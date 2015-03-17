@@ -5,7 +5,7 @@ Imports System.Text.RegularExpressions
 
 Public Class clsGlyQIqRunner
 
-    Protected Const GLYQ_IQ_CONSOLE_OUTPUT_PREFIX As String = "GlyQ-IQ_ConsoleOutput_Core"
+    Public Const GLYQ_IQ_CONSOLE_OUTPUT_PREFIX As String = "GlyQ-IQ_ConsoleOutput_Core"
 
 #Region "Enums"
 
@@ -46,7 +46,7 @@ Public Class clsGlyQIqRunner
     ''' Value between 0 and 100
     ''' </summary>
     ''' <remarks></remarks>
-    Public ReadOnly Property Progress As Integer
+    Public ReadOnly Property Progress As Double
         Get
             Return mProgress
         End Get
@@ -81,7 +81,13 @@ Public Class clsGlyQIqRunner
     Protected mBatchFilePath As String
     Protected mConsoleOutputFilePath As String
     Protected mCore As Integer
-    Protected mProgress As Integer
+    Protected mProgress As Double
+
+    ''' <summary>
+    ''' Dictionary tracking target names, and True/False for whether the target has been reported as being searched in the GlyQ-IQ Console Output window
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected mTargets As Dictionary(Of String, Boolean)
 
     Protected mStatus As GlyQIqRunnerStatusCodes
 
@@ -91,12 +97,115 @@ Public Class clsGlyQIqRunner
 
 #End Region
 
-
     Public Sub New(ByVal workingDirectory As String, ByVal processingCore As Integer, batchFilePathToUse As String)
         mWorkingDirectory = workingDirectory
         mCore = processingCore
         mBatchFilePath = batchFilePathToUse
         mStatus = GlyQIqRunnerStatusCodes.NotStarted
+
+        mTargets = New Dictionary(Of String, Boolean)
+
+        CacheTargets()
+
+    End Sub
+
+    ''' <summary>
+    ''' Forcibly ends GlyQ-IQ
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub AbortProcessingNow()
+        If Not mCmdRunner Is Nothing Then
+            mCmdRunner.AbortProgramNow()
+        End If
+    End Sub
+
+    Protected Sub CacheTargets()
+
+        Dim fiBatchFile = New FileInfo(mBatchFilePath)
+        If Not fiBatchFile.Exists Then
+            Throw New FileNotFoundException("Batch file not found", mBatchFilePath)
+        End If
+
+        Try
+            Dim fileContents = String.Empty
+
+            Using srBatchFile = New StreamReader(New FileStream(fiBatchFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                If Not srBatchFile.EndOfStream Then
+                    fileContents = srBatchFile.ReadLine
+                End If
+            End Using
+
+            If String.IsNullOrWhiteSpace(fileContents) Then
+                Throw New Exception("Batch file is empty, " + fiBatchFile.Name)
+            End If
+
+            ' Replace instances of " " with tab characters
+            fileContents = fileContents.Replace("""" & " " & """", ControlChars.Tab)
+
+            ' Replace any remaining double quotes with a tab character
+            fileContents = fileContents.Replace("""", ControlChars.Tab)
+
+            Dim parameterList = fileContents.Split(ControlChars.Tab)
+
+            ' Remove any empty items
+            Dim parameterListFiltered = (From item In parameterList Where Not String.IsNullOrWhiteSpace(item) Select item).ToList()
+
+            If parameterListFiltered.Count < 6 Then
+                Throw New Exception("Batch file arguments are not in the correct format")
+            End If
+
+            Dim targetsFileName = parameterListFiltered.Item(4)
+            Dim workingParametersFolderPath = parameterListFiltered.Item(6)
+
+            Dim diWorkingParameters = New DirectoryInfo(workingParametersFolderPath)
+            If Not diWorkingParameters.Exists Then
+                Throw New DirectoryNotFoundException("Folder not found, " & diWorkingParameters.FullName)
+            End If
+
+            Dim fiTargetsFile = New FileInfo(Path.Combine(diWorkingParameters.FullName, targetsFileName))
+            If Not fiTargetsFile.Exists Then
+                Throw New FileNotFoundException("Targets file not found, " & fiTargetsFile.FullName)
+            End If
+
+            Dim columnDelimiters() As Char = {ControlChars.Tab}
+            Const CODE_COLUMN_INDEX As Integer = 2
+
+            Using srTargetsFile = New StreamReader(New FileStream(fiTargetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+
+                ' Read the header line
+                If Not srTargetsFile.EndOfStream Then
+                    Dim headerLine = srTargetsFile.ReadLine
+
+                    Dim headers = headerLine.Split(ControlChars.Tab)
+                    If headers.Count < 3 Then
+                        Throw New DirectoryNotFoundException("Header line in the targets file does not have enough columns, " & fiTargetsFile.Name)
+                    End If
+
+                    If String.Compare(headers(CODE_COLUMN_INDEX), "Code", True) <> 0 Then
+                        Throw New DirectoryNotFoundException("The 3rd column in the header line of the targets file is not 'Code', it is '" & headers(2) & "' in " & fiTargetsFile.Name)
+                    End If
+                End If
+
+                While Not srTargetsFile.EndOfStream
+                    Dim dataLine = srTargetsFile.ReadLine
+
+                    Dim targetInfoColumns = dataLine.Split(columnDelimiters, 4)
+
+                    If targetInfoColumns.Length > CODE_COLUMN_INDEX + 1 Then
+                        Dim targetName = targetInfoColumns(CODE_COLUMN_INDEX)
+                        If Not mTargets.ContainsKey(targetName) Then
+                            mTargets.Add(targetName, False)
+                        End If
+                    End If
+
+                End While
+            End Using
+
+
+        Catch ex As Exception
+            Throw New Exception("Error caching the targets file: " & ex.Message, ex)
+        End Try
+
     End Sub
 
     Public Sub StartAnalysis()
@@ -122,12 +231,12 @@ Public Class clsGlyQIqRunner
 
         If blnSuccess Then
             mStatus = GlyQIqRunnerStatusCodes.Success
+            mProgress = 100
         Else
             mStatus = GlyQIqRunnerStatusCodes.Failure
         End If
 
     End Sub
-
 
     ''' <summary>
     ''' Parse the GlyQ-IQ console output file to track the search progress
@@ -136,45 +245,52 @@ Public Class clsGlyQIqRunner
     ''' <remarks></remarks>
     Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
 
-        ' Example Console output, looking for lines like this
+        ' In the Console output, we look for lines like this:
+        ' Start Workflows... (FragmentedTargetedIQWorkflow) on 3-6-1-0-0
         '
+        ' The Target Code is listed at the end of those lines, there 3-6-1-0-0
+        ' That code corresponds to the third column in the Targets file
 
-        Static reProgressStats As Regex = New Regex("We found (?<Done>\d+) out of (?<Total>\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-        Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
+        Static reStartWorkflows As Regex = New Regex("^Start Workflows... .+ on (.+)$", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         Try
             If Not File.Exists(strConsoleOutputFilePath) Then
-
                 Exit Sub
             End If
 
             Dim strLineIn As String
-            Dim glyqIqProgress As Integer = 0
+            Dim analysisFinished = False
 
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                Do While srInFile.Peek() >= 0
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
 
                     If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-                        Dim reMatch = reProgressStats.Match(strLineIn)
+                        Dim reMatch = reStartWorkflows.Match(strLineIn)
 
                         If reMatch.Success Then
-                            Dim intDone As Integer
-                            Dim intTotal As Integer
+                            Dim targetName As String = reMatch.Groups(1).Value
 
-                            If Integer.TryParse(reMatch.Groups("Done").Value, intDone) Then
-                                If Integer.TryParse(reMatch.Groups("Total").Value, intTotal) Then
-                                    glyqIqProgress = CInt(intDone / CSng(intTotal) * 100)
-                                End If
+                            If mTargets.ContainsKey(targetName) Then
+                                mTargets(targetName) = True
                             End If
+                        ElseIf strLineIn.StartsWith("Target Analysis Finished") Then
+                            analysisFinished = True
                         End If
 
                     End If
                 Loop
 
             End Using
+
+            Dim targetsProcessed = (From item In mTargets Where item.Value = True).Count - 1
+            If targetsProcessed < 0 Then targetsProcessed = 0
+
+            Dim glyqIqProgress = Math.Round(targetsProcessed / CDbl(mTargets.Count) * 100)
+
+            If analysisFinished Then glyqIqProgress = 100
 
             If glyqIqProgress > mProgress Then
                 mProgress = glyqIqProgress
@@ -201,4 +317,5 @@ Public Class clsGlyQIqRunner
 
         RaiseEvent CmdRunnerWaiting()
     End Sub
+
 End Class

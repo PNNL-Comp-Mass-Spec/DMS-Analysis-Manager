@@ -2060,7 +2060,8 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
             For Each FileToDelete In m_jobParams.ServerFilesToDelete
-                If m_DebugLevel >= 4 Then    'Log file to be deleted
+                If m_DebugLevel >= 4 Then
+                    ' Log file to be deleted
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & FileToDelete)
                 End If
 

@@ -754,7 +754,7 @@ Public Class clsStatusFile
 			m_CpuUtilization = CInt(GetCPUUtilization())
 			m_FreeMemoryMB = GetFreeMemoryMB()
 		Catch ex As Exception
-
+            ' Ignore errors here
 		End Try
 
 		'Set up the XML writer

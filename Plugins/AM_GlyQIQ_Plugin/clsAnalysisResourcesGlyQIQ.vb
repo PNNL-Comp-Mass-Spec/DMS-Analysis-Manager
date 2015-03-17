@@ -14,10 +14,14 @@ Public Class clsAnalysisResourcesGlyQIQ
 
     ' Public Const WORKING_PARAMETERS_FOLDER_NAME As String = "WorkingParameters"
     Protected Const LOCKS_FOLDER_NAME As String = "LocksFolder"
-    Protected Const EXECUTOR_PARAMETERS_FILE As String = "ExecutorParametersSK.xml"
-
+    
     Public Const JOB_PARAM_ACTUAL_CORE_COUNT = "GlyQ_IQ_ActualCoreCount"
+
+    Public Const EXECUTOR_PARAMETERS_FILE As String = "ExecutorParametersSK.xml"
     Public Const START_PROGRAM_BATCH_FILE_PREFIX As String = "StartProgram_Core"
+    Public Const GLYQIQ_PARAMS_FILE_PREFIX As String = "GlyQIQ_Params_"
+
+    Public Const ALIGNMENT_PARAMETERS_FILENAME As String = "AlignmentParameters.xml"
 
     Protected Structure udtGlyQIQParams
         'Public ApplicationsFolderPath As String
@@ -45,12 +49,16 @@ Public Class clsAnalysisResourcesGlyQIQ
             coreCount = 0
         End If
 
+        ' Use all the cores if the system has 4 or fewer cores
+        ' Otherwise, use CoreCount- 1
+        Dim maxAllowedCores = Environment.ProcessorCount
+        If maxAllowedCores > 4 Then maxAllowedCores -= 1
+
         If coreCount <= 0 Then
-            ' Use all cores
-            coreCount = Environment.ProcessorCount
+            coreCount = maxAllowedCores
         Else
-            If coreCount > Environment.ProcessorCount Then
-                coreCount = Environment.ProcessorCount
+            If coreCount > maxAllowedCores Then
+                coreCount = maxAllowedCores
             End If
         End If
 
@@ -98,7 +106,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
             Using srInFile = New StreamReader(New FileStream(targetsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                While srInFile.Peek() > -1
+                While Not srInFile.EndOfStream
                     srInFile.ReadLine()
                     numTargets += 1
                 End While
@@ -120,7 +128,7 @@ Public Class clsAnalysisResourcesGlyQIQ
         Try
 
             ' Define the output file name
-            mGlyQIQParams.ConsoleOperatingParametersFileName = "GlyQIQ_Params_" & m_DatasetName & ".txt"
+            mGlyQIQParams.ConsoleOperatingParametersFileName = GLYQIQ_PARAMS_FILE_PREFIX & m_DatasetName & ".txt"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the Operating Parameters file, " & mGlyQIQParams.ConsoleOperatingParametersFileName)
 
             For Each workingDirectory In mGlyQIQParams.WorkingParameterFolders
@@ -134,7 +142,7 @@ Public Class clsAnalysisResourcesGlyQIQ
                     swOutFile.WriteLine("ExecutorParameterFile" & "," & EXECUTOR_PARAMETERS_FILE)
                     swOutFile.WriteLine("XYDataFolder" & "," & "XYDataWriter")
                     swOutFile.WriteLine("WorkflowParametersFile" & "," & mGlyQIQParams.IQParamFileName)
-                    swOutFile.WriteLine("Alignment" & "," & Path.Combine(workingDirectory.Value.FullName, "AlignmentParameters.xml"))
+                    swOutFile.WriteLine("Alignment" & "," & Path.Combine(workingDirectory.Value.FullName, ALIGNMENT_PARAMETERS_FILENAME))
 
                     ' The following file doesn't have to exist
                     swOutFile.WriteLine("BasicTargetedParameters" & "," & Path.Combine(workingDirectory.Value.FullName, "BasicTargetedWorkflowParameters.xml"))
@@ -167,7 +175,6 @@ Public Class clsAnalysisResourcesGlyQIQ
                 Return False
             End If
 
-
             For Each workingDirectory In mGlyQIQParams.WorkingParameterFolders
 
                 Dim core = workingDirectory.Key
@@ -175,6 +182,12 @@ Public Class clsAnalysisResourcesGlyQIQ
                 Dim batchFilePath = Path.Combine(m_WorkingDir, START_PROGRAM_BATCH_FILE_PREFIX & workingDirectory.Key & ".bat")
 
                 Using swOutFile = New StreamWriter(New FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+                    ' Note that clsGlyQIqRunner expects this batch file to be in a specific format:
+                    ' GlyQIQProgramPath "WorkingDirectoryPath" "DatasetName" "DatasetSuffix" "TargetsFileName" "ParamFileName" "WorkingParametersFolderPath" "LockFileName" "ResultsFolderPath" "CoreNumber"
+                    '
+                    ' It will read and parse the batch file to determine the TargetsFile name and folder path so that it can cache the target code values
+                    ' Thus, if you change this code, also update clsGlyQIqRunner
 
                     swOutFile.Write(clsGlobal.PossiblyQuotePath(progLoc))
 
@@ -349,10 +362,9 @@ Public Class clsAnalysisResourcesGlyQIQ
                 splitTargetFileInfo = SplitTargetsFile(fiTargetsFile, mGlyQIQParams.NumTargets)
             End If
 
-
             ' Retrieve the alignment parameters
             sourceFolderPath = Path.Combine(paramFileStoragePathBase, "BaseFiles")
-            sourceFileName = "AlignmentParameters.xml"
+            sourceFileName = ALIGNMENT_PARAMETERS_FILENAME
 
             If Not CopyFileToWorkingDirectories(sourceFileName, sourceFolderPath, "AlignmentParameters File") Then
                 Return False
@@ -414,7 +426,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
             Dim diTransferFolder = New DirectoryInfo(m_jobParams.GetParam("transferFolderPath"))
             Dim diSourceFolder = New DirectoryInfo(sourceFolderPath)
-            If String.Compare(diTransferFolder.FullName, diSourceFolder.FullName, True) = 0 Then
+            If (diSourceFolder.FullName.ToLower().StartsWith(diTransferFolder.FullName.ToLower())) Then
                 ' The Peaks.txt file is in the transfer folder
                 ' If the analysis finishes successfully, then we can delete the file from the transfer folder
                 m_jobParams.AddServerFileToDelete(Path.Combine(sourceFolderPath, fileToFind))
@@ -449,7 +461,7 @@ Public Class clsAnalysisResourcesGlyQIQ
     ''' </summary>
     ''' <param name="fiTargetsFile"></param>
     ''' <param name="numTargets"></param>
-    ''' <returns>List of FileInfo objects for the newly created target files</returns>
+    ''' <returns>List of FileInfo objects for the newly created target files (key is core number, value is the Targets file path)</returns>
     ''' <remarks></remarks>
     Private Function SplitTargetsFile(ByVal fiTargetsFile As FileInfo, ByVal numTargets As Integer) As Dictionary(Of Integer, FileInfo)
 
