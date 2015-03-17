@@ -327,6 +327,9 @@ Public Class clsAnalysisResourcesGlyQIQ
                 Return False
             End If
 
+            ' There is no need to store the targets file in the job result folder
+            m_jobParams.AddResultFileToSkip(sourceFileName)
+
             Dim fiTargetsFile = New FileInfo(Path.Combine(m_WorkingDir, sourceFileName))
 
             ' Count the number of targets
