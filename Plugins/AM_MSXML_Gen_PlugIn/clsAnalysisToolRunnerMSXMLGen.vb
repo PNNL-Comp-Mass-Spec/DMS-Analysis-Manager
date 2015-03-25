@@ -127,15 +127,15 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")				' Typically mzXML or mzML
 
 			' Determine the output type
-			Select Case msXmlFormat.ToLower
-				Case "mzxml"
-					mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
-				Case "mzml"
-					mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML
-				Case Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "msXmlFormat string is not mzXML or mzML (" & msXmlFormat & "); will default to mzXML")
-					mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
-			End Select
+            Select Case msXmlFormat.ToLower()
+                Case "mzxml"
+                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
+                Case "mzml"
+                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML
+                Case Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "msXmlFormat string is not mzXML or mzML (" & msXmlFormat & "); will default to mzXML")
+                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
+            End Select
 
 			' Lookup Centroid Settings
 			Dim CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", False)
@@ -222,34 +222,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 	End Function
 
-	Private Function GZipMSXmlFile(ByVal fiResultFile As FileInfo) As FileInfo
-
-		Try
-			Dim success = GZipFile(fiResultFile.FullName, True)
-
-			If Not success Then
-				If String.IsNullOrEmpty(m_message) Then
-					LogError("GZipFile returned false in GZipMSXmlFile")
-				End If
-				Return Nothing
-			End If
-
-			Dim fiGZippedFile = New FileInfo(fiResultFile.FullName & clsAnalysisResources.DOT_GZ_EXTENSION)
-			If Not fiGZippedFile.Exists Then
-				LogError( "GZip file not found: " & fiGZippedFile.Name)
-				Return Nothing
-			End If
-
-			Return fiGZippedFile
-
-		Catch ex As Exception
-			m_message = "Exception in GZipMSXmlFile"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return Nothing
-		End Try
-
-	End Function
-
 	Private Function PostProcessMSXmlFile() As Boolean
 		Try
 			Dim resultFileExtension As String
@@ -275,7 +247,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "GZipping " & fiMSXmlFile.Name)
 
 			' Note that if this process turns out to be slow, we can have MSConvert do this for us using --gzip
-			fiMSXmlFile = GZipMSXmlFile(fiMSXmlFile)
+            fiMSXmlFile = GZipFile(fiMSXmlFile)
 			If fiMSXmlFile Is Nothing Then
 				Return False
 			End If

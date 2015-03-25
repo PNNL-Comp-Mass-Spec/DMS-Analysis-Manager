@@ -167,10 +167,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_GlyQIQ_Plugin\AnalysisManagerGlyQIQPlugin.vbproj">
-      <Project>{5924931f-9a13-4b6b-9cfd-e1896b6c0225}</Project>
-      <Name>AnalysisManagerGlyQIQPlugin</Name>
-    </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>

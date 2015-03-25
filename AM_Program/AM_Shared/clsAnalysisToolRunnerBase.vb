@@ -1246,6 +1246,7 @@ Public Class clsAnalysisToolRunnerBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings from the Manager Control DB")
             End If
 
+            ' Data Source=proteinseqs;Initial Catalog=manager_control
             Dim connectionString = objMgrParams.GetParam("MgrCnfgDbConnectStr")
             Dim managerName = objMgrParams.GetParam("MgrName")
 
@@ -1460,6 +1461,34 @@ Public Class clsAnalysisToolRunnerBase
         End If
 
         Return blnSuccess
+
+    End Function
+
+    Public Function GZipFile(ByVal fiResultFile As FileInfo) As FileInfo
+
+        Try
+            Dim success = GZipFile(fiResultFile.FullName, True)
+
+            If Not success Then
+                If String.IsNullOrEmpty(m_message) Then
+                    LogError("GZipFile returned false for " & fiResultFile.Name)
+                End If
+                Return Nothing
+            End If
+
+            Dim fiGZippedFile = New FileInfo(fiResultFile.FullName & clsAnalysisResources.DOT_GZ_EXTENSION)
+            If Not fiGZippedFile.Exists Then
+                LogError("GZip file not found: " & fiGZippedFile.Name)
+                Return Nothing
+            End If
+
+            Return fiGZippedFile
+
+        Catch ex As Exception
+            m_message = "Exception in GZipFile(ByVal fiResultFile As FileInfo)"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return Nothing
+        End Try
 
     End Function
 

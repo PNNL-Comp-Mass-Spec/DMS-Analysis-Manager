@@ -9,6 +9,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
 
 Public Class clsCompassXportRunner
 
@@ -101,35 +102,35 @@ Public Class clsCompassXportRunner
 		strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType)
 
 		' Define the input file path
-		strSourceFolderPath = System.IO.Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
-		strInputFilePath = System.IO.Path.Combine(strSourceFolderPath, "analysis.baf")
+        strSourceFolderPath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
+        strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.baf")
 
-		If Not System.IO.File.Exists(strInputFilePath) Then
-			' Analysis.baf not found; look for analysis.yep instead
-			strInputFilePath = System.IO.Path.Combine(strSourceFolderPath, "analysis.yep")
+        If Not File.Exists(strInputFilePath) Then
+            ' Analysis.baf not found; look for analysis.yep instead
+            strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.yep")
 
-			If Not System.IO.File.Exists(strInputFilePath) Then
-				mErrorMessage = "Could not find analysis.baf or analysis.yep in " & mDatasetName & clsAnalysisResources.DOT_D_EXTENSION
-				Return False
-			End If
-		End If
+            If Not File.Exists(strInputFilePath) Then
+                mErrorMessage = "Could not find analysis.baf or analysis.yep in " & mDatasetName & clsAnalysisResources.DOT_D_EXTENSION
+                Return False
+            End If
+        End If
 
-		' Define the output file path
-		strOutputFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & "." & strMSXmlFormatName)
+        ' Define the output file path
+        strOutputFilePath = Path.Combine(mWorkDir, mDatasetName & "." & strMSXmlFormatName)
 
-		' Verify that program file exists
-		If Not System.IO.File.Exists(mCompassXportProgramPath) Then
-			mErrorMessage = "Cannot find CompassXport exe program file: " & mCompassXportProgramPath
-			Return False
-		End If
+        ' Verify that program file exists
+        If Not File.Exists(mCompassXportProgramPath) Then
+            mErrorMessage = "Cannot find CompassXport exe program file: " & mCompassXportProgramPath
+            Return False
+        End If
 
-		CmdRunner = New clsRunDosProgram(System.IO.Path.GetDirectoryName(mCompassXportProgramPath))
+        CmdRunner = New clsRunDosProgram(Path.GetDirectoryName(mCompassXportProgramPath))
 
-		'Set up and execute a program runner to run CompassXport executable
+        'Set up and execute a program runner to run CompassXport executable
 
-		CmdStr = " -mode " & intFormatMode.ToString() & _
-				 " -a " & strInputFilePath & _
-				 " -o " & strOutputFilePath
+        CmdStr = " -mode " & intFormatMode.ToString() & _
+                 " -a " & strInputFilePath & _
+                 " -o " & strOutputFilePath
 
         If mCentroidMSXML Then
             ' Centroiding is enabled
@@ -146,17 +147,17 @@ Public Class clsCompassXportRunner
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & "_ConsoleOutput.txt")
+            .ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & "_ConsoleOutput.txt")
         End With
 
-        blnSuccess = CmdRunner.RunProgram(mCompassXportProgramPath, CmdStr, System.IO.Path.GetFileNameWithoutExtension(mCompassXportProgramPath), True)
+        blnSuccess = CmdRunner.RunProgram(mCompassXportProgramPath, CmdStr, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), True)
 
         If Not blnSuccess Then
             If CmdRunner.ExitCode <> 0 Then
-                mErrorMessage = System.IO.Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString
+                mErrorMessage = Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString
                 blnSuccess = False
             Else
-                mErrorMessage = "Call to " & System.IO.Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " failed (but exit code is 0)"
+                mErrorMessage = "Call to " & Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " failed (but exit code is 0)"
                 blnSuccess = True
             End If
         End If

@@ -75,7 +75,7 @@ Public Interface IJobParams
 	''' Add a filename to definitely move to the results folder
 	''' </summary>
 	''' <param name="FileName"></param>
-	''' <remarks></remarks>
+    ''' <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToKeep</remarks>
 	Sub AddResultFileToKeep(ByVal FileName As String)
 
 	''' <summary>
@@ -89,7 +89,7 @@ Public Interface IJobParams
 	''' Add a filename to not move to the results folder
 	''' </summary>
 	''' <param name="FileName"></param>
-	''' <remarks></remarks>
+    ''' <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
 	Sub AddResultFileToSkip(ByVal FileName As String)
 
 	''' <summary>

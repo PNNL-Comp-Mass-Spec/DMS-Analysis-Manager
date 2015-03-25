@@ -197,8 +197,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
                     Dim targetsFile As FileInfo = Nothing
                     If Not splitTargetFileInfo.TryGetValue(core, targetsFile) Then
-                        m_message = "Logic error; core " & core & " not found in dictionary splitTargetFileInfo"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        LogError("Logic error; core " & core & " not found in dictionary splitTargetFileInfo")
                         Return False
                     End If
 
@@ -277,8 +276,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
             mGlyQIQParams.IQParamFileName = m_jobParams.GetJobParameter("ParmFileName", "")
             If String.IsNullOrEmpty(mGlyQIQParams.IQParamFileName) Then
-                m_message = "Job Parameter File name is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Job Parameter File name is empty")
                 Return False
             End If
 
@@ -299,14 +297,12 @@ Public Class clsAnalysisResourcesGlyQIQ
             mGlyQIQParams.TargetsName = Path.GetFileNameWithoutExtension(mGlyQIQParams.TargetsName)
 
             If String.IsNullOrEmpty(mGlyQIQParams.FactorsName) Then
-                m_message = "Factors parameter is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Factors parameter is empty")
                 Return False
             End If
 
             If String.IsNullOrEmpty(mGlyQIQParams.TargetsName) Then
-                m_message = "Targets parameter is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Targets parameter is empty")
                 Return False
             End If
 
@@ -335,8 +331,7 @@ Public Class clsAnalysisResourcesGlyQIQ
             ' Count the number of targets
             mGlyQIQParams.NumTargets = CountTargets(fiTargetsFile.FullName)
             If mGlyQIQParams.NumTargets < 1 Then
-                m_message = "Targets file is empty: " & Path.Combine(sourceFolderPath, sourceFileName)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError( "Targets file is empty: " & Path.Combine(sourceFolderPath, sourceFileName))
                 Return False
             End If
 
@@ -411,7 +406,7 @@ Public Class clsAnalysisResourcesGlyQIQ
             If eRawDataType = eRawDataTypeConstants.ThermoRawFile Then
                 m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
             Else
-                m_message = "GlyQ-IQ presently only supports Thermo .Raw files"
+                LogError("GlyQ-IQ presently only supports Thermo .Raw files")
                 Return False
             End If
 

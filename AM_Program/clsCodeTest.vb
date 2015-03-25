@@ -1727,7 +1727,7 @@ Public Class clsCodeTest
         objToolRunner = New clsCodeTestAM
         objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
 
-        Const cacheFolderPath As String = "\\proto-11\MSXML_Cache"
+        Const cacheFolderPath As String = "\\Proto-11\MSXML_Cache"
 
         Try
             objToolRunner.PurgeOldServerCacheFiles(cacheFolderPath)

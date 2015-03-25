@@ -2242,6 +2242,7 @@ Public Class clsMSGFRunner
 
 		Try
 
+            ' Gigasax.DMS5
 			strConnectionString = m_mgrParams.GetParam("connectionstring")
 			If Integer.TryParse(m_JobNum, intJobNumber) Then
 				blnPostResultsToDB = True

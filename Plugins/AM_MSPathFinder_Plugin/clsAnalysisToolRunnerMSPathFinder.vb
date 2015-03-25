@@ -761,7 +761,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		CmdStr &= " " & strCmdLineOptions
 
 		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
 		End If
 
 		CmdRunner = New clsRunDosProgram(m_WorkDir)

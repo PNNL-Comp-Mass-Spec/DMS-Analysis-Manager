@@ -19,6 +19,24 @@ Public Class clsAnalysisResourcesMSXMLGen
 
 			currentTask = "Determine RawDataType"
 
+            Dim toolName = m_jobParams.GetParam("ToolName")
+            Dim proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase)
+
+            If proMexBruker Then
+                ' Make sure the settings file has MSXMLOutputType=mzML, not mzXML
+
+                Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")
+                If String.IsNullOrWhiteSpace(msXmlFormat) Then
+                    LogError("Job parameter MSXMLOutputType must be defined in the settings file")
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
+                If Not msXmlFormat.ToLower().Contains("mzml") Then
+                    LogError("ProMex_Bruker jobs require mzML files, not " & msXmlFormat & " files")                    
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+            End If
+
 			' Get input data file
 			Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
 

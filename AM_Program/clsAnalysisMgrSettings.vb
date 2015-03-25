@@ -55,36 +55,37 @@ Public Class clsAnalysisMgrSettings
 		Dim MyCmd As New SqlCommand
 		Dim ConnectionString As String
 
-		Try
-			ConnectionString = Me.GetParam("MgrCnfgDbConnectStr")
-			MyConnection = New SqlConnection(ConnectionString)
-			MyConnection.Open()
+        Try
+            ' Data Source=proteinseqs;Initial Catalog=manager_control
+            ConnectionString = Me.GetParam("MgrCnfgDbConnectStr")
+            MyConnection = New SqlConnection(ConnectionString)
+            MyConnection.Open()
 
-			'Set up the command object prior to SP execution
-			With MyCmd
-				.CommandType = CommandType.StoredProcedure
-				.CommandText = SP_NAME_ACKMANAGERUPDATE
-				.Connection = MyConnection
+            'Set up the command object prior to SP execution
+            With MyCmd
+                .CommandType = CommandType.StoredProcedure
+                .CommandText = SP_NAME_ACKMANAGERUPDATE
+                .Connection = MyConnection
 
-				.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
+                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
-				.Parameters.Add(New SqlParameter("@managerName", SqlDbType.VarChar, 128))
-				.Parameters.Item("@managerName").Direction = ParameterDirection.Input
-				.Parameters.Item("@managerName").Value = Me.GetParam("MgrName")
+                .Parameters.Add(New SqlParameter("@managerName", SqlDbType.VarChar, 128))
+                .Parameters.Item("@managerName").Direction = ParameterDirection.Input
+                .Parameters.Item("@managerName").Value = Me.GetParam("MgrName")
 
-				.Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
-				.Parameters.Item("@message").Direction = ParameterDirection.Output
-				.Parameters.Item("@message").Value = ""
-			End With
+                .Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
+                .Parameters.Item("@message").Direction = ParameterDirection.Output
+                .Parameters.Item("@message").Value = ""
+            End With
 
-			'Execute the SP
-			MyCmd.ExecuteNonQuery()
+            'Execute the SP
+            MyCmd.ExecuteNonQuery()
 
-		Catch ex As Exception
-			Const strErrorMessage As String = "Exception calling " & SP_NAME_ACKMANAGERUPDATE
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage & ex.Message)
-		End Try
+        Catch ex As Exception
+            Const strErrorMessage As String = "Exception calling " & SP_NAME_ACKMANAGERUPDATE
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage & ex.Message)
+        End Try
 
 	End Sub
 
@@ -252,36 +253,39 @@ Public Class clsAnalysisMgrSettings
 
 	Private Function LoadMgrSettingsFromDBWork(ByVal ManagerName As String, ByRef dtSettings As DataTable, ByVal blnReturnErrorIfNoParameters As Boolean) As Boolean
 
-		Dim RetryCount As Short = 3
-		Dim ConnectionString As String = Me.GetParam("MgrCnfgDbConnectStr", "")
-		dtSettings = Nothing
+        Const RetryCount As Short = 3
 
-		If String.IsNullOrEmpty(ManagerName) Then
-			m_ErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
-			Return False
-		End If
+        ' Data Source=proteinseqs;Initial Catalog=manager_control
+        Dim connectionString As String = Me.GetParam("MgrCnfgDbConnectStr", "")
 
-		Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" & ManagerName & "'"
+        dtSettings = Nothing
 
-		'Get a table to hold the results of the query
-		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr, ConnectionString, "LoadMgrSettingsFromDBWork", RetryCount, dtSettings)
+        If String.IsNullOrEmpty(ManagerName) Then
+            m_ErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
+            Return False
+        End If
 
-		'If loop exited due to errors, return false
-		If Not blnSuccess Then
-			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database for manager '" & ManagerName & "'"
-			WriteErrorMsg(m_ErrMsg)
-			If Not dtSettings Is Nothing Then dtSettings.Dispose()
-			Return False
-		End If
+        Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" & ManagerName & "'"
 
-		'Verify at least one row returned
-		If dtSettings.Rows.Count < 1 And blnReturnErrorIfNoParameters Then
-			' No data was returned
-			m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" & ManagerName & "' not defined in the manager control database; using " & ConnectionString
-			WriteErrorMsg(m_ErrMsg)
-			dtSettings.Dispose()
-			Return False
-		End If
+        'Get a table to hold the results of the query
+        Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr, connectionString, "LoadMgrSettingsFromDBWork", RetryCount, dtSettings)
+
+        'If loop exited due to errors, return false
+        If Not blnSuccess Then
+            m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database for manager '" & ManagerName & "'"
+            WriteErrorMsg(m_ErrMsg)
+            If Not dtSettings Is Nothing Then dtSettings.Dispose()
+            Return False
+        End If
+
+        'Verify at least one row returned
+        If dtSettings.Rows.Count < 1 And blnReturnErrorIfNoParameters Then
+            ' No data was returned
+            m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" & ManagerName & "' not defined in the manager control database; using " & connectionString
+            WriteErrorMsg(m_ErrMsg)
+            dtSettings.Dispose()
+            Return False
+        End If
 
 		Return True
 

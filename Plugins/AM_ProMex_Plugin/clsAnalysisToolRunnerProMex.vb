@@ -31,6 +31,8 @@ Public Class clsAnalysisToolRunnerProMex
 
     Protected mConsoleOutputErrorMsg As String
 
+    Protected mProMexParamFilePath As String
+
     Protected mProMexResultsFilePath As String
 
     Protected WithEvents mCmdRunner As clsRunDosProgram
@@ -119,6 +121,9 @@ Public Class clsAnalysisToolRunnerProMex
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
+            ' There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays all of the parameters used
+            m_jobParams.AddResultFileToSkip(mProMexParamFilePath)
+
             result = MakeResultsFolder()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 'MakeResultsFolder handles posting to local log, so set database error message and exit
@@ -198,10 +203,8 @@ Public Class clsAnalysisToolRunnerProMex
         dctParamNames.Add("MinMass", "minMass")
         dctParamNames.Add("MaxMass", "maxMass")
 
-        dctParamNames.Add("MassCollapse", "massCollapse")
         dctParamNames.Add("Score", "score")
         dctParamNames.Add("Csv", "csv")
-        dctParamNames.Add("MinProbability", "minProbability")
         dctParamNames.Add("MaxThreads", "maxThreads")
 
         Return dctParamNames
@@ -223,10 +226,8 @@ Public Class clsAnalysisToolRunnerProMex
         ' -maxCharge      60
         ' -minMass        3000.0
         ' -maxMass        50000.0
-        ' -massCollapse   n
         ' -score  n
         ' -csv    y
-        ' -minProbability 0.1
         ' -maxThreads     0
         ' Start loading MS1 data from CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ.pbf
         ' Complete loading MS1 data. Elapsed Time = 17.514 sec
@@ -240,7 +241,7 @@ Public Class clsAnalysisToolRunnerProMex
         ' Processing 6.76 % of mass bins (3562.563 Da); Elapsed Time = 40.169 sec; # of features = 1426
         ' Processing 9.02 % of mass bins (3750.063 Da); Elapsed Time = 51.633 sec; # of features = 2154
 
-        Const REGEX_ProMex_PROGRESS As String = "Processing ([0-9.]+) \%"
+        Const REGEX_ProMex_PROGRESS As String = "Processing ([0-9.]+)\%"
         Static reCheckProgress As New Regex(REGEX_ProMex_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
         Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
 
@@ -318,10 +319,10 @@ Public Class clsAnalysisToolRunnerProMex
 
         strCmdLineOptions = String.Empty
 
-        Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ProMexParamFile"))
+        mProMexParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ProMexParamFile"))
 
-        If Not File.Exists(strParameterFilePath) Then
-            LogError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
+        If Not File.Exists(mProMexParamFilePath) Then
+            LogError("Parameter file not found", "Parameter file not found: " & mProMexParamFilePath)
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
@@ -332,7 +333,7 @@ Public Class clsAnalysisToolRunnerProMex
             ' Initialize the Param Name dictionary
             Dim dctParamNames = GetProMexParameterNames()
 
-            Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile = New StreamReader(New FileStream(mProMexParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srParamFile.EndOfStream
                     Dim strLineIn = srParamFile.ReadLine()
@@ -349,7 +350,8 @@ Public Class clsAnalysisToolRunnerProMex
                         If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
 
                             sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
-
+                        Else
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring parameter '" & kvSetting.Key & "' since not recognized as a valid ProMex parameter")
                         End If
 
                     End If
@@ -359,7 +361,7 @@ Public Class clsAnalysisToolRunnerProMex
 
         Catch ex As Exception
             m_message = "Exception reading ProMex parameter file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -427,7 +429,7 @@ Public Class clsAnalysisToolRunnerProMex
         ' Make sure there are at least two features in the .ms1ft file
 
         Try
-            Using resultsReader = New System.IO.StreamReader(New FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using resultsReader = New StreamReader(New FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 Dim lineCount = 0
                 While Not resultsReader.EndOfStream
                     Dim lineIn = resultsReader.ReadLine()
@@ -440,10 +442,12 @@ Public Class clsAnalysisToolRunnerProMex
                 End While
             End Using
 
+            m_message = "The ProMex results file has fewer than 2 deisotoped features"
+
             Return False
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception examinin the ms1ft file: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception examining the ms1ft file: " & ex.Message)
             Return False
         End Try
 
@@ -472,14 +476,21 @@ Public Class clsAnalysisToolRunnerProMex
             Return False
         End If
 
-        Dim pbfFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION)
+        Dim msFilePath As String
+
+        Dim proMexBruker = clsAnalysisResourcesProMex.IsProMexBrukerJob(m_jobParams)
+
+        If proMexBruker Then
+            msFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+        Else
+            msFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION)
+        End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running ProMex")
 
         'Set up and execute a program runner to run ProMex
-        ' Prior to January 2015 ProMex read PBF files; it now reads .ms1ft files from ProMex
 
-        CmdStr = " -i " & pbfFilePath
+        CmdStr = " -i " & msFilePath
         CmdStr &= " " & strCmdLineOptions
 
         If m_DebugLevel >= 1 Then
@@ -539,11 +550,67 @@ Public Class clsAnalysisToolRunnerProMex
 
         End If
 
+        If proMexBruker Then
+            blnSuccess = StorePbfFileInCache()
+            If Not blnSuccess Then
+                Return False
+            End If
+        End If
+
         m_progress = PROGRESS_PCT_COMPLETE
         m_StatusTools.UpdateAndWrite(m_progress)
         If m_DebugLevel >= 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProMex Search Complete")
         End If
+
+        Return True
+
+    End Function
+
+    Private Function StorePbfFileInCache() As Boolean
+
+        Dim fiAutoGeneratedPbfFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION))
+
+        If Not fiAutoGeneratedPbfFile.Exists Then
+            LogError("Auto-generated .PBF file not found; this is unexpected: " + fiAutoGeneratedPbfFile.Name)
+            Return False
+        End If
+
+        ' Store the PBF file in the spectra cache folder; not in the job result folder
+
+        Dim msXmlCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
+        Dim msXmlCacheFolder = New DirectoryInfo(msXmlCacheFolderPath)
+
+        If Not msXmlCacheFolder.Exists Then
+            LogError("MSXmlCache folder not found: " & msXmlCacheFolderPath)
+            Return False
+        End If
+
+        ' Temporarily override the result folder name
+        Dim resultFolderNameSaved = String.Copy(m_ResFolderName)
+
+        m_ResFolderName = "PBF_Gen_1_193_000000"
+
+        ' Copy the .pbf file to the MSXML cache
+        Dim remoteCachefilePath = CopyFileToServerCache(msXmlCacheFolder.FullName, fiAutoGeneratedPbfFile.FullName, purgeOldFilesIfNeeded:=True)
+
+        ' Restore the result folder name
+        m_ResFolderName = resultFolderNameSaved
+
+        If String.IsNullOrEmpty(remoteCachefilePath) Then
+            If String.IsNullOrEmpty(m_message) Then
+                LogError("CopyFileToServerCache returned false for " & fiAutoGeneratedPbfFile.Name)
+            End If
+            Return False
+        End If
+
+        ' Create the _CacheInfo.txt file
+        Dim cacheInfoFilePath = fiAutoGeneratedPbfFile.FullName & "_CacheInfo.txt"
+        Using swOutFile = New StreamWriter(New FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            swOutFile.WriteLine(remoteCachefilePath)
+        End Using
+
+        m_jobParams.AddResultFileToSkip(fiAutoGeneratedPbfFile.Name)
 
         Return True
 

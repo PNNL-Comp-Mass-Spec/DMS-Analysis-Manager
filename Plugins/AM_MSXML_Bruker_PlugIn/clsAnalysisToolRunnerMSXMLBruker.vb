@@ -8,6 +8,8 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports System.IO
+Imports System.Runtime.InteropServices
 
 Public Class clsAnalysisToolRunnerMSXMLBruker
     Inherits clsAnalysisToolRunnerBase
@@ -16,6 +18,8 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
     Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 5
 
     Protected Const COMPASS_XPORT As String = "CompassXport.exe"
+
+    Protected mMSXmlCacheFolder As DirectoryInfo
 
     Protected WithEvents mCompassXportRunner As clsCompassXportRunner
 
@@ -59,9 +63,19 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		Dim processingErrorMessage As String = String.empty
+        Dim msXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
+        mMSXmlCacheFolder = New DirectoryInfo(msXMLCacheFolderPath)
 
-		eResult = CreateMSXmlFile()
+        If Not mMSXmlCacheFolder.Exists Then
+            LogError("MSXmlCache folder not found: " & msXMLCacheFolderPath)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+		Dim processingErrorMessage As String = String.empty
+        Dim fiResultsFile As FileInfo = Nothing
+
+        eResult = CreateMSXmlFile(fiResultsFile)
+
 		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 			' Something went wrong
 			' In order to help diagnose things, we will move whatever files were created into the eResult folder, 
@@ -76,200 +90,244 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 			Else
 				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+        Else
+            ' Gzip the .mzML or .mzXML file then copy to the server cache
+            eReturnCode = PostProcessMsXmlFile(fiResultsFile)
+        End If
 
-		End If
+        'Stop the job timer
+        m_StopTime = DateTime.UtcNow
 
-		'Stop the job timer
-		m_StopTime = System.DateTime.UtcNow
+        'Delete the raw data files
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file")
+        End If
 
-		'Delete the raw data files
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file")
-		End If
+        If DeleteRawDataFiles() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " & m_message)
 
-		If DeleteRawDataFiles() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " & m_message)
+            If Not String.IsNullOrEmpty(processingErrorMessage) Then
+                m_message = processingErrorMessage
+            Else
+                ' Don't treat this as a critical error; leave eReturnCode unchanged
+                m_message = "Error deleting raw data files"
+            End If
+        End If
 
-			If Not String.IsNullOrEmpty(processingErrorMessage) Then
-				m_message = processingErrorMessage
-			Else
-				' Don't treat this as a critical error; leave eReturnCode unchanged
-				m_message = "Error deleting raw data files"
-			End If
-		End If
+        'Update the job summary file
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file")
+        End If
+        UpdateSummaryFile()
 
-		'Update the job summary file
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file")
-		End If
-		UpdateSummaryFile()
+        'Make the results folder
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Making results folder")
+        End If
 
-		'Make the results folder
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Making results folder")
-		End If
+        eResult = MakeResultsFolder()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' MakeResultsFolder handles posting to local log, so set database error message and exit
+            m_message = "Error making results folder"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		eResult = MakeResultsFolder()
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'MakeResultsFolder handles posting to local log, so set database error message and exit
-			m_message = "Error making results folder"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        eResult = MoveResultFiles()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' MoveResultFiles moves the eResult files to the eResult folder
+            m_message = "Error moving files into results folder"
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		eResult = MoveResultFiles()
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'MoveResultFiles moves the eResult files to the eResult folder
-			m_message = "Error moving files into results folder"
-			eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+            ' Try to save whatever files were moved into the results folder
+            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
-		If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
-			' Try to save whatever files were moved into the results folder
-			Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-			objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        eResult = CopyResultsFolderToServer()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return eResult
+        End If
 
-		eResult = CopyResultsFolderToServer()
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
-			Return eResult
-		End If
+        'If we get to here, everything worked so exit happily
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-		'If we get to here, everything worked so exit happily
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    End Function
 
-	End Function
+    ''' <summary>
+    ''' Generate the mzXML or mzML file
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Private Function CreateMSXmlFile(<Out()> ByRef fiResultsFile As FileInfo) As IJobParams.CloseOutType
 
-	''' <summary>
-	''' Generate the mzXML or mzML file
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Private Function CreateMSXmlFile() As IJobParams.CloseOutType
+        If m_DebugLevel > 4 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter")
+        End If
 
-		If m_DebugLevel > 4 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter")
-		End If
+        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Typically CompassXport.exe
 
-		Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")			' Typically CompassXport.exe
+        Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")             ' Typically mzXML or mzML
+        Dim CentroidMSXML As Boolean = CBool(m_jobParams.GetParam("CentroidMSXML"))
 
-		Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")				' Typically mzXML or mzML
-		Dim CentroidMSXML As Boolean = CBool(m_jobParams.GetParam("CentroidMSXML"))
+        Dim CompassXportProgramPath As String
+        Dim eOutputType As clsCompassXportRunner.MSXMLOutputTypeConstants
 
-		Dim CompassXportProgramPath As String
-		Dim eOutputType As clsCompassXportRunner.MSXMLOutputTypeConstants
+        Dim blnSuccess As Boolean
 
-		Dim blnSuccess As Boolean
+        ' Initialize the Results File output parameter to a dummy name for now
+        fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, "NonExistent_Placeholder_File.tmp"))
 
-		If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
-			CompassXportProgramPath = m_mgrParams.GetParam("CompassXportLoc")
+        If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
+            CompassXportProgramPath = m_mgrParams.GetParam("CompassXportLoc")
 
-			If String.IsNullOrEmpty(CompassXportProgramPath) Then
-				m_message = "Manager parameter CompassXportLoc is not defined in the Manager Control DB"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If String.IsNullOrEmpty(CompassXportProgramPath) Then
+                m_message = "Manager parameter CompassXportLoc is not defined in the Manager Control DB"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			If Not System.IO.File.Exists(CompassXportProgramPath) Then
-				m_message = "CompassXport program not found"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & CompassXportProgramPath)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-		Else
-			m_message = "Invalid value for MSXMLGenerator: " & msXmlGenerator
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+            If Not File.Exists(CompassXportProgramPath) Then
+                m_message = "CompassXport program not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & CompassXportProgramPath)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+        Else
+            m_message = "Invalid value for MSXMLGenerator: " & msXmlGenerator
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		eOutputType = clsCompassXportRunner.GetMsXmlOutputTypeByName(msXmlFormat)
-		If eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.Invalid Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "msXmlFormat string is not recognized (" & msXmlFormat & "); it is typically mzXML, mzML, or CSV; will default to mzXML")
-			eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.mzXML
-		End If
+        eOutputType = clsCompassXportRunner.GetMsXmlOutputTypeByName(msXmlFormat)
+        If eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.Invalid Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "msXmlFormat string is not recognized (" & msXmlFormat & "); it is typically mzXML, mzML, or CSV; will default to mzXML")
+            eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.mzXML
+        End If
 
+        fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "." & clsCompassXportRunner.GetMsXmlOutputTypeByID(eOutputType)))
 
-		' Instantiate the processing class
-		mCompassXportRunner = New clsCompassXportRunner(m_WorkDir, CompassXportProgramPath, m_Dataset, eOutputType, CentroidMSXML)
+        ' Instantiate the processing class
+        mCompassXportRunner = New clsCompassXportRunner(m_WorkDir, CompassXportProgramPath, m_Dataset, eOutputType, CentroidMSXML)
 
-		' Create the file
-		blnSuccess = mCompassXportRunner.CreateMSXMLFile
+        ' Create the file
+        blnSuccess = mCompassXportRunner.CreateMSXMLFile
 
-		If Not blnSuccess Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mCompassXportRunner.ErrorMessage)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not blnSuccess Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mCompassXportRunner.ErrorMessage)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-		ElseIf mCompassXportRunner.ErrorMessage.Length > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mCompassXportRunner.ErrorMessage)
+        ElseIf mCompassXportRunner.ErrorMessage.Length > 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mCompassXportRunner.ErrorMessage)
 
-		End If
+        End If
 
-		If eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.CSV Then
-			' CompassXport created one CSV file for each spectrum in the dataset
-			' Confirm that fewer than 100 CSV files were created
+        If eOutputType <> clsCompassXportRunner.MSXMLOutputTypeConstants.CSV Then
+            If fiResultsFile.Exists Then
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            End If
 
-			Dim diWorkDir As New IO.DirectoryInfo(m_WorkDir)
-			Dim fiFiles As List(Of IO.FileInfo) = diWorkDir.GetFiles("*.csv").ToList()
+            m_message = "MSXml results file not found: " & fiResultsFile.FullName
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
 
-			If fiFiles.Count >= MAX_CSV_FILES Then
-				m_message = "CompassXport created " & fiFiles.Count.ToString() & " CSV files. The CSV conversion mode is only appropriate for datasets with fewer than " & MAX_CSV_FILES & " spectra; create a mzXML file instead (e.g., settings file mzXML_Bruker.xml)"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+        ' CompassXport created one CSV file for each spectrum in the dataset
+        ' Confirm that fewer than 100 CSV files were created
 
-				For Each fiFile In fiFiles
-					Try
-						fiFile.Delete()
-					Catch ex As Exception
-						' Ignore errors here
-					End Try
-				Next
+        Dim diWorkDir As New DirectoryInfo(m_WorkDir)
+        Dim fiFiles As List(Of FileInfo) = diWorkDir.GetFiles("*.csv").ToList()
 
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+        If fiFiles.Count < MAX_CSV_FILES Then
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
 
-		End If
+        m_message = "CompassXport created " & fiFiles.Count.ToString() & " CSV files. The CSV conversion mode is only appropriate for datasets with fewer than " & MAX_CSV_FILES & " spectra; create a mzXML file instead (e.g., settings file mzXML_Bruker.xml)"
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        For Each fiFile In fiFiles
+            Try
+                fiFile.Delete()
+            Catch ex As Exception
+                ' Ignore errors here
+            End Try
+        Next
 
-	End Function
+        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-	''' <summary>
-	''' Stores the tool version info in the database
-	''' </summary>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfo() As Boolean
+    End Function
+    
+    Private Function PostProcessMsXmlFile(ByVal fiResultsFile As FileInfo) As IJobParams.CloseOutType
 
-		Dim strToolVersionInfo As String = String.Empty
+        ' Compress the file using GZip
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "GZipping " & fiResultsFile.Name)
+        fiResultsFile = GZipFile(fiResultsFile)
 
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-		End If
+        If fiResultsFile Is Nothing Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ' Copy the .mzXML.gz or .mzML.gz file to the MSXML cache
+        Dim remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiResultsFile.FullName, purgeOldFilesIfNeeded:=True)
 
-		Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")			' Typically CompassXport.exe
-		If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
-			ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("CompassXportLoc")))
-		Else
-			If String.IsNullOrEmpty(msXmlGenerator) Then
-				m_message = "Job Parameter MSXMLGenerator is not defined"
-			Else
-				m_message = "Invalid value for MSXMLGenerator, should be " & COMPASS_XPORT & ", not " & msXmlGenerator
-			End If
+        If String.IsNullOrEmpty(remoteCachefilePath) Then
+            If String.IsNullOrEmpty(m_message) Then
+                LogError("CopyFileToServerCache returned false for " & fiResultsFile.Name)
+            End If
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+        ' Create the _CacheInfo.txt file
+        Dim cacheInfoFilePath = fiResultsFile.FullName & "_CacheInfo.txt"
+        Using swOutFile = New StreamWriter(New FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            swOutFile.WriteLine(remoteCachefilePath)
+        End Using
 
-		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-			Return False
-		End Try
+        m_jobParams.AddResultFileToSkip(fiResultsFile.Name)
+        
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
+
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
+
+        Dim strToolVersionInfo As String = String.Empty
+
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
+
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New List(Of FileInfo)
+
+        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Typically CompassXport.exe
+        If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
+            ioToolFiles.Add(New FileInfo(m_mgrParams.GetParam("CompassXportLoc")))
+        Else
+            If String.IsNullOrEmpty(msXmlGenerator) Then
+                m_message = "Job Parameter MSXMLGenerator is not defined"
+            Else
+                m_message = "Invalid value for MSXMLGenerator, should be " & COMPASS_XPORT & ", not " & msXmlGenerator
+            End If
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
+        End If
+
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
 
 #End Region
 
@@ -279,15 +337,15 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CompassXportRunner_LoopWaiting() Handles mCompassXportRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
         ' Synchronize the stored Debug level with the value stored in the database
         Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
         MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
 
         'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_MSXML_GEN_RUNNING, 0, "", "", "", False)
         End If
     End Sub

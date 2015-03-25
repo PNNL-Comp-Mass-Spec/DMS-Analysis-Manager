@@ -208,10 +208,6 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
 		' Call MASIC using the Program Runner class
 
-		If m_DebugLevel >= 1 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MASIC on file " & strInputFilePath)
-		End If
-
 		' Define the parameters to send to Masic.exe
 		CmdStr = "/I:" & strInputFilePath & " /O:" & strOutputFolderPath & " /P:" & strParameterFilePath & " /Q /SF:" & m_MASICStatusFileName
 
@@ -225,6 +221,9 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 			m_MASICLogFileName = String.Empty
 		End If
 
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMASICExePath & " " & CmdStr)
+        End If
 
 		objMasicProgRunner = New PRISM.Processes.clsProgRunner
 		With objMasicProgRunner

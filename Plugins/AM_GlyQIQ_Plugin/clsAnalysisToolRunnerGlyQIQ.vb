@@ -10,6 +10,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Threading
+Imports System.Data.SqlClient
 
 
 Public Class clsAnalysisToolRunnerGlyQIQ
@@ -26,6 +27,8 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     Protected Const USE_THREADING As Boolean = True
 
+    Protected Const STORE_JOB_PSM_RESULTS_SP_NAME As String = "StoreJobPSMStats"
+    
 #End Region
 
 #Region "Module Variables"
@@ -37,6 +40,8 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     ''' </summary>
     ''' <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
     Protected mGlyQRunners As Dictionary(Of Integer, clsGlyQIqRunner)
+
+    Private WithEvents mStoredProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
 
 #End Region
 
@@ -303,6 +308,105 @@ Public Class clsAnalysisToolRunnerGlyQIQ
         End Try
 
         Return True
+
+    End Function
+
+    Protected Function PostJobResults(ByVal intJob As Integer) As Boolean
+
+        Const MAX_RETRY_COUNT As Integer = 3
+
+        Dim objCommand As SqlCommand
+
+        Dim blnSuccess As Boolean
+
+        Try
+
+            ' Call stored procedure StoreJobPSMStats in DMS5
+
+            objCommand = New SqlCommand()
+
+            With objCommand
+                .CommandType = CommandType.StoredProcedure
+                .CommandText = STORE_JOB_PSM_RESULTS_SP_NAME
+
+                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
+                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+
+                .Parameters.Add(New SqlParameter("@Job", SqlDbType.Int))
+                .Parameters.Item("@Job").Direction = ParameterDirection.Input
+                .Parameters.Item("@Job").Value = intJob
+
+                .Parameters.Add(New SqlParameter("@MSGFThreshold", SqlDbType.Float))
+                .Parameters.Item("@MSGFThreshold").Direction = ParameterDirection.Input
+
+                .Parameters.Item("@MSGFThreshold").Value = 1
+
+                .Parameters.Add(New SqlParameter("@FDRThreshold", SqlDbType.Float))
+                .Parameters.Item("@FDRThreshold").Direction = ParameterDirection.Input
+                .Parameters.Item("@FDRThreshold").Value = 1
+
+                .Parameters.Add(New SqlParameter("@SpectraSearched", SqlDbType.Int))
+                .Parameters.Item("@SpectraSearched").Direction = ParameterDirection.Input
+                .Parameters.Item("@SpectraSearched").Value = mSpectraSearched
+
+                .Parameters.Add(New SqlParameter("@TotalPSMs", SqlDbType.Int))
+                .Parameters.Item("@TotalPSMs").Direction = ParameterDirection.Input
+                .Parameters.Item("@TotalPSMs").Value = mMSGFBasedCounts.TotalPSMs
+
+                .Parameters.Add(New SqlParameter("@UniquePeptides", SqlDbType.Int))
+                .Parameters.Item("@UniquePeptides").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniquePeptides").Value = mMSGFBasedCounts.UniquePeptideCount
+
+                .Parameters.Add(New SqlParameter("@UniqueProteins", SqlDbType.Int))
+                .Parameters.Item("@UniqueProteins").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniqueProteins").Value = mMSGFBasedCounts.UniqueProteinCount
+
+                .Parameters.Add(New SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int))
+                .Parameters.Item("@TotalPSMsFDRFilter").Direction = ParameterDirection.Input
+                .Parameters.Item("@TotalPSMsFDRFilter").Value = 0
+
+                .Parameters.Add(New SqlParameter("@UniquePeptidesFDRFilter", SqlDbType.Int))
+                .Parameters.Item("@UniquePeptidesFDRFilter").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniquePeptidesFDRFilter").Value = 0
+
+                .Parameters.Add(New SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int))
+                .Parameters.Item("@UniqueProteinsFDRFilter").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniqueProteinsFDRFilter").Value = 0
+
+                .Parameters.Add(New SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt))
+                .Parameters.Item("@MSGFThresholdIsEValue").Direction = ParameterDirection.Input
+
+                .Parameters.Item("@MSGFThresholdIsEValue").Value = 0
+
+            End With
+
+            If mStoredProcedureExecutor Is Nothing Then
+                ' Gigasax.DMS5
+                Dim strConnectionString = m_mgrParams.GetParam("connectionstring")
+                mStoredProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(strConnectionString)
+            End If
+
+
+            'Execute the SP (retry the call up to 3 times)
+            Dim ResCode As Integer
+            Dim strErrorMessage As String = String.Empty
+            ResCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, strErrorMessage)
+
+            If ResCode = 0 Then
+                blnSuccess = True
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error storing PSM Results in database, " & STORE_JOB_PSM_RESULTS_SP_NAME & " returned " & ResCode)
+                clsGlobal.AppendToComment(m_message, "Error storing PSM Results in database")
+
+                blnSuccess = False
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception storing PSM Results in database: " & ex.Message)            
+            blnSuccess = False
+        End Try
+
+        Return blnSuccess
 
     End Function
 
@@ -605,6 +709,19 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 #End Region
 
 #Region "Event Handlers"
+
+    Private Sub m_ExecuteSP_DebugEvent(ByVal errorMessage As String) Handles mStoredProcedureExecutor.DebugEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "StoredProcedureExecutor: " & errorMessage)
+
+    End Sub
+
+    Private Sub m_ExecuteSP_DBErrorEvent(ByVal errorMessage As String) Handles mStoredProcedureExecutor.DBErrorEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "StoredProcedureExecutor: " & errorMessage)
+
+        If Message.Contains("permission was denied") Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message)
+        End If
+    End Sub
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event

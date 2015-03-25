@@ -775,7 +775,8 @@ Public Class clsMSGFDBUtils
 		dctParamNames.Add("minCharge", "minCharge")		' Only used if the spectrum file doesn't have charge information
 		dctParamNames.Add("maxCharge", "maxCharge")		' Only used if the spectrum file doesn't have charge information
 		dctParamNames.Add("NumMatchesPerSpec", "n")
-		dctParamNames.Add("minNumPeaks", "minNumPeaks")	' Auto-added by this code if not defined
+        dctParamNames.Add("minNumPeaks", "minNumPeaks") ' Auto-added by this code if not defined
+        dctParamNames.Add("Protocol", "protocol")
 
 		' The following are special cases; 
 		' do not add to dctParamNames
@@ -1593,8 +1594,6 @@ Public Class clsMSGFDBUtils
         Dim strDMSDefinedThreadCount As String
         Dim intDMSDefinedThreadCount As Integer = 0
 
-        Dim dctParamNames As Dictionary(Of String, String)
-
         Dim intNumMods As Integer = 0
         Dim lstStaticMods As List(Of String) = New List(Of String)
         Dim lstDynamicMods As List(Of String) = New List(Of String)
@@ -1630,7 +1629,7 @@ Public Class clsMSGFDBUtils
         Try
 
             ' Initialize the Param Name dictionary
-            dctParamNames = GetMSFGDBParameterNames()
+            Dim dctParamNames = GetMSFGDBParameterNames()
 
             Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
@@ -1868,19 +1867,14 @@ Public Class clsMSGFDBUtils
         End If
 
 
-        '' Prior to MSGF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
-        '' However, v9284 now auto-selects the correct protocol based on the spectrum type and the dynamic modifications
-        '' Options for -protocol are 0=NoProtocol (Default), 1=Phosphorylation, 2=iTRAQ, 3=iTRAQPhospho
-        '' The following code is therefore no long used
-        ''
-        '' Check whether we are performing an HCD-based phosphorylation search
-        'If mPhosphorylationSearch AndAlso blnHCD Then
-        '	If Not sbOptions.ToString().Contains("-protocol ") Then
-        '		' Specify that "Protocol 1" is being used
-        '		' This instructs MSGFDB to use a scoring model specially trained for HCD Phospho data
-        '		sbOptions.Append(" -protocol 1")
-        '	End If
-        'End If
+        ' Prior to MSGF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
+        ' However, v9284 now auto-selects the correct protocol based on the spectrum type and the dynamic modifications
+        ' Options for -protocol are 0=NoProtocol (Default), 1=Phosphorylation, 2=iTRAQ, 3=iTRAQPhospho
+        '
+        ' As of March 23, 2015, if the user is searching for Phospho mods with TMT labeling enabled, 
+        ' then MSGF+ will use a model trained for TMT peptides (without phospho)
+        ' In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to sbOptions having "-protocol 1")
+       
 
         strMSGFDbCmdLineOptions = sbOptions.ToString()
 
