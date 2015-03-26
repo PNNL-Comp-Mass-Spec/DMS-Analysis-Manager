@@ -516,15 +516,15 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
                 .Parameters.Add(New SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int))
                 .Parameters.Item("@TotalPSMsFDRFilter").Direction = ParameterDirection.Input
-                .Parameters.Item("@TotalPSMsFDRFilter").Value = 0
+                .Parameters.Item("@TotalPSMsFDRFilter").Value = udtPSMStats.TotalPSMs
 
                 .Parameters.Add(New SqlParameter("@UniquePeptidesFDRFilter", SqlDbType.Int))
                 .Parameters.Item("@UniquePeptidesFDRFilter").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniquePeptidesFDRFilter").Value = 0
+                .Parameters.Item("@UniquePeptidesFDRFilter").Value = udtPSMStats.UniquePeptideCount
 
                 .Parameters.Add(New SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int))
                 .Parameters.Item("@UniqueProteinsFDRFilter").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniqueProteinsFDRFilter").Value = 0
+                .Parameters.Item("@UniqueProteinsFDRFilter").Value = udtPSMStats.UniqueProteinCount
 
                 .Parameters.Add(New SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt))
                 .Parameters.Item("@MSGFThresholdIsEValue").Direction = ParameterDirection.Input
