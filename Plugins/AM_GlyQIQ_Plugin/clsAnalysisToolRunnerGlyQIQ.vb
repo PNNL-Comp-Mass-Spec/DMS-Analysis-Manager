@@ -31,9 +31,26 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     
 #End Region
 
+#Region "Structures"
+
+    Protected Structure udtPSMStatsType
+        Public TotalPSMs As Integer
+        Public UniquePeptideCount As Integer
+        Public UniqueProteinCount As Integer
+        Public Sub Clear()
+            TotalPSMs = 0
+            UniquePeptideCount = 0
+            UniqueProteinCount = 0
+        End Sub
+    End Structure
+
+#End Region
+
 #Region "Module Variables"
 
     Protected mCoreCount As Integer
+
+    Protected mSpectraSearched As Integer
 
     ''' <summary>
     ''' Dictionary of GlyQIqRunner instances
@@ -41,6 +58,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     ''' <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
     Protected mGlyQRunners As Dictionary(Of Integer, clsGlyQIqRunner)
 
+    Private WithEvents mThermoFileReader As ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO
     Private WithEvents mStoredProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
 
 #End Region
@@ -210,10 +228,13 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
             End Using
 
-            System.Threading.Thread.Sleep(250)
+            Thread.Sleep(250)
 
             ' Zip the unfiltered results
             ZipFile(fiUnfilteredResults.FullName, True)
+
+            ' Parse the filtered results to count the number of identified glycans
+            blnSuccess = ExamineFilteredResults(fiFilteredResults)
 
             Return blnSuccess
 
@@ -223,6 +244,135 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             Return False
         End Try
 
+
+    End Function
+
+    Private Function CountMsMsSpectra(ByVal rawFilePath As String) As Integer
+
+        Try
+            mThermoFileReader = New ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO()
+
+            If Not mThermoFileReader.OpenRawFile(rawFilePath) Then
+                m_message = "Error opening the Thermo Raw file to count the MS/MS spectra"
+                Return 0
+            End If
+
+            Dim scanCount = mThermoFileReader.GetNumScans
+
+            Dim fragScanCount = 0
+
+            For scan = 1 To scanCount
+                Dim scanInfo As ThermoRawFileReaderDLL.clsScanInfo = Nothing
+
+                If mThermoFileReader.GetScanInfo(scan, scanInfo) Then
+                    If scanInfo.MSLevel > 1 Then
+                        fragScanCount += 1
+                    End If
+                End If
+
+            Next
+
+            Return fragScanCount
+
+        Catch ex As Exception
+            m_message = "Exception in CountMsMsSpectra: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return 0
+        End Try
+
+    End Function
+
+    Protected Function ExamineFilteredResults(ByVal fiResultsFile As FileInfo) As Boolean
+        Dim job As Integer
+        If Not Integer.TryParse(m_JobNum, job) Then
+            m_message = "Unable to determine job number since '" & m_JobNum & "' is not numeric"
+            Return False
+        End If
+
+        Return ExamineFilteredResults(fiResultsFile, job, String.Empty)
+
+    End Function
+
+    ''' <summary>
+    ''' Examine the GlyQ-IQ results in the given file to count the number of PSMs and unique number of glycans
+    ''' Post the results to DMS using jobNumber
+    ''' </summary>
+    ''' <param name="fiResultsFile"></param>
+    ''' <param name="jobNumber"></param>
+    ''' <param name="dmsConnectionStringOverride">Optional: DMS5 connection string</param>
+    ''' <returns></returns>
+    ''' <remarks>If dmsConnectionStringOverride is empty then PostJobResults will use the Manager Parameters (m_mgrParams)</remarks>
+    Public Function ExamineFilteredResults(
+      ByVal fiResultsFile As FileInfo,
+      ByVal jobNumber As Integer,
+      ByVal dmsConnectionStringOverride As String) As Boolean
+
+        Try
+
+            Dim headerSkipped As Boolean
+
+            Dim totalPSMs = 0
+            Dim uniqueCodeFormulaCombos = New SortedSet(Of String)
+            Dim uniqueCodes = New SortedSet(Of String)
+
+            Using srResults = New StreamReader(New FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                While Not srResults.EndOfStream
+                    Dim lineIn = srResults.ReadLine
+                    Dim dataColumns = lineIn.Split(ControlChars.Tab)
+
+                    If dataColumns Is Nothing OrElse dataColumns.Count < 3 Then
+                        Continue While
+                    End If
+
+                    Dim compoundCode = dataColumns(1)
+                    Dim empiricalFormula = dataColumns(2)
+
+                    If Not headerSkipped Then
+                        If String.Compare(compoundCode, "Code", True) <> 0 Then
+                            m_message = "3rd column in the glycan result file is not Code"
+                            Return False
+                        End If
+
+                        If String.Compare(empiricalFormula, "EmpiricalFormula", True) <> 0 Then
+                            m_message = "3rd column in the glycan result file is not EmpiricalFormula"
+                            Return False
+                        End If
+
+                        headerSkipped = True
+                        Continue While
+                    End If
+
+                    Dim codePlusFormula = compoundCode & "_" & empiricalFormula
+
+                    If Not uniqueCodeFormulaCombos.Contains(codePlusFormula) Then
+                        uniqueCodeFormulaCombos.Add(codePlusFormula)
+                    End If
+
+                    If Not uniqueCodes.Contains(compoundCode) Then
+                        uniqueCodes.Add(compoundCode)
+                    End If
+
+                    totalPSMs += 1
+
+                End While
+            End Using
+
+            Dim udtPSMStats As udtPSMStatsType
+            udtPSMStats.Clear()
+            udtPSMStats.TotalPSMs = totalPSMs
+            udtPSMStats.UniquePeptideCount = uniqueCodeFormulaCombos.Count
+            udtPSMStats.UniqueProteinCount = uniqueCodes.Count
+
+            ' Store the results in the database
+            PostJobResults(jobNumber, udtPSMStats, dmsConnectionStringOverride)
+
+            Return True
+
+        Catch ex As Exception
+            m_message = "Exception in ExamineFilteredResults"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
 
     End Function
 
@@ -250,7 +400,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             Next
 
             lstFilesToMove.AddRange(lstFiles)
-            
+
             For Each fiFile In lstFilesToMove
                 fiFile.MoveTo(Path.Combine(diTempZipFolder.FullName, fiFile.Name))
             Next
@@ -311,7 +461,10 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     End Function
 
-    Protected Function PostJobResults(ByVal intJob As Integer) As Boolean
+    Protected Function PostJobResults(
+      ByVal jobNumber As Integer,
+      ByVal udtPSMStats As udtPSMStatsType,
+      ByVal dmsConnectionStringOverride As String) As Boolean
 
         Const MAX_RETRY_COUNT As Integer = 3
 
@@ -334,7 +487,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
                 .Parameters.Add(New SqlParameter("@Job", SqlDbType.Int))
                 .Parameters.Item("@Job").Direction = ParameterDirection.Input
-                .Parameters.Item("@Job").Value = intJob
+                .Parameters.Item("@Job").Value = jobNumber
 
                 .Parameters.Add(New SqlParameter("@MSGFThreshold", SqlDbType.Float))
                 .Parameters.Item("@MSGFThreshold").Direction = ParameterDirection.Input
@@ -343,7 +496,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
                 .Parameters.Add(New SqlParameter("@FDRThreshold", SqlDbType.Float))
                 .Parameters.Item("@FDRThreshold").Direction = ParameterDirection.Input
-                .Parameters.Item("@FDRThreshold").Value = 1
+                .Parameters.Item("@FDRThreshold").Value = 0.25
 
                 .Parameters.Add(New SqlParameter("@SpectraSearched", SqlDbType.Int))
                 .Parameters.Item("@SpectraSearched").Direction = ParameterDirection.Input
@@ -351,15 +504,15 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
                 .Parameters.Add(New SqlParameter("@TotalPSMs", SqlDbType.Int))
                 .Parameters.Item("@TotalPSMs").Direction = ParameterDirection.Input
-                .Parameters.Item("@TotalPSMs").Value = mMSGFBasedCounts.TotalPSMs
+                .Parameters.Item("@TotalPSMs").Value = udtPSMStats.TotalPSMs
 
                 .Parameters.Add(New SqlParameter("@UniquePeptides", SqlDbType.Int))
                 .Parameters.Item("@UniquePeptides").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniquePeptides").Value = mMSGFBasedCounts.UniquePeptideCount
+                .Parameters.Item("@UniquePeptides").Value = udtPSMStats.UniquePeptideCount
 
                 .Parameters.Add(New SqlParameter("@UniqueProteins", SqlDbType.Int))
                 .Parameters.Item("@UniqueProteins").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniqueProteins").Value = mMSGFBasedCounts.UniqueProteinCount
+                .Parameters.Item("@UniqueProteins").Value = udtPSMStats.UniqueProteinCount
 
                 .Parameters.Add(New SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int))
                 .Parameters.Item("@TotalPSMsFDRFilter").Direction = ParameterDirection.Input
@@ -380,9 +533,21 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
             End With
 
-            If mStoredProcedureExecutor Is Nothing Then
-                ' Gigasax.DMS5
-                Dim strConnectionString = m_mgrParams.GetParam("connectionstring")
+            If mStoredProcedureExecutor Is Nothing OrElse Not String.IsNullOrWhiteSpace(dmsConnectionStringOverride) Then
+
+                Dim strConnectionString As String
+
+                If String.IsNullOrWhiteSpace(dmsConnectionStringOverride) Then
+                    If m_mgrParams Is Nothing Then
+                        Throw New Exception("m_mgrParams object has not been initialized")
+                    End If
+
+                    ' Gigasax.DMS5
+                    strConnectionString = m_mgrParams.GetParam("connectionstring")
+                Else
+                    strConnectionString = dmsConnectionStringOverride
+                End If
+
                 mStoredProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(strConnectionString)
             End If
 
@@ -402,7 +567,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception storing PSM Results in database: " & ex.Message)            
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception storing PSM Results in database: " & ex.Message)
             blnSuccess = False
         End Try
 
@@ -500,6 +665,10 @@ Public Class clsAnalysisToolRunnerGlyQIQ
                 m_message = "GlyQ-IQ presently only supports Thermo .Raw files"
                 Return False
             End If
+
+            ' Determine the number of MS/MS spectra in the .Raw file (required for PostJobResults)
+            Dim rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+            mSpectraSearched = CountMsMsSpectra(rawFilePath)
 
             ' Set up and execute a program runner to run each batch file that launches GlyQ-IQ
 
@@ -649,7 +818,6 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     End Function
 
-
     ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
@@ -721,6 +889,14 @@ Public Class clsAnalysisToolRunnerGlyQIQ
         If Message.Contains("permission was denied") Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message)
         End If
+    End Sub
+
+    Private Sub mThermoFileReader_ReportError(strMessage As String) Handles mThermoFileReader.ReportError
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
+    End Sub
+
+    Private Sub mThermoFileReader_ReportWarning(strMessage As String) Handles mThermoFileReader.ReportWarning
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message)
     End Sub
 
     ''' <summary>

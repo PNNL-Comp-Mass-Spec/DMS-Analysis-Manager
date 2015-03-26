@@ -416,7 +416,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
             fileToFind = m_DatasetName & "_peaks.txt"
             If Not FindAndRetrieveMiscFiles(fileToFind, Unzip:=False, SearchArchivedDatasetFolder:=False, sourceFolderPath:=sourceFolderPath) Then
-                'Errors were reported in function call, so just return
+                m_message = "Could not find the _peaks.txt file; this is typically created by the DeconPeakDetector job step; rerun that job step if it has been deleted"
                 Return False
             End If
             m_jobParams.AddResultFileToSkip(fileToFind)
