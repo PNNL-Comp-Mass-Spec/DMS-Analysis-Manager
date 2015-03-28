@@ -482,7 +482,7 @@ Public Class clsDtaGenToolRunner
 			End If
 
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
-			Threading.Thread.Sleep(250)
+            Threading.Thread.Sleep(50)
 
 			strCDTAFileOriginal = Path.Combine(m_WorkDir, m_Dataset & "_DTA_Original.txt")
 			fiCDTA.MoveTo(strCDTAFileOriginal)
@@ -529,7 +529,7 @@ Public Class clsDtaGenToolRunner
 			End If
 
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
-			Threading.Thread.Sleep(250)
+            Threading.Thread.Sleep(50)
 
 			strCDTAFileCentroided = Path.Combine(m_WorkDir, m_Dataset & "_DTA_Centroided.txt")
 			fiCDTA.MoveTo(strCDTAFileCentroided)
@@ -693,11 +693,13 @@ Public Class clsDtaGenToolRunner
 		Dim strMsMsDataListCentroid() As String = Nothing
 		Dim intMsMsDataCountCentroid As Integer
 
-		Dim udtParentIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+        Dim udtParentIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 		Dim udtFragIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
 		Dim blnNextSpectrumAvailable As Boolean
 		Dim intSpectrumCountSkipped As Integer
+
+        Dim dtLastStatus = DateTime.UtcNow
 
 		Try
 			Dim oCDTAReaderParentIons  = New clsDtaTextFileReader(False)
@@ -714,14 +716,62 @@ Public Class clsDtaGenToolRunner
 				Return False
 			End If
 
+            ' This dictionary is used to track the spectrum scan numbers in strCDTAWithFragIonData
+            ' This is used to reduce the number of times that oCDTAReaderFragIonData is closed and re-opened
+            Dim fragIonDataScanStatus = New Dictionary(Of Integer, SortedSet(Of Integer))
+
+            ' Cache the Start/End scan combos in strCDTAWithFragIonData
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Scanning " & Path.GetFileName(strCDTAWithFragIonData) & " to cache the scan range for each MS/MS spectrum")
+
+            Do While True
+                blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
+                If Not blnNextSpectrumAvailable Then
+                    Exit Do
+                End If
+
+                Dim scanStart = udtFragIonDataHeader.ScanNumberStart
+                Dim scanEnd = udtFragIonDataHeader.ScanNumberEnd
+
+                Dim endScanList As SortedSet(Of Integer) = Nothing
+                If fragIonDataScanStatus.TryGetValue(scanStart, endScanList) Then
+                    If Not endScanList.Contains(scanEnd) Then
+                        endScanList.Add(scanEnd)
+                    End If
+                Else
+                    endScanList = New SortedSet(Of Integer) From {scanEnd}
+                    fragIonDataScanStatus.Add(scanStart, endScanList)
+                End If
+            Loop
+
+            ' Close, then re-open strCDTAWithFragIonData
+            oCDTAReaderFragIonData.CloseFile()
+            udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo()
+
+            Threading.Thread.Sleep(10)
+
+            oCDTAReaderFragIonData = New clsDtaTextFileReader(True)
+            If Not oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData) Then
+                m_message = "Error re-opening CDTA file with the fragment ion data (after initial scan of the file)"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Merging " & Path.GetFileName(strCDTAWithParentIonData) & " with " & Path.GetFileName(strCDTAWithFragIonData))
+
 			intSpectrumCountSkipped = 0
 			Using swCDTAOut As StreamWriter = New StreamWriter(New FileStream(strCDTAFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 				While oCDTAReaderParentIons.ReadNextSpectrum(strMsMsDataList, intMsMsDataCount, udtParentIonDataHeader)
 
+                    If Not ScanMatchIsPossible(udtParentIonDataHeader, fragIonDataScanStatus) Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MergeCDTAs could not find spectrum with StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " for " & Path.GetFileName(strCDTAWithParentIonData))
+                        intSpectrumCountSkipped += 1
+                        Continue While
+                    End If
+
 					Do While Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
 						blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
-						If Not blnNextSpectrumAvailable Then Exit Do
+                        If Not blnNextSpectrumAvailable Then Exit Do                        
 					Loop
 
 					blnNextSpectrumAvailable = ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
@@ -729,14 +779,13 @@ Public Class clsDtaGenToolRunner
 						' We never did find a match; this is unexpected
 						' Try closing the FragIonData file, re-opening, and parsing again
 						oCDTAReaderFragIonData.CloseFile()
-						udtFragIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+                        udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo()
 
-						PRISM.Processes.clsProgRunner.GarbageCollectNow()
-						Threading.Thread.Sleep(250)
+                        Threading.Thread.Sleep(10)
 
 						oCDTAReaderFragIonData = New clsDtaTextFileReader(True)
 						If Not oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData) Then
-							m_message = "Error re-opening CDTA file with the fragment ion data"
+                            m_message = "Error re-opening CDTA file with the fragment ion data (when blnNextSpectrumAvailable = False)"
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 							Return False
 						End If
@@ -770,6 +819,12 @@ Public Class clsDtaGenToolRunner
 
 					End If
 
+                    If DateTime.UtcNow.Subtract(dtLastStatus).TotalSeconds >= 30 Then
+                        dtLastStatus = DateTime.UtcNow
+                        If m_DebugLevel >= 1 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Merging CDTAs, scan " & udtParentIonDataHeader.ScanNumberStart.ToString())
+                        End If
+                    End If
 				End While
 
 			End Using
@@ -793,36 +848,51 @@ Public Class clsDtaGenToolRunner
 		End Try
 
 		Return True
-	End Function
+    End Function
 
-	Protected Function RemoveTitleAndParentIonLines(ByVal strSpectrumText As String) As String
+    Protected Function RemoveTitleAndParentIonLines(ByVal strSpectrumText As String) As String
 
-		Dim strLine As String
-		Dim sbOutput As Text.StringBuilder = New Text.StringBuilder(strSpectrumText.Length)
-		Dim blnPreviousLineWasTitleLine As Boolean = False
+        Dim strLine As String
+        Dim sbOutput As Text.StringBuilder = New Text.StringBuilder(strSpectrumText.Length)
+        Dim blnPreviousLineWasTitleLine As Boolean = False
 
-		Using trReader As StringReader = New StringReader(strSpectrumText)
+        Using trReader As StringReader = New StringReader(strSpectrumText)
 
-			While trReader.Peek() > -1
-				strLine = trReader.ReadLine()
+            While trReader.Peek() > -1
+                strLine = trReader.ReadLine()
 
-				If strLine.StartsWith("=") Then
-					' Skip this line
-					blnPreviousLineWasTitleLine = True
-				ElseIf blnPreviousLineWasTitleLine Then
-					' Skip this line
-					blnPreviousLineWasTitleLine = False
-				ElseIf Not String.IsNullOrEmpty(strLine) Then
-					' Data line; keep it
-					sbOutput.AppendLine(strLine)
-				End If
+                If strLine.StartsWith("=") Then
+                    ' Skip this line
+                    blnPreviousLineWasTitleLine = True
+                ElseIf blnPreviousLineWasTitleLine Then
+                    ' Skip this line
+                    blnPreviousLineWasTitleLine = False
+                ElseIf Not String.IsNullOrEmpty(strLine) Then
+                    ' Data line; keep it
+                    sbOutput.AppendLine(strLine)
+                End If
 
-			End While
-		End Using
+            End While
+        End Using
 
-		Return sbOutput.ToString()
+        Return sbOutput.ToString()
 
-	End Function
+    End Function
+
+    Private Function ScanMatchIsPossible(
+        ByVal udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType,
+        ByVal fragIonDataScanStatus As Dictionary(Of Integer, SortedSet(Of Integer))) As Boolean
+
+        Dim endScanList As SortedSet(Of Integer) = Nothing
+        If fragIonDataScanStatus.TryGetValue(udtParentIonDataHeader.ScanNumberStart, endScanList) Then
+            If endScanList.Contains(udtParentIonDataHeader.ScanNumberEnd) Then
+                Return True
+            End If
+        End If
+
+        Return False
+
+    End Function
 
 	Protected Function ScanHeadersMatch(ByVal udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, ByVal udtFragIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType) As Boolean
 

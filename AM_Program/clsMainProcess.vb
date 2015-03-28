@@ -631,7 +631,7 @@ Public Class clsMainProcess
 					m_MostRecentErrorMessage &= "; " & m_Resource.Message
 				End If
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & jobNum & ", Dataset " & datasetName)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_MgrName & ": " & m_MostRecentErrorMessage & ", Job " & jobNum & ", Dataset " & datasetName)
 				m_AnalysisTask.CloseTask(eToolRunnerResult, m_Resource.Message)
 
 				m_MgrErrorCleanup.CleanWorkDir()

@@ -98,24 +98,27 @@ Public Class clsDtaGenMSConvert
 	''' <remarks></remarks>
 	Protected Function ConvertMGFtoDTA() As Boolean
 
-		Dim blnSuccess As Boolean
+        Try
+            Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
 
-		Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
-		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
+            Dim oMGFConverter As clsMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir)
 
-		Dim oMGFConverter As clsMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir)
+            Dim eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
+            Dim blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset)
 
-		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
-		blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset)
+            If Not blnSuccess Then
+                m_ErrMsg = oMGFConverter.ErrorMessage
+            End If
 
-		If Not blnSuccess Then
-			m_ErrMsg = oMGFConverter.ErrorMessage
-		End If
+            m_SpectraFileCount = oMGFConverter.SpectraCountWritten
+            m_Progress = 95
 
-		m_SpectraFileCount = oMGFConverter.SpectraCountWritten
-		m_Progress = 95
+            Return blnSuccess
 
-		Return blnSuccess
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ConvertMGFtoDTA: " + ex.Message)
+            Return False
+        End Try
 
 	End Function
 
@@ -128,152 +131,153 @@ Public Class clsDtaGenMSConvert
 	''' <remarks></remarks>
 	Private Function ConvertRawToMGF(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
 
-		Dim CmdStr As String
-		Dim RawFilePath As String
+        Try
 
-		Dim ScanStart As Integer
-		Dim ScanStop As Integer
-		Dim blnLimitingScanRange As Boolean = False
+            If m_DebugLevel > 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .MGF file using MSConvert")
+            End If
 
-		Dim CentroidMGF As Boolean
-		Dim CentroidPeakCountToRetain As Integer
+            Dim rawFilePath As String
 
-		If m_DebugLevel > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .MGF file using MSConvert")
-		End If
+            ' Construct the path to the .raw file
+            Select Case eRawDataType
+                Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
+                    rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+                Case clsAnalysisResources.eRawDataTypeConstants.mzXML
+                    rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
+                Case clsAnalysisResources.eRawDataTypeConstants.mzML
+                    rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+                Case Else
+                    m_ErrMsg = "Raw data file type not supported: " & eRawDataType.ToString()
+                    Return False
+            End Select
 
-		' Construct the path to the .raw file
-		Select Case eRawDataType
-			Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-				RawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
-			Case clsAnalysisResources.eRawDataTypeConstants.mzXML
-				RawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
-			Case clsAnalysisResources.eRawDataTypeConstants.mzML
-				RawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
-			Case Else
-				m_ErrMsg = "Raw data file type not supported: " & eRawDataType.ToString()
-				Return False
-		End Select
+            m_InstrumentFileName = Path.GetFileName(rawFilePath)
+            m_JobParams.AddResultFileToSkip(m_InstrumentFileName)
 
-		m_InstrumentFileName = Path.GetFileName(RawFilePath)
-		m_JobParams.AddResultFileToSkip(m_InstrumentFileName)
+            Const scanStart As Integer = 1
+            Dim scanStop = DEFAULT_SCAN_STOP
 
-		ScanStart = 1
-		ScanStop = DEFAULT_SCAN_STOP
+            If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
+                'Get the maximum number of scans in the file
+                m_MaxScanInFile = GetMaxScan(rawFilePath)
+            Else
+                m_MaxScanInFile = scanStop
+            End If
 
-		If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
-			'Get the maximum number of scans in the file
-			m_MaxScanInFile = GetMaxScan(RawFilePath)
-		Else
-			m_MaxScanInFile = ScanStop
-		End If
+            Select Case m_MaxScanInFile
+                Case -1
+                    ' Generic error getting number of scans
+                    m_ErrMsg = "Unknown error getting number of scans; Maxscan = " & m_MaxScanInFile.ToString
+                    Return False
+                Case 0
+                    ' Unable to read file; treat this is a warning
+                    m_ErrMsg = "Warning: unable to get maxscan; Maxscan = 0"
+                Case Is > 0
+                    ' This is normal, do nothing
+                Case Else
+                    ' This should never happen
+                    m_ErrMsg = "Critical error getting number of scans; Maxscan = " & m_MaxScanInFile.ToString
+                    Return False
+            End Select
 
-		Select Case m_MaxScanInFile
-			Case -1
-				' Generic error getting number of scans
-				m_ErrMsg = "Unknown error getting number of scans; Maxscan = " & m_MaxScanInFile.ToString
-				Return False
-			Case 0
-				' Unable to read file; treat this is a warning
-				m_ErrMsg = "Warning: unable to get maxscan; Maxscan = 0"
-			Case Is > 0
-				' This is normal, do nothing
-			Case Else
-				' This should never happen
-				m_ErrMsg = "Critical error getting number of scans; Maxscan = " & m_MaxScanInFile.ToString
-				Return False
-		End Select
+            Dim blnLimitingScanRange = False
 
-		'Verify max scan specified is in file
-		If m_MaxScanInFile > 0 Then
-			If ScanStart = 1 AndAlso ScanStop = 999999 AndAlso ScanStop < m_MaxScanInFile Then
-				' The default scan range for processing all scans has traditionally be 1 to 999999
-				' This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
-				' Assume that the user actually wants to analyze all of the spectra
-				ScanStop = m_MaxScanInFile
-			End If
+            'Verify max scan specified is in file
+            If m_MaxScanInFile > 0 Then
+                If scanStart = 1 AndAlso scanStop = 999999 AndAlso scanStop < m_MaxScanInFile Then
+                    ' The default scan range for processing all scans has traditionally be 1 to 999999
+                    ' This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
+                    ' Assume that the user actually wants to analyze all of the spectra
+                    scanStop = m_MaxScanInFile
+                End If
 
-			If ScanStop > m_MaxScanInFile Then ScanStop = m_MaxScanInFile
-			If ScanStop < m_MaxScanInFile Then blnLimitingScanRange = True
-			If ScanStart > 1 Then blnLimitingScanRange = True
-		Else
-			If ScanStart > 1 Or ScanStop < DEFAULT_SCAN_STOP Then blnLimitingScanRange = True
-		End If
+                If scanStop > m_MaxScanInFile Then scanStop = m_MaxScanInFile
+                If scanStop < m_MaxScanInFile Then blnLimitingScanRange = True
+                If scanStart > 1 Then blnLimitingScanRange = True
+            Else
+                If scanStart > 1 Or scanStop < DEFAULT_SCAN_STOP Then blnLimitingScanRange = True
+            End If
 
-		'Determine max number of scans to be used
-		m_NumScans = ScanStop - ScanStart + 1
+            'Determine max number of scans to be used
+            m_NumScans = scanStop - scanStart + 1
 
-		'Setup a program runner tool to make the spectra files
-		m_RunProgTool = New clsRunDosProgram(m_WorkDir)
+            'Setup a program runner tool to make the spectra files
+            m_RunProgTool = New clsRunDosProgram(m_WorkDir)
 
-		' Lookup Centroid Settings
-		CentroidMGF = m_JobParams.GetJobParameter("CentroidMGF", False)
+            ' Lookup Centroid Settings
+            Dim centroidMGF = m_JobParams.GetJobParameter("CentroidMGF", False)
 
-		' Look for parameter CentroidPeakCountToRetain in the DtaGenerator section
-		CentroidPeakCountToRetain = m_JobParams.GetJobParameter("DtaGenerator", "CentroidPeakCountToRetain", 0)
+            ' Look for parameter CentroidPeakCountToRetain in the DtaGenerator section
+            Dim centroidPeakCountToRetain = m_JobParams.GetJobParameter("DtaGenerator", "CentroidPeakCountToRetain", 0)
 
-		If CentroidPeakCountToRetain = 0 Then
-			' Look for parameter CentroidPeakCountToRetain in any section
-			CentroidPeakCountToRetain = m_JobParams.GetJobParameter("CentroidPeakCountToRetain", DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
-		End If
+            If centroidPeakCountToRetain = 0 Then
+                ' Look for parameter CentroidPeakCountToRetain in any section
+                centroidPeakCountToRetain = m_JobParams.GetJobParameter("CentroidPeakCountToRetain", DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+            End If
 
-		If mForceCentroidOn Then
-			CentroidMGF = True
-		End If
+            If mForceCentroidOn Then
+                centroidMGF = True
+            End If
 
-		'Set up command
-		CmdStr = " " & RawFilePath
+            'Set up command
+            Dim cmdStr = " " & rawFilePath
 
-		If CentroidMGF Then
-			' Centroid the data by first applying the peak-picking algorithm, then keeping the top N data points
-			' Syntax details:
-			'   peakPicking prefer_vendor:<true|false>  int_set(MS levels)
-			'   threshold <count|count-after-ties|absolute|bpi-relative|tic-relative|tic-cutoff> <threshold> <most-intense|least-intense> [int_set(MS levels)]
+            If centroidMGF Then
+                ' Centroid the data by first applying the peak-picking algorithm, then keeping the top N data points
+                ' Syntax details:
+                '   peakPicking prefer_vendor:<true|false>  int_set(MS levels)
+                '   threshold <count|count-after-ties|absolute|bpi-relative|tic-relative|tic-cutoff> <threshold> <most-intense|least-intense> [int_set(MS levels)]
 
-			' So, the following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 250 peaks (sorted by intensity)
-			' --filter "peakPicking true 1-" --filter "threshold count 250 most-intense"
+                ' So, the following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 250 peaks (sorted by intensity)
+                ' --filter "peakPicking true 1-" --filter "threshold count 250 most-intense"
 
-			If CentroidPeakCountToRetain = 0 Then
-				CentroidPeakCountToRetain = DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN
-			ElseIf CentroidPeakCountToRetain < 25 Then
-				CentroidPeakCountToRetain = 25
-			End If
+                If centroidPeakCountToRetain = 0 Then
+                    centroidPeakCountToRetain = DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN
+                ElseIf centroidPeakCountToRetain < 25 Then
+                    centroidPeakCountToRetain = 25
+                End If
 
-			CmdStr &= " --filter ""peakPicking true 1-"" --filter ""threshold count " & CentroidPeakCountToRetain & " most-intense"""
-		End If
+                cmdStr &= " --filter ""peakPicking true 1-"" --filter ""threshold count " & centroidPeakCountToRetain & " most-intense"""
+            End If
 
-		If blnLimitingScanRange Then
-			CmdStr &= " --filter ""scanNumber [" & ScanStart & "," & ScanStop & "]"""
-		End If
+            If blnLimitingScanRange Then
+                cmdStr &= " --filter ""scanNumber [" & scanStart & "," & scanStop & "]"""
+            End If
 
-		CmdStr &= " --mgf -o " & m_WorkDir
+            cmdStr &= " --mgf -o " & m_WorkDir
 
-		If m_DebugLevel > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & CmdStr)
-		End If
+            If m_DebugLevel > 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)
+            End If
 
-		With m_RunProgTool
-			.CreateNoWindow = True
-			.CacheStandardOutput = True
-			.EchoOutputToConsole = True
+            With m_RunProgTool
+                .CreateNoWindow = True
+                .CacheStandardOutput = True
+                .EchoOutputToConsole = True
 
-			.WriteConsoleOutputToFile = True
-			.ConsoleOutputFilePath = String.Empty	   ' Allow the console output filename to be auto-generated
-		End With
+                .WriteConsoleOutputToFile = True
+                .ConsoleOutputFilePath = String.Empty      ' Allow the console output filename to be auto-generated
+            End With
 
-		If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "MSConvert", True) Then
-			' .RunProgram returned False
-			LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
+            If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, cmdStr, "MSConvert", True) Then
+                ' .RunProgram returned False
+                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
 
-			m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
-			Return False
-		End If
+                m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
+                Return False
+            End If
 
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MGF file created")
-		End If
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MGF file created")
+            End If
 
-		Return True
+            Return True
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ConvertRawToMGF: " + ex.Message)
+            Return False
+        End Try
 
 	End Function
 

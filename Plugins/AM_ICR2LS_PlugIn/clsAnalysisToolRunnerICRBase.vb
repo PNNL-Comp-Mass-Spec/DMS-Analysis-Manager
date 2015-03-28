@@ -25,21 +25,6 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     Protected Const APEX_ACQUISITION_METHOD_FILE As String = "apexAcquisition.method"
 
-    ' ''Enumerated constants
-    ''Public Enum ICR_STATUS As Short
-    ''    'TODO: This list must be kept current with ICR2LS
-    ''    STATE_IDLE = 1
-    ''    STATE_PROCESSING = 2
-    ''    STATE_KILLED = 3
-    ''    STATE_FINISHED = 4
-    ''    STATE_GENERATING = 5
-    ''    STATE_TICGENERATION = 6
-    ''    STATE_LCQTICGENERATION = 7
-    ''    STATE_QTOFPEKGENERATION = 8
-    ''    STATE_MMTOFPEKGENERATION = 9
-    ''    STATE_LTQFTPEKGENERATION = 10
-    ''End Enum
-
     Public Enum ICR2LSProcessingModeConstants
         LTQFTPEK = 0
         LTQFTTIC = 1
@@ -112,8 +97,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         mICR2LSStatus.Initialize()
 
         ' Remainder of tasks are in subclass (which should call this using MyBase.Runtool)
-
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
     End Function
 
     Private Function ConvertPekToCsv(ByVal pekFilePath As String) As Boolean
@@ -436,14 +421,19 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             Return result
         End If
 
-        If blnCopyResultsToServer Then
-            result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
+        If Not blnCopyResultsToServer Then
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
         End If
 
-        If pekConversionSuccess Or Not blnCopyResultsToServer Then
+        result = CopyResultsFolderToServer()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
+        If pekConversionSuccess Then
+            ' We can now safely delete the .pek.tmp file from the server
+            MyBase.RemoveNonResultServerFiles()
+
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
         End If
 

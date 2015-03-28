@@ -250,6 +250,10 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     Private Function CountMsMsSpectra(ByVal rawFilePath As String) As Integer
 
         Try
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Counting the number of MS/MS spectra in " + Path.GetFileName(rawFilePath))
+            End If
+
             mThermoFileReader = New ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO()
 
             If Not mThermoFileReader.OpenRawFile(rawFilePath) Then
@@ -259,20 +263,34 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
             Dim scanCount = mThermoFileReader.GetNumScans
 
-            Dim fragScanCount = 0
+            Dim ms1ScanCount = 0
+            Dim ms2ScanCount = 0
 
             For scan = 1 To scanCount
                 Dim scanInfo As ThermoRawFileReaderDLL.clsScanInfo = Nothing
 
                 If mThermoFileReader.GetScanInfo(scan, scanInfo) Then
                     If scanInfo.MSLevel > 1 Then
-                        fragScanCount += 1
+                        ms2ScanCount += 1
+                    Else
+                        ms1ScanCount += 1
                     End If
                 End If
 
             Next
 
-            Return fragScanCount
+            mThermoFileReader.CloseRawFile()
+
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MS1 spectra: " & ms1ScanCount)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MS2 spectra: " & ms2ScanCount)
+            End If
+
+            If ms2ScanCount > 0 Then
+                Return ms2ScanCount
+            Else
+                Return ms1ScanCount
+            End If
 
         Catch ex As Exception
             m_message = "Exception in CountMsMsSpectra: " & ex.Message

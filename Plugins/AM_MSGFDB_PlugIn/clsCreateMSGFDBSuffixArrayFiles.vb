@@ -834,7 +834,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 				If udtHPCOptions.UsingHPC Then
 					mErrorMessage &= " using HPC"
 				End If
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": " & JobNum)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": job " & JobNum)
 				DeleteLockFile(fiLockFile)
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			Else

@@ -82,7 +82,7 @@ Public Interface IJobParams
 	''' Add a file to be deleted from the storage server (requires full file path)
 	''' </summary>
 	''' <param name="FilePath">Full path to the file</param>
-	''' <remarks></remarks>
+    ''' <remarks>To delete the files, call clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
 	Sub AddServerFileToDelete(ByVal FilePath As String)
 
 	''' <summary>

@@ -98,7 +98,7 @@ Public Class clsAnalysisJob
 	''' </summary>
 	''' <value></value>
 	''' <returns></returns>
-	''' <remarks></remarks>
+    ''' <remarks>Used by clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
 	Public ReadOnly Property ServerFilesToDelete As SortedSet(Of String) Implements IJobParams.ServerFilesToDelete
 		Get
 			Return m_ServerFilesToDelete

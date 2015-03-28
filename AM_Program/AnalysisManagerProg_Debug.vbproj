@@ -68,6 +68,9 @@
     <Reference Include="MsMsDataFileReader">
       <HintPath>..\AM_Common\MsMsDataFileReader.dll</HintPath>
     </Reference>
+    <Reference Include="Pacifica.Core">
+      <HintPath>..\AM_Common\Pacifica.Core.dll</HintPath>
+    </Reference>
     <Reference Include="PEKtoCSVConverter">
       <HintPath>..\AM_Common\PEKtoCSVConverter.dll</HintPath>
     </Reference>
