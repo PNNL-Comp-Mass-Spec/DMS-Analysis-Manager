@@ -56,20 +56,10 @@ Public Class clsMainProcess
 
 	Private m_MostRecentErrorMessage As String = String.Empty
 
-	Private m_TraceMode As Boolean
-
 #End Region
 
 #Region "Properties"
-	Public Property TraceMode As Boolean
-		Get
-			Return m_TraceMode
-		End Get
-		Set(value As Boolean)
-			m_TraceMode = value
-		End Set
-	End Property
-
+    Public Property TraceMode As Boolean
 #End Region
 
 #Region "Methods"
@@ -85,7 +75,7 @@ Public Class clsMainProcess
 		Try
 
 			If IsNothing(m_MainProcess) Then
-				If Me.TraceMode Then ShowTraceMessage("Instantiating m_MainProcess in clsMainProcess")
+                If Me.TraceMode Then ShowTraceMessage("Instantiating m_MainProcess as clsMainProcess")
 
 				m_MainProcess = New clsMainProcess(Me.TraceMode)
 				If Not m_MainProcess.InitMgr Then
