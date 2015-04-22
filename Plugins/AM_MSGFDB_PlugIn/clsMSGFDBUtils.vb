@@ -2,6 +2,7 @@
 Imports AnalysisManagerBase
 Imports System.Runtime.InteropServices
 Imports System.IO
+Imports System.Net
 
 Public Class clsMSGFDBUtils
 
@@ -1590,17 +1591,17 @@ Public Class clsMSGFDBUtils
         Dim kvSetting As KeyValuePair(Of String, String)
         Dim intValue As Integer
 
-        Dim intParamFileThreadCount As Integer = 0
+        Dim intParamFileThreadCount = 0
         Dim strDMSDefinedThreadCount As String
-        Dim intDMSDefinedThreadCount As Integer = 0
+        Dim intDMSDefinedThreadCount = 0
 
-        Dim intNumMods As Integer = 0
-        Dim lstStaticMods As List(Of String) = New List(Of String)
-        Dim lstDynamicMods As List(Of String) = New List(Of String)
+        Dim intNumMods = 0
+        Dim lstStaticMods = New List(Of String)
+        Dim lstDynamicMods = New List(Of String)
 
-        Dim blnShowDecoyParamPresent As Boolean = False
-        Dim blnShowDecoy As Boolean = False
-        Dim blnTDA As Boolean = False
+        Dim blnShowDecoyParamPresent = False
+        Dim blnShowDecoy = False
+        Dim blnTDA = False
 
         Dim strSearchEngineName As String
 
@@ -1631,7 +1632,7 @@ Public Class clsMSGFDBUtils
             ' Initialize the Param Name dictionary
             Dim dctParamNames = GetMSFGDBParameterNames()
 
-            Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srParamFile.EndOfStream
                     strLineIn = srParamFile.ReadLine()
@@ -1828,7 +1829,9 @@ Public Class clsMSGFDBUtils
 
         ' Define the thread count; note that MSGFDBThreads could be "all"
         strDMSDefinedThreadCount = m_jobParams.GetJobParameter("MSGFDBThreads", String.Empty)
-        If Not Integer.TryParse(strDMSDefinedThreadCount, intDMSDefinedThreadCount) Then
+        If String.IsNullOrWhiteSpace(strDMSDefinedThreadCount) OrElse
+           strDMSDefinedThreadCount.ToLower() = "all" OrElse
+           Not Integer.TryParse(strDMSDefinedThreadCount, intDMSDefinedThreadCount) Then
             intDMSDefinedThreadCount = 0
         End If
 
@@ -1836,23 +1839,40 @@ Public Class clsMSGFDBUtils
             intParamFileThreadCount = intDMSDefinedThreadCount
         End If
 
+        Dim limitCoreUsage = False
+
+        If Dns.GetHostName.ToLower().StartsWith("proto-") Then
+            ' Running on a Proto storage server (e.g. Proto-4, Proto-5, or Proto-11)
+            ' Limit the number of cores used to 75% of the total core count
+            limitCoreUsage = True
+        End If
+
         If udtHPCOptions.UsingHPC Then
             ' Do not define the thread count when running on HPC; MSGF+ should use all 16 cores (or all 32 cores)
             If intParamFileThreadCount > 0 Then intParamFileThreadCount = 0
 
-        ElseIf intParamFileThreadCount <= 0 Then
+        ElseIf intParamFileThreadCount <= 0 OrElse limitCoreUsage Then
             ' Set intParamFileThreadCount to the number of cores on this computer
             ' Note that Environment.ProcessorCount tells us the number of logical processors, not the number of cores
             ' Thus, we need to use a WMI query (see http://stackoverflow.com/questions/1542213/how-to-find-the-number-of-cpu-cores-via-net-c )
 
-            Dim coreCount As Integer = 0
+            Dim coreCount = 0
             For Each item As Management.ManagementBaseObject In New Management.ManagementObjectSearcher("Select * from Win32_Processor").Get()
                 coreCount += Integer.Parse(item("NumberOfCores").ToString())
             Next
 
-            ' Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MSGF+ would actually use intParamFileThreadCount+1 cores
-            ' Starting with version v10072 it now uses intParamFileThreadCount cores as instructed
-            intParamFileThreadCount = coreCount
+            If limitCoreUsage Then
+                Dim maxAllowedCores = CInt(Math.Floor(coreCount * 0.75))
+                If intParamFileThreadCount > 0 AndAlso intParamFileThreadCount < maxAllowedCores Then
+                    ' Leave intParamFileThreadCount unchanged
+                Else
+                    intParamFileThreadCount = maxAllowedCores
+                End If
+            Else
+                ' Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MSGF+ would actually use intParamFileThreadCount+1 cores
+                ' Starting with version v10072 it now uses intParamFileThreadCount cores as instructed
+                intParamFileThreadCount = coreCount
+            End If
 
         End If
 
@@ -1865,7 +1885,6 @@ Public Class clsMSGFDBUtils
         If Not ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
-
 
         ' Prior to MSGF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
         ' However, v9284 now auto-selects the correct protocol based on the spectrum type and the dynamic modifications

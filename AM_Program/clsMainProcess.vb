@@ -297,7 +297,13 @@ Public Class clsMainProcess
 						UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_MC, strManagerDisableReason)
 					End If
 
-					If Me.TraceMode Then ShowTraceMessage("Manager inactive: " & strManagerDisableReason)
+                    If Me.TraceMode Then
+                        ShowTraceMessage("Manager inactive: " & strManagerDisableReason)
+                    Else
+                        Console.WriteLine("Manager inactive: " & strManagerDisableReason)
+                        Thread.Sleep(750)
+                    End If
+
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manager inactive: " & strManagerDisableReason)
 					Exit Sub
 				End If
