@@ -1870,8 +1870,17 @@ Public Class clsMSGFDBUtils
                 End If
             Else
                 ' Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MSGF+ would actually use intParamFileThreadCount+1 cores
-                ' Starting with version v10072 it now uses intParamFileThreadCount cores as instructed
-                intParamFileThreadCount = coreCount
+                ' Starting with version v10072, MSGF+ actually uses all the cores, so we started using intParamFileThreadCount = coreCount
+
+                ' Then, in April 2015, we started running two copies of MSGF+ simultaneously on machines with > 4 cores because even if we tell MSGF+ to use all the cores, we saw a lot of idle time
+                ' When two simultaneous copies of MSGF+ are running the CPUs get a bit overtaxed, so we're now using this logic:
+
+                If coreCount > 4 Then
+                    intParamFileThreadCount = coreCount - 1
+                Else
+                    intParamFileThreadCount = coreCount
+                End If
+
             End If
 
         End If

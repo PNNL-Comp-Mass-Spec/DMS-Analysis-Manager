@@ -46,7 +46,7 @@ Public Class clsAnalysisResourcesMSXMLGen
 
                 retrievalAttempts += 1
                 Select Case strRawDataType.ToLower
-                    Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_DOT_D_FOLDERS
+                    Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_DOT_D_FOLDERS, RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER
                         currentTask = "Retrieve spectra: " & strRawDataType
 
                         If RetrieveSpectra(strRawDataType) Then

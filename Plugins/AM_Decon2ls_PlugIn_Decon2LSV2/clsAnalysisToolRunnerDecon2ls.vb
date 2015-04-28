@@ -401,103 +401,118 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		'Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
 		Dim eReturnCode As IJobParams.CloseOutType
 
-		mRawDataTypeName = m_jobParams.GetParam("RawDataType")
-		mRawDataType = clsAnalysisResources.GetRawDataType(mRawDataTypeName)
+        Dim msXmlOutputType As String = m_jobParams.GetParam("MSXMLOutputType")
 
-		' Set this to success for now
-		eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        If String.IsNullOrWhiteSpace(msXmlOutputType) Then
+            mRawDataTypeName = m_jobParams.GetParam("RawDataType")
+        Else
+            Select Case msXmlOutputType.ToLower()
+                Case "mzxml"
+                    mRawDataTypeName = clsAnalysisResources.RAW_DATA_TYPE_DOT_MZXML_FILES
+                Case "mzml"
+                    mRawDataTypeName = clsAnalysisResources.RAW_DATA_TYPE_DOT_MZML_FILES
+                Case Else
+                    m_message = "Unsupported value for MSXMLOutputType: " & msXmlOutputType
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End Select
+        End If
 
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.RunTool()")
-		End If
+        mRawDataType = clsAnalysisResources.GetRawDataType(mRawDataTypeName)
 
-		'Get the setup file by running the base class method
-		eResult = MyBase.RunTool()
-		If Not eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Error message is generated in base class, so just exit with error
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Set this to success for now
+        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-		'Run Decon2LS
-		eResult = RunDecon2Ls()
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Something went wrong
-			' In order to help diagnose things, we will move whatever files were created into the eResult folder, 
-			'  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			If String.IsNullOrEmpty(m_message) Then
-				m_message = "Error running Decon2LS"
-			End If
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.RunTool()")
+        End If
 
-			If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
-				eReturnCode = eResult
-			Else
-				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+        'Get the setup file by running the base class method
+        eResult = MyBase.RunTool()
+        If Not eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Error message is generated in base class, so just exit with error
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		End If
+        'Run Decon2LS
+        eResult = RunDecon2Ls()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Something went wrong
+            ' In order to help diagnose things, we will move whatever files were created into the eResult folder, 
+            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If String.IsNullOrEmpty(m_message) Then
+                m_message = "Error running Decon2LS"
+            End If
 
-		If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Create the QC plots
-			eReturnCode = CreateQCPlots()
-		End If
-		
-		' Zip the _Peaks.txt file (if it exists)
-		ZipPeaksFile()
+            If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                eReturnCode = eResult
+            Else
+                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-		'Delete the raw data files
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file")
-		End If
+        End If
 
-		If DeleteRawDataFiles(mRawDataType) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
-			m_message = "Error deleting raw data files"
-			' Don't treat this as a critical error; leave eReturnCode unchanged
-		End If
+        If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Create the QC plots
+            eReturnCode = CreateQCPlots()
+        End If
 
-		'Update the job summary file
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Updating summary file")
-		End If
-		UpdateSummaryFile()
+        ' Zip the _Peaks.txt file (if it exists)
+        ZipPeaksFile()
 
-		'Make the results folder
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Making results folder")
-		End If
+        'Delete the raw data files
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file")
+        End If
 
-		eResult = MakeResultsFolder()
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'MakeResultsFolder handles posting to local log, so set database error message and exit
-			m_message = "Error making results folder"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If DeleteRawDataFiles(mRawDataType) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
+            m_message = "Error deleting raw data files"
+            ' Don't treat this as a critical error; leave eReturnCode unchanged
+        End If
 
-		eResult = MoveResultFiles()
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'MoveResultFiles moves the eResult files to the eResult folder
-			m_message = "Error moving files into results folder"
-			eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Update the job summary file
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Updating summary file")
+        End If
+        UpdateSummaryFile()
 
-		If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
-			' Try to save whatever files were moved into the results folder
-			Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-			objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
+        'Make the results folder
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Making results folder")
+        End If
 
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        eResult = MakeResultsFolder()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'MakeResultsFolder handles posting to local log, so set database error message and exit
+            m_message = "Error making results folder"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		eResult = CopyResultsFolderToServer()
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
-			Return eResult
-		End If
+        eResult = MoveResultFiles()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'MoveResultFiles moves the eResult files to the eResult folder
+            m_message = "Error moving files into results folder"
+            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		'If we get to here, return the return code
-		Return eReturnCode
+        If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+            ' Try to save whatever files were moved into the results folder
+            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
-	End Function
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        eResult = CopyResultsFolderToServer()
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return eResult
+        End If
+
+        'If we get to here, return the return code
+        Return eReturnCode
+
+    End Function
 
 	Protected Function RunDecon2Ls() As IJobParams.CloseOutType
 

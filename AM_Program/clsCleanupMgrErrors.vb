@@ -8,7 +8,9 @@ Public Class clsCleanupMgrErrors
 
 #Region "Constants"
 
-	Protected Const SP_NAME_REPORTMGRCLEANUP As String = "ReportManagerErrorCleanup"
+    Protected Const SP_NAME_REPORTMGRCLEANUP As String = "ReportManagerErrorCleanup"
+    Protected Const DEFAULT_HOLDOFF_SECONDS = 3
+
 	Public Const FLAG_FILE_NAME As String = "flagFile.txt"
 	Public Const DECON_SERVER_FLAG_FILE_NAME As String = "flagFile_Svr.txt"
 	Public Const ERROR_DELETING_FILES_FILENAME As String = "Error_Deleting_Files_Please_Delete_Me.txt"
@@ -23,7 +25,8 @@ Public Class clsCleanupMgrErrors
 		Start = 1
 		Success = 2
 		Fail = 3
-	End Enum
+    End Enum
+
 #End Region
 
 #Region "Class wide Variables"
@@ -58,63 +61,63 @@ Public Class clsCleanupMgrErrors
 
 	End Sub
 
-	Public Function AutoCleanupManagerErrors(ByVal eManagerErrorCleanupMode As eCleanupModeConstants, ByVal DebugLevel As Integer) As Boolean
-		Dim blnSuccess As Boolean
-		Dim strFailureMessage As String = String.Empty
+    Public Function AutoCleanupManagerErrors(ByVal eManagerErrorCleanupMode As eCleanupModeConstants, ByVal debugLevel As Integer) As Boolean
+        Dim blnSuccess As Boolean
+        Dim strFailureMessage As String = String.Empty
 
-		If Not mInitialized Then Return False
+        If Not mInitialized Then Return False
 
-		If eManagerErrorCleanupMode <> eCleanupModeConstants.Disabled Then
+        If eManagerErrorCleanupMode <> eCleanupModeConstants.Disabled Then
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Attempting to automatically clean the work directory")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Attempting to automatically clean the work directory")
 
-			' Call SP ReportManagerErrorCleanup @ActionCode=1
-			ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start)
+            ' Call SP ReportManagerErrorCleanup @ActionCode=1
+            ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start)
 
-			' Delete all folders and subfolders in work folder
-			blnSuccess = CleanWorkDir(mWorkingDirPath, 1, strFailureMessage)
+            ' Delete all folders and subfolders in work folder
+            blnSuccess = CleanWorkDir(mWorkingDirPath, 1, strFailureMessage)
 
-			If Not blnSuccess Then
+            If Not blnSuccess Then
                 If String.IsNullOrEmpty(strFailureMessage) Then
                     strFailureMessage = "unable to clear work directory"
                 End If
-			Else
-				' If successful, then deletes flag files: flagfile.txt and flagFile_Svr.txt
-				blnSuccess = DeleteDeconServerFlagFile(DebugLevel)
+            Else
+                ' If successful, then deletes flag files: flagfile.txt and flagFile_Svr.txt
+                blnSuccess = DeleteDeconServerFlagFile(debugLevel)
 
-				If Not blnSuccess Then
-					strFailureMessage = "error deleting " & DECON_SERVER_FLAG_FILE_NAME
-				Else
-					blnSuccess = DeleteStatusFlagFile(DebugLevel)
-					If Not blnSuccess Then
-						strFailureMessage = "error deleting " & FLAG_FILE_NAME
-					End If
-				End If
-			End If
+                If Not blnSuccess Then
+                    strFailureMessage = "error deleting " & DECON_SERVER_FLAG_FILE_NAME
+                Else
+                    blnSuccess = DeleteStatusFlagFile(debugLevel)
+                    If Not blnSuccess Then
+                        strFailureMessage = "error deleting " & FLAG_FILE_NAME
+                    End If
+                End If
+            End If
 
 
-			' If successful, then call SP with ReportManagerErrorCleanup @ActionCode=2 
-			'    otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
+            ' If successful, then call SP with ReportManagerErrorCleanup @ActionCode=2 
+            '    otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
 
-			If blnSuccess Then
-				ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success)
-			Else
-				ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, strFailureMessage)
-			End If
+            If blnSuccess Then
+                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success)
+            Else
+                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, strFailureMessage)
+            End If
 
-		End If
+        End If
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 	''' <summary>
-	''' Deletes all files in working directory (using a 10 second holdoff after calling GC.Collect via PRISM.Processes.clsProgRunner.GarbageCollectNow)
+    ''' Deletes all files in working directory (using a 3 second holdoff after calling GC.Collect via PRISM.Processes.clsProgRunner.GarbageCollectNow)
 	''' </summary>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
 	Public Function CleanWorkDir() As Boolean
-		Return CleanWorkDir(mWorkingDirPath, 10, "")
+        Return CleanWorkDir(mWorkingDirPath, DEFAULT_HOLDOFF_SECONDS, "")
 	End Function
 
 	''' <summary>
@@ -124,20 +127,20 @@ Public Class clsCleanupMgrErrors
 	''' <param name="strFailureMessage">Error message (output)</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Public Function CleanWorkDir(ByVal HoldoffSeconds As Single, ByRef strFailureMessage As String) As Boolean
-		Return CleanWorkDir(mWorkingDirPath, 10, "")
-	End Function
+    Public Function CleanWorkDir(ByVal holdoffSeconds As Single, ByRef strFailureMessage As String) As Boolean
+        Return CleanWorkDir(mWorkingDirPath, DEFAULT_HOLDOFF_SECONDS, "")
+    End Function
 
 
 	''' <summary>
-	''' Deletes all files in working directory (using a 10 second holdoff after calling GC.Collect via PRISM.Processes.clsProgRunner.GarbageCollectNow)
+    ''' Deletes all files in working directory (using a 3 second holdoff after calling GC.Collect via PRISM.Processes.clsProgRunner.GarbageCollectNow)
 	''' </summary>
 	''' <param name="WorkDir">Full path to working directory</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Public Shared Function CleanWorkDir(ByVal WorkDir As String) As Boolean
-		Return CleanWorkDir(WorkDir, 10, "")
-	End Function
+    Public Shared Function CleanWorkDir(ByVal workDir As String) As Boolean
+        Return CleanWorkDir(workDir, DEFAULT_HOLDOFF_SECONDS, "")
+    End Function
 
 	''' <summary>
 	''' Deletes all files in working directory
@@ -147,36 +150,36 @@ Public Class clsCleanupMgrErrors
 	''' <param name="strFailureMessage">Error message (output)</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Public Shared Function CleanWorkDir(ByVal WorkDir As String, ByVal HoldoffSeconds As Single, ByRef strFailureMessage As String) As Boolean
+    Public Shared Function CleanWorkDir(ByVal workDir As String, ByVal holdoffSeconds As Single, ByRef strFailureMessage As String) As Boolean
 
-		Dim diWorkFolder As DirectoryInfo
-		Dim HoldoffMilliseconds As Integer
+        Dim diWorkFolder As DirectoryInfo
+        Dim holdoffMilliseconds As Integer
 
-		If Environment.MachineName.ToLower.StartsWith("monroe") AndAlso HoldoffSeconds > 1 Then HoldoffSeconds = 1
+        If Environment.MachineName.ToLower.StartsWith("monroe") AndAlso holdoffSeconds > 1 Then holdoffSeconds = 1
 
-		strFailureMessage = String.Empty
+        strFailureMessage = String.Empty
 
-		Try
-			HoldoffMilliseconds = CInt(HoldoffSeconds * 1000)
-			If HoldoffMilliseconds < 100 Then HoldoffMilliseconds = 100
-			If HoldoffMilliseconds > 300000 Then HoldoffMilliseconds = 300000
-		Catch ex As Exception
-			HoldoffMilliseconds = 10000
-		End Try
+        Try
+            holdoffMilliseconds = CInt(holdoffSeconds * 1000)
+            If holdoffMilliseconds < 100 Then holdoffMilliseconds = 100
+            If holdoffMilliseconds > 300000 Then holdoffMilliseconds = 300000
+        Catch ex As Exception
+            holdoffMilliseconds = 10000
+        End Try
 
-		'Try to ensure there are no open objects with file handles
-		PRISM.Processes.clsProgRunner.GarbageCollectNow()
-		Threading.Thread.Sleep(HoldoffMilliseconds)
+        'Try to ensure there are no open objects with file handles
+        PRISM.Processes.clsProgRunner.GarbageCollectNow()
+        Threading.Thread.Sleep(holdoffMilliseconds)
 
-		' Delete all of the files and folders in the work directory
-		diWorkFolder = New DirectoryInfo(WorkDir)
-		If Not DeleteFilesWithRetry(diWorkFolder) Then
-			Return False
-		Else
-			Return True
-		End If
+        ' Delete all of the files and folders in the work directory
+        diWorkFolder = New DirectoryInfo(workDir)
+        If Not DeleteFilesWithRetry(diWorkFolder) Then
+            Return False
+        Else
+            Return True
+        End If
 
-	End Function
+    End Function
 
 	Protected Shared Function DeleteFilesWithRetry(ByVal diWorkFolder As DirectoryInfo) As Boolean
 
