@@ -124,7 +124,10 @@ Public Interface IStatusFile
 	''' <param name="eTaskStatusDetail">Detailed task status</param>
 	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
 	''' <remarks></remarks>
-	Sub UpdateAndWrite(ByVal eMgrStatus As EnumMgrStatus, ByVal eTaskStatus As EnumTaskStatus, ByVal eTaskStatusDetail As EnumTaskStatusDetail, ByVal PercentComplete As Single)
+    Sub UpdateAndWrite(ByVal eMgrStatus As EnumMgrStatus,
+                       ByVal eTaskStatus As EnumTaskStatus,
+                       ByVal eTaskStatusDetail As EnumTaskStatusDetail,
+                       ByVal PercentComplete As Single)
 
 	''' <summary>
 	''' Update the current status
@@ -133,7 +136,9 @@ Public Interface IStatusFile
 	''' <param name="PercentComplete">VJob completion percentage (value between 0 and 100)</param>
 	''' <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
 	''' <remarks></remarks>
-	Sub UpdateAndWrite(ByVal Status As EnumTaskStatus, ByVal PercentComplete As Single, ByVal SpectrumCountTotal As Integer)
+    Sub UpdateAndWrite(ByVal Status As EnumTaskStatus,
+                       ByVal PercentComplete As Single,
+                       ByVal SpectrumCountTotal As Integer)
 
 	''' <summary>
 	''' Updates status file

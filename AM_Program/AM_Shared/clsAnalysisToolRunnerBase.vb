@@ -4,7 +4,6 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/19/2007
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
@@ -13,12 +12,12 @@ Imports System.IO
 Imports System.Threading
 Imports System.Runtime.InteropServices
 
+''' <summary>
+''' Base class for analysis tool runner
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerBase
     Implements IToolRunner
-
-    '*********************************************************************************************************
-    'Base class for analysis tool runner
-    '*********************************************************************************************************
 
 #Region "Constants"
     Protected Const SP_NAME_SET_TASK_TOOL_VERSION As String = "SetStepTaskToolVersion"

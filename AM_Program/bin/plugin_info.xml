@@ -342,6 +342,16 @@
 		Class="AnalysisManagerProMexPlugIn.clsAnalysisToolRunnerProMex" 
 		AssemblyFile="AnalysisManagerProMexPlugIn.dll" 
 	/>
+	<ToolRunner 
+		Tool="bruker_da_export" 
+		Class="AnalysisManagerBrukerDAExportPlugin.clsAnalysisToolRunnerBrukerDAExport" 
+		AssemblyFile="AnalysisManagerBrukerDAExportPlugin.dll" 
+	/>
+	<ToolRunner 
+		Tool="nomsi" 
+		Class="AnalysisManagerNOMSIPlugin.clsAnalysisToolRunnerNOMSI" 
+		AssemblyFile="AnalysisManagerNOMSIPlugin.dll" 
+	/>
 	
 </ToolRunners>
 
@@ -685,7 +695,19 @@
 		Tool="promex" 
 		Class="AnalysisManagerProMexPlugIn.clsAnalysisResourcesProMex" 
 		AssemblyFile="AnalysisManagerProMexPlugIn.dll" 
-	/>			
+	/>
+	<Resourcer 
+		Tool="bruker_da_export" 
+		Class="AnalysisManagerBrukerDAExportPlugin.clsAnalysisResourcesBrukerDAExport" 
+		AssemblyFile="AnalysisManagerBrukerDAExportPlugin.dll" 
+	/>
+	<Resourcer 
+		Tool="nomsi" 
+		Class="AnalysisManagerNOMSIPlugin.clsAnalysisResourcesNOMSI" 
+		AssemblyFile="AnalysisManagerNOMSIPlugin.dll" 
+	/>
+	
+		
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">

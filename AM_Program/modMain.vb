@@ -28,30 +28,30 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "February 2, 2015"
+    Public Const PROGRAM_DATE As String = "April 30, 2015"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
 	Private mTraceMode As Boolean
+    Private mDisableMessageQueue As Boolean
 
 	Public Function Main() As Integer
 		' Returns 0 if no error, error code if an error
 
-		Dim objDMSMain As clsMainProcess
-
-		Dim intReturnCode As Integer
+        Dim intReturnCode As Integer
 		Dim objParseCommandLine As New clsParseCommandLine
 
 		intReturnCode = 0
 		mCodeTestMode = False
 		mTraceMode = False
+        mDisableMessageQueue = False
 
 		Try
 
 			' Look for /T or /Test on the command line
 			' If present, this means "code test mode" is enabled
 			' 
-			' Other valid switches are /I, /T, /Test, /Trace, /EL, /Q, and /?
+            ' Other valid switches are /I, /NoStatus, /T, /Test, /Trace, /EL, /Q, and /?
 			'
 			If objParseCommandLine.ParseCommandLine Then
 				SetOptionsUsingCommandLineParameters(objParseCommandLine)
@@ -139,9 +139,11 @@ Module modMain
 				Else
 					' Initiate automated analysis
 					If mTraceMode Then ShowTraceMessage("Instantiating clsMainProcess")
-					objDMSMain = New clsMainProcess(mTraceMode)
-					objDMSMain.Main()
-					intReturnCode = 0
+
+                    Dim objDMSMain = New clsMainProcess(mTraceMode)
+                    objDMSMain.DisableMessageQueue = mDisableMessageQueue
+
+                    intReturnCode = objDMSMain.Main()
 
 				End If
 
@@ -175,7 +177,7 @@ Module modMain
 		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-		Dim lstValidParameters As List(Of String) = New List(Of String) From {"T", "Test", "Trace", "EL"}
+        Dim lstValidParameters As List(Of String) = New List(Of String) From {"T", "Test", "Trace", "EL", "NQ"}
 
 		Try
 			' Make sure no invalid parameters are present
@@ -187,14 +189,15 @@ Module modMain
 				With objParseCommandLine
 					' Query objParseCommandLine to see if various parameters are present
 
-					If .RetrieveValueForParameter("T", strValue) Then mCodeTestMode = True
-					If .RetrieveValueForParameter("Test", strValue) Then mCodeTestMode = True
+                    If .IsParameterPresent("T") Then mCodeTestMode = True
+                    If .IsParameterPresent("Test") Then mCodeTestMode = True
 
-					If .RetrieveValueForParameter("Trace", strValue) Then mTraceMode = True
+                    If .IsParameterPresent("Trace") Then mTraceMode = True
 
-					If .RetrieveValueForParameter("EL", strValue) Then mCreateWindowsEventLog = True
+                    If .IsParameterPresent("EL") Then mCreateWindowsEventLog = True
 
-				End With
+                    If .IsParameterPresent("NQ") Then mDisableMessageQueue = True
+                End With
 
 				Return True
 			End If
@@ -244,11 +247,13 @@ Module modMain
 
 			Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.")
 			Console.WriteLine()
-			Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(GetAppPath()) & " [/EL] [/T] [/Trace] [/Q]")
+            Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(GetAppPath()) & " [/EL] [/NQ] [/T] [/Trace] [/Q]")
 			Console.WriteLine()
 
 			Console.WriteLine("Use /EL to create the Windows Event Log named '" & clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
-			Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Use /NQ to disable posting status messages to the message queue")
+            Console.WriteLine()
 			Console.WriteLine("Use /T or /Test to start the program in code test mode.")
 			Console.WriteLine()
 			Console.WriteLine("Use /Trace to enable trace mode, where debug messages are written to the command prompt")

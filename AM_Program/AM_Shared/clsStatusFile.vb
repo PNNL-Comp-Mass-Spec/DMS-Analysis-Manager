@@ -265,8 +265,8 @@ Public Class clsStatusFile
 			Return m_MessageQueueTopic
 		End Get
 		Set(ByVal value As String)
-			m_MessageQueueTopic = value
-		End Set
+            m_MessageQueueTopic = value
+        End Set
 	End Property
 
 	Public Property LogToMsgQueue() As Boolean Implements IStatusFile.LogToMsgQueue
@@ -274,8 +274,8 @@ Public Class clsStatusFile
 			Return m_LogToMessageQueue
 		End Get
 		Set(ByVal value As Boolean)
-			m_LogToMessageQueue = value
-		End Set
+            m_LogToMessageQueue = value
+        End Set
 	End Property
 
 	Public ReadOnly Property AbortProcessingNow() As Boolean
@@ -305,24 +305,24 @@ Public Class clsStatusFile
 	''' <summary>
 	''' Configure the memory logging settings
 	''' </summary>
-	''' <param name="LogMemoryUsage"></param>
-	''' <param name="MinimumMemoryUsageLogIntervalMinutes"></param>
-	''' <param name="MemoryUsageLogFolderPath"></param>
-	''' <remarks></remarks>
-	Public Sub ConfigureMemoryLogging(ByVal LogMemoryUsage As Boolean, ByVal MinimumMemoryUsageLogIntervalMinutes As Single, ByVal MemoryUsageLogFolderPath As String)
-		If LogMemoryUsage Then
-			If m_MemoryUsageLogger Is Nothing Then
-				m_MemoryUsageLogger = New clsMemoryUsageLogger(MemoryUsageLogFolderPath, MinimumMemoryUsageLogIntervalMinutes)
-			Else
-				m_MemoryUsageLogger.MinimumLogIntervalMinutes = MinimumMemoryUsageLogIntervalMinutes
-			End If
-		Else
-			If Not m_MemoryUsageLogger Is Nothing Then
-				' Stop logging memory usage
-				m_MemoryUsageLogger = Nothing
-			End If
-		End If
-	End Sub
+    ''' <param name="logMemoryUsage"></param>
+    ''' <param name="minimumMemoryUsageLogIntervalMinutes"></param>
+    ''' <param name="memoryUsageLogFolderPath"></param>
+    ''' <remarks></remarks>
+    Public Sub ConfigureMemoryLogging(ByVal logMemoryUsage As Boolean, ByVal minimumMemoryUsageLogIntervalMinutes As Single, ByVal memoryUsageLogFolderPath As String)
+        If logMemoryUsage Then
+            If m_MemoryUsageLogger Is Nothing Then
+                m_MemoryUsageLogger = New clsMemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes)
+            Else
+                m_MemoryUsageLogger.MinimumLogIntervalMinutes = minimumMemoryUsageLogIntervalMinutes
+            End If
+        Else
+            If Not m_MemoryUsageLogger Is Nothing Then
+                ' Stop logging memory usage
+                m_MemoryUsageLogger = Nothing
+            End If
+        End If
+    End Sub
 
 	''' <summary>
 	''' Configure the Broker DB logging settings
@@ -980,15 +980,19 @@ Public Class clsStatusFile
 	''' <param name="eTaskStatusDetail">Task status detail enum</param>
 	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
 	''' <remarks></remarks>
-	Public Sub UpdateAndWrite(ByVal eMgrStatus As IStatusFile.EnumMgrStatus, ByVal eTaskStatus As IStatusFile.EnumTaskStatus, ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail, ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
+    Public Sub UpdateAndWrite(
+      ByVal eMgrStatus As IStatusFile.EnumMgrStatus,
+      ByVal eTaskStatus As IStatusFile.EnumTaskStatus,
+      ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail,
+      ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
 
-		m_MgrStatus = eMgrStatus
-		m_TaskStatus = eTaskStatus
-		m_TaskStatusDetail = eTaskStatusDetail
-		m_Progress = PercentComplete
-		WriteStatusFile()
+        m_MgrStatus = eMgrStatus
+        m_TaskStatus = eTaskStatus
+        m_TaskStatusDetail = eTaskStatusDetail
+        m_Progress = PercentComplete
+        WriteStatusFile()
 
-	End Sub
+    End Sub
 
 	''' <summary>
 	''' Updates status file
@@ -997,15 +1001,18 @@ Public Class clsStatusFile
 	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
 	''' <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
 	''' <remarks></remarks>
-	Public Sub UpdateAndWrite(ByVal Status As IStatusFile.EnumTaskStatus, ByVal PercentComplete As Single, ByVal SpectrumCountTotal As Integer) Implements IStatusFile.UpdateAndWrite
+    Public Sub UpdateAndWrite(
+      ByVal Status As IStatusFile.EnumTaskStatus,
+      ByVal PercentComplete As Single,
+      ByVal SpectrumCountTotal As Integer) Implements IStatusFile.UpdateAndWrite
 
-		m_TaskStatus = Status
-		m_Progress = PercentComplete
-		m_SpectrumCount = SpectrumCountTotal
+        m_TaskStatus = Status
+        m_Progress = PercentComplete
+        m_SpectrumCount = SpectrumCountTotal
 
-		WriteStatusFile()
+        WriteStatusFile()
 
-	End Sub
+    End Sub
 
 	''' <summary>
 	''' Updates status file

@@ -4,7 +4,6 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/19/2007
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
@@ -14,11 +13,11 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports AnalysisManagerBase
 
+''' <summary>
+''' Master processing class for analysis manager
+''' </summary>
+''' <remarks></remarks>
 Public Class clsMainProcess
-
-    '*********************************************************************************************************
-    'Master processing class for analysis manager
-    '*********************************************************************************************************
 
 #Region "Constants"
     ' These constants are used to create the Windows Event log (aka the EmergencyLog) that this program rights to
@@ -33,7 +32,6 @@ Public Class clsMainProcess
 #End Region
 
 #Region "Module variables"
-    Private m_MainProcess As clsMainProcess
     Private m_MgrSettings As IMgrParams             ' clsAnalysisMgrSettings
     Private m_MgrErrorCleanup As clsCleanupMgrErrors
 
@@ -59,6 +57,7 @@ Public Class clsMainProcess
 #End Region
 
 #Region "Properties"
+    Public Property DisableMessageQueue As Boolean
     Public Property TraceMode As Boolean
 #End Region
 
@@ -74,26 +73,22 @@ Public Class clsMainProcess
 
         Try
 
-            If IsNothing(m_MainProcess) Then
-                If Me.TraceMode Then ShowTraceMessage("Instantiating m_MainProcess as clsMainProcess")
+            If Me.TraceMode Then ShowTraceMessage("Initializing the manager")
 
-                m_MainProcess = New clsMainProcess(Me.TraceMode)
-                If Not m_MainProcess.InitMgr Then
-                    If Me.TraceMode Then ShowTraceMessage("m_MainProcess.InitMgr returned false; aborting")
-                    Exit Function
-                End If
-
+            If Not InitMgr() Then
+                If Me.TraceMode Then ShowTraceMessage("InitMgr returned false; aborting")
+                Return -1
             End If
 
-            If Me.TraceMode Then ShowTraceMessage("Call m_MainProcess.DoAnalysis")
-            m_MainProcess.DoAnalysis()
+            If Me.TraceMode Then ShowTraceMessage("Call DoAnalysis")
+            DoAnalysis()
 
             If Me.TraceMode Then ShowTraceMessage("Exiting clsMainProcess.Main with error code = 0")
             Return 0
 
-        Catch Err As Exception
+        Catch ex As Exception
             'Report any exceptions not handled at a lower level to the system application log
-            ErrMsg = "Critical exception starting application: " & Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err)
+            ErrMsg = "Critical exception starting application: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             If Me.TraceMode Then ShowTraceMessage(ErrMsg)
             PostToEventLog(ErrMsg)
             If Me.TraceMode Then ShowTraceMessage("Exiting clsMainProcess.Main with error code = 1")
@@ -105,7 +100,7 @@ Public Class clsMainProcess
     ''' <summary>
     ''' Constructor
     ''' </summary>	
-    Public Sub New(blnTraceModeEnabled As Boolean)
+    Public Sub New(ByVal blnTraceModeEnabled As Boolean)
         Me.TraceMode = blnTraceModeEnabled
         m_ConfigChanged = False
         m_DebugLevel = 0
@@ -1394,7 +1389,7 @@ Public Class clsMainProcess
     End Function
 
     Private Sub PostToEventLog(ByVal ErrMsg As String)
-        Const EVENT_LOG_NAME As String = "DMSAnalysisManager"
+        Const EVENT_LOG_NAME = "DMSAnalysisManager"
 
         Try
             Console.WriteLine()
@@ -1658,21 +1653,23 @@ Public Class clsMainProcess
     Private Sub UpdateStatusToolLoggingSettings(ByRef objStatusFile As clsStatusFile)
 
 
-        Dim LogMemoryUsage As Boolean = m_MgrSettings.GetParam("LogMemoryUsage", False)
-        Dim MinimumMemoryUsageLogInterval As Single = m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1)
+        Dim logMemoryUsage As Boolean = m_MgrSettings.GetParam("LogMemoryUsage", False)
+        Dim minimumMemoryUsageLogInterval As Single = m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1)
 
-        Dim LogStatusToBrokerDB As Boolean = m_MgrSettings.GetParam("LogStatusToBrokerDB", False)
-        Dim BrokerDBConnectionString As String = m_MgrSettings.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
-        Dim BrokerDBStatusUpdateIntervalMinutes As Single = m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60)
+        Dim logStatusToBrokerDb As Boolean = m_MgrSettings.GetParam("LogStatusToBrokerDB", False)
+        Dim brokerDbConnectionString As String = m_MgrSettings.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
+        Dim brokerDbStatusUpdateIntervalMinutes As Single = m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60)
 
-        Dim LogStatusToMessageQueue As Boolean = m_MgrSettings.GetParam("LogStatusToMessageQueue", False)
-        Dim MessageQueueURI As String = m_MgrSettings.GetParam("MessageQueueURI")
-        Dim MessageQueueTopicMgrStatus As String = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus")
+        Dim logStatusToMessageQueue As Boolean = m_MgrSettings.GetParam("LogStatusToMessageQueue", False)
+        If DisableMessageQueue Then logStatusToMessageQueue = False
+
+        Dim messageQueueUri As String = m_MgrSettings.GetParam("MessageQueueURI")
+        Dim messageQueueTopicMgrStatus As String = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus")
 
         With objStatusFile
-            .ConfigureMemoryLogging(LogMemoryUsage, MinimumMemoryUsageLogInterval, m_MgrFolderPath)
-            .ConfigureBrokerDBLogging(LogStatusToBrokerDB, BrokerDBConnectionString, BrokerDBStatusUpdateIntervalMinutes)
-            .ConfigureMessageQueueLogging(LogStatusToMessageQueue, MessageQueueURI, MessageQueueTopicMgrStatus, m_MgrName)
+            .ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, m_MgrFolderPath)
+            .ConfigureBrokerDBLogging(logStatusToBrokerDb, brokerDbConnectionString, brokerDbStatusUpdateIntervalMinutes)
+            .ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus, m_MgrName)
         End With
 
     End Sub

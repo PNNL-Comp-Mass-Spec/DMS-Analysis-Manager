@@ -25,7 +25,7 @@ Public Interface IAnalysisResources
 	''' <param name="mgrParams">Manager parameter object</param>
 	''' <param name="jobParams">Job parameter object</param>
 	''' <remarks></remarks>
-	Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+    Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams)
 
 	''' <summary>
 	''' Initialize class

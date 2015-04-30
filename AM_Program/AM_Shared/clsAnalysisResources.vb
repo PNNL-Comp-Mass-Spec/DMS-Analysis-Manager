@@ -340,10 +340,10 @@ Public MustInherit Class clsAnalysisResources
 	''' <param name="mgrParams">Manager parameter object</param>
 	''' <param name="jobParams">Job parameter object</param>
 	''' <remarks></remarks>
-	Public Overridable Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams) Implements IAnalysisResources.Setup
-		Dim statusTools As IStatusFile = Nothing
-		Me.Setup(mgrParams, jobParams, statusTools)
-	End Sub
+    Public Overridable Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams) Implements IAnalysisResources.Setup
+        Dim statusTools As IStatusFile = Nothing
+        Me.Setup(mgrParams, jobParams, statusTools)
+    End Sub
 
 	''' <summary>
 	''' Initialize class
@@ -3467,6 +3467,15 @@ Public MustInherit Class clsAnalysisResources
     Protected Sub LogError(ByVal errorMessage As String)
         m_message = errorMessage
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+    End Sub
+
+    Protected Sub LogError(ByVal errorMessage As String, ByVal detailedMessage As String)
+        m_message = String.Copy(errorMessage)
+        If String.IsNullOrEmpty(detailedMessage) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
+        End If
     End Sub
 
     ''' <summary>
