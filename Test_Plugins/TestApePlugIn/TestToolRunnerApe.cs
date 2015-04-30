@@ -48,7 +48,7 @@ namespace TestApePlugIn {
             StatusFileStub statusFile = new StatusFileStub();
 			IJobParams.CloseOutType eResult;
 
-            apeResourcer.Setup(ref mgrParams, ref jobParams);
+            apeResourcer.Setup(mgrParams, jobParams);
 			eResult = apeResourcer.GetResources();
 
 			if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)

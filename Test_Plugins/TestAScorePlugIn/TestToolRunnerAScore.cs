@@ -53,7 +53,7 @@ namespace TestAScorePlugIn {
             StatusFileStub statusFile = new StatusFileStub();
 			IJobParams.CloseOutType eResult;
 
-            ascoreResourcer.Setup(ref mgrParams, ref jobParams);
+            ascoreResourcer.Setup(mgrParams, jobParams);
 			eResult = ascoreResourcer.GetResources();
 
 			if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AnalysisManagerBase;
 using AnalysisManager_Mage_PlugIn;
 
@@ -10,7 +8,7 @@ namespace TestMagePlugIn {
 
     class TestToolRunnerMage {
 
-		private Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+		private readonly Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "workdir", @"C:\DMS_WorkDir" },
 				{ "logfilename", "AM_AnalysisManager_Log" },
@@ -21,7 +19,7 @@ namespace TestMagePlugIn {
 
             };
 
-		private Dictionary<string, string> mIMPROVJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+		private readonly Dictionary<string, string> mIMPROVJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "DatasetNum", "Aggregation" },
                 { "Job", "000" },
                 { "Step", "1" },
@@ -46,10 +44,9 @@ namespace TestMagePlugIn {
 			IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
 			IJobParams jobParams = new JobParamsStub(mIMPROVJobParms);
             StatusFileStub statusFile = new StatusFileStub();
-			IJobParams.CloseOutType eResult;
 
-			mageResourcer.Setup(ref mgrParams, ref jobParams);
-			eResult = mageResourcer.GetResources();
+		    mageResourcer.Setup(mgrParams, jobParams);
+			var eResult = mageResourcer.GetResources();
 
 			if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				return eResult;

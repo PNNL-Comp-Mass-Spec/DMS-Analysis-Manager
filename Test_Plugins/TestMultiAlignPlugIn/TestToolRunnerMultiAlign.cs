@@ -51,7 +51,7 @@ namespace TestMultiAlignPlugIn {
 			StatusFileStub statusFile = new StatusFileStub();
 			IJobParams.CloseOutType eResult;
 
-            multialignResourcer.Setup(ref mgrParams, ref jobParams);
+            multialignResourcer.Setup(mgrParams, jobParams);
             eResult = multialignResourcer.GetResources();
 
 			if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
