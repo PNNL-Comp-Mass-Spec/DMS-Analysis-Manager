@@ -4,8 +4,6 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 09/19/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
@@ -14,14 +12,15 @@ Imports AnalysisManagerBase
 Imports System.Text.RegularExpressions
 Imports System.Collections.Generic
 
+''' <summary>
+''' Base class for Sequest analysis 
+''' </summary>
+''' <remarks>
+''' Note that MakeOUTFiles() in this class calls a standalone Sequest.Exe program for groups of DTA files
+''' See clsAnalysisToolRunnerSeqCluster for the code used to interface with the Sequest cluster program
+''' </remarks>
 Public Class clsAnalysisToolRunnerSeqBase
 	Inherits clsAnalysisToolRunnerBase
-
-	'*********************************************************************************************************
-	' Base class for Sequest analysis 
-	' Note that MakeOUTFiles() in this class calls a standalone Sequest.Exe program for groups of DTA files
-	' See clsAnalysisToolRunnerSeqCluster for the code used to interface with the Sequest cluster program
-	'*********************************************************************************************************
 
 #Region "Constants"
 	Public Const CONCATENATED_OUT_TEMP_FILE As String = "_out.txt.tmp"

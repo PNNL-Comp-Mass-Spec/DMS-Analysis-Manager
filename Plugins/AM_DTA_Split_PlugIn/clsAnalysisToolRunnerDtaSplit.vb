@@ -4,7 +4,6 @@
 ' Copyright 2009, Battelle Memorial Institute
 ' Created 01/29/2009
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase

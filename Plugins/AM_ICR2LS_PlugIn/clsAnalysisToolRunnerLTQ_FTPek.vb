@@ -1,13 +1,14 @@
-' Last modified 06/11/2009 JDS - Added logging using log4net
 Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
 
+''' <summary>
+''' Performs PEK analysis using ICR-2LS on LTQ-FT MS data
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerLTQ_FTPek
 	Inherits clsAnalysisToolRunnerICRBase
-
-    'Performs PEK analysis using ICR-2LS on LTQ-FT MS data
 
 	Public Overrides Function RunTool() As IJobParams.CloseOutType
 

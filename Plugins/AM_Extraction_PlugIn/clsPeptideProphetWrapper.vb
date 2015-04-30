@@ -7,19 +7,15 @@
 ' Program converted from original version written by J.D. Sandoval, PNNL.
 ' Conversion performed as part of upgrade to VB.Net 2005, modification for use with manager and broker databases
 '
-' Last modified 07/12/2007
-' Modified for mini-pipeline by DAC - 09/24/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
-' Updated 7/7/2011 by MEM to use the PeptideProphetRunner console app
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
 
+''' <summary>
+''' Calls the PeptideProphetRunner application
+''' </summary>
+''' <remarks></remarks>
 Public Class clsPeptideProphetWrapper
-
-	'*********************************************************************************************************
-    ' Calls the PeptideProphetRunner application
-	'*********************************************************************************************************
 
 #Region "Constants"
     Public Const MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES As Integer = 120

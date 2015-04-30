@@ -12,10 +12,10 @@ Public Class clsAnalysisResourcesDtaRefinery
     Friend Const DTA_REFINERY_INPUT_FILE As String = "DtaRefinery_input.xml"
     Protected WithEvents CmdRunner As clsRunDosProgram
 
-	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
-		MyBase.Setup(mgrParams, jobParams)
-		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-	End Sub
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
+        MyBase.Setup(mgrParams, jobParams)
+        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
+    End Sub
 
 	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
 		MyBase.Setup(mgrParams, jobParams, statusTools)

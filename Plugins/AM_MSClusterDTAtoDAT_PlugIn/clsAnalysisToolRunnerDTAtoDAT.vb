@@ -4,20 +4,18 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 05/23/2009
 '
-' Last modified 05/23/2009
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
 
 Imports AnalysisManagerBase
 
+''' <summary>
+''' Class for running MSCluster DTAtoDAT analysis
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerDTAtoDAT
     Inherits clsAnalysisToolRunnerBase
-
-	'*********************************************************************************************************
-    'Class for running MSCluster DTAtoDAT analysis
-	'*********************************************************************************************************
 
 #Region "Module Variables"
     Protected Const PROGRESS_PCT_TOOL_RUNNING As Single = 5

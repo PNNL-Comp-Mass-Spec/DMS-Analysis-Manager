@@ -4,19 +4,18 @@
 ' Copyright 2009, Battelle Memorial Institute
 ' Created 01/29/2009
 '
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
 
 Imports AnalysisManagerBase
 
+''' <summary>
+''' Class for running Inspect Results Assembler
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerInspResultsAssembly
     Inherits clsAnalysisToolRunnerBase
-
-    '*********************************************************************************************************
-    'Class for running Inspect Results Assembler
-    '*********************************************************************************************************
 
 #Region "Constants and Enums"
     Private Const PVALUE_MINLENGTH5_SCRIPT As String = "PValue_MinLength5.py"

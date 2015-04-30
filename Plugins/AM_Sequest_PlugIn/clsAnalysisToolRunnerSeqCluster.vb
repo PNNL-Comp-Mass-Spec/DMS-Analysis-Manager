@@ -4,8 +4,6 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 09/17/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
@@ -14,12 +12,12 @@ Imports AnalysisManagerBase
 Imports System.Text.RegularExpressions
 Imports System.Collections.Generic
 
+''' <summary>
+''' Overrides Sequest tool runner to provide cluster-specific methods
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerSeqCluster
 	Inherits clsAnalysisToolRunnerSeqBase
-
-	'*********************************************************************************************************
-	' Overrides Sequest tool runner to provide cluster-specific methods
-	'*********************************************************************************************************
 
 #Region "Constants"
 	Protected Const TEMP_FILE_COPY_INTERVAL_SECONDS As Integer = 300

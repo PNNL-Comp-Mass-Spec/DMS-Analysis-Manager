@@ -1,4 +1,3 @@
-' Last modified 06/11/2009 JDS - Added logging using log4net
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System

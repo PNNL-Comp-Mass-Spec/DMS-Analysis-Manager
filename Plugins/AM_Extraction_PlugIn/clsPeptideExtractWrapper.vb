@@ -4,17 +4,15 @@
 ' Copyright 2008, Battelle Memorial Institute
 ' Created 10/09/2008
 '
-' Last modified 10/14/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 Imports AnalysisManagerBase
 Imports PeptideFileExtractor
 
+''' <summary>
+''' Perform Peptide extraction from Sequest results
+''' </summary>
+''' <remarks></remarks>
 Public Class clsPeptideExtractWrapper
-
-	'*********************************************************************************************************
-	'Perform Peptide extraction from Sequest results
-	'*********************************************************************************************************
 
 #Region "Event Handlers"
 	Private Sub m_ExtractTools_EndTask() Handles m_ExtractTools.EndTask

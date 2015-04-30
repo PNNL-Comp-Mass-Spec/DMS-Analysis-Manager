@@ -4,20 +4,18 @@
 ' Copyright 2008, Battelle Memorial Institute
 ' Created 10/30/2008
 '
-' Last modified 10/31/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Threading
 
+''' <summary>
+''' Derived class for performing analysis results transfer
+''' </summary>
+''' <remarks></remarks>
 Public Class clsResultXferToolRunner
 	Inherits clsAnalysisToolRunnerBase
-
-	'*********************************************************************************************************
-	'Derived class for performing analysis results transfer
-	'*********************************************************************************************************
 
 #Region "Methods"
 	''' <summary>

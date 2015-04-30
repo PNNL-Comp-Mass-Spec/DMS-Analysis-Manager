@@ -4,8 +4,6 @@
 ' Copyright 2008, Battelle Memorial Institute
 ' Created 10/10/2008
 '
-' Last modified 10/24/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
@@ -13,12 +11,12 @@ Imports System.IO
 Imports System.Runtime.InteropServices
 Imports PHRPReader
 
+''' <summary>
+''' Primary class for controlling data extraction
+''' </summary>
+''' <remarks></remarks>
 Public Class clsExtractToolRunner
 	Inherits clsAnalysisToolRunnerBase
-
-	'*********************************************************************************************************
-	'Primary class for controlling data extraction
-	'*********************************************************************************************************
 
 #Region "Constants"
 	Protected Const SEQUEST_PROGRESS_EXTRACTION_DONE As Single = 33

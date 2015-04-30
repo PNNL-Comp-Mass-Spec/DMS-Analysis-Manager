@@ -4,21 +4,20 @@
 ' Copyright 2008, Battelle Memorial Institute
 ' Created 07/08/2008
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
 Imports System.IO
 
+''' <summary>
+''' Gets resources necessary for DTA creation
+''' </summary>
+''' <remarks></remarks>
 Public Class clsDtaGenResources
 	Inherits clsAnalysisResources
 
-	'*********************************************************************************************************
-	'Gets resources necessary for DTA creation
-	'*********************************************************************************************************
-
 #Region "Constants"
-	Public Const USING_EXISTING_DECONMSN_RESULTS As String = "Using_existing_DeconMSn_Results"
+    Public Const USING_EXISTING_DECONMSN_RESULTS As String = "Using_existing_DeconMSn_Results"
 #End Region
 
 #Region "Methods"

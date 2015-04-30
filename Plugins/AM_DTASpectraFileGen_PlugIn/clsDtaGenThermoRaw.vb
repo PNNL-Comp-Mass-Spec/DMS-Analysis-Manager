@@ -15,12 +15,12 @@ Imports System.IO
 Imports System.Threading
 Imports System.Text.RegularExpressions
 
+''' <summary>
+''' This class creates DTA files using either DeconMSn.exe or ExtractMSn.exe
+''' </summary>
+''' <remarks></remarks>
 Public Class clsDtaGenThermoRaw
 	Inherits clsDtaGen
-
-	'*********************************************************************************************************
-	'This class creates DTA files using either DeconMSn.exe or ExtractMSn.exe
-	'*********************************************************************************************************
 
 #Region "Constants"
 	Protected Const USE_THREADING As Boolean = True

@@ -2,19 +2,19 @@
 ' Written by Dave Clark for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2006, Battelle Memorial Institute
-' Created 009/22/2008
+' Created 09/22/2008
 '
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
 Imports System.IO
 
+''' <summary>
+''' Manages retrieval of all files needed for data extraction
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisResourcesExtraction
 	Inherits clsAnalysisResources
-
-	'*********************************************************************************************************
-	'Manages retrieval of all files needed for data extraction
-	'*********************************************************************************************************
 
 #Region "Constants"
 	Public Const MOD_DEFS_FILE_SUFFIX As String = "_ModDefs.txt"
@@ -30,10 +30,10 @@ Public Class clsAnalysisResourcesExtraction
 
 #Region "Methods"
 
-	Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
-		Dim statusTools As IStatusFile = Nothing
-		Setup(mgrParams, jobParams, statusTools)		
-	End Sub
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
+        Dim statusTools As IStatusFile = Nothing
+        Setup(mgrParams, jobParams, statusTools)
+    End Sub
 
 	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
 		MyBase.Setup(mgrParams, jobParams, statusTools)

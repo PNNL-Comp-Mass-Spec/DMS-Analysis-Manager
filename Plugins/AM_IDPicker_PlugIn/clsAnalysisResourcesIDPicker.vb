@@ -15,7 +15,7 @@ Public Class clsAnalysisResourcesIDPicker
     ' This dictionary holds any filenames that we need to rename after copying locally
     Protected mInputFileRenames As Dictionary(Of String, String)
 
-    Public Overrides Sub Setup(ByRef mgrParams As IMgrParams, ByRef jobParams As IJobParams)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
         MyBase.Setup(mgrParams, jobParams)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub

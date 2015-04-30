@@ -12,12 +12,12 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Runtime.InteropServices
 
+''' <summary>
+''' Class for running MSPathFinder analysis of top down data
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerMSPathFinder
 	Inherits clsAnalysisToolRunnerBase
-
-	'*********************************************************************************************************
-	'Class for running MSPathFinder analysis of top down data
-	'*********************************************************************************************************
 
 #Region "Constants and Enums"
 	Protected Const MSPATHFINDER_CONSOLE_OUTPUT As String = "MSPathFinder_ConsoleOutput.txt"
@@ -326,59 +326,59 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 			' Value between 0 and 100
 			Dim progressComplete As Single = 0
-			Dim targetProteinsSearched As Integer = 0
-			Dim decoyProteinsSearched As Integer = 0
+            Dim targetProteinsSearched = 0
+            Dim decoyProteinsSearched = 0
 
 			Dim searchingDecoyDB = False
 
 			Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-				Do While srInFile.Peek() >= 0
-					Dim strLineIn = srInFile.ReadLine()
+                Do While Not srInFile.EndOfStream
+                    Dim strLineIn = srInFile.ReadLine()
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-						Dim strLineInLCase = strLineIn.ToLower()
+                        Dim strLineInLCase = strLineIn.ToLower()
 
-						If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
-							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-								mConsoleOutputErrorMsg = "Error running MSPathFinder:"
-							End If
-							mConsoleOutputErrorMsg &= "; " & strLineIn
-							Continue Do
+                        If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
+                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                mConsoleOutputErrorMsg = "Error running MSPathFinder:"
+                            End If
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                            Continue Do
 
-						ElseIf strLineIn.StartsWith("Searching the target database") Then
-							progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
+                        ElseIf strLineIn.StartsWith("Searching the target database") Then
+                            progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
 
-						ElseIf strLineIn.StartsWith("Searching the decoy database") Then
-							progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
-							searchingDecoyDB = True
+                        ElseIf strLineIn.StartsWith("Searching the decoy database") Then
+                            progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
+                            searchingDecoyDB = True
 
-						Else
-							Dim oMatch As Match = reCheckProgress.Match(strLineIn)
-							If oMatch.Success Then
-								Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
-								Continue Do
-							End If
+                        Else
+                            Dim oMatch As Match = reCheckProgress.Match(strLineIn)
+                            If oMatch.Success Then
+                                Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
+                                Continue Do
+                            End If
 
-							oMatch = reProcessingProteins.Match(strLineIn)
-							If oMatch.Success Then
-								Dim proteinsSearched As Integer
-								If Integer.TryParse(oMatch.Groups(1).ToString(), proteinsSearched) Then
-									If searchingDecoyDB Then
-										decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
-									Else
-										targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
-									End If
-								End If
+                            oMatch = reProcessingProteins.Match(strLineIn)
+                            If oMatch.Success Then
+                                Dim proteinsSearched As Integer
+                                If Integer.TryParse(oMatch.Groups(1).ToString(), proteinsSearched) Then
+                                    If searchingDecoyDB Then
+                                        decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
+                                    Else
+                                        targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
+                                    End If
+                                End If
 
-								Continue Do
-							End If
+                                Continue Do
+                            End If
 
-						End If
+                        End If
 
-					End If
-				Loop
+                    End If
+                Loop
 
 			End Using
 
@@ -531,50 +531,50 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 			' Initialize the Param Name dictionary
 			Dim dctParamNames = GetMSPathFinderParameterNames()
 
-			Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				Do While srParamFile.Peek > -1
-					Dim strLineIn = srParamFile.ReadLine()
+                Do While Not srParamFile.EndOfStream
+                    Dim strLineIn = srParamFile.ReadLine()
 
-					Dim kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
+                    Dim kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
 
-					If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
+                    If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
 
                         Dim strValue = kvSetting.Value
-						Dim intValue As Integer
+                        Dim intValue As Integer
 
                         Dim strArgumentSwitch = String.Empty
 
-						' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-						If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
+                        ' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
+                        If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
 
-							sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
+                            sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
 
-						ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumMods") Then
-							If Integer.TryParse(strValue, intValue) Then
-								intNumMods = intValue
-							Else
-								errMsg = "Invalid value for NumMods in MSGFDB parameter file"
-								LogError(errMsg, errMsg & ": " & strLineIn)
-								srParamFile.Close()
-								Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-							End If
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumMods") Then
+                            If Integer.TryParse(strValue, intValue) Then
+                                intNumMods = intValue
+                            Else
+                                errMsg = "Invalid value for NumMods in MSGFDB parameter file"
+                                LogError(errMsg, errMsg & ": " & strLineIn)
+                                srParamFile.Close()
+                                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            End If
 
-						ElseIf clsGlobal.IsMatch(kvSetting.Key, "StaticMod") Then
-							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
-								lstStaticMods.Add(strValue)
-							End If
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "StaticMod") Then
+                            If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
+                                lstStaticMods.Add(strValue)
+                            End If
 
-						ElseIf clsGlobal.IsMatch(kvSetting.Key, "DynamicMod") Then
-							If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
-								lstDynamicMods.Add(strValue)
-							End If
-						End If
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "DynamicMod") Then
+                            If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
+                                lstDynamicMods.Add(strValue)
+                            End If
+                        End If
 
-					End If
-				Loop
+                    End If
+                Loop
 
-			End Using
+            End Using
 
 		Catch ex As Exception
 			m_message = "Exception reading MSPathFinder parameter file"

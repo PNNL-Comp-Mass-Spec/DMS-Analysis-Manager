@@ -1,24 +1,22 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by Matt Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 01/15/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
+
+Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
 
+''' <summary>
+''' Derived class for performing MASIC analysis on Agilent datasets
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerMASICAgilent
 	Inherits clsAnalysisToolRunnerMASICBase
-
-	'*********************************************************************************************************
-	'Derived class for performing MASIC analysis on Agilent datasets
-	'*********************************************************************************************************
 
 	Public Sub New()
 	End Sub

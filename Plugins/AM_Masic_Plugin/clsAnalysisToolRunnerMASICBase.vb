@@ -1,25 +1,22 @@
-Option Strict On
-
 '*********************************************************************************************************
 ' Written by Matt Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 01/15/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
+
+Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
-Imports System.Xml.Linq
 
+''' <summary>
+''' Base class for performing MASIC analysis
+''' </summary>
+''' <remarks></remarks>
 Public MustInherit Class clsAnalysisToolRunnerMASICBase
     Inherits clsAnalysisToolRunnerBase
-
-	'*********************************************************************************************************
-	'Base class for performing MASIC analysis
-	'*********************************************************************************************************
 
 #Region "Module variables"
     Protected Const SICS_XML_FILE_SUFFIX As String = "_SICs.xml"

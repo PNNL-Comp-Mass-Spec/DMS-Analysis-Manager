@@ -1,5 +1,4 @@
-﻿' Last modified 06/11/2009 JDS - Added logging using log4net
-Option Strict On
+﻿Option Strict On
 
 Imports System.IO
 Imports AnalysisManagerBase

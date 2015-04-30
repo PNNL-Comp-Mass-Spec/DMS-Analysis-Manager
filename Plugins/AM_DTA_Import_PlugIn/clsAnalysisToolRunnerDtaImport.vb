@@ -4,18 +4,16 @@
 ' Copyright 2009, Battelle Memorial Institute
 ' Created 04/10/2009
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-imports AnalysisManagerBase
-Imports System.Collections.Generic
+Imports AnalysisManagerBase
 
+''' <summary>
+''' Class for running DTA Importer
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerDtaImport
-    Inherits clsAnalysisToolRunnerBase
-
-    '*********************************************************************************************************
-    'Class for running DTA Importer
-    '*********************************************************************************************************
+    Inherits clsAnalysisToolRunnerBase    
 
 #Region "Module Variables"
 #End Region

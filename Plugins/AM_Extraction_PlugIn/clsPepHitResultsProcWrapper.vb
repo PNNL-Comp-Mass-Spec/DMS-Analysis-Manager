@@ -7,19 +7,17 @@
 ' Program converted from original version written by J.D. Sandoval, PNNL.
 ' Conversion performed as part of upgrade to VB.Net 2005, modification for use with manager and broker databases
 '
-' Last modified 01/07/2009
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Text.RegularExpressions
 
+''' <summary>
+''' Calls PeptideHitResultsProcRunner.exe
+''' </summary>
+''' <remarks></remarks>
 Public Class clsPepHitResultsProcWrapper
-
-	'*********************************************************************************************************
-    ' Calls PeptideHitResultsProcRunner.exe
-	'*********************************************************************************************************
 
 #Region "Module Variables"
 	Private ReadOnly m_DebugLevel As Integer = 0

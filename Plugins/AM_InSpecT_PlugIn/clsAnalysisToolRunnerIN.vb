@@ -4,20 +4,18 @@
 ' Copyright 2008, Battelle Memorial Institute
 ' Created 07/25/2008
 '
-' Last modified 11/18/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
 
 Imports AnalysisManagerBase
 
+''' <summary>
+''' Class for running InSpecT analysis
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerIN
     Inherits clsAnalysisToolRunnerBase
-
-    '*********************************************************************************************************
-    'Class for running InSpecT analysis
-    '*********************************************************************************************************
 
 #Region "Structures"
     Protected Structure udtModInfoType

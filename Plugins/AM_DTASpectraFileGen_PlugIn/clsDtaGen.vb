@@ -4,19 +4,18 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/18/2007
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Text.RegularExpressions
 
+''' <summary>
+''' This is the base class that implements a specific spectra file generator.
+''' </summary>
+''' <remarks></remarks>
 Public MustInherit Class clsDtaGen
 	Implements ISpectraFileProcessor
-
-	'*********************************************************************************************************
-	'This is the base class that implements a specific spectra file generator.
-	'*********************************************************************************************************
 
 #Region "Module variables"
 	Protected m_ErrMsg As String = String.Empty

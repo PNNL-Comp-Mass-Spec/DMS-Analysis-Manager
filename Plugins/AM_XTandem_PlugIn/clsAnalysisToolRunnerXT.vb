@@ -4,20 +4,18 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 02/19/2008
-' Last modified 06/15/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
 
 Imports AnalysisManagerBase
 
+''' <summary>
+''' Class for running XTandem analysis
+''' </summary>
+''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerXT
     Inherits clsAnalysisToolRunnerBase
-
-	'*********************************************************************************************************
-	'Class for running XTandem analysis
-	'*********************************************************************************************************
 
 #Region "Module Variables"
     Protected Const XTANDEM_CONSOLE_OUTPUT As String = "XTandem_ConsoleOutput.txt"

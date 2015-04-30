@@ -1,5 +1,6 @@
 Option Strict On
 
+Imports System.Runtime.Serialization.Formatters
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMSXMLGen
@@ -7,17 +8,17 @@ Public Class clsAnalysisResourcesMSXMLGen
 
 #Region "Methods"
     ''' <summary>
-	''' Retrieves files necessary for creating the .mzXML file
+    ''' Retrieves files necessary for creating the .mzXML file
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim currentTask As String = "Initializing"
+        Dim currentTask As String = "Initializing"
 
-		Try
+        Try
 
-			currentTask = "Determine RawDataType"
+            currentTask = "Determine RawDataType"
 
             Dim toolName = m_jobParams.GetParam("ToolName")
             Dim proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase)
@@ -32,13 +33,13 @@ Public Class clsAnalysisResourcesMSXMLGen
                 End If
 
                 If Not msXmlFormat.ToLower().Contains("mzml") Then
-                    LogError("ProMex_Bruker jobs require mzML files, not " & msXmlFormat & " files")                    
+                    LogError("ProMex_Bruker jobs require mzML files, not " & msXmlFormat & " files")
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
-			' Get input data file
-			Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
+            ' Get input data file
+            Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
 
             Dim retrievalAttempts = 0
 
@@ -57,21 +58,25 @@ Public Class clsAnalysisResourcesMSXMLGen
                         End If
                     Case Else
                         m_message = "Dataset type " & strRawDataType & " is not supported"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSXMLGen.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_DOT_RAW_FILES)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                             "clsAnalysisResourcesMSXMLGen.GetResources: " & m_message & "; must be " &
+                                             RAW_DATA_TYPE_DOT_RAW_FILES & ", " &
+                                             RAW_DATA_TYPE_DOT_D_FOLDERS & ", or " &
+                                             RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End Select
 
                 If m_MyEMSLDatasetListInfo.FilesToDownload.Count = 0 Then
                     Exit While
-                Else
-                    currentTask = "ProcessMyEMSLDownloadQueue"
-                    If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                        Exit While
-                    Else
-                        ' Look for this file on the Samba share
-                        MyBase.DisableMyEMSLSearch()
-                    End If
                 End If
+
+                currentTask = "ProcessMyEMSLDownloadQueue"
+                If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                    Exit While
+                End If
+
+                ' Look for this file on the Samba share
+                MyBase.DisableMyEMSLSearch()
 
             End While
 
@@ -110,9 +115,9 @@ Public Class clsAnalysisResourcesMSXMLGen
         End Try
 
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 #End Region
 
 End Class

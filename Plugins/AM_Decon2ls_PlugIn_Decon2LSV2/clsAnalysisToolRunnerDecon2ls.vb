@@ -6,7 +6,6 @@ Option Strict On
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 09/14/2006
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase

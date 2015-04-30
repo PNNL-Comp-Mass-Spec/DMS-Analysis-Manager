@@ -4,7 +4,6 @@
 ' Copyright 2008, Battelle Memorial Institute
 ' Created 07/29/2008
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
@@ -12,12 +11,12 @@ Imports MsMsDataFileReader
 Imports System.Collections.Generic
 Imports System.IO
 
+''' <summary>
+''' Base class for DTA generation tool runners
+''' </summary>
+''' <remarks></remarks>
 Public Class clsDtaGenToolRunner
 	Inherits clsAnalysisToolRunnerBase
-
-	'*********************************************************************************************************
-	'Base class for DTA generation tool runners
-	'*********************************************************************************************************
 
 #Region "Constants and Enums"
 	Public Const CDTA_FILE_SUFFIX As String = "_dta.txt"
