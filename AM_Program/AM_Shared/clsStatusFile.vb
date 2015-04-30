@@ -264,19 +264,19 @@ Public Class clsStatusFile
 		Get
 			Return m_MessageQueueTopic
 		End Get
-		Set(ByVal value As String)
+        Set(ByVal value As String)
             m_MessageQueueTopic = value
         End Set
-	End Property
+    End Property
 
-	Public Property LogToMsgQueue() As Boolean Implements IStatusFile.LogToMsgQueue
-		Get
-			Return m_LogToMessageQueue
-		End Get
-		Set(ByVal value As Boolean)
+    Public Property LogToMsgQueue() As Boolean Implements IStatusFile.LogToMsgQueue
+        Get
+            Return m_LogToMessageQueue
+        End Get
+        Set(ByVal value As Boolean)
             m_LogToMessageQueue = value
         End Set
-	End Property
+    End Property
 
 	Public ReadOnly Property AbortProcessingNow() As Boolean
 		Get
