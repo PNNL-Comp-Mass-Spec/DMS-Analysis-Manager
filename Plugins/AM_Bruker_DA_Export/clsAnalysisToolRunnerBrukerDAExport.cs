@@ -15,7 +15,7 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerBrukerDAExportPlugin
 {
-    class clsAnalysisToolRunnerBrukerDAExport : clsAnalysisToolRunnerBase
+    public class clsAnalysisToolRunnerBrukerDAExport : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
@@ -517,7 +517,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].Value, out totalScans);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "TotalScans= " + totalScans);
                         }
                         else
                         {
@@ -525,7 +524,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             if (reMatch.Success)
                             {
                                 int.TryParse(reMatch.Groups[1].Value, out currentScan);
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CurrentScan= " + totalScans);
                             }
                         }
 
@@ -536,7 +534,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (totalScans > 0)
                 {
                     progressComplete = currentScan / (float)totalScans * 100;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "progressComplete= " + progressComplete.ToString("0.00"));
                 }
 
                 if (m_progress < progressComplete || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 60)

@@ -16,14 +16,15 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerNOMSIPlugin
 {
-    class clsAnalysisToolRunnerNOMSI : clsAnalysisToolRunnerBase
+    public class clsAnalysisToolRunnerNOMSI : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
         protected const float PROGRESS_PCT_STARTING = 5;
         protected const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const string NOMSI_CONSOLE_OUTPUT_BASE = "NOMSI_ConsoleOutput";
+        protected const string NOMSI_CONSOLE_OUTPUT_BASE = "NOMSI_ConsoleOutput_scan";
+        protected const string COMPRESSED_NOMSI_RESULTS_BASE = "NOMSI_Results_scan";
 
         #endregion
 
@@ -31,6 +32,7 @@ namespace AnalysisManagerNOMSIPlugin
 
         protected string mCurrentConsoleOutputFile;
         protected string mConsoleOutputErrorMsg;
+        protected bool mNoPeaksFound;
 
         protected DateTime mLastStatusUpdate;
         protected DateTime mLastConsoleOutputParse;
@@ -99,34 +101,39 @@ namespace AnalysisManagerNOMSIPlugin
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Process the XML files using NOMSI
-                success = StartNOMSI(progLoc);
+                bool noPeaksFound;
 
-                if (success)
+                // Process the XML files using NOMSI                
+                success = ProcessScansWithNOMSI(progLoc, out noPeaksFound);
+
+                var eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+
+                if (noPeaksFound)
+                {
+                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_NO_DATA;                
+                }
+                else if (!success)
+                {
+                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+                else
                 {
                     // Look for the result files
 
                     var diWorkDir = new DirectoryInfo(m_WorkDir);
-                    var fiResultsFiles = diWorkDir.GetFiles("Distribution_*.txt").ToList();
-
-                    if (fiResultsFiles.Count > 0)
+                    var fiResultsFiles = diWorkDir.GetFiles("Distributions.zip").ToList();
+                    if (fiResultsFiles.Count == 0)
                     {
-                        success = PostProcessNOMSIResults();
-                        if (!success)
-                        {
-                            if (string.IsNullOrEmpty(m_message))
-                            {
-                                m_message = "Unknown error post-processing the NOMSI results";
-                            }
-                        }
-
+                        fiResultsFiles = diWorkDir.GetFiles(COMPRESSED_NOMSI_RESULTS_BASE + "*.zip").ToList();
                     }
-                    else
+
+                    if (fiResultsFiles.Count == 0)
                     {
                         if (string.IsNullOrEmpty(m_message))
                         {
                             m_message = "NOMSI results not found";
                             success = false;
+                            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
                 }
@@ -155,6 +162,9 @@ namespace AnalysisManagerNOMSIPlugin
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // No need to keep the JobParameters file
+                m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
+
                 var result = MakeResultsFolder();
                 if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -178,6 +188,7 @@ namespace AnalysisManagerNOMSIPlugin
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                return eReturnCode;
             }
             catch (Exception ex)
             {
@@ -185,8 +196,6 @@ namespace AnalysisManagerNOMSIPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
-
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
@@ -209,7 +218,7 @@ namespace AnalysisManagerNOMSIPlugin
             {
                 var diWorkDir = new DirectoryInfo(m_WorkDir);
                 var fiSpectraFiles = GetXMLSpectraFiles(diWorkDir);
-                
+
                 foreach (var file in fiSpectraFiles)
                     file.Delete();
 
@@ -237,11 +246,42 @@ namespace AnalysisManagerNOMSIPlugin
             objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
 
         }
-        
+
+        private string GetUsername()
+        {
+            var currentUser = System.Security.Principal.WindowsIdentity.GetCurrent();
+            if (currentUser != null)
+            {
+                var userName = currentUser.Name;
+                var lastSlashIndex = userName.LastIndexOf('\\');
+                if (lastSlashIndex >= 0)
+                    userName = userName.Substring(lastSlashIndex + 1);
+
+                return userName;
+            }
+
+            return string.Empty;
+        }
+
         private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo diWorkDir)
         {
             var fiSpectraFiles = diWorkDir.GetFiles(m_Dataset + "_scan*.xml").ToList();
             return fiSpectraFiles;
+        }
+
+
+        private int MoveWorkDirFiles(DirectoryInfo diZipWork, string fileMask)
+        {
+            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            var filesToMove = diWorkDir.GetFiles(fileMask).ToList();
+
+            foreach (var fiFile in filesToMove)
+            {
+                fiFile.MoveTo(Path.Combine(diZipWork.FullName, fiFile.Name));
+            }
+
+            return filesToMove.Count;
+
         }
 
         /// <summary>
@@ -253,7 +293,19 @@ namespace AnalysisManagerNOMSIPlugin
         {
             // Example Console output
             //
-            // ????????
+            // log dump time stamp 4/30/2015 6:37:12 PM
+            // aah! being born again!
+            // dataset_path=E:\DMS_WorkDir\2014_05_09_Kaplan_Far_Neg_000001_scan1.xml
+            // param_file_path=E:\DMS_WorkDir\NOMSI_DI_Diagnostics_Targets_Pairs_2015-04-30.param
+            // distribution definition	m 100 1200 111=success
+            // distribution definition	logabu 1 10 37=success
+            // distribution definition	relabu 0 1 26=success
+            // distribution definition	sn 1 50 99=success
+            // distribution definition	kmd 0 1 26=success
+            // dm definition	E:\DMS_WorkDir\dmTransformations_Malak.inf=success
+            // diagnostics	success
+            // log dump time stamp 4/30/2015 6:37:13 PM
+            // that's all folks!
 
             try
             {
@@ -285,14 +337,18 @@ namespace AnalysisManagerNOMSIPlugin
                             continue;
                         }
 
-                        if (strLineIn.ToLower().StartsWith("error occurred"))
+                        if (strLineIn.ToLower().StartsWith("error "))
                         {
                             StoreConsoleErrorMessage(srInFile, strLineIn);
                         }
 
+                        if (strLineIn.StartsWith("no peaks found, discovered or perceived"))
+                        {
+                            mNoPeaksFound = true;
+                        }
                     }
 
-                }             
+                }
 
             }
             catch (Exception ex)
@@ -306,7 +362,55 @@ namespace AnalysisManagerNOMSIPlugin
 
         }
 
-        private bool ProcessOneFileWithNOMSI(string progLoc, FileInfo spectrumFile, string paramFilePath, int filesProcessed)
+        private void PostProcessResultsOneScan(DirectoryInfo diZipWork, int scanCount, int scanNumber)
+        {
+            diZipWork.Refresh();
+            if (diZipWork.Exists)
+            {
+                foreach (var fileToRemove in diZipWork.GetFiles("*").ToList())
+                {
+                    fileToRemove.Delete();
+                }
+            }
+            else
+            {
+                diZipWork.Create();
+            }
+
+            var filesMatched = 0;
+
+            if (scanCount == 1)
+            {
+                // Skip the console output file
+                m_jobParams.AddResultFileToSkip(mCurrentConsoleOutputFile);
+
+                // Combine the distribution files into a single .zip file
+                filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
+
+                if (filesMatched > 0)
+                    m_IonicZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, "Distributions.zip"));
+            }
+            else
+            {
+                // Combine the distribution files, the dm_ files, and the console output file into a zip file
+                // Example name: NOMSI_Results_scan1.zip
+
+                filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
+                filesMatched += MoveWorkDirFiles(diZipWork, "dm_pairs*.txt");
+                filesMatched += MoveWorkDirFiles(diZipWork, "dm_stats*.txt");
+                filesMatched += MoveWorkDirFiles(diZipWork, "NOMSI_ConsoleOutput_scan*.txt");
+
+                if (filesMatched > 0)
+                    m_IonicZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
+            }
+        }
+
+        private bool ProcessOneFileWithNOMSI(
+            string progLoc,
+            FileInfo spectrumFile,
+            string paramFilePath,
+            int filesProcessed,
+            out int scanNumber)
         {
             // Set up and execute a program runner to run NOMSI
 
@@ -321,7 +425,7 @@ namespace AnalysisManagerNOMSIPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + cmdStr);
             }
 
-            var scanNumber = filesProcessed;
+            scanNumber = filesProcessed;
 
             var reMatch = reGetScanNumber.Match(spectrumFile.Name);
             if (reMatch.Success)
@@ -368,6 +472,18 @@ namespace AnalysisManagerNOMSIPlugin
 
             // Parse the console output file one more time to check for errors
             Thread.Sleep(250);
+            var fiConsoleOutputFile = new FileInfo(cmdRunner.ConsoleOutputFilePath);
+            if (fiConsoleOutputFile.Exists && fiConsoleOutputFile.Length == 0 || !fiConsoleOutputFile.Exists)
+            {
+                // There were no log messages
+                // Look for a log file in folder C:\Users\d3l243\AppData\Local\
+                var alternateLogPath = Path.Combine(@"C:\Users", GetUsername(), @"AppData\Local\NOMSI.log");
+
+                var fiAlternateLogFile = new FileInfo(alternateLogPath);
+                if (fiAlternateLogFile.Exists)
+                    fiAlternateLogFile.CopyTo(cmdRunner.ConsoleOutputFilePath, true);
+            }
+
             ParseConsoleOutputFile(cmdRunner.ConsoleOutputFilePath);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -376,29 +492,136 @@ namespace AnalysisManagerNOMSIPlugin
                                      mConsoleOutputErrorMsg);
             }
 
-            if (!success)
+            if (success)
+            {                
+                return true;
+            }
+
+            var msg = "Error processing scan " + scanNumber + " using NOMSI";
+            m_message = clsGlobal.AppendToComment(m_message, msg);
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 msg + ", job " + m_JobNum);
+
+            if (cmdRunner.ExitCode != 0)
             {
-                var msg = "Error processing scan " + scanNumber + " using NOMSI";
-                m_message = clsGlobal.AppendToComment(m_message, msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                     "NOMSI returned a non-zero exit code: " + cmdRunner.ExitCode);
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                     "NOMSI failed (but exit code is 0)");
+            }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     msg + ", job " + m_JobNum);
+            return false;
+        }
 
-                if (cmdRunner.ExitCode != 0)
+        private bool ProcessScansWithNOMSI(string progLoc, out bool noPeaksFound)
+        {
+
+            noPeaksFound = false;
+
+            try
+            {
+
+                mConsoleOutputErrorMsg = string.Empty;
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing data using NOMSI");
+
+                var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+
+                if (!File.Exists(paramFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                         "NOMSI returned a non-zero exit code: " + cmdRunner.ExitCode);
+                    LogError("Parameter file not found", "Parameter file not found: " + paramFilePath);
+                    return false;
+                }
+
+                var targetsFileName = m_jobParams.GetParam("dm_target_file");
+
+                // Update the parameter file to use the targets file specified by the settings file
+                var success = UpdateParameterFile(paramFilePath, targetsFileName);
+                if (!success)
+                    return false;
+
+                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var spectraFiles = GetXMLSpectraFiles(diWorkDir);
+
+                mTotalSpectra = spectraFiles.Count;
+
+                if (mTotalSpectra == 0)
+                {
+                    m_message = "XML spectrum files not found";
+                    return false;
+                }
+
+                m_progress = PROGRESS_PCT_STARTING;
+
+                var diZipWork = new DirectoryInfo(Path.Combine(m_WorkDir, "ScanResultsZipWork"));
+
+                var filesProcessed = 0;
+                var fileCountNoPeaks = 0;
+
+                foreach (var spectrumFile in spectraFiles)
+                {
+                    mNoPeaksFound = false;
+
+                    int scanNumber;
+                    success = ProcessOneFileWithNOMSI(progLoc, spectrumFile, paramFilePath, filesProcessed, out scanNumber);
+                    if (!success)
+                        return false;
+
+                    m_jobParams.AddResultFileToSkip(spectrumFile.Name);
+
+                    PostProcessResultsOneScan(diZipWork, spectraFiles.Count, scanNumber);
+
+                    if (mNoPeaksFound)
+                        fileCountNoPeaks++;
+
+                    filesProcessed++;
+                }
+
+                m_jobParams.AddResultFileToSkip(targetsFileName);
+
+                m_progress = PROGRESS_PCT_COMPLETE;
+                m_StatusTools.UpdateAndWrite(m_progress);
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "NOMSI processing Complete");
+                }
+
+                if (fileCountNoPeaks <= 0)
+                {
+                    return true;
+                }
+
+                if (filesProcessed == 1 || fileCountNoPeaks >= filesProcessed)
+                {
+                    // None of the scans had peaks
+                    m_message = "No peaks found";
+                    if (filesProcessed > 1)
+                        m_EvalMessage = "None of the scans had peaks";
+                    else
+                        m_EvalMessage = "Scan did not have peaks";
+
+                    noPeaksFound = true;
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                         "NOMSI failed (but exit code is 0)");
+                    // Some of the scans had no peaks
+                    m_EvalMessage = fileCountNoPeaks + " / " + filesProcessed + " scans had no peaks";
                 }
 
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in NOMSIPlugin->StartNOMSI";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
                 return false;
             }
 
-            return true;
         }
 
         private void StoreConsoleErrorMessage(StreamReader srInFile, string strLineIn)
@@ -421,72 +644,6 @@ namespace AnalysisManagerNOMSIPlugin
 
             }
         }
-
-        private bool PostProcessNOMSIResults()
-        {
-            try
-            {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
-               
-                return true;
-            }
-            catch (Exception ex)
-            {
-                m_message = "Error in NOMSIPlugin->PostProcessNOMSIResults";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return false;
-            }
-
-        }
-
-        private bool StartNOMSI(string progLoc)
-        {
-
-            mConsoleOutputErrorMsg = string.Empty;
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing data using NOMSI");
-
-            var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
-
-            if (!File.Exists(paramFilePath))
-            {
-                LogError("Parameter file not found", "Parameter file not found: " + paramFilePath);
-                return false;
-            }
-
-            var targetsFileName = m_jobParams.GetParam("dm_target_file");
-
-            // Update the parameter file to use the targets file specified by the settings file
-            var success = UpdateParameterFile(paramFilePath, targetsFileName);
-            if (!success)
-                return false;
-
-            var diWorkDir = new DirectoryInfo(m_WorkDir);
-            var spectraFiles = GetXMLSpectraFiles(diWorkDir);
-
-            mTotalSpectra = spectraFiles.Count;
-            m_progress = PROGRESS_PCT_STARTING;
-
-            int filesProcessed = 0;
-            foreach (var spectrumFile in spectraFiles)
-            {
-                success = ProcessOneFileWithNOMSI(progLoc, spectrumFile, paramFilePath, filesProcessed);
-                if (!success)
-                    return false;
-
-                filesProcessed++;
-            }
-
-            m_progress = PROGRESS_PCT_COMPLETE;
-            m_StatusTools.UpdateAndWrite(m_progress);
-            if (m_DebugLevel >= 3)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "NOMSI processing Complete");
-            }
-
-            return true;
-
-        }      
 
         /// <summary>
         /// Stores the tool version info in the database
@@ -526,7 +683,7 @@ namespace AnalysisManagerNOMSIPlugin
             {
                 fiProgram
             };
-           
+
             try
             {
                 return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
@@ -574,7 +731,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                         if (dataLine.Trim().ToLower().StartsWith("param_dm_target_file"))
                         {
-                            writer.WriteLine("param_dm_target_file=" + Path.Combine(m_WorkDir, "targetsFileName"));
+                            writer.WriteLine("param_dm_target_file=" + Path.Combine(m_WorkDir, targetsFileName));
                         }
                         else
                         {
@@ -588,6 +745,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 fiParamFileNew.MoveTo(paramFilePath);
 
+                // Skip the old parameter file
                 m_jobParams.AddResultFileToSkip(fiParamFile.Name);
                 return true;
             }

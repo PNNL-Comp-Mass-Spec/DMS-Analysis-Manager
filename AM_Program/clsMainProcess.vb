@@ -723,7 +723,10 @@ Public Class clsMainProcess
                 If eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES AndAlso _
                    m_AnalysisTask.GetParam("StepTool").ToLower() = "sequest" Then
                     ' This was a Sequest job, but no .DTA files were found
-                    ' We return True here because we don't want this problem to be counted as a manager failure
+                    ' Return True; do not count this as a manager failure
+                    Return True
+                ElseIf eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                    ' Return True; do not count this as a manager failure
                     Return True
                 Else
                     Return False

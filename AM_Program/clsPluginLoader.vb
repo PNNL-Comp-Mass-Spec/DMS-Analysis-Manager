@@ -193,6 +193,9 @@ Public Class clsPluginLoader
             'Case "AnalysisManagerGlyQIQPlugin.clsAnalysisToolRunnerGlyQIQ".ToLower()
             '    myToolRunner = DirectCast(New AnalysisManagerGlyQIQPlugIn.clsAnalysisToolRunnerGlyQIQ, IToolRunner)
 
+            'Case "AnalysisManagerNOMSIPlugin.clsAnalysisToolRunnerNOMSI".ToLower()
+            '    myToolRunner = DirectCast(New AnalysisManagerNOMSIPlugin.clsAnalysisToolRunnerNOMSI, IToolRunner)
+
         End Select
 
 		Return myToolRunner
