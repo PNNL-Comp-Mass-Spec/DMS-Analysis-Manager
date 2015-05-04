@@ -424,7 +424,8 @@ Public Class clsMainProcess
                                 blnOneTaskPerformed = True
                             Else
                                 'Something went wrong; errors were logged by DoAnalysisJob
-                                If m_MostRecentErrorMessage.Contains("None of the spectra are centroided") Then
+                                If m_MostRecentErrorMessage.Contains("None of the spectra are centroided") OrElse
+                                   m_MostRecentErrorMessage.Contains("No peaks found") Then
                                     ' Job failed, but this was not a manager error
                                     ' Do not increment the error count
                                 Else
