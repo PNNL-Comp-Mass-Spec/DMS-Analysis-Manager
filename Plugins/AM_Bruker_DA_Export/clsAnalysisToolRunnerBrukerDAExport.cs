@@ -365,7 +365,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                     if (!string.IsNullOrWhiteSpace(mConsoleOutputErrorMsg) && mConsoleOutputErrorMsg.Contains("ActiveX component"))
                     {
-                        msg += "; ActiveX component error -- is Bruker DataAnalysis installed?";
+                        msg += "; ActiveX component error -- is Bruker DataAnalysis installed or has a license expired?";
                     }
                     m_message = clsGlobal.AppendToComment(m_message, msg);
 

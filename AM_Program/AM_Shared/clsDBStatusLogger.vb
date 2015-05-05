@@ -18,7 +18,8 @@ Public Class clsDBStatusLogger
 		Public LastUpdate As DateTime
 		Public LastStartTime As DateTime
 		Public CPUUtilization As Single
-		Public FreeMemoryMB As Single
+        Public FreeMemoryMB As Single
+        Public ProcessID As Integer
 		Public MostRecentErrorMessage As String
 		Public Task As udtTaskInfoType
 	End Structure
@@ -90,80 +91,87 @@ Public Class clsDBStatusLogger
 		m_DBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes
 	End Sub
 
-	Public Sub LogStatus(ByVal udtStatusInfo As udtStatusInfoType, ByVal blnForceLogToDB As Boolean)
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="udtStatusInfo"></param>
+    ''' <param name="blnForceLogToDB"></param>
+    ''' <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
+    Public Sub LogStatus(ByVal udtStatusInfo As udtStatusInfoType, ByVal blnForceLogToDB As Boolean)
 
-		Static dtLastWriteTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
+        Static dtLastWriteTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
-		Dim MyConnection As SqlClient.SqlConnection
-		Dim MyCmd As New SqlClient.SqlCommand
+        Dim MyConnection As SqlClient.SqlConnection
+        Dim MyCmd As New SqlClient.SqlCommand
 
-		Try
-			If String.IsNullOrEmpty(m_DBConnectionString) Then
-				' Connection string not defined; unable to continue
-				Exit Sub
-			End If
+        Try
+            If String.IsNullOrEmpty(m_DBConnectionString) Then
+                ' Connection string not defined; unable to continue
+                Exit Sub
+            End If
 
-			If Not blnForceLogToDB AndAlso _
-			   DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
-				' Not enough time has elapsed since the last write; exit sub
-				Exit Sub
-			End If
-			dtLastWriteTime = DateTime.UtcNow
-
-
-			MyConnection = New SqlClient.SqlConnection(m_DBConnectionString)
-			MyConnection.Open()
-
-			'Set up the command object prior to SP execution
-			With MyCmd
-
-				.CommandType = CommandType.StoredProcedure
-				.CommandText = SP_NAME_UPDATE_MANAGER_STATUS
-				.Connection = MyConnection
-
-				.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+            If Not blnForceLogToDB AndAlso _
+               DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
+                ' Not enough time has elapsed since the last write; exit sub
+                Exit Sub
+            End If
+            dtLastWriteTime = DateTime.UtcNow
 
 
-				' Manager items
-				AddSPParameter(.Parameters, "@MgrName", udtStatusInfo.MgrName, 128)
-				AddSPParameter(.Parameters, "@MgrStatusCode", udtStatusInfo.MgrStatus)
+            MyConnection = New SqlClient.SqlConnection(m_DBConnectionString)
+            MyConnection.Open()
 
-				AddSPParameter(.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime())
-				AddSPParameter(.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime())
-				AddSPParameter(.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization)
-				AddSPParameter(.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB)
-				AddSPParameter(.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024)
+            'Set up the command object prior to SP execution
+            With MyCmd
 
-				' Task items
-				AddSPParameter(.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128)
-				AddSPParameter(.Parameters, "@TaskStatusCode", udtStatusInfo.Task.Status)
-				AddSPParameter(.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours)
-				AddSPParameter(.Parameters, "@Progress", udtStatusInfo.Task.Progress)
-				AddSPParameter(.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256)
+                .CommandType = CommandType.StoredProcedure
+                .CommandText = SP_NAME_UPDATE_MANAGER_STATUS
+                .Connection = MyConnection
 
-				' Task detail items
-				AddSPParameter(.Parameters, "@TaskDetailStatusCode", udtStatusInfo.Task.TaskDetails.Status)
-				AddSPParameter(.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job)
-				AddSPParameter(.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep)
-				AddSPParameter(.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256)
-				AddSPParameter(.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024)
-				AddSPParameter(.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256)
-				AddSPParameter(.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount)
+                .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
-				AddSPParameterOutput(.Parameters, "@message", String.Empty, 512)
 
-			End With
+                ' Manager items
+                AddSPParameter(.Parameters, "@MgrName", udtStatusInfo.MgrName, 128)
+                AddSPParameter(.Parameters, "@MgrStatusCode", udtStatusInfo.MgrStatus)
 
-			'Execute the SP
-			MyCmd.ExecuteNonQuery()
+                AddSPParameter(.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime())
+                AddSPParameter(.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime())
+                AddSPParameter(.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization)
+                AddSPParameter(.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB)
+                AddSPParameter(.Parameters, "@ProcessID", udtStatusInfo.ProcessID)
+                AddSPParameter(.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024)
 
-		Catch ex As Exception
-			' Ignore errors here
-			Console.WriteLine("Error in clsDBStatusLogger.LogStatus: " & ex.Message)
-		End Try
+                ' Task items
+                AddSPParameter(.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128)
+                AddSPParameter(.Parameters, "@TaskStatusCode", udtStatusInfo.Task.Status)
+                AddSPParameter(.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours)
+                AddSPParameter(.Parameters, "@Progress", udtStatusInfo.Task.Progress)
+                AddSPParameter(.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256)
 
-	End Sub
+                ' Task detail items
+                AddSPParameter(.Parameters, "@TaskDetailStatusCode", udtStatusInfo.Task.TaskDetails.Status)
+                AddSPParameter(.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job)
+                AddSPParameter(.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep)
+                AddSPParameter(.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256)
+                AddSPParameter(.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024)
+                AddSPParameter(.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256)
+                AddSPParameter(.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount)
+
+                AddSPParameterOutput(.Parameters, "@message", String.Empty, 512)
+
+            End With
+
+            'Execute the SP
+            MyCmd.ExecuteNonQuery()
+
+        Catch ex As Exception
+            ' Ignore errors here
+            Console.WriteLine("Error in clsDBStatusLogger.LogStatus: " & ex.Message)
+        End Try
+
+    End Sub
 
 	Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, ByVal strParamName As String, ByVal strValue As String, ByVal intVarCharLength As Integer)
 		' Make sure the parameter starts with an @ sign

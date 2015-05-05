@@ -576,6 +576,11 @@ Public Class clsStatusFile
 
 	End Function
 
+    Public Function GetProcessID() As Integer
+        Dim processID = Process.GetCurrentProcess().Id
+        Return processID
+    End Function
+
 	Protected Sub LogStatusToMessageQueue(ByVal strStatusXML As String)
 
 		Const MINIMUM_LOG_FAILURE_INTERVAL_MINUTES As Single = 10
@@ -626,8 +631,9 @@ Public Class clsStatusFile
 			.MgrStatus = m_MgrStatus
 			.LastUpdate = DateTime.UtcNow()
 			.LastStartTime = m_TaskStartTime
-			.CPUUtilization = m_CpuUtilization
-			.FreeMemoryMB = m_FreeMemoryMB
+            .CPUUtilization = m_CpuUtilization
+            .FreeMemoryMB = m_FreeMemoryMB
+            .ProcessID = GetProcessID()
 
 			If m_RecentErrorMessageCount = 0 Then
 				.MostRecentErrorMessage = String.Empty
@@ -779,7 +785,8 @@ Public Class clsStatusFile
 				XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
 				XWriter.WriteElementString("LastStartTime", m_TaskStartTime.ToLocalTime().ToString())
 				XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString("##0.0"))
-				XWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
+                XWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
+                XWriter.WriteElementString("ProcessID", GetProcessID().ToString())
 				XWriter.WriteStartElement("RecentErrorMessages")
 				If m_RecentErrorMessageCount = 0 Then
 					XWriter.WriteElementString("ErrMsg", String.Empty)

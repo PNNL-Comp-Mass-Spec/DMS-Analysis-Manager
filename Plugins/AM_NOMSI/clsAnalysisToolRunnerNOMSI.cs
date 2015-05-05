@@ -110,7 +110,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 if (noPeaksFound)
                 {
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_NO_DATA;                
+                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_NO_DATA;                   
                 }
                 else if (!success)
                 {
@@ -293,22 +293,19 @@ namespace AnalysisManagerNOMSIPlugin
         {
             // Example Console output
             //
-            // log dump time stamp 4/30/2015 6:37:12 PM
-            // aah! being born again!
-            // dataset_path=E:\DMS_WorkDir\2014_05_09_Kaplan_Far_Neg_000001_scan1.xml
+            // start=5/4/2015 2:16:45 PM
+            // dataset_path=E:\DMS_WorkDir\2015_04_05_ESIL_Pos_ESIL_HighMass_TOF1p4_000001_scan1.xml
             // param_file_path=E:\DMS_WorkDir\NOMSI_DI_Diagnostics_Targets_Pairs_2015-04-30.param
-            // distribution definition	m 100 1200 111=success
-            // distribution definition	logabu 1 10 37=success
-            // distribution definition	relabu 0 1 26=success
-            // distribution definition	sn 1 50 99=success
-            // distribution definition	kmd 0 1 26=success
-            // dm definition	E:\DMS_WorkDir\dmTransformations_Malak.inf=success
-            // diagnostics	success
-            // log dump time stamp 4/30/2015 6:37:13 PM
-            // that's all folks!
+            // 	err	[Only one peak found; cannot run diagnostics]
+            // diagnostics=failure
+            // summary=success
+            // end=5/4/2015 2:16:45 PM
+            // 
 
             try
             {
+
+                var reErrorMessage = new Regex(@"err\t\[(.+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 if (!File.Exists(strConsoleOutputFilePath))
                 {
@@ -342,7 +339,23 @@ namespace AnalysisManagerNOMSIPlugin
                             StoreConsoleErrorMessage(srInFile, strLineIn);
                         }
 
-                        if (strLineIn.StartsWith("no peaks found, discovered or perceived"))
+                        var reMatch = reErrorMessage.Match(strLineIn);
+                        if (reMatch.Success)
+                        {
+                            var errorMessage = reMatch.Groups[1].Value;
+
+                            if (errorMessage.Contains("No peaks found") ||
+                                errorMessage.Contains("Only one peak found"))
+                            {
+                                mNoPeaksFound = true;
+                            }
+                            else
+                            {
+                                mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, errorMessage);                                    
+                            }
+                        }
+                        else if (strLineIn.Contains("No peaks found") ||
+                            strLineIn.Contains("Only one peak found"))
                         {
                             mNoPeaksFound = true;
                         }
@@ -381,8 +394,9 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (scanCount == 1)
             {
-                // Skip the console output file
+                // Skip the console output file and nomsi summary file
                 m_jobParams.AddResultFileToSkip(mCurrentConsoleOutputFile);
+                m_jobParams.AddResultFileToSkip("nomsi_summary.txt");
 
                 // Combine the distribution files into a single .zip file
                 filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
@@ -440,8 +454,8 @@ namespace AnalysisManagerNOMSIPlugin
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
                 EchoOutputToConsole = true,
-                WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = mCurrentConsoleOutputFile
+                WriteConsoleOutputToFile = false
+                // ConsoleOutputFilePath = mCurrentConsoleOutputFile
             };
 
             cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
@@ -452,7 +466,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             var success = cmdRunner.RunProgram(progLoc, cmdStr, "NOMSI", true);
 
-            if (!cmdRunner.WriteConsoleOutputToFile)
+            if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
                 Thread.Sleep(250);
@@ -470,21 +484,21 @@ namespace AnalysisManagerNOMSIPlugin
                                      mConsoleOutputErrorMsg);
             }
 
-            // Parse the console output file one more time to check for errors
+            // Parse the nomsi_summary file to look for errors
             Thread.Sleep(250);
-            var fiConsoleOutputFile = new FileInfo(cmdRunner.ConsoleOutputFilePath);
-            if (fiConsoleOutputFile.Exists && fiConsoleOutputFile.Length == 0 || !fiConsoleOutputFile.Exists)
+            var fiLogSummaryFile = new FileInfo(Path.Combine(m_WorkDir, "nomsi_summary.txt"));
+            if (!fiLogSummaryFile.Exists)
             {
-                // There were no log messages
+                // Summary file not created
                 // Look for a log file in folder C:\Users\d3l243\AppData\Local\
                 var alternateLogPath = Path.Combine(@"C:\Users", GetUsername(), @"AppData\Local\NOMSI.log");
 
                 var fiAlternateLogFile = new FileInfo(alternateLogPath);
                 if (fiAlternateLogFile.Exists)
-                    fiAlternateLogFile.CopyTo(cmdRunner.ConsoleOutputFilePath, true);
+                    fiAlternateLogFile.CopyTo(fiLogSummaryFile.FullName, true);
             }
 
-            ParseConsoleOutputFile(cmdRunner.ConsoleOutputFilePath);
+            ParseConsoleOutputFile(fiLogSummaryFile.FullName);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
@@ -493,7 +507,7 @@ namespace AnalysisManagerNOMSIPlugin
             }
 
             if (success)
-            {                
+            {
                 return true;
             }
 
@@ -605,6 +619,8 @@ namespace AnalysisManagerNOMSIPlugin
                         m_EvalMessage = "Scan did not have peaks";
 
                     noPeaksFound = true;
+
+                    m_jobParams.AddResultFileToSkip(paramFilePath);
                 }
                 else
                 {

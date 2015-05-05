@@ -537,7 +537,7 @@ Public Class clsMainProcess
         Dim jobNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0)
         Dim stepNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0)
         Dim datasetName As String = m_AnalysisTask.GetParam("JobParameters", "DatasetNum")
-        Dim jobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription
+        Dim jobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription()
 
         Dim blnRunToolError As Boolean = False
 
@@ -563,10 +563,17 @@ Public Class clsMainProcess
             .UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RETRIEVING_RESOURCES, 0, 0, "", "", m_MostRecentJobInfo, True)
         End With
 
+        Dim processID = Process.GetCurrentProcess().Id
+
         ' Note: The format of the following text is important; be careful about changing it
         ' In particular, function DetermineRecentErrorMessages in clsMainProcess looks for log entries
-        '   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool (.+), Normal"
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName & ", Tool " & jobToolDescription)
+        '   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool ([^,]+)"
+
+        ' Example log entries
+        ' 5/04/2015 12:34:46, Pub-88-3: Started analysis job 1193079, Dataset Lp_PDEC_N-sidG_PD1_1May15_Lynx_15-01-24, Tool Decon2LS_V2, Step 1, INFO,
+        ' 5/04/2015 10:54:49, Proto-6_Analysis-1: Started analysis job 1192426, Dataset LewyHNDCGlobFractestrecheck_SRM_HNDC_Frac46_smeagol_05Apr15_w6326a, Tool Results_Transfer (MASIC_Finnigan), Step 2, INFO,
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName & ", Tool " & jobToolDescription & ", Process ID " & processID)
 
         If m_DebugLevel >= 2 Then
             ' Log the debug level value whenever the debug level is 2 or higher
@@ -943,7 +950,12 @@ Public Class clsMainProcess
         Const ERROR_MATCH_REGEX As String = "^([^,]+),(.+), Error, *$"
 
         ' This regex looks for information on a job starting
-        Const JOB_START_REGEX As String = "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool (.+), Normal"
+        ' Note: do not try to match "Step \d+" with this regex due to variations on how the log message appears
+        Const JOB_START_REGEX As String = "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool ([^,]+)"
+
+        ' Examples matching log entries
+        ' 5/04/2015 12:34:46, Pub-88-3: Started analysis job 1193079, Dataset Lp_PDEC_N-sidG_PD1_1May15_Lynx_15-01-24, Tool Decon2LS_V2, Step 1, INFO,
+        ' 5/04/2015 10:54:49, Proto-6_Analysis-1: Started analysis job 1192426, Dataset LewyHNDCGlobFractestrecheck_SRM_HNDC_Frac46_smeagol_05Apr15_w6326a, Tool Results_Transfer (MASIC_Finnigan), Step 2, INFO,
 
         ' The following effectively defines the number of days in the past to search when finding recent errors
         Const MAX_LOG_FILES_TO_SEARCH As Integer = 5
@@ -1660,12 +1672,17 @@ Public Class clsMainProcess
         Dim logMemoryUsage As Boolean = m_MgrSettings.GetParam("LogMemoryUsage", False)
         Dim minimumMemoryUsageLogInterval As Single = m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1)
 
+        ' Most managers have logStatusToBrokerDb=False and logStatusToMessageQueue=True
         Dim logStatusToBrokerDb As Boolean = m_MgrSettings.GetParam("LogStatusToBrokerDB", False)
         Dim brokerDbConnectionString As String = m_MgrSettings.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
         Dim brokerDbStatusUpdateIntervalMinutes As Single = m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60)
 
         Dim logStatusToMessageQueue As Boolean = m_MgrSettings.GetParam("LogStatusToMessageQueue", False)
-        If DisableMessageQueue Then logStatusToMessageQueue = False
+        If DisableMessageQueue Then
+            ' Command line has switch /NQ
+            ' Disable message queue logging
+            logStatusToMessageQueue = False
+        End If
 
         Dim messageQueueUri As String = m_MgrSettings.GetParam("MessageQueueURI")
         Dim messageQueueTopicMgrStatus As String = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus")
