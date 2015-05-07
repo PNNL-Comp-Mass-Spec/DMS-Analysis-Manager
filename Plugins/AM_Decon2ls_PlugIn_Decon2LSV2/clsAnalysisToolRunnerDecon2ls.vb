@@ -1008,15 +1008,15 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening the DeconTools results file: " & strFilePath)
 
-		Using srReader As StreamReader = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-			While srReader.Peek > -1 AndAlso intDataLineCount < 2
+        Using srReader = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            While Not srReader.EndOfStream AndAlso intDataLineCount < 2
 
-				Dim strLineIn As String = srReader.ReadLine()
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					intDataLineCount += 1
-				End If
-			End While
-		End Using
+                Dim strLineIn As String = srReader.ReadLine()
+                If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    intDataLineCount += 1
+                End If
+            End While
+        End Using
 
 		If intDataLineCount >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconTools results file has at least two non-blank lines")

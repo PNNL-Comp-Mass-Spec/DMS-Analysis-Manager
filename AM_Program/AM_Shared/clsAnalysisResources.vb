@@ -7033,7 +7033,19 @@ Public MustInherit Class clsAnalysisResources
 
 	Private Sub m_CDTAUtilities_WarningEvent(ByVal strMessage As String) Handles m_CDTAUtilities.WarningEvent
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
-	End Sub
+    End Sub
+
+    Private Sub m_FileTools_LockQueueTimedOut(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueTimedOut
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Locked queue timed out after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisResources); Source=" & sourceFilePath & ", Target=" & targetFilePath)
+        End If
+    End Sub
+
+    Private Sub m_FileTools_LockQueueWaitComplete(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueWaitComplete
+        If m_DebugLevel >= 1 AndAlso waitTimeMinutes >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exited lockfile queue after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisResources); will now copy file")
+        End If
+    End Sub
 
 	Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
 

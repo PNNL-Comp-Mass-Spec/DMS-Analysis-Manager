@@ -583,98 +583,101 @@ Public Class clsExtractToolRunner
 	  ByVal lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
 
 		Try
-			Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_PepToProtMap.txt")
-			Dim lstPeptideLinesToWrite = New List(Of String)
-			Dim totalLinesProcessed As Int64 = 0
+            Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_PepToProtMap.txt")
+
+            Dim fiTempFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_PepToProtMap.tmp"))
+            m_jobParams.AddResultFileToSkip(fiTempFile.Name)
+
+            Dim totalLinesProcessed As Int64 = 0
+            Dim totalLinesToWrite As Int64 = 0
 
 			Dim lstPepProtMappingWritten = New SortedSet(Of String)
 
 			Dim lastPeptideFull As String = String.Empty
 			Dim addCurrentPeptide As Boolean = False
 
-			Using swMergedFile = New StreamWriter(New FileStream(mergedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swTempFile = New StreamWriter(New FileStream(fiTempFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-				For iteration As Integer = 1 To numberOfClonedSteps
+                For iteration As Integer = 1 To numberOfClonedSteps
 
-					Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & "_PepToProtMap.txt")
-					Dim linesRead As Integer = 0
+                    Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & "_PepToProtMap.txt")
+                    Dim linesRead As Integer = 0
 
-					If m_DebugLevel >= 2 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching data from " & sourceFilePath)
-					End If
+                    If m_DebugLevel >= 2 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching data from " & sourceFilePath)
+                    End If
 
-					Using srSourceFile = New StreamReader(New FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-						While srSourceFile.Peek() > -1
-							Dim strLineIn = srSourceFile.ReadLine()
-							linesRead += 1
-							totalLinesProcessed += 1
+                    Using srSourceFile = New StreamReader(New FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        While srSourceFile.Peek() > -1
+                            Dim strLineIn = srSourceFile.ReadLine()
+                            linesRead += 1
+                            totalLinesProcessed += 1
 
-							If linesRead = 1 Then
-								If iteration = 1 Then
-									' Write the header line
-									swMergedFile.WriteLine(strLineIn)
-								End If
-							Else
-								Dim charIndex = strLineIn.IndexOf(ControlChars.Tab)
-								If charIndex > 0 Then
-									Dim peptideFull = strLineIn.Substring(0, charIndex)
-									Dim peptide = clsMSGFPlusPSMs.RemovePrefixAndSuffix(peptideFull)
+                            If linesRead = 1 AndAlso iteration = 1 Then
+                                ' Write the header line
+                                swTempFile.WriteLine(strLineIn)
+                                Continue While
+                            End If
 
-									If String.Equals(lastPeptideFull, peptideFull) OrElse lstFilterPassingPeptides.Contains(peptide) Then
+                            Dim charIndex = strLineIn.IndexOf(ControlChars.Tab)
+                            If charIndex <= 0 Then
+                                Continue While
+                            End If
 
-										If Not String.Equals(lastPeptideFull, peptideFull) Then
-											' Done processing the last peptide; we can now update lstPepProtMappingWritten to True for this peptide
-											' to prevent it from getting added to the merged file again in the future
+                            Dim peptideFull = strLineIn.Substring(0, charIndex)
+                            Dim peptide = clsMSGFPlusPSMs.RemovePrefixAndSuffix(peptideFull)
 
-											If Not String.IsNullOrEmpty(lastPeptideFull) Then
-												If Not lstPepProtMappingWritten.Contains(lastPeptideFull) Then
-													lstPepProtMappingWritten.Add(lastPeptideFull)
-												End If
-											End If
+                            If String.Equals(lastPeptideFull, peptideFull) OrElse lstFilterPassingPeptides.Contains(peptide) Then
 
-											lastPeptideFull = String.Copy(peptideFull)
-											addCurrentPeptide = Not lstPepProtMappingWritten.Contains(peptideFull)
+                                If Not String.Equals(lastPeptideFull, peptideFull) Then
+                                    ' Done processing the last peptide; we can now update lstPepProtMappingWritten to True for this peptide
+                                    ' to prevent it from getting added to the merged file again in the future
 
-										End If
+                                    If Not String.IsNullOrEmpty(lastPeptideFull) Then
+                                        If Not lstPepProtMappingWritten.Contains(lastPeptideFull) Then
+                                            lstPepProtMappingWritten.Add(lastPeptideFull)
+                                        End If
+                                    End If
 
-										' Add this peptide if we didn't already add it during a previous iteration
-										If addCurrentPeptide Then
-											lstPeptideLinesToWrite.Add(strLineIn)
-										End If
-									End If
+                                    lastPeptideFull = String.Copy(peptideFull)
+                                    addCurrentPeptide = Not lstPepProtMappingWritten.Contains(peptideFull)
 
-								End If
-							End If
-						End While
-					End Using
+                                End If
 
-				Next
+                                ' Add this peptide if we didn't already add it during a previous iteration
+                                If addCurrentPeptide Then
+                                    swTempFile.WriteLine(strLineIn)
+                                    totalLinesToWrite += 1
+                                End If
+                            End If
 
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sorting " & lstPeptideLinesToWrite.Count & " lines of data in ParallelMSGFPlusMergePepToProtMapFiles")
-				End If
+                        End While
+                    End Using
 
-				' Sort the data, then write to disk
-				lstPeptideLinesToWrite.Sort()
+                Next
 
-				For Each peptideLine In lstPeptideLinesToWrite
-					swMergedFile.WriteLine(peptideLine)
-				Next
+            End Using
 
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Read " & totalLinesProcessed & " data lines from " & numberOfClonedSteps & " _PepToProtMap files; wrote " & lstPeptideLinesToWrite.Count & " data lines to the merged file")
-				End If
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Read " & totalLinesProcessed & " data lines from " & numberOfClonedSteps & " _PepToProtMap files; now sorting the " & totalLinesToWrite & " merged peptides using FlexibleFileSortUtility.dll")
+            End If
 
-			End Using
+            Threading.Thread.Sleep(250)
 
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Dim success = SortTextFile(fiTempFile.FullName, mergedFilePath, True)
 
-		Catch ex As Exception
-			m_message = "Error in ParallelMSGFPlusMergePepToProtMapFiles"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            If Not success Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+        Catch ex As Exception
+            m_message = "Error in ParallelMSGFPlusMergePepToProtMapFiles"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
 	End Function
 

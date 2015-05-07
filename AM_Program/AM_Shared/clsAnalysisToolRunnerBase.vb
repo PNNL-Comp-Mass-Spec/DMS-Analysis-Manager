@@ -83,6 +83,9 @@ Public Class clsAnalysisToolRunnerBase
 
     Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
 
+    Private mLastSortUtilityProgress As DateTime
+    Private mSortUtilityErrorMessage As String
+
 #End Region
 
 #Region "Properties"
@@ -1012,6 +1015,11 @@ Public Class clsAnalysisToolRunnerBase
         If IsFile Then
             'Data is a file, so use file deletion tools
             Try
+                If Not File.Exists(FileOrFolderName) Then
+                    ' File not found; treat this as a success
+                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                End If
+
                 ' DeleteFileWithRetries will throw an exception if it cannot delete any raw data files (e.g. the .UIMF file)
                 ' Thus, need to wrap it with an Exception handler
 
@@ -1033,7 +1041,9 @@ Public Class clsAnalysisToolRunnerBase
         Else
             'Use folder deletion tools
             Try
-                Directory.Delete(FileOrFolderName, True)
+                If Directory.Exists(FileOrFolderName) Then
+                    Directory.Delete(FileOrFolderName, True)
+                End If
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             Catch ex As Exception
                 m_message = "Exception deleting raw data folder " & FileOrFolderName & ": " & _
@@ -1257,7 +1267,7 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
             Return True
-          
+
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception getting current manager settings from the manager control DB: " & ex.Message)
         End Try
@@ -1377,7 +1387,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Return strMSXmlGeneratorExe
     End Function
-    
+
     ''' <summary>
     ''' Lookup the transfer folder path
     ''' </summary>
@@ -1538,6 +1548,11 @@ Public Class clsAnalysisToolRunnerBase
     Protected Sub LogError(ByVal errorMessage As String)
         m_message = errorMessage
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+    End Sub
+
+    Protected Sub LogError(ByVal errorMessage As String, ByVal ex As Exception)
+        m_message = String.Copy(errorMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage, ex)
     End Sub
 
     Protected Sub LogError(ByVal errorMessage As String, ByVal detailedMessage As String)
@@ -2327,6 +2342,44 @@ Public Class clsAnalysisToolRunnerBase
 
     End Function
 
+    Protected Function SortTextFile(ByVal textFilePath As String, ByVal mergedFilePath As String, ByVal hasHeaderLine As Boolean) As Boolean
+        Try
+            Dim sortUtility = New FlexibleFileSortUtility.TextFileSorter
+
+            mLastSortUtilityProgress = DateTime.UtcNow
+            mSortUtilityErrorMessage = String.Empty
+
+            sortUtility.WorkingDirectoryPath = m_WorkDir
+            sortUtility.HasHeaderLine = hasHeaderLine
+            sortUtility.ColumnDelimiter = ControlChars.Tab
+            sortUtility.MaxFileSizeMBForInMemorySort = FlexibleFileSortUtility.TextFileSorter.DEFAULT_IN_MEMORY_SORT_MAX_FILE_SIZE_MB
+            sortUtility.ChunkSizeMB = FlexibleFileSortUtility.TextFileSorter.DEFAULT_CHUNK_SIZE_MB
+
+            AddHandler sortUtility.ProgressChanged, AddressOf mSortUtility_ProgressChanged
+            AddHandler sortUtility.ErrorEvent, AddressOf mSortUtility_ErrorEvent
+            AddHandler sortUtility.WarningEvent, AddressOf mSortUtility_WarningEvent
+            AddHandler sortUtility.MessageEvent, AddressOf mSortUtility_MessageEvent
+
+            Dim success = sortUtility.SortFile(textFilePath, mergedFilePath)
+
+            If Not success Then
+                If String.IsNullOrWhiteSpace(mSortUtilityErrorMessage) Then
+                    m_message = "Unknown error sorting " & Path.GetFileName(textFilePath)
+                Else
+                    m_message = mSortUtilityErrorMessage
+                End If
+                Return False
+            End If
+
+            Return True
+
+        Catch ex As Exception
+            LogError("Exception in SortTextFile", ex)
+            Return False
+        End Try
+
+    End Function
+
     ''' <summary>
     ''' Uses Reflection to determine the version info for an assembly already loaded in memory
     ''' </summary>
@@ -3019,18 +3072,52 @@ Public Class clsAnalysisToolRunnerBase
 
     End Function
 
+#End Region
+
 #Region "Event Handlers"
+
+    Private Sub m_FileTools_LockQueueTimedOut(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueTimedOut
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Locked queue timed out after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisToolRunnerBase); Source=" & sourceFilePath & ", Target=" & targetFilePath)
+        End If
+    End Sub
+
+    Private Sub m_FileTools_LockQueueWaitComplete(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueWaitComplete
+        If m_DebugLevel >= 1 AndAlso waitTimeMinutes >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exited lockfile queue after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisToolRunnerBase); will now copy file")
+        End If
+    End Sub
+
     Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
         If DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
             m_LastLockQueueWaitTimeLog = DateTime.UtcNow
             If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisToolRunnerBase); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
             End If
         End If
     End Sub
 
-#End Region
+    Private Sub mSortUtility_ErrorEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
+        mSortUtilityErrorMessage = e.Message
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "SortUtility: " & e.Message)
+    End Sub
 
+    Private Sub mSortUtility_MessageEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SortUtility: " & e.Message)
+        End If
+    End Sub
+
+    Private Sub mSortUtility_ProgressChanged(sender As Object, e As FlexibleFileSortUtility.ProgressChangedEventArgs)
+        If m_DebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(mLastSortUtilityProgress).TotalSeconds >= 5 Then
+            mLastSortUtilityProgress = DateTime.UtcNow
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.taskDescription & ": " & e.percentComplete.ToString("0.0") & "% complete")
+        End If
+    End Sub
+
+    Private Sub mSortUtility_WarningEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SortUtility: " & e.Message)
+    End Sub
 
 #End Region
 
