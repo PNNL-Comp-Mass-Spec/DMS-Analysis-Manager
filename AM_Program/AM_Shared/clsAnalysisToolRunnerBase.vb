@@ -229,7 +229,7 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Computes the incremental progress that has been made beyond CurrentTaskProgressAtStart, based on the number of items processed and the next overall progress level
+    ''' Computes the incremental progress that has been made beyond currentTaskProgressAtStart, based on the number of items processed and the next overall progress level
     ''' </summary>
     ''' <param name="currentTaskProgressAtStart">Progress at the start of the current subtask (value between 0 and 100)</param>
     ''' <param name="currentTaskProgressAtEnd">Progress at the start of the current subtask (value between 0 and 100)</param>
@@ -247,21 +247,21 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Computes the incremental progress that has been made beyond CurrentTaskProgressAtStart, based on the number of items processed and the next overall progress level
+    ''' Computes the incremental progress that has been made beyond currentTaskProgressAtStart, based on the number of items processed and the next overall progress level
     ''' </summary>
-    ''' <param name="CurrentTaskProgressAtStart">Progress at the start of the current subtask (value between 0 and 100)</param>
-    ''' <param name="CurrentTaskProgressAtEnd">Progress at the start of the current subtask (value between 0 and 100)</param>
-    ''' <param name="CurrentTaskItemsProcessed">Number of items processed so far during this subtask</param>
-    ''' <param name="CurrentTaskTotalItems">Total number of items to process during this subtask</param>
+    ''' <param name="currentTaskProgressAtStart">Progress at the start of the current subtask (value between 0 and 100)</param>
+    ''' <param name="currentTaskProgressAtEnd">Progress at the start of the current subtask (value between 0 and 100)</param>
+    ''' <param name="currentTaskItemsProcessed">Number of items processed so far during this subtask</param>
+    ''' <param name="currentTaskTotalItems">Total number of items to process during this subtask</param>
     ''' <returns>Overall progress (value between 0 and 100)</returns>
     ''' <remarks></remarks>
-    Public Shared Function ComputeIncrementalProgress(ByVal CurrentTaskProgressAtStart As Single, ByVal CurrentTaskProgressAtEnd As Single, ByVal CurrentTaskItemsProcessed As Integer, ByVal CurrentTaskTotalItems As Integer) As Single
-        If CurrentTaskTotalItems < 1 Then
-            Return CurrentTaskProgressAtStart
-        ElseIf CurrentTaskItemsProcessed > CurrentTaskTotalItems Then
-            Return CurrentTaskProgressAtEnd
+    Public Shared Function ComputeIncrementalProgress(ByVal currentTaskProgressAtStart As Single, ByVal currentTaskProgressAtEnd As Single, ByVal currentTaskItemsProcessed As Integer, ByVal currentTaskTotalItems As Integer) As Single
+        If currentTaskTotalItems < 1 Then
+            Return currentTaskProgressAtStart
+        ElseIf currentTaskItemsProcessed > currentTaskTotalItems Then
+            Return currentTaskProgressAtEnd
         Else
-            Return CSng(CurrentTaskProgressAtStart + (CurrentTaskItemsProcessed / CurrentTaskTotalItems) * (CurrentTaskProgressAtEnd - CurrentTaskProgressAtStart))
+            Return CSng(currentTaskProgressAtStart + (currentTaskItemsProcessed / currentTaskTotalItems) * (currentTaskProgressAtEnd - currentTaskProgressAtStart))
         End If
     End Function
 
@@ -3104,7 +3104,7 @@ Public Class clsAnalysisToolRunnerBase
 
     Private Sub mSortUtility_MessageEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SortUtility: " & e.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message)
         End If
     End Sub
 

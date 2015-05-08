@@ -256,23 +256,31 @@ Public Class clsMSGFResultsSummarizer
 			' Initialize the list that will be used to track the number of spectra searched
 			lstUniqueSpectra = New Dictionary(Of String, Integer)
 
-			Using objReader As clsPHRPReader = New clsPHRPReader(strFirstHitsFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=False)
-				While objReader.MoveNext()
+            Dim oStartupOptions = New clsPHRPStartupOptions()
+            With oStartupOptions
+                .LoadModsAndSeqInfo = False
+                .LoadMSGFResults = False
+                .LoadScanStatsData = False
+                .MaxProteinsPerPSM = 1
+            End With
 
-					Dim objPSM As clsPSM
-					objPSM = objReader.CurrentPSM
+            Using objReader = New clsPHRPReader(strFirstHitsFilePath, oStartupOptions)
+                While objReader.MoveNext()
 
-					If objPSM.Charge >= 0 Then
-						strScanChargeCombo = objPSM.ScanNumber.ToString() & "_" & objPSM.Charge.ToString()
+                    Dim objPSM As clsPSM
+                    objPSM = objReader.CurrentPSM
 
-						If Not lstUniqueSpectra.ContainsKey(strScanChargeCombo) Then
-							lstUniqueSpectra.Add(strScanChargeCombo, 0)
-						End If
+                    If objPSM.Charge >= 0 Then
+                        strScanChargeCombo = objPSM.ScanNumber.ToString() & "_" & objPSM.Charge.ToString()
 
-					End If
+                        If Not lstUniqueSpectra.ContainsKey(strScanChargeCombo) Then
+                            lstUniqueSpectra.Add(strScanChargeCombo, 0)
+                        End If
 
-				End While
-			End Using
+                    End If
+
+                End While
+            End Using
 
 			mSpectraSearched = lstUniqueSpectra.Count
 
@@ -716,88 +724,96 @@ Public Class clsMSGFResultsSummarizer
 
 	End Function
 
-	Protected Function LoadPSMs(ByVal strPHRPSynopsisFilePath As String, ByRef lstPSMs As Dictionary(Of Integer, udtPSMInfoType)) As Boolean
+    Protected Function LoadPSMs(ByVal strPHRPSynopsisFilePath As String, ByVal lstPSMs As Dictionary(Of Integer, udtPSMInfoType)) As Boolean
 
-		Dim dblSpecProb As Double = UNKNOWN_MSGF_SPECPROB
-		Dim dblEValue As Double = UNKNOWN_EVALUE
+        Dim dblSpecProb As Double = UNKNOWN_MSGF_SPECPROB
+        Dim dblEValue As Double = UNKNOWN_EVALUE
 
-		Dim blnSuccess As Boolean
-		Dim udtPSMInfo As udtPSMInfoType
+        Dim blnSuccess As Boolean
+        Dim udtPSMInfo As udtPSMInfoType
 
-		Dim blnLoadMSGFResults = True
+        Dim blnLoadMSGFResults = True
 
-		Try
+        Try
 
-			If mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-				blnLoadMSGFResults = False
-			End If
+            If mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+                blnLoadMSGFResults = False
+            End If
 
-			Using objPHRPReader As New clsPHRPReader(strPHRPSynopsisFilePath, blnLoadModsAndSeqInfo:=False, blnLoadMSGFResults:=blnLoadMSGFResults)
+            Dim oStartupOptions = New clsPHRPStartupOptions()
+            With oStartupOptions
+                .LoadModsAndSeqInfo = False
+                .LoadMSGFResults = blnLoadMSGFResults
+                .LoadScanStatsData = False
+                .MaxProteinsPerPSM = 1
+            End With
 
-				Do While objPHRPReader.MoveNext()
+            Using objPHRPReader As New clsPHRPReader(strPHRPSynopsisFilePath, oStartupOptions)
 
-					Dim objPSM As clsPSM
-					objPSM = objPHRPReader.CurrentPSM
+                Do While objPHRPReader.MoveNext()
 
-					Dim blnValid = False
+                    Dim objPSM As clsPSM
+                    objPSM = objPHRPReader.CurrentPSM
 
-					If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-						' Use the EValue reported by MSAlign
+                    Dim blnValid = False
 
-						Dim strEValue = String.Empty
-						If objPSM.TryGetScore("EValue", strEValue) Then
-							blnValid = Double.TryParse(strEValue, dblEValue)
-						End If
+                    If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+                        ' Use the EValue reported by MSAlign
 
-					ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-						' MODa results don't have spectral probability, but they do have FDR
-						blnValid = True
+                        Dim strEValue = String.Empty
+                        If objPSM.TryGetScore("EValue", strEValue) Then
+                            blnValid = Double.TryParse(strEValue, dblEValue)
+                        End If
 
-					Else
-						blnValid = Double.TryParse(objPSM.MSGFSpecProb, dblSpecProb)
-					End If
+                    ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+                        ' MODa results don't have spectral probability, but they do have FDR
+                        blnValid = True
 
-					If blnValid Then
+                    Else
+                        blnValid = Double.TryParse(objPSM.MSGFSpecProb, dblSpecProb)
+                    End If
 
-						' Store in lstPSMs
-						If Not lstPSMs.ContainsKey(objPSM.ResultID) Then
+                    If blnValid Then
 
-							udtPSMInfo.Protein = objPSM.ProteinFirst
-							udtPSMInfo.MSGF = dblSpecProb
-							udtPSMInfo.EValue = dblEValue
+                        ' Store in lstPSMs
+                        If Not lstPSMs.ContainsKey(objPSM.ResultID) Then
 
-							If mResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Or
-							   mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-								udtPSMInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1)
-								If udtPSMInfo.FDR < 0 Then
-									udtPSMInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_EFDR, -1)
-								End If
+                            udtPSMInfo.Protein = objPSM.ProteinFirst
+                            udtPSMInfo.MSGF = dblSpecProb
+                            udtPSMInfo.EValue = dblEValue
 
-							ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-								udtPSMInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, -1)
+                            If mResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Or
+                               mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+                                udtPSMInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1)
+                                If udtPSMInfo.FDR < 0 Then
+                                    udtPSMInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_EFDR, -1)
+                                End If
 
-							Else
-								udtPSMInfo.FDR = -1
-							End If
+                            ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+                                udtPSMInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, -1)
 
-							lstPSMs.Add(objPSM.ResultID, udtPSMInfo)
-						End If
+                            Else
+                                udtPSMInfo.FDR = -1
+                            End If
 
-					End If
-				Loop
+                            lstPSMs.Add(objPSM.ResultID, udtPSMInfo)
+                        End If
 
-			End Using
+                    End If
+                Loop
 
-			blnSuccess = True
+            End Using
 
-		Catch ex As Exception
-			SetErrorMessage(ex.Message)
-			blnSuccess = False
-		End Try
+            blnSuccess = True
 
-		Return blnSuccess
+        Catch ex As Exception
+            SetErrorMessage(ex.Message)
+            blnSuccess = False
+        End Try
 
-	End Function
+        Return blnSuccess
+
+    End Function
 
 	Protected Function SaveResultsToFile() As Boolean
 

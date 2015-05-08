@@ -82,6 +82,7 @@ Public Class clsSplitFastaFileUtilities
 
 		Do
 			intAttemptCount += 1
+            Dim creatingLockFile = False
 
 			Try
 				lockFi.Refresh()
@@ -110,6 +111,7 @@ Public Class clsSplitFastaFileUtilities
 				End If
 
 				' Try to create a lock file so that the calling procedure can create the required .Fasta file (or validate that it now exists)
+                creatingLockFile = True
 
 				' Try to create the lock file
 				' If another process is still using it, an exception will be thrown
@@ -119,8 +121,17 @@ Public Class clsSplitFastaFileUtilities
 				' so we should exit the Do Loop
 				Exit Do
 
-			Catch ex As Exception
-				OnProgressUpdate("Exception while monitoring " & LOCK_FILE_PROGRESS_TEXT & " " & lockFi.FullName & ": " & ex.Message, 0)
+            Catch ex As Exception
+                If creatingLockFile Then
+                    If ex.Message.Contains("being used by another process") Then
+                        OnProgressUpdate("Another process has already created a " & LOCK_FILE_PROGRESS_TEXT & " at " & lockFi.FullName & "; will try again to monitor or create a new one", 0)
+                    Else
+                        OnProgressUpdate("Exception while creating a new " & LOCK_FILE_PROGRESS_TEXT & " at " & lockFi.FullName & ": " & ex.Message, 0)
+                    End If
+                Else
+                    OnProgressUpdate("Exception while monitoring " & LOCK_FILE_PROGRESS_TEXT & " " & lockFi.FullName & ": " & ex.Message, 0)
+                End If
+
 			End Try
 
 			' Something went wrong; wait for 15 seconds then try again

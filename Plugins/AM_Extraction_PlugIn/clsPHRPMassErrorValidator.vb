@@ -1,6 +1,7 @@
 ﻿Option Strict On
 
 Imports AnalysisManagerBase
+Imports PHRPReader
 
 Public Class clsPHRPMassErrorValidator
 
@@ -104,7 +105,15 @@ Public Class clsPHRPMassErrorValidator
 		Try
 			mErrorMessage = String.Empty
 
-			mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, eResultType, blnLoadModsAndSeqInfo:=True, blnLoadMSGFResults:=False, blnLoadScanStats:=False)
+            Dim oStartupOptions = New clsPHRPStartupOptions()
+            With oStartupOptions
+                .LoadModsAndSeqInfo = True
+                .LoadMSGFResults = False
+                .LoadScanStatsData = False
+                .MaxProteinsPerPSM = 1
+            End With
+
+            mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, eResultType, oStartupOptions)
 
 			' Report any errors cached during instantiation of mPHRPReader
 			For Each strMessage As String In mPHRPReader.ErrorMessages
