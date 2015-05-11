@@ -14,6 +14,36 @@ AnalysisManagerICR2LSPlugIn
 	<param name="strFolderPath">Folder to examine</param>
 	<param name="strDatasetName">Dataset name</param>
 	<remarks></remarks>
+</member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(System.String,System.Boolean@)">
+	<summary>
+ Looks for a ser file, fid file, or 0.ser folder in strFolderToCheck
+ </summary>
+	<param name="strFolderToCheck"></param>
+	<param name="blnIsFolder"></param>
+	<returns>The path to the ser file, fid file, or 0.ser folder, if found.  An empty string if not found</returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisResourcesIcr2ls.RetrieveExistingTempPEKFile">
+	<summary>
+ Look for file .pek.tmp in the transfer folder
+ Retrieves the file if it is found
+ </summary>
+	<returns>
+ CLOSEOUT_SUCCESS if an existing file was found and copied, 
+ CLOSEOUT_FILE_NOT_FOUND if an existing file was not found, and 
+ CLOSEOUT_FAILURE if an error
+ </returns>
+	<remarks>
+ Does not validate that the ICR-2LS param file matches (in contrast, clsAnalysisResourcesSeq.vb does valid the param file).
+ This is done on purpose to allow us to update the param file mid job.
+ Scans already deisotoped will have used one parameter file; scans processed from this point forward
+ will use a different one; this is OK and allows us to adjust the settings mid-job.
+ To prevent this behavior, delete the .pek.tmp file from the transfer folder
+ </remarks>
+</member><member name="T:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerLTQ_FTPek">
+	<summary>
+ Performs PEK analysis using ICR-2LS on LTQ-FT MS data
+ </summary>
+	<remarks></remarks>
 </member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StartICR2LS(System.String,System.String,System.String,AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.ICR2LSProcessingModeConstants)">
 	<summary>
  Starts ICR-2LS by running the .Exe at the command line
@@ -24,18 +54,23 @@ AnalysisManagerICR2LSPlugIn
 	<param name="eICR2LSMode"></param>
 	<returns>True if successfully started; otherwise false</returns>
 	<remarks></remarks>
-</member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StartICR2LS(System.String,System.String,System.String,AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.ICR2LSProcessingModeConstants,System.Boolean,System.Int32,System.Int32)">
+</member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StartICR2LS(System.String,System.String,System.String,AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.ICR2LSProcessingModeConstants,System.Boolean,System.Boolean,System.Int32,System.Int32)">
 	<summary>
  Run ICR-2LS on the file (or 0.ser folder) specified by DSNamePath
  </summary>
-	<param name="DSNamePath"></param>
-	<param name="ParamFilePath"></param>
-	<param name="ResultsFileNamePath"></param>
+	<param name="instrumentFilePath"></param>
+	<param name="paramFilePath"></param>
+	<param name="resultsFileNamePath"></param>
 	<param name="eICR2LSMode"></param>
-	<param name="UseAllScans"></param>
-	<param name="MinScan"></param>
-	<param name="MaxScan"></param>
+	<param name="useAllScans"></param>
+	<param name="minScan"></param>
+	<param name="maxScan"></param>
 	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:AnalysisManagerICR2LSPlugIn.clsAnalysisToolRunnerICRBase.StoreToolVersionInfo">
+	<summary>
+ Stores the tool version info in the database
+ </summary>
 	<remarks></remarks>
 </member>
 </members>

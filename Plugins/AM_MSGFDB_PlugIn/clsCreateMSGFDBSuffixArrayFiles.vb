@@ -869,10 +869,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 	Protected Function CreateLockFile(ByVal strLockFilePath As String) As Boolean
 
 		Try
-            Using sw = New StreamWriter(strLockFilePath)
-                ' Add Date and time to the file.
-                sw.WriteLine(DateTime.Now)
-                sw.WriteLine(mMgrName)
+            Using swLockFile = New StreamWriter(strLockFilePath)
+                swLockFile.WriteLine("Date: " & DateTime.Now.ToString())
+                swLockFile.WriteLine("Manager: " & mMgrName)
             End Using
 
 		Catch ex As Exception

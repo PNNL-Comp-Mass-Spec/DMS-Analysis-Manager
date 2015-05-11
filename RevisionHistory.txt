@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+May 10, 2015
+	- Updated the .exe and all DLLs to AnyCPU
+
 January 31, 2015
 	- Added ProMex plugin
 	- Updated to .NET 4.0 version of Log4net

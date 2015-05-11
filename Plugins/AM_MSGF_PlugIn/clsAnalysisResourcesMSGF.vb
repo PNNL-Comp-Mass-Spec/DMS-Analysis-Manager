@@ -70,232 +70,232 @@ Public Class clsAnalysisResourcesMSGF
 	''' <remarks></remarks>
 	Private Function GetInputFiles(ByVal ResultType As String) As IJobParams.CloseOutType
 
-		Dim eResultType As clsPHRPReader.ePeptideHitResultType
+        Dim eResultType As clsPHRPReader.ePeptideHitResultType
 
-		Dim RawDataType As String
-		Dim eRawDataType As eRawDataTypeConstants
-		Dim blnMGFInstrumentData As Boolean
+        Dim RawDataType As String
+        Dim eRawDataType As eRawDataTypeConstants
+        Dim blnMGFInstrumentData As Boolean
 
-		Dim FileToGet As String
-		Dim strMzXMLFilePath As String = String.Empty
-		Dim strSynFilePath As String = String.Empty
+        Dim FileToGet As String
+        Dim strMzXMLFilePath As String = String.Empty
+        Dim strSynFilePath As String = String.Empty
 
-		Dim blnSuccess As Boolean = False
-		Dim blnOnlyCopyFHTandSYNfiles As Boolean
+        Dim blnSuccess As Boolean = False
+        Dim blnOnlyCopyFHTandSYNfiles As Boolean
 
-		' Make sure the ResultType is valid
-		eResultType = clsPHRPReader.GetPeptideHitResultType(ResultType)
+        ' Make sure the ResultType is valid
+        eResultType = clsPHRPReader.GetPeptideHitResultType(ResultType)
 
-		If eResultType = clsPHRPReader.ePeptideHitResultType.Sequest OrElse
-		  eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse
-		  eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse
-		  eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB OrElse
-		  eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-			blnSuccess = True
-		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Invalid tool result type (not supported by MSGF): " & ResultType)
-			blnSuccess = False
-		End If
+        If eResultType = clsPHRPReader.ePeptideHitResultType.Sequest OrElse
+          eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse
+          eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse
+          eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB OrElse
+          eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+            blnSuccess = True
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Invalid tool result type (not supported by MSGF): " & ResultType)
+            blnSuccess = False
+        End If
 
-		If Not blnSuccess Then
-			Return (IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES)
-		End If
+        If Not blnSuccess Then
+            Return (IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES)
+        End If
 
-		' Make sure the dataset type is valid
-		RawDataType = m_jobParams.GetParam("RawDataType")
-		eRawDataType = GetRawDataType(RawDataType)
-		blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
+        ' Make sure the dataset type is valid
+        RawDataType = m_jobParams.GetParam("RawDataType")
+        eRawDataType = GetRawDataType(RawDataType)
+        blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
-		If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-			' We do not need the mzXML file, the parameter file, or various other files if we are running MSGFDB and running MSGF v6432 or later
-			' Determine this by looking for job parameter MSGF_Version
+        If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
+            ' We do not need the mzXML file, the parameter file, or various other files if we are running MSGFDB and running MSGF v6432 or later
+            ' Determine this by looking for job parameter MSGF_Version
 
-			Dim strMSGFStepToolVersion As String = m_jobParams.GetParam("MSGF_Version")
+            Dim strMSGFStepToolVersion As String = m_jobParams.GetParam("MSGF_Version")
 
-			If String.IsNullOrWhiteSpace(strMSGFStepToolVersion) Then
-				' Production version of MSGFDB; don't need the parameter file, ModSummary file, or mzXML file
-				blnOnlyCopyFHTandSYNfiles = True
-			Else
-				' Specific version of MSGF is defined
-				' Check whether the version is one of the known versions for the old MSGF
-				If clsMSGFRunner.IsLegacyMSGFVersion(strMSGFStepToolVersion) Then
-					blnOnlyCopyFHTandSYNfiles = False
-				Else
-					blnOnlyCopyFHTandSYNfiles = True
-				End If
-			End If
-		ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-			' We do not need any raw data files for MODa
-			blnOnlyCopyFHTandSYNfiles = True
+            If String.IsNullOrWhiteSpace(strMSGFStepToolVersion) Then
+                ' Production version of MSGFDB; don't need the parameter file, ModSummary file, or mzXML file
+                blnOnlyCopyFHTandSYNfiles = True
+            Else
+                ' Specific version of MSGF is defined
+                ' Check whether the version is one of the known versions for the old MSGF
+                If clsMSGFRunner.IsLegacyMSGFVersion(strMSGFStepToolVersion) Then
+                    blnOnlyCopyFHTandSYNfiles = False
+                Else
+                    blnOnlyCopyFHTandSYNfiles = True
+                End If
+            End If
+        ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+            ' We do not need any raw data files for MODa
+            blnOnlyCopyFHTandSYNfiles = True
 
-		Else
-			' Not running MSGFDB or running MSFDB but using legacy msgf
-			blnOnlyCopyFHTandSYNfiles = False
+        Else
+            ' Not running MSGFDB or running MSFDB but using legacy msgf
+            blnOnlyCopyFHTandSYNfiles = False
 
-			If Not blnMGFInstrumentData Then
-				Select Case eRawDataType
-					Case eRawDataTypeConstants.ThermoRawFile, eRawDataTypeConstants.mzML, eRawDataTypeConstants.mzXML
-						' This is a valid data type
-					Case Else
-						m_message = "Dataset type " & RawDataType & " is not supported by MSGF"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message & "; must be one of the following: " & RAW_DATA_TYPE_DOT_RAW_FILES & ", " & RAW_DATA_TYPE_DOT_MZML_FILES & ", " & RAW_DATA_TYPE_DOT_MZXML_FILES)
-						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End Select
-			End If
+            If Not blnMGFInstrumentData Then
+                Select Case eRawDataType
+                    Case eRawDataTypeConstants.ThermoRawFile, eRawDataTypeConstants.mzML, eRawDataTypeConstants.mzXML
+                        ' This is a valid data type
+                    Case Else
+                        m_message = "Dataset type " & RawDataType & " is not supported by MSGF"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message & "; must be one of the following: " & RAW_DATA_TYPE_DOT_RAW_FILES & ", " & RAW_DATA_TYPE_DOT_MZML_FILES & ", " & RAW_DATA_TYPE_DOT_MZXML_FILES)
+                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End Select
+            End If
 
-		End If
+        End If
 
-		If Not blnOnlyCopyFHTandSYNfiles Then
-			' Get the Sequest, X!Tandem, Inspect, MSGF+, or MODa parameter file
-			FileToGet = m_jobParams.GetParam("ParmFileName")
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
+        If Not blnOnlyCopyFHTandSYNfiles Then
+            ' Get the Sequest, X!Tandem, Inspect, MSGF+, or MODa parameter file
+            FileToGet = m_jobParams.GetParam("ParmFileName")
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            m_jobParams.AddResultFileToSkip(FileToGet)
 
-			' Also copy the _ProteinMods.txt file
-			FileToGet = clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_DatasetName)
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				' Ignore this error; we don't really need this file
-			Else
-				m_jobParams.AddResultFileToKeep(FileToGet)
-			End If
+            ' Also copy the _ProteinMods.txt file
+            FileToGet = clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_DatasetName)
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                ' Ignore this error; we don't really need this file
+            Else
+                m_jobParams.AddResultFileToKeep(FileToGet)
+            End If
 
-		End If
+        End If
 
-		' Get the Sequest, X!Tandem, Inspect, MSGF+, or MODa PHRP _syn.txt file
-		FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, m_DatasetName)
-		If Not String.IsNullOrEmpty(FileToGet) Then
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
-			strSynFilePath = Path.Combine(m_WorkingDir, FileToGet)
-		End If
+        ' Get the Sequest, X!Tandem, Inspect, MSGF+, or MODa PHRP _syn.txt file
+        FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, m_DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            m_jobParams.AddResultFileToSkip(FileToGet)
+            strSynFilePath = Path.Combine(m_WorkingDir, FileToGet)
+        End If
 
-		' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _fht.txt file
-		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
-		If Not String.IsNullOrEmpty(FileToGet) Then
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
-		End If
+        ' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _fht.txt file
+        FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            m_jobParams.AddResultFileToSkip(FileToGet)
+        End If
 
-		' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _ResultToSeqMap.txt file
-		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
-		If Not String.IsNullOrEmpty(FileToGet) Then
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
-		End If
+        ' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _ResultToSeqMap.txt file
+        FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            m_jobParams.AddResultFileToSkip(FileToGet)
+        End If
 
-		' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _SeqToProteinMap.txt file
-		FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
-		If Not String.IsNullOrEmpty(FileToGet) Then
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
-		End If
+        ' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _SeqToProteinMap.txt file
+        FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            m_jobParams.AddResultFileToSkip(FileToGet)
+        End If
 
-		' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _PepToProtMapMTS.txt file
-		FileToGet = clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, m_DatasetName)
-		If Not String.IsNullOrEmpty(FileToGet) Then
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
-		End If
+        ' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _PepToProtMapMTS.txt file
+        FileToGet = clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, m_DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            End If
+            m_jobParams.AddResultFileToSkip(FileToGet)
+        End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Dim SynFileSizeBytes As Int64 = 0
-		Dim ioSynFile As FileInfo = New FileInfo(strSynFilePath)
-		If ioSynFile.Exists Then
-			SynFileSizeBytes = ioSynFile.Length
-		End If
+        Dim SynFileSizeBytes As Int64 = 0
+        Dim ioSynFile As FileInfo = New FileInfo(strSynFilePath)
+        If ioSynFile.Exists Then
+            SynFileSizeBytes = ioSynFile.Length
+        End If
 
-		If Not blnOnlyCopyFHTandSYNfiles Then
-			' Get the ModSummary.txt file        
-			FileToGet = clsPHRPReader.GetPHRPModSummaryFileName(eResultType, m_DatasetName)
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				' _ModSummary.txt file not found
-				' This will happen if the synopsis file is empty
-				' Try to copy the _ModDefs.txt file instead
+        If Not blnOnlyCopyFHTandSYNfiles Then
+            ' Get the ModSummary.txt file        
+            FileToGet = clsPHRPReader.GetPHRPModSummaryFileName(eResultType, m_DatasetName)
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                ' _ModSummary.txt file not found
+                ' This will happen if the synopsis file is empty
+                ' Try to copy the _ModDefs.txt file instead
 
-				If SynFileSizeBytes = 0 Then
-					' If the synopsis file is 0-bytes, then the _ModSummary.txt file won't exist; that's OK
-					Dim strModDefsFile As String
-					Dim strTargetFile As String = Path.Combine(m_WorkingDir, FileToGet)
+                If SynFileSizeBytes = 0 Then
+                    ' If the synopsis file is 0-bytes, then the _ModSummary.txt file won't exist; that's OK
+                    Dim strModDefsFile As String
+                    Dim strTargetFile As String = Path.Combine(m_WorkingDir, FileToGet)
 
-					strModDefsFile = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) & PHRP_MOD_DEFS_SUFFIX
+                    strModDefsFile = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) & PHRP_MOD_DEFS_SUFFIX
 
-					If Not FindAndRetrieveMiscFiles(strModDefsFile, False) Then
-						' Rename the file to end in _ModSummary.txt
-						m_PendingFileRenames.Add(strModDefsFile, strTargetFile)
-					Else
-						'Errors were reported in function call, so just return
-						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-					End If
-				Else
-					'Errors were reported in function call, so just return
-					Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-				End If
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
-		End If
+                    If Not FindAndRetrieveMiscFiles(strModDefsFile, False) Then
+                        ' Rename the file to end in _ModSummary.txt
+                        m_PendingFileRenames.Add(strModDefsFile, strTargetFile)
+                    Else
+                        'Errors were reported in function call, so just return
+                        Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                    End If
+                Else
+                    'Errors were reported in function call, so just return
+                    Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                End If
+            End If
+            m_jobParams.AddResultFileToSkip(FileToGet)
+        End If
 
-		' Copy the PHRP files so that the PHRPReader can determine the modified residues and extract the protein names
-		' clsMSGFResultsSummarizer also uses these files
+        ' Copy the PHRP files so that the PHRPReader can determine the modified residues and extract the protein names
+        ' clsMSGFResultsSummarizer also uses these files
 
-		FileToGet = clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, m_DatasetName)
-		If Not String.IsNullOrEmpty(FileToGet) Then
-			If FindAndRetrieveMiscFiles(FileToGet, False) Then
-				m_jobParams.AddResultFileToSkip(FileToGet)
-			Else
-				If SynFileSizeBytes = 0 Then
-					' If the synopsis file is 0-bytes, then the _ResultToSeqMap.txt file won't exist
-					' That's OK; we'll create an empty file with just a header line
-					If Not CreateEmptyResultToSeqMapFile(FileToGet) Then
-						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-					End If
-				Else
-					'Errors were reported in function call, so just return
-					Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-				End If
-			End If
+        FileToGet = clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, m_DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If FindAndRetrieveMiscFiles(FileToGet, False) Then
+                m_jobParams.AddResultFileToSkip(FileToGet)
+            Else
+                If SynFileSizeBytes = 0 Then
+                    ' If the synopsis file is 0-bytes, then the _ResultToSeqMap.txt file won't exist
+                    ' That's OK; we'll create an empty file with just a header line
+                    If Not CreateEmptyResultToSeqMapFile(FileToGet) Then
+                        Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                    End If
+                Else
+                    'Errors were reported in function call, so just return
+                    Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                End If
+            End If
 
-		End If
+        End If
 
-		FileToGet = clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, m_DatasetName)
-		If Not String.IsNullOrEmpty(FileToGet) Then
-			If FindAndRetrieveMiscFiles(FileToGet, False) Then
-				m_jobParams.AddResultFileToSkip(FileToGet)
-			Else
-				If SynFileSizeBytes = 0 Then
-					' If the synopsis file is 0-bytes, then the _SeqToProteinMap.txt file won't exist
-					' That's OK; we'll create an empty file with just a header line
-					If Not CreateEmptySeqToProteinMapFile(FileToGet) Then
-						Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-					End If
-				Else
-					'Errors were reported in function call, so just return
-					Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-				End If
-			End If
-		End If
+        FileToGet = clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, m_DatasetName)
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If FindAndRetrieveMiscFiles(FileToGet, False) Then
+                m_jobParams.AddResultFileToSkip(FileToGet)
+            Else
+                If SynFileSizeBytes = 0 Then
+                    ' If the synopsis file is 0-bytes, then the _SeqToProteinMap.txt file won't exist
+                    ' That's OK; we'll create an empty file with just a header line
+                    If Not CreateEmptySeqToProteinMapFile(FileToGet) Then
+                        Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                    End If
+                Else
+                    'Errors were reported in function call, so just return
+                    Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                End If
+            End If
+        End If
 
-		FileToGet = clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, m_DatasetName)
+        FileToGet = clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, m_DatasetName)
 		If Not String.IsNullOrEmpty(FileToGet) Then
 			If FindAndRetrieveMiscFiles(FileToGet, False) Then
 				m_jobParams.AddResultFileToSkip(FileToGet)
