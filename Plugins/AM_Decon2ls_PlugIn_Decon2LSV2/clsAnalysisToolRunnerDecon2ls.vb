@@ -585,7 +585,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		m_StopTime = DateTime.UtcNow
 
 		'Make sure objects are released
-		Threading.Thread.Sleep(2000)		   '2 second delay
+        Threading.Thread.Sleep(1000)           '1 second delay
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		If m_DebugLevel > 3 Then
@@ -1118,7 +1118,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 		End If
 
 		' Lookup the version of the DeconConsole application
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioDeconToolsInfo.FullName)
+        blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, ioDeconToolsInfo.FullName)
 		If Not blnSuccess Then Return False
 
 		' Parse out the DeconConsole Build number using a RegEx
@@ -1142,12 +1142,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		' Lookup the version of the DeconTools Backend (in the DeconTools folder)
 		Dim strDeconToolsBackendPath As String = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconTools.Backend.dll")
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDeconToolsBackendPath)
+        blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strDeconToolsBackendPath)
 		If Not blnSuccess Then Return False
 
 		' Lookup the version of the UIMFLibrary (in the DeconTools folder)
 		Dim strDLLPath As String = Path.Combine(ioDeconToolsInfo.DirectoryName, "UIMFLibrary.dll")
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+        blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strDLLPath)
 		If Not blnSuccess Then Return False
 
 		' Old: Lookup the version of DeconEngine (in the DeconTools folder)
@@ -1158,7 +1158,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 		' Lookup the version of DeconEngineV2 (in the DeconTools folder)
 		strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
+        blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strDLLPath)
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles
