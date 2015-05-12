@@ -55,10 +55,6 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="AnalysisManager_Mage_PlugIn, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Plugins\AM_Mage_PlugIn\bin\Debug\AnalysisManager_Mage_PlugIn.dll</HintPath>
-    </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\log4net.dll</HintPath>
@@ -142,6 +138,12 @@
     <Content Include="..\..\AM_Common\MageExtExtractionFilters.dll" />
     <Content Include="..\..\AM_Common\System.Data.SQLite.dll" />
     <Content Include="..\..\AM_Common\System.Data.SQLite.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Plugins\AM_Mage_PlugIn\AnalysisManager_Mage_PlugIn.csproj">
+      <Project>{4aacc633-3f37-4102-ac9d-e23ab1edc5bf}</Project>
+      <Name>AnalysisManager_Mage_PlugIn</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
