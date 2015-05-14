@@ -4,6 +4,7 @@ Imports System.Runtime.InteropServices
 Imports FastaFileSplitterDLL
 
 Public Class clsSplitFastaFileUtilities
+    Inherits clsEventNotifier
 
 	Public Const LOCK_FILE_PROGRESS_TEXT As String = "Lockfile"
 
@@ -531,26 +532,10 @@ Public Class clsSplitFastaFileUtilities
 
 #Region "Events and Event Handlers"
 
-	Public Event ErrorEvent(ByVal strMessage As String)
-	Public Event WarningEvent(ByVal strMessage As String)
-	Public Event SplittingBaseFastafile(ByVal strBaseFastaFileName As String, ByVal numSplitParts As Integer)
-
-	Public Event ProgressUpdate(ByVal progressMessage As String, ByVal percentComplete As Integer)
-
-	Protected Sub OnProgressUpdate(ByVal progressMessage As String, ByVal percentComplete As Integer)
-		RaiseEvent ProgressUpdate(progressMessage, percentComplete)
-	End Sub
-
-	Protected Sub OnErrorEvent(ByVal errorMessageNew As String)
-		RaiseEvent ErrorEvent(errorMessageNew)
-	End Sub
+    Public Event SplittingBaseFastafile(ByVal strBaseFastaFileName As String, ByVal numSplitParts As Integer)
 
 	Protected Sub OnSplittingBaseFastafile(ByVal strBaseFastaFileName As String, ByVal numSplitParts As Integer)
 		RaiseEvent SplittingBaseFastafile(strBaseFastaFileName, numSplitParts)
-	End Sub
-
-	Protected Sub OnWarningEvent(ByVal warningMessageNew As String)
-		RaiseEvent WarningEvent(warningMessageNew)
 	End Sub
 
 	Private Sub mSplitter_ErrorEvent(strMessage As String) Handles mSplitter.ErrorEvent

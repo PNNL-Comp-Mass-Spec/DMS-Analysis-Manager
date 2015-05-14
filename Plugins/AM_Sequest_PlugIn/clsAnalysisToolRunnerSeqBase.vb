@@ -116,7 +116,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		End If
 
 		'Make sure objects are released
-		System.Threading.Thread.Sleep(2000)		   ' 2 second delay
+		System.Threading.Thread.Sleep(500)		   ' 500 msec delay
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		' Parse the Sequest .Log file to make sure the expected number of nodes was used in the analysis
@@ -569,7 +569,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		Next
 
 		'Make sure objects are released
-		System.Threading.Thread.Sleep(5000)		' 5 second delay
+		System.Threading.Thread.Sleep(500)        ' 500 msec delay
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		'Verify out file creation
@@ -592,7 +592,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		End If
 
 		'Try to ensure there are no open objects with file handles
-		System.Threading.Thread.Sleep(2000)		   '2 second delay
+        System.Threading.Thread.Sleep(500)         ' 1 second delay
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		'Zip concatenated .out files

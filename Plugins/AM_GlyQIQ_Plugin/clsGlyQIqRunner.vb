@@ -302,8 +302,7 @@ Public Class clsGlyQIqRunner
         End Try
 
     End Sub
-
-
+    
     Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow

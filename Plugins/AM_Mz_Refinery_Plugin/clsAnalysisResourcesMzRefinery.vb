@@ -37,57 +37,59 @@ Public Class clsAnalysisResourcesMzRefinery
 
 			currentTask = "Get Input file"
 
-			Dim eResult = GetMzMLFile()
-			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return eResult
-			End If
+            Dim eResult As IJobParams.CloseOutType
+            eResult = GetMsXmlFile()
 
-			' Retrieve the Fasta file
-			Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return eResult
+            End If
 
-			currentTask = "RetrieveOrgDB to " & localOrgDbFolder
+            ' Retrieve the Fasta file
+            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
 
-			If Not RetrieveOrgDB(localOrgDbFolder) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            currentTask = "RetrieveOrgDB to " & localOrgDbFolder
 
-			' Retrieve the Mz Refinery parameter file
-			currentTask = "Retrieve the Mz Refinery parameter file " & mzRefParamFile
+            If Not RetrieveOrgDB(localOrgDbFolder) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			Const paramFileStoragePathKeyName As String = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "Mz_Refinery"
+            ' Retrieve the Mz Refinery parameter file
+            currentTask = "Retrieve the Mz Refinery parameter file " & mzRefParamFile
 
-			Dim mzRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName)
-			If String.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath) Then
-				mzRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\MzRefinery"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & paramFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & mzRefineryParmFileStoragePath)
-			End If
+            Const paramFileStoragePathKeyName As String = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "Mz_Refinery"
 
-			If Not RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            Dim mzRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName)
+            If String.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath) Then
+                mzRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\MzRefinery"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & paramFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & mzRefineryParmFileStoragePath)
+            End If
 
-			' Look for existing MSGF+ results in the transfer folder
-			currentTask = "Find existing MSGF+ results"
+            If Not RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			If Not FindExistingMSGFPlusResults(mzRefParamFile) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' Look for existing MSGF+ results in the transfer folder
+            currentTask = "Find existing MSGF+ results"
 
-		Catch ex As Exception
-			m_message = "Exception in GetResources: " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+            If Not FindExistingMSGFPlusResults(mzRefParamFile) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception in GetResources: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Check for existing MSGF+ results in the transfer directory
-	''' </summary>
-	''' <returns>True if no errors, false if a problem</returns>
-	''' <remarks>Will retrun True even if existing results are not found</remarks>
+    ''' <summary>
+    ''' Check for existing MSGF+ results in the transfer directory
+    ''' </summary>
+    ''' <returns>True if no errors, false if a problem</returns>
+    ''' <remarks>Will retrun True even if existing results are not found</remarks>
 	Private Function FindExistingMSGFPlusResults(ByVal mzRefParamFileName As String) As Boolean
 
 		Dim resultsFolderName = m_jobParams.GetParam("OutputFolderName")

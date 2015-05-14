@@ -95,7 +95,7 @@ Public Class clsAnalysisToolRunnerLCMSFF
 		End If
 
 		'Make sure objects are released
-		System.Threading.Thread.Sleep(2000)		   '2 second delay
+        System.Threading.Thread.Sleep(500)         ' 1 second delay
 		PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 		If Not blnSuccess Then

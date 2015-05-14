@@ -44,25 +44,13 @@ Public Class clsAnalysisResourcesGlyQIQ
         mGlyQIQParams = New udtGlyQIQParams()
 
         Dim coreCountText = m_jobParams.GetJobParameter("GlyQ-IQ", "Cores", "All")
-        Dim coreCount As Integer
-        If Not Integer.TryParse(coreCountText, coreCount) Then
-            coreCount = 0
-        End If
 
         ' Use all the cores if the system has 4 or fewer cores
-        ' Otherwise, use CoreCount- 1
+        ' Otherwise, use TotalCoreCount - 1
         Dim maxAllowedCores = Environment.ProcessorCount
         If maxAllowedCores > 4 Then maxAllowedCores -= 1
 
-        If coreCount <= 0 Then
-            coreCount = maxAllowedCores
-        Else
-            If coreCount > maxAllowedCores Then
-                coreCount = maxAllowedCores
-            End If
-        End If
-
-        If coreCount < 1 Then coreCount = 1
+        Dim coreCount As Integer = clsAnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores)
 
         m_jobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString())
 

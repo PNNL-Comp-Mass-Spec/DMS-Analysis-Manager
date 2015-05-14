@@ -60,7 +60,7 @@ Public Class clsAnalysisToolRunnerDataImport
 			m_StopTime = System.DateTime.UtcNow
 
 			'Make sure objects are released
-			System.Threading.Thread.Sleep(2000)		   '2 second delay
+            System.Threading.Thread.Sleep(500)         ' 1 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			result = MakeResultsFolder()

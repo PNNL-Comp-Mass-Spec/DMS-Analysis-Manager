@@ -205,7 +205,7 @@ Public Class clsGlobal
 		' 
 		' the goal is to extract out the text after Version= but before the next comma
 
-		Dim reGetVersion As Regex = New Regex("version=([0-9.]+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        Dim reGetVersion = New Regex("version=([0-9.]+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 		Dim reMatch As Match
 		Dim strVersion As String
 
@@ -553,7 +553,7 @@ Public Class clsGlobal
     ''' <returns>strPath as-is if no spaces, otherwise strPath surrounded by double quotes </returns>
     ''' <remarks></remarks>
     Public Shared Function PossiblyQuotePath(ByVal strPath As String) As String
-        If String.IsNullOrEmpty(strPath) Then
+        If String.IsNullOrWhiteSpace(strPath) Then
             Return String.Empty
         Else
 

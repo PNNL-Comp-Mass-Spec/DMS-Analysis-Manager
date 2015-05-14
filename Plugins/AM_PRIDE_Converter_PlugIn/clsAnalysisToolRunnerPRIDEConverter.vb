@@ -335,7 +335,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 			End If
 
 			'Make sure objects are released
-			Threading.Thread.Sleep(2000)		   '2 second delay
+            Threading.Thread.Sleep(500)         ' 500 msec delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			If Not blnSuccess Or intJobFailureCount > 0 Then
@@ -1528,12 +1528,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 		Dim blnSkipNode As Boolean
 		Dim blnInstrumentDetailsAutoDefined As Boolean = False
 
-		Dim lstAttributeOverride As Dictionary(Of String, String) = New Dictionary(Of String, String)
+        Dim lstAttributeOverride = New Dictionary(Of String, String)
 
 		Dim lstElementCloseDepths As Stack(Of Integer)
 
-		Dim eFileLocation As eMSGFReportXMLFileLocation = eMSGFReportXMLFileLocation.Header
-		Dim lstRecentElements As Queue(Of String) = New Queue(Of String)
+        Dim eFileLocation = eMSGFReportXMLFileLocation.Header
+        Dim lstRecentElements = New Queue(Of String)
 
 
 		Try

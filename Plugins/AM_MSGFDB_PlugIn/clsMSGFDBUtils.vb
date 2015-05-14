@@ -589,6 +589,7 @@ Public Class clsMSGFDBUtils
 
 			ReportMessage("Creating trimmed fasta: " & fiTrimmedFasta.Name)
 
+            ' Construct the list of required contaminant proteins
 			Dim contaminantUtility = New clsFastaContaminantUtility()
 
 			Dim dctRequiredContaminants = New Dictionary(Of String, Boolean)
@@ -598,7 +599,7 @@ Public Class clsMSGFDBUtils
 
 			Dim maxSizeBytes As Int64 = maxFastaFileSizeMB * 1024 * 1024
 			Dim bytesWritten As Int64 = 0
-			Dim proteinCount As Integer = 0
+            Dim proteinCount = 0
 
 			Using srSourceFasta = New StreamReader(New FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 				Using swTrimmedFasta = New StreamWriter(New FileStream(fiTrimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -909,14 +910,23 @@ Public Class clsMSGFDBUtils
 
 		fastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
 
-		Dim strProteinOptions As String
-		strProteinOptions = m_jobParams.GetParam("ProteinOptions")
-		If Not String.IsNullOrEmpty(strProteinOptions) Then
-			If strProteinOptions.ToLower.Contains("seq_direction=decoy") Then
-				fastaFileIsDecoy = True
-			End If
-		End If
+        Dim strProteinOptions = m_jobParams.GetParam("ProteinOptions")
+        
+        If String.IsNullOrEmpty(strProteinOptions) OrElse strProteinOptions = "na" Then
 
+            ' Determine the fraction of the proteins that start with XXX.
+            Dim proteinCount As Integer
+            Dim fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, clsAnalysisResources.DECOY_PROTEIN_PREFIX, proteinCount)
+            If fractionDecoy >= 0.25 Then
+                fastaFileIsDecoy = True
+            End If
+
+        Else
+            If strProteinOptions.ToLower.Contains("seq_direction=decoy") Then
+                fastaFileIsDecoy = True
+            End If
+        End If
+        
         If Not String.IsNullOrEmpty(strMSGFDBParameterFilePath) Then
             Dim strTDASetting As String
             strTDASetting = GetSettingFromMSGFDbParamFile(strMSGFDBParameterFilePath, "TDA")
@@ -959,7 +969,7 @@ Public Class clsMSGFDBUtils
             Dim fastaFilePathTrimmed = String.Empty
 
             ' Allow for up to 3 attempts since multiple processes might potentially try to do this at the same time
-            Dim trimIteration As Integer = 0
+            Dim trimIteration = 0
 
             While trimIteration <= 2
                 trimIteration += 1

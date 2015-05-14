@@ -641,8 +641,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         ' However, it will raise a Loop Waiting event every MONITOR_INTERVAL_SECONDS seconds (see CmdRunner_LoopWaiting)
         blnSuccess = mCmdRunner.RunProgram(strExeFilePath, strArguments, "ICR2LS.exe", True)
 
-        ' Pause for another 2 seconds to make sure ICR-2LS closes
-        System.Threading.Thread.Sleep(2000)
+        ' Pause for another 500 msec to make sure ICR-2LS closes
+        System.Threading.Thread.Sleep(500)
 
         ' Make sure the status file is parsed one final time
         ParseICR2LSStatusFile(mStatusFilePath, True)

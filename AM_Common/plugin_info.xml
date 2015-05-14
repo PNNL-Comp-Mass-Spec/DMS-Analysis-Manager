@@ -352,6 +352,11 @@
 		Class="AnalysisManagerNOMSIPlugin.clsAnalysisToolRunnerNOMSI" 
 		AssemblyFile="AnalysisManagerNOMSIPlugin.dll" 
 	/>
+	<ToolRunner 
+		Tool="modplus" 
+		Class="AnalysisManagerMODPlusPlugin.clsAnalysisToolRunnerMODPlus" 
+		AssemblyFile="AnalysisManagerMODPlusPlugin.dll" 
+	/>
 	
 </ToolRunners>
 
@@ -705,6 +710,11 @@
 		Tool="nomsi" 
 		Class="AnalysisManagerNOMSIPlugin.clsAnalysisResourcesNOMSI" 
 		AssemblyFile="AnalysisManagerNOMSIPlugin.dll" 
+	/>
+	<Resourcer 
+		Tool="modplus" 
+		Class="AnalysisManagerMODPlusPlugin.clsAnalysisResourcesMODPlus" 
+		AssemblyFile="AnalysisManagerMODPlusPlugin.dll" 
 	/>
 	
 		

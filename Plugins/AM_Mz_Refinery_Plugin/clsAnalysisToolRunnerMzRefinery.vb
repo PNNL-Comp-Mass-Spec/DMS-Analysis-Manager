@@ -14,7 +14,7 @@ Imports AnalysisManagerMSGFDBPlugIn
 Imports System.Text.RegularExpressions
 
 ''' <summary>
-''' Class for running Mz Refinery to recalibrate m/z values in a .mzML file
+''' Class for running Mz Refinery to recalibrate m/z values in a .mzXML or .mzML file
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerMzRefinery
@@ -125,6 +125,13 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
+            Dim msXmlFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION
+
+            Dim msXmlOutputType = m_jobParams.GetJobParameter("MSXMLOutputType", String.Empty)
+            If msXmlOutputType.ToLower() = "mzxml" Then
+                msXmlFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION
+            End If
+
             ' Look for existing MSGF+ results (which would have been retrieved by clsAnalysisResourcesMzRefinery)
 
             Dim fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & MSGFPLUS_MZID_SUFFIX))
@@ -136,7 +143,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 m_jobParams.AddResultFileToSkip(fiMSGFPlusResults.Name)
             Else
                 ' Run MSGF+ (includes indexing the fasta file)
-                result = RunMSGFPlus(javaProgLoc, fiMSGFPlusResults)
+                result = RunMSGFPlus(javaProgLoc, msXmlFileExtension, fiMSGFPlusResults)
             End If
 
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -149,32 +156,32 @@ Public Class clsAnalysisToolRunnerMzRefinery
             CmdRunner = Nothing
 
             Dim blnSuccess As Boolean
-            Dim processingError As Boolean = False
+            Dim processingError = False
 
-            Dim fiOriginalMzMLFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION))
-            Dim fiFixedMzMLFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_FIXED" & clsAnalysisResources.DOT_MZML_EXTENSION))
+            Dim fiOriginalMSXmlFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & msXmlFileExtension))
+            Dim fiFixedMSXmlFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_FIXED" & msXmlFileExtension))
 
-            m_jobParams.AddResultFileToSkip(fiOriginalMzMLFile.Name)
-            m_jobParams.AddResultFileToSkip(fiFixedMzMLFile.Name)
+            m_jobParams.AddResultFileToSkip(fiOriginalMSXmlFile.Name)
+            m_jobParams.AddResultFileToSkip(fiFixedMSXmlFile.Name)
 
             If mSkipMzRefinery Then
                 ' Rename the original file to have the expected name of the fixed mzML file
                 ' Required for PostProcessMzRefineryResults to work properly
-                fiOriginalMzMLFile.MoveTo(fiFixedMzMLFile.FullName)
+                fiOriginalMSXmlFile.MoveTo(fiFixedMSXmlFile.FullName)
             Else
                 ' Run MSConvert with the MzRefiner filter
-                blnSuccess = StartMzRefinery(fiOriginalMzMLFile, fiMSGFPlusResults)
+                blnSuccess = StartMzRefinery(fiOriginalMSXmlFile, fiMSGFPlusResults)
 
                 If Not blnSuccess Then
                     processingError = True
                 Else
                     If mMzRefineryCorrectionMode.StartsWith("Chose no shift") Then
                         ' No valid peak was found; a result file may not exist
-                        fiFixedMzMLFile.Refresh()
-                        If Not fiFixedMzMLFile.Exists Then
+                        fiFixedMSXmlFile.Refresh()
+                        If Not fiFixedMSXmlFile.Exists Then
                             ' Rename the original file to have the expected name of the fixed mzML file
                             ' Required for PostProcessMzRefineryResults to work properly
-                            fiOriginalMzMLFile.MoveTo(fiFixedMzMLFile.FullName)
+                            fiOriginalMSXmlFile.MoveTo(fiFixedMSXmlFile.FullName)
                         End If
                     End If
                 End If
@@ -184,13 +191,13 @@ Public Class clsAnalysisToolRunnerMzRefinery
             If Not processingError Then
 
                 ' Look for the results file
-                fiFixedMzMLFile.Refresh()
-                If fiFixedMzMLFile.Exists Then
-                    blnSuccess = PostProcessMzRefineryResults(fiMSGFPlusResults, fiFixedMzMLFile)
+                fiFixedMSXmlFile.Refresh()
+                If fiFixedMSXmlFile.Exists Then
+                    blnSuccess = PostProcessMzRefineryResults(fiMSGFPlusResults, fiFixedMSXmlFile)
                     If Not blnSuccess Then processingError = True
                 Else
                     If String.IsNullOrEmpty(m_message) Then
-                        m_message = "MzRefinery results file not found: " & fiFixedMzMLFile.Name
+                        m_message = "MzRefinery results file not found: " & fiFixedMSXmlFile.Name
                     End If
                     processingError = True
                 End If
@@ -229,7 +236,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             CmdRunner = Nothing
 
             ' Make sure objects are released
-            Threading.Thread.Sleep(2000)        '2 second delay
+            Threading.Thread.Sleep(500)        ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             If processingError Then
@@ -250,7 +257,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 If Not msgfPlusResultsExist Then
                     ' Move the source files and any results to the Failed Job folder
                     ' Useful for debugging problems
-                    CopyFailedResultsToArchiveFolder()
+                    CopyFailedResultsToArchiveFolder(msXmlFileExtension)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
@@ -301,11 +308,13 @@ Public Class clsAnalysisToolRunnerMzRefinery
     ''' Index the Fasta file (if needed) then run MSGF+
     ''' </summary>
     ''' <param name="javaProgLoc">Path to Java</param>
+    ''' <param name="msXmlFileExtension">.mzXML or .mzML</param>
     ''' <param name="fiMSGFPlusResults">Output: MSGF+ results file</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
     Protected Function RunMSGFPlus(
-      ByVal javaProgLoc As String,
+      javaProgLoc As String,
+      msXmlFileExtension As String,
       <Out()> ByRef fiMSGFPlusResults As FileInfo) As IJobParams.CloseOutType
 
         Const strMSGFJarfile As String = clsMSGFDBUtils.MSGFPLUS_JAR_NAME
@@ -376,7 +385,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Look for extra parameters specific to MZRefiner
+        ' Look for extra parameters specific to MZRefinery
         Dim success = ExtractMzRefinerOptionsFromParameterFile(strParameterFilePath)
         If Not success Then
             m_message = "Error extracting MzRefinery options from parameter file " & Path.GetFileName(strParameterFilePath)
@@ -398,7 +407,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         Dim cmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
 
         ' Define the input file, output file, and fasta file
-        cmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION
+        cmdStr &= " -s " & m_Dataset & msXmlFileExtension
 
         cmdStr &= " -o " & fiMSGFPlusResults.Name
         cmdStr &= " -d " & PossiblyQuotePath(fastaFilePath)
@@ -497,7 +506,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Function
 
-    Protected Function StartMSGFPlus(ByVal javaExePath As String, ByVal strSearchEngineName As String, ByVal CmdStr As String) As Boolean
+    Protected Function StartMSGFPlus(javaExePath As String, strSearchEngineName As String, CmdStr As String) As Boolean
 
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath & " " & CmdStr)
@@ -527,7 +536,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Function
 
-    Private Function CompressMSGFPlusResults(ByVal fiMSGFPlusResults As FileInfo) As Boolean
+    Private Function CompressMSGFPlusResults(fiMSGFPlusResults As FileInfo) As Boolean
 
         Try
 
@@ -551,7 +560,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         Return True
     End Function
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
+    Protected Sub CopyFailedResultsToArchiveFolder(msXmlFileExtension As String)
 
         Dim result As IJobParams.CloseOutType
 
@@ -568,7 +577,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         strFolderPathToArchive = String.Copy(m_WorkDir)
 
         Try
-            Dim fiFiles = New DirectoryInfo(m_WorkDir).GetFiles("*" & clsAnalysisResources.DOT_MZML_EXTENSION)
+            Dim fiFiles = New DirectoryInfo(m_WorkDir).GetFiles("*" & msXmlFileExtension)
             For Each fiFileToDelete In fiFiles
                 fiFileToDelete.Delete()
             Next
@@ -588,12 +597,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
 
-    Private Function ExtractMzRefinerOptionsFromParameterFile(ByVal strParameterFilePath As String) As Boolean
+    Private Function ExtractMzRefinerOptionsFromParameterFile(strParameterFilePath As String) As Boolean
 
         mSkipMzRefinery = False
 
@@ -688,7 +697,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
     ''' Parse the MSGF+ console output file to determine the MSGF+ version and to track the search progress
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub ParseMSGFPlusConsoleOutputFile(ByVal workingDirectory As String)
+    Private Sub ParseMSGFPlusConsoleOutputFile(workingDirectory As String)
 
         Try
             If Not mMSGFDBUtils Is Nothing Then
@@ -710,7 +719,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseMSConvertConsoleOutputfile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseMSConvertConsoleOutputfile(strConsoleOutputFilePath As String)
 
         ' Example console output
         '
@@ -873,9 +882,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Sub
 
-    Private Function PostProcessMzRefineryResults(ByVal fiMSGFPlusResults As FileInfo, ByVal fiFixedMzMLFile As FileInfo) As Boolean
+    Private Function PostProcessMzRefineryResults(fiMSGFPlusResults As FileInfo, fiFixedMSXmlFile As FileInfo) As Boolean
 
-        Dim strOriginalMzMLFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
+        Dim strOriginalMSXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & fiFixedMSXmlFile.Extension)
 
         Try
             ' Create the plots
@@ -901,9 +910,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         Try
 
-            If File.Exists(strOriginalMzMLFilePath) Then
+            If File.Exists(strOriginalMSXmlFilePath) Then
                 ' Delete the original .mzML file
-                DeleteFileWithRetries(strOriginalMzMLFilePath, m_DebugLevel, 2)
+                DeleteFileWithRetries(strOriginalMSXmlFilePath, m_DebugLevel, 2)
             End If
 
         Catch ex As Exception
@@ -915,7 +924,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         Try
 
             ' Rename the fixed mzML file
-            fiFixedMzMLFile.MoveTo(strOriginalMzMLFilePath)
+            fiFixedMSXmlFile.MoveTo(strOriginalMSXmlFilePath)
 
         Catch ex As Exception
             m_message = "Error replacing the original .mzML file with the updated version; cannot rename the fixed file"
@@ -925,8 +934,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         Try
 
-            ' Compress the .mzML file
-            Dim blnSuccess = m_IonicZipTools.GZipFile(fiFixedMzMLFile.FullName, True)
+            ' Compress the .mzXML or .mzML file
+            Dim blnSuccess = m_IonicZipTools.GZipFile(fiFixedMSXmlFile.FullName, True)
 
             If Not blnSuccess Then
                 m_message = m_IonicZipTools.Message
@@ -934,16 +943,16 @@ Public Class clsAnalysisToolRunnerMzRefinery
             End If
 
         Catch ex As Exception
-            m_message = "Error compressing the fixed .mzML file"
+            m_message = "Error compressing the fixed .mzXML/.mzML file"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
             Return False
         End Try
 
         Try
 
-            Dim fiMzRefFileGzipped = New FileInfo(fiFixedMzMLFile.FullName & clsAnalysisResources.DOT_GZ_EXTENSION)
+            Dim fiMzRefFileGzipped = New FileInfo(fiFixedMSXmlFile.FullName & clsAnalysisResources.DOT_GZ_EXTENSION)
 
-            ' Copy the .mzML.gz file to the cache
+            ' Copy the .mzXML.gz or .mzML.gz file to the cache
             Dim remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiMzRefFileGzipped.FullName, purgeOldFilesIfNeeded:=True)
 
             If String.IsNullOrEmpty(remoteCachefilePath) Then
@@ -974,7 +983,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Function
 
-    Protected Function StartMzRefinery(ByVal fiOriginalMzMLFile As FileInfo, ByVal fiMSGFPlusResults As FileInfo) As Boolean
+    Protected Function StartMzRefinery(fiOriginalMzMLFile As FileInfo, fiMSGFPlusResults As FileInfo) As Boolean
 
         mConsoleOutputErrorMsg = String.Empty
 
@@ -1121,7 +1130,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Function
 
-    Protected Function StartPpmErrorCharter(ByVal fiMSGFPlusResults As FileInfo) As Boolean
+    Protected Function StartPpmErrorCharter(fiMSGFPlusResults As FileInfo) As Boolean
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PPMErrorCharter")
 
@@ -1245,9 +1254,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
     End Function
 
     Private Sub UpdateProgress(
-      ByVal currentTaskProgressAtStart As Single,
-      ByVal currentTaskProgressAtEnd As Single,
-      ByVal subTaskProgress As Single)
+      currentTaskProgressAtStart As Single,
+      currentTaskProgressAtEnd As Single,
+      subTaskProgress As Single)
 
         Dim progressCompleteOverall = ComputeIncrementalProgress(currentTaskProgressAtStart, currentTaskProgressAtEnd, subTaskProgress)
 
@@ -1255,7 +1264,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Sub
 
-    Private Sub UpdateProgress(ByVal progressCompleteOverall As Single)
+    Private Sub UpdateProgress(progressCompleteOverall As Single)
 
         Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
 
@@ -1270,7 +1279,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Sub
 
-    Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
+    Private Sub UpdateStatusRunning(sngPercentComplete As Single)
         m_progress = sngPercentComplete
         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
     End Sub
@@ -1279,37 +1288,37 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 #Region "Event Handlers"
 
-	''' <summary>
-	''' Event handler for CmdRunner.LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    ''' <summary>
+    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
-		MonitorProgress()
+        MonitorProgress()
 
-	End Sub
+    End Sub
 
-	Private Sub mMSGFDBUtils_ErrorEvent(ByVal errorMessage As String, ByVal detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
-		m_message = String.Copy(errorMessage)
-		If String.IsNullOrEmpty(detailedMessage) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
-		End If
+    Private Sub mMSGFDBUtils_ErrorEvent(errorMessage As String, detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
+        m_message = String.Copy(errorMessage)
+        If String.IsNullOrEmpty(detailedMessage) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
+        End If
 
-	End Sub
+    End Sub
 
-	Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent() Handles mMSGFDBUtils.IgnorePreviousErrorEvent
-		m_message = String.Empty
-	End Sub
+    Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent() Handles mMSGFDBUtils.IgnorePreviousErrorEvent
+        m_message = String.Empty
+    End Sub
 
-	Private Sub mMSGFDBUtils_MessageEvent(messageText As String) Handles mMSGFDBUtils.MessageEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, messageText)
-	End Sub
+    Private Sub mMSGFDBUtils_MessageEvent(messageText As String) Handles mMSGFDBUtils.MessageEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, messageText)
+    End Sub
 
-	Private Sub mMSGFDBUtils_WarningEvent(warningMessage As String) Handles mMSGFDBUtils.WarningEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-	End Sub
+    Private Sub mMSGFDBUtils_WarningEvent(warningMessage As String) Handles mMSGFDBUtils.WarningEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+    End Sub
 
 #End Region
 

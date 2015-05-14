@@ -268,7 +268,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			CmdRunner = Nothing
 
 			'Make sure objects are released
-			System.Threading.Thread.Sleep(2000)		'2 second delay
+			System.Threading.Thread.Sleep(500)        ' 500 msec delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			If blnProcessingError Then

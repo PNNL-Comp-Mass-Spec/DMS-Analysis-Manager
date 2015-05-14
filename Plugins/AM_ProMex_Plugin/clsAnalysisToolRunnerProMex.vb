@@ -111,7 +111,7 @@ Public Class clsAnalysisToolRunnerProMex
             mCmdRunner = Nothing
 
             'Make sure objects are released
-            Threading.Thread.Sleep(2000)        '2 second delay
+            Threading.Thread.Sleep(500)        ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             If Not blnSuccess Then

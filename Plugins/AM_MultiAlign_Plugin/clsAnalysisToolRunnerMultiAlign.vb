@@ -99,7 +99,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
         End If
 
         'Make sure objects are released
-        System.Threading.Thread.Sleep(2000)        '2 second delay
+        System.Threading.Thread.Sleep(500)        ' 500 msec delay
         PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
         If Not blnSuccess Then

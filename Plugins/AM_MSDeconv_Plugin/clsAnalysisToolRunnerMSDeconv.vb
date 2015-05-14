@@ -166,7 +166,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 			CmdRunner = Nothing
 
 			'Make sure objects are released
-			Threading.Thread.Sleep(2000)		'2 second delay
+			Threading.Thread.Sleep(500)        ' 500 msec delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			' Trim the console output file to remove the majority of the % finished messages

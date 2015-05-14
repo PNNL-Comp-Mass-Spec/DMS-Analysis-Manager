@@ -127,3 +127,4 @@ F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.vbprojResolveAssemblyReference.cache

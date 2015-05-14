@@ -216,7 +216,7 @@ Public Class clsAnalysisToolRunnerProSightQuant
 			End If
 
 			'Make sure objects are released
-			System.Threading.Thread.Sleep(2000)		   '2 second delay
+            System.Threading.Thread.Sleep(500)         ' 1 second delay
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
 			If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
