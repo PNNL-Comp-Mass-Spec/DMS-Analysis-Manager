@@ -161,6 +161,21 @@ namespace TestMultiAlignPlugIn {
             }
         }
 
+        public int GetCoreCount()
+        {
+            throw new NotImplementedException();
+        }
+
+        public float GetFreeMemoryMB()
+        {
+            throw new NotImplementedException();
+        }
+
+        public int GetProcessID()
+        {
+            throw new NotImplementedException();
+        }
+
         public void UpdateAndWrite(IStatusFile.EnumMgrStatus mgrStatus, IStatusFile.EnumTaskStatus taskStatus, IStatusFile.EnumTaskStatusDetail taskDetailStatus, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string MostRecentJobInfo, bool ForceLogToBrokerDB) {
 			// This would update a status file; instead, do nothing
 			return;
