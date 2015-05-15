@@ -11,98 +11,99 @@ Imports PHRPReader
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
+Imports ParamFileGenerator.MakeParams
 
 Public MustInherit Class clsAnalysisResources
-	Implements IAnalysisResources
+    Implements IAnalysisResources
 
-	'*********************************************************************************************************
-	'Base class for job resource class
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Base class for job resource class
+    '*********************************************************************************************************
 
 #Region "Constants"
-	Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
-	Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
+    Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
+    Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
 
-	''' <summary>
-	''' Maximum number of attempts to find a folder or file
-	''' </summary>
-	''' <remarks></remarks>
-	Protected Const DEFAULT_MAX_RETRY_COUNT As Integer = 3
+    ''' <summary>
+    ''' Maximum number of attempts to find a folder or file
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Const DEFAULT_MAX_RETRY_COUNT As Integer = 3
 
-	Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
+    Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
 
-	Public Const MYEMSL_PATH_FLAG As String = "\\MyEMSL"
+    Public Const MYEMSL_PATH_FLAG As String = "\\MyEMSL"
 
-	Protected Const FORCE_WINHPC_FS As Boolean = True
+    Protected Const FORCE_WINHPC_FS As Boolean = True
 
-	' Define the maximum file size to process using IonicZip; 
-	'  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
-	'  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
-	'   SharpZipLib unzips the file in 130 seconds
-	'   WinRar      unzips the file in 120 seconds
-	'   PKZipC      unzips the file in  84 seconds
-	'
-	' Re-tested on 1/7/2011 with a 611 MB file
-	'   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
-	'   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
-	'   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
-	'   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
-	'
-	' For smaller files, the speed differences are much less noticable
+    ' Define the maximum file size to process using IonicZip; 
+    '  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
+    '  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
+    '   SharpZipLib unzips the file in 130 seconds
+    '   WinRar      unzips the file in 120 seconds
+    '   PKZipC      unzips the file in  84 seconds
+    '
+    ' Re-tested on 1/7/2011 with a 611 MB file
+    '   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
+    '   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
+    '   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
+    '   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
+    '
+    ' For smaller files, the speed differences are much less noticable
 
-	Protected Const IONIC_ZIP_MAX_FILESIZE_MB As Integer = 1280
+    Protected Const IONIC_ZIP_MAX_FILESIZE_MB As Integer = 1280
 
-	' Note: All of the RAW_DATA_TYPE constants need to be all lowercase
-	'
-	Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"				'Agilent ion trap data, Agilent TOF data
-	Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"			'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
-	Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"				'Micromass QTOF data
-	Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"				'Finnigan ion trap/LTQ-FT data
-	Public Const RAW_DATA_TYPE_DOT_WIFF_FILES As String = "dot_wiff_files"				'Agilent/QSTAR TOF data
-	Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"				'IMS_UIMF (IMS_Agilent_TOF in DMS)
-	Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"			'mzXML
-	Public Const RAW_DATA_TYPE_DOT_MZML_FILES As String = "dot_mzml_files"				'mzML
+    ' Note: All of the RAW_DATA_TYPE constants need to be all lowercase
+    '
+    Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"                'Agilent ion trap data, Agilent TOF data
+    Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"          'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+    Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"              'Micromass QTOF data
+    Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"                'Finnigan ion trap/LTQ-FT data
+    Public Const RAW_DATA_TYPE_DOT_WIFF_FILES As String = "dot_wiff_files"              'Agilent/QSTAR TOF data
+    Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"              'IMS_UIMF (IMS_Agilent_TOF in DMS)
+    Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"            'mzXML
+    Public Const RAW_DATA_TYPE_DOT_MZML_FILES As String = "dot_mzml_files"              'mzML
 
-	' 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
-	' Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
+    ' 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
+    ' Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
 
-	' 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
-	' Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
-	' 15T datasets also have raw_data_type "bruker_ft"
-	' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
-	Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"
+    ' 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
+    ' Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
+    ' 15T datasets also have raw_data_type "bruker_ft"
+    ' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+    Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"
 
-	' The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
-	' Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
-	Public Const RAW_DATA_TYPE_BRUKER_MALDI_SPOT As String = "bruker_maldi_spot"
+    ' The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
+    ' Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
+    Public Const RAW_DATA_TYPE_BRUKER_MALDI_SPOT As String = "bruker_maldi_spot"
 
-	' The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
-	' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
-	Public Const RAW_DATA_TYPE_BRUKER_MALDI_IMAGING As String = "bruker_maldi_imaging"
+    ' The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
+    ' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+    Public Const RAW_DATA_TYPE_BRUKER_MALDI_IMAGING As String = "bruker_maldi_imaging"
 
-	' The following is used by instrument Maxis_01
-	' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
-	Public Const RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER As String = "bruker_tof_baf"
+    ' The following is used by instrument Maxis_01
+    ' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+    Public Const RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER As String = "bruker_tof_baf"
 
-	Public Const RESULT_TYPE_SEQUEST As String = "Peptide_Hit"
-	Public Const RESULT_TYPE_XTANDEM As String = "XT_Peptide_Hit"
-	Public Const RESULT_TYPE_INSPECT As String = "IN_Peptide_Hit"
-	Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"			' Used for MSGFDB and MSGF+
-	Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
-	Public Const RESULT_TYPE_MODA As String = "MODa_Peptide_Hit"
-	Public Const RESULT_TYPE_MSPATHFINDER As String = "MSP_Peptide_Hit"
+    Public Const RESULT_TYPE_SEQUEST As String = "Peptide_Hit"
+    Public Const RESULT_TYPE_XTANDEM As String = "XT_Peptide_Hit"
+    Public Const RESULT_TYPE_INSPECT As String = "IN_Peptide_Hit"
+    Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"           ' Used for MSGFDB and MSGF+
+    Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
+    Public Const RESULT_TYPE_MODA As String = "MODa_Peptide_Hit"
+    Public Const RESULT_TYPE_MSPATHFINDER As String = "MSP_Peptide_Hit"
 
-	Public Const DOT_WIFF_EXTENSION As String = ".wiff"
-	Public Const DOT_D_EXTENSION As String = ".d"
-	Public Const DOT_RAW_EXTENSION As String = ".raw"
-	Public Const DOT_UIMF_EXTENSION As String = ".uimf"
+    Public Const DOT_WIFF_EXTENSION As String = ".wiff"
+    Public Const DOT_D_EXTENSION As String = ".d"
+    Public Const DOT_RAW_EXTENSION As String = ".raw"
+    Public Const DOT_UIMF_EXTENSION As String = ".uimf"
 
-	Public Const DOT_GZ_EXTENSION As String = ".gz"
-	Public Const DOT_MZXML_EXTENSION As String = ".mzXML"
-	Public Const DOT_MZML_EXTENSION As String = ".mzML"
+    Public Const DOT_GZ_EXTENSION As String = ".gz"
+    Public Const DOT_MZXML_EXTENSION As String = ".mzXML"
+    Public Const DOT_MZML_EXTENSION As String = ".mzML"
 
-	Public Const DOT_MGF_EXTENSION As String = ".mgf"
-	Public Const DOT_CDF_EXTENSION As String = ".cdf"
+    Public Const DOT_MGF_EXTENSION As String = ".mgf"
+    Public Const DOT_CDF_EXTENSION As String = ".cdf"
 
     Public Const DOT_PBF_EXTENSION As String = ".pbf"
 
@@ -112,18 +113,16 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks></remarks>
     Public Const DOT_MS1FT_EXTENSION As String = ".ms1ft"
 
-	Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
+    Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
 
-	Public Const SCAN_STATS_FILE_SUFFIX As String = "_ScanStats.txt"
-	Public Const SCAN_STATS_EX_FILE_SUFFIX As String = "_ScanStatsEx.txt"
+    Public Const SCAN_STATS_FILE_SUFFIX As String = "_ScanStats.txt"
+    Public Const SCAN_STATS_EX_FILE_SUFFIX As String = "_ScanStatsEx.txt"
 
     Public Const DATA_PACKAGE_SPECTRA_FILE_SUFFIX As String = "_SpectraFile"
 
-	Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
-	Public Const BRUKER_SER_FILE As String = "ser"
-	Public Const BRUKER_FID_FILE As String = "fid"
-
-    Public Const DECOY_PROTEIN_PREFIX As String = "XXX."
+    Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
+    Public Const BRUKER_SER_FILE As String = "ser"
+    Public Const BRUKER_FID_FILE As String = "fid"
 
     Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
 
@@ -135,10 +134,10 @@ Public MustInherit Class clsAnalysisResources
     Public Const JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP As String = "PackedParam_JobSettingsFileMap"
     Public Const JOB_PARAM_DICTIONARY_JOB_TOOL_MAP As String = "PackedParam_JobToolNameMap"
 
-	Public Const JOB_INFO_FILE_PREFIX As String = "JobInfoFile_Job"
+    Public Const JOB_INFO_FILE_PREFIX As String = "JobInfoFile_Job"
 
-	' This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
-	Public Const SPECTRA_ARE_NOT_CENTROIDED As String = "None of the spectra are centroided; unable to process"
+    ' This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
+    Public Const SPECTRA_ARE_NOT_CENTROIDED As String = "None of the spectra are centroided; unable to process"
 
     Public Enum eRawDataTypeConstants
         Unknown = 0
@@ -156,10 +155,10 @@ Public MustInherit Class clsAnalysisResources
         BrukerTOFBaf = 12               ' Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
     End Enum
 
-	Public Enum MSXMLOutputTypeConstants
-		mzXML = 0
-		mzML = 1
-	End Enum
+    Public Enum MSXMLOutputTypeConstants
+        mzXML = 0
+        mzML = 1
+    End Enum
 
     Public Enum DataPackageFileRetrievalModeConstants
         Undefined = 0
@@ -169,115 +168,115 @@ Public MustInherit Class clsAnalysisResources
 #End Region
 
 #Region "Structures"
-	Public Structure udtDataPackageJobInfoType
-		Public Job As Integer
-		Public Dataset As String
-		Public DatasetID As Integer
-		Public Instrument As String
-		Public InstrumentGroup As String
-		Public Experiment As String
-		Public Experiment_Reason As String
-		Public Experiment_Comment As String
-		Public Experiment_Organism As String
-		Public Experiment_NEWT_ID As Integer		' NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
-		Public Experiment_NEWT_Name As String		' NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
-		Public Tool As String
-		Public ResultType As String
-		Public PeptideHitResultType As clsPHRPReader.ePeptideHitResultType
-		Public SettingsFileName As String
-		Public ParameterFileName As String
-		Public OrganismDBName As String				' Generated Fasta File Name or legacy fasta file name; for jobs where ProteinCollectionList = 'na', this is the legacy fasta file name; otherwise, this is the generated fasta file name (or "na")
-		Public LegacyFastaFileName As String
-		Public ProteinCollectionList As String
-		Public ProteinOptions As String
-		Public ServerStoragePath As String
-		Public ArchiveStoragePath As String
-		Public ResultsFolderName As String
-		Public DatasetFolderName As String
-		Public SharedResultsFolder As String
-		Public RawDataType As String
-	End Structure
+    Public Structure udtDataPackageJobInfoType
+        Public Job As Integer
+        Public Dataset As String
+        Public DatasetID As Integer
+        Public Instrument As String
+        Public InstrumentGroup As String
+        Public Experiment As String
+        Public Experiment_Reason As String
+        Public Experiment_Comment As String
+        Public Experiment_Organism As String
+        Public Experiment_NEWT_ID As Integer        ' NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        Public Experiment_NEWT_Name As String       ' NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        Public Tool As String
+        Public ResultType As String
+        Public PeptideHitResultType As clsPHRPReader.ePeptideHitResultType
+        Public SettingsFileName As String
+        Public ParameterFileName As String
+        Public OrganismDBName As String             ' Generated Fasta File Name or legacy fasta file name; for jobs where ProteinCollectionList = 'na', this is the legacy fasta file name; otherwise, this is the generated fasta file name (or "na")
+        Public LegacyFastaFileName As String
+        Public ProteinCollectionList As String
+        Public ProteinOptions As String
+        Public ServerStoragePath As String
+        Public ArchiveStoragePath As String
+        Public ResultsFolderName As String
+        Public DatasetFolderName As String
+        Public SharedResultsFolder As String
+        Public RawDataType As String
+    End Structure
 
-	Public Structure udtDataPackageRetrievalOptionsType
-		''' <summary>
-		''' Set to true to create a text file for each job listing the full path to the files that would be retrieved for that job
-		''' Example filename: FilePathInfo_Job950000.txt
-		''' </summary>
-		''' <remarks>No files are actually retrieved when this is set to True</remarks>
-		Public CreateJobPathFiles As Boolean
-		''' <summary>
-		''' Set to true to obtain the mzXML file for the dataset associated with this job
-		''' </summary>
-		''' <remarks>If the .mzXML file does not exist, then retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
-		Public RetrieveMzXMLFile As Boolean
-		''' <summary>
-		''' Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
-		''' </summary>
-		''' <remarks></remarks>
-		Public RetrieveDTAFiles As Boolean
-		''' <summary>
-		''' Set to True to obtain MSGF+ .mzID files
-		''' </summary>
-		''' <remarks></remarks>
-		Public RetrieveMZidFiles As Boolean
-		''' <summary>
-		''' Set to True to obtain the _syn.txt file and related PHRP files
-		''' </summary>
-		''' <remarks></remarks>
-		Public RetrievePHRPFiles As Boolean
-	End Structure
+    Public Structure udtDataPackageRetrievalOptionsType
+        ''' <summary>
+        ''' Set to true to create a text file for each job listing the full path to the files that would be retrieved for that job
+        ''' Example filename: FilePathInfo_Job950000.txt
+        ''' </summary>
+        ''' <remarks>No files are actually retrieved when this is set to True</remarks>
+        Public CreateJobPathFiles As Boolean
+        ''' <summary>
+        ''' Set to true to obtain the mzXML file for the dataset associated with this job
+        ''' </summary>
+        ''' <remarks>If the .mzXML file does not exist, then retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
+        Public RetrieveMzXMLFile As Boolean
+        ''' <summary>
+        ''' Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
+        ''' </summary>
+        ''' <remarks></remarks>
+        Public RetrieveDTAFiles As Boolean
+        ''' <summary>
+        ''' Set to True to obtain MSGF+ .mzID files
+        ''' </summary>
+        ''' <remarks></remarks>
+        Public RetrieveMZidFiles As Boolean
+        ''' <summary>
+        ''' Set to True to obtain the _syn.txt file and related PHRP files
+        ''' </summary>
+        ''' <remarks></remarks>
+        Public RetrievePHRPFiles As Boolean
+    End Structure
 
-	Public Structure udtHPCOptionsType
-		Public HeadNode As String
-		Public UsingHPC As Boolean
-		Public SharePath As String
-		Public ResourceType As String
-		' Obsolete parameter; no longer used: Public NodeGroup As String
-		Public MinimumMemoryMB As Integer
-		Public MinimumCores As Integer
-		Public WorkDirPath As String
-	End Structure
+    Public Structure udtHPCOptionsType
+        Public HeadNode As String
+        Public UsingHPC As Boolean
+        Public SharePath As String
+        Public ResourceType As String
+        ' Obsolete parameter; no longer used: Public NodeGroup As String
+        Public MinimumMemoryMB As Integer
+        Public MinimumCores As Integer
+        Public WorkDirPath As String
+    End Structure
 
 #End Region
 
 #Region "Module variables"
-	Protected m_jobParams As IJobParams
-	Protected m_mgrParams As IMgrParams
+    Protected m_jobParams As IJobParams
+    Protected m_mgrParams As IMgrParams
     Protected m_WorkingDir As String
     Protected m_JobNum As Integer
-	Protected m_DatasetName As String
-	Protected m_message As String
-	Protected m_DebugLevel As Short
-	Protected m_MgrName As String
+    Protected m_DatasetName As String
+    Protected m_message As String
+    Protected m_DebugLevel As Short
+    Protected m_MgrName As String
 
-	Protected m_StatusTools As IStatusFile		' Might be nothing
+    Protected m_StatusTools As IStatusFile      ' Might be nothing
 
     Protected m_FastaToolsCnStr As String = ""
-	Protected m_FastaFileName As String = ""
+    Protected m_FastaFileName As String = ""
 
     Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
     Protected m_IonicZipTools As clsIonicZipTools
 
-	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
+    Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
 
-	Protected WithEvents m_CDTAUtilities As clsCDTAUtilities
+    Protected WithEvents m_CDTAUtilities As clsCDTAUtilities
 
-	Protected WithEvents m_SplitFastaFileUtility As clsSplitFastaFileUtilities
+    Protected WithEvents m_SplitFastaFileUtility As clsSplitFastaFileUtilities
 
-	Protected m_SplitFastaLastUpdateTime As DateTime
-	Protected m_SplitFastaLastPercentComplete As Integer
+    Protected m_SplitFastaLastUpdateTime As DateTime
+    Protected m_SplitFastaLastPercentComplete As Integer
 
-	Protected WithEvents m_MyEMSLDatasetListInfo As MyEMSLReader.DatasetListInfo
-	Protected m_RecentlyFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
+    Protected WithEvents m_MyEMSLDatasetListInfo As MyEMSLReader.DatasetListInfo
+    Protected m_RecentlyFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
 
-	Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
-	Private m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
+    Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
+    Private m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
 
-	Private m_LastMyEMSLProgressWriteTime As DateTime = DateTime.UtcNow
+    Private m_LastMyEMSLProgressWriteTime As DateTime = DateTime.UtcNow
 
-	Private m_ResourceOptions As Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
+    Private m_ResourceOptions As Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
 
-	Public WithEvents mSpectraTypeClassifier As SpectraTypeClassifier.clsSpectrumTypeClassifier
+    Public WithEvents mSpectraTypeClassifier As SpectraTypeClassifier.clsSpectrumTypeClassifier
 #End Region
 
 #Region "Properties"
@@ -484,7 +483,7 @@ Public MustInherit Class clsAnalysisResources
 
             DestFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(ZipFilePath))
 
-            If CreateStoragePathInfoOnly Then
+            If createStoragePathInfoOnly Then
                 If Not CreateStoragePathInfoFile(ZipFilePath, DestFilePath) Then
                     m_message = "Error creating storage path info file for " + ZipFilePath
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -580,7 +579,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
     Protected Function CopyFileToWorkDir(InpFile As String, InpFolder As String, OutDir As String) As Boolean
         Const MaxCopyAttempts As Integer = 3
-        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
     End Function
 
     ''' <summary>
@@ -598,7 +597,7 @@ Public MustInherit Class clsAnalysisResources
       eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
         Const MaxCopyAttempts As Integer = 3
-        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 
     End Function
 
@@ -618,7 +617,7 @@ Public MustInherit Class clsAnalysisResources
       eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
       MaxCopyAttempts As Integer) As Boolean
 
-        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
 
     End Function
 
@@ -639,7 +638,7 @@ Public MustInherit Class clsAnalysisResources
       createStoragePathInfoOnly As Boolean) As Boolean
 
         Const MaxCopyAttempts As Integer = 3
-        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly, MaxCopyAttempts)
+        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly, MaxCopyAttempts)
 
     End Function
 
@@ -683,7 +682,7 @@ Public MustInherit Class clsAnalysisResources
                 Return False
             End If
 
-            If CreateStoragePathInfoOnly Then
+            If createStoragePathInfoOnly Then
                 ' Create a storage path info file
                 Return CreateStoragePathInfoFile(SourceFile, DestFilePath)
             End If
@@ -724,7 +723,7 @@ Public MustInherit Class clsAnalysisResources
       InpFolder As String, _
       OutDir As String) As Boolean
         Const MaxCopyAttempts As Integer = 3
-        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
     End Function
 
     ''' <summary>
@@ -741,7 +740,7 @@ Public MustInherit Class clsAnalysisResources
       OutDir As String, _
       eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
         Const MaxCopyAttempts As Integer = 3
-        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
     End Function
 
     ''' <summary>
@@ -759,7 +758,7 @@ Public MustInherit Class clsAnalysisResources
       OutDir As String, _
       eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
       MaxCopyAttempts As Integer) As Boolean
-        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, CreateStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
     End Function
 
     ''' <summary>
@@ -798,7 +797,7 @@ Public MustInherit Class clsAnalysisResources
             Dim TargetName As String = m_DatasetName + Fi.Extension
             DestFilePath = Path.Combine(OutDir, TargetName)
 
-            If CreateStoragePathInfoOnly Then
+            If createStoragePathInfoOnly Then
                 ' Create a storage path info file
                 Return CreateStoragePathInfoFile(SourceFile, DestFilePath)
             End If
@@ -1379,7 +1378,7 @@ Public MustInherit Class clsAnalysisResources
                         FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))   ' Parent Folder \ Dataset Folder \ Input folder
                     End If
 
-                    For Each strSharedFolderName As String In SharedResultFolderNames
+                    For Each strSharedFolderName As String In sharedResultFolderNames
                         FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))  ' Parent Folder \ Dataset Folder \  Shared results folder
                     Next
 
@@ -1838,7 +1837,7 @@ Public MustInherit Class clsAnalysisResources
 
                 For Each udtArchivedFile In m_RecentlyFoundMyEMSLFiles
                     Dim fiArchivedFile As New FileInfo(udtArchivedFile.FileInfo.RelativePathWindows)
-                    If String.Equals(fiArchivedFile.Name, MzXMLFilename, StringComparison.CurrentCultureIgnoreCase) Then
+                    If clsGlobal.IsMatch(fiArchivedFile.Name, MzXMLFilename) Then
                         myEmslFileID = udtArchivedFile.FileID
                         Exit For
                     End If
@@ -2792,13 +2791,14 @@ Public MustInherit Class clsAnalysisResources
     ''' </summary>
     ''' <param name="fiFastaFile">FASTA file to examine</param>
     ''' <param name="proteinCount">Output parameter: total protein count</param>
-    ''' <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with XXX.)</returns>
-    ''' <remarks>Decoy proteins start with XXX.</remarks>
+    ''' <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
+    ''' <remarks>Decoy proteins start with Reversed_</remarks>
     Public Shared Function GetDecoyFastaCompositionStats(
       fiFastaFile As FileInfo,
       <Out()> ByRef proteinCount As Integer) As Double
 
-        Return GetDecoyFastaCompositionStats(fiFastaFile, DECOY_PROTEIN_PREFIX, proteinCount)
+        Dim decoyProteinPrefix = GetDefaultDecoyPrefixes().First()
+        Return GetDecoyFastaCompositionStats(fiFastaFile, decoyProteinPrefix, proteinCount)
 
     End Function
 
@@ -2807,15 +2807,18 @@ Public MustInherit Class clsAnalysisResources
     ''' </summary>
     ''' <param name="fiFastaFile">FASTA file to examine</param>
     ''' <param name="proteinCount">Output parameter: total protein count</param>
-    ''' <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with XXX.)</returns>
-    ''' <remarks>Decoy proteins start with XXX.</remarks>
+    ''' <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
+    ''' <remarks>Decoy proteins start with decoyProteinPrefix</remarks>
     Public Shared Function GetDecoyFastaCompositionStats(
       fiFastaFile As FileInfo,
       decoyProteinPrefix As String,
       <Out()> ByRef proteinCount As Integer) As Double
 
         ' Look for protein names that look like:
-        ' >XXX.
+        ' >decoyProteinPrefix
+        ' where
+        ' decoyProteinPrefix is typically XXX. or XXX_ or Reversed_
+
         Dim prefixToFind = ">" & decoyProteinPrefix
         Dim forwardProteinCount = 0
         Dim reverseProteinCount = 0
@@ -2846,6 +2849,19 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         Return fractionDecoy
+
+    End Function
+
+    Public Shared Function GetDefaultDecoyPrefixes() As List(Of String)
+
+        ' Decoy proteins created by MSGF+ start with XXX_
+        ' Decoy proteins created by DMS start with Reversed_
+        Dim decoyPrefixes = New List(Of String) From {
+          "Reversed_",
+          "XXX_",
+          "XXX:"}
+
+        Return decoyPrefixes
 
     End Function
 
@@ -3336,7 +3352,7 @@ Public MustInherit Class clsAnalysisResources
         Dim iteration = GetSplitFastaIteration(jobParams, errorMessage)
         If iteration < 1 Then
             Dim toolName = jobParams.GetJobParameter("ToolName", String.Empty)
-            If String.Compare(toolName, "Mz_Refinery", True) = 0 Then
+            If clsGlobal.IsMatch(toolName, "Mz_Refinery") Then
                 ' Running MzRefinery
                 ' Override iteration to be 1
                 iteration = 1
@@ -3595,7 +3611,7 @@ Public MustInherit Class clsAnalysisResources
             Return False
         End If
 
-        If String.Equals(udtDataPackageJobInfo.Dataset, "Aggregation", StringComparison.CurrentCultureIgnoreCase) Then
+        If clsGlobal.IsMatch(udtDataPackageJobInfo.Dataset, "Aggregation") Then
             blnAggregationJob = True
         End If
 
@@ -5048,7 +5064,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
     Protected Function RetrieveDatasetFile(FileExtension As String, createStoragePathInfoOnly As Boolean) As Boolean
-        Return RetrieveDatasetFile(FileExtension, CreateStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT)
+        Return RetrieveDatasetFile(FileExtension, createStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT)
     End Function
 
     ''' <summary>
@@ -5083,7 +5099,7 @@ Public MustInherit Class clsAnalysisResources
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving file " & fiDatasetFile.FullName)
         End If
 
-        If CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly) Then
+        If CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly) Then
             Return True
         Else
             Return False
@@ -5220,7 +5236,7 @@ Public MustInherit Class clsAnalysisResources
         Dim strErrorMessage As String = String.Empty
         Dim blnComputeHash As Boolean
 
-        If CreateStoragePathInfoOnly Then
+        If createStoragePathInfoOnly Then
             strTargetFilePath = fiSourceFile.FullName
             ' Don't compute the hash, since we're accessing the file over the network
             blnComputeHash = False
@@ -5236,7 +5252,7 @@ Public MustInherit Class clsAnalysisResources
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MzXML file validation error in RetrieveMzXMLFileVerifyHash: " & strErrorMessage)
 
         Try
-            If CreateStoragePathInfoOnly Then
+            If createStoragePathInfoOnly Then
                 ' Delete the local StoragePathInfo file
                 Dim strStoragePathInfoFile As String = Path.Combine(m_WorkingDir, fiSourceFile.Name & STORAGE_PATH_INFO_FILE_SUFFIX)
                 If File.Exists(strStoragePathInfoFile) Then
@@ -5274,7 +5290,7 @@ Public MustInherit Class clsAnalysisResources
     Protected Function RetrieveScanStatsFiles(createStoragePathInfoOnly As Boolean) As Boolean
 
         Const RetrieveSICStatsFile As Boolean = False
-        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
+        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
 
     End Function
 
@@ -5290,7 +5306,7 @@ Public MustInherit Class clsAnalysisResources
     Protected Function RetrieveScanStatsFiles(createStoragePathInfoOnly As Boolean, RetrieveScanStatsFile As Boolean, RetrieveScanStatsExFile As Boolean) As Boolean
 
         Const RetrieveSICStatsFile As Boolean = False
-        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile)
+        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile)
 
     End Function
 
@@ -5303,7 +5319,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>True if the file was found and retrieved, otherwise False</returns>
     ''' <remarks></remarks>
     Protected Function RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile As Boolean, createStoragePathInfoOnly As Boolean) As Boolean
-        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
+        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
     End Function
 
     ''' <summary>
@@ -5323,7 +5339,7 @@ Public MustInherit Class clsAnalysisResources
       RetrieveScanStatsExFile As Boolean) As Boolean
 
         Dim lstNonCriticalFileSuffixes As List(Of String) = New List(Of String)
-        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, lstNonCriticalFileSuffixes)
+        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, lstNonCriticalFileSuffixes)
 
     End Function
 
@@ -5369,7 +5385,7 @@ Public MustInherit Class clsAnalysisResources
                         Continue For
                     End If
 
-                    If String.Equals(myEmslFile.FileInfo.Filename, ScanStatsFilename, StringComparison.CurrentCultureIgnoreCase) AndAlso
+                    If clsGlobal.IsMatch(myEmslFile.FileInfo.Filename, ScanStatsFilename) AndAlso
                       myEmslFile.FileInfo.TransactionID > BestScanStatsFileTransactionID Then
                         Dim fiScanStatsFile = New FileInfo(myEmslFile.FileInfo.RelativePathWindows)
                         BestSICFolderName = fiScanStatsFile.Directory.Name
@@ -5381,7 +5397,7 @@ Public MustInherit Class clsAnalysisResources
                     m_message = "MASIC ScanStats file not found in the SIC results folder(s) in MyEMSL"
                 Else
                     Dim BestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, BestSICFolderName)
-                    Return RetrieveScanAndSICStatsFiles(BestSICFolderPath, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
+                    Return RetrieveScanAndSICStatsFiles(BestSICFolderPath, RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
                 End If
             Else
                 Dim diFolderInfo As DirectoryInfo
@@ -5416,7 +5432,7 @@ Public MustInherit Class clsAnalysisResources
                         Else
                             Dim fiSourceFile = New FileInfo(strNewestScanStatsFilePath)
                             Dim BestSICFolderPath = fiSourceFile.Directory.FullName
-                            Return RetrieveScanAndSICStatsFiles(BestSICFolderPath, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
+                            Return RetrieveScanAndSICStatsFiles(BestSICFolderPath, RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile:=RetrieveScanStatsFile, RetrieveScanStatsExFile:=RetrieveScanStatsExFile, lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
                         End If
 
                     End If
@@ -5451,7 +5467,7 @@ Public MustInherit Class clsAnalysisResources
 
         Dim lstNonCriticalFileSuffixes As List(Of String) = New List(Of String)
 
-        Return RetrieveScanAndSICStatsFiles(MASICResultsFolderPath, RetrieveSICStatsFile, CreateStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, lstNonCriticalFileSuffixes)
+        Return RetrieveScanAndSICStatsFiles(MASICResultsFolderPath, RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, lstNonCriticalFileSuffixes)
     End Function
 
     ''' <summary>
@@ -5520,21 +5536,21 @@ Public MustInherit Class clsAnalysisResources
 
                 If RetrieveScanStatsFile Then
                     ' Look for and copy the _ScanStats.txt file
-                    If Not RetrieveSICFileUNC(m_DatasetName + SCAN_STATS_FILE_SUFFIX, MASICResultsFolderPath, CreateStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
+                    If Not RetrieveSICFileUNC(m_DatasetName + SCAN_STATS_FILE_SUFFIX, MASICResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
                         Return False
                     End If
                 End If
 
                 If RetrieveScanStatsExFile Then
                     ' Look for and copy the _ScanStatsEx.txt file
-                    If Not RetrieveSICFileUNC(m_DatasetName + SCAN_STATS_EX_FILE_SUFFIX, MASICResultsFolderPath, CreateStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
+                    If Not RetrieveSICFileUNC(m_DatasetName + SCAN_STATS_EX_FILE_SUFFIX, MASICResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
                         Return False
                     End If
                 End If
 
                 If RetrieveSICStatsFile Then
                     ' Look for and copy the _SICStats.txt file
-                    If Not RetrieveSICFileUNC(m_DatasetName + "_SICStats.txt", MASICResultsFolderPath, CreateStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
+                    If Not RetrieveSICFileUNC(m_DatasetName + "_SICStats.txt", MASICResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
                         Return False
                     End If
                 End If
@@ -5587,7 +5603,7 @@ Public MustInherit Class clsAnalysisResources
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying MASIC results file: " + fiSourceFile.FullName)
         End If
 
-        If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoOnly, MaxCopyAttempts) Then
+        If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, MaxCopyAttempts) Then
             Dim blnIgnoreFile As Boolean
             blnIgnoreFile = SafeToIgnore(fiSourceFile.Name, lstNonCriticalFileSuffixes)
 
@@ -5620,7 +5636,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
     Protected Function RetrieveSpectra(RawDataType As String, createStoragePathInfoOnly As Boolean) As Boolean
-        Return RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT)
+        Return RetrieveSpectra(RawDataType, createStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT)
     End Function
 
     ''' <summary>
@@ -5656,25 +5672,25 @@ Public MustInherit Class clsAnalysisResources
                 End If
 
             Case eRawDataTypeConstants.AgilentQStarWiffFile         'Agilent/QSTAR TOF data
-                blnSuccess = RetrieveDatasetFile(DOT_WIFF_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
+                blnSuccess = RetrieveDatasetFile(DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts)
 
             Case eRawDataTypeConstants.ZippedSFolders           'FTICR data
-                blnSuccess = RetrieveSFolders(CreateStoragePathInfoOnly, maxAttempts)
+                blnSuccess = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts)
 
             Case eRawDataTypeConstants.ThermoRawFile            'Finnigan ion trap/LTQ-FT data				
-                blnSuccess = RetrieveDatasetFile(DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
+                blnSuccess = RetrieveDatasetFile(DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts)
 
             Case eRawDataTypeConstants.MicromassRawFolder           'Micromass QTOF data
-                blnSuccess = RetrieveDotRawFolder(CreateStoragePathInfoOnly, maxAttempts)
+                blnSuccess = RetrieveDotRawFolder(createStoragePathInfoOnly, maxAttempts)
 
             Case eRawDataTypeConstants.UIMF         'IMS UIMF data
-                blnSuccess = RetrieveDatasetFile(DOT_UIMF_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
+                blnSuccess = RetrieveDatasetFile(DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts)
 
             Case eRawDataTypeConstants.mzXML
-                blnSuccess = RetrieveDatasetFile(DOT_MZXML_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
+                blnSuccess = RetrieveDatasetFile(DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts)
 
             Case eRawDataTypeConstants.mzML
-                blnSuccess = RetrieveDatasetFile(DOT_MZML_EXTENSION, CreateStoragePathInfoOnly, maxAttempts)
+                blnSuccess = RetrieveDatasetFile(DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts)
 
             Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
                 ' Call RetrieveDotDFolder() to copy the folder and all subfolders
@@ -5734,7 +5750,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
     Protected Function RetrieveDotRawFolder(createStoragePathInfoOnly As Boolean, maxAttempts As Integer) As Boolean
-        Return RetrieveDotXFolder(DOT_RAW_EXTENSION, CreateStoragePathInfoOnly, maxAttempts, New List(Of String))
+        Return RetrieveDotXFolder(DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts, New List(Of String))
     End Function
 
     ''' <summary>
@@ -5779,7 +5795,7 @@ Public MustInherit Class clsAnalysisResources
 
             DestFolderPath = Path.Combine(m_WorkingDir, diSourceFolder.Name)
 
-            If CreateStoragePathInfoOnly Then
+            If createStoragePathInfoOnly Then
                 If Not diSourceFolder.Exists Then
                     m_message = "Source folder not found: " + diSourceFolder.FullName
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -5857,7 +5873,7 @@ Public MustInherit Class clsAnalysisResources
                 End If
 
                 For Each diSubFolder As DirectoryInfo In diCachedDataFolder.GetDirectories()
-                    If Not String.Equals(diSubFolder.Name, m_DatasetName, StringComparison.CurrentCultureIgnoreCase) Then
+                    If Not clsGlobal.IsMatch(diSubFolder.Name, m_DatasetName) Then
                         ' Delete this directory
                         Try
                             If m_DebugLevel >= 2 Then
@@ -5880,7 +5896,7 @@ Public MustInherit Class clsAnalysisResources
 
                 ' Delete any .mis files that do not start with this dataset's name
                 For Each fiFile As FileInfo In diCachedDataFolder.GetFiles("*.mis")
-                    If Not String.Equals(Path.GetFileNameWithoutExtension(fiFile.Name), m_DatasetName, StringComparison.CurrentCultureIgnoreCase) Then
+                    If Not clsGlobal.IsMatch(Path.GetFileNameWithoutExtension(fiFile.Name), m_DatasetName) Then
                         fiFile.Delete()
                     End If
                 Next
@@ -5921,7 +5937,7 @@ Public MustInherit Class clsAnalysisResources
                     ' We'll copy the first file in MisFiles(0)
                     ' Log a warning if we will be renaming the file
 
-                    If Not String.Equals(Path.GetFileName(MisFiles(0)), strImagingSeqFilePathFinal, StringComparison.CurrentCultureIgnoreCase) Then
+                    If Not clsGlobal.IsMatch(Path.GetFileName(MisFiles(0)), strImagingSeqFilePathFinal) Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles(0)) + " to " + Path.GetFileName(strImagingSeqFilePathFinal))
                     End If
 
@@ -6275,13 +6291,11 @@ Public MustInherit Class clsAnalysisResources
     ''' Overrides base class version of the function to creates a Sequest params file compatible 
     '''	with the Bioworks version on this System. Uses ParamFileGenerator dll provided by Ken Auberry
     ''' </summary>
-    ''' <param name="ParamFileName">Name of param file to be created</param>
-    ''' <param name="ParamFilePath">Param file storage path</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>NOTE: ParamFilePath isn't used in this override, but is needed in parameter list for compatability</remarks>
-    Protected Function RetrieveGeneratedParamFile(ParamFileName As String, ParamFilePath As String) As Boolean
+    ''' <param name="paramFileName">Name of param file to be created</param>
+    ''' <returns>True for success; False for failure</returns>
+    Protected Function RetrieveGeneratedParamFile(paramFileName As String) As Boolean
 
-        Dim ParFileGen As ParamFileGenerator.MakeParams.IGenerateFile = Nothing
+        Dim ParFileGen As IGenerateFile = Nothing
         Dim blnSuccess As Boolean
 
         Try
@@ -6292,18 +6306,37 @@ Public MustInherit Class clsAnalysisResources
 
             ' Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
             ' Furthermore, the full path to the fasta file is only necessary when creating Sequest parameter files
-            Dim paramFileType = SetBioworksVersion(m_jobParams.GetParam("ToolName"))
+            Dim toolName = m_jobParams.GetParam("ToolName", String.Empty)
+            If String.IsNullOrWhiteSpace(toolName) Then
+                m_message = "Job parameter ToolName is empty"
+                Return False
+            End If
+
+            Dim paramFileType = SetParamfileType(toolName)
+            If paramFileType = IGenerateFile.ParamFileType.Invalid Then
+                m_message = "Tool " & toolName & " is not supported by the ParamFileGenerator; update clsAnalysisResources and ParamFileGenerator.dll"
+                Return False
+            End If
+
             Dim fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
             ' Gigasax.DMS5
             Dim connectionString = m_mgrParams.GetParam("connectionstring")
             Dim datasetID As Integer = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0)
 
-            blnSuccess = ParFileGen.MakeFile(ParamFileName, paramFileType, fastaFilePath, m_WorkingDir, connectionString, datasetID)
+            blnSuccess = ParFileGen.MakeFile(paramFileName, paramFileType, fastaFilePath, m_WorkingDir, connectionString, datasetID)
+
+
+            ' Examine the size of the ModDefs.txt file
+            ' Add it to the ignore list if it is empty (no point in tracking a 0-byte file)
+            Dim fiModDefs = New FileInfo(Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(paramFileName) & "_ModDefs.txt"))
+            If fiModDefs.Exists AndAlso fiModDefs.Length = 0 Then
+                m_jobParams.AddResultFileToSkip(fiModDefs.Name)
+            End If
 
             If blnSuccess Then
                 If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successfully retrieved param file: " + ParamFileName)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successfully retrieved param file: " + paramFileName)
                 End If
 
                 Return True
@@ -6630,66 +6663,38 @@ Public MustInherit Class clsAnalysisResources
     ''' <summary>
     ''' Specifies the Bioworks version for use by the Param File Generator DLL
     ''' </summary>
-    ''' <param name="ToolName">Version specified in mgr config file</param>
+    ''' <param name="toolName">Version specified in mgr config file</param>
     ''' <returns>IGenerateFile.ParamFileType based on input version</returns>
     ''' <remarks></remarks>
-    Protected Function SetBioworksVersion(ToolName As String) As ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType
+    Protected Function SetParamfileType(toolName As String) As IGenerateFile.ParamFileType
 
-        Dim strToolNameLCase As String
+        Dim toolNameToTypeMapping = New Dictionary(Of String, IGenerateFile.ParamFileType)(StringComparer.CurrentCultureIgnoreCase) From
+            {{"sequest", IGenerateFile.ParamFileType.BioWorks_Current},
+             {"xtandem", IGenerateFile.ParamFileType.X_Tandem},
+             {"inspect", IGenerateFile.ParamFileType.Inspect},
+             {"msgfplus", IGenerateFile.ParamFileType.MSGFPlus},
+             {"msalign_histone", IGenerateFile.ParamFileType.MSAlignHistone},
+             {"msalign", IGenerateFile.ParamFileType.MSAlign},
+             {"moda", IGenerateFile.ParamFileType.MODa},
+             {"mspathfinder", IGenerateFile.ParamFileType.MSPathFinder},
+             {"modplus", IGenerateFile.ParamFileType.MODPlus}
+            }
 
-        strToolNameLCase = ToolName.ToLower()
+        Dim paramFileType As IGenerateFile.ParamFileType
 
-        'Converts the setup file entry for the Bioworks version to a parameter type compatible with the
-        '	parameter file generator dll
-        Select Case strToolNameLCase
-            Case "20"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_20
-            Case "30"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_30
-            Case "31"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_31
-            Case "32"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_32
-            Case "sequest"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_Current
-            Case "xtandem"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.X_Tandem
-            Case "inspect"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
-            Case "msgfplus"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFPlus
-            Case "msalign"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
-            Case "msalign_histone"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlignHistone
-            Case "moda"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MODa
-            Case "mspathfinder"
-                Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSPathFinder
+        If toolNameToTypeMapping.TryGetValue(toolName, paramFileType) Then
+            Return paramFileType
+        End If
 
-            Case Else
-                ' Did not find an exact match
-                ' Try a substring match
-                If strToolNameLCase.Contains("sequest") Then
-                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.BioWorks_Current
-                ElseIf strToolNameLCase.Contains("xtandem") Then
-                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.X_Tandem
-                ElseIf strToolNameLCase.Contains("inspect") Then
-                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.Inspect
-                ElseIf strToolNameLCase.Contains("msgfplus") Then
-                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSGFPlus
-                ElseIf strToolNameLCase.Contains("msalign_histone") Then
-                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlignHistone
-                ElseIf strToolNameLCase.Contains("msalign") Then
-                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSAlign
-                ElseIf strToolNameLCase.StartsWith("moda") Then
-                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MODa
-                ElseIf strToolNameLCase.StartsWith("mspathfinder") Then
-                    Return ParamFileGenerator.MakeParams.IGenerateFile.ParamFileType.MSPathFinder
-                Else
-                    Return Nothing
-                End If
-        End Select
+        Dim strToolNameLCase = toolName.ToLower()
+
+        For Each entry In toolNameToTypeMapping
+            If strToolNameLCase.Contains(entry.Key.ToLower()) Then
+                Return entry.Value
+            End If
+        Next
+
+        Return IGenerateFile.ParamFileType.Invalid
 
     End Function
 
@@ -6992,7 +6997,7 @@ Public MustInherit Class clsAnalysisResources
 
             ' Open the file and confirm it has data rows
             Using srInFile As StreamReader = New StreamReader(New FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                While Not srInfile.EndOfStream And Not blnDataFound
+                While Not srInFile.EndOfStream And Not blnDataFound
                     strLineIn = srInFile.ReadLine()
                     If Not String.IsNullOrEmpty(strLineIn) Then
                         If intNumericDataColIndex < 0 Then

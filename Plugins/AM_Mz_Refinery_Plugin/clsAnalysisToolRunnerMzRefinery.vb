@@ -375,7 +375,21 @@ Public Class clsAnalysisToolRunnerMzRefinery
         ' Read the MSGF+ Parameter File
         Dim strMSGFDbCmdLineOptions = String.Empty
 
-        result = mMSGFDBUtils.ParseMSGFDBParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, udtHPCOptions, strMSGFDbCmdLineOptions)
+        Dim overrideParams = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+
+        Dim jobScript = m_jobParams.GetJobParameter("ToolName", "")
+        If jobScript.ToLower().StartsWith("modplus") Then
+            If fastaFileIsDecoy Then
+                overrideParams.Add("TDA", "0")
+            End If
+        End If
+
+        result = mMSGFDBUtils.ParseMSGFDBParameterFile(
+            fastaFileSizeKB, fastaFileIsDecoy,
+            strAssumedScanType, strScanTypeFilePath,
+            strInstrumentGroup, strParameterFilePath,
+            udtHPCOptions, overrideParams, strMSGFDbCmdLineOptions)
+
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then

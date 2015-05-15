@@ -381,16 +381,16 @@ Public Class clsIonicZipTools
 
 			Dim fiCompressedFileFinal = New FileInfo(GZipFilePath)
 
-			If Not String.Equals(fiCompressedFile.FullName, fiCompressedFileFinal.FullName, StringComparison.CurrentCultureIgnoreCase) Then
+            If Not clsGlobal.IsMatch(fiCompressedFile.FullName, fiCompressedFileFinal.FullName) Then
 
-				If fiCompressedFileFinal.Exists Then
-					fiCompressedFileFinal.Delete()
-				Else
-					fiCompressedFileFinal.Directory.Create()
-				End If
+                If fiCompressedFileFinal.Exists Then
+                    fiCompressedFileFinal.Delete()
+                Else
+                    fiCompressedFileFinal.Directory.Create()
+                End If
 
-				fiCompressedFile.MoveTo(fiCompressedFileFinal.FullName)
-			End If
+                fiCompressedFile.MoveTo(fiCompressedFileFinal.FullName)
+            End If
 
 		Catch ex As Exception
 			m_Message = "Error gzipping file " & fiFile.FullName & " using gzip.exe: " & ex.Message

@@ -36,61 +36,60 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		'Retrieve param file
-		If Not RetrieveGeneratedParamFile( _
-		 m_jobParams.GetParam("ParmFileName"), _
-		 m_jobParams.GetParam("ParmFileStoragePath")) _
-		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Retrieve the Inspect Input Params file
-		If Not RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName) Then
-			'Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Retrieve the Inspect Input Params file
+        If Not RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName) Then
+            'Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
-		If [String].IsNullOrEmpty(numClonedSteps) Then
-			' This is not a parallelized job
-			' Retrieve the zipped Inspect result file
-			If Not RetrieveFile(zippedResultName, transferFolderName) Then
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & zippedResultName & " using folder " & transferFolderName)
-				End If
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+        numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
+        If [String].IsNullOrEmpty(numClonedSteps) Then
+            ' This is not a parallelized job
+            ' Retrieve the zipped Inspect result file
+            If Not RetrieveFile(zippedResultName, transferFolderName) Then
+                If m_DebugLevel >= 3 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & zippedResultName & " using folder " & transferFolderName)
+                End If
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' Unzip Inspect result file
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping Inspect result file")
-			End If
-			If UnzipFileStart(Path.Combine(m_WorkingDir, zippedResultName), m_WorkingDir, "clsAnalysisResourcesInspResultsAssembly.GetResources", False) Then
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Inspect result file unzipped")
-				End If
-			End If
+            ' Unzip Inspect result file
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping Inspect result file")
+            End If
+            If UnzipFileStart(Path.Combine(m_WorkingDir, zippedResultName), m_WorkingDir, "clsAnalysisResourcesInspResultsAssembly.GetResources", False) Then
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Inspect result file unzipped")
+                End If
+            End If
 
-			' Retrieve the Inspect search log file
-			If Not RetrieveFile(searchLogResultName, transferFolderName) Then
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & searchLogResultName & " using folder " & transferFolderName)
-				End If
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' Retrieve the Inspect search log file
+            If Not RetrieveFile(searchLogResultName, transferFolderName) Then
+                If m_DebugLevel >= 3 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & searchLogResultName & " using folder " & transferFolderName)
+                End If
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			m_jobParams.AddResultFileExtensionToSkip(searchLogResultName)
+            m_jobParams.AddResultFileExtensionToSkip(searchLogResultName)
 
-		Else
-			' This is a parallelized job
-			' Retrieve multi inspect result files
-			If Not RetrieveMultiInspectResultFiles() Then
-				'Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-		End If
+        Else
+            ' This is a parallelized job
+            ' Retrieve multi inspect result files
+            If Not RetrieveMultiInspectResultFiles() Then
+                'Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+        End If
 
-		'All finished
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        'All finished
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Retrieves inspect and inspect log and error files

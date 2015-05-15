@@ -197,7 +197,7 @@ Public Class clsAnalysisMgrSettings
             'Add the column heading and value to the dictionary
             Dim paramKey As String = DbCStr(oRow(dtSettings.Columns("ParameterName")))
 
-            If String.Equals(paramKey, "MgrSettingGroupName", StringComparison.CurrentCultureIgnoreCase) Then
+            If clsGlobal.IsMatch(paramKey, "MgrSettingGroupName") Then
                 Dim groupName As String = DbCStr(oRow(dtSettings.Columns("ParameterValue")))
                 If Not String.IsNullOrWhiteSpace(groupName) Then
                     Return groupName

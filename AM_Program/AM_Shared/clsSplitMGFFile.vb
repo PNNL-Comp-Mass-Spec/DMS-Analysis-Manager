@@ -46,7 +46,7 @@ Public Class clsSplitMGFFile
                 Return New List(Of FileInfo)
             End If
 
-            If Not fiMgfFile.Length = 0 Then
+            If fiMgfFile.Length = 0 Then
                 OnErrorEvent("MGF file is empty: " & mgfFilePath)
                 Return New List(Of FileInfo)
             End If
@@ -125,7 +125,6 @@ Public Class clsSplitMGFFile
                     Return New List(Of FileInfo)
                 End If
             End Using
-
 
             Return lstSplitMgfFiles
 

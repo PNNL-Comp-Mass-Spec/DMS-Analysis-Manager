@@ -3,228 +3,229 @@ Imports AnalysisManagerBase
 Imports System.Runtime.InteropServices
 Imports System.IO
 Imports System.Net
+Imports System.Runtime.Serialization.Formatters
 
 Public Class clsMSGFDBUtils
 
 #Region "Constants"
-	Public Const PROGRESS_PCT_MSGFDB_STARTING As Single = 1
-	Public Const PROGRESS_PCT_MSGFDB_LOADING_DATABASE As Single = 2
-	Public Const PROGRESS_PCT_MSGFDB_READING_SPECTRA As Single = 3
-	Public Const PROGRESS_PCT_MSGFDB_THREADS_SPAWNED As Single = 4
-	Public Const PROGRESS_PCT_MSGFDB_COMPUTING_FDRS As Single = 95
-	Public Const PROGRESS_PCT_MSGFDB_COMPLETE As Single = 96
-	Public Const PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV As Single = 97
-	Public Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 98
-	Public Const PROGRESS_PCT_COMPLETE As Single = 99
+    Public Const PROGRESS_PCT_MSGFDB_STARTING As Single = 1
+    Public Const PROGRESS_PCT_MSGFDB_LOADING_DATABASE As Single = 2
+    Public Const PROGRESS_PCT_MSGFDB_READING_SPECTRA As Single = 3
+    Public Const PROGRESS_PCT_MSGFDB_THREADS_SPAWNED As Single = 4
+    Public Const PROGRESS_PCT_MSGFDB_COMPUTING_FDRS As Single = 95
+    Public Const PROGRESS_PCT_MSGFDB_COMPLETE As Single = 96
+    Public Const PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV As Single = 97
+    Public Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 98
+    Public Const PROGRESS_PCT_COMPLETE As Single = 99
 
-	Protected Enum eThreadProgressSteps
-		PreprocessingSpectra = 0
-		DatabaseSearch = 1
-		ComputingSpectralProbabilities = 2
-		Complete = 3
-	End Enum
+    Protected Enum eThreadProgressSteps
+        PreprocessingSpectra = 0
+        DatabaseSearch = 1
+        ComputingSpectralProbabilities = 2
+        Complete = 3
+    End Enum
 
-	Protected Const THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA As Single = 0
-	Protected Const THREAD_PROGRESS_PCT_DATABASE_SEARCH As Single = 5
-	Protected Const THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES As Single = 50
-	Protected Const THREAD_PROGRESS_PCT_COMPLETE As Single = 100
+    Protected Const THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA As Single = 0
+    Protected Const THREAD_PROGRESS_PCT_DATABASE_SEARCH As Single = 5
+    Protected Const THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES As Single = 50
+    Protected Const THREAD_PROGRESS_PCT_COMPLETE As Single = 100
 
-	Protected Const MSGFDB_OPTION_TDA As String = "TDA"
-	Protected Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
-	Protected Const MSGFDB_OPTION_FRAGMENTATION_METHOD As String = "FragmentationMethodID"
-	Protected Const MSGFDB_OPTION_INSTRUMENT_ID As String = "InstrumentID"
+    Protected Const MSGFDB_OPTION_TDA As String = "TDA"
+    Protected Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
+    Protected Const MSGFDB_OPTION_FRAGMENTATION_METHOD As String = "FragmentationMethodID"
+    Protected Const MSGFDB_OPTION_INSTRUMENT_ID As String = "InstrumentID"
 
-	Public Const MSGFDB_TSV_SUFFIX As String = "_msgfdb.tsv"
+    Public Const MSGFDB_TSV_SUFFIX As String = "_msgfdb.tsv"
 
-	' Obsolete setting: Old MS-GFDB program
-	'Public Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
+    ' Obsolete setting: Old MS-GFDB program
+    'Public Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
 
-	Public Const MSGFPLUS_JAR_NAME As String = "MSGFPlus.jar"
-	Public Const MSGFDB_CONSOLE_OUTPUT_FILE As String = "MSGFDB_ConsoleOutput.txt"
+    Public Const MSGFPLUS_JAR_NAME As String = "MSGFPlus.jar"
+    Public Const MSGFDB_CONSOLE_OUTPUT_FILE As String = "MSGFDB_ConsoleOutput.txt"
 
-	Public Const MOD_FILE_NAME As String = "MSGFDB_Mods.txt"
+    Public Const MOD_FILE_NAME As String = "MSGFDB_Mods.txt"
 
 #End Region
 
 #Region "Events"
-	Public Event ErrorEvent(Message As String, DetailedMessage As String)
-	Public Event IgnorePreviousErrorEvent()
-	Public Event MessageEvent(Message As String)
-	Public Event WarningEvent(Message As String)
+    Public Event ErrorEvent(Message As String, DetailedMessage As String)
+    Public Event IgnorePreviousErrorEvent()
+    Public Event MessageEvent(Message As String)
+    Public Event WarningEvent(Message As String)
 #End Region
 
 #Region "Module Variables"
-	Protected m_mgrParams As IMgrParams
-	Protected m_jobParams As IJobParams
+    Protected m_mgrParams As IMgrParams
+    Protected m_jobParams As IJobParams
 
-	Protected m_WorkDir As String
-	Protected m_JobNum As String
-	Protected m_DebugLevel As Short
+    Protected m_WorkDir As String
+    Protected m_JobNum As String
+    Protected m_DebugLevel As Short
 
-	Protected mMSGFPlus As Boolean
-	Protected mMSGFDbVersion As String = String.Empty
-	Protected mErrorMessage As String = String.Empty
-	Protected mConsoleOutputErrorMsg As String = String.Empty
+    Protected mMSGFPlus As Boolean
+    Protected mMSGFDbVersion As String = String.Empty
+    Protected mErrorMessage As String = String.Empty
+    Protected mConsoleOutputErrorMsg As String = String.Empty
 
-	Protected mContinuumSpectraSkipped As Integer
-	Protected mSpectraSearched As Integer
+    Protected mContinuumSpectraSkipped As Integer
+    Protected mSpectraSearched As Integer
 
-	Protected mPhosphorylationSearch As Boolean
-	Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
+    Protected mPhosphorylationSearch As Boolean
+    Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
 
-	' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
-	Protected WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
+    ' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
+    Protected WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 #End Region
 
-	Public ReadOnly Property ContinuumSpectraSkipped() As Integer
-		Get
-			Return mContinuumSpectraSkipped
-		End Get
-	End Property
+    Public ReadOnly Property ContinuumSpectraSkipped() As Integer
+        Get
+            Return mContinuumSpectraSkipped
+        End Get
+    End Property
 
-	Public ReadOnly Property ConsoleOutputErrorMsg As String
-		Get
-			Return mConsoleOutputErrorMsg
-		End Get
-	End Property
+    Public ReadOnly Property ConsoleOutputErrorMsg As String
+        Get
+            Return mConsoleOutputErrorMsg
+        End Get
+    End Property
 
-	Public ReadOnly Property ErrorMessage As String
-		Get
-			Return mErrorMessage
-		End Get
-	End Property
+    Public ReadOnly Property ErrorMessage As String
+        Get
+            Return mErrorMessage
+        End Get
+    End Property
 
-	Public ReadOnly Property MSGFDbVersion As String
-		Get
-			Return mMSGFDbVersion
-		End Get
-	End Property
+    Public ReadOnly Property MSGFDbVersion As String
+        Get
+            Return mMSGFDbVersion
+        End Get
+    End Property
 
-	Public ReadOnly Property PhosphorylationSearch As Boolean
-		Get
-			Return mPhosphorylationSearch
-		End Get
-	End Property
+    Public ReadOnly Property PhosphorylationSearch As Boolean
+        Get
+            Return mPhosphorylationSearch
+        End Get
+    End Property
 
-	Public ReadOnly Property ResultsIncludeAutoAddedDecoyPeptides As Boolean
-		Get
-			Return mResultsIncludeAutoAddedDecoyPeptides
-		End Get
-	End Property
+    Public ReadOnly Property ResultsIncludeAutoAddedDecoyPeptides As Boolean
+        Get
+            Return mResultsIncludeAutoAddedDecoyPeptides
+        End Get
+    End Property
 
-	Public ReadOnly Property SpectraSearched As Integer
-		Get
-			Return mSpectraSearched
-		End Get
-	End Property
+    Public ReadOnly Property SpectraSearched As Integer
+        Get
+            Return mSpectraSearched
+        End Get
+    End Property
 
 #Region "Methods"
 
-	Public Sub New(oMgrParams As IMgrParams, oJobParams As IJobParams, ByVal JobNum As String, ByVal strWorkDir As String, ByVal intDebugLevel As Short, ByVal blnMSGFPlus As Boolean)
-		m_mgrParams = oMgrParams
-		m_jobParams = oJobParams
-		m_WorkDir = strWorkDir
+    Public Sub New(oMgrParams As IMgrParams, oJobParams As IJobParams, JobNum As String, strWorkDir As String, intDebugLevel As Short, blnMSGFPlus As Boolean)
+        m_mgrParams = oMgrParams
+        m_jobParams = oJobParams
+        m_WorkDir = strWorkDir
 
-		m_JobNum = JobNum
-		m_DebugLevel = intDebugLevel
+        m_JobNum = JobNum
+        m_DebugLevel = intDebugLevel
 
-		mMSGFPlus = blnMSGFPlus
-		mMSGFDbVersion = String.Empty
-		mConsoleOutputErrorMsg = String.Empty
-		mContinuumSpectraSkipped = 0
-		mSpectraSearched = 0
+        mMSGFPlus = blnMSGFPlus
+        mMSGFDbVersion = String.Empty
+        mConsoleOutputErrorMsg = String.Empty
+        mContinuumSpectraSkipped = 0
+        mSpectraSearched = 0
 
-	End Sub
+    End Sub
 
-	Protected Sub AdjustSwitchesForMSGFPlus(ByVal blnMSGFPlus As Boolean, ByRef strArgumentSwitch As String, ByRef strValue As String)
+    Protected Sub AdjustSwitchesForMSGFPlus(blnMSGFPlus As Boolean, ByRef strArgumentSwitch As String, ByRef strValue As String)
 
-		Dim intValue As Integer
-		Dim intCharIndex As Integer
+        Dim intValue As Integer
+        Dim intCharIndex As Integer
 
-		If blnMSGFPlus Then
-			' MSGF+
+        If blnMSGFPlus Then
+            ' MSGF+
 
-			If clsGlobal.IsMatch(strArgumentSwitch, "nnet") Then
-				' Auto-switch to ntt
-				strArgumentSwitch = "ntt"
-				If Integer.TryParse(strValue, intValue) Then
-					Select Case intValue
-						Case 0 : strValue = "2"			' Fully-tryptic
-						Case 1 : strValue = "1"			' Partially tryptic
-						Case 2 : strValue = "0"			' No-enzyme search
-						Case Else
-							' Assume partially tryptic
-							strValue = "1"
-					End Select
-				End If
+            If clsGlobal.IsMatch(strArgumentSwitch, "nnet") Then
+                ' Auto-switch to ntt
+                strArgumentSwitch = "ntt"
+                If Integer.TryParse(strValue, intValue) Then
+                    Select Case intValue
+                        Case 0 : strValue = "2"         ' Fully-tryptic
+                        Case 1 : strValue = "1"         ' Partially tryptic
+                        Case 2 : strValue = "0"         ' No-enzyme search
+                        Case Else
+                            ' Assume partially tryptic
+                            strValue = "1"
+                    End Select
+                End If
 
-			ElseIf clsGlobal.IsMatch(strArgumentSwitch, "c13") Then
-				' Auto-switch to ti
-				strArgumentSwitch = "ti"
-				If Integer.TryParse(strValue, intValue) Then
-					If intValue = 0 Then
-						strValue = "0,0"
-					ElseIf intValue = 1 Then
-						strValue = "-1,1"
-					ElseIf intValue = 2 Then
-						strValue = "-1,2"
-					Else
-						strValue = "0,1"
-					End If
-				Else
-					strValue = "0,1"
-				End If
+            ElseIf clsGlobal.IsMatch(strArgumentSwitch, "c13") Then
+                ' Auto-switch to ti
+                strArgumentSwitch = "ti"
+                If Integer.TryParse(strValue, intValue) Then
+                    If intValue = 0 Then
+                        strValue = "0,0"
+                    ElseIf intValue = 1 Then
+                        strValue = "-1,1"
+                    ElseIf intValue = 2 Then
+                        strValue = "-1,2"
+                    Else
+                        strValue = "0,1"
+                    End If
+                Else
+                    strValue = "0,1"
+                End If
 
-			ElseIf clsGlobal.IsMatch(strArgumentSwitch, "showDecoy") Then
-				' Not valid for MSGF+; skip it
-				strArgumentSwitch = String.Empty
-			End If
+            ElseIf clsGlobal.IsMatch(strArgumentSwitch, "showDecoy") Then
+                ' Not valid for MSGF+; skip it
+                strArgumentSwitch = String.Empty
+            End If
 
-		Else
-			' MS-GFDB
+        Else
+            ' MS-GFDB
 
-			If clsGlobal.IsMatch(strArgumentSwitch, "ntt") Then
-				' Auto-switch to nnet
-				strArgumentSwitch = "nnet"
-				If Integer.TryParse(strValue, intValue) Then
-					Select Case intValue
-						Case 2 : strValue = "0"			' Fully-tryptic
-						Case 1 : strValue = "1"			' Partially tryptic
-						Case 0 : strValue = "2"			' No-enzyme search
-						Case Else
-							' Assume partially tryptic
-							strValue = "1"
-					End Select
-				End If
+            If clsGlobal.IsMatch(strArgumentSwitch, "ntt") Then
+                ' Auto-switch to nnet
+                strArgumentSwitch = "nnet"
+                If Integer.TryParse(strValue, intValue) Then
+                    Select Case intValue
+                        Case 2 : strValue = "0"         ' Fully-tryptic
+                        Case 1 : strValue = "1"         ' Partially tryptic
+                        Case 0 : strValue = "2"         ' No-enzyme search
+                        Case Else
+                            ' Assume partially tryptic
+                            strValue = "1"
+                    End Select
+                End If
 
-			ElseIf clsGlobal.IsMatch(strArgumentSwitch, "ti") Then
-				' Auto-switch to c13
-				' Use the digit after the comma in the "ti" specification
-				strArgumentSwitch = "c13"
-				intCharIndex = strValue.IndexOf(",", StringComparison.Ordinal)
-				If intCharIndex >= 0 Then
-					strValue = strValue.Substring(intCharIndex + 1)
-				Else
-					' Comma not found
-					If Integer.TryParse(strValue, intValue) Then
-						strValue = intValue.ToString()
-					Else
-						strValue = "1"
-					End If
+            ElseIf clsGlobal.IsMatch(strArgumentSwitch, "ti") Then
+                ' Auto-switch to c13
+                ' Use the digit after the comma in the "ti" specification
+                strArgumentSwitch = "c13"
+                intCharIndex = strValue.IndexOf(",", StringComparison.Ordinal)
+                If intCharIndex >= 0 Then
+                    strValue = strValue.Substring(intCharIndex + 1)
+                Else
+                    ' Comma not found
+                    If Integer.TryParse(strValue, intValue) Then
+                        strValue = intValue.ToString()
+                    Else
+                        strValue = "1"
+                    End If
 
-				End If
+                End If
 
-			ElseIf clsGlobal.IsMatch(strArgumentSwitch, "addFeatures") Then
-				' Not valid for MS-GFDB; skip it
-				strArgumentSwitch = String.Empty
+            ElseIf clsGlobal.IsMatch(strArgumentSwitch, "addFeatures") Then
+                ' Not valid for MS-GFDB; skip it
+                strArgumentSwitch = String.Empty
 
-			End If
+            End If
 
-		End If
+        End If
 
-	End Sub
+    End Sub
 
-    Private Function CanDetermineInstIdFromInstGroup(ByVal instrumentGroup As String, <Out> ByRef instrumentIDNew As String, <Out> ByRef autoSwitchReason As String) As Boolean
+    Private Function CanDetermineInstIdFromInstGroup(instrumentGroup As String, <Out> ByRef instrumentIDNew As String, <Out> ByRef autoSwitchReason As String) As Boolean
 
         ' Thermo Instruments
         If clsGlobal.IsMatch(instrumentGroup, "QExactive") Then
@@ -251,7 +252,7 @@ Public Class clsMSGFDBUtils
 
     End Function
 
-    Private Sub AutoUpdateInstrumentIDIfChanged(ByRef instrumentIDCurrent As String, ByVal instrumentIDNew As String, ByVal autoSwitchReason As String)
+    Private Sub AutoUpdateInstrumentIDIfChanged(ByRef instrumentIDCurrent As String, instrumentIDNew As String, autoSwitchReason As String)
 
         If Not String.IsNullOrEmpty(instrumentIDNew) AndAlso instrumentIDNew <> instrumentIDCurrent Then
 
@@ -276,150 +277,150 @@ Public Class clsMSGFDBUtils
 
     End Sub
 
-	Public Function ConvertMZIDToTSV(ByVal javaProgLoc As String, ByVal msgfDbProgLoc As String, ByVal strDatasetName As String, ByVal strMZIDFileName As String) As String
+    Public Function ConvertMZIDToTSV(javaProgLoc As String, msgfDbProgLoc As String, strDatasetName As String, strMZIDFileName As String) As String
 
-		Dim strTSVFilePath As String
-		Dim javaMemorySizeMB As Integer
+        Dim strTSVFilePath As String
+        Dim javaMemorySizeMB As Integer
 
-		Dim CmdStr As String
-		Dim blnSuccess As Boolean
+        Dim CmdStr As String
+        Dim blnSuccess As Boolean
 
-		Try
-			' Note that this file needs to be _msgfdb.tsv, not _msgfplus.tsv
-			' The reason is that we want the PeptideToProtein Map file to be named Dataset_msgfdb_PepToProtMap.txt for compatibility with PHRPReader
-			Dim tsvFileName = strDatasetName & MSGFDB_TSV_SUFFIX
-			strTSVFilePath = Path.Combine(m_WorkDir, tsvFileName)
+        Try
+            ' Note that this file needs to be _msgfdb.tsv, not _msgfplus.tsv
+            ' The reason is that we want the PeptideToProtein Map file to be named Dataset_msgfdb_PepToProtMap.txt for compatibility with PHRPReader
+            Dim tsvFileName = strDatasetName & MSGFDB_TSV_SUFFIX
+            strTSVFilePath = Path.Combine(m_WorkDir, tsvFileName)
 
-			'Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
+            'Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
 
-			javaMemorySizeMB = 2000
-			CmdStr = GetMZIDtoTSVCommandLine(strMZIDFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB)
+            javaMemorySizeMB = 2000
+            CmdStr = GetMZIDtoTSVCommandLine(strMZIDFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB)
 
-			' Make sure the machine has enough free memory to run MSGFPlus
-			Const LOG_FREE_MEMORY_ON_SUCCESS As Boolean = False
+            ' Make sure the machine has enough free memory to run MSGFPlus
+            Const LOG_FREE_MEMORY_ON_SUCCESS As Boolean = False
 
-			If Not clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MzIDToTsv", LOG_FREE_MEMORY_ON_SUCCESS) Then
-				ReportError("Not enough free memory to run the MzIDToTsv module in MSGFPlus")
-				Return String.Empty
-			End If
+            If Not clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MzIDToTsv", LOG_FREE_MEMORY_ON_SUCCESS) Then
+                ReportError("Not enough free memory to run the MzIDToTsv module in MSGFPlus")
+                Return String.Empty
+            End If
 
-			If m_DebugLevel >= 1 Then
-				ReportMessage(javaProgLoc & " " & CmdStr)
-			End If
+            If m_DebugLevel >= 1 Then
+                ReportMessage(javaProgLoc & " " & CmdStr)
+            End If
 
-			Dim objCreateTSV As clsRunDosProgram
-			objCreateTSV = New clsRunDosProgram(m_WorkDir)
+            Dim objCreateTSV As clsRunDosProgram
+            objCreateTSV = New clsRunDosProgram(m_WorkDir)
 
-			With objCreateTSV
-				.CreateNoWindow = True
-				.CacheStandardOutput = True
-				.EchoOutputToConsole = True
+            With objCreateTSV
+                .CreateNoWindow = True
+                .CacheStandardOutput = True
+                .EchoOutputToConsole = True
 
-				.WriteConsoleOutputToFile = True
-				.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
-			End With
+                .WriteConsoleOutputToFile = True
+                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
+            End With
 
-			blnSuccess = objCreateTSV.RunProgram(javaProgLoc, CmdStr, "MzIDToTsv", True)
+            blnSuccess = objCreateTSV.RunProgram(javaProgLoc, CmdStr, "MzIDToTsv", True)
 
-			If Not blnSuccess Then
-				ReportError("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
-				Return String.Empty
-			Else
-				Try
-					' Delete the console output file
-					File.Delete(objCreateTSV.ConsoleOutputFilePath)
-				Catch ex As Exception
-					' Ignore errors here
-				End Try
+            If Not blnSuccess Then
+                ReportError("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
+                Return String.Empty
+            Else
+                Try
+                    ' Delete the console output file
+                    File.Delete(objCreateTSV.ConsoleOutputFilePath)
+                Catch ex As Exception
+                    ' Ignore errors here
+                End Try
 
-			End If
+            End If
 
-		Catch ex As Exception
-			ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV", "Error in MSGFDbPlugin->ConvertMZIDToTSV: & " & ex.Message)
-			Return String.Empty
-		End Try
+        Catch ex As Exception
+            ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV", "Error in MSGFDbPlugin->ConvertMZIDToTSV: & " & ex.Message)
+            Return String.Empty
+        End Try
 
-		Return strTSVFilePath
+        Return strTSVFilePath
 
-	End Function
+    End Function
 
-	Public Shared Function GetMZIDtoTSVCommandLine(
-	  ByVal mzidFileName As String,
-	  ByVal tsvFileName As String,
-	  ByVal workingDirectory As String,
-	  ByVal msgfDbProgLoc As String,
-	  ByVal javaMemorySizeMB As Integer) As String
+    Public Shared Function GetMZIDtoTSVCommandLine(
+      mzidFileName As String,
+      tsvFileName As String,
+      workingDirectory As String,
+      msgfDbProgLoc As String,
+      javaMemorySizeMB As Integer) As String
 
-		Dim CmdStr As String
+        Dim CmdStr As String
 
-		CmdStr = " -Xmx" & javaMemorySizeMB & "M -cp " & msgfDbProgLoc
-		CmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
+        CmdStr = " -Xmx" & javaMemorySizeMB & "M -cp " & msgfDbProgLoc
+        CmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
 
-		CmdStr &= " -i " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName))
-		CmdStr &= " -o " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName))
-		CmdStr &= " -showQValue 1"
-		CmdStr &= " -showDecoy 1"
-		CmdStr &= " -unroll 1"
+        CmdStr &= " -i " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName))
+        CmdStr &= " -o " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName))
+        CmdStr &= " -showQValue 1"
+        CmdStr &= " -showDecoy 1"
+        CmdStr &= " -unroll 1"
 
-		Return CmdStr
+        Return CmdStr
 
-	End Function
+    End Function
 
-	Public Function CreatePeptideToProteinMapping(
-	  ByVal ResultsFileName As String,
-	  ByVal ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
+    Public Function CreatePeptideToProteinMapping(
+      ResultsFileName As String,
+      ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
 
-		Const blnResultsIncludeAutoAddedDecoyPeptides = False
-		Dim localOrgDbFolder As String = m_mgrParams.GetParam("orgdbdir")
-		Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat)
+        Const blnResultsIncludeAutoAddedDecoyPeptides = False
+        Dim localOrgDbFolder As String = m_mgrParams.GetParam("orgdbdir")
+        Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat)
 
-	End Function
+    End Function
 
-	Public Function CreatePeptideToProteinMapping(
-	  ByVal ResultsFileName As String,
-	  ByVal blnResultsIncludeAutoAddedDecoyPeptides As Boolean) As IJobParams.CloseOutType
+    Public Function CreatePeptideToProteinMapping(
+      ResultsFileName As String,
+      blnResultsIncludeAutoAddedDecoyPeptides As Boolean) As IJobParams.CloseOutType
 
-		Dim localOrgDbFolder As String = m_mgrParams.GetParam("orgdbdir")
-		Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
+        Dim localOrgDbFolder As String = m_mgrParams.GetParam("orgdbdir")
+        Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
 
-	End Function
+    End Function
 
-	Public Function CreatePeptideToProteinMapping(
-	  ByVal ResultsFileName As String,
-	  ByVal blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
-	  ByVal localOrgDbFolder As String) As IJobParams.CloseOutType
+    Public Function CreatePeptideToProteinMapping(
+      ResultsFileName As String,
+      blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
+      localOrgDbFolder As String) As IJobParams.CloseOutType
 
-		Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile)
+        Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile)
 
-	End Function
+    End Function
 
-	Public Function CreatePeptideToProteinMapping(
-	  ByVal ResultsFileName As String,
-	  ByVal blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
-	  ByVal localOrgDbFolder As String,
-	  ByVal ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
+    Public Function CreatePeptideToProteinMapping(
+      ResultsFileName As String,
+      blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
+      localOrgDbFolder As String,
+      ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
 
-		' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-		Dim dbFilename As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
-		Dim strInputFilePath As String
-		Dim strFastaFilePath As String
+        ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+        Dim dbFilename As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
+        Dim strInputFilePath As String
+        Dim strFastaFilePath As String
 
-		Dim msg As String
+        Dim msg As String
 
-		Dim blnIgnorePeptideToProteinMapperErrors As Boolean
-		Dim blnSuccess As Boolean
+        Dim blnIgnorePeptideToProteinMapperErrors As Boolean
+        Dim blnSuccess As Boolean
 
-		strInputFilePath = Path.Combine(m_WorkDir, ResultsFileName)
-		strFastaFilePath = Path.Combine(localOrgDbFolder, dbFilename)
+        strInputFilePath = Path.Combine(m_WorkDir, ResultsFileName)
+        strFastaFilePath = Path.Combine(localOrgDbFolder, dbFilename)
 
-		Try
-			' Validate that the input file has at least one entry; if not, then no point in continuing
-			Dim strLineIn As String
-			Dim intLinesRead As Integer
+        Try
+            ' Validate that the input file has at least one entry; if not, then no point in continuing
+            Dim strLineIn As String
+            Dim intLinesRead As Integer
 
-			Using srInFile As StreamReader = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile As StreamReader = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				intLinesRead = 0
+                intLinesRead = 0
                 Do While Not srInFile.EndOfStream AndAlso intLinesRead < 10
                     strLineIn = srInFile.ReadLine()
                     If Not String.IsNullOrEmpty(strLineIn) Then
@@ -427,182 +428,182 @@ Public Class clsMSGFDBUtils
                     End If
                 Loop
 
-			End Using
+            End Using
 
-			If intLinesRead <= 1 Then
-				' File is empty or only contains a header line
-				msg = "No results above threshold"
-				ReportError(msg, msg & "; " & GetSearchEngineName() & " results file is empty")
+            If intLinesRead <= 1 Then
+                ' File is empty or only contains a header line
+                msg = "No results above threshold"
+                ReportError(msg, msg & "; " & GetSearchEngineName() & " results file is empty")
 
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
-			End If
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            End If
 
-		Catch ex As Exception
+        Catch ex As Exception
 
-			msg = "Error validating MSGF-DB results file contents in CreatePeptideToProteinMapping"
-			ReportError(msg, msg & ", job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            msg = "Error validating MSGF-DB results file contents in CreatePeptideToProteinMapping"
+            ReportError(msg, msg & ", job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-		End Try
+        End Try
 
-		If blnResultsIncludeAutoAddedDecoyPeptides Then
-			' Read the original fasta file to create a decoy fasta file
-			strFastaFilePath = GenerateDecoyFastaFile(strFastaFilePath, m_WorkDir)
+        If blnResultsIncludeAutoAddedDecoyPeptides Then
+            ' Read the original fasta file to create a decoy fasta file
+            strFastaFilePath = GenerateDecoyFastaFile(strFastaFilePath, m_WorkDir)
 
-			If String.IsNullOrEmpty(strFastaFilePath) Then
-				' Problem creating the decoy fasta file
-				If String.IsNullOrEmpty(mErrorMessage) Then
-					mErrorMessage = "Error creating a decoy version of the fasta file"
-				End If
-				ReportError(mErrorMessage)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If String.IsNullOrEmpty(strFastaFilePath) Then
+                ' Problem creating the decoy fasta file
+                If String.IsNullOrEmpty(mErrorMessage) Then
+                    mErrorMessage = "Error creating a decoy version of the fasta file"
+                End If
+                ReportError(mErrorMessage)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			m_jobParams.AddResultFileToSkip(Path.GetFileName(strFastaFilePath))
-		End If
+            m_jobParams.AddResultFileToSkip(Path.GetFileName(strFastaFilePath))
+        End If
 
-		Try
-			If m_DebugLevel >= 1 Then
-				ReportMessage("Creating peptide to protein map file")
-			End If
+        Try
+            If m_DebugLevel >= 1 Then
+                ReportMessage("Creating peptide to protein map file")
+            End If
 
-			blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
+            blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
 
-			mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
+            mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 
-			With mPeptideToProteinMapper
-				.DeleteTempFiles = True
-				.IgnoreILDifferences = False
-				.InspectParameterFilePath = String.Empty
+            With mPeptideToProteinMapper
+                .DeleteTempFiles = True
+                .IgnoreILDifferences = False
+                .InspectParameterFilePath = String.Empty
 
-				If m_DebugLevel > 2 Then
-					.LogMessagesToFile = True
-					.LogFolderPath = m_WorkDir
-				Else
-					.LogMessagesToFile = False
-				End If
+                If m_DebugLevel > 2 Then
+                    .LogMessagesToFile = True
+                    .LogFolderPath = m_WorkDir
+                Else
+                    .LogMessagesToFile = False
+                End If
 
-				.MatchPeptidePrefixAndSuffixToProtein = False
-				.OutputProteinSequence = False
-				.PeptideInputFileFormat = ePeptideInputFileFormat
-				.PeptideFileSkipFirstLine = False
-				.ProteinDataRemoveSymbolCharacters = True
-				.ProteinInputFilePath = strFastaFilePath
-				.SaveProteinToPeptideMappingFile = True
-				.SearchAllProteinsForPeptideSequence = True
-				.SearchAllProteinsSkipCoverageComputationSteps = True
-				.ShowMessages = False
-			End With
+                .MatchPeptidePrefixAndSuffixToProtein = False
+                .OutputProteinSequence = False
+                .PeptideInputFileFormat = ePeptideInputFileFormat
+                .PeptideFileSkipFirstLine = False
+                .ProteinDataRemoveSymbolCharacters = True
+                .ProteinInputFilePath = strFastaFilePath
+                .SaveProteinToPeptideMappingFile = True
+                .SearchAllProteinsForPeptideSequence = True
+                .SearchAllProteinsSkipCoverageComputationSteps = True
+                .ShowMessages = False
+            End With
 
-			' Note that clsPeptideToProteinMapEngine utilizes Data.SQLite.dll
-			blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
+            ' Note that clsPeptideToProteinMapEngine utilizes Data.SQLite.dll
+            blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
 
-			mPeptideToProteinMapper.CloseLogFileNow()
+            mPeptideToProteinMapper.CloseLogFileNow()
 
-			Dim strResultsFilePath As String
-			strResultsFilePath = Path.GetFileNameWithoutExtension(strInputFilePath) & PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING
-			strResultsFilePath = Path.Combine(m_WorkDir, strResultsFilePath)
+            Dim strResultsFilePath As String
+            strResultsFilePath = Path.GetFileNameWithoutExtension(strInputFilePath) & PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING
+            strResultsFilePath = Path.Combine(m_WorkDir, strResultsFilePath)
 
-			If blnSuccess Then
-				If Not File.Exists(strResultsFilePath) Then
-					ReportError("Peptide to protein mapping file was not created", "Peptide to protein mapping file was not created: " & strResultsFilePath)
-					blnSuccess = False
-				Else
-					If m_DebugLevel >= 2 Then
-						ReportMessage("Peptide to protein mapping complete")
-					End If
+            If blnSuccess Then
+                If Not File.Exists(strResultsFilePath) Then
+                    ReportError("Peptide to protein mapping file was not created", "Peptide to protein mapping file was not created: " & strResultsFilePath)
+                    blnSuccess = False
+                Else
+                    If m_DebugLevel >= 2 Then
+                        ReportMessage("Peptide to protein mapping complete")
+                    End If
 
-					blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
-				End If
-			Else
-				If mPeptideToProteinMapper.GetErrorMessage.Length = 0 AndAlso mPeptideToProteinMapper.StatusMessage.ToLower().Contains("error") Then
-					ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.StatusMessage)
-				Else
-					ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
-					If mPeptideToProteinMapper.StatusMessage.Length > 0 Then
-						ReportError("clsPeptideToProteinMapEngine status: " & mPeptideToProteinMapper.StatusMessage)
-					End If
-				End If
+                    blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
+                End If
+            Else
+                If mPeptideToProteinMapper.GetErrorMessage.Length = 0 AndAlso mPeptideToProteinMapper.StatusMessage.ToLower().Contains("error") Then
+                    ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.StatusMessage)
+                Else
+                    ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
+                    If mPeptideToProteinMapper.StatusMessage.Length > 0 Then
+                        ReportError("clsPeptideToProteinMapEngine status: " & mPeptideToProteinMapper.StatusMessage)
+                    End If
+                End If
 
-				If blnIgnorePeptideToProteinMapperErrors Then
-					ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+                If blnIgnorePeptideToProteinMapperErrors Then
+                    ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
 
-					If File.Exists(strResultsFilePath) Then
-						blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
-					Else
-						blnSuccess = True
-					End If
+                    If File.Exists(strResultsFilePath) Then
+                        blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
+                    Else
+                        blnSuccess = True
+                    End If
 
-				Else
-					ReportError("Error in CreatePeptideToProteinMapping")
-					blnSuccess = False
-				End If
-			End If
+                Else
+                    ReportError("Error in CreatePeptideToProteinMapping")
+                    blnSuccess = False
+                End If
+            End If
 
-		Catch ex As Exception
-			msg = "Exception in CreatePeptideToProteinMapping"
-			ReportError(msg, "CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+        Catch ex As Exception
+            msg = "Exception in CreatePeptideToProteinMapping"
+            ReportError(msg, "CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
 
-			If blnIgnorePeptideToProteinMapperErrors Then
-				ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
-				Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-			Else
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-		End Try
+            If blnIgnorePeptideToProteinMapperErrors Then
+                ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Else
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+        End Try
 
-		If blnSuccess Then
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		Else
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If blnSuccess Then
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Else
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Create a trimmed version of fastaFilePath, with max size maxFastaFileSizeMB
-	''' </summary>
-	''' <param name="fastaFilePath">Fasta file to trim</param>
-	''' <param name="maxFastaFileSizeMB">Maximum file size</param>
-	''' <returns>Full path to the trimmed fasta; empty string if a problem</returns>
-	''' <remarks></remarks>
-	Protected Function CreateTrimmedFasta(ByVal fastaFilePath As String, ByVal maxFastaFileSizeMB As Integer) As String
-		Dim trimmedFastaFilePath = String.Empty
+    ''' <summary>
+    ''' Create a trimmed version of fastaFilePath, with max size maxFastaFileSizeMB
+    ''' </summary>
+    ''' <param name="fastaFilePath">Fasta file to trim</param>
+    ''' <param name="maxFastaFileSizeMB">Maximum file size</param>
+    ''' <returns>Full path to the trimmed fasta; empty string if a problem</returns>
+    ''' <remarks></remarks>
+    Protected Function CreateTrimmedFasta(fastaFilePath As String, maxFastaFileSizeMB As Integer) As String
+        Dim trimmedFastaFilePath = String.Empty
 
-		Try
-			Dim fiFastaFile = New FileInfo(fastaFilePath)
+        Try
+            Dim fiFastaFile = New FileInfo(fastaFilePath)
 
-			Dim fiTrimmedFasta = New FileInfo(Path.Combine(fiFastaFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFastaFile.Name) & "_Trim" & maxFastaFileSizeMB & "MB.fasta"))
+            Dim fiTrimmedFasta = New FileInfo(Path.Combine(fiFastaFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFastaFile.Name) & "_Trim" & maxFastaFileSizeMB & "MB.fasta"))
 
-			If fiTrimmedFasta.Exists Then
-				' Verify that the file matches the .hashcheck value
-				Dim hashcheckFilePath = fiTrimmedFasta.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+            If fiTrimmedFasta.Exists Then
+                ' Verify that the file matches the .hashcheck value
+                Dim hashcheckFilePath = fiTrimmedFasta.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
 
-				Dim hashCheckError = String.Empty
-				If clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, hashCheckError) Then
-					' The trimmed fasta file is valid
-					ReportMessage("Using existing trimmed fasta: " & fiTrimmedFasta.Name)
-					Return fiTrimmedFasta.FullName
-				End If
+                Dim hashCheckError = String.Empty
+                If clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, hashCheckError) Then
+                    ' The trimmed fasta file is valid
+                    ReportMessage("Using existing trimmed fasta: " & fiTrimmedFasta.Name)
+                    Return fiTrimmedFasta.FullName
+                End If
 
-			End If
+            End If
 
-			ReportMessage("Creating trimmed fasta: " & fiTrimmedFasta.Name)
+            ReportMessage("Creating trimmed fasta: " & fiTrimmedFasta.Name)
 
             ' Construct the list of required contaminant proteins
-			Dim contaminantUtility = New clsFastaContaminantUtility()
+            Dim contaminantUtility = New clsFastaContaminantUtility()
 
-			Dim dctRequiredContaminants = New Dictionary(Of String, Boolean)
-			For Each proteinName In contaminantUtility.ProteinNames()
-				dctRequiredContaminants.Add(proteinName, False)
-			Next
+            Dim dctRequiredContaminants = New Dictionary(Of String, Boolean)
+            For Each proteinName In contaminantUtility.ProteinNames()
+                dctRequiredContaminants.Add(proteinName, False)
+            Next
 
-			Dim maxSizeBytes As Int64 = maxFastaFileSizeMB * 1024 * 1024
-			Dim bytesWritten As Int64 = 0
+            Dim maxSizeBytes As Int64 = maxFastaFileSizeMB * 1024 * 1024
+            Dim bytesWritten As Int64 = 0
             Dim proteinCount = 0
 
-			Using srSourceFasta = New StreamReader(New FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-				Using swTrimmedFasta = New StreamWriter(New FileStream(fiTrimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using srSourceFasta = New StreamReader(New FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                Using swTrimmedFasta = New StreamWriter(New FileStream(fiTrimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
                     While Not srSourceFasta.EndOfStream
                         Dim dataLine = srSourceFasta.ReadLine()
 
@@ -630,196 +631,196 @@ Public Class clsMSGFDBUtils
                         bytesWritten += dataLine.Length + 2
                     End While
 
-					' Add any missing contaminants
-					For Each protein In dctRequiredContaminants
-						If Not protein.Value Then
-							contaminantUtility.WriteProteinToFasta(swTrimmedFasta, protein.Key)
-						End If
-					Next
+                    ' Add any missing contaminants
+                    For Each protein In dctRequiredContaminants
+                        If Not protein.Value Then
+                            contaminantUtility.WriteProteinToFasta(swTrimmedFasta, protein.Key)
+                        End If
+                    Next
 
-				End Using
+                End Using
 
-			End Using
+            End Using
 
-			ReportMessage("Trimmed fasta created using " & proteinCount & " proteins; creating the hashcheck file")
+            ReportMessage("Trimmed fasta created using " & proteinCount & " proteins; creating the hashcheck file")
 
-			clsGlobal.CreateHashcheckFile(fiTrimmedFasta.FullName, True)
-			trimmedFastaFilePath = fiTrimmedFasta.FullName
+            clsGlobal.CreateHashcheckFile(fiTrimmedFasta.FullName, True)
+            trimmedFastaFilePath = fiTrimmedFasta.FullName
 
-		Catch ex As Exception
-			mErrorMessage = "Exception trimming fasta file to " & maxFastaFileSizeMb & " MB"
-			ReportError(mErrorMessage, "CreateTrimmedFasta, " & mErrorMessage & ": " & ex.Message)
-			Return String.Empty
-		End Try
+        Catch ex As Exception
+            mErrorMessage = "Exception trimming fasta file to " & maxFastaFileSizeMB & " MB"
+            ReportError(mErrorMessage, "CreateTrimmedFasta, " & mErrorMessage & ": " & ex.Message)
+            Return String.Empty
+        End Try
 
-		Return trimmedFastaFilePath
+        Return trimmedFastaFilePath
 
-	End Function
+    End Function
 
-	Public Sub DeleteFileInWorkDir(ByVal strFilename As String)
+    Public Sub DeleteFileInWorkDir(strFilename As String)
 
-		Dim fiFile As FileInfo
+        Dim fiFile As FileInfo
 
-		Try
-			fiFile = New FileInfo(Path.Combine(m_WorkDir, strFilename))
+        Try
+            fiFile = New FileInfo(Path.Combine(m_WorkDir, strFilename))
 
-			If fiFile.Exists Then
-				fiFile.Delete()
-			End If
+            If fiFile.Exists Then
+                fiFile.Delete()
+            End If
 
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
 
-	End Sub
+    End Sub
 
-	''' Read the original fasta file to create a decoy fasta file
-	''' <summary>
-	''' Creates a decoy version of the fasta file specified by strInputFilePath
-	''' This new file will include the original proteins plus reversed versions of the original proteins
-	''' Protein names will be prepended with REV_ or XXX_
-	''' </summary>
-	''' <param name="strInputFilePath">Fasta file to process</param>
-	''' <param name="strOutputDirectoryPath">Output folder to create decoy file in</param>
-	''' <returns>Full path to the decoy fasta file</returns>
-	''' <remarks></remarks>
-	Protected Function GenerateDecoyFastaFile(ByVal strInputFilePath As String, ByVal strOutputDirectoryPath As String) As String
+    ''' Read the original fasta file to create a decoy fasta file
+    ''' <summary>
+    ''' Creates a decoy version of the fasta file specified by strInputFilePath
+    ''' This new file will include the original proteins plus reversed versions of the original proteins
+    ''' Protein names will be prepended with REV_ or XXX_
+    ''' </summary>
+    ''' <param name="strInputFilePath">Fasta file to process</param>
+    ''' <param name="strOutputDirectoryPath">Output folder to create decoy file in</param>
+    ''' <returns>Full path to the decoy fasta file</returns>
+    ''' <remarks></remarks>
+    Protected Function GenerateDecoyFastaFile(strInputFilePath As String, strOutputDirectoryPath As String) As String
 
-		Const PROTEIN_LINE_START_CHAR As Char = ">"c
-		Const PROTEIN_LINE_ACCESSION_END_CHAR As Char = " "c
+        Const PROTEIN_LINE_START_CHAR As Char = ">"c
+        Const PROTEIN_LINE_ACCESSION_END_CHAR As Char = " "c
 
-		Dim strDecoyFastaFilePath As String
-		Dim ioSourceFile As FileInfo
+        Dim strDecoyFastaFilePath As String
+        Dim ioSourceFile As FileInfo
 
-		Dim objFastaFileReader As ProteinFileReader.FastaFileReader
+        Dim objFastaFileReader As ProteinFileReader.FastaFileReader
 
-		Dim blnInputProteinFound As Boolean
-		Dim strPrefix As String
+        Dim blnInputProteinFound As Boolean
+        Dim strPrefix As String
 
-		Try
-			ioSourceFile = New FileInfo(strInputFilePath)
-			If Not ioSourceFile.Exists Then
-				mErrorMessage = "Fasta file not found: " & ioSourceFile.FullName
-				Return String.Empty
-			End If
+        Try
+            ioSourceFile = New FileInfo(strInputFilePath)
+            If Not ioSourceFile.Exists Then
+                mErrorMessage = "Fasta file not found: " & ioSourceFile.FullName
+                Return String.Empty
+            End If
 
-			strDecoyFastaFilePath = Path.Combine(strOutputDirectoryPath, Path.GetFileNameWithoutExtension(ioSourceFile.Name) & "_decoy.fasta")
+            strDecoyFastaFilePath = Path.Combine(strOutputDirectoryPath, Path.GetFileNameWithoutExtension(ioSourceFile.Name) & "_decoy.fasta")
 
-			If m_DebugLevel >= 2 Then
-				ReportMessage("Creating decoy fasta file at " & strDecoyFastaFilePath)
-			End If
+            If m_DebugLevel >= 2 Then
+                ReportMessage("Creating decoy fasta file at " & strDecoyFastaFilePath)
+            End If
 
-			objFastaFileReader = New ProteinFileReader.FastaFileReader
-			With objFastaFileReader
-				.ProteinLineStartChar = PROTEIN_LINE_START_CHAR
-				.ProteinLineAccessionEndChar = PROTEIN_LINE_ACCESSION_END_CHAR
-			End With
+            objFastaFileReader = New ProteinFileReader.FastaFileReader
+            With objFastaFileReader
+                .ProteinLineStartChar = PROTEIN_LINE_START_CHAR
+                .ProteinLineAccessionEndChar = PROTEIN_LINE_ACCESSION_END_CHAR
+            End With
 
-			If Not objFastaFileReader.OpenFile(strInputFilePath) Then
-				ReportError("Error reading fasta file with ProteinFileReader to create decoy file")
-				Return String.Empty
-			End If
+            If Not objFastaFileReader.OpenFile(strInputFilePath) Then
+                ReportError("Error reading fasta file with ProteinFileReader to create decoy file")
+                Return String.Empty
+            End If
 
-			If mMSGFPlus Then
-				strPrefix = "XXX_"
-			Else
-				strPrefix = "REV_"
-			End If
+            If mMSGFPlus Then
+                strPrefix = "XXX_"
+            Else
+                strPrefix = "REV_"
+            End If
 
-			Using swProteinOutputFile As StreamWriter = New StreamWriter(New FileStream(strDecoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swProteinOutputFile As StreamWriter = New StreamWriter(New FileStream(strDecoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-				Do
-					blnInputProteinFound = objFastaFileReader.ReadNextProteinEntry()
+                Do
+                    blnInputProteinFound = objFastaFileReader.ReadNextProteinEntry()
 
-					If blnInputProteinFound Then
-						' Write the forward protein
-						swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
-						WriteProteinSequence(swProteinOutputFile, objFastaFileReader.ProteinSequence)
+                    If blnInputProteinFound Then
+                        ' Write the forward protein
+                        swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
+                        WriteProteinSequence(swProteinOutputFile, objFastaFileReader.ProteinSequence)
 
-						' Write the decoy protein
-						swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & strPrefix & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
-						WriteProteinSequence(swProteinOutputFile, ReverseString(objFastaFileReader.ProteinSequence))
-					End If
+                        ' Write the decoy protein
+                        swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR & strPrefix & objFastaFileReader.ProteinName & " " & objFastaFileReader.ProteinDescription)
+                        WriteProteinSequence(swProteinOutputFile, ReverseString(objFastaFileReader.ProteinSequence))
+                    End If
 
-				Loop While blnInputProteinFound
+                Loop While blnInputProteinFound
 
-			End Using
+            End Using
 
-			objFastaFileReader.CloseFile()
+            objFastaFileReader.CloseFile()
 
-		Catch ex As Exception
-			Dim msg As String
-			msg = "Exception creating decoy fasta file"
-			ReportError(msg, "GenerateDecoyFastaFile, " & msg & ": " & ex.Message)
-			Return String.Empty
-		End Try
+        Catch ex As Exception
+            Dim msg As String
+            msg = "Exception creating decoy fasta file"
+            ReportError(msg, "GenerateDecoyFastaFile, " & msg & ": " & ex.Message)
+            Return String.Empty
+        End Try
 
-		Return strDecoyFastaFilePath
+        Return strDecoyFastaFilePath
 
-	End Function
+    End Function
 
-	Protected Function GetMSFGDBParameterNames() As Dictionary(Of String, String)
-		Dim dctParamNames As Dictionary(Of String, String)
-		dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
+    Protected Function GetMSFGDBParameterNames() As Dictionary(Of String, String)
+        Dim dctParamNames As Dictionary(Of String, String)
+        dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
-		dctParamNames.Add("PMTolerance", "t")
-		dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
-		dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, "showDecoy")
-		dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")		' This setting is always set to 0 since we create a _ScanType.txt file that specifies the type of each scan (thus, the value in the parameter file is ignored)
-		dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")			' This setting is auto-updated based on the instrument class for this dataset, plus also the scan types listed in the _ScanType.txt file (thus, the value in the parameter file is typically ignored)
-		dctParamNames.Add("EnzymeID", "e")
-		dctParamNames.Add("C13", "c13")					' Used by MS-GFDB
-		dctParamNames.Add("IsotopeError", "ti")			' Used by MSGF+
-		dctParamNames.Add("NNET", "nnet")				' Used by MS-GFDB
-		dctParamNames.Add("NTT", "ntt")					' Used by MSGF+
-		dctParamNames.Add("minLength", "minLength")
-		dctParamNames.Add("maxLength", "maxLength")
-		dctParamNames.Add("minCharge", "minCharge")		' Only used if the spectrum file doesn't have charge information
-		dctParamNames.Add("maxCharge", "maxCharge")		' Only used if the spectrum file doesn't have charge information
-		dctParamNames.Add("NumMatchesPerSpec", "n")
+        dctParamNames.Add("PMTolerance", "t")
+        dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
+        dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, "showDecoy")
+        dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")      ' This setting is always set to 0 since we create a _ScanType.txt file that specifies the type of each scan (thus, the value in the parameter file is ignored)
+        dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")          ' This setting is auto-updated based on the instrument class for this dataset, plus also the scan types listed in the _ScanType.txt file (thus, the value in the parameter file is typically ignored)
+        dctParamNames.Add("EnzymeID", "e")
+        dctParamNames.Add("C13", "c13")                 ' Used by MS-GFDB
+        dctParamNames.Add("IsotopeError", "ti")         ' Used by MSGF+
+        dctParamNames.Add("NNET", "nnet")               ' Used by MS-GFDB
+        dctParamNames.Add("NTT", "ntt")                 ' Used by MSGF+
+        dctParamNames.Add("minLength", "minLength")
+        dctParamNames.Add("maxLength", "maxLength")
+        dctParamNames.Add("minCharge", "minCharge")     ' Only used if the spectrum file doesn't have charge information
+        dctParamNames.Add("maxCharge", "maxCharge")     ' Only used if the spectrum file doesn't have charge information
+        dctParamNames.Add("NumMatchesPerSpec", "n")
         dctParamNames.Add("minNumPeaks", "minNumPeaks") ' Auto-added by this code if not defined
         dctParamNames.Add("Protocol", "protocol")
 
-		' The following are special cases; 
-		' do not add to dctParamNames
-		'   uniformAAProb
-		'   NumThreads
-		'   NumMods
-		'   StaticMod
-		'   DynamicMod
+        ' The following are special cases; 
+        ' do not add to dctParamNames
+        '   uniformAAProb
+        '   NumThreads
+        '   NumMods
+        '   StaticMod
+        '   DynamicMod
 
-		Return dctParamNames
-	End Function
+        Return dctParamNames
+    End Function
 
-	Protected Function GetSearchEngineName() As String
-		Return GetSearchEngineName(mMSGFPlus)
-	End Function
+    Protected Function GetSearchEngineName() As String
+        Return GetSearchEngineName(mMSGFPlus)
+    End Function
 
-	Public Shared Function GetSearchEngineName(ByVal blnMSGFPlus As Boolean) As String
-		If blnMSGFPlus Then
-			Return "MSGF+"
-		Else
-			Return "MS-GFDB"
-		End If
-	End Function
+    Public Shared Function GetSearchEngineName(blnMSGFPlus As Boolean) As String
+        If blnMSGFPlus Then
+            Return "MSGF+"
+        Else
+            Return "MS-GFDB"
+        End If
+    End Function
 
-	Public Function GetSettingFromMSGFDbParamFile(ByVal strParameterFilePath As String, ByVal strSettingToFind As String) As String
-		Return GetSettingFromMSGFDbParamFile(strParameterFilePath, strSettingToFind, String.Empty)
-	End Function
+    Public Function GetSettingFromMSGFDbParamFile(strParameterFilePath As String, strSettingToFind As String) As String
+        Return GetSettingFromMSGFDbParamFile(strParameterFilePath, strSettingToFind, String.Empty)
+    End Function
 
-	Public Function GetSettingFromMSGFDbParamFile(ByVal strParameterFilePath As String, ByVal strSettingToFind As String, ByVal strValueIfNotFound As String) As String
+    Public Function GetSettingFromMSGFDbParamFile(strParameterFilePath As String, strSettingToFind As String, strValueIfNotFound As String) As String
 
-		Dim strLineIn As String
-		Dim kvSetting As KeyValuePair(Of String, String)
+        Dim strLineIn As String
+        Dim kvSetting As KeyValuePair(Of String, String)
 
-		If Not File.Exists(strParameterFilePath) Then
-			ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
-			Return strValueIfNotFound
-		End If
+        If Not File.Exists(strParameterFilePath) Then
+            ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
+            Return strValueIfNotFound
+        End If
 
-		Try
+        Try
 
-			Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srParamFile.EndOfStream
                     strLineIn = srParamFile.ReadLine()
@@ -831,102 +832,107 @@ Public Class clsMSGFDBUtils
                     End If
                 Loop
 
-			End Using
+            End Using
 
-		Catch ex As Exception
-			mErrorMessage = "Exception reading MSGFDB parameter file"
-			ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
-		End Try
+        Catch ex As Exception
+            mErrorMessage = "Exception reading MSGFDB parameter file"
+            ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+        End Try
 
-		Return strValueIfNotFound
+        Return strValueIfNotFound
 
-	End Function
+    End Function
 
-	Public Function InitializeFastaFile(
-	  ByVal javaProgLoc As String,
-	  ByVal msgfDbProgLoc As String,
-	  <Out()> ByRef fastaFileSizeKB As Single,
-	  <Out()> ByRef fastaFileIsDecoy As Boolean,
-	  <Out()> ByRef fastaFilePath As String) As IJobParams.CloseOutType
+    Public Function InitializeFastaFile(
+      javaProgLoc As String,
+      msgfDbProgLoc As String,
+      <Out()> ByRef fastaFileSizeKB As Single,
+      <Out()> ByRef fastaFileIsDecoy As Boolean,
+      <Out()> ByRef fastaFilePath As String) As IJobParams.CloseOutType
 
-		Dim udtHPCOptions = New clsAnalysisResources.udtHPCOptionsType
+        Dim udtHPCOptions = New clsAnalysisResources.udtHPCOptionsType
 
-		Return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath, String.Empty, udtHPCOptions)
+        Return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath, String.Empty, udtHPCOptions)
 
-	End Function
+    End Function
 
-	Public Function InitializeFastaFile(
-	 ByVal javaProgLoc As String,
-	 ByVal msgfDbProgLoc As String,
-	 <Out()> ByRef fastaFileSizeKB As Single,
-	 <Out()> ByRef fastaFileIsDecoy As Boolean,
-	 <Out()> ByRef fastaFilePath As String,
-	 ByVal strMSGFDBParameterFilePath As String,
-	 ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+    Public Function InitializeFastaFile(
+     javaProgLoc As String,
+     msgfDbProgLoc As String,
+     <Out()> ByRef fastaFileSizeKB As Single,
+     <Out()> ByRef fastaFileIsDecoy As Boolean,
+     <Out()> ByRef fastaFilePath As String,
+     strMSGFDBParameterFilePath As String,
+     udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
-		Return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath, strMSGFDBParameterFilePath, udtHPCOptions, 0)
+        Return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath, strMSGFDBParameterFilePath, udtHPCOptions, 0)
 
-	End Function
+    End Function
 
-	Public Function InitializeFastaFile(
-	  ByVal javaProgLoc As String,
-	  ByVal msgfDbProgLoc As String,
-	  <Out()> ByRef fastaFileSizeKB As Single,
-	  <Out()> ByRef fastaFileIsDecoy As Boolean,
-	  <Out()> ByRef fastaFilePath As String,
-	  ByVal strMSGFDBParameterFilePath As String,
-	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
-	  ByVal maxFastaFileSizeMB As Integer) As IJobParams.CloseOutType
+    Public Function InitializeFastaFile(
+      javaProgLoc As String,
+      msgfDbProgLoc As String,
+      <Out()> ByRef fastaFileSizeKB As Single,
+      <Out()> ByRef fastaFileIsDecoy As Boolean,
+      <Out()> ByRef fastaFilePath As String,
+      strMSGFDBParameterFilePath As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+      maxFastaFileSizeMB As Integer) As IJobParams.CloseOutType
 
-		Dim result As IJobParams.CloseOutType
-		Dim oRand = New Random()
+        Dim result As IJobParams.CloseOutType
+        Dim oRand = New Random()
 
-		Dim objIndexedDBCreator As clsCreateMSGFDBSuffixArrayFiles
-		Dim strMgrName As String = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
-		Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
-		Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
+        Dim objIndexedDBCreator As clsCreateMSGFDBSuffixArrayFiles
+        Dim strMgrName As String = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
+        Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
+        Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
 
-		objIndexedDBCreator = New clsCreateMSGFDBSuffixArrayFiles(strMgrName, sPICHPCUsername, sPICHPCPassword)
+        objIndexedDBCreator = New clsCreateMSGFDBSuffixArrayFiles(strMgrName, sPICHPCUsername, sPICHPCPassword)
 
-		' Define the path to the fasta file
-		Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
-		If udtHPCOptions.UsingHPC Then
-			' Override the OrgDB folder to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
-			localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
-		End If
-		fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+        ' Define the path to the fasta file
+        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+        If udtHPCOptions.UsingHPC Then
+            ' Override the OrgDB folder to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
+            localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
+        End If
+        fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-		fastaFileSizeKB = 0
-		fastaFileIsDecoy = False
+        fastaFileSizeKB = 0
+        fastaFileIsDecoy = False
 
-		Dim fiFastaFile As FileInfo
-		fiFastaFile = New FileInfo(fastaFilePath)
+        Dim fiFastaFile As FileInfo
+        fiFastaFile = New FileInfo(fastaFilePath)
 
-		If Not fiFastaFile.Exists Then
-			' Fasta file not found
-			ReportError("Fasta file not found: " & fiFastaFile.Name, "Fasta file not found: " & fiFastaFile.FullName)
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
+        If Not fiFastaFile.Exists Then
+            ' Fasta file not found
+            ReportError("Fasta file not found: " & fiFastaFile.Name, "Fasta file not found: " & fiFastaFile.FullName)
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
 
-		fastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
+        fastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
 
         Dim strProteinOptions = m_jobParams.GetParam("ProteinOptions")
-        
+
         If String.IsNullOrEmpty(strProteinOptions) OrElse strProteinOptions = "na" Then
 
-            ' Determine the fraction of the proteins that start with XXX.
-            Dim proteinCount As Integer
-            Dim fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, clsAnalysisResources.DECOY_PROTEIN_PREFIX, proteinCount)
-            If fractionDecoy >= 0.25 Then
-                fastaFileIsDecoy = True
-            End If
+            ' Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
+            Dim decoyPrefixes = clsAnalysisResources.GetDefaultDecoyPrefixes()
+            For Each decoyPrefix In decoyPrefixes
+
+                Dim proteinCount As Integer
+                Dim fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, proteinCount)
+                If fractionDecoy >= 0.25 Then
+                    fastaFileIsDecoy = True
+                    Exit For
+                End If
+            Next
 
         Else
             If strProteinOptions.ToLower.Contains("seq_direction=decoy") Then
                 fastaFileIsDecoy = True
             End If
         End If
-        
+
         If Not String.IsNullOrEmpty(strMSGFDBParameterFilePath) Then
             Dim strTDASetting As String
             strTDASetting = GetSettingFromMSGFDbParamFile(strMSGFDBParameterFilePath, "TDA")
@@ -959,7 +965,7 @@ Public Class clsMSGFDBUtils
 
                 End If
             End If
-            
+
         End If
 
         If maxFastaFileSizeMB > 0 AndAlso fastaFileSizeKB / 1024.0 > maxFastaFileSizeMB Then
@@ -1045,40 +1051,40 @@ Public Class clsMSGFDBUtils
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Reads the contents of a _ScanType.txt file, returning the scan info using three generic dictionary objects
-	''' </summary>
-	''' <param name="strScanTypeFilePath"></param>
-	''' <param name="lstLowResMSn">Low Res MSn spectra</param>
-	''' <param name="lstHighResMSn">High Res MSn spectra (but not HCD)</param>
-	''' <param name="lstHCDMSn">HCD Spectra</param>
-	''' <param name="lstOther">Spectra that are not MSn</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Function LoadScanTypeFile(ByVal strScanTypeFilePath As String,
-	  ByRef lstLowResMSn As Dictionary(Of Integer, String),
-	  ByRef lstHighResMSn As Dictionary(Of Integer, String),
-	  ByRef lstHCDMSn As Dictionary(Of Integer, String),
-	  ByRef lstOther As Dictionary(Of Integer, String)) As Boolean
+    ''' <summary>
+    ''' Reads the contents of a _ScanType.txt file, returning the scan info using three generic dictionary objects
+    ''' </summary>
+    ''' <param name="strScanTypeFilePath"></param>
+    ''' <param name="lstLowResMSn">Low Res MSn spectra</param>
+    ''' <param name="lstHighResMSn">High Res MSn spectra (but not HCD)</param>
+    ''' <param name="lstHCDMSn">HCD Spectra</param>
+    ''' <param name="lstOther">Spectra that are not MSn</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function LoadScanTypeFile(strScanTypeFilePath As String,
+      ByRef lstLowResMSn As Dictionary(Of Integer, String),
+      ByRef lstHighResMSn As Dictionary(Of Integer, String),
+      ByRef lstHCDMSn As Dictionary(Of Integer, String),
+      ByRef lstOther As Dictionary(Of Integer, String)) As Boolean
 
-		Dim strLineIn As String
-		Dim intScanNumberColIndex As Integer = -1
-		Dim intScanTypeNameColIndex As Integer = -1
+        Dim strLineIn As String
+        Dim intScanNumberColIndex As Integer = -1
+        Dim intScanTypeNameColIndex As Integer = -1
 
-		Try
-			If Not File.Exists(strScanTypeFilePath) Then
-				mErrorMessage = "ScanType file not found: " & strScanTypeFilePath
-				Return False
-			End If
+        Try
+            If Not File.Exists(strScanTypeFilePath) Then
+                mErrorMessage = "ScanType file not found: " & strScanTypeFilePath
+                Return False
+            End If
 
-			lstLowResMSn = New Dictionary(Of Integer, String)
-			lstHighResMSn = New Dictionary(Of Integer, String)
-			lstHCDMSn = New Dictionary(Of Integer, String)
-			lstOther = New Dictionary(Of Integer, String)
+            lstLowResMSn = New Dictionary(Of Integer, String)
+            lstHighResMSn = New Dictionary(Of Integer, String)
+            lstHCDMSn = New Dictionary(Of Integer, String)
+            lstOther = New Dictionary(Of Integer, String)
 
-			Using srScanTypeFile As StreamReader = New StreamReader(New FileStream(strScanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srScanTypeFile As StreamReader = New StreamReader(New FileStream(strScanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 While Not srScanTypeFile.EndOfStream
                     strLineIn = srScanTypeFile.ReadLine()
@@ -1133,108 +1139,108 @@ Public Class clsMSGFDBUtils
                     End If
 
                 End While
-			End Using
+            End Using
 
-		Catch ex As Exception
-			mErrorMessage = "Exception in LoadScanTypeFile"
-			ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            mErrorMessage = "Exception in LoadScanTypeFile"
+            ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
-	''' </summary>
-	''' <returns>Percent Complete (value between 0 and 100)</returns>
-	''' <remarks>MSGFDb version is available via the MSGFDbVersion property</remarks>
-	Public Function ParseMSGFDBConsoleOutputFile() As Single
-		Return ParseMSGFDBConsoleOutputFile(m_WorkDir)
-	End Function
+    ''' <summary>
+    ''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
+    ''' </summary>
+    ''' <returns>Percent Complete (value between 0 and 100)</returns>
+    ''' <remarks>MSGFDb version is available via the MSGFDbVersion property</remarks>
+    Public Function ParseMSGFDBConsoleOutputFile() As Single
+        Return ParseMSGFDBConsoleOutputFile(m_WorkDir)
+    End Function
 
-	''' <summary>
-	''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
-	''' </summary>
-	''' <returns>Percent Complete (value between 0 and 100)</returns>
-	''' <remarks>MSGFDb version is available via the MSGFDbVersion property</remarks>
-	Public Function ParseMSGFDBConsoleOutputFile(ByVal workingDirectory As String) As Single
+    ''' <summary>
+    ''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
+    ''' </summary>
+    ''' <returns>Percent Complete (value between 0 and 100)</returns>
+    ''' <remarks>MSGFDb version is available via the MSGFDbVersion property</remarks>
+    Public Function ParseMSGFDBConsoleOutputFile(workingDirectory As String) As Single
 
-		' Example Console output:
-		'
-		' MS-GFDB v6299 (08/22/2011)
-		' Loading database files...
-		' Loading database finished (elapsed time: 0.23 sec)
-		' Reading spectra...
-		' Read spectra finished (elapsed time: 9.19 sec)
-		' Using 4 threads.
-		' Spectrum 0-12074 (total: 12075)
-		' pool-1-thread-2: Preprocessing spectra...
-		' pool-1-thread-1: Preprocessing spectra...
-		' pool-1-thread-1: Preprocessing spectra finished (elapsed time: 33.00 sec)
-		' pool-1-thread-1: Database search...
-		' pool-1-thread-1: Database search progress... 0.0% complete
-		' pool-1-thread-2: Preprocessing spectra finished (elapsed time: 35.00 sec)
-		' pool-1-thread-2: Database search...
-		' pool-1-thread-2: Database search progress... 0.0% complete
-		' pool-1-thread-1: Database search finished (elapsed time: 36.00 sec)
-		' pool-1-thread-1: Computing spectral probabilities...
-		' pool-1-thread-2: Database search finished (elapsed time: 44.00 sec)
-		' pool-1-thread-2: Computing spectral probabilities...
-		' pool-1-thread-1: Computing spectral probabilities... 33.1% complete
-		' pool-1-thread-2: Computing spectral probabilities... 33.1% complete
-		' pool-1-thread-1: Computing spectral probabilities... 66.2% complete
-		' Computing FDRs...
-		' Computing EFDRs finished(elapsed time: 0.78 sec)
-		' MS-GFDB complete (total elapsed time: 699.69 sec)
+        ' Example Console output:
+        '
+        ' MS-GFDB v6299 (08/22/2011)
+        ' Loading database files...
+        ' Loading database finished (elapsed time: 0.23 sec)
+        ' Reading spectra...
+        ' Read spectra finished (elapsed time: 9.19 sec)
+        ' Using 4 threads.
+        ' Spectrum 0-12074 (total: 12075)
+        ' pool-1-thread-2: Preprocessing spectra...
+        ' pool-1-thread-1: Preprocessing spectra...
+        ' pool-1-thread-1: Preprocessing spectra finished (elapsed time: 33.00 sec)
+        ' pool-1-thread-1: Database search...
+        ' pool-1-thread-1: Database search progress... 0.0% complete
+        ' pool-1-thread-2: Preprocessing spectra finished (elapsed time: 35.00 sec)
+        ' pool-1-thread-2: Database search...
+        ' pool-1-thread-2: Database search progress... 0.0% complete
+        ' pool-1-thread-1: Database search finished (elapsed time: 36.00 sec)
+        ' pool-1-thread-1: Computing spectral probabilities...
+        ' pool-1-thread-2: Database search finished (elapsed time: 44.00 sec)
+        ' pool-1-thread-2: Computing spectral probabilities...
+        ' pool-1-thread-1: Computing spectral probabilities... 33.1% complete
+        ' pool-1-thread-2: Computing spectral probabilities... 33.1% complete
+        ' pool-1-thread-1: Computing spectral probabilities... 66.2% complete
+        ' Computing FDRs...
+        ' Computing EFDRs finished(elapsed time: 0.78 sec)
+        ' MS-GFDB complete (total elapsed time: 699.69 sec)
 
-		Static reExtractThreadCount As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Using (\d+) thread",
-		  Text.RegularExpressions.RegexOptions.Compiled Or
-		  Text.RegularExpressions.RegexOptions.IgnoreCase)
+        Static reExtractThreadCount As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Using (\d+) thread",
+          Text.RegularExpressions.RegexOptions.Compiled Or
+          Text.RegularExpressions.RegexOptions.IgnoreCase)
 
-		Static reSpectraSearched As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Spectrum.+\(total: *(\d+)\)",
-		  Text.RegularExpressions.RegexOptions.Compiled Or
-		  Text.RegularExpressions.RegexOptions.IgnoreCase)
+        Static reSpectraSearched As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Spectrum.+\(total: *(\d+)\)",
+          Text.RegularExpressions.RegexOptions.Compiled Or
+          Text.RegularExpressions.RegexOptions.IgnoreCase)
 
-		Dim strConsoleOutputFilePath As String = "??"
+        Dim strConsoleOutputFilePath As String = "??"
 
-		Dim eThreadProgressBase() As eThreadProgressSteps
-		Dim sngThreadProgressAddon() As Single
-		Dim sngEffectiveProgress As Single
+        Dim eThreadProgressBase() As eThreadProgressSteps
+        Dim sngThreadProgressAddon() As Single
+        Dim sngEffectiveProgress As Single
 
-		Try
-			' Initially reserve space for 32 threads
-			' We'll expand these arrays later if needed
-			ReDim eThreadProgressBase(32)
-			ReDim sngThreadProgressAddon(32)
+        Try
+            ' Initially reserve space for 32 threads
+            ' We'll expand these arrays later if needed
+            ReDim eThreadProgressBase(32)
+            ReDim sngThreadProgressAddon(32)
 
-			strConsoleOutputFilePath = Path.Combine(workingDirectory, MSGFDB_CONSOLE_OUTPUT_FILE)
-			If Not File.Exists(strConsoleOutputFilePath) Then
-				If m_DebugLevel >= 4 Then
-					ReportMessage("Console output file not found: " & strConsoleOutputFilePath)
-				End If
+            strConsoleOutputFilePath = Path.Combine(workingDirectory, MSGFDB_CONSOLE_OUTPUT_FILE)
+            If Not File.Exists(strConsoleOutputFilePath) Then
+                If m_DebugLevel >= 4 Then
+                    ReportMessage("Console output file not found: " & strConsoleOutputFilePath)
+                End If
 
-				Return 0
-			End If
+                Return 0
+            End If
 
-			If m_DebugLevel >= 4 Then
-				ReportMessage("Parsing file " & strConsoleOutputFilePath)
-			End If
+            If m_DebugLevel >= 4 Then
+                ReportMessage("Parsing file " & strConsoleOutputFilePath)
+            End If
 
-			Dim strLineIn As String
-			Dim intLinesRead As Integer
+            Dim strLineIn As String
+            Dim intLinesRead As Integer
 
-			Dim oMatch As Text.RegularExpressions.Match
-			Dim intThreadCount As Short = 0
+            Dim oMatch As Text.RegularExpressions.Match
+            Dim intThreadCount As Short = 0
 
-			sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
-			mContinuumSpectraSkipped = 0
-			mSpectraSearched = 0
+            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
+            mContinuumSpectraSkipped = 0
+            mSpectraSearched = 0
 
-			Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-				intLinesRead = 0
+                intLinesRead = 0
                 Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
@@ -1342,255 +1348,289 @@ Public Class clsMSGFDBUtils
                     End If
                 Loop
 
-			End Using
+            End Using
 
 
-			If sngEffectiveProgress >= PROGRESS_PCT_MSGFDB_THREADS_SPAWNED AndAlso sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+            If sngEffectiveProgress >= PROGRESS_PCT_MSGFDB_THREADS_SPAWNED AndAlso sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
 
-				' Increment sngEffectiveProgress based on the data in sngThreadProgressBase() and sngThreadProgressAddon()
-				Dim sngProgressAddonAllThreads As Single
-				Dim sngProgressOneThread As Single
+                ' Increment sngEffectiveProgress based on the data in sngThreadProgressBase() and sngThreadProgressAddon()
+                Dim sngProgressAddonAllThreads As Single
+                Dim sngProgressOneThread As Single
 
-				sngProgressAddonAllThreads = 0
+                sngProgressAddonAllThreads = 0
 
-				For intThread As Integer = 1 To intThreadCount
-					sngProgressOneThread = 0
+                For intThread As Integer = 1 To intThreadCount
+                    sngProgressOneThread = 0
 
-					Select Case eThreadProgressBase(intThread)
-						Case eThreadProgressSteps.PreprocessingSpectra
-							sngProgressOneThread = THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA
-							sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_DATABASE_SEARCH - THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA) / 100.0!
+                    Select Case eThreadProgressBase(intThread)
+                        Case eThreadProgressSteps.PreprocessingSpectra
+                            sngProgressOneThread = THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA
+                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_DATABASE_SEARCH - THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA) / 100.0!
 
-						Case eThreadProgressSteps.DatabaseSearch
-							sngProgressOneThread = THREAD_PROGRESS_PCT_DATABASE_SEARCH
-							sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES - THREAD_PROGRESS_PCT_DATABASE_SEARCH) / 100.0!
+                        Case eThreadProgressSteps.DatabaseSearch
+                            sngProgressOneThread = THREAD_PROGRESS_PCT_DATABASE_SEARCH
+                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES - THREAD_PROGRESS_PCT_DATABASE_SEARCH) / 100.0!
 
-						Case eThreadProgressSteps.ComputingSpectralProbabilities
-							sngProgressOneThread = THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES
-							sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_COMPLETE - THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES) / 100.0!
+                        Case eThreadProgressSteps.ComputingSpectralProbabilities
+                            sngProgressOneThread = THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES
+                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_COMPLETE - THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES) / 100.0!
 
-						Case eThreadProgressSteps.Complete
-							sngProgressOneThread = THREAD_PROGRESS_PCT_COMPLETE
+                        Case eThreadProgressSteps.Complete
+                            sngProgressOneThread = THREAD_PROGRESS_PCT_COMPLETE
 
-						Case Else
-							' Unrecognized step
-							sngProgressOneThread = sngProgressOneThread
-					End Select
+                        Case Else
+                            ' Unrecognized step
+                            sngProgressOneThread = sngProgressOneThread
+                    End Select
 
-					sngProgressAddonAllThreads += sngProgressOneThread / intThreadCount
-				Next
+                    sngProgressAddonAllThreads += sngProgressOneThread / intThreadCount
+                Next
 
-				sngEffectiveProgress += sngProgressAddonAllThreads * (PROGRESS_PCT_MSGFDB_COMPUTING_FDRS - PROGRESS_PCT_MSGFDB_THREADS_SPAWNED) / 100.0!
-			End If
+                sngEffectiveProgress += sngProgressAddonAllThreads * (PROGRESS_PCT_MSGFDB_COMPUTING_FDRS - PROGRESS_PCT_MSGFDB_THREADS_SPAWNED) / 100.0!
+            End If
 
-		Catch ex As Exception
-			' Ignore errors here
-			If m_DebugLevel >= 2 Then
-				ReportWarning("Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-			End If
-		End Try
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                ReportWarning("Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
 
-		Return sngEffectiveProgress
+        Return sngEffectiveProgress
 
-	End Function
+    End Function
 
-	Protected Sub ParseConsoleOutputThreadMessage(ByVal strLineIn As String, _
-	 ByVal eThreadProgressStep As eThreadProgressSteps, _
-	 ByRef eThreadProgressBase() As eThreadProgressSteps, _
-	 ByRef sngThreadProgressAddon() As Single)
+    Protected Sub ParseConsoleOutputThreadMessage(strLineIn As String, _
+     eThreadProgressStep As eThreadProgressSteps, _
+     ByRef eThreadProgressBase() As eThreadProgressSteps, _
+     ByRef sngThreadProgressAddon() As Single)
 
-		Dim oMatch As Text.RegularExpressions.Match
+        Dim oMatch As Text.RegularExpressions.Match
 
-		Static reExtractThreadNum As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("thread-(\d+)", _
-		  Text.RegularExpressions.RegexOptions.Compiled Or _
-		  Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Static reExtractPctComplete As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("([0-9.]+)% complete", _
-		  Text.RegularExpressions.RegexOptions.Compiled Or _
-		  Text.RegularExpressions.RegexOptions.IgnoreCase)
+        Static reExtractThreadNum As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("thread-(\d+)", _
+          Text.RegularExpressions.RegexOptions.Compiled Or _
+          Text.RegularExpressions.RegexOptions.IgnoreCase)
+        Static reExtractPctComplete As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("([0-9.]+)% complete", _
+          Text.RegularExpressions.RegexOptions.Compiled Or _
+          Text.RegularExpressions.RegexOptions.IgnoreCase)
 
-		' Extract out the thread number
-		' Line should look like one of these lines:
-		'   pool-1-thread-2: Database search...
-		'   pool-1-thread-2: Database search progress... 0.0% complete
-		'   pool-1-thread-3: Preprocessing spectra finished (elapsed time: 40.00 sec)
-		'   pool-1-thread-1: Computing spectral probabilities...
-		'   pool-1-thread-1: Computing spectral probabilities... 66.2% complete
-		'   pool-1-thread-1: Computing spectral probabilities finished (elapsed time: 138.00 sec)
+        ' Extract out the thread number
+        ' Line should look like one of these lines:
+        '   pool-1-thread-2: Database search...
+        '   pool-1-thread-2: Database search progress... 0.0% complete
+        '   pool-1-thread-3: Preprocessing spectra finished (elapsed time: 40.00 sec)
+        '   pool-1-thread-1: Computing spectral probabilities...
+        '   pool-1-thread-1: Computing spectral probabilities... 66.2% complete
+        '   pool-1-thread-1: Computing spectral probabilities finished (elapsed time: 138.00 sec)
 
-		oMatch = reExtractThreadNum.Match(strLineIn)
+        oMatch = reExtractThreadNum.Match(strLineIn)
 
-		If oMatch.Success Then
-			Dim intThread As Short
-			If Short.TryParse(oMatch.Groups(1).Value, intThread) Then
+        If oMatch.Success Then
+            Dim intThread As Short
+            If Short.TryParse(oMatch.Groups(1).Value, intThread) Then
 
-				If eThreadProgressBase Is Nothing OrElse intThread > eThreadProgressBase.Length Then
-					' Array not initialized properly; can't update it
-				Else
-					If eThreadProgressBase(intThread) < eThreadProgressStep Then
-						eThreadProgressBase(intThread) = eThreadProgressStep
-					End If
+                If eThreadProgressBase Is Nothing OrElse intThread > eThreadProgressBase.Length Then
+                    ' Array not initialized properly; can't update it
+                Else
+                    If eThreadProgressBase(intThread) < eThreadProgressStep Then
+                        eThreadProgressBase(intThread) = eThreadProgressStep
+                    End If
 
-					' Parse out the % complete (if present)
-					oMatch = reExtractPctComplete.Match(strLineIn)
-					If oMatch.Success Then
-						Dim sngProgressPctInLogFile As Single = 0
-						If Single.TryParse(oMatch.Groups(1).Value, sngProgressPctInLogFile) Then
-							If sngThreadProgressAddon(intThread) < sngProgressPctInLogFile Then
-								sngThreadProgressAddon(intThread) = sngProgressPctInLogFile
-							End If
-						End If
-					End If
+                    ' Parse out the % complete (if present)
+                    oMatch = reExtractPctComplete.Match(strLineIn)
+                    If oMatch.Success Then
+                        Dim sngProgressPctInLogFile As Single = 0
+                        If Single.TryParse(oMatch.Groups(1).Value, sngProgressPctInLogFile) Then
+                            If sngThreadProgressAddon(intThread) < sngProgressPctInLogFile Then
+                                sngThreadProgressAddon(intThread) = sngProgressPctInLogFile
+                            End If
+                        End If
+                    End If
 
-				End If
+                End If
 
-			End If
-		End If
-	End Sub
+            End If
+        End If
+    End Sub
 
 
-	''' <summary>
-	''' Parses the static and dynamic modification information to create the MSGFDB Mods file
-	''' </summary>
-	''' <param name="strParameterFilePath">Full path to the MSGF parameter file; will create file MSGFDB_Mods.txt in the same folder</param>
-	''' <param name="sbOptions">String builder of command line arguments to pass to MSGFDB</param>
-	''' <param name="intNumMods">Max Number of Modifications per peptide</param>
-	''' <param name="lstStaticMods">List of Static Mods</param>
-	''' <param name="lstDynamicMods">List of Dynamic Mods</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks></remarks>
-	Protected Function ParseMSGFDBModifications(ByVal strParameterFilePath As String, _
-	  ByRef sbOptions As Text.StringBuilder, _
-	  ByVal intNumMods As Integer, _
-	  ByRef lstStaticMods As List(Of String), _
-	  ByRef lstDynamicMods As List(Of String)) As Boolean
+    ''' <summary>
+    ''' Parses the static and dynamic modification information to create the MSGFDB Mods file
+    ''' </summary>
+    ''' <param name="strParameterFilePath">Full path to the MSGF parameter file; will create file MSGFDB_Mods.txt in the same folder</param>
+    ''' <param name="sbOptions">String builder of command line arguments to pass to MSGFDB</param>
+    ''' <param name="intNumMods">Max Number of Modifications per peptide</param>
+    ''' <param name="lstStaticMods">List of Static Mods</param>
+    ''' <param name="lstDynamicMods">List of Dynamic Mods</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function ParseMSGFDBModifications(strParameterFilePath As String, _
+      ByRef sbOptions As Text.StringBuilder, _
+      intNumMods As Integer, _
+      ByRef lstStaticMods As List(Of String), _
+      ByRef lstDynamicMods As List(Of String)) As Boolean
 
-		Dim blnSuccess As Boolean
-		Dim strModFilePath As String
+        Dim blnSuccess As Boolean
+        Dim strModFilePath As String
 
-		Try
-			Dim fiParameterFile As FileInfo
-			fiParameterFile = New FileInfo(strParameterFilePath)
+        Try
+            Dim fiParameterFile As FileInfo
+            fiParameterFile = New FileInfo(strParameterFilePath)
 
-			strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME)
+            strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME)
 
-			' Note that ParseMSGFDbValidateMod will set this to True if a dynamic or static mod is STY phosphorylation 
-			mPhosphorylationSearch = False
+            ' Note that ParseMSGFDbValidateMod will set this to True if a dynamic or static mod is STY phosphorylation 
+            mPhosphorylationSearch = False
 
-			sbOptions.Append(" -mod " & MOD_FILE_NAME)
+            sbOptions.Append(" -mod " & MOD_FILE_NAME)
 
-			Using swModFile As StreamWriter = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swModFile As StreamWriter = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-				swModFile.WriteLine("# This file is used to specify modifications for MSGFDB")
-				swModFile.WriteLine("")
-				swModFile.WriteLine("# Max Number of Modifications per peptide")
-				swModFile.WriteLine("# If this value is large, the search will be slow")
-				swModFile.WriteLine("NumMods=" & intNumMods)
+                swModFile.WriteLine("# This file is used to specify modifications for MSGFDB")
+                swModFile.WriteLine("")
+                swModFile.WriteLine("# Max Number of Modifications per peptide")
+                swModFile.WriteLine("# If this value is large, the search will be slow")
+                swModFile.WriteLine("NumMods=" & intNumMods)
 
-				swModFile.WriteLine("")
-				swModFile.WriteLine("# Static mods")
-				If lstStaticMods.Count = 0 Then
-					swModFile.WriteLine("# None")
-				Else
-					For Each strStaticMod As String In lstStaticMods
-						Dim strModClean As String = String.Empty
+                swModFile.WriteLine("")
+                swModFile.WriteLine("# Static mods")
+                If lstStaticMods.Count = 0 Then
+                    swModFile.WriteLine("# None")
+                Else
+                    For Each strStaticMod As String In lstStaticMods
+                        Dim strModClean As String = String.Empty
 
-						If ParseMSGFDbValidateMod(strStaticMod, strModClean) Then
-							If strModClean.Contains(",opt,") Then
-								' Static (fixed) mod is listed as dynamic
-								' Abort the analysis since the parameter file is misleading and needs to be fixed							
-								mErrorMessage = "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='"
-								ReportError(mErrorMessage, mErrorMessage & "; " & strStaticMod)
-								Return False
-							End If
-							swModFile.WriteLine(strModClean)
-						Else
-							Return False
-						End If
-					Next
-				End If
+                        If ParseMSGFDbValidateMod(strStaticMod, strModClean) Then
+                            If strModClean.Contains(",opt,") Then
+                                ' Static (fixed) mod is listed as dynamic
+                                ' Abort the analysis since the parameter file is misleading and needs to be fixed							
+                                mErrorMessage = "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='"
+                                ReportError(mErrorMessage, mErrorMessage & "; " & strStaticMod)
+                                Return False
+                            End If
+                            swModFile.WriteLine(strModClean)
+                        Else
+                            Return False
+                        End If
+                    Next
+                End If
 
-				swModFile.WriteLine("")
-				swModFile.WriteLine("# Dynamic mods")
-				If lstDynamicMods.Count = 0 Then
-					swModFile.WriteLine("# None")
-				Else
-					For Each strDynamicMod As String In lstDynamicMods
-						Dim strModClean As String = String.Empty
+                swModFile.WriteLine("")
+                swModFile.WriteLine("# Dynamic mods")
+                If lstDynamicMods.Count = 0 Then
+                    swModFile.WriteLine("# None")
+                Else
+                    For Each strDynamicMod As String In lstDynamicMods
+                        Dim strModClean As String = String.Empty
 
-						If ParseMSGFDbValidateMod(strDynamicMod, strModClean) Then
-							If strModClean.Contains(",fix,") Then
-								' Dynamic (optional) mod is listed as static
-								' Abort the analysis since the parameter file is misleading and needs to be fixed							
-								mErrorMessage = "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='"
-								ReportError(mErrorMessage, mErrorMessage & "; " & strDynamicMod)
-								Return False
-							End If
-							swModFile.WriteLine(strModClean)
-						Else
-							Return False
-						End If
-					Next
-				End If
+                        If ParseMSGFDbValidateMod(strDynamicMod, strModClean) Then
+                            If strModClean.Contains(",fix,") Then
+                                ' Dynamic (optional) mod is listed as static
+                                ' Abort the analysis since the parameter file is misleading and needs to be fixed							
+                                mErrorMessage = "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='"
+                                ReportError(mErrorMessage, mErrorMessage & "; " & strDynamicMod)
+                                Return False
+                            End If
+                            swModFile.WriteLine(strModClean)
+                        Else
+                            Return False
+                        End If
+                    Next
+                End If
 
-			End Using
+            End Using
 
-			blnSuccess = True
+            blnSuccess = True
 
-		Catch ex As Exception
-			mErrorMessage = "Exception creating MSGFDB Mods file"
-			ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
-			blnSuccess = False
-		End Try
+        Catch ex As Exception
+            mErrorMessage = "Exception creating MSGFDB Mods file"
+            ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+            blnSuccess = False
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Read the MSGFDB options file and convert the options to command line switches
-	''' </summary>
-	''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
-	''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
-	''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
-	''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
-	''' <param name="strInstrumentGroup">DMS Instrument Group name</param>
-	''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
-	''' <returns>Options string if success; empty string if an error</returns>
-	''' <remarks></remarks>
-	Public Function ParseMSGFDBParameterFile(
-	  ByVal fastaFileSizeKB As Single,
-	  ByVal fastaFileIsDecoy As Boolean,
-	  ByVal strAssumedScanType As String,
-	  ByVal strScanTypeFilePath As String,
-	  ByVal strInstrumentGroup As String,
-	  ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
-	  <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
-
-		Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
-
-		Return ParseMSGFDBParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, udtHPCOptions, strMSGFDbCmdLineOptions)
-	End Function
-
-	''' <summary>
-	''' Read the MSGFDB options file and convert the options to command line switches
-	''' </summary>
-	''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
-	''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
-	''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
-	''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
-    ''' <param name="instrumentGroup">DMS Instrument Group name</param>
-	''' <param name="strParameterFilePath">Full path to the MSGF+ parameter file to use</param>
-	''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
-	''' <returns>Options string if success; empty string if an error</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Read the MSGFDB options file and convert the options to command line switches
+    ''' </summary>
+    ''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
+    ''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+    ''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
+    ''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
+    ''' <param name="strInstrumentGroup">DMS Instrument Group name</param>
+    ''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
+    ''' <returns>Options string if success; empty string if an error</returns>
+    ''' <remarks></remarks>
     Public Function ParseMSGFDBParameterFile(
-      ByVal fastaFileSizeKB As Single,
-      ByVal fastaFileIsDecoy As Boolean,
-      ByVal strAssumedScanType As String,
-      ByVal strScanTypeFilePath As String,
-      ByVal instrumentGroup As String,
-      ByVal strParameterFilePath As String,
-      ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+      fastaFileSizeKB As Single,
+      fastaFileIsDecoy As Boolean,
+      strAssumedScanType As String,
+      strScanTypeFilePath As String,
+      strInstrumentGroup As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+      <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+
+        Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+
+        Return ParseMSGFDBParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, udtHPCOptions, strMSGFDbCmdLineOptions)
+    End Function
+
+    ''' <summary>
+    ''' Read the MSGFDB options file and convert the options to command line switches
+    ''' </summary>
+    ''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
+    ''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+    ''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
+    ''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
+    ''' <param name="instrumentGroup">DMS Instrument Group name</param>
+    ''' <param name="strParameterFilePath">Full path to the MSGF+ parameter file to use</param>
+    ''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
+    ''' <returns>Options string if success; empty string if an error</returns>
+    ''' <remarks></remarks>
+    Public Function ParseMSGFDBParameterFile(
+      fastaFileSizeKB As Single,
+      fastaFileIsDecoy As Boolean,
+      strAssumedScanType As String,
+      strScanTypeFilePath As String,
+      instrumentGroup As String,
+      strParameterFilePath As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+      <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+
+        Dim overrideParams = New Dictionary(Of String, String)
+
+        Return ParseMSGFDBParameterFile(
+           fastaFileSizeKB, fastaFileIsDecoy,
+           strAssumedScanType, strScanTypeFilePath,
+           instrumentGroup, strParameterFilePath,
+           udtHPCOptions, overrideParams, strMSGFDbCmdLineOptions)
+
+    End Function
+
+    ''' <summary>
+    ''' Read the MSGFDB options file and convert the options to command line switches
+    ''' </summary>
+    ''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
+    ''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+    ''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
+    ''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
+    ''' <param name="instrumentGroup">DMS Instrument Group name</param>
+    ''' <param name="strParameterFilePath">Full path to the MSGF+ parameter file to use</param>
+    ''' <param name="overrideParams">Parameters to override settings in the MSGF+ parameter file</param>
+    ''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
+    ''' <returns>Options string if success; empty string if an error</returns>
+    ''' <remarks></remarks>
+    Public Function ParseMSGFDBParameterFile(
+      fastaFileSizeKB As Single,
+      fastaFileIsDecoy As Boolean,
+      strAssumedScanType As String,
+      strScanTypeFilePath As String,
+      instrumentGroup As String,
+      strParameterFilePath As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+      overrideParams As Dictionary(Of String, String),
       <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
 
         Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
@@ -1717,6 +1757,13 @@ Public Class clsMSGFDBUtils
                             strArgumentSwitchOriginal = String.Copy(strArgumentSwitch)
 
                             AdjustSwitchesForMSGFPlus(mMSGFPlus, strArgumentSwitch, strValue)
+
+                            Dim valueOverride As String = String.Empty
+                            If overrideParams.TryGetValue(strArgumentSwitch, valueOverride) Then
+                                ReportMessage("Overriding switch " & strArgumentSwitch & " to use -" & strArgumentSwitch & " " & valueOverride &
+                                                                                     " instead of -" & strArgumentSwitch & " " & strValue)
+                                strValue = String.Copy(valueOverride)
+                            End If
 
                             If String.IsNullOrEmpty(strArgumentSwitch) Then
                                 If m_DebugLevel >= 1 And Not clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFDB_OPTION_SHOWDECOY) Then
@@ -1912,7 +1959,7 @@ Public Class clsMSGFDBUtils
         ' As of March 23, 2015, if the user is searching for Phospho mods with TMT labeling enabled, 
         ' then MSGF+ will use a model trained for TMT peptides (without phospho)
         ' In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to sbOptions having "-protocol 1")
-       
+
 
         strMSGFDbCmdLineOptions = sbOptions.ToString()
 
@@ -1935,67 +1982,67 @@ Public Class clsMSGFDBUtils
 
     End Function
 
-	Private Function DetermineInstrumentID(ByRef instrumentIDCurrent As String, ByVal scanTypeFilePath As String, ByVal instrumentGroup As String) As IJobParams.CloseOutType
+    Private Function DetermineInstrumentID(ByRef instrumentIDCurrent As String, scanTypeFilePath As String, instrumentGroup As String) As IJobParams.CloseOutType
 
-		' Override Instrument ID based on the instrument class and scan types in the _ScanType file
+        ' Override Instrument ID based on the instrument class and scan types in the _ScanType file
 
-		' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
-		' #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
-		' #  2 means TOF
-		' #  3 means Q-Exactive
+        ' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
+        ' #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
+        ' #  2 means TOF
+        ' #  3 means Q-Exactive
 
-		If String.IsNullOrEmpty(instrumentGroup) Then instrumentGroup = "#Undefined#"
+        If String.IsNullOrEmpty(instrumentGroup) Then instrumentGroup = "#Undefined#"
 
-		Dim instrumentIDNew As String = String.Empty
-		Dim autoSwitchReason As String = String.Empty
+        Dim instrumentIDNew As String = String.Empty
+        Dim autoSwitchReason As String = String.Empty
 
-		If Not CanDetermineInstIdFromInstGroup(instrumentGroup, instrumentIDNew, autoSwitchReason) Then
+        If Not CanDetermineInstIdFromInstGroup(instrumentGroup, instrumentIDNew, autoSwitchReason) Then
 
-			' Instrument ID is not obvious from the instrument group
-			' Examine the scan types in scanTypeFilePath
+            ' Instrument ID is not obvious from the instrument group
+            ' Examine the scan types in scanTypeFilePath
 
-			' If low res MS1,  then Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
+            ' If low res MS1,  then Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
 
-			' If high res MS2, then Instrument Group is typically VelosOrbi, or LTQ_FT
+            ' If high res MS2, then Instrument Group is typically VelosOrbi, or LTQ_FT
 
-			' Count the number of High res CID or ETD spectra
-			' Count HCD spectra separately since MSGF+ has a special scoring model for HCD spectra
+            ' Count the number of High res CID or ETD spectra
+            ' Count HCD spectra separately since MSGF+ has a special scoring model for HCD spectra
 
-			Dim lstLowResMSn As Dictionary(Of Integer, String) = Nothing
-			Dim lstHighResMSn As Dictionary(Of Integer, String) = Nothing
-			Dim lstHCDMSn As Dictionary(Of Integer, String) = Nothing
-			Dim lstOther As Dictionary(Of Integer, String) = Nothing
-			Dim blnSuccess As Boolean
+            Dim lstLowResMSn As Dictionary(Of Integer, String) = Nothing
+            Dim lstHighResMSn As Dictionary(Of Integer, String) = Nothing
+            Dim lstHCDMSn As Dictionary(Of Integer, String) = Nothing
+            Dim lstOther As Dictionary(Of Integer, String) = Nothing
+            Dim blnSuccess As Boolean
 
-			blnSuccess = LoadScanTypeFile(scanTypeFilePath, lstLowResMSn, lstHighResMSn, lstHCDMSn, lstOther)
+            blnSuccess = LoadScanTypeFile(scanTypeFilePath, lstLowResMSn, lstHighResMSn, lstHCDMSn, lstOther)
 
-			If Not blnSuccess Then
-				If String.IsNullOrEmpty(mErrorMessage) Then
-					mErrorMessage = "LoadScanTypeFile returned false for " & Path.GetFileName(scanTypeFilePath)
-					ReportError(mErrorMessage)
-				End If
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not blnSuccess Then
+                If String.IsNullOrEmpty(mErrorMessage) Then
+                    mErrorMessage = "LoadScanTypeFile returned false for " & Path.GetFileName(scanTypeFilePath)
+                    ReportError(mErrorMessage)
+                End If
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-			ElseIf lstLowResMSn.Count + lstHighResMSn.Count + lstHCDMSn.Count = 0 Then
-				mErrorMessage = "LoadScanTypeFile could not find any MSn spectra " & Path.GetFileName(scanTypeFilePath)
-				ReportError(mErrorMessage)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			Else
-				ExamineScanTypes(lstLowResMSn.Count, lstHighResMSn.Count, lstHCDMSn.Count, instrumentIDNew, autoSwitchReason)
-			End If
+            ElseIf lstLowResMSn.Count + lstHighResMSn.Count + lstHCDMSn.Count = 0 Then
+                mErrorMessage = "LoadScanTypeFile could not find any MSn spectra " & Path.GetFileName(scanTypeFilePath)
+                ReportError(mErrorMessage)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Else
+                ExamineScanTypes(lstLowResMSn.Count, lstHighResMSn.Count, lstHCDMSn.Count, instrumentIDNew, autoSwitchReason)
+            End If
 
-		End If
+        End If
 
-		AutoUpdateInstrumentIDIfChanged(instrumentIDCurrent, instrumentIDNew, autoSwitchReason)
+        AutoUpdateInstrumentIDIfChanged(instrumentIDCurrent, instrumentIDNew, autoSwitchReason)
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
     Private Sub ExamineScanTypes(
-      ByVal countLowResMSn As Integer,
-      ByVal countHighResMSn As Integer,
-      ByVal countHCDMSn As Integer,
+      countLowResMSn As Integer,
+      countHighResMSn As Integer,
+      countHCDMSn As Integer,
       <Out> ByRef instrumentIDNew As String,
       <Out> ByRef autoSwitchReason As String)
 
@@ -2038,7 +2085,7 @@ Public Class clsMSGFDBUtils
     End Sub
 
     Protected Function LookupScanTypesForDataset(
-      ByVal datasetName As String,
+      datasetName As String,
       <Out> ByRef countLowResMSn As Integer,
       <Out> ByRef countHighResMSn As Integer,
       <Out> ByRef countHCDMSn As Integer) As Boolean
@@ -2115,165 +2162,165 @@ Public Class clsMSGFDBUtils
 
     End Function
 
-	''' <summary>
-	''' Validates that the modification definition text
-	''' </summary>
-	''' <param name="strMod">Modification definition</param>
-	''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
-	''' <returns>True if valid; false if invalid</returns>
-	''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-	Protected Function ParseMSGFDbValidateMod(ByVal strMod As String, <Out()> ByRef strModClean As String) As Boolean
+    ''' <summary>
+    ''' Validates that the modification definition text
+    ''' </summary>
+    ''' <param name="strMod">Modification definition</param>
+    ''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
+    ''' <returns>True if valid; false if invalid</returns>
+    ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
+    Protected Function ParseMSGFDbValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
 
-		Dim intPoundIndex As Integer
-		Dim strSplitMod() As String
+        Dim intPoundIndex As Integer
+        Dim strSplitMod() As String
 
-		Dim strComment As String = String.Empty
+        Dim strComment As String = String.Empty
 
-		strModClean = String.Empty
+        strModClean = String.Empty
 
-		intPoundIndex = strMod.IndexOf("#"c)
-		If intPoundIndex > 0 Then
-			strComment = strMod.Substring(intPoundIndex)
-			strMod = strMod.Substring(0, intPoundIndex - 1).Trim
-		End If
+        intPoundIndex = strMod.IndexOf("#"c)
+        If intPoundIndex > 0 Then
+            strComment = strMod.Substring(intPoundIndex)
+            strMod = strMod.Substring(0, intPoundIndex - 1).Trim
+        End If
 
-		strSplitMod = strMod.Split(","c)
+        strSplitMod = strMod.Split(","c)
 
-		If strSplitMod.Length < 5 Then
-			' Invalid mod definition; must have 5 sections
-			mErrorMessage = "Invalid modification string; must have 5 sections: " & strMod
-			ReportError(mErrorMessage)
-			Return False
-		End If
+        If strSplitMod.Length < 5 Then
+            ' Invalid mod definition; must have 5 sections
+            mErrorMessage = "Invalid modification string; must have 5 sections: " & strMod
+            ReportError(mErrorMessage)
+            Return False
+        End If
 
-		' Reconstruct the mod definition, making sure there is no whitespace
-		strModClean = strSplitMod(0).Trim()
-		For intIndex As Integer = 1 To strSplitMod.Length - 1
-			strModClean &= "," & strSplitMod(intIndex).Trim()
-		Next
+        ' Reconstruct the mod definition, making sure there is no whitespace
+        strModClean = strSplitMod(0).Trim()
+        For intIndex As Integer = 1 To strSplitMod.Length - 1
+            strModClean &= "," & strSplitMod(intIndex).Trim()
+        Next
 
-		If Not String.IsNullOrWhiteSpace(strComment) Then
-			' As of August 12, 2011, the comment cannot contain a comma
-			' Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
-			strComment = strComment.Replace(",", ";")
-			strModClean &= "     " & strComment
-		End If
+        If Not String.IsNullOrWhiteSpace(strComment) Then
+            ' As of August 12, 2011, the comment cannot contain a comma
+            ' Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
+            strComment = strComment.Replace(",", ";")
+            strModClean &= "     " & strComment
+        End If
 
-		' Check whether this is a phosphorylation mod
-		If strSplitMod(4).Trim().ToUpper().StartsWith("PHOSPH") OrElse strSplitMod(0).ToUpper() = "HO3P" Then
-			If strSplitMod(1).ToUpper().IndexOfAny(New Char() {"S"c, "T"c, "Y"c}) >= 0 Then
-				mPhosphorylationSearch = True
-			End If
-		End If
+        ' Check whether this is a phosphorylation mod
+        If strSplitMod(4).Trim().ToUpper().StartsWith("PHOSPH") OrElse strSplitMod(0).ToUpper() = "HO3P" Then
+            If strSplitMod(1).ToUpper().IndexOfAny(New Char() {"S"c, "T"c, "Y"c}) >= 0 Then
+                mPhosphorylationSearch = True
+            End If
+        End If
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' 
-	''' </summary>
-	''' <param name="sbOptions"></param>
-	''' <param name="strKeyName"></param>
-	''' <param name="strValue"></param>
-	''' <param name="strParameterName"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Protected Function ParseMSFDBParamLine(ByRef sbOptions As Text.StringBuilder, _
-	   ByVal strKeyName As String, _
-	   ByVal strValue As String, _
-	   ByVal strParameterName As String) As Boolean
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="sbOptions"></param>
+    ''' <param name="strKeyName"></param>
+    ''' <param name="strValue"></param>
+    ''' <param name="strParameterName"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function ParseMSFDBParamLine(ByRef sbOptions As Text.StringBuilder, _
+       strKeyName As String, _
+       strValue As String, _
+       strParameterName As String) As Boolean
 
-		Dim strCommandLineSwitchName As String = strParameterName
+        Dim strCommandLineSwitchName As String = strParameterName
 
-		Return ParseMSFDBParamLine(sbOptions, strKeyName, strValue, strParameterName, strCommandLineSwitchName)
+        Return ParseMSFDBParamLine(sbOptions, strKeyName, strValue, strParameterName, strCommandLineSwitchName)
 
-	End Function
+    End Function
 
-	Protected Function ParseMSFDBParamLine(ByRef sbOptions As Text.StringBuilder, _
-	   ByVal strKeyName As String, _
-	   ByVal strValue As String, _
-	   ByVal strParameterName As String, _
-	   ByVal strCommandLineSwitchName As String) As Boolean
+    Protected Function ParseMSFDBParamLine(ByRef sbOptions As Text.StringBuilder, _
+       strKeyName As String, _
+       strValue As String, _
+       strParameterName As String, _
+       strCommandLineSwitchName As String) As Boolean
 
-		If clsGlobal.IsMatch(strKeyName, strParameterName) Then
-			sbOptions.Append(" -" & strCommandLineSwitchName & " " & strValue)
-			Return True
-		Else
-			Return False
-		End If
+        If clsGlobal.IsMatch(strKeyName, strParameterName) Then
+            sbOptions.Append(" -" & strCommandLineSwitchName & " " & strValue)
+            Return True
+        Else
+            Return False
+        End If
 
 
-	End Function
+    End Function
 
-	Private Function ReverseString(ByVal strText As String) As String
+    Private Function ReverseString(strText As String) As String
 
-		Dim chReversed() As Char = strText.ToCharArray()
-		Array.Reverse(chReversed)
-		Return New String(chReversed)
+        Dim chReversed() As Char = strText.ToCharArray()
+        Array.Reverse(chReversed)
+        Return New String(chReversed)
 
-	End Function
+    End Function
 
-	Public Shared Function UseLegacyMSGFDB(jobParams As IJobParams) As Boolean
+    Public Shared Function UseLegacyMSGFDB(jobParams As IJobParams) As Boolean
 
-		Return False
+        Return False
 
-		'Dim strValue As String
+        'Dim strValue As String
 
-		'' Default to using MSGF+
-		'Dim blnUseLegacyMSGFDB As Boolean = False
+        '' Default to using MSGF+
+        'Dim blnUseLegacyMSGFDB As Boolean = False
 
-		'strValue = jobParams.GetJobParameter("UseLegacyMSGFDB", String.Empty)
-		'If Not String.IsNullOrEmpty(strValue) Then
-		'	If Not Boolean.TryParse(strValue, blnUseLegacyMSGFDB) Then
-		'		' Error parsing strValue; not boolean
-		'		strValue = String.Empty
-		'	End If
-		'End If
+        'strValue = jobParams.GetJobParameter("UseLegacyMSGFDB", String.Empty)
+        'If Not String.IsNullOrEmpty(strValue) Then
+        '	If Not Boolean.TryParse(strValue, blnUseLegacyMSGFDB) Then
+        '		' Error parsing strValue; not boolean
+        '		strValue = String.Empty
+        '	End If
+        'End If
 
-		'If String.IsNullOrEmpty(strValue) Then
-		'	strValue = jobParams.GetJobParameter("UseMSGFPlus", String.Empty)
+        'If String.IsNullOrEmpty(strValue) Then
+        '	strValue = jobParams.GetJobParameter("UseMSGFPlus", String.Empty)
 
-		'	If Not String.IsNullOrEmpty(strValue) Then
-		'		Dim blnUseMSGFPlus As Boolean
-		'		If Boolean.TryParse(strValue, blnUseMSGFPlus) Then
-		'			strValue = "False"
-		'			blnUseLegacyMSGFDB = False
-		'		Else
-		'			strValue = String.Empty
-		'		End If
-		'	End If
+        '	If Not String.IsNullOrEmpty(strValue) Then
+        '		Dim blnUseMSGFPlus As Boolean
+        '		If Boolean.TryParse(strValue, blnUseMSGFPlus) Then
+        '			strValue = "False"
+        '			blnUseLegacyMSGFDB = False
+        '		Else
+        '			strValue = String.Empty
+        '		End If
+        '	End If
 
-		'	If String.IsNullOrEmpty(strValue) Then
-		'		' Default to using MSGF+
-		'		blnUseLegacyMSGFDB = False
-		'	End If
-		'End If
+        '	If String.IsNullOrEmpty(strValue) Then
+        '		' Default to using MSGF+
+        '		blnUseLegacyMSGFDB = False
+        '	End If
+        'End If
 
-		'Return blnUseLegacyMSGFDB
+        'Return blnUseLegacyMSGFDB
 
-	End Function
+    End Function
 
-	Private Function ValidatePeptideToProteinMapResults(ByVal strPeptideToProteinMapFilePath As String, ByVal blnIgnorePeptideToProteinMapperErrors As Boolean) As Boolean
+    Private Function ValidatePeptideToProteinMapResults(strPeptideToProteinMapFilePath As String, blnIgnorePeptideToProteinMapperErrors As Boolean) As Boolean
 
-		Const PROTEIN_NAME_NO_MATCH As String = "__NoMatch__"
+        Const PROTEIN_NAME_NO_MATCH As String = "__NoMatch__"
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		Dim intPeptideCount As Integer = 0
-		Dim intPeptideCountNoMatch As Integer = 0
-		Dim intLinesRead As Integer = 0
+        Dim intPeptideCount As Integer = 0
+        Dim intPeptideCountNoMatch As Integer = 0
+        Dim intLinesRead As Integer = 0
 
-		Try
-			' Validate that none of the results in strPeptideToProteinMapFilePath has protein name PROTEIN_NAME_NO_MATCH
+        Try
+            ' Validate that none of the results in strPeptideToProteinMapFilePath has protein name PROTEIN_NAME_NO_MATCH
 
-			Dim strLineIn As String
+            Dim strLineIn As String
 
-			If m_DebugLevel >= 2 Then
-				ReportMessage("Validating peptide to protein mapping, file " & Path.GetFileName(strPeptideToProteinMapFilePath))
-			End If
+            If m_DebugLevel >= 2 Then
+                ReportMessage("Validating peptide to protein mapping, file " & Path.GetFileName(strPeptideToProteinMapFilePath))
+            End If
 
-			Using srInFile As StreamReader = New StreamReader(New FileStream(strPeptideToProteinMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile As StreamReader = New StreamReader(New FileStream(strPeptideToProteinMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
@@ -2287,128 +2334,128 @@ Public Class clsMSGFDBUtils
                     End If
                 Loop
 
-			End Using
+            End Using
 
-			If intPeptideCount = 0 Then
-				mErrorMessage = "Peptide to protein mapping file is empty"
-				ReportError(mErrorMessage, mErrorMessage & ", file " & Path.GetFileName(strPeptideToProteinMapFilePath))
-				blnSuccess = False
+            If intPeptideCount = 0 Then
+                mErrorMessage = "Peptide to protein mapping file is empty"
+                ReportError(mErrorMessage, mErrorMessage & ", file " & Path.GetFileName(strPeptideToProteinMapFilePath))
+                blnSuccess = False
 
-			ElseIf intPeptideCountNoMatch = 0 Then
-				If m_DebugLevel >= 2 Then
-					ReportMessage("Peptide to protein mapping validation complete; processed " & intPeptideCount & " peptides")
-				End If
+            ElseIf intPeptideCountNoMatch = 0 Then
+                If m_DebugLevel >= 2 Then
+                    ReportMessage("Peptide to protein mapping validation complete; processed " & intPeptideCount & " peptides")
+                End If
 
-				blnSuccess = True
+                blnSuccess = True
 
-			Else
-				Dim dblErrorPercent As Double	' Value between 0 and 100
-				dblErrorPercent = intPeptideCountNoMatch / intPeptideCount * 100.0
-
-
-				mErrorMessage = dblErrorPercent.ToString("0.0") & "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file"
-				ReportError(mErrorMessage)
-
-				If blnIgnorePeptideToProteinMapperErrors Then
-					ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
-					blnSuccess = True
-				Else
-					RaiseEvent IgnorePreviousErrorEvent()
-					blnSuccess = False
-				End If
-			End If
-
-		Catch ex As Exception
-
-			mErrorMessage = "Error validating peptide to protein map file"
-			ReportError(mErrorMessage, mErrorMessage & ", job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
-			blnSuccess = False
-		End Try
-
-		Return blnSuccess
-
-	End Function
-
-	Private Sub WriteProteinSequence(ByRef swOutFile As StreamWriter, ByVal strSequence As String)
-		Dim intIndex As Integer = 0
-		Dim intLength As Integer
-
-		Do While intIndex < strSequence.Length
-			intLength = Math.Min(60, strSequence.Length - intIndex)
-			swOutFile.WriteLine(strSequence.Substring(intIndex, intLength))
-			intIndex += 60
-		Loop
-
-	End Sub
+            Else
+                Dim dblErrorPercent As Double   ' Value between 0 and 100
+                dblErrorPercent = intPeptideCountNoMatch / intPeptideCount * 100.0
 
 
-	''' <summary>
-	''' Zips MSGFDB Output File (creating a .gz file)
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Function ZipOutputFile(ByRef oToolRunner As clsAnalysisToolRunnerBase, ByVal FileName As String) As IJobParams.CloseOutType
-		Dim TmpFilePath As String
+                mErrorMessage = dblErrorPercent.ToString("0.0") & "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file"
+                ReportError(mErrorMessage)
 
-		Try
+                If blnIgnorePeptideToProteinMapperErrors Then
+                    ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+                    blnSuccess = True
+                Else
+                    RaiseEvent IgnorePreviousErrorEvent()
+                    blnSuccess = False
+                End If
+            End If
 
-			TmpFilePath = Path.Combine(m_WorkDir, FileName)
-			If Not File.Exists(TmpFilePath) Then
-				ReportError("MSGF+ results file not found: " & FileName)
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
-			End If
+        Catch ex As Exception
 
-			If Not oToolRunner.GZipFile(TmpFilePath, False) Then
-				Const Msg As String = "Error zipping output files"
-				ReportError(Msg, Msg & ": oToolRunner.ZipFile returned false, job " & m_JobNum)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            mErrorMessage = "Error validating peptide to protein map file"
+            ReportError(mErrorMessage, mErrorMessage & ", job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            blnSuccess = False
+        End Try
 
-			' Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
-			m_jobParams.AddResultFileToSkip(FileName)
+        Return blnSuccess
 
-		Catch ex As Exception
-			Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-			ReportError("Error zipping output files", Msg)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+    End Function
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+    Private Sub WriteProteinSequence(ByRef swOutFile As StreamWriter, strSequence As String)
+        Dim intIndex As Integer = 0
+        Dim intLength As Integer
 
-	End Function
+        Do While intIndex < strSequence.Length
+            intLength = Math.Min(60, strSequence.Length - intIndex)
+            swOutFile.WriteLine(strSequence.Substring(intIndex, intLength))
+            intIndex += 60
+        Loop
+
+    End Sub
+
+
+    ''' <summary>
+    ''' Zips MSGFDB Output File (creating a .gz file)
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Function ZipOutputFile(ByRef oToolRunner As clsAnalysisToolRunnerBase, FileName As String) As IJobParams.CloseOutType
+        Dim TmpFilePath As String
+
+        Try
+
+            TmpFilePath = Path.Combine(m_WorkDir, FileName)
+            If Not File.Exists(TmpFilePath) Then
+                ReportError("MSGF+ results file not found: " & FileName)
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+            End If
+
+            If Not oToolRunner.GZipFile(TmpFilePath, False) Then
+                Const Msg As String = "Error zipping output files"
+                ReportError(Msg, Msg & ": oToolRunner.ZipFile returned false, job " & m_JobNum)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            ' Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
+            m_jobParams.AddResultFileToSkip(FileName)
+
+        Catch ex As Exception
+            Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
+            ReportError("Error zipping output files", Msg)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
 
 #End Region
 
 #Region "Event Methods"
-	Protected Sub ReportError(Message As String)
-		ReportError(Message, String.Empty)
-	End Sub
+    Protected Sub ReportError(Message As String)
+        ReportError(Message, String.Empty)
+    End Sub
 
-	Protected Sub ReportError(Message As String, DetailedMessage As String)
-		RaiseEvent ErrorEvent(Message, DetailedMessage)
-	End Sub
+    Protected Sub ReportError(Message As String, DetailedMessage As String)
+        RaiseEvent ErrorEvent(Message, DetailedMessage)
+    End Sub
 
-	Protected Sub ReportMessage(Message As String)
-		RaiseEvent MessageEvent(Message)
-	End Sub
+    Protected Sub ReportMessage(Message As String)
+        RaiseEvent MessageEvent(Message)
+    End Sub
 
-	Protected Sub ReportWarning(Message As String)
-		RaiseEvent WarningEvent(Message)
-	End Sub
+    Protected Sub ReportWarning(Message As String)
+        RaiseEvent WarningEvent(Message)
+    End Sub
 
-	Private Sub mPeptideToProteinMapper_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
+    Private Sub mPeptideToProteinMapper_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
 
-		Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS As Integer = 120
-		Static dtLastLogTime As DateTime = DateTime.UtcNow
+        Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS As Integer = 120
+        Static dtLastLogTime As DateTime = DateTime.UtcNow
 
-		If m_DebugLevel >= 1 Then
-			If DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
-				dtLastLogTime = DateTime.UtcNow
-				ReportMessage("Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
-			End If
-		End If
+        If m_DebugLevel >= 1 Then
+            If DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
+                dtLastLogTime = DateTime.UtcNow
+                ReportMessage("Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
+            End If
+        End If
 
-	End Sub
+    End Sub
 #End Region
 
 End Class

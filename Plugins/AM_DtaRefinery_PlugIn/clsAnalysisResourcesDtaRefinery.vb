@@ -37,9 +37,9 @@ Public Class clsAnalysisResourcesDtaRefinery
 		'Retrieve param file
 		Dim strParamFileName = m_jobParams.GetParam("ParmFileName")
 
-		If Not RetrieveGeneratedParamFile(strParamFileName, m_jobParams.GetParam("ParmFileStoragePath")) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not RetrieveGeneratedParamFile(strParamFileName) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		Dim strParamFileStoragePathKeyName As String
 		Dim strDtaRefineryParmFileStoragePath As String

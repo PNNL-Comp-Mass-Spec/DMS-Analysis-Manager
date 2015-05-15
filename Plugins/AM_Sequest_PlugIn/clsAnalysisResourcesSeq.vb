@@ -319,60 +319,59 @@ Public Class clsAnalysisResourcesSeq
 		If Not RetrieveOrgDB(LocOrgDBFolder) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		' Retrieve param file
-		If Not RetrieveGeneratedParamFile( _
-		  m_jobParams.GetParam("ParmFileName"), _
-		  m_jobParams.GetParam("ParmFileStoragePath")) _
-		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Make sure the Sequest parameter file is present in the parameter file storage path
-		ArchiveSequestParamFile()
+        ' Make sure the Sequest parameter file is present in the parameter file storage path
+        ArchiveSequestParamFile()
 
-		' Look for an existing _out.txt.tmp file in the transfer folder on the storage server
-		' If one exists, and if the parameter file and settings file associated with the file match the ones in the work folder, then copy it locally
-		eExistingOutFileResult = CheckForExistingConcatenatedOutFile()
+        ' Look for an existing _out.txt.tmp file in the transfer folder on the storage server
+        ' If one exists, and if the parameter file and settings file associated with the file match the ones in the work folder, then copy it locally
+        eExistingOutFileResult = CheckForExistingConcatenatedOutFile()
 
-		If eExistingOutFileResult = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
-			If String.IsNullOrEmpty(m_message) Then
-				m_message = "Call to CheckForExistingConcatenatedOutFile failed"
-			End If
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If eExistingOutFileResult = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+            If String.IsNullOrEmpty(m_message) Then
+                m_message = "Call to CheckForExistingConcatenatedOutFile failed"
+            End If
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Retrieve the _DTA.txt file
-		' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-		' The file will be de-concatenated by function clsAnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
-		If Not RetrieveDtaFiles() Then
-			' Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Retrieve the _DTA.txt file
+        ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+        ' The file will be de-concatenated by function clsAnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
+        If Not RetrieveDtaFiles() Then
+            ' Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' If running on a cluster, then distribute the database file across the nodes
-		' We do this after we have successfully retrieved the DTA files and unzipped them
-		If m_mgrParams.GetParam("cluster", True) Then
-			' Check the cluster nodes, updating local database copies as necessary
-			Dim OrbDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
-			If String.IsNullOrEmpty(OrbDBName) Then
-				m_message = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a fasta file"
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
+        ' If running on a cluster, then distribute the database file across the nodes
+        ' We do this after we have successfully retrieved the DTA files and unzipped them
+        If m_mgrParams.GetParam("cluster", True) Then
+            ' Check the cluster nodes, updating local database copies as necessary
+            Dim OrbDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
+            If String.IsNullOrEmpty(OrbDBName) Then
+                m_message = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a fasta file"
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            End If
 
-			If Not VerifyDatabase(OrbDBName, LocOrgDBFolder) Then
-				' Errors were reported in function call, so just return
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If Not VerifyDatabase(OrbDBName, LocOrgDBFolder) Then
+                ' Errors were reported in function call, so just return
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-		End If
+        End If
 
-		'Add all the extensions of the files to delete after run
-		m_jobParams.AddResultFileExtensionToSkip("_dta.zip")	' Zipped DTA
-		m_jobParams.AddResultFileExtensionToSkip("_dta.txt")	' Unzipped, concatenated DTA
-		m_jobParams.AddResultFileExtensionToSkip(".dta")		' DTA files
-		m_jobParams.AddResultFileExtensionToSkip(".tmp")		' Temp files
+        'Add all the extensions of the files to delete after run
+        m_jobParams.AddResultFileExtensionToSkip("_dta.zip")    ' Zipped DTA
+        m_jobParams.AddResultFileExtensionToSkip("_dta.txt")    ' Unzipped, concatenated DTA
+        m_jobParams.AddResultFileExtensionToSkip(".dta")        ' DTA files
+        m_jobParams.AddResultFileExtensionToSkip(".tmp")        ' Temp files
 
-		'All finished
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        'All finished
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Verifies the fasta file required by the job is distributed to all the cluster nodes

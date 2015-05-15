@@ -573,9 +573,7 @@ Public Class clsAnalysisResourcesExtraction
 			'  FROM V_Param_File_Mass_Mod_Info 
 			'  WHERE Param_File_Name = 'ParamFileName'
 
-			blnSuccess = RetrieveGeneratedParamFile( _
-			 strParamFileName, _
-			 m_jobParams.GetParam("ParmFileStoragePath"))
+            blnSuccess = RetrieveGeneratedParamFile(strParamFileName)
 
 			If Not blnSuccess Then
 				m_message = "Error retrieving parameter file and ModDefs.txt file"

@@ -50,12 +50,9 @@ Public Class clsAnalysisResourcesMSGFDB_IMS
 		'  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
 		'  FROM V_Param_File_Mass_Mod_Info 
 		'  WHERE Param_File_Name = 'ParamFileName'
-		If Not RetrieveGeneratedParamFile( _
-		   m_jobParams.GetParam("ParmFileName"), _
-		   m_jobParams.GetParam("ParmFileStoragePath")) _
-		Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		' Get the UIMF file for this dataset
 		If Not RetrieveSpectra(strRawDataType) Then

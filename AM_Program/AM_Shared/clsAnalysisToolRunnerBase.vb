@@ -794,7 +794,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Dim strRemoteTransferFolderPath As String
 
-        If String.Equals(m_Dataset, "Aggregation", StringComparison.CurrentCultureIgnoreCase) Then
+        If clsGlobal.IsMatch(m_Dataset, "Aggregation") Then
             ' Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
             strRemoteTransferFolderPath = String.Copy(transferFolderPath)
         Else
@@ -1299,12 +1299,12 @@ Public Class clsAnalysisToolRunnerBase
                 Dim paramName = resultRow(0)
                 Dim paramValue = resultRow(1)
 
-                If String.Equals(paramName, "debuglevel", StringComparison.CurrentCultureIgnoreCase) Then
+                If clsGlobal.IsMatch(paramName, "debuglevel") Then
                     Dim debugLevel = Short.Parse(paramValue)
                     Return debugLevel
                 End If
 
-                If String.Equals(paramName, "MgrSettingGroupName", StringComparison.CurrentCultureIgnoreCase) Then
+                If clsGlobal.IsMatch(paramName, "MgrSettingGroupName") Then
                     ' DebugLevel is defined by a manager settings group; repeat the query to V_MgrParams
 
                     Dim debugLevel = GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, recursionLevel + 1)

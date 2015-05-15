@@ -66,13 +66,12 @@ Public Class clsAnalysisResourcesMSPathFinder
 			'  WHERE Param_File_Name = 'ParamFileName'
 
 			Dim paramFileName = m_jobParams.GetParam("ParmFileName")
-			Dim paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
 
 			currentTask = "RetrieveGeneratedParamFile " & paramFileName
 
-			If Not RetrieveGeneratedParamFile(paramFileName, paramFileStoragePath) Then
-				Return False
-			End If
+            If Not RetrieveGeneratedParamFile(paramFileName) Then
+                Return False
+            End If
 
 			Return True
 

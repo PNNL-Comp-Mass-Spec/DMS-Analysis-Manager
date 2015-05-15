@@ -36,26 +36,25 @@ Public Class clsAnalysisResourcesIN
 		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
 		'Retrieve param file
-		If Not RetrieveGeneratedParamFile( _
-		 m_jobParams.GetParam("ParmFileName"), _
-		 m_jobParams.GetParam("ParmFileStoragePath")) _
-		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Retrieve the _DTA.txt file
-		If Not RetrieveDtaFiles() Then
-			'Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Retrieve the _DTA.txt file
+        If Not RetrieveDtaFiles() Then
+            'Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		'Add all the extensions of the files to delete after run
-		m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
-		m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
-		m_jobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
+        'Add all the extensions of the files to delete after run
+        m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+        m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+        m_jobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
-		'All finished
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        'All finished
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files

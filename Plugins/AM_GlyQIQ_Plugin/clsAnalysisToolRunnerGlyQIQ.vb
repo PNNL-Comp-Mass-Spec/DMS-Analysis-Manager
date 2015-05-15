@@ -708,7 +708,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
                 If USE_THREADING Then
                     Dim newThread As New Thread(New ThreadStart(AddressOf glyQRunner.StartAnalysis))
-                    newThread.Priority = Threading.ThreadPriority.Normal
+                    newThread.Priority = Threading.ThreadPriority.BelowNormal
                     newThread.Start()
                     lstThreads.Add(newThread)
                 Else

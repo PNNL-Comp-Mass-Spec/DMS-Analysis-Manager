@@ -532,7 +532,7 @@ Public Class clsGlobal
                 colIndex = lstColumns.IndexOf(headerName)
             Else
                 For i As Integer = 0 To lstColumns.Count - 1
-                    If String.Equals(lstColumns(i), headerName, StringComparison.CurrentCultureIgnoreCase) Then
+                    If IsMatch(lstColumns(i), headerName) Then
                         colIndex = i
                         Exit For
                     End If

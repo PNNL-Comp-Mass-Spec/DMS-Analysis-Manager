@@ -97,10 +97,7 @@ Public Class clsAnalysisResourcesMSGFDB
 			Dim paramFileName = m_jobParams.GetParam("ParmFileName")
 			currentTask = "RetrieveGeneratedParamFile " & paramFileName
 
-			If Not RetrieveGeneratedParamFile( _
-			   paramFileName, _
-			   m_jobParams.GetParam("ParmFileStoragePath")) _
-			Then
+			If Not RetrieveGeneratedParamFile(paramFileName) Then
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
