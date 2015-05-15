@@ -737,9 +737,12 @@ Public Class clsAnalysisToolRunnerMODPlus
 
             currentTask = "Determine thread count"
 
+            Dim javaMemorySizeMB = m_jobParams.GetJobParameter("MODPlusJavaMemorySize", 3000)
+            Dim maxThreadsToAllow = ComputeMaxThreadsGivenMemoryPerThread(javaMemorySizeMB)
+
             ' Determine the number of threads
             Dim threadCountText = m_jobParams.GetJobParameter("MODPlusThreads", "90%")
-            Dim threadCount As Integer = ParseThreadCount(threadCountText)
+            Dim threadCount As Integer = ParseThreadCount(threadCountText, maxThreadsToAllow)
 
             ' Convert the .mzXML or .mzML file to the MGF format
             Dim spectrumFileName = m_Dataset
@@ -794,10 +797,6 @@ Public Class clsAnalysisToolRunnerMODPlus
             Dim fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename)
 
             Dim paramFileName = m_jobParams.GetParam("ParmFileName")
-
-            ' Lookup the amount of memory to reserve for Java; default to 3 GB 
-            Dim javaMemorySizeMB = m_jobParams.GetJobParameter("MODPlusJavaMemorySize", 3000)
-            If javaMemorySizeMB < 512 Then javaMemorySizeMB = 512
 
             currentTask = "Create a parameter file for each thread"
 

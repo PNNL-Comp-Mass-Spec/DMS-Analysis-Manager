@@ -1323,10 +1323,10 @@ Public Class clsMainProcess
     Private Sub InitStatusTools()
 
         If m_StatusTools Is Nothing Then
-            Dim StatusFileLoc As String = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation"))
+            Dim statusFileLoc As String = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation"))
 
-            If Me.TraceMode Then ShowTraceMessage("Initialize m_StatusTools using " & StatusFileLoc)
-            m_StatusTools = New clsStatusFile(StatusFileLoc, m_DebugLevel)
+            If Me.TraceMode Then ShowTraceMessage("Initialize m_StatusTools using " & statusFileLoc)
+            m_StatusTools = New clsStatusFile(statusFileLoc, m_DebugLevel)
 
             With m_StatusTools
                 .TaskStartTime = DateTime.UtcNow

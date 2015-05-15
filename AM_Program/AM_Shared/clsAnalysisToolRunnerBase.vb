@@ -270,6 +270,39 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
+    ''' Computes the maximum threads to allow given the number of cores on the machine and 
+    ''' the the amount of memory that each thread is allowed to reserve
+    ''' </summary>
+    ''' <param name="memorySizeMBPerThread">Amount of memory allocated to each thread</param>
+    ''' <returns>Maximum number of cores to use</returns>
+    ''' <remarks></remarks>
+    Protected Function ComputeMaxThreadsGivenMemoryPerThread(memorySizeMBPerThread As Single) As Integer
+
+        If memorySizeMBPerThread < 512 Then memorySizeMBPerThread = 512
+
+        Dim maxThreadsToAllow = m_StatusTools.GetCoreCount()
+
+        Dim freeMemoryMB = m_StatusTools.GetFreeMemoryMB()
+
+        Dim maxThreadsBasedOnMemory = freeMemoryMB / memorySizeMBPerThread
+
+        ' Round up maxThreadsBasedOnMemory only if it is within 0.2 of the next highest integer
+        Dim maxThreadsRoundedUp = CInt(Math.Ceiling(maxThreadsBasedOnMemory))
+        If maxThreadsRoundedUp - maxThreadsBasedOnMemory <= 0.2 Then
+            maxThreadsBasedOnMemory = maxThreadsRoundedUp
+        Else
+            maxThreadsBasedOnMemory = maxThreadsRoundedUp - 1
+        End If
+
+        If maxThreadsBasedOnMemory < maxThreadsToAllow Then
+            maxThreadsToAllow = CInt(Math.Round(maxThreadsBasedOnMemory))
+        End If
+
+        Return maxThreadsToAllow
+
+    End Function
+
+    ''' <summary>
     ''' Copies a file (typically a mzXML or mzML file) to a server cache folder
     ''' Will store the file in a subfolder based on job parameter OutputFolderName, and below that, in a folder with a name like 2013_2
     ''' </summary>
@@ -1508,10 +1541,21 @@ Public Class clsAnalysisToolRunnerBase
     ''' Parse a thread count text value to determine the number of threads (cores) to use
     ''' </summary>
     ''' <param name="threadCountText">Can be "0" or "all" for all threads, or a number of threads, or "90%"</param>
-    ''' <param name="maxThreadsToAllow">Optional: maximum number of cores to use</param>
+    ''' <param name="maxThreadsToAllow">Maximum number of cores to use (0 for all)</param>
     ''' <returns>The core count to use</returns>
     ''' <remarks>Core count will be a minimum of 1 and a maximum of Environment.ProcessorCount</remarks>
-    Public Shared Function ParseThreadCount(threadCountText As String, Optional maxThreadsToAllow As Integer = 0) As Integer
+    Public Function ParseThreadCount(threadCountText As String, maxThreadsToAllow As Integer) As Integer
+        Return ParseThreadCount(threadCountText, maxThreadsToAllow, m_StatusTools)
+    End Function
+
+    ''' <summary>
+    ''' Parse a thread count text value to determine the number of threads (cores) to use
+    ''' </summary>
+    ''' <param name="threadCountText">Can be "0" or "all" for all threads, or a number of threads, or "90%"</param>
+    ''' <param name="maxThreadsToAllow">Maximum number of cores to use (0 for all)</param>
+    ''' <returns>The core count to use</returns>
+    ''' <remarks>Core count will be a minimum of 1 and a maximum of Environment.ProcessorCount</remarks>
+    Public Shared Function ParseThreadCount(threadCountText As String, maxThreadsToAllow As Integer, oStatusTools As IStatusFile) As Integer
 
         Dim rePercentage = New Regex("([0-9.]+)%")
 
@@ -1521,17 +1565,18 @@ Public Class clsAnalysisToolRunnerBase
             threadCountText = threadCountText.Trim()
         End If
 
+        Dim coresOnMachine = oStatusTools.GetCoreCount()
         Dim coreCount = 0
 
         If threadCountText.ToLower().StartsWith("all") Then
-            coreCount = Environment.ProcessorCount
+            coreCount = coresOnMachine
         Else
             Dim reMatch As Match = rePercentage.Match(threadCountText)
             If reMatch.Success Then
                 ' Value is similar to 90%
                 ' Convert to a double, then compute the number of cores to use
                 Dim coreCountPct = CDbl(reMatch.Groups(1).Value)
-                coreCount = CInt(Math.Round(coreCountPct / 100 * Environment.ProcessorCount))
+                coreCount = CInt(Math.Round(coreCountPct / 100 * coresOnMachine))
                 If coreCount < 1 Then coreCount = 1
             Else
                 If Integer.TryParse(threadCountText, coreCount) Then
@@ -1540,8 +1585,8 @@ Public Class clsAnalysisToolRunnerBase
             End If
         End If
 
-        If coreCount = 0 Then coreCount = Environment.ProcessorCount
-        If coreCount > Environment.ProcessorCount Then coreCount = Environment.ProcessorCount
+        If coreCount = 0 Then coreCount = coresOnMachine
+        If coreCount > coresOnMachine Then coreCount = coresOnMachine
 
         If maxThreadsToAllow > 0 AndAlso coreCount > maxThreadsToAllow Then
             coreCount = maxThreadsToAllow
@@ -1885,7 +1930,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <returns>The path (updated if necessary)</returns>
     ''' <remarks></remarks>
     Public Shared Function PossiblyQuotePath(strPath As String) As String
-        Return clsGlobal.PossiblyQuotePath(strPath)        
+        Return clsGlobal.PossiblyQuotePath(strPath)
     End Function
 
     Public Sub PurgeOldServerCacheFiles(cacheFolderPath As String)

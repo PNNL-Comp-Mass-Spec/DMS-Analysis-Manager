@@ -10,6 +10,10 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMODPlusPlugi
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMODaPlugIn", "..\Plugins\AM_MODa_PlugIn\AnalysisManagerMODaPlugIn.vbproj", "{894D4C6C-FD28-44D2-A570-2600ED2C787E}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerGlyQIQPlugin", "..\Plugins\AM_GlyQIQ_Plugin\AnalysisManagerGlyQIQPlugin.vbproj", "{5924931F-9A13-4B6B-9CFD-E1896B6C0225}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSGFDBPlugIn", "..\Plugins\AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.vbproj", "{44E81B35-BA39-47AD-9B67-FBAFC925CACA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,22 @@ Global
 		{894D4C6C-FD28-44D2-A570-2600ED2C787E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{894D4C6C-FD28-44D2-A570-2600ED2C787E}.Release|x86.ActiveCfg = Release|x86
 		{894D4C6C-FD28-44D2-A570-2600ED2C787E}.Release|x86.Build.0 = Release|x86
+		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|x86.ActiveCfg = Debug|x86
+		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|x86.Build.0 = Debug|x86
+		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|x86.ActiveCfg = Release|x86
+		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|x86.Build.0 = Release|x86
+		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Debug|x86.ActiveCfg = Debug|x86
+		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Debug|x86.Build.0 = Debug|x86
+		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|x86.ActiveCfg = Release|x86
+		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

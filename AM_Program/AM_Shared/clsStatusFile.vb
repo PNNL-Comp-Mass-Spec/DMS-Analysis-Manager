@@ -551,442 +551,483 @@ Public Class clsStatusFile
 
 	End Function
 
-	''' <summary>
-	''' Returns the amount of free memory
-	''' </summary>
-	''' <returns>Amount of free memory, in MB</returns>
-	''' <remarks></remarks>
-	Public Function GetFreeMemoryMB() As Single
-		Dim sngFreeMemory As Single = 0
+    ''' <summary>
+    ''' Returns the number of cores
+    ''' </summary>
+    ''' <returns>The number of cores on this computer</returns>
+    ''' <remarks>Should not affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+    Public Function GetCoreCount() As Integer Implements IStatusFile.GetCoreCount
 
-		Try
-			If Not mFreeMemoryPerformanceCounter Is Nothing Then
-				sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
-			End If
+        Try
 
-			If sngFreeMemory < Single.Epsilon Then
-				sngFreeMemory = CSng(New Devices.ComputerInfo().AvailablePhysicalMemory / 1024.0 / 1024.0)
-			End If
+            Dim result = New System.Management.ManagementObjectSearcher("Select NumberOfCores from Win32_Processor")
+            Dim coreCount = 0
 
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
+            For Each item In result.Get()
+                coreCount += Integer.Parse(item("NumberOfCores").ToString())
+            Next
 
-		Return sngFreeMemory
+            Return coreCount
 
-	End Function
+        Catch ex As Exception
+            ' This value will be affected by hyperthreading
+            Return Environment.ProcessorCount
+        End Try
 
-    Public Function GetProcessID() As Integer
+    End Function
+
+    ''' <summary>
+    ''' Returns the amount of free memory
+    ''' </summary>
+    ''' <returns>Amount of free memory, in MB</returns>
+    Public Function GetFreeMemoryMB() As Single Implements IStatusFile.GetFreeMemoryMB
+        Dim sngFreeMemory As Single = 0
+
+        Try
+            If Not mFreeMemoryPerformanceCounter Is Nothing Then
+                sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
+            End If
+
+            If sngFreeMemory < Single.Epsilon Then
+                sngFreeMemory = CSng(New Devices.ComputerInfo().AvailablePhysicalMemory / 1024.0 / 1024.0)
+            End If
+
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+        Return sngFreeMemory
+
+    End Function
+
+    ''' <summary>
+    ''' Return the ProcessID of the running process
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function GetProcessID() As Integer Implements IStatusFile.GetProcessID
         Dim processID = Process.GetCurrentProcess().Id
         Return processID
     End Function
 
-	Protected Sub LogStatusToMessageQueue(ByVal strStatusXML As String)
+    Protected Sub LogStatusToMessageQueue(ByVal strStatusXML As String)
 
-		Const MINIMUM_LOG_FAILURE_INTERVAL_MINUTES As Single = 10
-		Static dtLastFailureTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
+        Const MINIMUM_LOG_FAILURE_INTERVAL_MINUTES As Single = 10
+        Static dtLastFailureTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
-		Try
-			If m_MessageSender Is Nothing Then
+        Try
+            If m_MessageSender Is Nothing Then
 
-				If m_DebugLevel >= 5 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Initializing message queue with URI '" & m_MessageQueueURI & "' and Topic '" & m_MessageQueueTopic & "'")
-				End If
+                If m_DebugLevel >= 5 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Initializing message queue with URI '" & m_MessageQueueURI & "' and Topic '" & m_MessageQueueTopic & "'")
+                End If
 
-				m_MessageSender = New clsMessageSender(m_MessageQueueURI, m_MessageQueueTopic, m_MgrName)
+                m_MessageSender = New clsMessageSender(m_MessageQueueURI, m_MessageQueueTopic, m_MgrName)
 
-				' message queue logger sets up local message buffering (so calls to log don't block)
-				' and uses message sender (as a delegate) to actually send off the messages
-				m_QueueLogger = New clsMessageQueueLogger()
-				AddHandler m_QueueLogger.Sender, New MessageSenderDelegate(AddressOf m_MessageSender.SendMessage)
+                ' message queue logger sets up local message buffering (so calls to log don't block)
+                ' and uses message sender (as a delegate) to actually send off the messages
+                m_QueueLogger = New clsMessageQueueLogger()
+                AddHandler m_QueueLogger.Sender, New MessageSenderDelegate(AddressOf m_MessageSender.SendMessage)
 
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message queue initialized with URI '" & m_MessageQueueURI & "'; posting to Topic '" & m_MessageQueueTopic & "'")
-				End If
+                If m_DebugLevel >= 3 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message queue initialized with URI '" & m_MessageQueueURI & "'; posting to Topic '" & m_MessageQueueTopic & "'")
+                End If
 
-			End If
+            End If
 
-			If Not m_QueueLogger Is Nothing Then
-				m_QueueLogger.LogStatusMessage(strStatusXML)
-			End If
+            If Not m_QueueLogger Is Nothing Then
+                m_QueueLogger.LogStatusMessage(strStatusXML)
+            End If
 
-		Catch ex As Exception
-			If DateTime.UtcNow.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
-				dtLastFailureTime = DateTime.UtcNow
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsStatusFile.LogStatusToMessageQueue (B): " & ex.Message)
-			End If
+        Catch ex As Exception
+            If DateTime.UtcNow.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
+                dtLastFailureTime = DateTime.UtcNow
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsStatusFile.LogStatusToMessageQueue (B): " & ex.Message)
+            End If
 
-		End Try
+        End Try
 
 
-	End Sub
+    End Sub
 
-	Protected Sub LogStatusToBrokerDatabase(ByVal ForceLogToBrokerDB As Boolean)
+    Protected Sub LogStatusToBrokerDatabase(ByVal ForceLogToBrokerDB As Boolean)
 
-		Dim intIndex As Integer
+        Dim intIndex As Integer
 
-		Dim udtStatusInfo As clsDBStatusLogger.udtStatusInfoType
-		With udtStatusInfo
-			.MgrName = m_MgrName
-			.MgrStatus = m_MgrStatus
-			.LastUpdate = DateTime.UtcNow()
-			.LastStartTime = m_TaskStartTime
+        Dim udtStatusInfo As clsDBStatusLogger.udtStatusInfoType
+        With udtStatusInfo
+            .MgrName = m_MgrName
+            .MgrStatus = m_MgrStatus
+            .LastUpdate = DateTime.UtcNow()
+            .LastStartTime = m_TaskStartTime
             .CPUUtilization = m_CpuUtilization
             .FreeMemoryMB = m_FreeMemoryMB
             .ProcessID = GetProcessID()
 
-			If m_RecentErrorMessageCount = 0 Then
-				.MostRecentErrorMessage = String.Empty
-			Else
-				.MostRecentErrorMessage = m_RecentErrorMessages(0)
-				If m_RecentErrorMessageCount > 1 Then
-					' Append the next two error messages
-					For intIndex = 1 To m_RecentErrorMessageCount - 1
+            If m_RecentErrorMessageCount = 0 Then
+                .MostRecentErrorMessage = String.Empty
+            Else
+                .MostRecentErrorMessage = m_RecentErrorMessages(0)
+                If m_RecentErrorMessageCount > 1 Then
+                    ' Append the next two error messages
+                    For intIndex = 1 To m_RecentErrorMessageCount - 1
                         .MostRecentErrorMessage &= Environment.NewLine & m_RecentErrorMessages(intIndex)
-						If intIndex >= 2 Then Exit For
-					Next
-				End If
-			End If
+                        If intIndex >= 2 Then Exit For
+                    Next
+                End If
+            End If
 
-			.Task.Tool = m_Tool
-			.Task.Status = m_TaskStatus
-			.Task.DurationHours = GetRunTime()
-			.Task.Progress = m_Progress
-			.Task.CurrentOperation = m_CurrentOperation
+            .Task.Tool = m_Tool
+            .Task.Status = m_TaskStatus
+            .Task.DurationHours = GetRunTime()
+            .Task.Progress = m_Progress
+            .Task.CurrentOperation = m_CurrentOperation
 
-			.Task.TaskDetails.Status = m_TaskStatusDetail
-			.Task.TaskDetails.Job = m_JobNumber
-			.Task.TaskDetails.JobStep = m_JobStep
-			.Task.TaskDetails.Dataset = m_Dataset
-			.Task.TaskDetails.MostRecentLogMessage = m_MostRecentLogMessage
-			.Task.TaskDetails.MostRecentJobInfo = m_MostRecentJobInfo
-			.Task.TaskDetails.SpectrumCount = m_SpectrumCount
+            .Task.TaskDetails.Status = m_TaskStatusDetail
+            .Task.TaskDetails.Job = m_JobNumber
+            .Task.TaskDetails.JobStep = m_JobStep
+            .Task.TaskDetails.Dataset = m_Dataset
+            .Task.TaskDetails.MostRecentLogMessage = m_MostRecentLogMessage
+            .Task.TaskDetails.MostRecentJobInfo = m_MostRecentJobInfo
+            .Task.TaskDetails.SpectrumCount = m_SpectrumCount
 
-		End With
+        End With
 
-		m_BrokerDBLogger.LogStatus(udtStatusInfo, ForceLogToBrokerDB)
-	End Sub
+        m_BrokerDBLogger.LogStatus(udtStatusInfo, ForceLogToBrokerDB)
+    End Sub
 
-	Protected Sub StoreRecentJobInfo(ByVal JobInfo As String)
-		If Not JobInfo Is Nothing AndAlso JobInfo.Length > 0 Then
-			m_MostRecentJobInfo = JobInfo
-		End If
-	End Sub
+    Protected Sub StoreRecentJobInfo(ByVal JobInfo As String)
+        If Not JobInfo Is Nothing AndAlso JobInfo.Length > 0 Then
+            m_MostRecentJobInfo = JobInfo
+        End If
+    End Sub
 
-	Protected Sub StoreNewErrorMessage(ByVal strErrorMessage As String, ByVal blnClearExistingMessages As Boolean)
-		Dim intIndex As Integer
+    Protected Sub StoreNewErrorMessage(ByVal strErrorMessage As String, ByVal blnClearExistingMessages As Boolean)
+        Dim intIndex As Integer
 
-		If blnClearExistingMessages Then
-			If strErrorMessage Is Nothing Then
-				m_RecentErrorMessageCount = 0
-			Else
-				m_RecentErrorMessageCount = 1
-				m_RecentErrorMessages(0) = strErrorMessage
-			End If
-		Else
-			If Not strErrorMessage Is Nothing AndAlso strErrorMessage.Length > 0 Then
-				If m_RecentErrorMessageCount < MAX_ERROR_MESSAGE_COUNT_TO_CACHE Then
-					m_RecentErrorMessageCount += 1
-				End If
+        If blnClearExistingMessages Then
+            If strErrorMessage Is Nothing Then
+                m_RecentErrorMessageCount = 0
+            Else
+                m_RecentErrorMessageCount = 1
+                m_RecentErrorMessages(0) = strErrorMessage
+            End If
+        Else
+            If Not strErrorMessage Is Nothing AndAlso strErrorMessage.Length > 0 Then
+                If m_RecentErrorMessageCount < MAX_ERROR_MESSAGE_COUNT_TO_CACHE Then
+                    m_RecentErrorMessageCount += 1
+                End If
 
-				' Shift each of the entries by one
-				For intIndex = m_RecentErrorMessageCount To 1 Step -1
-					m_RecentErrorMessages(intIndex) = m_RecentErrorMessages(intIndex - 1)
-				Next intIndex
+                ' Shift each of the entries by one
+                For intIndex = m_RecentErrorMessageCount To 1 Step -1
+                    m_RecentErrorMessages(intIndex) = m_RecentErrorMessages(intIndex - 1)
+                Next intIndex
 
-				' Store the new message
-				m_RecentErrorMessages(0) = strErrorMessage
-			End If
-		End If
+                ' Store the new message
+                m_RecentErrorMessages(0) = strErrorMessage
+            End If
+        End If
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Copies messages from RecentErrorMessages() to m_RecentErrorMessages(); ignores messages that are Nothing or blank
-	''' </summary>
-	''' <param name="RecentErrorMessages"></param>
-	''' <remarks></remarks>
-	Protected Sub StoreRecentErrorMessages(ByRef RecentErrorMessages() As String)
-		Dim intIndex As Integer
+    ''' <summary>
+    ''' Copies messages from RecentErrorMessages() to m_RecentErrorMessages(); ignores messages that are Nothing or blank
+    ''' </summary>
+    ''' <param name="RecentErrorMessages"></param>
+    ''' <remarks></remarks>
+    Protected Sub StoreRecentErrorMessages(ByRef RecentErrorMessages() As String)
+        Dim intIndex As Integer
 
-		If RecentErrorMessages Is Nothing Then
-			StoreNewErrorMessage("", True)
-		Else
-			m_RecentErrorMessageCount = 0
+        If RecentErrorMessages Is Nothing Then
+            StoreNewErrorMessage("", True)
+        Else
+            m_RecentErrorMessageCount = 0
 
-			For intIndex = 0 To RecentErrorMessages.Length - 1
-				If Not RecentErrorMessages(intIndex) Is Nothing AndAlso RecentErrorMessages(intIndex).Length > 0 Then
-					m_RecentErrorMessages(m_RecentErrorMessageCount) = RecentErrorMessages(intIndex)
-					m_RecentErrorMessageCount += 1
-				End If
-			Next
+            For intIndex = 0 To RecentErrorMessages.Length - 1
+                If Not RecentErrorMessages(intIndex) Is Nothing AndAlso RecentErrorMessages(intIndex).Length > 0 Then
+                    m_RecentErrorMessages(m_RecentErrorMessageCount) = RecentErrorMessages(intIndex)
+                    m_RecentErrorMessageCount += 1
+                End If
+            Next
 
-			If m_RecentErrorMessageCount = 0 Then
-				' No valid messages were found in RecentErrorMessages()
-				' Call StoreNewErrorMessage to clear the stored error messages
-				StoreNewErrorMessage("", True)
-			End If
-		End If
-	End Sub
+            If m_RecentErrorMessageCount = 0 Then
+                ' No valid messages were found in RecentErrorMessages()
+                ' Call StoreNewErrorMessage to clear the stored error messages
+                StoreNewErrorMessage("", True)
+            End If
+        End If
+    End Sub
 
-	''' <summary>
-	''' Writes the status file
-	''' </summary>
-	''' <remarks></remarks>
-	Public Sub WriteStatusFile() Implements IStatusFile.WriteStatusFile
-		WriteStatusFile(False)
-	End Sub
+    ''' <summary>
+    ''' Writes the status file
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub WriteStatusFile() Implements IStatusFile.WriteStatusFile
+        WriteStatusFile(False)
+    End Sub
 
-	''' <summary>
-	''' Updates the status in various locations, including on disk and with the message broker and/or broker DB
-	''' </summary>
-	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	''' <remarks></remarks>
-	Public Sub WriteStatusFile(ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.WriteStatusFile
+    ''' <summary>
+    ''' Updates the status in various locations, including on disk and with the message broker and/or broker DB
+    ''' </summary>
+    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+    ''' <remarks></remarks>
+    Public Sub WriteStatusFile(ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.WriteStatusFile
 
-		'Writes a status file for external monitor to read
-		Dim objMemoryStream As MemoryStream
-		Dim srMemoryStreamReader As StreamReader
+        'Writes a status file for external monitor to read
+        Dim objMemoryStream As MemoryStream
+        Dim srMemoryStreamReader As StreamReader
 
-		Dim strXMLText As String = String.Empty
+        Dim strXMLText As String = String.Empty
 
-		Dim dtLastUpdate As DateTime
-		Dim sngRunTimeHours As Single
+        Dim dtLastUpdate As DateTime
+        Dim sngRunTimeHours As Single
 
-		Try
-			dtLastUpdate = DateTime.UtcNow()
-			sngRunTimeHours = GetRunTime()
+        Try
+            dtLastUpdate = DateTime.UtcNow()
+            sngRunTimeHours = GetRunTime()
 
-			m_CpuUtilization = CInt(GetCPUUtilization())
-			m_FreeMemoryMB = GetFreeMemoryMB()
-		Catch ex As Exception
+            m_CpuUtilization = CInt(GetCPUUtilization())
+            m_FreeMemoryMB = GetFreeMemoryMB()
+        Catch ex As Exception
             ' Ignore errors here
-		End Try
+        End Try
 
-		'Set up the XML writer
-		Try
-			' Create a new memory stream in which to write the XML
-			objMemoryStream = New MemoryStream
-			Using XWriter = New XmlTextWriter(objMemoryStream, Text.Encoding.UTF8)
+        'Set up the XML writer
+        Try
+            ' Create a new memory stream in which to write the XML
+            objMemoryStream = New MemoryStream
+            Using XWriter = New XmlTextWriter(objMemoryStream, Text.Encoding.UTF8)
 
-				XWriter.Formatting = Formatting.Indented
-				XWriter.Indentation = 2
+                XWriter.Formatting = Formatting.Indented
+                XWriter.Indentation = 2
 
-				'Create the XML document in memory
-				XWriter.WriteStartDocument(True)
-				XWriter.WriteComment("Analysis manager job status")
+                'Create the XML document in memory
+                XWriter.WriteStartDocument(True)
+                XWriter.WriteComment("Analysis manager job status")
 
-				'General job information
-				'Root level element
-				XWriter.WriteStartElement("Root")	 ' Root
-				XWriter.WriteStartElement("Manager")  ' Manager
-				XWriter.WriteElementString("MgrName", m_MgrName)
-				XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus))
-				XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
-				XWriter.WriteElementString("LastStartTime", m_TaskStartTime.ToLocalTime().ToString())
-				XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString("##0.0"))
+                'General job information
+                'Root level element
+                XWriter.WriteStartElement("Root")    ' Root
+                XWriter.WriteStartElement("Manager")  ' Manager
+                XWriter.WriteElementString("MgrName", m_MgrName)
+                XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus))
+                XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
+                XWriter.WriteElementString("LastStartTime", m_TaskStartTime.ToLocalTime().ToString())
+                XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString("##0.0"))
                 XWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
                 XWriter.WriteElementString("ProcessID", GetProcessID().ToString())
-				XWriter.WriteStartElement("RecentErrorMessages")
-				If m_RecentErrorMessageCount = 0 Then
-					XWriter.WriteElementString("ErrMsg", String.Empty)
-				Else
-					For intErrorMsgIndex As Integer = 0 To m_RecentErrorMessageCount - 1
-						XWriter.WriteElementString("ErrMsg", m_RecentErrorMessages(intErrorMsgIndex))
-					Next
-				End If
-				XWriter.WriteEndElement()				' RecentErrorMessages
-				XWriter.WriteEndElement()				' Manager
+                XWriter.WriteStartElement("RecentErrorMessages")
+                If m_RecentErrorMessageCount = 0 Then
+                    XWriter.WriteElementString("ErrMsg", String.Empty)
+                Else
+                    For intErrorMsgIndex As Integer = 0 To m_RecentErrorMessageCount - 1
+                        XWriter.WriteElementString("ErrMsg", m_RecentErrorMessages(intErrorMsgIndex))
+                    Next
+                End If
+                XWriter.WriteEndElement()               ' RecentErrorMessages
+                XWriter.WriteEndElement()               ' Manager
 
-				XWriter.WriteStartElement("Task")		' Task
-				XWriter.WriteElementString("Tool", m_Tool)
-				XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus))
-				XWriter.WriteElementString("Duration", sngRunTimeHours.ToString("0.00"))
-				XWriter.WriteElementString("DurationMinutes", (sngRunTimeHours * 60).ToString("0.0"))
-				XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"))
-				XWriter.WriteElementString("CurrentOperation", m_CurrentOperation)
+                XWriter.WriteStartElement("Task")       ' Task
+                XWriter.WriteElementString("Tool", m_Tool)
+                XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus))
+                XWriter.WriteElementString("Duration", sngRunTimeHours.ToString("0.00"))
+                XWriter.WriteElementString("DurationMinutes", (sngRunTimeHours * 60).ToString("0.0"))
+                XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"))
+                XWriter.WriteElementString("CurrentOperation", m_CurrentOperation)
 
-				XWriter.WriteStartElement("TaskDetails") 'TaskDetails
-				XWriter.WriteElementString("Status", ConvertTaskStatusDetailToString(m_TaskStatusDetail))
-				XWriter.WriteElementString("Job", CStr(m_JobNumber))
-				XWriter.WriteElementString("Step", CStr(m_JobStep))
-				XWriter.WriteElementString("Dataset", m_Dataset)
-				XWriter.WriteElementString("MostRecentLogMessage", m_MostRecentLogMessage)
-				XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo)
-				XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString)
-				XWriter.WriteEndElement()				' TaskDetails
-				XWriter.WriteEndElement()				' Task
-				XWriter.WriteEndElement()				' Root
+                XWriter.WriteStartElement("TaskDetails") 'TaskDetails
+                XWriter.WriteElementString("Status", ConvertTaskStatusDetailToString(m_TaskStatusDetail))
+                XWriter.WriteElementString("Job", CStr(m_JobNumber))
+                XWriter.WriteElementString("Step", CStr(m_JobStep))
+                XWriter.WriteElementString("Dataset", m_Dataset)
+                XWriter.WriteElementString("MostRecentLogMessage", m_MostRecentLogMessage)
+                XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo)
+                XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString)
+                XWriter.WriteEndElement()               ' TaskDetails
+                XWriter.WriteEndElement()               ' Task
+                XWriter.WriteEndElement()               ' Root
 
-				'Close out the XML document (but do not close XWriter yet)
-				XWriter.WriteEndDocument()
-				XWriter.Flush()
+                'Close out the XML document (but do not close XWriter yet)
+                XWriter.WriteEndDocument()
+                XWriter.Flush()
 
-				' Now use a StreamReader to copy the XML text to a string variable
-				objMemoryStream.Seek(0, SeekOrigin.Begin)
-				srMemoryStreamReader = New StreamReader(objMemoryStream)
-				strXMLText = srMemoryStreamReader.ReadToEnd
+                ' Now use a StreamReader to copy the XML text to a string variable
+                objMemoryStream.Seek(0, SeekOrigin.Begin)
+                srMemoryStreamReader = New StreamReader(objMemoryStream)
+                strXMLText = srMemoryStreamReader.ReadToEnd
 
-				srMemoryStreamReader.Close()
-				objMemoryStream.Close()
+                srMemoryStreamReader.Close()
+                objMemoryStream.Close()
 
-				' Since strXMLText now contains the XML, we can now safely close XWriter
-			End Using
+                ' Since strXMLText now contains the XML, we can now safely close XWriter
+            End Using
 
-			WriteStatusFileToDisk(strXMLText)
+            WriteStatusFileToDisk(strXMLText)
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error generating status info: " & ex.Message)
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error generating status info: " & ex.Message)
+        End Try
 
-		CheckForAbortProcessingFile()
+        CheckForAbortProcessingFile()
 
-		If m_LogToMessageQueue Then
-			' Send the XML text to a message queue
-			LogStatusToMessageQueue(strXMLText)
-		End If
+        If m_LogToMessageQueue Then
+            ' Send the XML text to a message queue
+            LogStatusToMessageQueue(strXMLText)
+        End If
 
-		If Not m_MemoryUsageLogger Is Nothing Then
-			' Log the memory usage to a local file
-			m_MemoryUsageLogger.WriteMemoryUsageLogEntry()
-		End If
+        If Not m_MemoryUsageLogger Is Nothing Then
+            ' Log the memory usage to a local file
+            m_MemoryUsageLogger.WriteMemoryUsageLogEntry()
+        End If
 
-		If Not m_BrokerDBLogger Is Nothing Then
-			' Send the status info to the Broker DB
-			' Note that m_BrokerDBLogger() only logs the status every x minutes (unless ForceLogToBrokerDB = True)
+        If Not m_BrokerDBLogger Is Nothing Then
+            ' Send the status info to the Broker DB
+            ' Note that m_BrokerDBLogger() only logs the status every x minutes (unless ForceLogToBrokerDB = True)
 
-			LogStatusToBrokerDatabase(ForceLogToBrokerDB)
-		End If
-	End Sub
+            LogStatusToBrokerDatabase(ForceLogToBrokerDB)
+        End If
+    End Sub
 
-	Protected Function WriteStatusFileToDisk(ByRef strXMLText As String) As Boolean
+    Protected Function WriteStatusFileToDisk(ByRef strXMLText As String) As Boolean
 
-		Const MIN_FILE_WRITE_INTERVAL_SECONDS As Integer = 2
+        Const MIN_FILE_WRITE_INTERVAL_SECONDS = 2
 
-		Static dtLastFileWriteTime As DateTime = DateTime.UtcNow
+        Static dtLastFileWriteTime As DateTime = DateTime.UtcNow
 
-		Dim strTempStatusFilePath As String
-		Dim blnSuccess As Boolean
+        Dim strTempStatusFilePath As String
+        Dim blnSuccess As Boolean
 
-		blnSuccess = True
+        blnSuccess = True
 
-		If DateTime.UtcNow.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
-			' We will write out the Status XML to a temporary file, then rename the temp file to the primary file
+        If DateTime.UtcNow.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
+            ' We will write out the Status XML to a temporary file, then rename the temp file to the primary file
 
-			strTempStatusFilePath = Path.Combine(Path.GetDirectoryName(m_FileNamePath), Path.GetFileNameWithoutExtension(m_FileNamePath) & "_Temp.xml")
+            strTempStatusFilePath = Path.Combine(Path.GetDirectoryName(m_FileNamePath), Path.GetFileNameWithoutExtension(m_FileNamePath) & "_Temp.xml")
 
-			dtLastFileWriteTime = DateTime.UtcNow
+            dtLastFileWriteTime = DateTime.UtcNow
 
-			blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText)
-			If blnSuccess Then
-				Try
-					File.Copy(strTempStatusFilePath, m_FileNamePath, True)
-				Catch ex As Exception
-					' Log a warning that the file copy failed
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" &
-					  Path.GetFileName(strTempStatusFilePath) & " to " & Path.GetFileName(m_FileNamePath) & "):" & ex.Message)
-				End Try
+            Dim logWarning = True
+            If m_Tool.ToLower().Contains("glyq") OrElse m_Tool.ToLower().Contains("modplus") Then
+                If m_DebugLevel < 3 Then logWarning = False
+            End If
 
-				Try
-					File.Delete(strTempStatusFilePath)
-				Catch ex As Exception
-					' Log a warning that the file delete failed
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete temporary status file (" &
-					  Path.GetFileName(strTempStatusFilePath) & "): " & ex.Message)
-				End Try
+            blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText, logWarning)
+            If blnSuccess Then
+                Try
+                    File.Copy(strTempStatusFilePath, m_FileNamePath, True)
+                Catch ex As Exception
+                    ' Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
+                    If logWarning Then
+                        ' Log a warning that the file copy failed
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" &
+                          Path.GetFileName(strTempStatusFilePath) & " to " & Path.GetFileName(m_FileNamePath) & "):" & ex.Message)
+                    End If
 
-			Else
-				' Error writing to the temporary status file; try the primary file
-				blnSuccess = WriteStatusFileToDisk(m_FileNamePath, strXMLText)
-			End If
-		End If
+                End Try
 
-		Return blnSuccess
+                Try
+                    File.Delete(strTempStatusFilePath)
+                Catch ex As Exception
+                    ' Delete failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
+                    If logWarning Then
+                        ' Log a warning that the file delete failed
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete temporary status file (" &
+                          Path.GetFileName(strTempStatusFilePath) & "): " & ex.Message)
+                    End If
+                End Try
 
-	End Function
+            Else
+                ' Error writing to the temporary status file; try the primary file
+                blnSuccess = WriteStatusFileToDisk(m_FileNamePath, strXMLText, logWarning)
+            End If
+        End If
 
-	Protected Function WriteStatusFileToDisk(ByVal strFilePath As String, ByVal strXMLText As String) As Boolean
-		Const WRITE_FAILURE_LOG_THRESHOLD As Integer = 5
+        Return blnSuccess
 
-		Static intWritingErrorCountSaved As Integer = 0
+    End Function
 
-		Dim blnSuccess As Boolean
+    Protected Function WriteStatusFileToDisk(ByVal strFilePath As String, ByVal strXMLText As String, ByVal logWarning As Boolean) As Boolean
+        Const WRITE_FAILURE_LOG_THRESHOLD As Integer = 5
 
-		Try
-			' Write out the XML text to a file
-			' If the file is in use by another process, then the writing will fail
-			Using srOutFile = New StreamWriter(New FileStream(strFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-				srOutFile.WriteLine(strXMLText)
-			End Using
+        Static intWritingErrorCountSaved As Integer = 0
 
-			' Reset the error counter
-			intWritingErrorCountSaved = 0
+        Dim blnSuccess As Boolean
 
-			blnSuccess = True
+        Try
+            ' Write out the XML text to a file
+            ' If the file is in use by another process, then the writing will fail
+            Using srOutFile = New StreamWriter(New FileStream(strFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                srOutFile.WriteLine(strXMLText)
+            End Using
 
-		Catch ex As Exception
-			' Increment the error counter
-			intWritingErrorCountSaved += 1
+            ' Reset the error counter
+            intWritingErrorCountSaved = 0
 
-			If intWritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD Then
-				' 5 or more errors in a row have occurred
-				' Post an entry to the log, only when intWritingErrorCountSaved is 5, 10, 20, 30, etc.
-				If intWritingErrorCountSaved = WRITE_FAILURE_LOG_THRESHOLD OrElse intWritingErrorCountSaved Mod 10 = 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error writing status file " & Path.GetFileName(strFilePath) & ": " & ex.Message)
-				End If
-			End If
-			blnSuccess = False
-		End Try
+            blnSuccess = True
 
-		Return blnSuccess
+        Catch ex As Exception
+            ' Increment the error counter
+            intWritingErrorCountSaved += 1
 
-	End Function
+            If intWritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD AndAlso logWarning Then
+                ' 5 or more errors in a row have occurred
+                ' Post an entry to the log, only when intWritingErrorCountSaved is 5, 10, 20, 30, etc.
+                If intWritingErrorCountSaved = WRITE_FAILURE_LOG_THRESHOLD OrElse intWritingErrorCountSaved Mod 10 = 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error writing status file " & Path.GetFileName(strFilePath) & ": " & ex.Message)
+                End If
+            End If
+            blnSuccess = False
+        End Try
 
-	''' <summary>
-	''' Updates status file
-	''' </summary>
-	''' <param name="JobInfo">Information on the job that started most recently</param>
-	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	''' <remarks></remarks>
-	Public Sub UpdateClose(
-	  ByVal ManagerIdleMessage As String, _
-	  ByRef RecentErrorMessages() As String, _
-	  ByVal JobInfo As String, _
-	  ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateClose
+        Return blnSuccess
 
-		ClearCachedInfo()
-		m_MgrStatus = IStatusFile.EnumMgrStatus.STOPPED
-		m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-		m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
-		m_MostRecentLogMessage = ManagerIdleMessage
+    End Function
 
-		StoreRecentErrorMessages(RecentErrorMessages)
-		StoreRecentJobInfo(JobInfo)
+    ''' <summary>
+    ''' Updates status file
+    ''' </summary>
+    ''' <param name="JobInfo">Information on the job that started most recently</param>
+    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateClose(
+      ByVal ManagerIdleMessage As String, _
+      ByRef RecentErrorMessages() As String, _
+      ByVal JobInfo As String, _
+      ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateClose
 
-		WriteStatusFile(ForceLogToBrokerDB)
+        ClearCachedInfo()
+        m_MgrStatus = IStatusFile.EnumMgrStatus.STOPPED
+        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+        m_MostRecentLogMessage = ManagerIdleMessage
 
-	End Sub
+        StoreRecentErrorMessages(RecentErrorMessages)
+        StoreRecentJobInfo(JobInfo)
 
-	''' <summary>
-	''' Updates status file
-	''' </summary>
-	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-	''' <remarks></remarks>
-	Public Sub UpdateAndWrite(ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
+        WriteStatusFile(ForceLogToBrokerDB)
 
-		m_Progress = PercentComplete
-		WriteStatusFile()
+    End Sub
 
-	End Sub
+    ''' <summary>
+    ''' Updates status file
+    ''' </summary>
+    ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateAndWrite(ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
 
-	''' <summary>
-	''' Updates status file
-	''' </summary>
-	''' <param name="eMgrStatus">Job status enum</param>
-	''' <param name="eTaskStatus">Task status enum</param>
-	''' <param name="eTaskStatusDetail">Task status detail enum</param>
-	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-	''' <remarks></remarks>
+        m_Progress = PercentComplete
+        WriteStatusFile()
+
+    End Sub
+
+    ''' <summary>
+    ''' Updates status file
+    ''' </summary>
+    ''' <param name="eMgrStatus">Job status enum</param>
+    ''' <param name="eTaskStatus">Task status enum</param>
+    ''' <param name="eTaskStatusDetail">Task status detail enum</param>
+    ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+    ''' <remarks></remarks>
     Public Sub UpdateAndWrite(
       ByVal eMgrStatus As IStatusFile.EnumMgrStatus,
       ByVal eTaskStatus As IStatusFile.EnumTaskStatus,
@@ -1001,13 +1042,13 @@ Public Class clsStatusFile
 
     End Sub
 
-	''' <summary>
-	''' Updates status file
-	''' </summary>
-	''' <param name="Status">Job status enum</param>
-	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-	''' <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Updates status file
+    ''' </summary>
+    ''' <param name="Status">Job status enum</param>
+    ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+    ''' <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+    ''' <remarks></remarks>
     Public Sub UpdateAndWrite(
       ByVal Status As IStatusFile.EnumTaskStatus,
       ByVal PercentComplete As Single,
@@ -1021,206 +1062,206 @@ Public Class clsStatusFile
 
     End Sub
 
-	''' <summary>
-	''' Updates status file
-	''' </summary>
-	''' <param name="eMgrStatus">Job status code</param>
-	''' <param name="eTaskStatus">Task status code</param>
-	''' <param name="eTaskStatusDetail">Detailed task status</param>
-	''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-	''' <param name="DTACount">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
-	''' <param name="MostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
-	''' <param name="MostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
-	''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	''' <remarks></remarks>
-	Public Sub UpdateAndWrite(
-	  ByVal eMgrStatus As IStatusFile.EnumMgrStatus, _
-	  ByVal eTaskStatus As IStatusFile.EnumTaskStatus, _
-	  ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail, _
-	  ByVal PercentComplete As Single, _
-	  ByVal DTACount As Integer, _
-	  ByVal MostRecentLogMessage As String, _
-	  ByVal MostRecentErrorMessage As String, _
-	  ByVal RecentJobInfo As String, _
-	  ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateAndWrite
+    ''' <summary>
+    ''' Updates status file
+    ''' </summary>
+    ''' <param name="eMgrStatus">Job status code</param>
+    ''' <param name="eTaskStatus">Task status code</param>
+    ''' <param name="eTaskStatusDetail">Detailed task status</param>
+    ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+    ''' <param name="DTACount">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+    ''' <param name="MostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
+    ''' <param name="MostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
+    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
+    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateAndWrite(
+      ByVal eMgrStatus As IStatusFile.EnumMgrStatus, _
+      ByVal eTaskStatus As IStatusFile.EnumTaskStatus, _
+      ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail, _
+      ByVal PercentComplete As Single, _
+      ByVal DTACount As Integer, _
+      ByVal MostRecentLogMessage As String, _
+      ByVal MostRecentErrorMessage As String, _
+      ByVal RecentJobInfo As String, _
+      ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateAndWrite
 
-		m_MgrStatus = eMgrStatus
-		m_TaskStatus = eTaskStatus
-		m_TaskStatusDetail = eTaskStatusDetail
-		m_Progress = PercentComplete
-		m_SpectrumCount = DTACount
+        m_MgrStatus = eMgrStatus
+        m_TaskStatus = eTaskStatus
+        m_TaskStatusDetail = eTaskStatusDetail
+        m_Progress = PercentComplete
+        m_SpectrumCount = DTACount
 
-		m_MostRecentLogMessage = MostRecentLogMessage
-		StoreNewErrorMessage(MostRecentErrorMessage, True)
-		StoreRecentJobInfo(RecentJobInfo)
+        m_MostRecentLogMessage = MostRecentLogMessage
+        StoreNewErrorMessage(MostRecentErrorMessage, True)
+        StoreRecentJobInfo(RecentJobInfo)
 
-		WriteStatusFile(ForceLogToBrokerDB)
+        WriteStatusFile(ForceLogToBrokerDB)
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Sets status file to show mahager idle
-	''' </summary>
-	''' <remarks></remarks>
-	Public Sub UpdateIdle() Implements IStatusFile.UpdateIdle
-		UpdateIdle("Manager Idle", False)
-	End Sub
+    ''' <summary>
+    ''' Sets status file to show mahager idle
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub UpdateIdle() Implements IStatusFile.UpdateIdle
+        UpdateIdle("Manager Idle", False)
+    End Sub
 
-	''' <summary>
-	''' Logs to the status file that the manager is idle
-	''' </summary>
-	''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	''' <remarks></remarks>
-	Public Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
-		ClearCachedInfo()
-		m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-		m_MostRecentLogMessage = ManagerIdleMessage
+    ''' <summary>
+    ''' Logs to the status file that the manager is idle
+    ''' </summary>
+    ''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
+        ClearCachedInfo()
+        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        m_MostRecentLogMessage = ManagerIdleMessage
 
-		WriteStatusFile(ForceLogToBrokerDB)
-	End Sub
+        WriteStatusFile(ForceLogToBrokerDB)
+    End Sub
 
-	''' <summary>
-	''' Logs to the status file that the manager is idle
-	''' </summary>
-	''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-	''' <param name="IdleErrorMessage">Error message explaining why the manager is idle</param>
-	''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	''' <remarks></remarks>
-	Public Sub UpdateIdle(
-	  ByVal ManagerIdleMessage As String, _
-	  ByVal IdleErrorMessage As String, _
-	  ByVal RecentJobInfo As String, _
-	  ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
-		ClearCachedInfo()
-		m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-		m_MostRecentLogMessage = ManagerIdleMessage
+    ''' <summary>
+    ''' Logs to the status file that the manager is idle
+    ''' </summary>
+    ''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+    ''' <param name="IdleErrorMessage">Error message explaining why the manager is idle</param>
+    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
+    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateIdle(
+      ByVal ManagerIdleMessage As String, _
+      ByVal IdleErrorMessage As String, _
+      ByVal RecentJobInfo As String, _
+      ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
+        ClearCachedInfo()
+        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        m_MostRecentLogMessage = ManagerIdleMessage
 
-		StoreNewErrorMessage(IdleErrorMessage, True)
-		StoreRecentJobInfo(RecentJobInfo)
+        StoreNewErrorMessage(IdleErrorMessage, True)
+        StoreRecentJobInfo(RecentJobInfo)
 
-		WriteStatusFile(ForceLogToBrokerDB)
+        WriteStatusFile(ForceLogToBrokerDB)
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Logs to the status file that the manager is idle
-	''' </summary>
-	''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-	''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-	''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-	''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-	''' <remarks></remarks>
-	Public Sub UpdateIdle(
-	  ByVal ManagerIdleMessage As String, _
-	  ByRef RecentErrorMessages() As String, _
-	  ByVal RecentJobInfo As String, _
-	  ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
+    ''' <summary>
+    ''' Logs to the status file that the manager is idle
+    ''' </summary>
+    ''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+    ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
+    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateIdle(
+      ByVal ManagerIdleMessage As String, _
+      ByRef RecentErrorMessages() As String, _
+      ByVal RecentJobInfo As String, _
+      ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
 
-		ClearCachedInfo()
-		m_MgrStatus = IStatusFile.EnumMgrStatus.RUNNING
-		m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-		m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
-		m_MostRecentLogMessage = ManagerIdleMessage
+        ClearCachedInfo()
+        m_MgrStatus = IStatusFile.EnumMgrStatus.RUNNING
+        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+        m_MostRecentLogMessage = ManagerIdleMessage
 
-		StoreRecentErrorMessages(RecentErrorMessages)
-		StoreRecentJobInfo(RecentJobInfo)
+        StoreRecentErrorMessages(RecentErrorMessages)
+        StoreRecentJobInfo(RecentJobInfo)
 
-		WriteStatusFile(ForceLogToBrokerDB)
-	End Sub
+        WriteStatusFile(ForceLogToBrokerDB)
+    End Sub
 
-	''' <summary>
-	''' Updates status file to show manager disabled
-	''' </summary>
-	''' <remarks></remarks>
-	Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus) Implements IStatusFile.UpdateDisabled
-		UpdateDisabled(ManagerStatus, "Manager Disabled")
-	End Sub
+    ''' <summary>
+    ''' Updates status file to show manager disabled
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus) Implements IStatusFile.UpdateDisabled
+        UpdateDisabled(ManagerStatus, "Manager Disabled")
+    End Sub
 
-	''' <summary>
-	''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
-	''' </summary>
-	''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-	''' <remarks></remarks>
-	Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String) Implements IStatusFile.UpdateDisabled
-		Dim strRecentErrorMessages() As String
-		ReDim strRecentErrorMessages(-1)
+    ''' <summary>
+    ''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+    ''' </summary>
+    ''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String) Implements IStatusFile.UpdateDisabled
+        Dim strRecentErrorMessages() As String
+        ReDim strRecentErrorMessages(-1)
 
-		UpdateDisabled(ManagerStatus, ManagerDisableMessage, strRecentErrorMessages, m_MostRecentJobInfo)
-	End Sub
+        UpdateDisabled(ManagerStatus, ManagerDisableMessage, strRecentErrorMessages, m_MostRecentJobInfo)
+    End Sub
 
-	''' <summary>
-	''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
-	''' </summary>
-	''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-	''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-	''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-	''' <remarks></remarks>
-	Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String) Implements IStatusFile.UpdateDisabled
-		ClearCachedInfo()
+    ''' <summary>
+    ''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+    ''' </summary>
+    ''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
+    ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String) Implements IStatusFile.UpdateDisabled
+        ClearCachedInfo()
 
-		If Not (ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_LOCAL OrElse ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_MC) Then
-			ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_LOCAL
-		End If
-		m_MgrStatus = ManagerStatus
-		m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-		m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
-		m_MostRecentLogMessage = ManagerDisableMessage
+        If Not (ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_LOCAL OrElse ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_MC) Then
+            ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_LOCAL
+        End If
+        m_MgrStatus = ManagerStatus
+        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+        m_MostRecentLogMessage = ManagerDisableMessage
 
-		StoreRecentJobInfo(RecentJobInfo)
-		StoreRecentErrorMessages(RecentErrorMessages)
+        StoreRecentJobInfo(RecentJobInfo)
+        StoreRecentErrorMessages(RecentErrorMessages)
 
-		WriteStatusFile(True)
-	End Sub
+        WriteStatusFile(True)
+    End Sub
 
-	''' <summary>
-	''' Updates status file to show manager stopped due to a flag file
-	''' </summary>
-	''' <remarks></remarks>
-	Public Sub UpdateFlagFileExists() Implements IStatusFile.UpdateFlagFileExists
-		Dim strRecentErrorMessages() As String
-		ReDim strRecentErrorMessages(-1)
+    ''' <summary>
+    ''' Updates status file to show manager stopped due to a flag file
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub UpdateFlagFileExists() Implements IStatusFile.UpdateFlagFileExists
+        Dim strRecentErrorMessages() As String
+        ReDim strRecentErrorMessages(-1)
 
-		UpdateFlagFileExists(strRecentErrorMessages, m_MostRecentJobInfo)
-	End Sub
+        UpdateFlagFileExists(strRecentErrorMessages, m_MostRecentJobInfo)
+    End Sub
 
-	''' <summary>
-	''' Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
-	''' </summary>
-	''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-	''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-	''' <remarks></remarks>
-	Public Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String) Implements IStatusFile.UpdateFlagFileExists
-		ClearCachedInfo()
+    ''' <summary>
+    ''' Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
+    ''' </summary>
+    ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
+    ''' <remarks></remarks>
+    Public Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String) Implements IStatusFile.UpdateFlagFileExists
+        ClearCachedInfo()
 
-		m_MgrStatus = IStatusFile.EnumMgrStatus.STOPPED_ERROR
-		m_MostRecentLogMessage = "Flag file"
-		StoreRecentErrorMessages(RecentErrorMessages)
-		StoreRecentJobInfo(RecentJobInfo)
+        m_MgrStatus = IStatusFile.EnumMgrStatus.STOPPED_ERROR
+        m_MostRecentLogMessage = "Flag file"
+        StoreRecentErrorMessages(RecentErrorMessages)
+        StoreRecentJobInfo(RecentJobInfo)
 
-		WriteStatusFile(True)
-	End Sub
+        WriteStatusFile(True)
+    End Sub
 
-	''' <summary>
-	''' Total time the job has been running
-	''' </summary>
-	''' <returns>Number of hours manager has been processing job</returns>
-	''' <remarks></remarks>
-	Private Function GetRunTime() As Single
+    ''' <summary>
+    ''' Total time the job has been running
+    ''' </summary>
+    ''' <returns>Number of hours manager has been processing job</returns>
+    ''' <remarks></remarks>
+    Private Function GetRunTime() As Single
 
-		Return CSng(DateTime.UtcNow.Subtract(m_TaskStartTime).TotalHours)
+        Return CSng(DateTime.UtcNow.Subtract(m_TaskStartTime).TotalHours)
 
-	End Function
+    End Function
 
-	Public Sub DisposeMessageQueue()
-		If Not m_MessageSender Is Nothing Then
-			m_QueueLogger.Dispose()
-			m_MessageSender.Dispose()
-		End If
+    Public Sub DisposeMessageQueue()
+        If Not m_MessageSender Is Nothing Then
+            m_QueueLogger.Dispose()
+            m_MessageSender.Dispose()
+        End If
 
-	End Sub
+    End Sub
 
 #End Region
 

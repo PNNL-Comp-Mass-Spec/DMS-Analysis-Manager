@@ -121,7 +121,14 @@ Public Class clsMSGFDBUtils
 
 #Region "Methods"
 
-    Public Sub New(oMgrParams As IMgrParams, oJobParams As IJobParams, JobNum As String, strWorkDir As String, intDebugLevel As Short, blnMSGFPlus As Boolean)
+    Public Sub New(
+      oMgrParams As IMgrParams,
+      oJobParams As IJobParams,
+      JobNum As String,
+      strWorkDir As String,
+      intDebugLevel As Short,
+      blnMSGFPlus As Boolean)
+
         m_mgrParams = oMgrParams
         m_jobParams = oJobParams
         m_WorkDir = strWorkDir
@@ -756,6 +763,31 @@ Public Class clsMSGFDBUtils
         End Try
 
         Return strDecoyFastaFilePath
+
+    End Function
+
+    ''' <summary>
+    ''' Returns the number of cores
+    ''' </summary>
+    ''' <returns>The number of cores on this computer</returns>
+    ''' <remarks>Should not affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+    Public Function GetCoreCount() As Integer
+
+        Try
+
+            Dim result = New System.Management.ManagementObjectSearcher("Select NumberOfCores from Win32_Processor")
+            Dim coreCount = 0
+
+            For Each item In result.Get()
+                coreCount += Integer.Parse(item("NumberOfCores").ToString())
+            Next
+
+            Return coreCount
+
+        Catch ex As Exception
+            ' This value will be affected by hyperthreading
+            Return Environment.ProcessorCount
+        End Try
 
     End Function
 
@@ -1910,13 +1942,8 @@ Public Class clsMSGFDBUtils
 
         ElseIf intParamFileThreadCount <= 0 OrElse limitCoreUsage Then
             ' Set intParamFileThreadCount to the number of cores on this computer
-            ' Note that Environment.ProcessorCount tells us the number of logical processors, not the number of cores
-            ' Thus, we need to use a WMI query (see http://stackoverflow.com/questions/1542213/how-to-find-the-number-of-cpu-cores-via-net-c )
 
-            Dim coreCount = 0
-            For Each item As Management.ManagementBaseObject In New Management.ManagementObjectSearcher("Select * from Win32_Processor").Get()
-                coreCount += Integer.Parse(item("NumberOfCores").ToString())
-            Next
+            Dim coreCount = GetCoreCount()
 
             If limitCoreUsage Then
                 Dim maxAllowedCores = CInt(Math.Floor(coreCount * 0.75))
