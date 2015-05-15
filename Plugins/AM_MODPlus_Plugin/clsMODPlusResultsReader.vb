@@ -47,7 +47,6 @@ Public Class clsMODPlusResultsReader
     Protected mSpectrumAvailable As Boolean
 
     Protected ReadOnly mExtractChargeAndScan As Regex
-    Protected ReadOnly mExtractFilenameWithoutPartTag As Regex
 
     Protected ReadOnly mReader As StreamReader
     Protected ReadOnly mResultFile As FileInfo
@@ -75,7 +74,6 @@ Public Class clsMODPlusResultsReader
         '   Charge<Tab>Dataset.StartScan.EndScan.Charge
 
         mExtractChargeAndScan = New Regex("\t(\d+)\t" & datasetName & "\.(\d+)\.", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-        mExtractFilenameWithoutPartTag = New Regex("(.+)_Part\d+\.mgf", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         mReader = New StreamReader(New FileStream(modPlusResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
@@ -160,12 +158,7 @@ Public Class clsMODPlusResultsReader
                             If fiMgfFileLocal.Name.Length > 0 Then
                                 ' Reconstruct dataLine
 
-                                Dim reNameMatch = mExtractFilenameWithoutPartTag.Match(fiMgfFileLocal.Name)
-                                If reNameMatch.Success Then
-                                    mgfFilePath = Path.Combine("E:\DMS_WorkDir\", reNameMatch.Groups(1).Value & fiMgfFileLocal.Extension)
-                                Else
-                                    mgfFilePath = Path.Combine("E:\DMS_WorkDir\", fiMgfFileLocal.Name)
-                                End If
+                                mgfFilePath = Path.Combine("E:\DMS_WorkDir\", fiMgfFileLocal.Name)
 
                                 dataLine = ">>" & mgfFilePath & ControlChars.Tab & dataColumns(1) & ControlChars.Tab
 

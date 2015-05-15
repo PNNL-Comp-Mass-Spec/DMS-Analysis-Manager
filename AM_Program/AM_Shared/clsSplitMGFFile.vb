@@ -1,4 +1,6 @@
 ﻿Imports System.IO
+Imports System.Runtime.InteropServices
+Imports System.Text.RegularExpressions
 
 ''' <summary>
 ''' This class splits a Mascot Generic File (mgf file) into multiple parts
@@ -11,7 +13,17 @@ Public Class clsSplitMGFFile
         Public OutputFile As FileInfo
         Public SpectraWritten As Integer
         Public Writer As StreamWriter
+        Public PartNumber As Integer
     End Structure
+
+    Protected ReadOnly mExtractScan As Regex
+    ''' <summary>
+    '''  Constructor
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub New()
+        mExtractScan = New Regex(".+\.(\d+)\.\d+\.\d?", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+    End Sub
 
     ''' <summary>
     ''' Splits a Mascot Generic File (mgf file) into splitCount parts
@@ -56,32 +68,41 @@ Public Class clsSplitMGFFile
 
             OnProgressUpdate("Splitting " & fiMgfFile.Name & " into " & splitCount & " parts", 0)
 
+            Dim scanMapFilePath = Path.Combine(fiMgfFile.DirectoryName, Path.GetFileNameWithoutExtension(fiMgfFile.Name) & "_mgfScanMap.txt")
+
             Dim lstSplitMgfFiles = New List(Of FileInfo)
 
-            Using srMgfFile = New StreamReader(New FileStream(fiMgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srMgfFile = New StreamReader(New FileStream(fiMgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)),
+                  swScanToPartMapFile = New StreamWriter(New FileStream(scanMapFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+                ' Write the header to the map file
+                swScanToPartMapFile.WriteLine("ScanNumber" & ControlChars.Tab & "ScanIndexOriginal" & ControlChars.Tab & "MgfFilePart" & ControlChars.Tab & "ScanIndex")
 
                 ' Create the writers
                 ' Keys are each StreamWriter, values are the number of spectra written to the file
                 Dim swWriters = New Queue(Of udtOutputFileType)
 
-                For splitFile = 1 To splitCount
-                    Dim outputFilePath = Path.Combine(fiMgfFile.DirectoryName, Path.GetFileNameWithoutExtension(fiMgfFile.Name) & fileSuffix & splitFile & ".mgf")
+                For partNum = 1 To splitCount
+                    Dim outputFilePath = Path.Combine(fiMgfFile.DirectoryName, Path.GetFileNameWithoutExtension(fiMgfFile.Name) & fileSuffix & partNum & ".mgf")
 
                     Dim nextWriter = New udtOutputFileType()
                     nextWriter.OutputFile = New FileInfo(outputFilePath)
                     nextWriter.SpectraWritten = 0
+                    nextWriter.PartNumber = partNum
 
                     lstSplitMgfFiles.Add(nextWriter.OutputFile)
                     nextWriter.Writer = New StreamWriter(New FileStream(nextWriter.OutputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-                    
+
                     swWriters.Enqueue(nextWriter)
                 Next
 
                 Dim bytesRead As Int64 = 0
+                Dim scanNumber As Integer
+                Dim totalSpectraWritten = 0
 
                 Dim previousLine As String = String.Empty
                 While True
-                    Dim spectrumData As List(Of String) = GetNextMGFSpectrum(srMgfFile, previousLine, bytesRead)
+                    Dim spectrumData As List(Of String) = GetNextMGFSpectrum(srMgfFile, previousLine, bytesRead, scanNumber)
                     If spectrumData.Count = 0 Then
                         Exit While
                     Else
@@ -91,6 +112,10 @@ Public Class clsSplitMGFFile
                         Next
 
                         nextWriter.SpectraWritten += 1
+                        totalSpectraWritten += 1
+
+                        swScanToPartMapFile.WriteLine(scanNumber & ControlChars.Tab & totalSpectraWritten & ControlChars.Tab & nextWriter.PartNumber & ControlChars.Tab & nextWriter.SpectraWritten)
+                        
                         swWriters.Enqueue(nextWriter)
                     End If
 
@@ -104,7 +129,7 @@ Public Class clsSplitMGFFile
 
                 ' Close the writers
                 ' In addition, delete any output files that did not have any spectra written to them
-                Dim totalSpectraWritten = 0
+                totalSpectraWritten = 0
 
                 While swWriters.Count > 0
                     Dim nextWriter = swWriters.Dequeue()
@@ -135,10 +160,15 @@ Public Class clsSplitMGFFile
 
     End Function
 
-    Private Function GetNextMGFSpectrum(srMgfFile As StreamReader, ByRef previousLine As String, ByRef bytesRead As Int64) As List(Of String)
+    Private Function GetNextMGFSpectrum(
+      srMgfFile As StreamReader,
+      ByRef previousLine As String,
+      ByRef bytesRead As Int64,
+      <Out()> ByRef scanNumber As Integer) As List(Of String)
 
         Dim spectrumFound = False
         Dim spectrumData = New List(Of String)
+        scanNumber = 0
 
         If srMgfFile.EndOfStream Then Return spectrumData
 
@@ -156,7 +186,9 @@ Public Class clsSplitMGFFile
             If Not String.IsNullOrWhiteSpace(dataLine) Then
                 bytesRead += dataLine.Length
 
-                If dataLine.ToUpper().StartsWith("BEGIN IONS") Then
+                Dim datalineUCase = dataLine.ToUpper()
+
+                If datalineUCase.StartsWith("BEGIN IONS") Then
                     If spectrumFound Then
                         ' The previous spectrum was missing the END IONS line
                         ' This is unexpected, but we'll allow it
@@ -166,13 +198,19 @@ Public Class clsSplitMGFFile
                         Return spectrumData
                     End If
                     spectrumFound = True
+                ElseIf datalineUCase.StartsWith("TITLE") Then
+                    ' Parse out the scan number
+                    Dim reMatch = mExtractScan.Match(dataLine)
+                    If reMatch.Success Then
+                        Integer.TryParse(reMatch.Groups(1).Value, scanNumber)
+                    End If
                 End If
 
                 If spectrumFound Then
                     spectrumData.Add(dataLine)
                 End If
 
-                If dataLine.ToUpper().StartsWith("END IONS") Then
+                If datalineUCase.StartsWith("END IONS") Then
                     Return spectrumData
                 End If
             End If
