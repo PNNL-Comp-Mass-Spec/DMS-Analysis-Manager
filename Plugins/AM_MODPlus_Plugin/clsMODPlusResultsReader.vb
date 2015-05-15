@@ -47,6 +47,7 @@ Public Class clsMODPlusResultsReader
     Protected mSpectrumAvailable As Boolean
 
     Protected ReadOnly mExtractChargeAndScan As Regex
+    Protected ReadOnly mExtractFilenameWithoutPartTag As Regex
 
     Protected ReadOnly mReader As StreamReader
     Protected ReadOnly mResultFile As FileInfo
@@ -61,16 +62,20 @@ Public Class clsMODPlusResultsReader
         mResultFile = modPlusResultsFile
 
         ' This RegEx is used to parse out the charge and scan number from the current spectrum
+        ' LineFormat (where \t is tab)
+        ' >>MGFFilePath \t MGFScanIndex \t ScanNumber \t ParentMZ \t Charge \t MGFScanHeader
+
         ' Example lines:
         ' >>E:\DMS_WorkDir\O_disjunctus_PHG_test_01_Run2_30Dec13_Samwise_13-07-28_Part4.mgf	522	0	841.5054	2	O_disjunctus_PHG_test_01_Run2_30Dec13_Samwise_13-07-28.4165.4165.
         ' >>E:\DMS_WorkDir\O_disjunctus_PHG_test_01_Run2_30Dec13_Samwise_13-07-28_Part4.mgf	524	0	1037.5855	2	O_disjunctus_PHG_test_01_Run2_30Dec13_Samwise_13-07-28.4181.4181.2
 
-        ' Notice that some lines have 
+        ' Notice that some lines have MGFScanHeaders of 
         '   Charge<Tab>Dataset.StartScan.EndScan.
         ' while others have
         '   Charge<Tab>Dataset.StartScan.EndScan.Charge
 
         mExtractChargeAndScan = New Regex("\t(\d+)\t" & datasetName & "\.(\d+)\.", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        mExtractFilenameWithoutPartTag = New Regex("(.+)_Part\d+\.mgf", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         mReader = New StreamReader(New FileStream(modPlusResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
@@ -122,29 +127,66 @@ Public Class clsMODPlusResultsReader
 
                     Dim charge = 0
                     Dim scan = 0
+                    Dim scanMatched = False
+
                     If reMatch.Success Then
                         Integer.TryParse(reMatch.Groups(1).Value, charge)
-                        Integer.TryParse(reMatch.Groups(2).Value, scan)
-                        mCurrentScanChargeCombo = scan + charge / 100.0
+                        If Integer.TryParse(reMatch.Groups(2).Value, scan) Then
+                            mCurrentScanChargeCombo = scan + charge / 100.0
+                            scanMatched = True
+                        Else
+                            mCurrentScanChargeCombo = 0
+                        End If
+
                     End If
 
                     ' Replace the file path in this line with a generic path of "E:\DMS_WorkDir\"
-                    Dim tabIndex = dataLine.IndexOf(ControlChars.Tab)
-                    If tabIndex > 0 Then
-                        Try
-                            Dim mgfFilePath = dataLine.Substring(2, tabIndex - 2)
-                            Dim remainder = dataLine.Substring(tabIndex)
+                    ' In addition, update the scan number if it is 0
+                    ' And, remove "_Part#" from the filename
+
+                    ' For example, change from
+                    ' >>E:\DMS_WorkDir3\DatasetX_Part3.mgf	51	0	1481.7382	3	DatasetX.592.592.
+                    ' to
+                    ' >>E:\DMS_WorkDir\DatasetX.mgf	51	592	1481.7382	3	DatasetX.592.592.
+
+                    Try
+
+                        Dim dataColumns = dataLine.Split(ControlChars.Tab)
+                        If dataColumns.Count > 3 Then
+
+                            Dim mgfFilePath = dataColumns(0).TrimStart(">"c)
                             Dim fiMgfFileLocal = New FileInfo(mgfFilePath)
+
                             If fiMgfFileLocal.Name.Length > 0 Then
                                 ' Reconstruct dataLine
-                                dataLine = ">>" & Path.Combine("E:\DMS_WorkDir\", fiMgfFileLocal.Name) & remainder
+
+                                Dim reNameMatch = mExtractFilenameWithoutPartTag.Match(fiMgfFileLocal.Name)
+                                If reNameMatch.Success Then
+                                    mgfFilePath = Path.Combine("E:\DMS_WorkDir\", reNameMatch.Groups(1).Value & fiMgfFileLocal.Extension)
+                                Else
+                                    mgfFilePath = Path.Combine("E:\DMS_WorkDir\", fiMgfFileLocal.Name)
+                                End If
+
+                                dataLine = ">>" & mgfFilePath & ControlChars.Tab & dataColumns(1) & ControlChars.Tab
+
+                                If scanMatched AndAlso dataColumns(2) = "0" Then
+                                    dataLine &= scan
+                                Else
+                                    dataLine &= dataColumns(2)
+                                End If
+
+                                ' Add the remaining columns
+                                For colIndex = 3 To dataColumns.Length - 1
+                                    dataLine &= ControlChars.Tab & dataColumns(colIndex)
+                                Next
+
                             End If
-                        Catch ex As Exception
-                            ' Text parsing error
-                            ' Do not reconstruct dataLine
-                        End Try
-                        
-                    End If
+                        End If
+
+                    Catch ex As Exception
+                        ' Text parsing error
+                        ' Do not reconstruct dataLine
+                    End Try
 
                 End If
                 mCurrentScanData.Add(dataLine)
