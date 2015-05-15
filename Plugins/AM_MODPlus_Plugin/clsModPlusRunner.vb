@@ -26,6 +26,8 @@ Public Class clsMODPlusRunner
 
 #Region "Properties"
 
+    Public Property CommandLineArgsLogged As Boolean
+
     Public ReadOnly Property CommandLineArgs As String
         Get
             Return mCommandLineArgs
@@ -167,6 +169,7 @@ Public Class clsMODPlusRunner
         mOutputFilePath = String.Empty
         mCommandLineArgs = String.Empty
 
+        CommandLineArgsLogged = False
         JavaMemorySizeMB = 3000
 
     End Sub
@@ -258,7 +261,7 @@ Public Class clsMODPlusRunner
         ' [MOD-Plus] Elapsed Time : 6461 Sec
         ' 
 
-        Static reCheckProgress As New Regex("^MODPlus.+(\d+)/(\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        Static reCheckProgress As New Regex("^MODPlus[^0-9]+(\d+)/(\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         Try
             If Not File.Exists(strConsoleOutputFilePath) Then

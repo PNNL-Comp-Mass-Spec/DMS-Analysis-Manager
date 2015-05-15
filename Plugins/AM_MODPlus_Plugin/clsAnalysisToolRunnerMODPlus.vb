@@ -94,8 +94,9 @@ Public Class clsAnalysisToolRunnerMODPlus
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
+            Dim fiFastaFile As FileInfo = Nothing
             Dim fastaFileIsDecoy As Boolean
-            If Not InitializeFastaFile(fastaFileIsDecoy) Then
+            If Not InitializeFastaFile(fiFastaFile, fastaFileIsDecoy) Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -104,7 +105,7 @@ Public Class clsAnalysisToolRunnerMODPlus
 
             If blnSuccess Then
                 ' Look for the results file(s)
-                blnSuccess = PostProcessMODPlusResults(javaProgLoc, fastaFileIsDecoy)
+                blnSuccess = PostProcessMODPlusResults(javaProgLoc, fiFastaFile, fastaFileIsDecoy)
                 If Not blnSuccess Then
                     If String.IsNullOrEmpty(m_message) Then
                         LogError("Unknown error post-processing the MODPlus results")
@@ -364,7 +365,7 @@ Public Class clsAnalysisToolRunnerMODPlus
                 nodeList = doc.SelectNodes("/search/dataset")
                 If nodeList.Count > 0 Then
                     nodeList(0).Attributes("local_path").Value = fiMgfFile.FullName
-                    nodeList(0).Attributes("format").Value = "mzxml"
+                    nodeList(0).Attributes("format").Value = "mgf"
                 End If
 
                 Dim paramFilePathCurrent = Path.Combine(fiParamFile.DirectoryName, Path.GetFileNameWithoutExtension(fiParamFile.Name) & "_Part" & threadNumber & ".xml")
@@ -391,7 +392,9 @@ Public Class clsAnalysisToolRunnerMODPlus
 
     End Function
 
-    Private Function InitializeFastaFile(<Out()> ByRef fastaFileIsDecoy As Boolean) As Boolean
+    Private Function InitializeFastaFile(
+      <Out()> ByRef fiFastaFile As FileInfo,
+      <Out()> ByRef fastaFileIsDecoy As Boolean) As Boolean
 
         fastaFileIsDecoy = False
 
@@ -399,7 +402,7 @@ Public Class clsAnalysisToolRunnerMODPlus
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
         Dim fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-        Dim fiFastaFile = New FileInfo(fastaFilePath)
+        fiFastaFile = New FileInfo(fastaFilePath)
 
         If Not fiFastaFile.Exists Then
             ' Fasta file not found
@@ -412,29 +415,58 @@ Public Class clsAnalysisToolRunnerMODPlus
         If Boolean.TryParse(decoyFastaFileFlag, paramValue) Then
             fastaFileIsDecoy = paramValue
         End If
-      
+
         Return True
 
     End Function
 
-    Private Function ParseDecoyResults(javaProgLoc As String, fiResultsFile As FileInfo) As Boolean
+    Private Function ParseDecoyResults(javaProgLoc As String, fiResultsFile As FileInfo, fiFastaFile As FileInfo) As Boolean
 
         Dim fiModPlusProgram = New FileInfo(mMODPlusProgLoc)
         Dim tdaPlusProgLoc = Path.Combine(fiModPlusProgram.DirectoryName, TDA_PLUS_JAR_NAME)
 
         Dim tdaPlusConsoleOutput = Path.Combine(m_WorkDir, "TDA_Plus_ConsoleOutput.txt")
-        m_jobParams.AddResultFileToSkip(tdaPlusConsoleOutput)
 
         Dim fdrThreshold = m_jobParams.GetJobParameter("MODPlusDecoyFilterFDR", "0.01")
-        Dim decoyPrefix = m_jobParams.GetJobParameter("MODPlusDecoyPrefix", clsAnalysisResourcesMODPlus.DECOY_PROTEIN_PREFIX)   ' XXX.
+        Dim decoyPrefixJobParam = m_jobParams.GetJobParameter("MODPlusDecoyPrefix", clsAnalysisResourcesMODPlus.GetDefaultDecoyPrefixes().First())   'Reversed_
+
+        If m_DebugLevel >= 1 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Verifying the decoy prefix in " & fiFastaFile.Name)
+        End If
+
+        ' Determine the most common decoy prefix in the Fasta file
+        Dim decoyPrefixes = clsAnalysisResources.GetDefaultDecoyPrefixes()
+        Dim bestPrefix = New KeyValuePair(Of Double, String)(0, String.Empty)
+
+        For Each decoyPrefix In decoyPrefixes
+
+            Dim proteinCount As Integer
+            Dim fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, proteinCount)
+            If fractionDecoy * 100 >= clsAnalysisResourcesMODPlus.MINIMUM_PERCENT_DECOY Then
+
+                If fractionDecoy > bestPrefix.Key Then
+                    bestPrefix = New KeyValuePair(Of Double, String)(fractionDecoy, decoyPrefix)
+                End If
+            End If
+
+        Next
+
+        If Not String.IsNullOrEmpty(bestPrefix.Value) AndAlso bestPrefix.Value <> decoyPrefixJobParam Then
+            m_EvalMessage = "Using decoy prefix " & bestPrefix.Value & " instead of " & decoyPrefixJobParam &
+                            " as defined by job parameter MODPlusDecoyPrefix because " &
+                            (bestPrefix.Key * 100).ToString("0") & "% of the proteins start with " & bestPrefix.Value
+
+            decoyPrefixJobParam = bestPrefix.Value
+
+        End If
 
         Dim cmdStr = " -jar " & PossiblyQuotePath(tdaPlusProgLoc)
         cmdStr &= " -i " & PossiblyQuotePath(fiResultsFile.FullName)
         cmdStr &= " -fdr " & fdrThreshold
-        cmdStr &= " -d " & decoyPrefix
+        cmdStr &= " -d " & decoyPrefixJobParam
 
         If m_DebugLevel >= 1 Then
-            ' "C:\Program Files\Java\jre8\bin\java.exe" -jar C:\DMS_Programs\MODPlus\tda_plus.jar -i Dataset_modp.txt -fdr 0.01 -d XXX.
+            ' "C:\Program Files\Java\jre8\bin\java.exe" -jar C:\DMS_Programs\MODPlus\tda_plus.jar -i Dataset_modp.txt -fdr 0.01 -d Reversed_
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaProgLoc & " " & cmdStr)
         End If
 
@@ -477,6 +509,8 @@ Public Class clsAnalysisToolRunnerMODPlus
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
             End If
 
+            m_jobParams.AddResultFileToSkip(tdaPlusConsoleOutput)
+
             Return True
 
         End If
@@ -497,34 +531,54 @@ Public Class clsAnalysisToolRunnerMODPlus
 
     End Function
 
-    Private Function PostProcessMODPlusResults(javaProgLoc As String, fastaFileIsDecoy As Boolean) As Boolean
+    Private Function PostProcessMODPlusResults(
+      javaProgLoc As String,
+      fiFastaFile As FileInfo,
+      fastaFileIsDecoy As Boolean) As Boolean
 
         Dim successOverall = True
 
         Try
-            Dim lstNextAvailableScan = New SortedList(Of Integer, List(Of clsMODPlusResultsReader))
+            ' Keys in this list are scan numbers with charge state encoded as Charge / 100
+            ' For example, if scan 1000 and charge 2, then the key will be 1000.02
+            ' Values are a list of readers that have that given ScanPlusCharge combo
+            Dim lstNextAvailableScan = New SortedList(Of Double, List(Of clsMODPlusResultsReader))
 
             ' Combine the result files using a Merge Sort (we assume the results are sorted by scan in each result file)
 
-            For Each modPlusRunner In mMODPlusRunners
-                Dim fiOutputFile = New FileInfo(modPlusRunner.Value.OutputFilePath)
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Merging the results files")
+            End If
 
-                If Not fiOutputFile.Exists Then
+            For Each modPlusRunner In mMODPlusRunners
+                Dim fiResultFile = New FileInfo(modPlusRunner.Value.OutputFilePath)
+
+                If Not fiResultFile.Exists Then
+                    ' Result file not found for the current thread
+                    ' Log an error, but continue to combine the files
                     m_message = clsGlobal.AppendToComment(m_message, "Result file not found for thread " & modPlusRunner.Key)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    successOverall = False
+                    Continue For
+                ElseIf fiResultFile.Length = 0 Then
+                    ' 0-byte result file
+                    ' Log an error, but continue to combine the files
+                    m_message = clsGlobal.AppendToComment(m_message, "Result file is empty for thread " & modPlusRunner.Key)
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                     successOverall = False
                     Continue For
                 End If
 
-                Dim reader = New clsMODPlusResultsReader(fiOutputFile)
+                Dim reader = New clsMODPlusResultsReader(m_Dataset, fiResultFile)
                 If reader.SpectrumAvailable Then
                     PushReader(lstNextAvailableScan, reader)
                 End If
             Next
 
-            Dim fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsMODPlusRunner.RESULTS_FILE_SUFFIX))
+            Dim combinedResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & clsMODPlusRunner.RESULTS_FILE_SUFFIX)
+            Dim fiCombinedResults = New FileInfo(combinedResultsFilePath)
 
-            Using swCombinedResults = New StreamWriter(New FileStream(fiResultsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swCombinedResults = New StreamWriter(New FileStream(fiCombinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 While lstNextAvailableScan.Count > 0
                     Dim nextScan = lstNextAvailableScan.First()
@@ -551,21 +605,58 @@ Public Class clsAnalysisToolRunnerMODPlus
                 m_jobParams.AddResultFileToSkip(modPlusRunner.Value.OutputFilePath)
             Next
 
-            ' Zip the output file
-            Dim blnSuccess = ZipOutputFile(fiResultsFile, "MODPlus")
+            ' Zip the output file along with the ConsoleOutput files
+            Dim diZipFolder = New DirectoryInfo(Path.Combine(m_WorkDir, "Temp_ZipScratch"))
+            If Not diZipFolder.Exists Then diZipFolder.Create()
 
+            Dim filesToMove = New List(Of FileInfo)
+            filesToMove.Add(fiCombinedResults)
+            
+            Dim diWorkDir = New DirectoryInfo(m_WorkDir)
+            filesToMove.AddRange(diWorkDir.GetFiles("*ConsoleOutput*.txt"))
+
+            For Each fiFile In filesToMove
+                fiFile.MoveTo(Path.Combine(diZipFolder.FullName, fiFile.Name))
+            Next
+
+            Dim zippedResultsFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(fiCombinedResults.Name) & ".zip")
+            Dim blnSuccess = m_IonicZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath)
+            
             If blnSuccess Then
-                m_jobParams.AddResultFileToSkip(fiResultsFile.Name)
+                m_jobParams.AddResultFileToSkip(fiCombinedResults.Name)
             ElseIf String.IsNullOrEmpty(m_message) Then
-                LogError("Unknown error zipping the MODPlus results")
+                LogError("Unknown error zipping the MODPlus results and console output files")
                 Return False
             End If
 
             If fastaFileIsDecoy Then
-                blnSuccess = ParseDecoyResults(javaProgLoc, fiResultsFile)
+                ' Copy the combined results file back to the working directory
+                fiCombinedResults.Refresh()
+                If Not fiCombinedResults.Exists() Then
+                    fiCombinedResults = New FileInfo(Path.Combine(diZipFolder.FullName, Path.GetFileName(combinedResultsFilePath)))
+                    If Not fiCombinedResults.Exists Then
+                        m_message = "Lost track of the combined results file; programming bug"
+                        Return False
+                    End If
+                End If
+
+                If clsGlobal.IsMatch(fiCombinedResults.FullName, combinedResultsFilePath) Then
+                    m_message = "Combined results file is already in teh working directory; it should be in the " & diZipFolder.Name & " folder; programming bug"
+                    Return False
+                End If
+                fiCombinedResults.CopyTo(combinedResultsFilePath, True)
+
+                fiCombinedResults = New FileInfo(combinedResultsFilePath)
+
+                ' Parse the results with tda_plus.jar to create the modp.id.txt and modp.ptm.txt files
+                blnSuccess = ParseDecoyResults(javaProgLoc, fiCombinedResults, fiFastaFile)
+                If Not blnSuccess Then Return False
 
             End If
 
+            If successOverall Then
+                m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
+            End If
 
             Return successOverall
 
@@ -577,18 +668,18 @@ Public Class clsAnalysisToolRunnerMODPlus
     End Function
 
     Protected Sub PushReader(
-      lstNextAvailableScan As SortedList(Of Integer, List(Of clsMODPlusResultsReader)),
+      lstNextAvailableScan As SortedList(Of Double, List(Of clsMODPlusResultsReader)),
       reader As clsMODPlusResultsReader)
 
         Dim readersForValue As List(Of clsMODPlusResultsReader) = Nothing
 
-        If lstNextAvailableScan.TryGetValue(reader.CurrentScan, readersForValue) Then
+        If lstNextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, readersForValue) Then
             readersForValue.Add(reader)
         Else
             readersForValue = New List(Of clsMODPlusResultsReader)
             readersForValue.Add(reader)
 
-            lstNextAvailableScan.Add(reader.CurrentScan, readersForValue)
+            lstNextAvailableScan.Add(reader.CurrentScanChargeCombo, readersForValue)
         End If
     End Sub
 
@@ -626,6 +717,8 @@ Public Class clsAnalysisToolRunnerMODPlus
             Return New List(Of FileInfo)
         End If
 
+        m_jobParams.AddResultFileToSkip(fiMgfFile.FullName)
+
         Return mgfFiles
 
     End Function
@@ -659,7 +752,7 @@ Public Class clsAnalysisToolRunnerMODPlus
             End If
 
             currentTask = "Convert .mzML file to MGF"
-            
+
             Dim fiSpectrumFile = New FileInfo(Path.Combine(m_WorkDir, spectrumFileName))
             If Not fiSpectrumFile.Exists Then
                 LogError("Spectrum file not found: " + fiSpectrumFile.Name)
@@ -668,10 +761,18 @@ Public Class clsAnalysisToolRunnerMODPlus
 
             Dim fiMgfFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION))
 
-            Dim success As Boolean = ConvertMsXmlToMGF(fiSpectrumFile, fiMgfFile)
-            If Not success Then
-                Return False
+            If fiMgfFile.Exists Then
+                ' The .MGF file already exists
+                ' This will typically only be true while debugging
+            Else
+
+                Dim success As Boolean = ConvertMsXmlToMGF(fiSpectrumFile, fiMgfFile)
+                If Not success Then
+                    Return False
+                End If
+
             End If
+
 
             currentTask = "Split the MGF file"
 
@@ -697,7 +798,7 @@ Public Class clsAnalysisToolRunnerMODPlus
             ' Lookup the amount of memory to reserve for Java; default to 3 GB 
             Dim javaMemorySizeMB = m_jobParams.GetJobParameter("MODPlusJavaMemorySize", 3000)
             If javaMemorySizeMB < 512 Then javaMemorySizeMB = 512
-            
+
             currentTask = "Create a parameter file for each thread"
 
             Dim paramFileList = CreateParameterFiles(paramFileName, fastaFilePath, mgfFiles)
@@ -732,18 +833,15 @@ Public Class clsAnalysisToolRunnerMODPlus
 
                 mMODPlusRunners.Add(threadNum, modPlusRunner)
 
-                If m_DebugLevel >= 1 Then
-                    ' "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt  > MODPlus_ConsoleOutput_Part1.txt
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaProgLoc & " " & modPlusRunner.CommandLineArgs)
-                End If
-
                 If USE_THREADING Then
                     Dim newThread As New Thread(New ThreadStart(AddressOf modPlusRunner.StartAnalysis))
-                    newThread.Priority = Threading.ThreadPriority.Normal
+                    newThread.Priority = Threading.ThreadPriority.BelowNormal
                     newThread.Start()
                     lstThreads.Add(newThread)
                 Else
                     modPlusRunner.StartAnalysis()
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaProgLoc & " " & modPlusRunner.CommandLineArgs)
 
                     If modPlusRunner.Status = clsMODPlusRunner.MODPlusRunnerStatusCodes.Failure Then
                         LogError("Error running MODPlus, thread " & threadNum)
@@ -782,6 +880,23 @@ Public Class clsAnalysisToolRunnerMODPlus
                         End If
 
                         progressSum += modPlusRunner.Value.Progress
+
+                        If m_DebugLevel >= 1 Then
+
+                            If Not modPlusRunner.Value.CommandLineArgsLogged AndAlso Not String.IsNullOrWhiteSpace(modPlusRunner.Value.CommandLineArgs) Then
+                                modPlusRunner.Value.CommandLineArgsLogged = True
+
+                                ' "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt  > MODPlus_ConsoleOutput_Part1.txt
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaProgLoc & " " & modPlusRunner.Value.CommandLineArgs)
+
+                            End If
+
+                        End If
+
+                        If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate) Then
+                            mMODPlusVersion = modPlusRunner.Value.ReleaseDate
+                            mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc)
+                        End If
                     Next
 
                     Dim subTaskProgress = CSng(progressSum / mMODPlusRunners.Count)
@@ -818,16 +933,30 @@ Public Class clsAnalysisToolRunnerMODPlus
             ' Look for any console output error messages
             For Each modPlusRunner In mMODPlusRunners
 
+                ' One last check for the ToolVersion info being written to the database
+                If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate) Then
+                    mMODPlusVersion = modPlusRunner.Value.ReleaseDate
+                    mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc)
+                End If
+
                 Dim progRunner = modPlusRunner.Value.ProgRunner
 
-                If progRunner Is Nothing Then Continue For
-
-                For Each cachedError In progRunner.CachedConsoleErrors
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Thread " & modPlusRunner.Key & ": " & cachedError)
+                If progRunner Is Nothing Then
                     blnSuccess = False
-                Next
+                    If String.IsNullOrWhiteSpace(m_message) Then
+                        m_message = "progRunner object is null for thread " & modPlusRunner.Key
+                    End If
+                    Continue For
+                End If
+
+                If Not String.IsNullOrWhiteSpace(progRunner.CachedConsoleErrors) Then
+                    Dim consoleError = "Console error for thread " & modPlusRunner.Key & ": " & progRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError)
+                    blnSuccess = False
+                End If
 
                 If progRunner.ExitCode <> 0 AndAlso exitCode = 0 Then
+                    blnSuccess = False
                     exitCode = progRunner.ExitCode
                 End If
 
@@ -836,7 +965,7 @@ Public Class clsAnalysisToolRunnerMODPlus
             If Not blnSuccess Then
                 Dim msg As String
                 msg = "Error running MODPlus"
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
+                m_message = clsGlobal.AppendToComment(m_message, msg)
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
 

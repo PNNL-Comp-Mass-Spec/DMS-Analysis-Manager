@@ -14,6 +14,7 @@ Public Class clsAnalysisResourcesMODPlus
 	Inherits clsAnalysisResources
 
     Friend Const MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY As String = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###"
+    Friend Const MINIMUM_PERCENT_DECOY = 25
 
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
         MyBase.Setup(mgrParams, jobParams)
@@ -74,7 +75,7 @@ Public Class clsAnalysisResourcesMODPlus
 
             Dim checkLegacyFastaForDecoy = False
 
-            If String.Equals(proteinCollections, "na", StringComparison.CurrentCultureIgnoreCase) Then
+            If clsGlobal.IsMatch(proteinCollections, "na") Then
                 ' Legacy fasta file
                 ' Need to open it with a reader and look for entries that start with XXX.
                 checkLegacyFastaForDecoy = True
@@ -93,7 +94,7 @@ Public Class clsAnalysisResourcesMODPlus
             If Not RetrieveOrgDB(localOrgDbFolder) Then Return False
 
             If checkLegacyFastaForDecoy Then
-                If Not FastaHasDecoyProteins(DECOY_PROTEIN_PREFIX) Then                    
+                If Not FastaHasDecoyProteins() Then
                     Return False
                 End If
             End If
@@ -109,11 +110,10 @@ Public Class clsAnalysisResourcesMODPlus
             '  WHERE Param_File_Name = 'ParamFileName'
 
             Dim paramFileName = m_jobParams.GetParam("ParmFileName")
-            Dim paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
 
             currentTask = "RetrieveGeneratedParamFile " & paramFileName
 
-            If Not RetrieveGeneratedParamFile(paramFileName, paramFileStoragePath) Then
+            If Not RetrieveGeneratedParamFile(paramFileName) Then
                 Return False
             End If
 
@@ -127,9 +127,7 @@ Public Class clsAnalysisResourcesMODPlus
 
 	End Function
 
-    Private Function FastaHasDecoyProteins(decoyProteinPrefix As String) As Boolean
-
-        Const MINIMUM_PERCENT_DECOY = 25
+    Private Function FastaHasDecoyProteins() As Boolean
 
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
         Dim fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
@@ -142,30 +140,40 @@ Public Class clsAnalysisResourcesMODPlus
             Return False
         End If
 
-        ' Determine the fraction of the proteins that start with XXX.
-        Dim proteinCount As Integer
-        Dim fractionDecoy = GetDecoyFastaCompositionStats(fiFastaFile, DECOY_PROTEIN_PREFIX, proteinCount)
+        ' Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
+        Dim decoyPrefixes = GetDefaultDecoyPrefixes()
+        Dim maxPercentReverse As Double = 0
 
-        If proteinCount = 0 Then
-            LogError("No proteins found in " & fiFastaFile.Name)
-            Return False
-        End If
+        For Each decoyPrefix In decoyPrefixes
 
-        Dim percentReverse = fractionDecoy * 100
+            Dim proteinCount As Integer
+            Dim fractionDecoy = GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, proteinCount)
+          
+            If proteinCount = 0 Then
+                LogError("No proteins found in " & fiFastaFile.Name)
+                Return False
+            End If
 
-        If percentReverse >= MINIMUM_PERCENT_DECOY Then
-            ' At least 25% of the proteins in the FASTA file are reverse proteins
-            Return True
-        End If
+            Dim percentReverse = fractionDecoy * 100
 
-        Dim addonMsg = "choose a DMS-generated decoy protein collection or a legacy fasta file with protein names that start with " & decoyProteinPrefix
+            If percentReverse >= MINIMUM_PERCENT_DECOY Then
+                ' At least 25% of the proteins in the FASTA file are reverse proteins
+                Return True
+            End If
 
-        If Math.Abs(fractionDecoy - 0) < Single.Epsilon Then
+            If percentReverse > maxPercentReverse Then
+                maxPercentReverse = percentReverse
+            End If
+        Next
+
+        Dim addonMsg = "choose a DMS-generated decoy protein collection or a legacy fasta file with protein names that start with " & String.Join(" or ", decoyPrefixes)
+
+        If Math.Abs(maxPercentReverse - 0) < Single.Epsilon Then
             LogError("Legacy fasta file " & fiFastaFile.Name & " does not have any decoy (reverse) proteins; " & addonMsg)
             Return False
         End If
 
-        LogError("Fewer than " & MINIMUM_PERCENT_DECOY & "% of the proteins in legacy fasta file " & fiFastaFile.Name & " are decoy (reverse) proteins (" & percentReverse.ToString("0") & "%); " & addonMsg)
+        LogError("Fewer than " & MINIMUM_PERCENT_DECOY & "% of the proteins in legacy fasta file " & fiFastaFile.Name & " are decoy (reverse) proteins (" & maxPercentReverse.ToString("0") & "%); " & addonMsg)
         Return False
 
     End Function

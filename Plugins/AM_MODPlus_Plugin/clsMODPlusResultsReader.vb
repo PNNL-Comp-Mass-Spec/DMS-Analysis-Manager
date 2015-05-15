@@ -3,6 +3,12 @@ Imports System.Text.RegularExpressions
 
 Public Class clsMODPlusResultsReader
 
+    ''' <summary>
+    ''' Data lines for the current scan
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Public ReadOnly Property CurrentScanData As List(Of String)
         Get
             Return mCurrentScanData
@@ -10,12 +16,14 @@ Public Class clsMODPlusResultsReader
     End Property
 
     ''' <summary>
-    ''' Currently available scan number
+    ''' Currently available scan number and charge
+    ''' For example if scan 1000 and charge 2, will be 1000.02
+    ''' Or if scan 1000 and charge 4, will be 1000.04
     ''' </summary>
     ''' <remarks>-1 if no more scans remain</remarks>
-    Public ReadOnly Property CurrentScan As Integer
+    Public ReadOnly Property CurrentScanChargeCombo As Double
         Get
-            Return mCurrentScan
+            Return mCurrentScanChargeCombo
         End Get
     End Property
 
@@ -32,12 +40,13 @@ Public Class clsMODPlusResultsReader
     End Property
 
 
-    Protected mCurrentScan As Integer
+    Protected mCurrentScanChargeCombo As Double
     Protected mCurrentScanData As List(Of String)
+
     Protected mSavedLine As String
     Protected mSpectrumAvailable As Boolean
 
-    Protected ReadOnly mExtractScanNum As Regex
+    Protected ReadOnly mExtractChargeAndScan As Regex
 
     Protected ReadOnly mReader As StreamReader
     Protected ReadOnly mResultFile As FileInfo
@@ -47,11 +56,21 @@ Public Class clsMODPlusResultsReader
     ''' Constructor
     ''' </summary>
     ''' <remarks></remarks>
-    Public Sub New(modPlusResultsFile As FileInfo)
+    Public Sub New(datasetName As String, modPlusResultsFile As FileInfo)
 
         mResultFile = modPlusResultsFile
 
-        mExtractScanNum = New Regex("\.mgf\t(\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        ' This RegEx is used to parse out the charge and scan number from the current spectrum
+        ' Example lines:
+        ' >>E:\DMS_WorkDir\O_disjunctus_PHG_test_01_Run2_30Dec13_Samwise_13-07-28_Part4.mgf	522	0	841.5054	2	O_disjunctus_PHG_test_01_Run2_30Dec13_Samwise_13-07-28.4165.4165.
+        ' >>E:\DMS_WorkDir\O_disjunctus_PHG_test_01_Run2_30Dec13_Samwise_13-07-28_Part4.mgf	524	0	1037.5855	2	O_disjunctus_PHG_test_01_Run2_30Dec13_Samwise_13-07-28.4181.4181.2
+
+        ' Notice that some lines have 
+        '   Charge<Tab>Dataset.StartScan.EndScan.
+        ' while others have
+        '   Charge<Tab>Dataset.StartScan.EndScan.Charge
+
+        mExtractChargeAndScan = New Regex("\t(\d+)\t" & datasetName & "\.(\d+)\.", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         mReader = New StreamReader(New FileStream(modPlusResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
@@ -65,7 +84,7 @@ Public Class clsMODPlusResultsReader
     Public Function ReadNextSpectrum() As Boolean
 
         mSpectrumAvailable = False
-        mCurrentScan = -1
+        mCurrentScanChargeCombo = -1
 
         If mReader.EndOfStream Then
             Return False
@@ -97,11 +116,34 @@ Public Class clsMODPlusResultsReader
 
                     startScanFound = True
 
-                    Dim reMatch As Match = mExtractScanNum.Match(dataLine)
-                    mCurrentScan = 0
+                    Dim reMatch As Match = mExtractChargeAndScan.Match(dataLine)
+                    
+                    mCurrentScanChargeCombo = 0
 
+                    Dim charge = 0
+                    Dim scan = 0
                     If reMatch.Success Then
-                        Integer.TryParse(reMatch.Groups(1).Value, mCurrentScan)
+                        Integer.TryParse(reMatch.Groups(1).Value, charge)
+                        Integer.TryParse(reMatch.Groups(2).Value, scan)
+                        mCurrentScanChargeCombo = scan + charge / 100.0
+                    End If
+
+                    ' Replace the file path in this line with a generic path of "E:\DMS_WorkDir\"
+                    Dim tabIndex = dataLine.IndexOf(ControlChars.Tab)
+                    If tabIndex > 0 Then
+                        Try
+                            Dim mgfFilePath = dataLine.Substring(2, tabIndex - 2)
+                            Dim remainder = dataLine.Substring(tabIndex)
+                            Dim fiMgfFileLocal = New FileInfo(mgfFilePath)
+                            If fiMgfFileLocal.Name.Length > 0 Then
+                                ' Reconstruct dataLine
+                                dataLine = ">>" & Path.Combine("E:\DMS_WorkDir\", fiMgfFileLocal.Name) & remainder
+                            End If
+                        Catch ex As Exception
+                            ' Text parsing error
+                            ' Do not reconstruct dataLine
+                        End Try
+                        
                     End If
 
                 End If
