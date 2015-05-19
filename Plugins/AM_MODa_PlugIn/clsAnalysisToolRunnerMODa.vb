@@ -28,7 +28,6 @@ Public Class clsAnalysisToolRunnerMODa
     Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
     Protected Const MODA_RESULTS_FILE_SUFFIX As String = "_moda.txt"
-    Protected Const MODA_FILTERED_RESULTS_FILE_SUFFIX As String = "_moda.id.txt"
 #End Region
 
 #Region "Module Variables"
@@ -69,7 +68,7 @@ Public Class clsAnalysisToolRunnerMODa
 
             ' Verify that program files exist
 
-            ' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+            ' JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
             Dim JavaProgLoc = GetJavaProgLoc()
             If String.IsNullOrEmpty(JavaProgLoc) Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED

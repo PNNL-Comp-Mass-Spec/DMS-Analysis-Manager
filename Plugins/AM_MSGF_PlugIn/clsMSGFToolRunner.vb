@@ -50,7 +50,8 @@ Public Class clsMSGFRunner
 	Protected Const MSGF_CONSOLE_OUTPUT As String = "MSGF_ConsoleOutput.txt"
 	Protected Const MSGF_JAR_NAME As String = "MSGF.jar"
 	Protected Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
-	Protected Const MODa_JAR_NAME As String = "moda.jar"
+    Protected Const MODa_JAR_NAME As String = "moda.jar"
+    Protected Const MODPlus_JAR_NAME As String = "modp_pnnl.jar"
 
 	Protected Structure udtSegmentFileInfoType
 		Public Segment As Integer		' Segment number
@@ -160,13 +161,25 @@ Public Class clsMSGFRunner
                     blnProcessingError = True
                 End If
 
-            ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+            ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa 
+
                 ' Analysis tool is MODa, which MSGF+ does not support
                 ' Instead, copy the probability values from the synopsis file into the _syn_MSGF.txt and _fht_MSGF.txt files
 
                 StoreToolVersionInfoPrecomputedProbabilities(eResultType)
 
                 If Not CreateMSGFResultsFromMODaResults() Then
+                    blnProcessingError = True
+                End If
+
+            ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+
+                ' Analysis tool is MODPlus, which MSGF+ does not support
+                ' Instead, copy the probability values from the synopsis file into the _syn_MSGF.txt and _fht_MSGF.txt files
+
+                StoreToolVersionInfoPrecomputedProbabilities(eResultType)
+
+                If Not CreateMSGFResultsFromMODPlusResults() Then
                     blnProcessingError = True
                 End If
 
@@ -311,6 +324,10 @@ Public Class clsMSGFRunner
 
             Case clsPHRPReader.ePeptideHitResultType.MODa
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODa does not support ETD data processing; will set mETDMode to False")
+                blnSuccess = True
+
+            Case clsPHRPReader.ePeptideHitResultType.MODPlus
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODPlus does not support ETD data processing; will set mETDMode to False")
                 blnSuccess = True
 
             Case Else
@@ -665,6 +682,11 @@ Public Class clsMSGFRunner
                 ' Convert MODa results to input format required for MSGF
                 mMSGFInputCreator = New clsMSGFInputCreatorMODa(m_Dataset, m_WorkDir)
 
+            Case clsPHRPReader.ePeptideHitResultType.MODPlus
+
+                ' Convert MODPlus results to input format required for MSGF
+                mMSGFInputCreator = New clsMSGFInputCreatorMODPlus(m_Dataset, m_WorkDir)
+
             Case Else
                 ' Should never get here; invalid result type specified
                 Msg = "Invalid PeptideHit ResultType specified: " & eResultType
@@ -715,6 +737,25 @@ Public Class clsMSGFRunner
         ' Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODa results
         ' Post the results to the database
         blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODa)
+
+        If blnSuccess Then
+            ' We didn't actually run MSGF, so these files aren't needed
+            m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt")
+            m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt")
+        End If
+
+        Return blnSuccess
+
+    End Function
+
+    Private Function CreateMSGFResultsFromMODPlusResults() As Boolean
+
+        Dim blnSuccess As Boolean
+
+        ' Summarize the results to determine the number of peptides and proteins at a given FDR threshold
+        ' Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODPlus results
+        ' Post the results to the database
+        blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODPlus)
 
         If blnSuccess Then
             ' We didn't actually run MSGF, so these files aren't needed
@@ -2212,14 +2253,21 @@ Public Class clsMSGFRunner
 
         ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
             ' Store the path to MODa.jar
-            Dim strMODaProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", MODa_JAR_NAME)
+            Dim strProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", MODa_JAR_NAME)
 
-            If Not String.IsNullOrEmpty(strMODaProgLoc) Then
-                ioToolFiles.Add(New FileInfo(strMODaProgLoc))
+            If Not String.IsNullOrEmpty(strProgLoc) Then
+                ioToolFiles.Add(New FileInfo(strProgLoc))
+            End If
+
+        ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+            ' Store the path to MODa.jar
+            Dim strProgLoc = DetermineProgramLocation("MODPlus", "MODPlusProgLoc", MODPlus_JAR_NAME)
+
+            If Not String.IsNullOrEmpty(strProgLoc) Then
+                ioToolFiles.Add(New FileInfo(strProgLoc))
             End If
 
         End If
-
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)

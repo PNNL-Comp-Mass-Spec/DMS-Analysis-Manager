@@ -655,7 +655,8 @@ Public Class clsMSGFResultsSummarizer
 
             If mResultType = clsPHRPReader.ePeptideHitResultType.XTandem Or
                mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Or
-               mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+               mResultType = clsPHRPReader.ePeptideHitResultType.MODa Or
+               mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
                 ' These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                 strPHRPFirstHitsFileName = strPHRPSynopsisFileName
             End If
@@ -730,7 +731,8 @@ Public Class clsMSGFResultsSummarizer
 
         Try
 
-            If mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+            If mResultType = clsPHRPReader.ePeptideHitResultType.MODa Or
+               mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
                 blnLoadMSGFResults = False
             End If
 
@@ -754,8 +756,10 @@ Public Class clsMSGFResultsSummarizer
                             blnValid = Double.TryParse(strEValue, dblEValue)
                         End If
 
-                    ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-                        ' MODa results don't have spectral probability, but they do have FDR
+                    ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Or
+                           mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+
+                        ' MODa / MODPlus results don't have spectral probability, but they do have FDR
                         blnValid = True
 
                     Else
@@ -780,6 +784,9 @@ Public Class clsMSGFResultsSummarizer
 
                             ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
                                 udtPSMInfo.FDR = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODa.DATA_COLUMN_QValue, -1)
+
+                            ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+                                udtPSMInfo.FDR = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODPlus.DATA_COLUMN_QValue, -1)
 
                             Else
                                 udtPSMInfo.FDR = -1

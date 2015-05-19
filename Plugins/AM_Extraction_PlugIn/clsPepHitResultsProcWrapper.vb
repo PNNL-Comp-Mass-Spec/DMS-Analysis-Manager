@@ -84,7 +84,7 @@ Public Class clsPepHitResultsProcWrapper
     End Function
 
     ''' <summary>
-    ''' Converts Sequest, X!Tandem, Inspect, MSGDB, MSAlign, or MODa output file to a flat file
+    ''' Converts Sequest, X!Tandem, Inspect, MSGDB, MSAlign, MODa, or MODPlus output file to a flat file
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
@@ -129,13 +129,16 @@ Public Class clsPepHitResultsProcWrapper
             End If
 
             ' Set up and execute a program runner to run the PHRP
-            ' Note that /SynPvalue is only used when processing Inspect files
+            ' Note: 
+            '   /SynPvalue is only used when processing Inspect files
+            '   /SynProb is only used for MODa and MODPlus results
             CmdStr = ioInputFile.FullName &
             " /O:" & ioInputFile.DirectoryName &
             " /M:" & ModDefsFileName &
             " /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME &
             " /N:" & ParamFileName &
-            " /SynPvalue:0.2 "
+            " /SynPvalue:0.2 " &
+            " /SynProb:0.05 "
 
             CmdStr &= " /L:" & Path.Combine(ioInputFile.DirectoryName, PHRP_LOG_FILE_NAME)
 
@@ -149,7 +152,7 @@ Public Class clsPepHitResultsProcWrapper
             End If
 
             ' Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
-            ' Thus, we only need to use these switches if either or these should be false
+            ' Thus, we only need to use these switches if either of these should be false
             If Not CreateFirstHitsFile Or Not CreateSynopsisFile Then
                 CmdStr &= " /InsFHT:" & CreateFirstHitsFile.ToString()
                 CmdStr &= " /InsSyn:" & CreateSynopsisFile.ToString()

@@ -80,7 +80,8 @@ Public Class clsLogTools
 		Select Case LoggerType
 			Case LoggerTypes.LogDb
 				' Note that the Logging.config should have the DbLogger logging to both the database and the rolling file
-				MyLogger = m_DbLogger
+                MyLogger = m_DbLogger
+                InpMsg = Net.Dns.GetHostName() & ": " & InpMsg
 			Case LoggerTypes.LogFile
 				MyLogger = m_FileLogger
 			Case LoggerTypes.LogSystem

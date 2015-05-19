@@ -175,7 +175,8 @@ Public Class clsAnalysisResourcesIDPicker
           eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse
           eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse
           eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB OrElse
-          eResultType = clsPHRPReader.ePeptideHitResultType.MODa) Then
+          eResultType = clsPHRPReader.ePeptideHitResultType.MODa OrElse
+          eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus) Then
             m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -385,7 +386,8 @@ Public Class clsAnalysisResourcesIDPicker
         lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, strDatasetName), True)
         lstFileNamesToGet.Add(clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, strDatasetName), False)
 
-        If eResultType <> clsPHRPReader.ePeptideHitResultType.MODa Then
+        If eResultType <> clsPHRPReader.ePeptideHitResultType.MODa And
+           eResultType <> clsPHRPReader.ePeptideHitResultType.MODPlus Then
             lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), True)
         End If
 

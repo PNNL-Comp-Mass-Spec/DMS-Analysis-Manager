@@ -129,12 +129,14 @@ Public Class clsAnalysisResourcesExtraction
 				Case RESULT_TYPE_MODA
 					eResult = GetMODaFiles()
 
-				Case RESULT_TYPE_MSPATHFINDER
-					eResult = GetMSPathFinderFiles()
+                Case RESULT_TYPE_MODPLUS
+                    eResult = GetMODPlusFiles()
+
+                Case RESULT_TYPE_MSPATHFINDER
+                    eResult = GetMSPathFinderFiles()
 
 				Case Else
-					m_message = "Invalid tool result type: " & strResultType
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    LogError("Invalid tool result type: " & strResultType)
 					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End Select
 
@@ -145,8 +147,7 @@ Public Class clsAnalysisResourcesExtraction
 			RetrieveToolVersionFile(strResultType)
 
 		Catch ex As Exception
-			m_message = "Error retrieving input files"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            LogError("Error retrieving input files", ex)            
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
@@ -279,6 +280,39 @@ Public Class clsAnalysisResourcesExtraction
 
 	End Function
 
+    Private Function GetMODPlusFiles() As IJobParams.CloseOutType
+
+        Dim FileToGet As String
+
+        FileToGet = m_DatasetName & "_modp.zip"
+        If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+            'Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
+        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileExtensionToSkip("_modp.txt")
+
+        Threading.Thread.Sleep(100)
+
+        ' Delete the MSConvert_ConsoleOutput.txt and MODPlus_ConsoleOutput files that were in the zip file; we don't need them
+
+        Dim diWorkDir = New DirectoryInfo(m_WorkingDir)
+        Dim filesToDelete = New List(Of FileInfo)
+
+        filesToDelete.AddRange(diWorkDir.GetFiles("MODPlus_ConsoleOutput_Part*.txt"))
+        filesToDelete.AddRange(diWorkDir.GetFiles("MSConvert_ConsoleOutput.txt"))
+        filesToDelete.AddRange(diWorkDir.GetFiles("TDA_Plus_ConsoleOutput.txt"))
+
+        For Each fiFile In filesToDelete
+            fiFile.Delete()
+        Next
+        
+        ' Note that we'll obtain the MODPlus parameter file in RetrieveMiscFiles
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
 	Private Function GetMSGFPlusFiles() As IJobParams.CloseOutType
 
 		Dim currentStep As String = "Initializing"
@@ -350,8 +384,7 @@ Public Class clsAnalysisResourcesExtraction
 					strBaseName = m_DatasetName & "_msgfdb"
 
 					If splitFastaEnabled Then
-						m_message = "GetMSGFPlusFiles does not support SplitFasta mode for legacy MSGF-DB results"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        LogError("GetMSGFPlusFiles does not support SplitFasta mode for legacy MSGF-DB results")
 						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 					End If
 				Else
@@ -452,9 +485,8 @@ Public Class clsAnalysisResourcesExtraction
 			End If
 
 		Catch ex As Exception
-			m_message = "Error in GetMSGFPlusFiles at step " & currentStep
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogError("Error in GetMSGFPlusFiles at step " & currentStep, ex)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 		' Note that we'll obtain the MSGF-DB parameter file in RetrieveMiscFiles
@@ -576,7 +608,7 @@ Public Class clsAnalysisResourcesExtraction
             blnSuccess = RetrieveGeneratedParamFile(strParamFileName)
 
 			If Not blnSuccess Then
-				m_message = "Error retrieving parameter file and ModDefs.txt file"
+                LogError("Error retrieving parameter file and ModDefs.txt file")
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
 
@@ -597,12 +629,13 @@ Public Class clsAnalysisResourcesExtraction
 			' Check whether the newly generated ModDefs file matches the existing one
 			' If it doesn't match, or if the existing one is missing, then we need to keep the file
 			' Otherwise, we can skip it
-			Dim remoteModDefsFolder = FindDataFile(ModDefsFilename, SearchArchivedDatasetFolder:=True, LogFileNotFound:=logModFilesFileNotFound)
+            Dim remoteModDefsFolder = FindDataFile(ModDefsFilename, SearchArchivedDatasetFolder:=False, LogFileNotFound:=logModFilesFileNotFound)
 			If String.IsNullOrEmpty(remoteModDefsFolder) Then
 				' ModDefs file not found on the server
-				If fiModDefsFile.Length = 0 Then
-					m_jobParams.AddResultFileToSkip(ModDefsFilename)
-				End If
+                If fiModDefsFile.Length = 0 Then
+                    ' File is empty; no point in keeping it
+                    m_jobParams.AddResultFileToSkip(ModDefsFilename)
+                End If
 			ElseIf remoteModDefsFolder.ToLower().StartsWith("\\proto") Then
 				If clsGlobal.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsFolder, ModDefsFilename)) Then
 					m_jobParams.AddResultFileToSkip(ModDefsFilename)
@@ -611,8 +644,7 @@ Public Class clsAnalysisResourcesExtraction
 
 
 		Catch ex As Exception
-			m_message = "Error retrieving miscellaneous files"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            LogError("Error retrieving miscellaneous files", ex)
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 

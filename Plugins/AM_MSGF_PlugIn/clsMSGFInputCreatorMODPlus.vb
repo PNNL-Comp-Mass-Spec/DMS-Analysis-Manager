@@ -2,9 +2,9 @@
 ' Written by Matthew Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 '
-' Created 04/23/2014
+' Created 05/19/2015
 '
-' This class reads a MODa _syn.txt file in support of creating the input file for MSGF 
+' This class reads a MODPlus _syn.txt file in support of creating the input file for MSGF 
 '
 '*********************************************************************************************************
 
@@ -12,7 +12,7 @@ Option Strict On
 
 Imports PHRPReader
 
-Public Class clsMSGFInputCreatorMODa
+Public Class clsMSGFInputCreatorMODPlus
     Inherits clsMSGFInputCreator
 
     ''' <summary>
@@ -23,15 +23,15 @@ Public Class clsMSGFInputCreatorMODa
     ''' <remarks></remarks>
     Public Sub New(ByVal strDatasetName As String, ByVal strWorkDir As String)
 
-        MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MODa)
+        MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MODPlus)
 
     End Sub
 
     Protected Overrides Sub InitializeFilePaths()
 
-        ' Customize mPHRPResultFilePath for MODa _syn.txt files
+        ' Customize mPHRPResultFilePath for MODPlus _syn.txt files
         mPHRPFirstHitsFilePath = String.Empty
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName(mDatasetName))
+        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserMODPlus.GetPHRPSynopsisFileName(mDatasetName))
 
     End Sub
 
@@ -40,11 +40,11 @@ Public Class clsMSGFInputCreatorMODa
 
         Dim blnPassesFilters As Boolean
 
-        ' Keep MODa results with Probability >= 0.2  (higher probability values are better)
+        ' Keep MODPlus results with Probability >= 0.05  (higher probability values are better)
         ' This will typically keep all data in the _syn.txt file
 
-        dblProbability = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODa.DATA_COLUMN_Probability, 0)
-        If dblProbability >= 0.2 Then
+        dblProbability = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODPlus.DATA_COLUMN_Probability, 0)
+        If dblProbability >= 0.05 Then
             blnPassesFilters = True
         End If
 

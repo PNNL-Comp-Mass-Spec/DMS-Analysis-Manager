@@ -91,6 +91,7 @@ Public MustInherit Class clsAnalysisResources
     Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"           ' Used for MSGFDB and MSGF+
     Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
     Public Const RESULT_TYPE_MODA As String = "MODa_Peptide_Hit"
+    Public Const RESULT_TYPE_MODPLUS As String = "MODPlus_Peptide_Hit"
     Public Const RESULT_TYPE_MSPATHFINDER As String = "MSP_Peptide_Hit"
 
     Public Const DOT_WIFF_EXTENSION As String = ".wiff"
@@ -1322,29 +1323,18 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
     ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
     Protected Function FindDataFile(FileToFind As String, SearchArchivedDatasetFolder As Boolean) As String
-        Return FindDataFile(FileToFind, SearchArchivedDatasetFolder, LogFileNotFound:=True)
+        Return FindDataFile(FileToFind, SearchArchivedDatasetFolder, logFileNotFound:=True)
     End Function
 
     ''' <summary>
     ''' Finds the server or archive folder where specified file is located
     ''' </summary>
     ''' <param name="FileToFind">Name of the file to search for</param>
-    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched</param>
     ''' <param name="LogFileNotFound">True if an error should be logged when a file is not found</param>
     ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
     ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function FindDataFile(FileToFind As String, SearchArchivedDatasetFolder As Boolean, LogFileNotFound As Boolean) As String
-
-        Dim FoldersToSearch As New List(Of String)
-
-        ' ReSharper disable once RedundantAssignment
-        Dim TempDir As String = String.Empty
-
-        Dim FileFound As Boolean = False
-
-        Dim strParentFolderPaths As List(Of String)
-        Dim strDatasetFolderName As String
-        Dim strInputFolderName As String
+    Protected Function FindDataFile(fileToFind As String, searchArchivedDatasetFolder As Boolean, logFileNotFound As Boolean) As String
 
         Try
             ' Fill collection with possible folder locations
@@ -1357,62 +1347,68 @@ Public MustInherit Class clsAnalysisResources
             ' Note that "SharedResultsFolders" will typically only contain one folder path, 
             '  but can contain a comma-separated list of folders
 
-            strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName")
-            strInputFolderName = m_jobParams.GetParam("inputFolderName")
+            Dim strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName")
+            Dim strInputFolderName = m_jobParams.GetParam("inputFolderName")
 
-            Dim sharedResultFolderNames = GetSharedResultFolderList()
+            Dim sharedResultFolderNames = GetSharedResultFolderList().ToList()
 
-            strParentFolderPaths = New List(Of String)
+            Dim strParentFolderPaths = New List(Of String)
             strParentFolderPaths.Add(m_jobParams.GetParam("transferFolderPath"))
             strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"))
 
-            If SearchArchivedDatasetFolder Then
+            If searchArchivedDatasetFolder Then
                 strParentFolderPaths.Add(MYEMSL_PATH_FLAG)
                 strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"))
             End If
+
+            Dim foldersToSearch = New List(Of String)
 
             For Each strParentFolderPath As String In strParentFolderPaths
 
                 If Not String.IsNullOrEmpty(strParentFolderPath) Then
                     If Not String.IsNullOrEmpty(strInputFolderName) Then
-                        FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))   ' Parent Folder \ Dataset Folder \ Input folder
+                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))   ' Parent Folder \ Dataset Folder \ Input folder
                     End If
 
                     For Each strSharedFolderName As String In sharedResultFolderNames
-                        FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))  ' Parent Folder \ Dataset Folder \  Shared results folder
+                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))  ' Parent Folder \ Dataset Folder \  Shared results folder
                     Next
 
-                    FoldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, String.Empty))             ' Parent Folder \ Dataset Folder
+                    foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, String.Empty))             ' Parent Folder \ Dataset Folder
                 End If
 
             Next
 
-            ' Now search for FileToFind in each folder in FoldersToSearch
-            For Each TempDir In FoldersToSearch
-                Try
-                    Dim diFolderToCheck = New DirectoryInfo(TempDir)
+            Dim matchingDirectory As String = String.Empty
+            Dim matchFound = False
 
-                    If TempDir.StartsWith(MYEMSL_PATH_FLAG) Then
+            ' Now search for FileToFind in each folder in FoldersToSearch
+            For Each folderPath In foldersToSearch
+                Try
+                    Dim diFolderToCheck = New DirectoryInfo(folderPath)
+
+                    If folderPath.StartsWith(MYEMSL_PATH_FLAG) Then
 
                         If (Not m_MyEMSLDatasetListInfo.ContainsDataset(m_DatasetName)) Then
                             m_MyEMSLDatasetListInfo.AddDataset(m_DatasetName)
                         End If
 
-                        m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(FileToFind, diFolderToCheck.Name, m_DatasetName, recurse:=False)
+                        m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(fileToFind, diFolderToCheck.Name, m_DatasetName, recurse:=False)
 
                         If m_RecentlyFoundMyEMSLFiles.Count > 0 Then
-                            FileFound = True
+                            matchFound = True
 
                             ' Include the MyEMSL FileID in TempDir so that it is available for downloading
-                            TempDir = MyEMSLReader.DatasetInfo.AppendMyEMSLFileID(TempDir, m_RecentlyFoundMyEMSLFiles.First().FileID)
+                            matchingDirectory = MyEMSLReader.DatasetInfo.AppendMyEMSLFileID(folderPath, m_RecentlyFoundMyEMSLFiles.First().FileID)
                             Exit For
                         End If
 
                     Else
 
                         If diFolderToCheck.Exists Then
-                            If File.Exists(Path.Combine(TempDir, FileToFind)) Then
-                                FileFound = True
+                            If File.Exists(Path.Combine(folderPath, fileToFind)) Then
+                                matchFound = True
+                                matchingDirectory = folderPath
                                 Exit For
                             End If
                         End If
@@ -1421,35 +1417,35 @@ Public MustInherit Class clsAnalysisResources
 
                 Catch ex As Exception
                     ' Exception checking TempDir; log an error, but continue checking the other folders in FoldersToSearch
-                    m_message = "Exception in FindDataFile looking for: " + FileToFind + " in " + TempDir + ": " + ex.Message
+                    m_message = "Exception in FindDataFile looking for: " + fileToFind + " in " + folderPath + ": " + ex.Message
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 End Try
             Next
 
-            If FileFound Then
+            If matchFound Then
                 If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Data file found: " + FileToFind)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Data file found: " + fileToFind)
                 End If
-                Return TempDir
-            Else
-                ' Data file not found
-                ' Log this as an error if SearchArchivedDatasetFolder=True
-                ' Log this as a warning if SearchArchivedDatasetFolder=False
-
-                If LogFileNotFound Then
-                    If SearchArchivedDatasetFolder Then
-                        m_message = "Data file not found: " + FileToFind
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Else
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Data file not found (did not check archive): " + FileToFind)
-                    End If
-                End If
-
-                Return String.Empty
+                Return matchingDirectory
             End If
 
+            ' Data file not found
+            ' Log this as an error if SearchArchivedDatasetFolder=True
+            ' Log this as a warning if SearchArchivedDatasetFolder=False
+
+            If logFileNotFound Then
+                If searchArchivedDatasetFolder Then
+                    m_message = "Data file not found: " + fileToFind
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Data file not found (did not check archive): " + fileToFind)
+                End If
+            End If
+
+            Return String.Empty
+
         Catch ex As Exception
-            m_message = "Exception in FindDataFile looking for: " + FileToFind
+            m_message = "Exception in FindDataFile looking for: " + fileToFind
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
         End Try
 
@@ -3570,6 +3566,11 @@ Public MustInherit Class clsAnalysisResources
     Protected Sub LogError(errorMessage As String)
         m_message = errorMessage
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+    End Sub
+
+    Protected Sub LogError(errorMessage As String, ex As Exception)
+        m_message = String.Copy(errorMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage, ex)
     End Sub
 
     Protected Sub LogError(errorMessage As String, detailedMessage As String)

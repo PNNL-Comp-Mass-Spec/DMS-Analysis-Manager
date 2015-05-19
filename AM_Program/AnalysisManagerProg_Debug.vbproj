@@ -198,10 +198,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\AM_MODPlus_Plugin\AnalysisManagerMODPlusPlugin.vbproj">
-      <Project>{f797edd0-f632-45b8-8421-1f4a3f50314a}</Project>
-      <Name>AnalysisManagerMODPlusPlugin</Name>
-    </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>

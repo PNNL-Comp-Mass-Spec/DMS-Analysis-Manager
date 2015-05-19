@@ -81,7 +81,7 @@ Public Class clsAnalysisToolRunnerMODPlus
 
             ' Verify that program files exist
 
-            ' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+            ' JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
             Dim javaProgLoc = GetJavaProgLoc()
             If String.IsNullOrEmpty(javaProgLoc) Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -94,9 +94,7 @@ Public Class clsAnalysisToolRunnerMODPlus
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            Dim fiFastaFile As FileInfo = Nothing
-            Dim fastaFileIsDecoy As Boolean
-            If Not InitializeFastaFile(fiFastaFile, fastaFileIsDecoy) Then
+            If Not InitializeFastaFile() Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -105,7 +103,7 @@ Public Class clsAnalysisToolRunnerMODPlus
 
             If blnSuccess Then
                 ' Look for the results file(s)
-                blnSuccess = PostProcessMODPlusResults(javaProgLoc, fiFastaFile, fastaFileIsDecoy)
+                blnSuccess = PostProcessMODPlusResults()
                 If Not blnSuccess Then
                     If String.IsNullOrEmpty(m_message) Then
                         LogError("Unknown error post-processing the MODPlus results")
@@ -392,17 +390,13 @@ Public Class clsAnalysisToolRunnerMODPlus
 
     End Function
 
-    Private Function InitializeFastaFile(
-      <Out()> ByRef fiFastaFile As FileInfo,
-      <Out()> ByRef fastaFileIsDecoy As Boolean) As Boolean
-
-        fastaFileIsDecoy = False
+    Private Function InitializeFastaFile() As Boolean
 
         ' Define the path to the fasta file
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
         Dim fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-        fiFastaFile = New FileInfo(fastaFilePath)
+        Dim fiFastaFile = New FileInfo(fastaFilePath)
 
         If Not fiFastaFile.Exists Then
             ' Fasta file not found
@@ -410,131 +404,11 @@ Public Class clsAnalysisToolRunnerMODPlus
             Return False
         End If
 
-        Dim decoyFastaFileFlag = m_jobParams.GetParam(clsAnalysisResourcesMODPlus.MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY, String.Empty)
-        Dim paramValue As Boolean
-        If Boolean.TryParse(decoyFastaFileFlag, paramValue) Then
-            fastaFileIsDecoy = paramValue
-        End If
-
         Return True
 
     End Function
 
-    Private Function ParseDecoyResults(javaProgLoc As String, fiResultsFile As FileInfo, fiFastaFile As FileInfo) As Boolean
-
-        Dim fiModPlusProgram = New FileInfo(mMODPlusProgLoc)
-        Dim tdaPlusProgLoc = Path.Combine(fiModPlusProgram.DirectoryName, TDA_PLUS_JAR_NAME)
-
-        Dim tdaPlusConsoleOutput = Path.Combine(m_WorkDir, "TDA_Plus_ConsoleOutput.txt")
-
-        Dim fdrThreshold = m_jobParams.GetJobParameter("MODPlusDecoyFilterFDR", "0.01")
-        Dim decoyPrefixJobParam = m_jobParams.GetJobParameter("MODPlusDecoyPrefix", clsAnalysisResourcesMODPlus.GetDefaultDecoyPrefixes().First())   'Reversed_
-
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Verifying the decoy prefix in " & fiFastaFile.Name)
-        End If
-
-        ' Determine the most common decoy prefix in the Fasta file
-        Dim decoyPrefixes = clsAnalysisResources.GetDefaultDecoyPrefixes()
-        Dim bestPrefix = New KeyValuePair(Of Double, String)(0, String.Empty)
-
-        For Each decoyPrefix In decoyPrefixes
-
-            Dim proteinCount As Integer
-            Dim fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, proteinCount)
-            If fractionDecoy * 100 >= clsAnalysisResourcesMODPlus.MINIMUM_PERCENT_DECOY Then
-
-                If fractionDecoy > bestPrefix.Key Then
-                    bestPrefix = New KeyValuePair(Of Double, String)(fractionDecoy, decoyPrefix)
-                End If
-            End If
-
-        Next
-
-        If Not String.IsNullOrEmpty(bestPrefix.Value) AndAlso bestPrefix.Value <> decoyPrefixJobParam Then
-            m_EvalMessage = "Using decoy prefix " & bestPrefix.Value & " instead of " & decoyPrefixJobParam &
-                            " as defined by job parameter MODPlusDecoyPrefix because " &
-                            (bestPrefix.Key * 100).ToString("0") & "% of the proteins start with " & bestPrefix.Value
-
-            decoyPrefixJobParam = bestPrefix.Value
-
-        End If
-
-        Dim cmdStr = " -jar " & PossiblyQuotePath(tdaPlusProgLoc)
-        cmdStr &= " -i " & PossiblyQuotePath(fiResultsFile.FullName)
-        cmdStr &= " -fdr " & fdrThreshold
-        cmdStr &= " -d " & decoyPrefixJobParam
-
-        If m_DebugLevel >= 1 Then
-            ' "C:\Program Files\Java\jre8\bin\java.exe" -jar C:\DMS_Programs\MODPlus\tda_plus.jar -i Dataset_modp.txt -fdr 0.01 -d Reversed_
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaProgLoc & " " & cmdStr)
-        End If
-
-        Dim tdaPlusRunner = New clsRunDosProgram(m_WorkDir)
-        AddHandler tdaPlusRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
-        tdaPlusRunner = New clsRunDosProgram(m_WorkDir)
-
-        With tdaPlusRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = tdaPlusConsoleOutput
-        End With
-
-        m_progress = PROGRESS_PCT_COMPUTING_FDR
-
-        Dim success = tdaPlusRunner.RunProgram(javaProgLoc, cmdStr, "TDA_Plus", True)
-
-        If success Then
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "tda_plus.jar complete")
-            End If
-
-            ' Confirm that the expected files were created
-            Dim baseName = Path.Combine(fiResultsFile.DirectoryName, Path.GetFileNameWithoutExtension(fiResultsFile.Name))
-
-            Dim fiFilteredResults = New FileInfo(baseName & ".id.txt")
-            Dim fiPtmTable = New FileInfo(baseName & ".ptm.txt")
-
-            If Not fiFilteredResults.Exists Then
-                LogError("TDA_Plus did not create the .id.txt file")
-                Return False
-            End If
-
-            If Not fiPtmTable.Exists Then
-                ' Treat this as a warning
-                m_EvalMessage = "TDA_Plus did not create the .ptm.txt file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-            End If
-
-            m_jobParams.AddResultFileToSkip(tdaPlusConsoleOutput)
-
-            Return True
-
-        End If
-
-        Dim msg As String
-        msg = "Error running TDA_Plus"
-        m_message = clsGlobal.AppendToComment(m_message, msg)
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
-
-        If tdaPlusRunner.ExitCode <> 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "TDA_Plus returned a non-zero exit code: " & tdaPlusRunner.ExitCode.ToString)
-        Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to TDA_Plus failed (but exit code is 0)")
-        End If
-
-        Return False
-
-    End Function
-
-    Private Function PostProcessMODPlusResults(
-      javaProgLoc As String,
-      fiFastaFile As FileInfo,
-      fastaFileIsDecoy As Boolean) As Boolean
+    Private Function PostProcessMODPlusResults() As Boolean
 
         Dim successOverall = True
 
@@ -575,6 +449,7 @@ Public Class clsAnalysisToolRunnerMODPlus
                 End If
             Next
 
+            ' The final results file is named Dataset_modp.txt
             Dim combinedResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & clsMODPlusRunner.RESULTS_FILE_SUFFIX)
             Dim fiCombinedResults = New FileInfo(combinedResultsFilePath)
 
@@ -627,31 +502,6 @@ Public Class clsAnalysisToolRunnerMODPlus
             ElseIf String.IsNullOrEmpty(m_message) Then
                 LogError("Unknown error zipping the MODPlus results and console output files")
                 Return False
-            End If
-
-            If fastaFileIsDecoy Then
-                ' Copy the combined results file back to the working directory
-                fiCombinedResults.Refresh()
-                If Not fiCombinedResults.Exists() Then
-                    fiCombinedResults = New FileInfo(Path.Combine(diZipFolder.FullName, Path.GetFileName(combinedResultsFilePath)))
-                    If Not fiCombinedResults.Exists Then
-                        m_message = "Lost track of the combined results file; programming bug"
-                        Return False
-                    End If
-                End If
-
-                If clsGlobal.IsMatch(fiCombinedResults.FullName, combinedResultsFilePath) Then
-                    m_message = "Combined results file is already in teh working directory; it should be in the " & diZipFolder.Name & " folder; programming bug"
-                    Return False
-                End If
-                fiCombinedResults.CopyTo(combinedResultsFilePath, True)
-
-                fiCombinedResults = New FileInfo(combinedResultsFilePath)
-
-                ' Parse the results with tda_plus.jar to create the modp.id.txt and modp.ptm.txt files
-                blnSuccess = ParseDecoyResults(javaProgLoc, fiCombinedResults, fiFastaFile)
-                If Not blnSuccess Then Return False
-
             End If
 
             If successOverall Then
@@ -1015,7 +865,7 @@ Public Class clsAnalysisToolRunnerMODPlus
         ioToolFiles.Add(New FileInfo(Path.Combine(fiMODPlusProg.DirectoryName, "tda_plus.jar")))
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False

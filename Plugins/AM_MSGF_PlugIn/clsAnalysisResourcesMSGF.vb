@@ -87,11 +87,14 @@ Public Class clsAnalysisResourcesMSGF
         eResultType = clsPHRPReader.GetPeptideHitResultType(ResultType)
 
         If eResultType = clsPHRPReader.ePeptideHitResultType.Sequest OrElse
-          eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse
-          eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse
-          eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB OrElse
-          eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
+           eResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse
+           eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse
+           eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB OrElse
+           eResultType = clsPHRPReader.ePeptideHitResultType.MODa OrElse
+           eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+
             blnSuccess = True
+
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Invalid tool result type (not supported by MSGF): " & ResultType)
             blnSuccess = False
@@ -124,8 +127,10 @@ Public Class clsAnalysisResourcesMSGF
                     blnOnlyCopyFHTandSYNfiles = True
                 End If
             End If
-        ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-            ' We do not need any raw data files for MODa
+        ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Or
+               eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+
+            ' We do not need any raw data files for MODa or modPlus
             blnOnlyCopyFHTandSYNfiles = True
 
         Else
@@ -146,7 +151,7 @@ Public Class clsAnalysisResourcesMSGF
         End If
 
         If Not blnOnlyCopyFHTandSYNfiles Then
-            ' Get the Sequest, X!Tandem, Inspect, MSGF+, or MODa parameter file
+            ' Get the Sequest, X!Tandem, Inspect, MSGF+, MODa, or MODPlus parameter file
             FileToGet = m_jobParams.GetParam("ParmFileName")
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
                 'Errors were reported in function call, so just return
@@ -164,7 +169,7 @@ Public Class clsAnalysisResourcesMSGF
 
         End If
 
-        ' Get the Sequest, X!Tandem, Inspect, MSGF+, or MODa PHRP _syn.txt file
+        ' Get the Sequest, X!Tandem, Inspect, MSGF+, MODa, or MODPlus PHRP _syn.txt file
         FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, m_DatasetName)
         If Not String.IsNullOrEmpty(FileToGet) Then
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -296,77 +301,77 @@ Public Class clsAnalysisResourcesMSGF
         End If
 
         FileToGet = clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, m_DatasetName)
-		If Not String.IsNullOrEmpty(FileToGet) Then
-			If FindAndRetrieveMiscFiles(FileToGet, False) Then
-				m_jobParams.AddResultFileToSkip(FileToGet)
-			Else
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SeqInfo file not found (" & FileToGet & "); modifications will be inferred using the ModSummary.txt file")
-			End If
-		End If
+        If Not String.IsNullOrEmpty(FileToGet) Then
+            If FindAndRetrieveMiscFiles(FileToGet, False) Then
+                m_jobParams.AddResultFileToSkip(FileToGet)
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SeqInfo file not found (" & FileToGet & "); modifications will be inferred using the ModSummary.txt file")
+            End If
+        End If
 
-		If blnMGFInstrumentData Then
+        If blnMGFInstrumentData Then
 
-			Dim strFileToFind As String = m_DatasetName & DOT_MGF_EXTENSION
-			If Not FindAndRetrieveMiscFiles(strFileToFind, False) Then
-				m_message = "Instrument data not found: " & strFileToFind
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMSGF.GetResources: " & m_message)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			Else
-				m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION)
-			End If
+            Dim strFileToFind As String = m_DatasetName & DOT_MGF_EXTENSION
+            If Not FindAndRetrieveMiscFiles(strFileToFind, False) Then
+                m_message = "Instrument data not found: " & strFileToFind
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMSGF.GetResources: " & m_message)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Else
+                m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION)
+            End If
 
-		ElseIf Not blnOnlyCopyFHTandSYNfiles Then
+        ElseIf Not blnOnlyCopyFHTandSYNfiles Then
 
-			' See if a .mzXML file already exists for this dataset
-			blnSuccess = RetrieveMZXmlFile(False, strMzXMLFilePath)
+            ' See if a .mzXML file already exists for this dataset
+            blnSuccess = RetrieveMZXmlFile(False, strMzXMLFilePath)
 
-			' Make sure we don't move the .mzXML file into the results folder
-			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
+            ' Make sure we don't move the .mzXML file into the results folder
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
 
-			If blnSuccess Then
-				' .mzXML file found and copied locally; no need to retrieve the .Raw file
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Existing .mzXML file found: " & strMzXMLFilePath)
-				End If
+            If blnSuccess Then
+                ' .mzXML file found and copied locally; no need to retrieve the .Raw file
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Existing .mzXML file found: " & strMzXMLFilePath)
+                End If
 
-				' Possibly unzip the .mzXML file
+                ' Possibly unzip the .mzXML file
                 Dim fiMzXMLFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & DOT_MZXML_EXTENSION & DOT_GZ_EXTENSION))
-				If fiMzXMLFile.Exists Then
-					m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
+                If fiMzXMLFile.Exists Then
+                    m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
 
-					If Not m_IonicZipTools.GUnzipFile(fiMzXMLFile.FullName) Then
-						m_message = "Error decompressing .mzXML.gz file"
-						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-					End If
+                    If Not m_IonicZipTools.GUnzipFile(fiMzXMLFile.FullName) Then
+                        m_message = "Error decompressing .mzXML.gz file"
+                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    End If
 
-				End If
-			Else
-				' .mzXML file not found
-				' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
-				If RetrieveSpectra(RawDataType) Then
-					m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)			' Raw file
-					m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)		' mzXML file
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
+                End If
+            Else
+                ' .mzXML file not found
+                ' Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
+                If RetrieveSpectra(RawDataType) Then
+                    m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)         ' Raw file
+                    m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)       ' mzXML file
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.")
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
 
-			End If
+            End If
 
-		End If
+        End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		For Each entry In m_PendingFileRenames
-			Dim sourceFile As New FileInfo(Path.Combine(m_WorkingDir, entry.Key))
-			If sourceFile.Exists Then
-				sourceFile.MoveTo(Path.Combine(m_WorkingDir, entry.Value))
-			End If
-		Next
+        For Each entry In m_PendingFileRenames
+            Dim sourceFile As New FileInfo(Path.Combine(m_WorkingDir, entry.Key))
+            If sourceFile.Exists Then
+                sourceFile.MoveTo(Path.Combine(m_WorkingDir, entry.Value))
+            End If
+        Next
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
 

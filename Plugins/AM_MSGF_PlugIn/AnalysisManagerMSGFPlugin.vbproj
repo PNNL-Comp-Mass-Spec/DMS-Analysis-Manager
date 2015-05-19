@@ -113,6 +113,7 @@
     <Compile Include="clsMSGFInputCreator.vb" />
     <Compile Include="clsMSGFInputCreatorInspect.vb" />
     <Compile Include="clsMSGFInputCreatorMODa.vb" />
+    <Compile Include="clsMSGFInputCreatorMODPlus.vb" />
     <Compile Include="clsMSGFInputCreatorMSGFDB.vb" />
     <Compile Include="clsMSGFInputCreatorSequest.vb" />
     <Compile Include="clsMSGFInputCreatorXTandem.vb" />
