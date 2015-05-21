@@ -29,7 +29,14 @@ Public Class clsAnalysisToolRunnerMzRefinery
     Protected Const MZ_REFINERY_CONSOLE_OUTPUT As String = "MSConvert_MzRefinery_ConsoleOutput.txt"
 	Protected Const ERROR_CHARTER_CONSOLE_OUTPUT_FILE As String = "PPMErrorCharter_ConsoleOutput.txt"
 
-	Public Const MSGFPLUS_MZID_SUFFIX As String = "_msgfplus.mzid"
+    Public Const MSGFPLUS_MZID_SUFFIX As String = "_msgfplus.mzid"
+
+    Protected Enum eMzRefinerProgRunnerMode
+        Unknown = 0
+        MSGFPlus = 1
+        MzRefiner = 2
+        PPMErrorCharter = 3
+    End Enum
 #End Region
 
 #Region "Module Variables"
@@ -44,9 +51,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 	Protected mMSGFPlusResultsFilePath As String
 
-	Protected mRunningMSGFPlus As Boolean
-	Protected mRunningzRefinerWithMSConvert As Boolean
-
+    Protected mProgRunnerMode As eMzRefinerProgRunnerMode
+	
 	Protected mMSGFPlusComplete As Boolean
 	Protected mMSGFPlusCompletionTime As DateTime
 
@@ -539,12 +545,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
 
-        mRunningMSGFPlus = True
+        mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus
 
         ' Start MSGF+ and wait for it to exit
         Dim blnSuccess = CmdRunner.RunProgram(javaExePath, CmdStr, strSearchEngineName, True)
 
-        mRunningMSGFPlus = False
+        mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown
 
         Return blnSuccess
 
@@ -655,55 +661,55 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     Private Sub MonitorProgress()
 
-        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        UpdateStatusFile()
 
-        'Update the status file (limit the updates to every 15 seconds)
-        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 15 Then
-            dtLastStatusUpdate = DateTime.UtcNow
-            UpdateStatusRunning(m_progress)
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds < 30 Then
+            Return
         End If
 
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 30 Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
+        dtLastConsoleOutputParse = DateTime.UtcNow
 
-            If mRunningMSGFPlus Then
+        If mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus Then
 
-                ParseMSGFPlusConsoleOutputFile(m_WorkDir)
-                If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
-                    mToolVersionWritten = StoreToolVersionInfo()
-                End If
-
-                If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE Then
-                    If Not mMSGFPlusComplete Then
-                        mMSGFPlusComplete = True
-                        mMSGFPlusCompletionTime = DateTime.UtcNow
-                    Else
-                        If DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
-                            ' MSGF+ is stuck at 96% complete and has been that way for 5 minutes
-                            ' Java is likely frozen and thus the process should be aborted
-                            Dim warningMessage = "MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE.ToString("0") & "% complete for 5 minutes; aborting since Java appears frozen"
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-
-                            ' Bump up mMSGFPlusCompletionTime by one hour
-                            ' This will prevent this function from logging the above message every 30 seconds if the .abort command fails
-                            mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1)
-
-                            CmdRunner.AbortProgramNow()
-
-                        End If
-                    End If
-                End If
-
-            ElseIf mRunningzRefinerWithMSConvert Then
-                ParseMSConvertConsoleOutputfile(Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT))
+            ParseMSGFPlusConsoleOutputFile(m_WorkDir)
+            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
+                mToolVersionWritten = StoreToolVersionInfo()
             End If
 
+            LogProgress("MSGF+ for MzRefinery")
+
+            If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE Then
+                If Not mMSGFPlusComplete Then
+                    mMSGFPlusComplete = True
+                    mMSGFPlusCompletionTime = DateTime.UtcNow
+                Else
+                    If DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
+                        ' MSGF+ is stuck at 96% complete and has been that way for 5 minutes
+                        ' Java is likely frozen and thus the process should be aborted
+                        Dim warningMessage = "MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE.ToString("0") & "% complete for 5 minutes; aborting since Java appears frozen"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+
+                        ' Bump up mMSGFPlusCompletionTime by one hour
+                        ' This will prevent this function from logging the above message every 30 seconds if the .abort command fails
+                        mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1)
+
+                        CmdRunner.AbortProgramNow()
+
+                    End If
+                End If
+            End If
+
+        ElseIf mProgRunnerMode = eMzRefinerProgRunnerMode.MzRefiner Then
+            ParseMSConvertConsoleOutputfile(Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT))
+
+            LogProgress("MzRefinery")
+        Else
+            LogProgress("MzRefinery (unknown step)")
         End If
+
+        
     End Sub
 
 
@@ -1043,12 +1049,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
 
-        mRunningzRefinerWithMSConvert = True
+        mProgRunnerMode = eMzRefinerProgRunnerMode.MzRefiner
 
         ' Start MSConvert and wait for it to exit
         Dim blnSuccess = CmdRunner.RunProgram(mMSConvertProgLoc, cmdStr, "MSConvert_MzRefinery", True)
 
-        mRunningzRefinerWithMSConvert = False
+        mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown
 
         If Not CmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
@@ -1166,8 +1172,13 @@ Public Class clsAnalysisToolRunnerMzRefinery
             .ConsoleOutputFilePath = Path.Combine(m_WorkDir, ERROR_CHARTER_CONSOLE_OUTPUT_FILE)
         End With
 
-        ' Start the PPM Error Chararter and wait for it to exit
+        mProgRunnerMode = eMzRefinerProgRunnerMode.PPMErrorCharter
+
+        ' Start the PPM Error Charter and wait for it to exit
         Dim blnSuccess = CmdRunner.RunProgram(mPpmErrorCharterProgLoc, cmdStr, "PPMErrorCharter", True)
+
+        mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown
+
 
         If Not blnSuccess Then
             Dim Msg As String
@@ -1280,22 +1291,10 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     Private Sub UpdateProgress(progressCompleteOverall As Single)
 
-        Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
-
         If m_progress < progressCompleteOverall Then
             m_progress = progressCompleteOverall
-
-            If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-                dtLastProgressWriteTime = DateTime.UtcNow
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-            End If
         End If
 
-    End Sub
-
-    Private Sub UpdateStatusRunning(sngPercentComplete As Single)
-        m_progress = sngPercentComplete
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
     End Sub
 
 #End Region

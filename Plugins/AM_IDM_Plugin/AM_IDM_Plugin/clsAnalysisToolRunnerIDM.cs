@@ -16,7 +16,7 @@ namespace AnalysisManager_IDM_Plugin
 		#endregion
 
 		#region Members
-		protected DateTime mLastProgressUpdate;
+
 		#endregion
 
 		#region Methods
@@ -69,10 +69,8 @@ namespace AnalysisManager_IDM_Plugin
 					// Store the Version info in the database
 					StoreToolVersionInfo();
 
-					mLastProgressUpdate = DateTime.UtcNow;
 					m_progress = 0;
-					m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
-
+                    UpdateStatusFile();
 
 					if (m_DebugLevel > 4)
 					{
@@ -224,12 +222,7 @@ namespace AnalysisManager_IDM_Plugin
 
 			m_progress = e.Value;
 
-			if (DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalMinutes >= 1)
-			{
-				mLastProgressUpdate = DateTime.UtcNow;
-				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
-			}
-
+		    UpdateStatusFile(m_progress, 60);
 
 		}
 

@@ -666,7 +666,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         Const REGEX_AScore_PROGRESS As String = "Percent Completion (\d+)\%"
 
         Static reCheckProgress As New Regex(REGEX_AScore_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-        Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
 
         Try
             If Not File.Exists(strConsoleOutputFilePath) Then
@@ -720,13 +719,8 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
             Dim progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subtaskProgress)
 
-            If m_progress < progressComplete OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 60 Then
+            If m_progress < progressComplete Then
                 m_progress = progressComplete
-
-                If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-                    dtLastProgressWriteTime = DateTime.UtcNow
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-                End If
             End If
 
         Catch ex As Exception
@@ -1039,29 +1033,15 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Function
 
-    Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-        m_progress = sngPercentComplete
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-    End Sub
-
     ''' <summary>
     ''' Event handler for mCmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-        'Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
-            UpdateStatusRunning(m_progress)
-        End If
-
+        UpdateStatusFile()
 
         ' Parse the console output file every 15 seconds
         If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
@@ -1069,7 +1049,9 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
             ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
+            LogProgress("PhosphoFdrAggregator")
         End If
+
     End Sub
 
 #End Region

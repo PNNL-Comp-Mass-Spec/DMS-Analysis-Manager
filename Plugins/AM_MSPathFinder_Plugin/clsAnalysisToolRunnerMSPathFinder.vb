@@ -307,7 +307,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 		Const REGEX_MSPathFinder_PROGRESS As String = "(\d+)% complete"
 		Static reCheckProgress As New Regex(REGEX_MSPathFinder_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-		Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
 
 		Static reProcessingProteins As New Regex("Processing (\d+)th proteins", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
@@ -386,14 +385,9 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 				progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched)
 			End If
 
-			If m_progress < progressComplete OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 60 Then
-				m_progress = progressComplete
-
-				If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-					dtLastProgressWriteTime = DateTime.UtcNow
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-				End If
-			End If
+            If m_progress < progressComplete Then
+                m_progress = progressComplete
+            End If
 
 		Catch ex As Exception
 			' Ignore errors here
@@ -873,11 +867,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 	End Function
 
-	Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-		m_progress = sngPercentComplete
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-	End Sub
-
 #End Region
 
 #Region "Event Handlers"
@@ -887,26 +876,19 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+
 		Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
+        
+        UpdateStatusFile()
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        ' Parse the console output file every 30 seconds
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 30 Then
+            dtLastConsoleOutputParse = DateTime.UtcNow
 
-		'Update the status file (limit the updates to every 5 seconds)
-		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
+            ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT))
 
-		' Parse the console output file every 15 seconds
-		If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-			dtLastConsoleOutputParse = DateTime.UtcNow
-
-			ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT))
-
-		End If
+            LogProgress("MSPathFinder")
+        End If
 
 	End Sub
 

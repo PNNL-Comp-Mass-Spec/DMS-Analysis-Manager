@@ -375,8 +375,7 @@ Public Class clsAnalysisToolRunnerProSightQuant
 		'   ...
 		'   8/13/2012 1:56:55 PM    ---- PROCESSING COMPLETE ---------------
 
-		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
-		Static reSubProgress As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Percent complete = ([0-9.]+)", Text.RegularExpressions.RegexOptions.Compiled)
+        Static reSubProgress As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Percent complete = ([0-9.]+)", Text.RegularExpressions.RegexOptions.Compiled)
 
 		Try
 
@@ -474,11 +473,6 @@ Public Class clsAnalysisToolRunnerProSightQuant
 
 			If m_progress < sngEffectiveProgress Then
 				m_progress = sngEffectiveProgress
-
-				If m_DebugLevel >= 3 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-					dtLastProgressWriteTime = System.DateTime.UtcNow
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-				End If
 			End If
 
 		Catch ex As Exception
@@ -537,11 +531,6 @@ Public Class clsAnalysisToolRunnerProSightQuant
 
 	End Function
 
-	Protected Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-		m_progress = sngPercentComplete
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-	End Sub
-
 	Public Sub WriteXMLSetting(swOutFile As System.Xml.XmlTextWriter, strSettingName As String, strSettingValue As String)
 		swOutFile.WriteStartElement(strSettingName)
 		swOutFile.WriteValue(strSettingValue)
@@ -557,24 +546,17 @@ Public Class clsAnalysisToolRunnerProSightQuant
 	''' </summary>
 	''' <remarks></remarks>
 	Protected Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+
 		Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
+        UpdateStatusFile()
 
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
 			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT))
 
+            LogProgress("ProSightQuant")
 		End If
 
 	End Sub

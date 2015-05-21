@@ -84,6 +84,11 @@ Public Class clsAnalysisToolRunnerBase
 
     Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
 
+    Private m_LastProgressWriteTime As DateTime = DateTime.UtcNow
+    Private m_LastProgressConsoleTime As DateTime = DateTime.UtcNow
+
+    Private m_LastStatusFileUpdate As DateTime = DateTime.UtcNow
+
     Private mLastSortUtilityProgress As DateTime
     Private mSortUtilityErrorMessage As String
 
@@ -1274,8 +1279,9 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="DebugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
     ''' <returns>True for success; False for error</returns>
     ''' <remarks></remarks>
-    Public Shared Function GetCurrentMgrSettingsFromDB(intUpdateIntervalSeconds As Integer, _
-       ByRef objMgrParams As IMgrParams, _
+    Public Shared Function GetCurrentMgrSettingsFromDB(
+       intUpdateIntervalSeconds As Integer,
+       objMgrParams As IMgrParams,
        ByRef debugLevel As Short) As Boolean
 
         Static dtLastUpdateTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
@@ -1662,6 +1668,65 @@ Public Class clsAnalysisToolRunnerBase
     End Sub
 
     ''' <summary>
+    ''' Logs current progress to the log file at a given interval
+    ''' </summary>
+    ''' <param name="toolName"></param>
+    ''' <remarks>Longer log intervals when m_debuglevel is 0 or 1; shorter intervals for 5</remarks>
+    Protected Sub LogProgress(toolName As String)
+        Dim logIntervalMinutes As Integer
+
+        If m_DebugLevel >= 5 Then
+            logIntervalMinutes = 1
+        ElseIf m_DebugLevel >= 4 Then
+            logIntervalMinutes = 5
+        ElseIf m_DebugLevel >= 3 Then
+            logIntervalMinutes = 15
+        ElseIf m_DebugLevel >= 2 Then
+            logIntervalMinutes = 30
+        Else
+            logIntervalMinutes = 60
+        End If
+
+        LogProgress(toolName, logIntervalMinutes)
+    End Sub
+
+    ''' <summary>
+    ''' Logs m_progress to the log file at interval logIntervalMinutes
+    ''' </summary>
+    ''' <param name="toolName"></param>
+    ''' <param name="logIntervalMinutes"></param>
+    ''' <remarks>UCalls GetCurrentMgrSettingsFromDB every 300 seconds</remarks>
+    Protected Sub LogProgress(toolName As String, logIntervalMinutes As Integer)
+
+        Const CONSOLE_PROGRESS_INTERVAL_MINUTES = 1
+
+        Try
+
+            If logIntervalMinutes < 1 Then logIntervalMinutes = 1
+
+            Dim progressMessage = " ... " & m_progress.ToString("0.0") & "% complete for " & toolName & ", job " & m_JobNum
+
+            If DateTime.UtcNow.Subtract(m_LastProgressConsoleTime).TotalMinutes >= CONSOLE_PROGRESS_INTERVAL_MINUTES Then
+                m_LastProgressConsoleTime = DateTime.UtcNow
+                Console.WriteLine(progressMessage)
+            End If
+
+            If DateTime.UtcNow.Subtract(m_LastProgressWriteTime).TotalMinutes >= logIntervalMinutes Then
+                m_LastProgressWriteTime = DateTime.UtcNow
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progressMessage)
+            End If
+
+            ' Synchronize the stored Debug level with the value stored in the database
+            Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300
+            GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+
+    End Sub
+
+    ''' <summary>
     ''' Creates a results folder after analysis complete
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
@@ -1932,7 +1997,7 @@ Public Class clsAnalysisToolRunnerBase
     Public Shared Function PossiblyQuotePath(strPath As String) As String
         Return clsGlobal.PossiblyQuotePath(strPath)
     End Function
-
+    
     Public Sub PurgeOldServerCacheFiles(cacheFolderPath As String)
         Const spaceUsageThresholdGB As Integer = 20000
         PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
@@ -3054,6 +3119,71 @@ Public Class clsAnalysisToolRunnerBase
         Return m_IonicZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
 
     End Function
+
+    ''' <summary>
+    ''' Update Status.xml every 15 seconds using m_progress
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Sub UpdateStatusFile()
+        UpdateStatusFile(m_progress)
+    End Sub
+
+    ''' <summary>
+    ''' Update Status.xml every 15 seconds using sngPercentComplete
+    ''' </summary>
+    ''' <param name="sngPercentComplete">Percent complete</param>
+    ''' <remarks></remarks>
+    Protected Sub UpdateStatusFile(ByVal sngPercentComplete As Single)
+        Dim frequencySeconds = 15
+        UpdateStatusFile(sngPercentComplete, frequencySeconds)
+    End Sub
+
+    ''' <summary>
+    ''' Update Status.xml every frequencySeconds seconds using sngPercentComplete
+    ''' </summary>
+    ''' <param name="sngPercentComplete">Percent complete</param>
+    ''' <param name="frequencySeconds">Minimum time between updates, in seconds (must be at least 5)</param>
+    ''' <remarks></remarks>
+    Protected Sub UpdateStatusFile(ByVal sngPercentComplete As Single, frequencySeconds As Integer)
+
+        If frequencySeconds < 5 Then frequencySeconds = 5
+
+        ' Update the status file (limit the updates to every x seconds)
+        If DateTime.UtcNow.Subtract(m_LastStatusFileUpdate).TotalSeconds >= frequencySeconds Then
+            m_LastStatusFileUpdate = DateTime.UtcNow
+            UpdateStatusRunning(sngPercentComplete)
+        End If
+
+    End Sub
+
+    ''' <summary>
+    ''' Update Status.xml now using m_progress
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Sub UpdateStatusRunning()
+        UpdateStatusRunning(m_progress)
+    End Sub
+
+    ''' <summary>
+    ''' Update Status.xml now using sngPercentComplete
+    ''' </summary>
+    ''' <param name="sngPercentComplete"></param>
+    ''' <remarks></remarks>
+    Protected Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
+        m_progress = sngPercentComplete
+        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
+    End Sub
+
+    ''' <summary>
+    ''' Update Status.xml now using sngPercentComplete and spectrumCountTotal
+    ''' </summary>
+    ''' <param name="sngPercentComplete"></param>
+    ''' <param name="spectrumCountTotal"></param>
+    ''' <remarks></remarks>
+    Protected Sub UpdateStatusRunning(ByVal sngPercentComplete As Single, ByVal spectrumCountTotal As Integer)
+        m_progress = sngPercentComplete
+        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, spectrumCountTotal, "", "", "", False)
+    End Sub
 
     ''' <summary>
     ''' Make sure the _DTA.txt file exists and has at least one spectrum in it

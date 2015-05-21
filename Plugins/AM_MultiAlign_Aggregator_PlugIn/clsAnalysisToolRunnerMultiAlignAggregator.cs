@@ -34,8 +34,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign Aggregator");
 
 				// Determine the path to the LCMSFeatureFinder folder
-				string progLoc;
-				progLoc = base.DetermineProgramLocation("MultiAlign", "MultiAlignProgLoc", "MultiAlignConsole.exe");
+				string progLoc = base.DetermineProgramLocation("MultiAlign", "MultiAlignProgLoc", "MultiAlignConsole.exe");
 
 				if (string.IsNullOrWhiteSpace(progLoc))
 				{
@@ -52,7 +51,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
 				m_CurrentMultiAlignTask = "Running MultiAlign";
 				m_LastStatusUpdateTime = System.DateTime.UtcNow;
-				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+				UpdateStatusRunning(m_progress);
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentMultiAlignTask);
 

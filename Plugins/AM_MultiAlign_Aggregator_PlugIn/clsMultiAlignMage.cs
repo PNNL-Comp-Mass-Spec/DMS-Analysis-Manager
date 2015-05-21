@@ -435,7 +435,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             System.DateTime dtLastStatusUpdate = System.DateTime.UtcNow;
             System.DateTime dtLastMultialignLogFileParse = System.DateTime.UtcNow;
 
-            //Update the status file (limit the updates to every 5 seconds)
+            // Update the status file (limit the updates to every 5 seconds)
             if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
             {
                 dtLastStatusUpdate = System.DateTime.UtcNow;

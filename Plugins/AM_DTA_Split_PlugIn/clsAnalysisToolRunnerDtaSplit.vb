@@ -101,7 +101,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
 
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, 100, intSegmentCountToCreate, "", "", "", False)
+            UpdateStatusRunning(100, intSegmentCountToCreate)
 
             result = MakeResultsFolder()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -253,7 +253,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
                 If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
                     dtLastStatusUpdate = System.DateTime.UtcNow
                     sngPercentComplete = (lngBytesRead / CSng(srInFile.BaseStream.Length) * 100)
-                    m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, intSpectraCountRead, "", "", "", False)
+                    UpdateStatusRunning(sngPercentComplete, intSpectraCountRead)
                 End If
 
                 swOutFile(intSplitFileNum).WriteLine(strLineIn)

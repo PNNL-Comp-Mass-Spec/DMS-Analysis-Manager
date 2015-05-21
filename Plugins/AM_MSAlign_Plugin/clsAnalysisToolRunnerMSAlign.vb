@@ -847,10 +847,9 @@ Public Class clsAnalysisToolRunnerMSAlign
 		' Processing spectrum scan 1329...        1% finished (0 minutes used).
 		' Processing spectrum scan 1649...        1% finished (0 minutes used).
 
-		Static reExtractPercentFinished As New System.Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
+        Static reExtractPercentFinished As New Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 
-		Dim oMatch As System.Text.RegularExpressions.Match
+        Dim oMatch As Text.RegularExpressions.Match
 
 		Try
 			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
@@ -920,12 +919,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
 			If m_progress < intActualProgress Then
 				m_progress = intActualProgress
-
-				If m_DebugLevel >= 3 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-					dtLastProgressWriteTime = System.DateTime.UtcNow
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-				End If
-			End If
+            End If
 
 		Catch ex As Exception
 			' Ignore errors here
@@ -1182,12 +1176,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 		Return True
 
 	End Function
-
-	Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-		m_progress = sngPercentComplete
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-	End Sub
-
+	
 	Protected Function ZipMSAlignResultFolder(ByVal strFolderName As String) As Boolean
 
 		Dim objZipper As Ionic.Zip.ZipFile
@@ -1240,18 +1229,10 @@ Public Class clsAnalysisToolRunnerMSAlign
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+
 		Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
+        UpdateStatusFile()
 
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
@@ -1262,9 +1243,11 @@ Public Class clsAnalysisToolRunnerMSAlign
 				mToolVersionWritten = StoreToolVersionInfo()
 			End If
 
-		End If
+            LogProgress("MSAlign")
 
-	End Sub
+        End If
+
+    End Sub
 
 #End Region
 

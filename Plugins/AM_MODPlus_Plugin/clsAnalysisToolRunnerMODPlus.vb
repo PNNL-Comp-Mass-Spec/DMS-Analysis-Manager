@@ -852,7 +852,11 @@ Public Class clsAnalysisToolRunnerMODPlus
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, currentTask)
 
                 Dim modPlusRunner = New clsMODPlusRunner(m_Dataset, threadNum, m_WorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc)
-                AddHandler modPlusRunner.CmdRunnerWaiting, AddressOf CmdRunner_LoopWaiting
+
+                If Not USE_THREADING Then
+                    AddHandler modPlusRunner.CmdRunnerWaiting, AddressOf CmdRunner_LoopWaiting
+                End If
+
                 modPlusRunner.JavaMemorySizeMB = javaMemorySizeMB
 
                 mMODPlusRunners.Add(threadNum, modPlusRunner)
@@ -926,9 +930,11 @@ Public Class clsAnalysisToolRunnerMODPlus
                     Dim subTaskProgress = CSng(progressSum / mMODPlusRunners.Count)
                     Dim updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, subTaskProgress)
                     If updatedProgress > m_progress Then
-                        ' This progress will get written to the status file and sent to the messaging queue by UpdateStatusRunning()
+                        ' This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
                         m_progress = updatedProgress
                     End If
+
+                    CmdRunner_LoopWaiting()
 
                     If stepsComplete >= mMODPlusRunners.Count Then
                         ' All threads are done
@@ -1048,11 +1054,6 @@ Public Class clsAnalysisToolRunnerMODPlus
 
     End Function
 
-    Private Sub UpdateStatusRunning(sngPercentComplete As Single)
-        m_progress = sngPercentComplete
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-    End Sub
-
 #End Region
 
 #Region "Event Handlers"
@@ -1063,17 +1064,10 @@ Public Class clsAnalysisToolRunnerMODPlus
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting()
 
-        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+        UpdateStatusFile(m_progress)
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        LogProgress("MODPlus")
 
-        ' Update the status file (limit the updates to every 5 seconds)
-        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = DateTime.UtcNow
-            UpdateStatusRunning(m_progress)
-        End If
     End Sub
 
     Private Sub SplitMgfProgressHandler(progressMessage As String, percentComplete As Integer)

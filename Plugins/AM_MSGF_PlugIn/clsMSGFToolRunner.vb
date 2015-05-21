@@ -2523,18 +2523,11 @@ Public Class clsMSGFRunner
 	End Sub
 
 	Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING)
 
-		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
-			m_progress = PROGRESS_PCT_MSXML_GEN_RUNNING
-			m_StatusTools.UpdateAndWrite(m_progress)
-		End If
+        LogProgress("MSGF")
+
 	End Sub
 
 	''' <summary>

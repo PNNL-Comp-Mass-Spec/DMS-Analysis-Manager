@@ -36,7 +36,7 @@ namespace AnalysisManager_Ape_PlugIn
 
 				m_CurrentApeTask = "Running Ape";
 				m_LastStatusUpdateTime = DateTime.UtcNow;
-				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+                UpdateStatusRunning();
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentApeTask);
 

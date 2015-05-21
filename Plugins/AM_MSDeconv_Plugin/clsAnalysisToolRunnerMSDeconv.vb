@@ -276,7 +276,6 @@ Public Class clsAnalysisToolRunnerMSDeconv
 		' Result is in Syne_LI_CID_09092011_msdeconv.msalign
 
 		Static reExtractPercentFinished As New Regex("(\d+)% finished", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-		Static dtLastProgressWriteTime As DateTime = System.DateTime.UtcNow
 
 		Dim oMatch As Match
 
@@ -350,11 +349,6 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
 			If m_progress < intActualProgress Then
 				m_progress = intActualProgress
-
-				If m_DebugLevel >= 3 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-					dtLastProgressWriteTime = System.DateTime.UtcNow
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-				End If
 			End If
 
 		Catch ex As Exception
@@ -625,11 +619,6 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
 	End Sub
 
-	Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-		m_progress = sngPercentComplete
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-	End Sub
-
 #End Region
 
 #Region "Event Handlers"
@@ -639,18 +628,9 @@ Public Class clsAnalysisToolRunnerMSDeconv
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
-		Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
+        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
+        UpdateStatusFile()
 
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
@@ -661,6 +641,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 				mToolVersionWritten = StoreToolVersionInfo()
 			End If
 
+            LogProgress("MSDeconv")
 		End If
 
 	End Sub

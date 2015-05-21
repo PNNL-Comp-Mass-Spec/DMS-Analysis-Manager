@@ -652,8 +652,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 		'   Writing QC data...Done.
 		'   Saving QC images...Done.
 
-		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
-		Static reSubProgress As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("^(\d+) / (\d+)", Text.RegularExpressions.RegexOptions.Compiled)
+        Static reSubProgress As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("^(\d+) / (\d+)", Text.RegularExpressions.RegexOptions.Compiled)
 
 		Try
 
@@ -741,12 +740,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
 			If m_progress < sngEffectiveProgress Then
 				m_progress = sngEffectiveProgress
-
-				If m_DebugLevel >= 3 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-					dtLastProgressWriteTime = System.DateTime.UtcNow
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-				End If
-			End If
+            End If
 
 		Catch ex As Exception
 			' Ignore errors here
@@ -955,11 +949,6 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
 	End Function
 
-	Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-		m_progress = sngPercentComplete
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-	End Sub
-
 #End Region
 
 #Region "Event Handlers"
@@ -969,24 +958,17 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+
 		Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
+        UpdateStatusFile()
 
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 AndAlso Not mDownloadingLipidMapsDatabase Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
 			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, LIPID_TOOLS_CONSOLE_OUTPUT))
 
+            LogProgress("LipidMapSearch")
 		End If
 
 	End Sub

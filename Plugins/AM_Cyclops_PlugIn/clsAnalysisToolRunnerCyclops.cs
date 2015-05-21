@@ -27,7 +27,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Cyclops");
 				m_progress = PROGRESS_PCT_CYCLOPS_START;
-				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+                UpdateStatusRunning();
 
 
 				if (m_DebugLevel > 4)

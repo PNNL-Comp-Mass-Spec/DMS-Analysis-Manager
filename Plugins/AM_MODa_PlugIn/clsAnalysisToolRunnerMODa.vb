@@ -328,7 +328,6 @@ Public Class clsAnalysisToolRunnerMODa
 
 
         Static reExtractScan As New Regex(REGEX_MODa_PROGRESS, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-        Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
 
         Dim oMatch As Match
 
@@ -424,11 +423,6 @@ Public Class clsAnalysisToolRunnerMODa
 
             If m_progress < sngActualProgress Then
                 m_progress = sngActualProgress
-
-                If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-                    dtLastProgressWriteTime = DateTime.UtcNow
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-                End If
             End If
 
         Catch ex As Exception
@@ -626,11 +620,6 @@ Public Class clsAnalysisToolRunnerMODa
 
     End Function
 
-    Private Sub UpdateStatusRunning(sngPercentComplete As Single)
-        m_progress = sngPercentComplete
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-    End Sub
-
 #End Region
 
 #Region "Event Handlers"
@@ -640,18 +629,10 @@ Public Class clsAnalysisToolRunnerMODa
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-        ' Update the status file (limit the updates to every 5 seconds)
-        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = DateTime.UtcNow
-            UpdateStatusRunning(m_progress)
-        End If
+        UpdateStatusFile()
 
         If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
             dtLastConsoleOutputParse = DateTime.UtcNow
@@ -662,6 +643,7 @@ Public Class clsAnalysisToolRunnerMODa
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
+            LogProgress("MODa")
         End If
 
     End Sub

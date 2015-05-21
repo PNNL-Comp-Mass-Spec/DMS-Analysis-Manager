@@ -317,7 +317,7 @@ Public Class clsMODPlusRunner
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 30 Then
             dtLastConsoleOutputParse = DateTime.UtcNow
 
             ParseConsoleOutputFile(mConsoleOutputFilePath)

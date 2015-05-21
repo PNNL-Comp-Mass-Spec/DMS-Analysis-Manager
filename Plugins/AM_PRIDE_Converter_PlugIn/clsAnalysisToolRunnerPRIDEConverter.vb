@@ -4143,14 +4143,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 		Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
 		If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = DateTime.UtcNow
 
-			ParseConsoleOutputFile(Path.Combine(m_WorkDir, PRIDEConverter_CONSOLE_OUTPUT))
+            ParseConsoleOutputFile(Path.Combine(m_WorkDir, PRIDEConverter_CONSOLE_OUTPUT))
+
+            LogProgress("PRIDEConverter")
 		End If
 
 	End Sub
@@ -4172,17 +4170,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 	End Sub
 
 	Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
-		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        UpdateStatusFile()
 
-		'Update the status file (limit the updates to every 5 seconds)
-		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = DateTime.UtcNow
-			m_StatusTools.UpdateAndWrite(m_progress)
-		End If
+        LogProgress("MSXmlCreator (PRIDEConverter)")
+
 	End Sub
 
 #End Region

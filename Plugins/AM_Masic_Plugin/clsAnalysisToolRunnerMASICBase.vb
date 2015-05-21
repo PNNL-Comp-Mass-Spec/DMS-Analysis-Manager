@@ -132,9 +132,8 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-		' Update progress to 100%
-		m_progress = 100
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+        m_progress = 100
+        UpdateStatusFile()
 
 		'Run the cleanup routine from the base class
 		If PerfPostAnalysisTasks("SIC") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -463,11 +462,9 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 	End Function
 
 	Protected Function WaitForJobToFinish(ByRef objMasicProgRunner As PRISM.Processes.clsProgRunner) As Boolean
-		Const MINIMUM_LOG_INTERVAL_SEC As Integer = 120
-		Const MAX_RUNTIME_HOURS As Integer = 12
+        Const MAX_RUNTIME_HOURS As Integer = 12
 
-		Static dtLastLogTime As DateTime
-		Static sngProgressSaved As Single = -1
+        Static sngProgressSaved As Single = -1
 
 		Dim blnSICsXMLFileExists As Boolean
 		Dim dtStartTime As DateTime = DateTime.UtcNow
@@ -483,21 +480,10 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 				m_JobRunning = False
 			Else
 
-				' Synchronize the stored Debug level with the value stored in the database
-				Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-				MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+                CalculateNewStatus(objMasicProgRunner.Program)                       'Update the status
+                UpdateStatusFile()
 
-				CalculateNewStatus(objMasicProgRunner.Program)						 'Update the status
-				m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
-
-				If m_DebugLevel >= 3 Then
-					If DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse m_progress - sngProgressSaved >= 25 Then
-						dtLastLogTime = DateTime.UtcNow
-						sngProgressSaved = m_progress
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & _
-							"Continuing loop: " & m_ProcessStep & " (" & Math.Round(m_progress, 2).ToString & ")")
-					End If
-				End If
+                LogProgress("MASIC")
 			End If
 
 			If DateTime.UtcNow.Subtract(dtStartTime).TotalHours >= MAX_RUNTIME_HOURS Then

@@ -22,15 +22,14 @@ namespace AnalysisManager_IDP_PlugIn
                 bool blnSuccess = false;
 
                 //Do the base class stuff
-                if (!(base.RunTool() == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
+                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running IDP");
                 m_progress = PROGRESS_PCT_IDP_START;
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
-
+                UpdateStatusRunning(m_progress);
 
                 if (m_DebugLevel > 4)
                 {

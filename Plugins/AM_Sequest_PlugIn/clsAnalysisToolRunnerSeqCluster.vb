@@ -331,11 +331,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 	Protected Sub m_CmdRunner_LoopWaiting() Handles m_CmdRunner.LoopWaiting
 		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-		' Compute the progress by comparing the number of .Out files to the number of .Dta files 
+        ' Compute the progress by comparing the number of .Out files to the number of .Dta files 
 		' (only count the files every 15 seconds)
 		If System.DateTime.UtcNow.Subtract(mLastOutFileCountTime).TotalSeconds >= 15 Then
 			mLastOutFileCountTime = System.DateTime.UtcNow
@@ -356,8 +352,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 		' Update the status file (limit the updates to every 5 seconds)
 		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
 			dtLastStatusUpdate = System.DateTime.UtcNow
-			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
+            UpdateStatusRunning(m_progress, m_DtaCount)
 		End If
+
+        LogProgress("Sequest")
 
 		If mResetPVM Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... calling m_CmdRunner.AbortProgramNow in LoopWaiting since mResetPVM = True")

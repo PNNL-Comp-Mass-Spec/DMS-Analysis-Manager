@@ -553,9 +553,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 		' 2/13/2012 07:15:47 PM - Scan output has been saved to E:\DMS_WorkDir\QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45_SMAQC.txt
 		' 2/13/2012 07:15:47 PM - SMAQC analysis complete
 
-		Static dtLastProgressWriteTime As System.DateTime = System.DateTime.UtcNow
-
-		' This RegEx matches lines in the form:
+        ' This RegEx matches lines in the form:
 		' 2/13/2012 07:15:42 PM - Searching for Text Files!...
 		Static reMatchTimeStamp As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("^\d+/\d+/\d+ \d+:\d+:\d+ [AP]M - ", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 
@@ -637,11 +635,6 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 			If m_progress < sngEffectiveProgress Then
 				m_progress = sngEffectiveProgress
-
-				If m_DebugLevel >= 3 OrElse System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-					dtLastProgressWriteTime = System.DateTime.UtcNow
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_progress.ToString("0") & "% complete")
-				End If
 			End If
 
 		Catch ex As Exception
@@ -867,11 +860,6 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 	End Function
 
-	Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-		m_progress = sngPercentComplete
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-	End Sub
-
 #End Region
 
 #Region "Event Handlers"
@@ -881,27 +869,21 @@ Public Class clsAnalysisToolRunnerSMAQC
 	''' </summary>
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+
 		Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-		'Update the status file (limit the updates to every 5 seconds)
-		If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = System.DateTime.UtcNow
-			UpdateStatusRunning(m_progress)
-		End If
-
+        UpdateStatusFile()
+		
 		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
 			dtLastConsoleOutputParse = System.DateTime.UtcNow
 
 			ParseConsoleOutputFile(Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT))
 
+            LogProgress("SMAQC")
 		End If
 
 	End Sub
 
 #End Region
+
 End Class

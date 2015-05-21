@@ -341,7 +341,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 m_progress = mICR2LSStatus.PercentComplete
 
                 ' Update the local status file (and post the status to the message queue)
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, mICR2LSStatus.ScansProcessed, "", "", "", False)
+                UpdateStatusRunning(m_progress, mICR2LSStatus.ScansProcessed)
 
                 blnSuccess = True
             Else

@@ -99,7 +99,7 @@ Public Class clsExtractToolRunner
                     ' Run PHRP
                     If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                         m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE     ' 33% done
-                        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+                        UpdateStatusRunning(m_progress)
 
                         strCurrentAction = "running peptide hits result processor for Sequest"
                         eResult = RunPhrpForSequest()
@@ -107,7 +107,7 @@ Public Class clsExtractToolRunner
 
                     If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                         m_progress = SEQUEST_PROGRESS_PHRP_DONE   ' 66% done
-                        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+                        UpdateStatusRunning(m_progress)
                         strCurrentAction = "running peptide prophet for Sequest"
                         RunPeptideProphet()
                     End If
@@ -198,8 +198,8 @@ Public Class clsExtractToolRunner
                 m_message = clsGlobal.AppendToComment(m_message, msg)
                 blnProcessingError = True
             Else
-                m_progress = 100    ' 100% done
-                m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, 0, "", "", "", False)
+                m_progress = 100
+                UpdateStatusRunning(m_progress)
                 m_jobParams.AddResultFileToSkip(clsPepHitResultsProcWrapper.PHRP_LOG_FILE_NAME)
             End If
 

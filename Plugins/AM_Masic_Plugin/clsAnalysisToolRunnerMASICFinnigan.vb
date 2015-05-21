@@ -266,19 +266,13 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message)
 	End Sub
 
-	Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
-		Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+    Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
 
-		' Synchronize the stored Debug level with the value stored in the database
-		Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-		MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        UpdateStatusFile()
 
-		'Update the status file (limit the updates to every 5 seconds)
-		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-			dtLastStatusUpdate = DateTime.UtcNow
-			m_StatusTools.UpdateAndWrite(m_progress)
-		End If
-	End Sub
+        LogProgress("MSXmlCreator")
+
+    End Sub
 
 #End Region
 

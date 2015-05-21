@@ -83,7 +83,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 		CalculateNewStatus(blnUpdateDTACount:=True)
 
 		'Run Sequest
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
+        UpdateStatusRunning(m_progress, m_DtaCount)
 
 		'Make the .out files
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Making OUT files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
@@ -522,12 +522,8 @@ Public Class clsAnalysisToolRunnerSeqBase
 			' Wait 5 seconds
 			System.Threading.Thread.Sleep(5000)
 
-			' Synchronize the stored Debug level with the value stored in the database
-			Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-			MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-			CalculateNewStatus()
-			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
+            CalculateNewStatus()
+            UpdateStatusRunning(m_progress, m_DtaCount)
 
 			For ProcIndx = 0 To RunProgs.GetUpperBound(0)
 				If m_DebugLevel > 4 Then
@@ -553,7 +549,9 @@ Public Class clsAnalysisToolRunnerSeqBase
 						End If
 					End If
 				End If
-			Next
+            Next
+
+            LogProgress("Sequest")
 
 		Loop While StillRunning
 

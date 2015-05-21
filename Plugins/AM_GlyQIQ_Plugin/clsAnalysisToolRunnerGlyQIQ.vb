@@ -757,7 +757,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
                     Dim subTaskProgress = CSng(progressSum / mGlyQRunners.Count)
                     Dim updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress)
                     If updatedProgress > m_progress Then
-                        ' This progress will get written to the status file and sent to the messaging queue by UpdateStatusRunning()
+                        ' This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
                         m_progress = updatedProgress
                     End If
 
@@ -887,11 +887,6 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     End Function
 
-    Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-        m_progress = sngPercentComplete
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-    End Sub
-
 #End Region
 
 #Region "Event Handlers"
@@ -923,17 +918,10 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting()
 
-        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+        UpdateStatusFile(m_progress)
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        LogProgress("GlyQIQ")
 
-        ' Update the status file (limit the updates to every 5 seconds)
-        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = DateTime.UtcNow
-            UpdateStatusRunning(m_progress)
-        End If
     End Sub
 
 #End Region

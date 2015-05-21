@@ -162,7 +162,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 				End If
             End If
 
-            UpdateStatusRunning(100)
+            m_progress = 100
+            UpdateStatusRunning()
 
             'Stop the job timer
             m_StopTime = System.DateTime.UtcNow
@@ -1167,11 +1168,6 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Function
 
-    Private Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
-        m_progress = sngPercentComplete
-        m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
-    End Sub
-
     Private Function ValidateShuffledDBInUse(ByVal strInspectResultsPath As String) As Boolean
         Dim srInspectResults As System.IO.StreamReader
         Dim intLinesRead As Integer
@@ -1312,36 +1308,18 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         ' Note that percentComplete is a value between 0 and 100
 
-        Const STATUS_UPDATE_INTERVAL_SECONDS As Integer = 5
-        Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS As Integer = 120
-
-        Static dtLastStatusUpdate As System.DateTime
-        Static dtLastLogTime As System.DateTime
-
         Dim sngStartPercent As Single = mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping)
         Dim sngEndPercent As Single = mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1)
         Dim sngPercentCompleteEffective As Single
 
         sngPercentCompleteEffective = sngStartPercent + CSng(percentComplete / 100.0 * (sngEndPercent - sngStartPercent))
 
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
-
-            ' Synchronize the stored Debug level with the value stored in the database
-            Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-			clsAnalysisToolRunnerBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS, m_mgrParams, m_DebugLevel)
-
-            UpdateStatusRunning(sngPercentCompleteEffective)
-        End If
-
-        If m_DebugLevel >= 3 Then
-            If System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
-                dtLastLogTime = System.DateTime.UtcNow
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
-            End If
-        End If
+        UpdateStatusFile(sngPercentCompleteEffective)
+      
+        LogProgress("Mapping peptides to proteins", 3)
 
     End Sub
+
 #End Region
 
 End Class

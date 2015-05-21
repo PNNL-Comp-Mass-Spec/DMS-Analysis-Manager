@@ -687,10 +687,10 @@ Public Class clsDtaGenThermoRaw
 			MonitorProgress()
 		End If
 
-		'Update the status file (limit the updates to every 5 seconds)
+        ' Update the status file (limit the updates to every 5 seconds)
 		If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
 			dtLastStatusUpdate = DateTime.UtcNow
-			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_Progress, m_SpectraFileCount, "", "", "", False)
+            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_Progress, m_SpectraFileCount, "", "", "", False)
 		End If
 
 	End Sub

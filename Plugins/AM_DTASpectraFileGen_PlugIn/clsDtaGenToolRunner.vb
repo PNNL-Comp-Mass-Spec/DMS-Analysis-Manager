@@ -943,12 +943,12 @@ Public Class clsDtaGenToolRunner
 				End If
 			End If
 
+            UpdateStatusRunning(m_progress, oDTAGenerator.SpectraFileCount)
 
-			m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, oDTAGenerator.SpectraFileCount, "", "", "", False)
 			Threading.Thread.Sleep(5000)				 'Delay for 5 seconds
 		End While
 
-		m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, oDTAGenerator.SpectraFileCount, "", "", "", False)
+        UpdateStatusRunning(m_progress, oDTAGenerator.SpectraFileCount)
 
 		'Check for reason spectra generator exited
 		If oDTAGenerator.Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE Then

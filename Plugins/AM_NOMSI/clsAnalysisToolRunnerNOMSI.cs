@@ -34,7 +34,6 @@ namespace AnalysisManagerNOMSIPlugin
         protected string mConsoleOutputErrorMsg;
         protected bool mNoPeaksFound;
 
-        protected DateTime mLastStatusUpdate;
         protected DateTime mLastConsoleOutputParse;
         protected DateTime mLastProgressWriteTime;
 
@@ -66,7 +65,6 @@ namespace AnalysisManagerNOMSIPlugin
                 }
 
                 // Initialize classwide variables
-                mLastStatusUpdate = DateTime.UtcNow;
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mLastProgressWriteTime = DateTime.UtcNow;
 
@@ -773,16 +771,6 @@ namespace AnalysisManagerNOMSIPlugin
             }
         }
 
-        private void UpdateStatusRunning(float sngPercentComplete)
-        {
-            m_progress = sngPercentComplete;
-            m_StatusTools.UpdateAndWrite(
-                IStatusFile.EnumMgrStatus.RUNNING,
-                IStatusFile.EnumTaskStatus.RUNNING,
-                IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL,
-                sngPercentComplete);
-        }
-
         #endregion
 
         #region "Event Handlers"
@@ -793,15 +781,7 @@ namespace AnalysisManagerNOMSIPlugin
             // Synchronize the stored Debug level with the value stored in the database
 
             {
-                const int MGR_SETTINGS_UPDATE_INTERVAL_SECONDS = 300;
-                GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS);
-
-                //Update the status file (limit the updates to every 5 seconds)
-                if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 5)
-                {
-                    mLastStatusUpdate = DateTime.UtcNow;
-                    UpdateStatusRunning(m_progress);
-                }
+                UpdateStatusFile();
 
                 // Parse the console output file every 15 seconds
                 if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
@@ -810,7 +790,9 @@ namespace AnalysisManagerNOMSIPlugin
 
                     ParseConsoleOutputFile(Path.Combine(m_WorkDir, mCurrentConsoleOutputFile));
 
+                    LogProgress("NOMSI");
                 }
+                
             }
 
         }

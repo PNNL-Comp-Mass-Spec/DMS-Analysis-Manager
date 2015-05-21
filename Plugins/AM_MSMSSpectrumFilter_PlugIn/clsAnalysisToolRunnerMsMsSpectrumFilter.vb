@@ -562,15 +562,13 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
         m_progress = percentComplete
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
-        'Update the status file (limit the updates to every 5 seconds)
+        ' Update the status file (limit the updates to every 5 seconds)
         If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = System.DateTime.UtcNow
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress, m_DtaCount, "", "", "", False)
+            UpdateStatusRunning(m_progress, m_DtaCount)
         End If
+
+        LogProgress("MsMsSpectrumFilter")
 
     End Sub
 
