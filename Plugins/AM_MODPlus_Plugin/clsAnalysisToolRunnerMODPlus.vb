@@ -11,6 +11,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Runtime.InteropServices
+Imports System.Runtime.Serialization.Formatters
 Imports System.Threading
 Imports System.Xml
 
@@ -98,12 +99,14 @@ Public Class clsAnalysisToolRunnerMODPlus
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
+            Dim paramFileList As Dictionary(Of Integer, String) = Nothing
+
             ' Run MODPlus (using multiple threads)
-            Dim blnSuccess = StartMODPlus(javaProgLoc)
+            Dim blnSuccess = StartMODPlus(javaProgLoc, paramFileList)
 
             If blnSuccess Then
                 ' Look for the results file(s)
-                blnSuccess = PostProcessMODPlusResults()
+                blnSuccess = PostProcessMODPlusResults(paramFileList)
                 If Not blnSuccess Then
                     If String.IsNullOrEmpty(m_message) Then
                         LogError("Unknown error post-processing the MODPlus results")
@@ -162,29 +165,34 @@ Public Class clsAnalysisToolRunnerMODPlus
 
     End Function
 
-    Private Sub AddXMLElement(doc As XmlDocument, elementName As String, attributeName As String, attributeValue As String)
+    ''' <summary>
+    ''' Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
+    ''' </summary>
+    ''' <param name="doc"></param>
+    ''' <param name="xpath"></param>
+    ''' <param name="attributeName"></param>
+    ''' <param name="attributeValue"></param>
+    ''' <remarks></remarks>
+    Private Sub AddXMLElement(doc As XmlDocument, xpath As String, attributeName As String, attributeValue As String)
         Dim attributes = New Dictionary(Of String, String)
         attributes.Add(attributeName, attributeValue)
 
-        AddXMLElement(doc, elementName, attributes)
+        AddXMLElement(doc, xpath, attributes)
     End Sub
 
-    Private Sub AddXMLElement(doc As XmlDocument, elementName As String, attributes As Dictionary(Of String, String))
+    ''' <summary>
+    ''' Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
+    ''' </summary>
+    ''' <param name="doc"></param>
+    ''' <param name="xpath"></param>
+    ''' <param name="attributes"></param>
+    ''' <remarks></remarks>
+    Private Sub AddXMLElement(doc As XmlDocument, xpath As String, attributes As Dictionary(Of String, String))
 
-        Dim newElem As XmlElement = doc.CreateElement(elementName)
-
-        ' Add the attributes
-        For Each attrib In attributes
-            Dim newAttr As XmlAttribute = doc.CreateAttribute(attrib.Key)
-            newAttr.Value = attrib.Value
-            newElem.Attributes.Append(newAttr)
-        Next
-
-        ' Add the new element to the search element
-        doc.DocumentElement.AppendChild(newElem)
+        MakeXPath(doc, xpath, attributes)
 
     End Sub
-    
+
     ''' <summary>
     ''' Use MSConvert to convert the .mzXML or .mzML file to a .mgf file
     ''' </summary>
@@ -317,69 +325,11 @@ Public Class clsAnalysisToolRunnerMODPlus
             Dim doc = New XmlDocument()
             doc.Load(fiParamFile.FullName)
 
-            Dim nodeList As XmlNodeList = doc.SelectNodes("/search/dataset")
-            If nodeList.Count > 0 Then
-                ' This value will get updated to the correct name later in this function
-                nodeList(0).Attributes("local_path").Value = "Dataset_PartX.mgf"
-                nodeList(0).Attributes("format").Value = "mgf"
-            Else
-                ' Match not found; add it
-                Dim attributes = New Dictionary(Of String, String)
-                attributes.Add("local_path", "Dataset_PartX.mgf")
-                attributes.Add("format", "mgf")
-                AddXMLElement(doc, "dataset", attributes)
-            End If
+            DefineParamfileDatasetAndFasta(doc, fastaFilePath)
 
-            nodeList = doc.SelectNodes("/search/database")
-            If nodeList.Count > 0 Then
-                nodeList(0).Attributes("local_path").Value = fastaFilePath
-            Else
-                ' Match not found; add it
-                AddXMLElement(doc, "database", "local_path", fastaFilePath)
-            End If
+            DefineParamMassResolutionSettings(doc)
 
-            Dim reThreadNumber = New Regex("_Part(\d+)\.mgf", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-            Dim paramFileList = New Dictionary(Of Integer, String)
-
-            For Each fiMgfFile In mgfFiles
-
-                Dim reMatch = reThreadNumber.Match(fiMgfFile.Name)
-                If Not reMatch.Success Then
-                    LogError("RegEx failed to extract the thread number from the MGF file name: " + fiMgfFile.Name)
-                    Return New Dictionary(Of Integer, String)
-                End If
-
-                Dim threadNumber As Integer
-                If Not Integer.TryParse(reMatch.Groups(1).Value, threadNumber) Then
-                    LogError("RegEx logic error extracting the thread number from the MGF file name: " + fiMgfFile.Name)
-                    Return New Dictionary(Of Integer, String)
-                End If
-
-                If paramFileList.ContainsKey(threadNumber) Then
-                    LogError("MGFSplitter logic error; duplicate thread number encountered for " + fiMgfFile.Name)
-                    Return New Dictionary(Of Integer, String)
-                End If
-
-                nodeList = doc.SelectNodes("/search/dataset")
-                If nodeList.Count > 0 Then
-                    nodeList(0).Attributes("local_path").Value = fiMgfFile.FullName
-                    nodeList(0).Attributes("format").Value = "mgf"
-                End If
-
-                Dim paramFilePathCurrent = Path.Combine(fiParamFile.DirectoryName, Path.GetFileNameWithoutExtension(fiParamFile.Name) & "_Part" & threadNumber & ".xml")
-
-                Using objXmlWriter = New XmlTextWriter(New FileStream(paramFilePathCurrent, FileMode.Create, FileAccess.Write, FileShare.Read), New Text.UTF8Encoding(False))
-                    objXmlWriter.Formatting = Formatting.Indented
-                    objXmlWriter.Indentation = 4
-
-                    doc.WriteTo(objXmlWriter)
-                End Using
-
-                paramFileList.Add(threadNumber, paramFilePathCurrent)
-
-                m_jobParams.AddResultFileToSkip(paramFilePathCurrent)
-
-            Next
+            Dim paramFileList = CreateThreadParamFiles(fiParamFile, doc, mgfFiles)
 
             Return paramFileList
 
@@ -389,6 +339,160 @@ Public Class clsAnalysisToolRunnerMODPlus
         End Try
 
     End Function
+
+    Private Function CreateThreadParamFiles(
+       fiMasterParamFile As FileInfo,
+       doc As XmlDocument,
+       mgfFiles As IEnumerable(Of FileInfo)) As Dictionary(Of Integer, String)
+
+        Dim reThreadNumber = New Regex("_Part(\d+)\.mgf", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        Dim paramFileList = New Dictionary(Of Integer, String)
+        Dim nodeList As XmlNodeList
+
+        For Each fiMgfFile In mgfFiles
+
+            Dim reMatch = reThreadNumber.Match(fiMgfFile.Name)
+            If Not reMatch.Success Then
+                LogError("RegEx failed to extract the thread number from the MGF file name: " + fiMgfFile.Name)
+                Return New Dictionary(Of Integer, String)
+            End If
+
+            Dim threadNumber As Integer
+            If Not Integer.TryParse(reMatch.Groups(1).Value, threadNumber) Then
+                LogError("RegEx logic error extracting the thread number from the MGF file name: " + fiMgfFile.Name)
+                Return New Dictionary(Of Integer, String)
+            End If
+
+            If paramFileList.ContainsKey(threadNumber) Then
+                LogError("MGFSplitter logic error; duplicate thread number encountered for " + fiMgfFile.Name)
+                Return New Dictionary(Of Integer, String)
+            End If
+
+            nodeList = doc.SelectNodes("/search/dataset")
+            If nodeList.Count > 0 Then
+                nodeList(0).Attributes("local_path").Value = fiMgfFile.FullName
+                nodeList(0).Attributes("format").Value = "mgf"
+            End If
+
+            Dim paramFileName = Path.GetFileNameWithoutExtension(fiMasterParamFile.Name) & "_Part" & threadNumber & ".xml"
+            Dim paramFilePath = Path.Combine(fiMasterParamFile.DirectoryName, paramFileName)
+
+            Using objXmlWriter = New XmlTextWriter(New FileStream(paramFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), New Text.UTF8Encoding(False))
+                objXmlWriter.Formatting = Formatting.Indented
+                objXmlWriter.Indentation = 4
+
+                doc.WriteTo(objXmlWriter)
+            End Using
+
+            paramFileList.Add(threadNumber, paramFilePath)
+
+            m_jobParams.AddResultFileToSkip(paramFilePath)
+
+        Next
+
+        Return paramFileList
+
+    End Function
+
+    Private Sub DefineParamfileDatasetAndFasta(doc As XmlDocument, fastaFilePath As String)
+
+        ' Define the path to the dataset file
+        Dim nodeList As XmlNodeList = doc.SelectNodes("/search/dataset")
+        If nodeList.Count > 0 Then
+            ' This value will get updated to the correct name later in this function
+            nodeList(0).Attributes("local_path").Value = "Dataset_PartX.mgf"
+            nodeList(0).Attributes("format").Value = "mgf"
+        Else
+            ' Match not found; add it
+            Dim attributes = New Dictionary(Of String, String)
+            attributes.Add("local_path", "Dataset_PartX.mgf")
+            attributes.Add("format", "mgf")
+            AddXMLElement(doc, "/search/dataset", attributes)
+        End If
+
+        ' Define the path to the fasta file
+        nodeList = doc.SelectNodes("/search/database")
+        If nodeList.Count > 0 Then
+            nodeList(0).Attributes("local_path").Value = fastaFilePath
+        Else
+            ' Match not found; add it
+            AddXMLElement(doc, "/search/database", "local_path", fastaFilePath)
+        End If
+
+    End Sub
+
+    Private Sub DefineParamMassResolutionSettings(doc As XmlDocument)
+
+        Const LOW_RES_FLAG = "low"
+        Const HIGH_RES_FLAG = "high"
+
+        Const MIN_FRAG_TOL_LOW_RES = 0.3
+        Const DEFAULT_FRAG_TOL_LOW_RES = "0.5"        
+        Const DEFAULT_FRAG_TOL_HIGH_RES = "0.05"
+
+
+        ' Validate the setting for instrument_resolution and fragment_ion_tol
+
+        Dim strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
+        Dim instrumentResolutionMsMs = LOW_RES_FLAG
+
+        If strDatasetType.ToLower().EndsWith("hmsn") Then
+            instrumentResolutionMsMs = HIGH_RES_FLAG
+        End If
+
+        Dim nodeList = doc.SelectNodes("/search/instrument_resolution")
+        If nodeList.Count > 0 Then
+            If nodeList(0).Attributes("msms").Value = HIGH_RES_FLAG AndAlso instrumentResolutionMsMs = "low" Then
+                ' Parameter file lists the resolution as high, but it's actually low
+                ' Auto-change it
+                nodeList(0).Attributes("msms").Value = instrumentResolutionMsMs
+                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-switched to low resolution mode for MS/MS data")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+            End If
+        Else
+            ' Match not found; add it
+            Dim attributes = New Dictionary(Of String, String)
+            attributes.Add("ms", HIGH_RES_FLAG)
+            attributes.Add("msms", instrumentResolutionMsMs)
+            AddXMLElement(doc, "/search/instrument_resolution", attributes)
+        End If
+
+
+        nodeList = doc.SelectNodes("/search/parameters/fragment_ion_tol")
+        If nodeList.Count > 0 Then
+            If instrumentResolutionMsMs = LOW_RES_FLAG Then
+                Dim massTolDa As Double = 0
+                If Double.TryParse(nodeList(0).Attributes("value").Value, massTolDa) Then
+                    Dim massUnits = nodeList(0).Attributes("unit").Value
+
+                    If massUnits = "ppm" Then
+                        ' Convert from ppm to Da
+                        massTolDa = massTolDa * 1000 / 1000000
+                    End If
+
+                    If massTolDa < MIN_FRAG_TOL_LOW_RES Then
+                        m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-changed fragment_ion_tol to " & DEFAULT_FRAG_TOL_LOW_RES & " Da since low resolution MS/MS")
+                        nodeList(0).Attributes("value").Value = DEFAULT_FRAG_TOL_LOW_RES
+                        nodeList(0).Attributes("unit").Value = "da"
+                    End If
+                End If
+            End If
+
+        Else
+            ' Match not found; add it
+            Dim attributes = New Dictionary(Of String, String)
+
+            If instrumentResolutionMsMs = HIGH_RES_FLAG Then
+                attributes.Add("value", DEFAULT_FRAG_TOL_HIGH_RES)
+            Else
+                attributes.Add("value", DEFAULT_FRAG_TOL_LOW_RES)
+            End If
+
+            attributes.Add("unit", "da")
+            AddXMLElement(doc, "/search/parameters/fragment_ion_tol", attributes)
+        End If
+
+    End Sub
 
     Private Function InitializeFastaFile() As Boolean
 
@@ -408,7 +512,56 @@ Public Class clsAnalysisToolRunnerMODPlus
 
     End Function
 
-    Private Function PostProcessMODPlusResults() As Boolean
+    ''' <summary>
+    ''' Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
+    ''' </summary>
+    ''' <param name="doc"></param>
+    ''' <param name="xpath"></param>
+    ''' <param name="attributes"></param>
+    ''' <returns></returns>
+    ''' <remarks>Code adapted from "http://stackoverflow.com/questions/508390/create-xml-nodes-based-on-xpath"</remarks>
+    Private Function MakeXPath(doc As XmlDocument, xpath As String, attributes As Dictionary(Of String, String)) As XmlNode
+        Return MakeXPath(doc, TryCast(doc, XmlNode), xpath, attributes)
+    End Function
+
+    Private Function MakeXPath(doc As XmlDocument, parent As XmlNode, xpath As String, attributes As Dictionary(Of String, String)) As XmlNode
+
+        ' Grab the next node name in the xpath; or return parent if empty
+        Dim partsOfXPath As String() = xpath.Trim("/"c).Split("/"c)
+        Dim nextNodeInXPath As String = partsOfXPath.First()
+        If String.IsNullOrEmpty(nextNodeInXPath) Then
+            Return parent
+        End If
+
+        ' Get or create the node from the name
+        Dim node As XmlNode = parent.SelectSingleNode(nextNodeInXPath)
+        If node Is Nothing Then
+            Dim newNode = doc.CreateElement(nextNodeInXPath)
+
+            If partsOfXPath.Count = 1 Then
+                ' Right-most node in the xpath
+                ' Add the attributes
+                For Each attrib In attributes
+                    Dim newAttr As XmlAttribute = doc.CreateAttribute(attrib.Key)
+                    newAttr.Value = attrib.Value
+                    newNode.Attributes.Append(newAttr)
+                Next
+            End If
+
+            node = parent.AppendChild(newNode)
+        End If
+
+        If partsOfXPath.Count = 1 Then
+            Return node
+        Else
+            ' Rejoin the remainder of the array as an xpath expression and recurse
+            Dim rest As String = String.Join("/", partsOfXPath.Skip(1).ToArray())
+            Return MakeXPath(doc, node, rest, attributes)
+        End If
+
+    End Function
+
+    Private Function PostProcessMODPlusResults(paramFileList As Dictionary(Of Integer, String)) As Boolean
 
         Dim successOverall = True
 
@@ -425,6 +578,11 @@ Public Class clsAnalysisToolRunnerMODPlus
             End If
 
             For Each modPlusRunner In mMODPlusRunners
+
+                If String.IsNullOrWhiteSpace(modPlusRunner.Value.OutputFilePath) Then
+                    Continue For
+                End If
+
                 Dim fiResultFile = New FileInfo(modPlusRunner.Value.OutputFilePath)
 
                 If Not fiResultFile.Exists Then
@@ -486,17 +644,23 @@ Public Class clsAnalysisToolRunnerMODPlus
 
             Dim filesToMove = New List(Of FileInfo)
             filesToMove.Add(fiCombinedResults)
-            
+
             Dim diWorkDir = New DirectoryInfo(m_WorkDir)
             filesToMove.AddRange(diWorkDir.GetFiles("*ConsoleOutput*.txt"))
 
+            For Each paramFile In paramFileList
+                filesToMove.Add(New FileInfo(paramFile.Value))
+            Next
+
             For Each fiFile In filesToMove
-                fiFile.MoveTo(Path.Combine(diZipFolder.FullName, fiFile.Name))
+                If fiFile.Exists Then
+                    fiFile.MoveTo(Path.Combine(diZipFolder.FullName, fiFile.Name))
+                End If
             Next
 
             Dim zippedResultsFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(fiCombinedResults.Name) & ".zip")
             Dim blnSuccess = m_IonicZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath)
-            
+
             If blnSuccess Then
                 m_jobParams.AddResultFileToSkip(fiCombinedResults.Name)
             ElseIf String.IsNullOrEmpty(m_message) Then
@@ -573,9 +737,20 @@ Public Class clsAnalysisToolRunnerMODPlus
 
     End Function
 
-    Protected Function StartMODPlus(javaProgLoc As String) As Boolean
+    ''' <summary>
+    ''' Run MODPlus
+    ''' </summary>
+    ''' <param name="javaProgLoc">Path to java.exe</param>
+    ''' <param name="paramFileList">Output: Dictionary where key is the thread number and value is the parameter file path</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Protected Function StartMODPlus(
+      javaProgLoc As String,
+      <Out()> ByRef paramFileList As Dictionary(Of Integer, String)) As Boolean
 
         Dim currentTask = "Initializing"
+
+        paramFileList = New Dictionary(Of Integer, String)
 
         Try
 
@@ -650,7 +825,7 @@ Public Class clsAnalysisToolRunnerMODPlus
 
             currentTask = "Create a parameter file for each thread"
 
-            Dim paramFileList = CreateParameterFiles(paramFileName, fastaFilePath, mgfFiles)
+            paramFileList = CreateParameterFiles(paramFileName, fastaFilePath, mgfFiles)
 
             If paramFileList.Count = 0 Then
                 If String.IsNullOrWhiteSpace(m_message) Then
