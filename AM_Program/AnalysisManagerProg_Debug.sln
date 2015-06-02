@@ -6,7 +6,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProg_Debug",
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AM_Shared", "AM_Shared\AM_Shared.vbproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMODPlusPlugin", "..\Plugins\AM_MODPlus_Plugin\AnalysisManagerMODPlusPlugin.vbproj", "{F797EDD0-F632-45B8-8421-1F4A3F50314A}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerDecon2lsPlugIn", "..\Plugins\AM_Decon2ls_PlugIn_Decon2LSV2\AnalysisManagerDecon2lsPlugIn.vbproj", "{4E7586EC-4A03-433B-B98D-393DA95C020C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,12 +29,14 @@ Global
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|x86.ActiveCfg = Release|Any CPU
-		{F797EDD0-F632-45B8-8421-1F4A3F50314A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F797EDD0-F632-45B8-8421-1F4A3F50314A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F797EDD0-F632-45B8-8421-1F4A3F50314A}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F797EDD0-F632-45B8-8421-1F4A3F50314A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F797EDD0-F632-45B8-8421-1F4A3F50314A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F797EDD0-F632-45B8-8421-1F4A3F50314A}.Release|x86.ActiveCfg = Release|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Debug|x86.ActiveCfg = Debug|x86
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Debug|x86.Build.0 = Debug|x86
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Release|x86.ActiveCfg = Release|x86
+		{4E7586EC-4A03-433B-B98D-393DA95C020C}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

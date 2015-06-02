@@ -24,7 +24,7 @@ Public Class clsMainProcess
     '  when the manager is disabled or cannot make an entry in the log file
     Private Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
     Public Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
-    Private Const MAX_ERROR_COUNT As Integer = 6
+    Private Const MAX_ERROR_COUNT As Integer = 10
 
     Private Const DECON2LS_FATAL_REMOTING_ERROR As String = "Fatal remoting error"
     Private Const DECON2LS_CORRUPTED_MEMORY_ERROR As String = "Corrupted memory error"
@@ -239,7 +239,8 @@ Public Class clsMainProcess
         Dim blnOneTaskStarted As Boolean
         Dim blnOneTaskPerformed As Boolean
 
-        Dim intErrorCount As Integer = 0
+        ' Used to track critical manager errors (not necessarily failed analysis jobs when the plugin reports "no results" or similar)
+        Dim intCriticalMgrErrorCount As Integer = 0
         Dim intSuccessiveDeadLockCount As Integer = 0
 
         Try
@@ -347,7 +348,7 @@ Public Class clsMainProcess
                 End If
 
                 ' Check to see if an excessive number of errors have occurred
-                If intErrorCount > MAX_ERROR_COUNT Then
+                If intCriticalMgrErrorCount > MAX_ERROR_COUNT Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Excessive task failures; disabling manager via flag file")
 
                     ' Note: We previously called DisableManagerLocally() to update AnalysisManager.config.exe
@@ -399,14 +400,14 @@ Public Class clsMainProcess
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No analysis jobs found")
                         End If
                         blnRequestJobs = False
-                        intErrorCount = 0
+                        intCriticalMgrErrorCount = 0
                         UpdateStatusIdle("No analysis jobs found")
 
                     Case clsDBTask.RequestTaskResult.ResultError
                         If Me.TraceMode Then ShowTraceMessage("Error requesting a task")
 
                         'There was a problem getting the task; errors were logged by RequestTaskResult
-                        intErrorCount += 1
+                        intCriticalMgrErrorCount += 1
 
                     Case clsDBTask.RequestTaskResult.TaskFound
 
@@ -420,16 +421,17 @@ Public Class clsMainProcess
                             blnOneTaskStarted = True
                             If DoAnalysisJob() Then
                                 ' Task succeeded; reset the sequential job failure counter
-                                intErrorCount = 0
+                                intCriticalMgrErrorCount = 0
                                 blnOneTaskPerformed = True
                             Else
                                 'Something went wrong; errors were logged by DoAnalysisJob
                                 If m_MostRecentErrorMessage.Contains("None of the spectra are centroided") OrElse
-                                   m_MostRecentErrorMessage.Contains("No peaks found") Then
+                                   m_MostRecentErrorMessage.Contains("No peaks found") OrElse
+                                   m_MostRecentErrorMessage.Contains("No spectra were exported") Then
                                     ' Job failed, but this was not a manager error
                                     ' Do not increment the error count
                                 Else
-                                    intErrorCount += 1
+                                    intCriticalMgrErrorCount += 1
                                 End If
                             End If
 
@@ -444,7 +446,7 @@ Public Class clsMainProcess
                             ' Set the job state to failed
                             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob")
 
-                            intErrorCount += 1
+                            intCriticalMgrErrorCount += 1
                             m_NeedToAbortProcessing = True
 
                         End Try
