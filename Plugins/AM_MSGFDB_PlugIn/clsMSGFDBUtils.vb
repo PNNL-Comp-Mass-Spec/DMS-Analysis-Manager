@@ -360,7 +360,10 @@ Public Class clsMSGFDBUtils
 
         Dim CmdStr As String
 
-        CmdStr = " -Xmx" & javaMemorySizeMB & "M -cp " & msgfDbProgLoc
+        ' We're using "-XX:+UseConcMarkSweepGC" as directed at http://stackoverflow.com/questions/5839359/java-lang-outofmemoryerror-gc-overhead-limit-exceeded
+        ' due to seeing error "java.lang.OutOfMemoryError: GC overhead limit exceeded" with a 353 MB .mzid file
+
+        CmdStr = " -Xmx" & javaMemorySizeMB & "M -XX:+UseConcMarkSweepGC -cp " & msgfDbProgLoc
         CmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
 
         CmdStr &= " -i " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName))

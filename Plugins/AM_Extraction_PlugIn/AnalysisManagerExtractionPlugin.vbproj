@@ -93,6 +93,10 @@
     <Reference Include="PeptideHitResultsProcessor">
       <HintPath>..\..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
     </Reference>
+    <Reference Include="PeptideToProteinMapEngine, Version=1.1.5606.27810, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>

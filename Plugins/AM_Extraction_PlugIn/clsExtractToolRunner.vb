@@ -9,6 +9,7 @@
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
+Imports AnalysisManagerMSGFDBPlugIn
 Imports PHRPReader
 
 ''' <summary>
@@ -36,7 +37,10 @@ Public Class clsExtractToolRunner
 #Region "Module variables"
 	Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
 	Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
-	Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
+
+    Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
+    Protected mMSGFDBUtilsError As Boolean
+
 	Protected mGeneratedFastaFilePath As String
 #End Region
 
@@ -487,8 +491,16 @@ Public Class clsExtractToolRunner
 
             ' Initialize mMSGFDBUtils
             mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
+            mMSGFDBUtilsError = False
 
             Dim strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, MSGFDbProgLoc, m_Dataset, strMZIDFileName)
+
+            If mMSGFDBUtilsError Then
+                If String.IsNullOrWhiteSpace(m_message) Then
+                    LogError("mMSGFDBUtilsError is True after call to ConvertMZIDToTSV")
+                End If
+                Return String.Empty
+            End If
 
             If Not String.IsNullOrEmpty(strTSVFilePath) Then
                 ' File successfully created
@@ -1191,7 +1203,7 @@ Public Class clsExtractToolRunner
 
                 strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
                 If Not File.Exists(strTargetFilePath) Then
-                    ' Processing MSGF+ results
+                    ' Processing MSGF+ results, work with .tsv files
 
                     If splitFastaEnabled Then
                         numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0)
@@ -1218,7 +1230,41 @@ Public Class clsExtractToolRunner
                             If String.IsNullOrEmpty(strTargetFilePath) Then
                                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                             End If
+
                         End If
+
+                        Dim strPeptoProtMapFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb" & suffixToAdd & "_PepToProtMap.txt")
+
+                        If Not File.Exists(strPeptoProtMapFilePath) Then
+                            ' Create the Peptide to Protein map file
+
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the missing _PepToProtMap.txt file")
+
+                            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+                            If mMSGFDBUtils Is Nothing Then
+                                mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum.ToString(), m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
+                            End If
+
+                            mMSGFDBUtilsError = False
+
+                            ' Assume this is true
+                            Dim resultsIncludeAutoAddedDecoyPeptides = True
+
+                            Dim result = mMSGFDBUtils.CreatePeptideToProteinMapping(strTargetFilePath, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
+
+                            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                                Return result
+                            End If
+
+                            If mMSGFDBUtilsError Then
+                                If String.IsNullOrWhiteSpace(m_message) Then
+                                    LogError("mMSGFDBUtilsError is True after call to CreatePeptideToProteinMapping")
+                                End If
+
+                                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                            End If
+                        End If
+
                     Next
 
                     If splitFastaEnabled Then
@@ -2057,6 +2103,16 @@ Public Class clsExtractToolRunner
             End If
         End If
     End Sub
+
+    Private Sub mMSGFDBUtils_ErrorEvent(errorMsg As String, detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
+        LogError("Error in MSGFDBUtils: " & errorMsg, detailedMessage)
+        mMSGFDBUtilsError = True
+    End Sub
+
+    Private Sub mMSGFDBUtils_WarningEvent(warningMsg As String) Handles mMSGFDBUtils.WarningEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning in MSGFDBUtils: " & warningMsg)
+    End Sub
 #End Region
 
+  
 End Class

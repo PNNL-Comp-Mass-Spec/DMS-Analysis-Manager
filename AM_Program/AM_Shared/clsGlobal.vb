@@ -46,26 +46,26 @@ Public Class clsGlobal
 	''' <summary>
 	''' Appends a string to a job comment string
 	''' </summary>
-	''' <param name="InpComment">Comment currently in job params</param>
-	''' <param name="NewComment">Comment to be appened</param>
+    ''' <param name="baseComment">Comment currently in job params</param>
+    ''' <param name="addnlComment">Comment to be appened</param>
 	''' <returns>String containing both comments</returns>
 	''' <remarks></remarks>
-	Public Shared Function AppendToComment(ByVal InpComment As String, ByVal NewComment As String) As String
+    Public Shared Function AppendToComment(ByVal baseComment As String, ByVal addnlComment As String) As String
 
-		'Appends a comment string to an existing comment string
+        'Appends a comment string to an existing comment string
 
-		If String.IsNullOrWhiteSpace(InpComment) Then
-			Return NewComment
-		Else
-			' Append a semicolon to InpComment, but only if it doesn't already end in a semicolon
-			If Not InpComment.TrimEnd(" "c).EndsWith(";"c) Then
-				InpComment &= "; "
-			End If
+        If String.IsNullOrWhiteSpace(baseComment) Then
+            Return addnlComment
+        Else
+            ' Append a semicolon to InpComment, but only if it doesn't already end in a semicolon
+            If Not baseComment.TrimEnd(" "c).EndsWith(";"c) Then
+                baseComment &= "; "
+            End If
 
-			Return InpComment & NewComment
-		End If
+            Return baseComment & addnlComment
+        End If
 
-	End Function
+    End Function
 
 	''' <summary>
 	'''Examines intCount to determine which string to return
