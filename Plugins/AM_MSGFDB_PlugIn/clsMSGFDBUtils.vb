@@ -1999,6 +1999,12 @@ Public Class clsMSGFDBUtils
             strMSGFDbCmdLineOptions &= " -minNumPeaks 5"
         End If
 
+        ' Auto-add the "addFeatures" switch if not present
+        ' This is required to post-process the results with Percolator
+        If mMSGFPlus AndAlso strMSGFDbCmdLineOptions.IndexOf("-addFeatures", StringComparison.CurrentCultureIgnoreCase) < 0 Then
+            strMSGFDbCmdLineOptions &= " -addFeatures 1"
+        End If
+
         If strMSGFDbCmdLineOptions.Contains("-tda 1") Then
             ' Make sure the .Fasta file is not a Decoy fasta
             If fastaFileIsDecoy Then

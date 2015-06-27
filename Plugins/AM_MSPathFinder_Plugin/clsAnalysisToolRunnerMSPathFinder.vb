@@ -23,7 +23,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 	Protected Const MSPATHFINDER_CONSOLE_OUTPUT As String = "MSPathFinder_ConsoleOutput.txt"
 
 	Protected Const PROGRESS_PCT_STARTING As Single = 1
-	Protected Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 5
+    Protected Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 2
 	Protected Const PROGRESS_PCT_SEARCHING_DECOY_DB As Single = 50
 	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
@@ -296,16 +296,22 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 		' C(0) H(1) N(0) O(3) S(0) P(1),T,opt,Everywhere,Phospho
 		' C(0) H(1) N(0) O(3) S(0) P(1),Y,opt,Everywhere,Phospho
 		' C(0) H(-1) N(0) O(0) S(0),C,opt,Everywhere,Dehydro
-		' C(2) H(2) N(0) O(1) S(0),*,opt,ProteinNTerm,Acetyl
-		' Reading raw file...Elapsed Time: 4.4701 sec
-		' Determining precursor masses...Elapsed Time: 59.2987 sec
-		' Deconvoluting MS2 spectra...Elapsed Time: 9.5820 sec
-		' Generating C:\DMS_Temp_Org\ID_003962_71E1A1D4.icseq and C:\DMS_Temp_Org\ID_003962_71E1A1D4.icanno...    Done.
-		' Reading the target database...Elapsed Time: 0.0074 sec
-		' Searching the target database
-		' Generating C:\DMS_Temp_Org\ID_003962_71E1A1D4.icplcp... Done.
+        ' C(2) H(2) N(0) O(1) S(0),*,opt,ProteinNTerm,Acetyl
+        ' Getting MS1 features from E:\DMS_WorkDir\NCR_50K_Test_24Jun15_Bane_15-02-02RZ.ms1ft.
+        ' Reading raw file...Elapsed Time: 0.0288 sec
+        ' Reading ProMex results...#MS/MS matches per sequence: 0.005317193
+        ' Elapsed Time: 5.1212 sec
+        ' Generating C:\DMS_Temp_Org\ID_004973_9BA6912F.icseq and C:\DMS_Temp_Org\ID_004973_9BA6912F.icanno...    Done.
+        ' Reading the target database...Elapsed Time: 0.0217 sec
+        ' Searching the target database
+        ' Generating C:\DMS_Temp_Org\ID_004973_9BA6912F.icplcp... Done.
+        ' Estimated proteins: 7142811
+        ' Processing 100000th proteins..., 01.4%...Elapsed Time: 13.8874 sec
+        ' Processing 200000th proteins..., 02.8%...Elapsed Time: 14.2812 sec
+        ' Processing 300000th proteins..., 04.2%...Elapsed Time: 12.5555 sec
 
-		Const REGEX_MSPathFinder_PROGRESS As String = "(\d+)% complete"
+
+        Const REGEX_MSPathFinder_PROGRESS = "Processing.+, ([0-9.]+)%"
 		Static reCheckProgress As New Regex(REGEX_MSPathFinder_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
 		Static reProcessingProteins As New Regex("Processing (\d+)th proteins", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
@@ -325,6 +331,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 			' Value between 0 and 100
 			Dim progressComplete As Single = 0
+            Dim percentCompleteFound = False
+
             Dim targetProteinsSearched = 0
             Dim decoyProteinsSearched = 0
 
@@ -346,10 +354,12 @@ Public Class clsAnalysisToolRunnerMSPathFinder
                             mConsoleOutputErrorMsg &= "; " & strLineIn
                             Continue Do
 
-                        ElseIf strLineIn.StartsWith("Searching the target database") Then
+                        ElseIf Not percentCompleteFound AndAlso strLineIn.StartsWith("Searching the target database") Then
+                            ' The following is deprecated in June 2015 because MSPathFinder now reports % complete
                             progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
 
-                        ElseIf strLineIn.StartsWith("Searching the decoy database") Then
+                        ElseIf Not percentCompleteFound AndAlso strLineIn.StartsWith("Searching the decoy database") Then
+                            ' The following is deprecated in June 2015 because MSPathFinder now reports % complete
                             progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
                             searchingDecoyDB = True
 
@@ -357,6 +367,12 @@ Public Class clsAnalysisToolRunnerMSPathFinder
                             Dim oMatch As Match = reCheckProgress.Match(strLineIn)
                             If oMatch.Success Then
                                 Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
+                                percentCompleteFound = True
+                                Continue Do
+                            End If
+
+                            If percentCompleteFound Then
+                                ' No need to manually compute the % complete
                                 Continue Do
                             End If
 
@@ -381,9 +397,11 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 			End Using
 
-			If searchingDecoyDB Then
-				progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched)
-			End If
+            If percentCompleteFound Then
+                progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_TARGET_DB, PROGRESS_PCT_COMPLETE, progressComplete)
+            ElseIf searchingDecoyDB Then
+                progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched)
+            End If
 
             If m_progress < progressComplete Then
                 m_progress = progressComplete
