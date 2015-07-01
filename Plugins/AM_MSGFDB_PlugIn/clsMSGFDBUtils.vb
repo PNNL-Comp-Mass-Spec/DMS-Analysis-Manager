@@ -3,7 +3,6 @@ Imports AnalysisManagerBase
 Imports System.Runtime.InteropServices
 Imports System.IO
 Imports System.Net
-Imports System.Runtime.Serialization.Formatters
 
 Public Class clsMSGFDBUtils
 
@@ -284,13 +283,22 @@ Public Class clsMSGFDBUtils
 
     End Sub
 
-    Public Function ConvertMZIDToTSV(javaProgLoc As String, msgfDbProgLoc As String, strDatasetName As String, strMZIDFileName As String) As String
+    ''' <summary>
+    ''' Convert a .mzid file to a tab-delimited text file (.tsv)
+    ''' </summary>
+    ''' <param name="javaProgLoc">Full path to Java</param>
+    ''' <param name="msgfDbProgLoc">Folder with MSGFDB.jar</param>
+    ''' <param name="strDatasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
+    ''' <param name="strMZIDFileName">.mzid file name (assumed to be in the work directory)</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function ConvertMZIDToTSV(
+      javaProgLoc As String,
+      msgfDbProgLoc As String,
+      strDatasetName As String,
+      strMZIDFileName As String) As String
 
         Dim strTSVFilePath As String
-        Dim javaMemorySizeMB As Integer
-
-        Dim CmdStr As String
-        Dim blnSuccess As Boolean
 
         Try
             ' Note that this file needs to be _msgfdb.tsv, not _msgfplus.tsv
@@ -298,13 +306,31 @@ Public Class clsMSGFDBUtils
             Dim tsvFileName = strDatasetName & MSGFDB_TSV_SUFFIX
             strTSVFilePath = Path.Combine(m_WorkDir, tsvFileName)
 
-            'Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
+            ' Examine the size of the .mzid file
+            Dim fiMzidFile = New FileInfo(Path.Combine(m_WorkDir, strMZIDFileName))
+            If Not fiMzidFile.Exists Then
+                ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV (file not found)", "Error in MSGFDbPlugin->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
+                Return String.Empty
+            End If
 
-            javaMemorySizeMB = 2000
-            CmdStr = GetMZIDtoTSVCommandLine(strMZIDFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB)
+            ' Dynamically set the amount of required memory based on the size of the .mzid file
+            Dim fileSizeMB = fiMzidFile.Length / 1024.0 / 1024.0
+            Dim javaMemorySizeMB = 10000
+
+            If fileSizeMB < 1000 Then javaMemorySizeMB = 8000
+            If fileSizeMB < 800 Then javaMemorySizeMB = 7000
+            If fileSizeMB < 600 Then javaMemorySizeMB = 6000
+            If fileSizeMB < 600 Then javaMemorySizeMB = 6000
+            If fileSizeMB < 400 Then javaMemorySizeMB = 5000
+            If fileSizeMB < 300 Then javaMemorySizeMB = 4000
+            If fileSizeMB < 200 Then javaMemorySizeMB = 3000
+            If fileSizeMB < 100 Then javaMemorySizeMB = 2000
+
+            ' Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
+            Dim cmdStr = GetMZIDtoTSVCommandLine(strMZIDFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB)
 
             ' Make sure the machine has enough free memory to run MSGFPlus
-            Const LOG_FREE_MEMORY_ON_SUCCESS As Boolean = False
+            Const LOG_FREE_MEMORY_ON_SUCCESS = False
 
             If Not clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MzIDToTsv", LOG_FREE_MEMORY_ON_SUCCESS) Then
                 ReportError("Not enough free memory to run the MzIDToTsv module in MSGFPlus")
@@ -312,11 +338,10 @@ Public Class clsMSGFDBUtils
             End If
 
             If m_DebugLevel >= 1 Then
-                ReportMessage(javaProgLoc & " " & CmdStr)
+                ReportMessage(javaProgLoc & " " & cmdStr)
             End If
 
-            Dim objCreateTSV As clsRunDosProgram
-            objCreateTSV = New clsRunDosProgram(m_WorkDir)
+            Dim objCreateTSV = New clsRunDosProgram(m_WorkDir)
 
             With objCreateTSV
                 .CreateNoWindow = True
@@ -327,7 +352,7 @@ Public Class clsMSGFDBUtils
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
             End With
 
-            blnSuccess = objCreateTSV.RunProgram(javaProgLoc, CmdStr, "MzIDToTsv", True)
+            Dim blnSuccess = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", True)
 
             If Not blnSuccess Then
                 ReportError("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
@@ -343,7 +368,7 @@ Public Class clsMSGFDBUtils
             End If
 
         Catch ex As Exception
-            ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV", "Error in MSGFDbPlugin->ConvertMZIDToTSV: & " & ex.Message)
+            ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV", "Error in MSGFDbPlugin->ConvertMZIDToTSV: " & ex.Message)
             Return String.Empty
         End Try
 
@@ -578,7 +603,6 @@ Public Class clsMSGFDBUtils
     ''' <returns>Full path to the trimmed fasta; empty string if a problem</returns>
     ''' <remarks></remarks>
     Protected Function CreateTrimmedFasta(fastaFilePath As String, maxFastaFileSizeMB As Integer) As String
-        Dim trimmedFastaFilePath = String.Empty
 
         Try
             Dim fiFastaFile = New FileInfo(fastaFilePath)
@@ -655,15 +679,14 @@ Public Class clsMSGFDBUtils
             ReportMessage("Trimmed fasta created using " & proteinCount & " proteins; creating the hashcheck file")
 
             clsGlobal.CreateHashcheckFile(fiTrimmedFasta.FullName, True)
-            trimmedFastaFilePath = fiTrimmedFasta.FullName
+            Dim trimmedFastaFilePath = fiTrimmedFasta.FullName
+            Return trimmedFastaFilePath
 
         Catch ex As Exception
             mErrorMessage = "Exception trimming fasta file to " & maxFastaFileSizeMB & " MB"
             ReportError(mErrorMessage, "CreateTrimmedFasta, " & mErrorMessage & ": " & ex.Message)
             Return String.Empty
         End Try
-
-        Return trimmedFastaFilePath
 
     End Function
 
