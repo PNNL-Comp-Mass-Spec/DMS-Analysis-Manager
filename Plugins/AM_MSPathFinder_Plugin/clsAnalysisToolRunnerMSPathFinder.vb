@@ -304,10 +304,12 @@ Public Class clsAnalysisToolRunnerMSPathFinder
         ' Reading the target database...Elapsed Time: 0.0005 sec
         ' Searching the target database
         ' Estimated proteins: 7142811
-        ' Processing 100000th proteins..., 1.4%...Elapsed Time: 12.2013 sec
-        ' Processing 200000th proteins..., 2.8%...Elapsed Time: 12.3526 sec
-        ' Processing 300000th proteins..., 4.2%...Elapsed Time: 11.8967 sec
-        ' Processing 400000th proteins..., 5.6%...Elapsed Time: 11.8692 sec
+        ' Processing, 95 proteins done, 1.0% complete, 15.1 sec elapsed
+        ' Processing, 180 proteins done, 1.8% complete, 30.3 sec elapsed
+        ' Processing, 319 proteins done, 3.2% complete, 45.3 sec elapsed
+        ' Processing, 376 proteins done, 3.8% complete, 60.5 sec elapsed
+        ' Processing, 411 proteins done, 4.1% complete, 75.6 sec elapsed
+        ' Processing, 527 proteins done, 5.3% complete, 90.6 sec elapsed
 
         Const EXCEPTION_FLAG = "Exception while processing:"
         Const ERROR_PROCESSING_FLAG = "Error processing"
@@ -315,7 +317,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
         Const REGEX_PROMEX_RESULTS = "ProMex.+(\d+)/(\d+) features loaded"
         Static rePromexFeatureStats As New Regex(REGEX_PROMEX_RESULTS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
-        Const REGEX_MSPATHFINDER_PROGRESS = "Processing.+, ([0-9.]+)%"
+        Const REGEX_MSPATHFINDER_PROGRESS = "([0-9.]+)% complete"
         Static reCheckProgress As New Regex(REGEX_MSPATHFINDER_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         Static reProcessingProteins As New Regex("Processing (\d+)th proteins", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
@@ -489,9 +491,9 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
             strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME)
 
-            sbOptions.Append(" -mod " & MOD_FILE_NAME)
+            sbOptions.Append(" -mod " & strModFilePath)
 
-            Using swModFile As StreamWriter = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swModFile = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 swModFile.WriteLine("# This file is used to specify modifications for MSPathFinder")
                 swModFile.WriteLine("")
