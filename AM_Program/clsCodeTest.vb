@@ -1925,7 +1925,6 @@ Public Class clsCodeTest
 		UpdateDTAProgress(e.Name)
 	End Sub
 
-
 	Public Sub TestGetFileContents()
 
 		Dim strFilePath As String = "TestInputFile.txt"
@@ -1953,6 +1952,40 @@ Public Class clsCodeTest
 		Return s
 
 	End Function
+
+    Public Sub TestGetVersionInfo()
+
+        Dim intDebugLevel As Integer = 2
+
+        Dim objToolRunner As clsCodeTestAM
+        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+        Dim objSummaryFile As New clsSummaryFile()
+
+        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
+        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam("debuglevel", "0")
+        
+        objToolRunner = New clsCodeTestAM
+        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+
+        Dim pathToTestx86 = "F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\32bit_Dll_Examples\UIMFLibrary.dll"
+        Dim pathToTestx64 = "F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\64bit_Dll_Examples\UIMFLibrary.dll"
+        Dim pathToTestAnyCPU = "F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\AnyCPU_DLL_Examples\UIMFLibrary.dll"
+
+        Dim strToolVersionInfo = String.Empty
+        objToolRunner.StoreToolVersionInfoOneFile(strToolVersionInfo, pathToTestx86)
+        Console.WriteLine(strToolVersionInfo)
+
+        strToolVersionInfo = String.Empty
+        objToolRunner.StoreToolVersionInfoOneFile(strToolVersionInfo, pathToTestx64)
+        Console.WriteLine(strToolVersionInfo)
+
+        strToolVersionInfo = String.Empty
+        objToolRunner.StoreToolVersionInfoOneFile(strToolVersionInfo, pathToTestAnyCPU)
+        Console.WriteLine(strToolVersionInfo)
+
+    End Sub
 
 	Public Sub RemoveSparseSpectra()
 

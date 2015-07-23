@@ -11,6 +11,7 @@ Option Strict On
 Imports System.IO
 Imports System.Threading
 Imports System.Runtime.InteropServices
+Imports System.Runtime.Serialization.Formatters
 Imports System.Text.RegularExpressions
 
 ''' <summary>
@@ -225,8 +226,8 @@ Public Class clsAnalysisToolRunnerBase
         dtElapsedTime = stopTime.Subtract(startTime)
 
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, StartTime = " & StartTime.ToString)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Stoptime = " & StopTime.ToString)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, StartTime = " & startTime.ToString)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Stoptime = " & stopTime.ToString)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Hours = " & dtElapsedTime.Hours.ToString)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Minutes = " & dtElapsedTime.Minutes.ToString)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CalcElapsedTime, Seconds = " & dtElapsedTime.Seconds.ToString)
@@ -1997,7 +1998,7 @@ Public Class clsAnalysisToolRunnerBase
     Public Shared Function PossiblyQuotePath(strPath As String) As String
         Return clsGlobal.PossiblyQuotePath(strPath)
     End Function
-    
+
     Public Sub PurgeOldServerCacheFiles(cacheFolderPath As String)
         Const spaceUsageThresholdGB As Integer = 20000
         PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
@@ -2577,7 +2578,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="strDLLFilePath">Path to the DLL</param>
     ''' <returns>True if success; false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, strDLLFilePath As String) As Boolean
+    Public Function StoreToolVersionInfoOneFile(ByRef strToolVersionInfo As String, strDLLFilePath As String) As Boolean
 
         Dim ioFileInfo As FileInfo
         Dim blnSuccess As Boolean
@@ -2602,9 +2603,17 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
         Catch ex As BadImageFormatException
-            ' Most likely trying to read a 64-bit DLL
-            ' Instead try StoreToolVersionInfoOneFile64Bit
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, strDLLFilePath)
+            ' Most likely trying to read a 64-bit DLL (if this program is running as 32-bit)
+            ' Or, if this program is AnyCPU and running as 64-bit, the target DLL or Exe must be 32-bit
+
+            ' Instead try StoreToolVersionInfoOneFile32Bit or StoreToolVersionInfoOneFile64Bit
+
+            ' Use this when compiled as AnyCPU
+            blnSuccess = StoreToolVersionInfoOneFile32Bit(strToolVersionInfo, strDLLFilePath)
+
+            ' Use this when compiled as 32-bit
+            'blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, strDLLFilePath)
+
 
         Catch ex As Exception
             ' If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, then add these lines to the end of file AnalysisManagerProg.exe.config
@@ -2689,6 +2698,17 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
+    ''' Uses the DLLVersionInspector to determine the version of a 32-bit .NET DLL or .Exe
+    ''' </summary>
+    ''' <param name="strToolVersionInfo"></param>
+    ''' <param name="strDLLFilePath"></param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfoOneFile32Bit(ByRef strToolVersionInfo As String, strDLLFilePath As String) As Boolean
+        Return StoreToolVersionInfoOneFileUseExe(strToolVersionInfo, strDLLFilePath, "DLLVersionInspector_x86.exe")
+    End Function
+
+    ''' <summary>
     ''' Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
     ''' </summary>
     ''' <param name="strToolVersionInfo"></param>
@@ -2696,8 +2716,22 @@ Public Class clsAnalysisToolRunnerBase
     ''' <returns>True if success; false if an error</returns>
     ''' <remarks></remarks>
     Protected Function StoreToolVersionInfoOneFile64Bit(ByRef strToolVersionInfo As String, strDLLFilePath As String) As Boolean
+        Return StoreToolVersionInfoOneFileUseExe(strToolVersionInfo, strDLLFilePath, "DLLVersionInspector_x64.exe")
+    End Function
 
-        Dim strNameAndVersion As String = String.Empty
+    ''' <summary>
+    ''' Uses the specified DLLVersionInspector to determine the version of a .NET DLL or .Exe
+    ''' </summary>
+    ''' <param name="strToolVersionInfo"></param>
+    ''' <param name="strDLLFilePath"></param>
+    ''' <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfoOneFileUseExe(
+      ByRef strToolVersionInfo As String,
+      strDLLFilePath As String,
+      versionInspectorExeName As String) As Boolean
+
         Dim strAppPath As String
         Dim strVersionInfoFilePath As String
         Dim strArgs As String
@@ -2705,79 +2739,76 @@ Public Class clsAnalysisToolRunnerBase
         Dim ioFileInfo As FileInfo
 
         Try
-            strAppPath = Path.Combine(clsGlobal.GetAppFolderPath(), "DLLVersionInspector.exe")
+            strAppPath = Path.Combine(clsGlobal.GetAppFolderPath(), versionInspectorExeName)
 
             ioFileInfo = New FileInfo(strDLLFilePath)
-            strNameAndVersion = Path.GetFileNameWithoutExtension(ioFileInfo.Name) & ", Version="
 
             If Not ioFileInfo.Exists Then
-                m_message = "File not found by StoreToolVersionInfoOneFile64Bit"
+                m_message = "File not found by StoreToolVersionInfoOneFileUseExe"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDLLFilePath)
                 Return False
             ElseIf Not File.Exists(strAppPath) Then
-                m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFile64Bit"
+                m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFileUseExe"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strAppPath)
                 Return False
-            Else
-                ' Call DLLVersionInspector.exe to determine the tool version
-
-                strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_VersionInfo.txt")
-
-                Dim objProgRunner As clsRunDosProgram
-                Dim blnSuccess As Boolean
-                Dim strVersion As String = String.Empty
-
-                objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath())
-
-                strArgs = ioFileInfo.FullName & " /O:" & PossiblyQuotePath(strVersionInfoFilePath)
-
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strAppPath & " " & strArgs)
-                End If
-
-                With objProgRunner
-                    .CacheStandardOutput = False
-                    .CreateNoWindow = True
-                    .EchoOutputToConsole = True
-                    .WriteConsoleOutputToFile = False
-
-                    .DebugLevel = 1
-                    .MonitorInterval = 250
-                End With
-
-                blnSuccess = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", False)
-
-                If Not blnSuccess Then
-                    Return False
-                End If
-
-                Thread.Sleep(100)
-
-                blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, strVersion)
-
-                ' Delete the version info file
-                Try
-                    Thread.Sleep(100)
-                    File.Delete(strVersionInfoFilePath)
-                Catch ex As Exception
-                    ' Ignore errors here
-                End Try
-
-
-                If Not blnSuccess OrElse String.IsNullOrWhiteSpace(strVersion) Then
-                    Return False
-                Else
-                    strNameAndVersion = String.Copy(strVersion)
-                End If
-
             End If
 
-            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+            ' Call DLLVersionInspector.exe to determine the tool version
+
+            strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_VersionInfo.txt")
+
+            Dim objProgRunner As clsRunDosProgram
+            Dim blnSuccess As Boolean
+            Dim strVersion As String = String.Empty
+
+            objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath())
+
+            strArgs = PossiblyQuotePath(ioFileInfo.FullName) & " /O:" & PossiblyQuotePath(strVersionInfoFilePath)
+
+            If m_DebugLevel >= 3 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strAppPath & " " & strArgs)
+            End If
+
+            With objProgRunner
+                .CacheStandardOutput = False
+                .CreateNoWindow = True
+                .EchoOutputToConsole = True
+                .WriteConsoleOutputToFile = False
+
+                .DebugLevel = 1
+                .MonitorInterval = 250
+            End With
+
+            blnSuccess = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", False)
+
+            If Not blnSuccess Then
+                Return False
+            End If
+
+            Thread.Sleep(100)
+
+            blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, strVersion)
+
+            ' Delete the version info file
+            Try
+                If File.Exists(strVersionInfoFilePath) Then
+                    Thread.Sleep(100)
+                    File.Delete(strVersionInfoFilePath)
+                End If                
+            Catch ex As Exception
+                ' Ignore errors here
+            End Try
+
+            If Not blnSuccess OrElse String.IsNullOrWhiteSpace(strVersion) Then
+                Return False
+            End If
+
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strVersion)
 
             Return True
 
         Catch ex As Exception
-            m_message = "Exception determining Version info for " & Path.GetFileName(strDLLFilePath)
+            m_message = "Exception determining Version info for " & Path.GetFileName(strDLLFilePath) & " using " & versionInspectorExeName
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, Path.GetFileNameWithoutExtension(strDLLFilePath))
         End Try

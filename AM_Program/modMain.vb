@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "April 30, 2015"
+    Public Const PROGRAM_DATE As String = "July 22, 2015"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -128,8 +128,10 @@ Module modMain
                         'objTest.TestCosoleOutputParsing()
                         ' objTest.TestMSXmlCachePurge()
 
-                        Dim testLogger = New PRISM.Logging.clsDBLogger()
-                        Console.WriteLine(testLogger.MachineName)
+                        ' Dim testLogger = New PRISM.Logging.clsDBLogger()
+                        ' Console.WriteLine(testLogger.MachineName)
+
+                        objTest.TestGetVersionInfo()
 
 					Catch ex As Exception
 						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))

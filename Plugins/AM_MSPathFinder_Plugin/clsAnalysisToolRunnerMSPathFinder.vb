@@ -310,17 +310,32 @@ Public Class clsAnalysisToolRunnerMSPathFinder
         ' Processing, 376 proteins done, 3.8% complete, 60.5 sec elapsed
         ' Processing, 411 proteins done, 4.1% complete, 75.6 sec elapsed
         ' Processing, 527 proteins done, 5.3% complete, 90.6 sec elapsed
+        ' ...
+        ' Processing, 14215001 proteins done, 95.8% complete, 5085.3 sec elapsed
+        ' Target database search elapsed Time: 5326.1 sec
+        ' Creating G:\DMS_Temp_Org\ID_005140_7A170668.icsfldecoy.fasta
+        ' Generating G:\DMS_Temp_Org\ID_005140_7A170668.icsfldecoy.icseq and
+        ' Generating G:\DMS_Temp_Org\ID_005140_7A170668.icsfldecoy.icanno ... Done
+        ' Reading the decoy database...Elapsed Time: 3.6 sec
+        ' Searching the decoy database
+        ' Generating G:\DMS_Temp_Org\ID_005140_7A170668.icsfldecoy.icplcp ... Done
+        ' Estimated proteins: 14831487
+        ' Processing, 0 proteins done, 0.0% complete, 0.0 sec elapsed
+        ' Processing, 39609 proteins done, 0.3% complete, 15.0 sec elapsed
+        ' Processing, 78739 proteins done, 0.5% complete, 30.0 sec elapsed
+        ' Processing, 114390 proteins done, 0.8% complete, 45.0 sec elapsed
+
 
         Const EXCEPTION_FLAG = "Exception while processing:"
         Const ERROR_PROCESSING_FLAG = "Error processing"
 
-        Const REGEX_PROMEX_RESULTS = "ProMex.+(\d+)/(\d+) features loaded"
+        Const REGEX_PROMEX_RESULTS = "ProMex[^\d]+(\d+)/(\d+) features loaded"
         Static rePromexFeatureStats As New Regex(REGEX_PROMEX_RESULTS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         Const REGEX_MSPATHFINDER_PROGRESS = "([0-9.]+)% complete"
         Static reCheckProgress As New Regex(REGEX_MSPATHFINDER_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
-        Static reProcessingProteins As New Regex("Processing (\d+)th proteins", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        Static reProcessingProteins As New Regex("(\d+) proteins done", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         Try
             If Not File.Exists(strConsoleOutputFilePath) Then
@@ -335,8 +350,10 @@ Public Class clsAnalysisToolRunnerMSPathFinder
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
             End If
 
-            ' Value between 0 and 100
-            Dim progressComplete As Single = 0
+            ' progressComplete values are between 0 and 100
+            Dim progressCompleteTarget As Single = 0
+            Dim progressCompleteDecoy As Single = 0
+
             Dim percentCompleteFound = False
 
             Dim filteredFeatures = 0
@@ -353,102 +370,122 @@ Public Class clsAnalysisToolRunnerMSPathFinder
                 Do While Not srInFile.EndOfStream
                     Dim strLineIn = srInFile.ReadLine()
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If String.IsNullOrWhiteSpace(strLineIn) Then
+                        Continue Do
+                    End If
 
-                        Dim strLineInLCase = strLineIn.ToLower()
+                    Dim strLineInLCase = strLineIn.ToLower()
 
-                        If strLineInLCase.StartsWith(EXCEPTION_FLAG.ToLower()) OrElse strLineInLCase.Contains("unhandled exception") Then
-                            ' Exception while processing
+                    If strLineInLCase.StartsWith(EXCEPTION_FLAG.ToLower()) OrElse strLineInLCase.Contains("unhandled exception") Then
+                        ' Exception while processing
 
-                            Dim exceptionMessage = strLineIn.Substring(EXCEPTION_FLAG.Length).TrimStart()
+                        Dim exceptionMessage = strLineIn.Substring(EXCEPTION_FLAG.Length).TrimStart()
 
-                            mConsoleOutputErrorMsg = "Error running MSPathFinder: " & exceptionMessage
-                            Exit Do
+                        mConsoleOutputErrorMsg = "Error running MSPathFinder: " & exceptionMessage
+                        Exit Do
+                    End If
 
-                        ElseIf strLineInLCase.StartsWith(ERROR_PROCESSING_FLAG.ToLower()) Then
-                            ' Error processing FileName.msf1lt: Error details;
+                    If strLineInLCase.StartsWith(ERROR_PROCESSING_FLAG.ToLower()) Then
+                        ' Error processing FileName.msf1lt: Error details;
 
-                            Dim errorMessage As String
+                        Dim errorMessage As String
 
-                            Dim colonIndex = strLineIn.IndexOf(":"c)
-                            If colonIndex > 0 Then
-                                errorMessage = strLineIn.Substring(colonIndex + 1).Trim()
-                            Else
-                                errorMessage = strLineIn
-                            End If
-
-                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                If errorMessage.Contains("No results found") Then
-                                    mConsoleOutputErrorMsg = errorMessage
-                                Else
-                                    mConsoleOutputErrorMsg = "Error running MSPathFinder: " & errorMessage
-                                End If
-
-                                Continue Do
-                            End If
-
-                            mConsoleOutputErrorMsg &= "; " & errorMessage
-
-                        ElseIf Not percentCompleteFound AndAlso strLineIn.StartsWith("Searching the target database") Then
-                            ' The following is deprecated in June 2015 because MSPathFinder now reports % complete
-                            progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
-
-                        ElseIf Not percentCompleteFound AndAlso strLineIn.StartsWith("Searching the decoy database") Then
-                            ' The following is deprecated in June 2015 because MSPathFinder now reports % complete
-                            progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
-                            searchingDecoyDB = True
-
+                        Dim colonIndex = strLineIn.IndexOf(":"c)
+                        If colonIndex > 0 Then
+                            errorMessage = strLineIn.Substring(colonIndex + 1).Trim()
                         Else
-                            Dim oProgressMatch As Match = reCheckProgress.Match(strLineIn)
-                            If oProgressMatch.Success Then
-                                Single.TryParse(oProgressMatch.Groups(1).ToString(), progressComplete)
-                                percentCompleteFound = True
-                                Continue Do
-                            End If
-
-                            If percentCompleteFound Then
-                                ' No need to manually compute the % complete
-                                Continue Do
-                            End If
-
-                            If unfilteredFeatures = 0 Then
-                                Dim oPromexResults As Match = rePromexFeatureStats.Match(strLineIn)
-                                If oPromexResults.Success Then
-                                    If Integer.TryParse(oPromexResults.Groups(1).ToString(), filteredFeatures) Then
-                                        m_filteredPromexFeatures = filteredFeatures
-                                    End If
-                                    If Integer.TryParse(oPromexResults.Groups(2).ToString(), unfilteredFeatures) Then
-                                        m_unfilteredPromexFeatures = unfilteredFeatures
-                                    End If
-                                End If
-                            End If
-
-                            Dim oProteinSerchedMatch = reProcessingProteins.Match(strLineIn)
-                            If oProteinSerchedMatch.Success Then
-                                Dim proteinsSearched As Integer
-                                If Integer.TryParse(oProteinSerchedMatch.Groups(1).ToString(), proteinsSearched) Then
-                                    If searchingDecoyDB Then
-                                        decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
-                                    Else
-                                        targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
-                                    End If
-                                End If
-
-                                Continue Do
-                            End If
-
+                            errorMessage = strLineIn
                         End If
 
+                        If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            If errorMessage.Contains("No results found") Then
+                                mConsoleOutputErrorMsg = errorMessage
+                            Else
+                                mConsoleOutputErrorMsg = "Error running MSPathFinder: " & errorMessage
+                            End If
+
+                            Continue Do
+                        End If
+
+                        mConsoleOutputErrorMsg &= "; " & errorMessage
+                        Continue Do
+
+                    ElseIf strLineIn.StartsWith("Searching the decoy database") Then
+                        progressCompleteTarget = 100
+                        searchingDecoyDB = True
+                        Continue Do
+
                     End If
+
+                    Dim oProgressMatch As Match = reCheckProgress.Match(strLineIn)
+                    If oProgressMatch.Success Then
+                        Dim progressValue As Single
+                        If Single.TryParse(oProgressMatch.Groups(1).ToString(), progressValue) Then
+                            If searchingDecoyDB Then
+                                progressCompleteDecoy = progressValue
+                            Else
+                                progressCompleteTarget = progressValue
+                            End If
+
+                            percentCompleteFound = True
+                        End If
+                        Continue Do
+
+                    End If
+
+                    If percentCompleteFound Then
+                        ' No need to manually compute the % complete
+                        Continue Do
+                    End If
+
+                    If unfilteredFeatures = 0 Then
+                        Dim oPromexResults As Match = rePromexFeatureStats.Match(strLineIn)
+                        If oPromexResults.Success Then
+                            If Integer.TryParse(oPromexResults.Groups(1).ToString(), filteredFeatures) Then
+                                m_filteredPromexFeatures = filteredFeatures
+                            End If
+                            If Integer.TryParse(oPromexResults.Groups(2).ToString(), unfilteredFeatures) Then
+                                m_unfilteredPromexFeatures = unfilteredFeatures
+                            End If
+                        End If
+                    End If
+
+                    Dim oProteinSerchedMatch = reProcessingProteins.Match(strLineIn)
+                    If oProteinSerchedMatch.Success Then
+                        Dim proteinsSearched As Integer
+                        If Integer.TryParse(oProteinSerchedMatch.Groups(1).ToString(), proteinsSearched) Then
+                            If searchingDecoyDB Then
+                                decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
+                            Else
+                                targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
+                            End If
+                        End If
+                    End If
+
                 Loop
 
             End Using
 
+            Dim progressComplete As Single
+
             If percentCompleteFound Then
                 ' Numeric % complete values were found
+
+                ' First compute the MSPathFinder % complete, depending on whether or not we have reached the halfway point
+                ' (at the halfway point, all target (forward) proteins have been searched and we're now searching the decoy proteins)
+
+                If searchingDecoyDB Then
+                    progressComplete = ComputeIncrementalProgress(50, 100, progressCompleteDecoy)
+                Else
+                    progressComplete = ComputeIncrementalProgress(0, 50, progressCompleteTarget)
+                End If
+
+                ' Now adjust the % complete value to be between 2% and 99%
                 progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_TARGET_DB, PROGRESS_PCT_COMPLETE, progressComplete)
+
             ElseIf searchingDecoyDB Then
-                ' Numeric % complete values were not found, but we did encounter "Searching the decoy database" and can thus now compute % complete based on the number of proteins searched
+                ' Numeric % complete values were not found, but we did encounter "Searching the decoy database" 
+                ' so we can thus now compute % complete based on the number of proteins searched
                 progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched)
             End If
 

@@ -374,7 +374,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 		Try
 
 			If mConsoleOutputProgressMap Is Nothing OrElse mConsoleOutputProgressMap.Count = 0 Then
-				mConsoleOutputProgressMap = New System.Collections.Generic.Dictionary(Of String, Integer)
+                mConsoleOutputProgressMap = New Dictionary(Of String, Integer)
 
 				mConsoleOutputProgressMap.Add("Creating extracted ion chromatogram", PROGRESS_TARGETED_WORKFLOWS_CREATING_XIC)
 				mConsoleOutputProgressMap.Add("Done creating XIC source data", PROGRESS_TARGETED_WORKFLOWS_XIC_CREATED)
@@ -420,13 +420,13 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 					strLineInLCase = strLineIn.ToLower()
 
 					' Update progress if the line contains any one of the expected phrases
-					For Each oItem As System.Collections.Generic.KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
-						If strLineIn.Contains(oItem.Key) Then
-							If intEffectiveProgress < oItem.Value Then
-								intEffectiveProgress = oItem.Value
-							End If
-						End If
-					Next
+                    For Each oItem As KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
+                        If strLineIn.Contains(oItem.Key) Then
+                            If intEffectiveProgress < oItem.Value Then
+                                intEffectiveProgress = oItem.Value
+                            End If
+                        End If
+                    Next
 
 					If intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED Then
 						oMatch = reSubProgress.Match(strLineIn)
@@ -452,9 +452,9 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 						' Error message found; update m_message
 						Dim strNewError As String = strLineIn.Substring(intCharIndex)
 
-						If strNewError.StartsWith("Error: every peptide in the mass tags file had an unknown modification") Then
-							strNewError = "Error: every peptide in the mass tags file had an unknown modification"
-						End If
+                        If strNewError.Contains("all peptides contain unknown modifications") Then
+                            strNewError = "Error: every peptide in the mass tags file had an unknown modification; known mods are Acetylation (C2H2O, 42.01 Da), Phosphorylation (HPO3, 79.97 Da), or Pyroglutomate (H3N1, 17.03 Da)"
+                        End If
 
 						mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, strNewError)
 					End If
@@ -502,7 +502,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 		If Not ioTargetedWorkflowsConsole.Exists Then
 			Try
 				strToolVersionInfo = "Unknown"
-				Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of FileInfo))
+                Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
 			Catch ex As Exception
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
 				Return False
@@ -516,7 +516,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 		If Not blnSuccess Then Return False
 
 		' Store paths to key DLLs in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of FileInfo)
+        Dim ioToolFiles As New List(Of FileInfo)
 		ioToolFiles.Add(ioTargetedWorkflowsConsole)
 
 		ioToolFiles.Add(New FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")))
