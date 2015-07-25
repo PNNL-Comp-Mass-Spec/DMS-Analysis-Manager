@@ -188,6 +188,10 @@ Public Class clsExtractToolRunner
                     ' ToDo: Run PHRP
                     blnProcessingError = False
 
+                    ' Run PHRP
+                    strCurrentAction = "running peptide hits result processor for MSPathFinder"
+                    eResult = RunPhrpForMSPathFinder()
+
                 Case Else
                     ' Should never get here - invalid result type specified
                     msg = "Invalid ResultType specified: " & m_jobParams.GetParam("ResultType")
