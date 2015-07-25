@@ -69,8 +69,8 @@ Public MustInherit Class clsMSGFInputCreator
 #End Region
 
 #Region "Events"
-    Public Event ErrorEvent(ByVal strErrorMessage As String)
-    Public Event WarningEvent(ByVal strWarningMessage As String)
+    Public Event ErrorEvent(strErrorMessage As String)
+    Public Event WarningEvent(strWarningMessage As String)
 #End Region
 
 #Region "Properties"
@@ -79,7 +79,7 @@ Public MustInherit Class clsMSGFInputCreator
         Get
             Return mDoNotFilterPeptides
         End Get
-        Set(ByVal value As Boolean)
+        Set(value As Boolean)
             mDoNotFilterPeptides = value
         End Set
     End Property
@@ -138,7 +138,7 @@ Public MustInherit Class clsMSGFInputCreator
     ''' <param name="strWorkDir">Working directory</param>
     ''' <param name="eResultType">PeptideHit result type</param>
     ''' <remarks></remarks>
-    Public Sub New(ByVal strDatasetName As String, ByVal strWorkDir As String, ByVal eResultType As clsPHRPReader.ePeptideHitResultType)
+    Public Sub New(strDatasetName As String, strWorkDir As String, eResultType As clsPHRPReader.ePeptideHitResultType)
 
         mDatasetName = strDatasetName
         mWorkDir = strWorkDir
@@ -158,13 +158,14 @@ Public MustInherit Class clsMSGFInputCreator
 
 #Region "Functions to be defined in derived classes"
     Protected MustOverride Sub InitializeFilePaths()
-    Protected MustOverride Function PassesFilters(ByRef objPSM As PHRPReader.clsPSM) As Boolean
+    Protected MustOverride Function PassesFilters(ByVal objPSM As PHRPReader.clsPSM) As Boolean
 #End Region
 
-    Public Sub AddUpdateMSGFResult(ByRef strScanNumber As String, _
-     ByRef strCharge As String, _
-     ByRef strPeptide As String, _
-     ByRef strMSGFResultData As String)
+    Public Sub AddUpdateMSGFResult(
+      strScanNumber As String, _
+      strCharge As String, _
+      strPeptide As String, _
+      strMSGFResultData As String)
 
         Try
             mMSGFCachedResults.Item(ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide)) = strMSGFResultData
@@ -175,11 +176,11 @@ Public MustInherit Class clsMSGFInputCreator
 
     End Sub
 
-    Protected Function AppendText(ByVal strText As String, ByVal strAddnl As String) As String
+    Protected Function AppendText(strText As String, strAddnl As String) As String
         Return AppendText(strText, strAddnl, ": ")
     End Function
 
-    Protected Function AppendText(ByVal strText As String, ByVal strAddnl As String, ByVal strDelimiter As String) As String
+    Protected Function AppendText(strText As String, strAddnl As String, strDelimiter As String) As String
         If String.IsNullOrWhiteSpace(strAddnl) Then
             Return strText
         Else
@@ -205,21 +206,23 @@ Public MustInherit Class clsMSGFInputCreator
         End If
     End Function
 
-    Protected Function ConstructMGFMappingCode(ByVal intScanNumber As Integer, ByVal intCharge As Integer) As String
+    Protected Function ConstructMGFMappingCode(intScanNumber As Integer, intCharge As Integer) As String
         Return intScanNumber.ToString & "_" & intCharge.ToString
     End Function
 
-    Protected Function ConstructMSGFResultCode(ByVal intScanNumber As Integer, _
-     ByVal intCharge As Integer, _
-     ByRef strPeptide As String) As String
+    Protected Function ConstructMSGFResultCode(
+     intScanNumber As Integer, _
+     intCharge As Integer, _
+     strPeptide As String) As String
 
         Return intScanNumber.ToString & "_" & intCharge.ToString & "_" & strPeptide
 
     End Function
 
-    Protected Function ConstructMSGFResultCode(ByRef strScanNumber As String, _
-     ByRef strCharge As String, _
-     ByRef strPeptide As String) As String
+    Protected Function ConstructMSGFResultCode(
+     strScanNumber As String, _
+     strCharge As String, _
+     strPeptide As String) As String
 
         Return strScanNumber & "_" & strCharge & "_" & strPeptide
 
@@ -538,7 +541,7 @@ Public MustInherit Class clsMSGFInputCreator
 
     End Function
 
-    Public Function GetSkippedInfoByResultId(ByVal intResultID As Integer) As List(Of String)
+    Public Function GetSkippedInfoByResultId(intResultID As Integer) As List(Of String)
 
         Dim objSkipList As List(Of String) = Nothing
 
@@ -556,7 +559,7 @@ Public MustInherit Class clsMSGFInputCreator
     ''' <param name="intMGFSpectrumIndex"></param>
     ''' <returns>Scan number if found; 0 if no match</returns>
     ''' <remarks></remarks>
-    Public Function GetScanByMGFSpectrumIndex(ByVal intMGFSpectrumIndex As Integer) As Integer
+    Public Function GetScanByMGFSpectrumIndex(intMGFSpectrumIndex As Integer) As Integer
         Dim intScanNumber As Integer
 
         If mMGFIndexToScan.TryGetValue(intMGFSpectrumIndex, intScanNumber) Then
@@ -567,7 +570,7 @@ Public MustInherit Class clsMSGFInputCreator
 
     End Function
 
-    Protected Sub LogError(ByVal strErrorMessage As String)
+    Protected Sub LogError(strErrorMessage As String)
 
         Try
             If mLogFile Is Nothing Then
@@ -606,10 +609,11 @@ Public MustInherit Class clsMSGFInputCreator
     ''' <param name="strSpectrumFileName"></param>
     ''' <param name="blnParsingSynopsisFile"></param>
     ''' <remarks></remarks>
-    Private Sub ReadAndStorePHRPData(ByRef objReader As clsPHRPReader, _
-      ByRef swMSGFInputFile As StreamWriter, _
-      ByVal strSpectrumFileName As String, _
-      ByVal blnParsingSynopsisFile As Boolean)
+    Private Sub ReadAndStorePHRPData(
+      objReader As clsPHRPReader, _
+      swMSGFInputFile As StreamWriter, _
+      strSpectrumFileName As String, _
+      blnParsingSynopsisFile As Boolean)
 
         Dim strPeptideResultCode As String
         Dim strPHRPSource As String
@@ -749,13 +753,13 @@ Public MustInherit Class clsMSGFInputCreator
 
     End Sub
 
-    Protected Sub ReportError(ByVal strErrorMessage As String)
+    Protected Sub ReportError(strErrorMessage As String)
         mErrorMessage = strErrorMessage
         LogError(mErrorMessage)
         RaiseEvent ErrorEvent(mErrorMessage)
     End Sub
 
-    Protected Sub ReportWarning(ByVal strWarningMessage As String)
+    Protected Sub ReportWarning(strWarningMessage As String)
         LogError(strWarningMessage)
         RaiseEvent WarningEvent(strWarningMessage)
     End Sub
@@ -770,7 +774,7 @@ Public MustInherit Class clsMSGFInputCreator
         mMSGFResultsFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
     End Sub
 
-    Public Sub WriteMSGFResultsHeaders(ByRef swOutFile As StreamWriter)
+    Public Sub WriteMSGFResultsHeaders(swOutFile As StreamWriter)
 
         swOutFile.WriteLine("Result_ID" & ControlChars.Tab & _
           "Scan" & ControlChars.Tab & _

@@ -119,6 +119,7 @@
     <Compile Include="clsMSGFInputCreatorXTandem.vb" />
     <Compile Include="clsMSGFResultsSummarizer.vb" />
     <Compile Include="clsMSGFToolRunner.vb" />
+    <Compile Include="clsPSMInfo.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <ItemGroup>

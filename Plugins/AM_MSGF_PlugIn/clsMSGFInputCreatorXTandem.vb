@@ -21,7 +21,7 @@ Public Class clsMSGFInputCreatorXTandem
     ''' <param name="strDatasetName">Dataset name</param>
     ''' <param name="strWorkDir">Working directory</param>
     ''' <remarks></remarks>
-    Public Sub New(ByVal strDatasetName As String, ByVal strWorkDir As String)
+    Public Sub New(strDatasetName As String, strWorkDir As String)
 
         MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.XTandem)
 
@@ -35,7 +35,7 @@ Public Class clsMSGFInputCreatorXTandem
 
     End Sub
 
-    Protected Overrides Function PassesFilters(ByRef objPSM As PHRPReader.clsPSM) As Boolean
+    Protected Overrides Function PassesFilters(objPSM As PHRPReader.clsPSM) As Boolean
         Dim dblLogEValue As Double
 
         Dim blnPassesFilters As Boolean

@@ -21,7 +21,7 @@ Public Class clsMSGFInputCreatorSequest
 	''' <param name="strDatasetName">Dataset name</param>
 	''' <param name="strWorkDir">Working directory</param>
 	''' <remarks></remarks>
-	Public Sub New(ByVal strDatasetName As String, ByVal strWorkDir As String)
+	Public Sub New(strDatasetName As String, strWorkDir As String)
 
         MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Sequest)
 
@@ -35,7 +35,7 @@ Public Class clsMSGFInputCreatorSequest
 
     End Sub
 
-    Protected Overrides Function PassesFilters(ByRef objPSM As clsPSM) As Boolean
+    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
         Dim dblXCorr As Double
         Dim dblDeltaCN As Double
 

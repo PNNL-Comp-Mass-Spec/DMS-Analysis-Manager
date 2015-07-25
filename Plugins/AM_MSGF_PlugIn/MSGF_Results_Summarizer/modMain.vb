@@ -15,7 +15,7 @@ Imports PHRPReader
 Imports System.IO
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "January 17, 2014"
+    Public Const PROGRAM_DATE As String = "July 24, 2015"
 
 	Private mMSGFSynFilePath As String = String.Empty
 	Private mInputFolderPath As String = String.Empty
@@ -98,7 +98,8 @@ Module modMain
 			dctFileSuffixes.Add("_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFDB)
 			dctFileSuffixes.Add("_inspect_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Inspect)
 			dctFileSuffixes.Add("_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Sequest)
-			dctFileSuffixes.Add("_msalign_syn.txt", clsPHRPReader.ePeptideHitResultType.MSAlign)
+            dctFileSuffixes.Add("_msalign_syn.txt", clsPHRPReader.ePeptideHitResultType.MSAlign)
+            dctFileSuffixes.Add("_mspath_syn.txt", clsPHRPReader.ePeptideHitResultType.MSPathFinder)
 
 			eResultType = clsPHRPReader.ePeptideHitResultType.Unknown
 

@@ -22,7 +22,7 @@ Public Class clsMSGFInputCreatorMSGFDB
 	''' <param name="strDatasetName">Dataset name</param>
 	''' <param name="strWorkDir">Working directory</param>
 	''' <remarks></remarks>
-	Public Sub New(ByVal strDatasetName As String, ByVal strWorkDir As String)
+	Public Sub New(strDatasetName As String, strWorkDir As String)
 
         MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MSGFDB)
 
@@ -122,7 +122,7 @@ Public Class clsMSGFInputCreatorMSGFDB
     ''' <param name="strSourceFileDescription"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function CreateMSGFFileUsingMSGFDBSpecProb(ByVal strSourceFilePath As String, strSourceFileDescription As String) As Boolean
+    Public Function CreateMSGFFileUsingMSGFDBSpecProb(strSourceFilePath As String, strSourceFileDescription As String) As Boolean
 
         Dim strMSGFFilePath As String
 
@@ -179,7 +179,7 @@ Public Class clsMSGFInputCreatorMSGFDB
 
     End Function
 
-    Protected Overrides Function PassesFilters(ByRef objPSM As PHRPReader.clsPSM) As Boolean
+    Protected Overrides Function PassesFilters(objPSM As PHRPReader.clsPSM) As Boolean
         Dim blnPassesFilters As Boolean
 
         ' All MSGFDB data is considered to be "filter-passing"

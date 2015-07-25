@@ -68,7 +68,7 @@ Public Class clsAnalysisResourcesMSGF
 	''' <param name="ResultType">String specifying type of analysis results input to extraction process</param>
 	''' <returns>IJobParams.CloseOutType specifying results</returns>
 	''' <remarks></remarks>
-	Private Function GetInputFiles(ByVal ResultType As String) As IJobParams.CloseOutType
+	Private Function GetInputFiles(ResultType As String) As IJobParams.CloseOutType
 
         Dim eResultType As clsPHRPReader.ePeptideHitResultType
 
@@ -375,7 +375,7 @@ Public Class clsAnalysisResourcesMSGF
 
 	End Function
 
-	Private Function CreateEmptyResultToSeqMapFile(ByVal FileName As String) As Boolean
+	Private Function CreateEmptyResultToSeqMapFile(FileName As String) As Boolean
 		Dim strFilePath As String
 
 		Try
@@ -392,7 +392,7 @@ Public Class clsAnalysisResourcesMSGF
 		Return True
 	End Function
 
-	Private Function CreateEmptySeqToProteinMapFile(ByVal FileName As String) As Boolean
+	Private Function CreateEmptySeqToProteinMapFile(FileName As String) As Boolean
 		Dim strFilePath As String
 
 		Try

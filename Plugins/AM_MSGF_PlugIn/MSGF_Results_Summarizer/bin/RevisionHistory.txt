@@ -1,5 +1,11 @@
 MSGF Results Summarizer Change Log
 
+Version 1.1.5683; July 24, 2015
+	- When finding PSMs and unique peptide counts, now ignoring the position of modifications in peptides (though order still matters)
+		- For example, PEPT*IDES and PEPTIDES* are treated as the same peptide
+	- Now only using the top scoring hit for each scan
+		- Led to exaggerated PSM and unique peptide counts for phosphopeptides
+
 Version 1.1.4688; November 1, 2012
 	- New version of AnalysisManagerMSGFPlugin.dll that uses MSXML_Generator.dll (which in turn uses AnalysisManagerMsXmlGenPlugIn.dll)
 
