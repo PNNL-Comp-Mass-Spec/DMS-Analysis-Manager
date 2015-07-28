@@ -516,6 +516,9 @@ Public Class clsAnalysisMgrSettings
         WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, Message)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
 
+        ' Also post a log to the database
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message)
+
     End Sub
 
     ''' <summary>
