@@ -339,6 +339,9 @@ Public Class clsMSGFResultsSummarizer
         If Not blnFilterPSMs Then
             ' Keep all PSMs
             For Each kvEntry As KeyValuePair(Of Integer, clsPSMInfo) In lstNormalizedPSMs
+                For Each observation In kvEntry.Value.Observations
+                    observation.PassesFilter = True
+                Next
                 lstFilteredPSMs.Add(kvEntry.Key, kvEntry.Value)
             Next
             blnSuccess = True
@@ -347,6 +350,14 @@ Public Class clsMSGFResultsSummarizer
         If Not blnUsingMSGFOrEValueFilter AndAlso mFDRThreshold < 1 Then
             ' Filter on FDR (we'll compute the FDR using Reverse Proteins, if necessary)
             blnSuccess = FilterPSMsByFDR(lstFilteredPSMs)
+
+            For Each entry In lstFilteredPSMs
+                For Each observation In entry.Value.Observations
+                    If observation.FDR > mFDRThreshold Then
+                        observation.PassesFilter = False
+                    End If
+                Next
+            Next
         End If
 
         If blnSuccess Then
@@ -372,7 +383,7 @@ Public Class clsMSGFResultsSummarizer
 
         Dim blnFDRAlreadyComputed = True
         For Each kvEntry As KeyValuePair(Of Integer, clsPSMInfo) In lstPSMs
-            If kvEntry.Value.FDR < 0 Then
+            If kvEntry.Value.BestFDR < 0 Then
                 blnFDRAlreadyComputed = False
                 Exit For
             End If
@@ -381,7 +392,7 @@ Public Class clsMSGFResultsSummarizer
         lstResultIDtoFDRMap = New Dictionary(Of Integer, Double)
         If blnFDRAlreadyComputed Then
             For Each kvEntry As KeyValuePair(Of Integer, clsPSMInfo) In lstPSMs
-                lstResultIDtoFDRMap.Add(kvEntry.Key, kvEntry.Value.FDR)
+                lstResultIDtoFDRMap.Add(kvEntry.Key, kvEntry.Value.BestFDR)
             Next
         Else
 
@@ -398,12 +409,12 @@ Public Class clsMSGFResultsSummarizer
 
             Dim blnValidMSGFOrEValue = False
             For Each kvEntry As KeyValuePair(Of Integer, clsPSMInfo) In lstPSMs
-                If kvEntry.Value.MSGF < clsPSMInfo.UNKNOWN_MSGF_SPECPROB Then
-                    lstMSGFtoResultIDMap.Add(New KeyValuePair(Of Double, Integer)(kvEntry.Value.MSGF, kvEntry.Key))
-                    If kvEntry.Value.MSGF < 1 Then blnValidMSGFOrEValue = True
+                If kvEntry.Value.BestMSGF < clsPSMInfo.UNKNOWN_MSGF_SPECPROB Then
+                    lstMSGFtoResultIDMap.Add(New KeyValuePair(Of Double, Integer)(kvEntry.Value.BestMSGF, kvEntry.Key))
+                    If kvEntry.Value.BestMSGF < 1 Then blnValidMSGFOrEValue = True
                 Else
-                    lstMSGFtoResultIDMap.Add(New KeyValuePair(Of Double, Integer)(kvEntry.Value.EValue, kvEntry.Key))
-                    If kvEntry.Value.EValue < clsPSMInfo.UNKNOWN_EVALUE Then blnValidMSGFOrEValue = True
+                    lstMSGFtoResultIDMap.Add(New KeyValuePair(Of Double, Integer)(kvEntry.Value.BestEValue, kvEntry.Key))
+                    If kvEntry.Value.BestEValue < clsPSMInfo.UNKNOWN_EVALUE Then blnValidMSGFOrEValue = True
                 End If
             Next
 
@@ -473,14 +484,7 @@ Public Class clsMSGFResultsSummarizer
 
         For Each kvEntry As KeyValuePair(Of Integer, Double) In lstResultIDtoFDRMap
             If kvEntry.Value > mFDRThreshold Then
-                lstPSMs.Remove(kvEntry.Key)
-            Else
-                Dim psmInfo As clsPSMInfo = Nothing
-                If lstPSMs.TryGetValue(kvEntry.Key, psmInfo) Then
-                    ' Update the FDR value (this isn't really necessary, but it doesn't hurt do to so)
-                    psmInfo.FDR = kvEntry.Value
-                    lstPSMs(kvEntry.Key) = psmInfo
-                End If
+                lstPSMs.Remove(kvEntry.Key)            
             End If
         Next
 
@@ -495,9 +499,12 @@ Public Class clsMSGFResultsSummarizer
 
         lstFilteredPSMs.Clear()
 
-        Dim lstFilteredValues = From item In lstPSMs Where item.Value.EValue <= dblEValueThreshold
+        Dim lstFilteredValues = From item In lstPSMs Where item.Value.BestEValue <= dblEValueThreshold
 
         For Each item In lstFilteredValues
+            For Each observation In item.Value.Observations
+                observation.PassesFilter = (observation.EValue <= dblEValueThreshold)
+            Next
             lstFilteredPSMs.Add(item.Key, item.Value)
         Next
 
@@ -512,9 +519,12 @@ Public Class clsMSGFResultsSummarizer
 
         lstFilteredPSMs.Clear()
 
-        Dim lstFilteredValues = From item In lstPSMs Where item.Value.MSGF <= dblMSGFThreshold
+        Dim lstFilteredValues = From item In lstPSMs Where item.Value.BestMSGF <= dblMSGFThreshold
 
         For Each item In lstFilteredValues
+            For Each observation In item.Value.Observations
+                observation.PassesFilter = (observation.MSGF <= dblMSGFThreshold)
+            Next
             lstFilteredPSMs.Add(item.Key, item.Value)
         Next
 
@@ -859,27 +869,28 @@ Public Class clsMSGFResultsSummarizer
                     psmInfo.Clear()
 
                     psmInfo.Protein = objPSM.ProteinFirst
-                    psmInfo.MSGF = dblSpecProb
-                    psmInfo.EValue = dblEValue
+                    Dim psmMSGF = dblSpecProb
+                    Dim psmEValue = dblEValue
+                    Dim psmFDR As Double
 
                     If mResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Or
                        mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-                        psmInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR)
-                        If psmInfo.FDR < 0 Then
-                            psmInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR)
+                        psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR)
+                        If psmFDR < 0 Then
+                            psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR)
                         End If
 
                     ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-                        psmInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR)
+                        psmFDR = objPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR)
 
                     ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
-                        psmInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR)
+                        psmFDR = objPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR)
 
                     ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MSPathFinder Then
-                        psmInfo.FDR = objPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR)
+                        psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR)
 
                     Else
-                        psmInfo.FDR = clsPSMInfo.UNKNOWN_FDR
+                        psmFDR = clsPSMInfo.UNKNOWN_FDR
                     End If
 
                     Dim normalizedSequence As String = String.Empty
@@ -921,18 +932,36 @@ Public Class clsMSGFResultsSummarizer
                     Dim normalizedSeqID As Integer
                     If lstNormalizedPeptides.TryGetValue(normalizedSequence, normalizedSeqID) Then
                         Dim normalizedPSM = lstNormalizedPSMs(normalizedSeqID)
+                        Dim addObservation = True
 
-                        If Not normalizedPSM.Scans.Contains(objPSM.ScanNumber) Then
-                            normalizedPSM.Scans.Add(objPSM.ScanNumber)
+                        For Each observation In normalizedPSM.Observations
+                            If observation.Scan = objPSM.ScanNumber Then
+                                ' Scan already stored
+
+                                ' Update the scores if this PSM has a better score than the cached one
+                                If psmFDR > clsPSMInfo.UNKNOWN_FDR Then
+                                    observation.FDR = Math.Min(observation.FDR, psmFDR)
+                                End If
+
+                                observation.MSGF = Math.Min(observation.MSGF, psmMSGF)
+                                observation.EValue = Math.Min(observation.EValue, psmEValue)
+
+                                addObservation = False
+                                Exit For
+
+                            End If
+                        Next
+
+                        If addObservation Then
+                            Dim observation = New clsPSMInfo.PSMObservation()
+
+                            observation.Scan = objPSM.ScanNumber
+                            observation.FDR = psmFDR
+                            observation.MSGF = psmMSGF
+                            observation.EValue = psmEValue
+
+                            normalizedPSM.Observations.Add(observation)
                         End If
-
-                        ' Update the scores if this PSM has a better score than the cached one
-                        If psmInfo.FDR > clsPSMInfo.UNKNOWN_FDR Then
-                            normalizedPSM.FDR = Math.Min(normalizedPSM.FDR, psmInfo.FDR)
-                        End If
-
-                        normalizedPSM.MSGF = Math.Min(normalizedPSM.MSGF, psmInfo.MSGF)
-                        normalizedPSM.EValue = Math.Min(normalizedPSM.EValue, psmInfo.EValue)
 
                     Else
 
@@ -943,7 +972,15 @@ Public Class clsMSGFResultsSummarizer
                         lstNormalizedPeptides.Add(normalizedSequence, intSeqID)
 
                         psmInfo.SeqIdFirst = intSeqID
-                        psmInfo.Scans.Add(objPSM.ScanNumber)
+
+                        Dim observation = New clsPSMInfo.PSMObservation()
+
+                        observation.Scan = objPSM.ScanNumber
+                        observation.FDR = psmFDR
+                        observation.MSGF = psmMSGF
+                        observation.EValue = psmEValue
+
+                        psmInfo.Observations.Add(observation)
 
                         If lstNormalizedPSMs.ContainsKey(intSeqID) Then
                             Console.WriteLine("Warning: Duplicate key, intSeqID=" & intSeqID & "; skipping PSM with ResultID=" & objPSM.ResultID)
@@ -1091,7 +1128,12 @@ Public Class clsMSGFResultsSummarizer
 
             For Each result As KeyValuePair(Of Integer, clsPSMInfo) In lstFilteredPSMs
 
-                Dim obsCountForResult = result.Value.Scans.Count
+                Dim observations = result.Value.Observations
+                Dim obsCountForResult = (From item In observations Where item.PassesFilter Select item).Count
+
+                If obsCountForResult = 0 Then
+                    Continue For
+                End If
 
                 ' If lstResultToSeqMap has data, the keys in lstFilteredPSMs are SeqID values
                 ' Otherwise, the keys are ResultID values
@@ -1144,11 +1186,11 @@ Public Class clsMSGFResultsSummarizer
 
             ' Store the stats
             If blnUsingMSGFOrEValueFilter Then
-                mMSGFBasedCounts.TotalPSMs = (From item In lstFilteredPSMs Select item.Value.Scans.Count).Sum()
+                mMSGFBasedCounts.TotalPSMs = (From item In lstUniqueSequences Select item.Value).Sum()
                 mMSGFBasedCounts.UniquePeptideCount = lstUniqueSequences.Count
                 mMSGFBasedCounts.UniqueProteinCount = lstUniqueProteins.Count
             Else
-                mFDRBasedCounts.TotalPSMs = (From item In lstFilteredPSMs Select item.Value.Scans.Count).Sum()
+                mFDRBasedCounts.TotalPSMs = (From item In lstUniqueSequences Select item.Value).Sum()
                 mFDRBasedCounts.UniquePeptideCount = lstUniqueSequences.Count
                 mFDRBasedCounts.UniqueProteinCount = lstUniqueProteins.Count
             End If
