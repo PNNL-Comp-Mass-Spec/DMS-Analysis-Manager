@@ -39,15 +39,12 @@ Public Class clsAnalysisResourcesExtraction
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
         MyBase.Setup(mgrParams, jobParams, statusTools)
 
-        Dim orgDbRequired As Boolean = True
-        Dim strResultType As String = m_jobParams.GetParam("ResultType")
+        ' Always retrieve the FASTA file because PHRP uses it
+        ' This includes for MSGF+ because it uses the order of the proteins in the 
+        ' FASTA file to determine the protein to include in the FHT file
+        Const ORG_DB_REQUIRED = True
 
-        If strResultType = RESULT_TYPE_MSGFDB Then
-            ' Extraction of MSGF+ results typically does not require a fasta file
-            orgDbRequired = False
-        End If
-
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, orgDbRequired)
+        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, ORG_DB_REQUIRED)
     End Sub
 
     ''' <summary>
@@ -58,7 +55,7 @@ Public Class clsAnalysisResourcesExtraction
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         ' Set this to true for now
-        ' It will be changed to False if processing MSGFDB results and the _PepToProtMap.txt file is successfully retrieved
+        ' It will be changed to False if processing Inspect results and the _PepToProtMap.txt file is successfully retrieved
         mRetrieveOrganismDB = True
         m_PendingFileRenames = New Dictionary(Of String, String)
 
@@ -139,6 +136,8 @@ Public Class clsAnalysisResourcesExtraction
                 Case RESULT_TYPE_MSPATHFINDER
                     eResult = GetMSPathFinderFiles()
 
+                    m_jobParams.AddResultFileExtensionToSkip(".tsv")
+
                 Case Else
                     LogError("Invalid tool result type: " & strResultType)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -183,14 +182,14 @@ Public Class clsAnalysisResourcesExtraction
 
     Private Function GetXTandemFiles() As IJobParams.CloseOutType
 
-        Dim FileToGet As String
+        Dim fileToGet As String
 
-        FileToGet = m_DatasetName & "_xt.zip"
-        If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+        fileToGet = m_DatasetName & "_xt.zip"
+        If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_NO_XT_FILES
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
 
         'Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
         m_jobParams.AddResultFileToSkip(m_DatasetName & "_xt.xml")
@@ -198,12 +197,12 @@ Public Class clsAnalysisResourcesExtraction
         ' Note that we'll obtain the X!Tandem parameter file in RetrieveMiscFiles
 
         ' However, we need to obtain the "input.xml" file and "default_input.xml" files now
-        FileToGet = "input.xml"
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+        fileToGet = "input.xml"
+        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
 
         If Not CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir) Then
             Const Msg As String = "Failed retrieving default_input.xml file."
@@ -217,29 +216,29 @@ Public Class clsAnalysisResourcesExtraction
 
     Private Function GetInspectFiles() As IJobParams.CloseOutType
 
-        Dim FileToGet As String
+        Dim fileToGet As String
 
         ' Get the zipped Inspect results files
 
         ' This file contains the p-value filtered results
-        FileToGet = m_DatasetName & "_inspect.zip"
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+        fileToGet = m_DatasetName & "_inspect.zip"
+        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
 
         ' This file contains top hit for each scan (no filters)
-        FileToGet = m_DatasetName & "_inspect_fht.zip"
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+        fileToGet = m_DatasetName & "_inspect_fht.zip"
+        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_NO_INSP_FILES
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
 
         ' Get the peptide to protein mapping file
-        FileToGet = m_DatasetName & "_inspect_PepToProtMap.txt"
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+        fileToGet = m_DatasetName & "_inspect_PepToProtMap.txt"
+        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call
 
             ' See if IgnorePeptideToProteinMapError=True
@@ -252,7 +251,7 @@ Public Class clsAnalysisResourcesExtraction
             ' The OrgDB (aka fasta file) is not required
             mRetrieveOrganismDB = False
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
 
         ' Note that we'll obtain the Inspect parameter file in RetrieveMiscFiles
 
@@ -262,21 +261,21 @@ Public Class clsAnalysisResourcesExtraction
 
     Private Function GetMODaFiles() As IJobParams.CloseOutType
 
-        Dim FileToGet As String
+        Dim fileToGet As String
 
-        FileToGet = m_DatasetName & "_moda.zip"
-        If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+        fileToGet = m_DatasetName & "_moda.zip"
+        If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
         m_jobParams.AddResultFileExtensionToSkip("_moda.txt")
 
-        FileToGet = m_DatasetName & "_mgf_IndexToScanMap.txt"
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+        fileToGet = m_DatasetName & "_mgf_IndexToScanMap.txt"
+        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
 
         ' Note that we'll obtain the MODa parameter file in RetrieveMiscFiles
 
@@ -286,14 +285,14 @@ Public Class clsAnalysisResourcesExtraction
 
     Private Function GetMODPlusFiles() As IJobParams.CloseOutType
 
-        Dim FileToGet As String
+        Dim fileToGet As String
 
-        FileToGet = m_DatasetName & "_modp.zip"
-        If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+        fileToGet = m_DatasetName & "_modp.zip"
+        If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
         m_jobParams.AddResultFileExtensionToSkip("_modp.txt")
 
         Threading.Thread.Sleep(100)
@@ -464,7 +463,7 @@ Public Class clsAnalysisResourcesExtraction
                             createPepToProtMapFile = True
                         End If
                     End If
-                
+
                     pepToProtMapRetrievalError = True
                 Else
                     If splitFastaEnabled Then
@@ -489,11 +488,6 @@ Public Class clsAnalysisResourcesExtraction
 
             Next
 
-            If Not pepToProtMapRetrievalError Then
-                ' The OrgDB (aka fasta file) is not required
-                mRetrieveOrganismDB = False
-            End If
-
         Catch ex As Exception
             LogError("Error in GetMSGFPlusFiles at step " & currentStep, ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -507,14 +501,14 @@ Public Class clsAnalysisResourcesExtraction
 
     Private Function GetMSAlignFiles() As IJobParams.CloseOutType
 
-        Dim FileToGet As String
+        Dim fileToGet As String
 
-        FileToGet = m_DatasetName & "_MSAlign_ResultTable.txt"
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+        fileToGet = m_DatasetName & "_MSAlign_ResultTable.txt"
+        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
 
         ' Note that we'll obtain the MSAlign parameter file in RetrieveMiscFiles
 
@@ -525,15 +519,16 @@ Public Class clsAnalysisResourcesExtraction
 
     Private Function GetMSPathFinderFiles() As IJobParams.CloseOutType
 
-        Dim FileToGet As String
+        Dim fileToGet As String
 
-        FileToGet = m_DatasetName & "_IcTsv.zip"
+        fileToGet = m_DatasetName & "_IcTsv.zip"
 
-        If Not FindAndRetrieveMiscFiles(FileToGet, True) Then
+        If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+
+        m_jobParams.AddResultFileToSkip(fileToGet)
         m_jobParams.AddResultFileExtensionToSkip(".tsv")
 
         ' Note that we'll obtain the MSPathFinder parameter file in RetrieveMiscFiles
@@ -624,6 +619,13 @@ Public Class clsAnalysisResourcesExtraction
 
             ' Confirm that the file was actually created
             Dim fiModDefsFile = New FileInfo(Path.Combine(m_WorkingDir, ModDefsFilename))
+
+            If Not fiModDefsFile.Exists AndAlso ResultType = RESULT_TYPE_MSPATHFINDER Then
+                ' MSPathFinder should have already created the ModDefs file during the previous step
+                ' Retrieve it from the transfer folder now
+                FindAndRetrieveMiscFiles(ModDefsFilename, False)
+                fiModDefsFile.Refresh()
+            End If
 
             If Not fiModDefsFile.Exists And ResultType <> RESULT_TYPE_MSALIGN Then
                 m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods"

@@ -185,8 +185,6 @@ Public Class clsExtractToolRunner
                     End If
 
                 Case clsAnalysisResources.RESULT_TYPE_MSPATHFINDER
-                    ' ToDo: Run PHRP
-                    blnProcessingError = False
 
                     ' Run PHRP
                     strCurrentAction = "running peptide hits result processor for MSPathFinder"
@@ -1021,7 +1019,7 @@ Public Class clsExtractToolRunner
 
     Private Function RunPhrpForMODa(ByVal strFilteredMODaResultsFilePath As String) As IJobParams.CloseOutType
 
-        Dim currentStep As String = "Initializing"
+        Dim currentStep = "Initializing"
 
         Dim msg As String
 
@@ -1350,6 +1348,81 @@ Public Class clsExtractToolRunner
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
+    End Function
+
+    Private Function RunPHRPForMSPathFinder() As IJobParams.CloseOutType
+
+        Dim currentStep = "Initializing"
+
+        Dim msg As String
+
+        Try
+
+            m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
+
+            ' Run the processor
+            If m_DebugLevel > 3 Then
+                msg = "clsExtractToolRunner.RunPhrpForMODa(); Starting PHRP"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
+            End If
+
+            Dim strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_mspath_syn.txt")
+
+            Try
+                ' The goal:
+                '   Create the _syn.txt files from the _IcTda.tsv file
+
+                currentStep = "Looking for the results file"
+
+                Dim msPathFinderResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_IcTDA.tsv")
+                If Not File.Exists(msPathFinderResultsFilePath) Then
+                    LogError("MSPathFinder results file not found: " & Path.GetFileName(msPathFinderResultsFilePath))
+                    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                End If
+
+                currentStep = "Running PHRP"
+
+                ' Create the Synopsis file using the _IcTDA.tsv file
+                Const CreateFirstHitsFile = False
+                Const CreateSynopsisFile = True
+
+                Dim eResult = m_PHRP.ExtractDataFromResults(msPathFinderResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSPATHFINDER)
+
+                If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+                    msg = "Error running PHRP"
+                    If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+
+                currentStep = "Verifying results exist"
+
+                ' Confirm that the synopsis file was made
+                If Not File.Exists(strSynFilePath) Then
+                    LogError("Synopsis file not found: " & Path.GetFileName(strSynFilePath))
+                    Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                End If
+
+            Catch ex As Exception
+                msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " & _
+                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+                m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End Try
+
+            ' Validate that the mass errors are within tolerance
+            Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+            If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSPathFinder, strParamFileName) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Else
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMODa at step " & currentStep, ex)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
     End Function
 
     Private Sub ZipConsoleOutputFiles()
@@ -2065,7 +2138,7 @@ Public Class clsExtractToolRunner
             End If
 
         Catch ex As Exception
-            LogError("Exception calling ValidatePHRPResultMassErrors", ex)            
+            LogError("Exception calling ValidatePHRPResultMassErrors", ex)
             blnSuccess = False
         End Try
 
@@ -2118,5 +2191,5 @@ Public Class clsExtractToolRunner
     End Sub
 #End Region
 
-  
+
 End Class

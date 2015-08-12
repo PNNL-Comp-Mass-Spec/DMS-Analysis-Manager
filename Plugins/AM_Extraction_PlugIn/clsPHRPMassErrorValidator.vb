@@ -113,7 +113,7 @@ Public Class clsPHRPMassErrorValidator
                 .MaxProteinsPerPSM = 1
             End With
 
-            mPHRPReader = New PHRPReader.clsPHRPReader(strInputFilePath, eResultType, oStartupOptions)
+            mPHRPReader = New clsPHRPReader(strInputFilePath, eResultType, oStartupOptions)
 
 			' Report any errors cached during instantiation of mPHRPReader
 			For Each strMessage As String In mPHRPReader.ErrorMessages
@@ -143,11 +143,11 @@ Public Class clsPHRPMassErrorValidator
 
 			' Define the precursor mass tolerance threshold
 			' At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
-			Dim dblPrecursorMassTolerance As Double
-			dblPrecursorMassTolerance = objSearchEngineParams.PrecursorMassToleranceDa
-			If dblPrecursorMassTolerance < 6 Then
-				dblPrecursorMassTolerance = 6
-			End If
+            Dim dblPrecursorMassTolerance As Double = objSearchEngineParams.PrecursorMassToleranceDa
+
+            If dblPrecursorMassTolerance < 6 Then
+                dblPrecursorMassTolerance = 6
+            End If
 
 			If mDebugLevel >= 2 Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Will use mass tolerance of " & dblPrecursorMassTolerance.ToString("0.0") & " Da when determining PHRP mass errors")
@@ -157,7 +157,7 @@ Public Class clsPHRPMassErrorValidator
 			Dim dblMassError As Double
 			Dim dblToleranceCurrent As Double
 
-			Dim intErrorCount As Integer = 0
+            Dim intErrorCount = 0
 			Dim intPsmCount = 0
 			Dim dtLastProgress As DateTime = DateTime.UtcNow
 
@@ -199,7 +199,7 @@ Public Class clsPHRPMassErrorValidator
 					Console.WriteLine(statusMessage)
 				End If
 
-				Dim objCurrentPSM As PHRPReader.clsPSM = mPHRPReader.CurrentPSM
+                Dim objCurrentPSM As clsPSM = mPHRPReader.CurrentPSM
 
 				If objCurrentPSM.PeptideMonoisotopicMass > 0 Then
 					dblMassError = objCurrentPSM.PrecursorNeutralMass - objCurrentPSM.PeptideMonoisotopicMass
