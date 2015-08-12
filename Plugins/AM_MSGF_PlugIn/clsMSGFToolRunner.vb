@@ -2076,8 +2076,9 @@ Public Class clsMSGFRunner
 
             Dim strLineIn As String
             Dim intLinesRead As Integer
+            mConsoleOutputErrorMsg = String.Empty
 
-            Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
                 Do While srInFile.Peek() > -1

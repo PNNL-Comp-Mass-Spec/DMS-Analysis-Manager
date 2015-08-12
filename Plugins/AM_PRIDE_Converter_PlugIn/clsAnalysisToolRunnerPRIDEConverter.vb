@@ -2866,8 +2866,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
 			End If
 
-
 			Dim strLineIn As String
+
+			mConsoleOutputErrorMsg = String.Empty
 
 			Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 

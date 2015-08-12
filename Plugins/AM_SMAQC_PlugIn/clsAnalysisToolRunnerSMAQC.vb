@@ -574,75 +574,76 @@ Public Class clsAnalysisToolRunnerSMAQC
 			End If
 
 
-			Dim srInFile As StreamReader
-			Dim strLineIn As String
+            Dim strLineIn As String
 			Dim intLinesRead As Integer
 
 			Dim sngEffectiveProgress As Single
 			sngEffectiveProgress = PROGRESS_PCT_SMAQC_STARTING
 
-			srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            mConsoleOutputErrorMsg = String.Empty
 
-			intLinesRead = 0
-			Do While srInFile.Peek() >= 0
-				strLineIn = srInFile.ReadLine()
-				intLinesRead += 1
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                intLinesRead = 0
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
+                    intLinesRead += 1
 
-					' Remove the timestamp from the start of the line (if present)
-					reMatch = reMatchTimeStamp.Match(strLineIn)
-					If reMatch.Success Then
-						strLineIn = strLineIn.Substring(reMatch.Length)
-					End If
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-					' Update progress if the line starts with one of the expected phrases
-					If strLineIn.StartsWith("Searching for Text Files") Then
-						If sngEffectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES Then
-							sngEffectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES
-						End If
+                        ' Remove the timestamp from the start of the line (if present)
+                        reMatch = reMatchTimeStamp.Match(strLineIn)
+                        If reMatch.Success Then
+                            strLineIn = strLineIn.Substring(reMatch.Length)
+                        End If
 
-					ElseIf strLineIn.StartsWith("Parsing and Inserting Data") Then
-						If sngEffectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES Then
-							sngEffectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES
-						End If
+                        ' Update progress if the line starts with one of the expected phrases
+                        If strLineIn.StartsWith("Searching for Text Files") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES Then
+                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES
+                            End If
 
-					ElseIf strLineIn.StartsWith("Now running Measurements") Then
-						If sngEffectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS Then
-							sngEffectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS
-						End If
+                        ElseIf strLineIn.StartsWith("Parsing and Inserting Data") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES Then
+                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES
+                            End If
 
-					ElseIf strLineIn.StartsWith("Saving Scan Results") Then
-						If sngEffectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS Then
-							sngEffectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS
-						End If
+                        ElseIf strLineIn.StartsWith("Now running Measurements") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS Then
+                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS
+                            End If
 
-					ElseIf strLineIn.StartsWith("Scan output has been saved") Then
-						' Ignore this line
+                        ElseIf strLineIn.StartsWith("Saving Scan Results") Then
+                            If sngEffectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS Then
+                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS
+                            End If
 
-					ElseIf strLineIn.StartsWith("SMAQC analysis complete") Then
-						' Ignore this line
+                        ElseIf strLineIn.StartsWith("Scan output has been saved") Then
+                            ' Ignore this line
 
-					ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-						If strLineIn.ToLower.Contains("error") Then
-							mConsoleOutputErrorMsg &= "; " & strLineIn
-						End If
-					End If
-				End If
-			Loop
+                        ElseIf strLineIn.StartsWith("SMAQC analysis complete") Then
+                            ' Ignore this line
 
-			srInFile.Close()
+                        ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            If strLineIn.ToLower.Contains("error") Then
+                                mConsoleOutputErrorMsg &= "; " & strLineIn
+                            End If
+                        End If
+                    End If
+                Loop
 
-			If m_progress < sngEffectiveProgress Then
-				m_progress = sngEffectiveProgress
-			End If
+            End Using
 
-		Catch ex As Exception
-			' Ignore errors here
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-			End If
-		End Try
+            If m_progress < sngEffectiveProgress Then
+                m_progress = sngEffectiveProgress
+            End If
+
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
 
 	End Sub
 

@@ -524,8 +524,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 		Const INSTRUMENT_ACTIVATION_TYPE_KEY As String = "activation"
 		Const SEARCH_TYPE_KEY As String = "search"
 
-		Dim srInFile As System.IO.StreamReader
-		Dim strLineIn As String
+        Dim strLineIn As String
 
 		Dim intEqualsIndex As Integer
 		Dim strKeyName As String
@@ -547,90 +546,86 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			dctParameterMap.Add("report", "r")
 
 			' Open the parameter file
-			srInFile = New IO.StreamReader(New IO.FileStream(strParamFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+            Using srInFile = New IO.StreamReader(New IO.FileStream(strParamFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-			' The first two parameters on the command line are Fasta File name and input file name
-			strCommandLine &= mInputPropertyValues.FastaFileName & " " & mInputPropertyValues.SpectrumFileName
+                ' The first two parameters on the command line are Fasta File name and input file name
+                strCommandLine &= mInputPropertyValues.FastaFileName & " " & mInputPropertyValues.SpectrumFileName
 
-			' Now append the parameters defined in the parameter file			
-			Do While srInFile.Peek > -1
-				strLineIn = srInFile.ReadLine()
+                ' Now append the parameters defined in the parameter file			
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
 
-				If strLineIn.TrimStart().StartsWith("#") OrElse String.IsNullOrWhiteSpace(strLineIn) Then
-					' Comment line or blank line; skip it
-				Else
-					' Look for an equals sign
-					intEqualsIndex = strLineIn.IndexOf("="c)
+                    If strLineIn.TrimStart().StartsWith("#") OrElse String.IsNullOrWhiteSpace(strLineIn) Then
+                        ' Comment line or blank line; skip it
+                    Else
+                        ' Look for an equals sign
+                        intEqualsIndex = strLineIn.IndexOf("="c)
 
-					If intEqualsIndex > 0 Then
-						' Split the line on the equals sign
-						strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd()
-						If intEqualsIndex < strLineIn.Length - 1 Then
-							strValue = strLineIn.Substring(intEqualsIndex + 1).Trim()
-						Else
-							strValue = String.Empty
-						End If
+                        If intEqualsIndex > 0 Then
+                            ' Split the line on the equals sign
+                            strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd()
+                            If intEqualsIndex < strLineIn.Length - 1 Then
+                                strValue = strLineIn.Substring(intEqualsIndex + 1).Trim()
+                            Else
+                                strValue = String.Empty
+                            End If
 
-						If strKeyName.ToLower() = INSTRUMENT_ACTIVATION_TYPE_KEY Then
-							' If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
-							' The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
-							Dim strToolName As String
-							strToolName = m_jobParams.GetParam("ToolName")
+                            If strKeyName.ToLower() = INSTRUMENT_ACTIVATION_TYPE_KEY Then
+                                ' If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
+                                ' The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+                                Dim strToolName As String
+                                strToolName = m_jobParams.GetParam("ToolName")
 
-							If strToolName = "MSAlign_Bruker" OrElse strToolName = "MSAlign_Histone_Bruker" Then
-								If strValue.ToUpper() = "FILE" Then
-									m_message = "Must specify an explicit scan type for " & strKeyName & " in the MSAlign parameter file (CID, HCD, or ETD)"
+                                If strToolName = "MSAlign_Bruker" OrElse strToolName = "MSAlign_Histone_Bruker" Then
+                                    If strValue.ToUpper() = "FILE" Then
+                                        m_message = "Must specify an explicit scan type for " & strKeyName & " in the MSAlign parameter file (CID, HCD, or ETD)"
 
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag")
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag")
 
-									srInFile.Close()
+                                        Return False
 
-									Return False
+                                    End If
+                                End If
+                            End If
 
-								End If
-							End If
-						End If
+                            If strKeyName.ToLower() = SEARCH_TYPE_KEY Then
+                                If strValue.ToUpper() = "TARGET+DECOY" Then
+                                    ' Make sure the protein collection is not a Decoy protein collection
+                                    Dim strProteinOptions As String
+                                    strProteinOptions = m_jobParams.GetParam("ProteinOptions")
 
-						If strKeyName.ToLower() = SEARCH_TYPE_KEY Then
-							If strValue.ToUpper() = "TARGET+DECOY" Then
-								' Make sure the protein collection is not a Decoy protein collection
-								Dim strProteinOptions As String
-								strProteinOptions = m_jobParams.GetParam("ProteinOptions")
+                                    If strProteinOptions.ToLower().Contains("seq_direction=decoy") Then
+                                        m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy"
 
-								If strProteinOptions.ToLower().Contains("seq_direction=decoy") Then
-									m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy"
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                                        Return False
+                                    End If
+                                End If
+                            End If
 
-									srInFile.Close()
+                            Dim strSwitch As String = String.Empty
+                            If dctParameterMap.TryGetValue(strKeyName, strSwitch) Then
+                                strCommandLine &= " -" & strSwitch & " " & strValue
+                            Else
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring unrecognized MSAlign_Histone parameter: " & strKeyName)
+                            End If
 
-									Return False
-								End If
-							End If
-						End If
+                        Else
+                            ' Unknown line format; skip it
+                        End If
 
-						Dim strSwitch As String = String.Empty
-						If dctParameterMap.TryGetValue(strKeyName, strSwitch) Then
-							strCommandLine &= " -" & strSwitch & " " & strValue
-						Else
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring unrecognized MSAlign_Histone parameter: " & strKeyName)
-						End If
+                    End If
 
-					Else
-						' Unknown line format; skip it
-					End If
+                Loop
 
-				End If
+            End Using
 
-			Loop
-
-			srInFile.Close()
-
-		Catch ex As Exception
-			m_message = "Exception in CreateMSAlignCommandLine"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateMSAlignCommandLine: " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in CreateMSAlignCommandLine"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateMSAlignCommandLine: " & ex.Message)
+            Return False
+        End Try
 
 		Return True
 
@@ -640,29 +635,29 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 		Dim blnFilesMatch As Boolean = False
 		Try
-			Dim fiFile1 As IO.FileInfo = New IO.FileInfo(strFilePath1)
-			Dim fiFile2 As IO.FileInfo = New IO.FileInfo(strFilePath2)
+            Dim fiFile1 = New IO.FileInfo(strFilePath1)
+            Dim fiFile2 = New IO.FileInfo(strFilePath2)
 
 			If fiFile1.Exists AndAlso fiFile2.Exists Then
 				If fiFile1.Length = fiFile2.Length Then
 
 					blnFilesMatch = True
 
-					Using srInfile1 As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiFile1.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-						Using srInfile2 As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiFile2.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-							Do While srInfile1.Peek > -1
-								If srInfile2.Peek < 0 Then
-									blnFilesMatch = False
-									Exit Do
-								Else
-									If srInfile1.ReadLine() <> srInfile2.ReadLine() Then
-										blnFilesMatch = False
-										Exit Do
-									End If
-								End If
-							Loop
-						End Using
-					End Using
+                    Using srInfile1 = New IO.StreamReader(New IO.FileStream(fiFile1.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+                        Using srInfile2 = New IO.StreamReader(New IO.FileStream(fiFile2.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+                            Do While Not srInfile1.EndOfStream
+                                If srInfile2.EndOfStream Then
+                                    blnFilesMatch = False
+                                    Exit Do
+                                Else
+                                    If srInfile1.ReadLine() <> srInfile2.ReadLine() Then
+                                        blnFilesMatch = False
+                                        Exit Do
+                                    End If
+                                End If
+                            Loop
+                        End Using
+                    End Using
 
 				End If
 			End If
@@ -675,22 +670,22 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
 	End Function
 
-	Protected Function GetExpectedMSAlignResultFiles(ByVal strDatasetName As String) As Generic.Dictionary(Of String, String)
-		' Keys in this dictionary are the expected file name
-		' Values are the new name to rename the file to
-		Dim dctResultFiles As Generic.Dictionary(Of String, String) = New Generic.Dictionary(Of String, String)
-		Dim strBaseName As String = IO.Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName)
+    Protected Function GetExpectedMSAlignResultFiles(ByVal strDatasetName As String) As Dictionary(Of String, String)
+        ' Keys in this dictionary are the expected file name
+        ' Values are the new name to rename the file to
+        Dim dctResultFiles = New Generic.Dictionary(Of String, String)
+        Dim strBaseName As String = IO.Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName)
 
-		dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_PTM_SEARCH, strDatasetName & "_PTM_Search_Result.xml")
-		dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_TOP_RESULT, String.Empty)							' Don't keep this file since it's virtually identical to the E_VALUE_RESULT file
-		dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_E_VALUE_RESULT, strDatasetName & "_PTM_Search_Result_EValue.xml")
-		dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_OUTPUT_RESULT, strDatasetName & "_PTM_Search_Result_Final.xml")
+        dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_PTM_SEARCH, strDatasetName & "_PTM_Search_Result.xml")
+        dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_TOP_RESULT, String.Empty)                          ' Don't keep this file since it's virtually identical to the E_VALUE_RESULT file
+        dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_E_VALUE_RESULT, strDatasetName & "_PTM_Search_Result_EValue.xml")
+        dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_OUTPUT_RESULT, strDatasetName & "_PTM_Search_Result_Final.xml")
 
-		dctResultFiles.Add(strBaseName & "." & RESULT_TABLE_FILE_EXTENSION, strDatasetName & "_" & RESULT_TABLE_FILE_EXTENSION)
+        dctResultFiles.Add(strBaseName & "." & RESULT_TABLE_FILE_EXTENSION, strDatasetName & "_" & RESULT_TABLE_FILE_EXTENSION)
 
-		Return dctResultFiles
+        Return dctResultFiles
 
-	End Function
+    End Function
 
 	Protected Function InitializeInputFolder(ByVal strMSAlignWorkFolderPath As String, ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
 
@@ -832,72 +827,72 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			End If
 
 
-			Dim srInFile As System.IO.StreamReader
-			Dim strLineIn As String
+            Dim strLineIn As String
 			Dim intLinesRead As Integer
 
 			Dim intProgress As Int16
 			Dim intActualProgress As Int16
 
 			mConsoleOutputErrorMsg = String.Empty
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-			intLinesRead = 0
-			Do While srInFile.Peek() >= 0
-				strLineIn = srInFile.ReadLine()
-				intLinesRead += 1
+            Using srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					If intLinesRead <= 2 AndAlso String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-						' Parse out the MSAlign version
-						If strLineIn.ToLower.Contains("align") Then
-							If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign version: " & strLineIn)
-							End If
+                intLinesRead = 0
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
+                    intLinesRead += 1
 
-							mMSAlignVersion = String.Copy(strLineIn)
-						Else
-							If strLineIn.ToLower.Contains("error") OrElse strLineIn.Contains("[ java.lang") Then
-								mConsoleOutputErrorMsg = "Error running MSAlign: " & strLineIn
-							End If
-						End If
-					End If
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                        If intLinesRead <= 2 AndAlso String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            ' Parse out the MSAlign version
+                            If strLineIn.ToLower.Contains("align") Then
+                                If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSAlignVersion) Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign version: " & strLineIn)
+                                End If
 
-					If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-						mConsoleOutputErrorMsg &= "; " & strLineIn
-					Else
+                                mMSAlignVersion = String.Copy(strLineIn)
+                            Else
+                                If strLineIn.ToLower.Contains("error") OrElse strLineIn.Contains("[ java.lang") Then
+                                    mConsoleOutputErrorMsg = "Error running MSAlign: " & strLineIn
+                                End If
+                            End If
+                        End If
 
-						' Update progress if the line starts with Processing spectrum
-						If strLineIn.IndexOf("Processing spectrum") >= 0 Then
-							oMatch = reExtractPercentFinished.Match(strLineIn)
-							If oMatch.Success Then
-								If Int16.TryParse(oMatch.Groups(1).Value, intProgress) Then
-									intActualProgress = intProgress
-								End If
-							End If
+                        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                        Else
 
-						ElseIf strLineIn.Contains("[ java.lang") Then
-							' This is likely an exception
-							mConsoleOutputErrorMsg = "Error running MSAlign: " & strLineIn
-						End If
+                            ' Update progress if the line starts with Processing spectrum
+                            If strLineIn.IndexOf("Processing spectrum") >= 0 Then
+                                oMatch = reExtractPercentFinished.Match(strLineIn)
+                                If oMatch.Success Then
+                                    If Int16.TryParse(oMatch.Groups(1).Value, intProgress) Then
+                                        intActualProgress = intProgress
+                                    End If
+                                End If
 
-					End If
+                            ElseIf strLineIn.Contains("[ java.lang") Then
+                                ' This is likely an exception
+                                mConsoleOutputErrorMsg = "Error running MSAlign: " & strLineIn
+                            End If
 
-				End If
-			Loop
+                        End If
 
-			srInFile.Close()
+                    End If
+                Loop
 
-			If m_progress < intActualProgress Then
-				m_progress = intActualProgress
+            End Using
+
+            If m_progress < intActualProgress Then
+                m_progress = intActualProgress
             End If
 
-		Catch ex As Exception
-			' Ignore errors here
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-			End If
-		End Try
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
 
 	End Sub
 
@@ -951,10 +946,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Trimming console output file at " & strConsoleOutputFilePath)
 			End If
 
-			Dim srInFile As System.IO.StreamReader
-			Dim swOutFile As System.IO.StreamWriter
-
-			Dim strLineIn As String
+            Dim strLineIn As String
 			Dim blnKeepLine As Boolean
 
 			Dim intScanNumber As Integer
@@ -966,60 +958,59 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 			Dim strTrimmedFilePath As String
 			strTrimmedFilePath = strConsoleOutputFilePath & ".trimmed"
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-			swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strTrimmedFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+            Using srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite)),
+                  swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strTrimmedFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-			intScanNumberOutputThreshold = 0
-			Do While srInFile.Peek() >= 0
-				strLineIn = srInFile.ReadLine()
-				blnKeepLine = True
+                intScanNumberOutputThreshold = 0
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
+                    blnKeepLine = True
 
-				oMatch = reExtractScan.Match(strLineIn)
-				If oMatch.Success Then
-					If Integer.TryParse(oMatch.Groups(1).Value, intScanNumber) Then
-						If intScanNumber < intScanNumberOutputThreshold Then
-							blnKeepLine = False
-						Else
-							' Write out this line and bump up intScanNumberOutputThreshold by 100
-							intScanNumberOutputThreshold += 100
-							strMostRecentProgressLineWritten = String.Copy(strLineIn)
-						End If
-					End If
-					strMostRecentProgressLine = String.Copy(strLineIn)
+                    oMatch = reExtractScan.Match(strLineIn)
+                    If oMatch.Success Then
+                        If Integer.TryParse(oMatch.Groups(1).Value, intScanNumber) Then
+                            If intScanNumber < intScanNumberOutputThreshold Then
+                                blnKeepLine = False
+                            Else
+                                ' Write out this line and bump up intScanNumberOutputThreshold by 100
+                                intScanNumberOutputThreshold += 100
+                                strMostRecentProgressLineWritten = String.Copy(strLineIn)
+                            End If
+                        End If
+                        strMostRecentProgressLine = String.Copy(strLineIn)
 
-				ElseIf strLineIn.StartsWith("Deconvolution finished") Then
-					' Possibly write out the most recent progress line
-					If String.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) <> 0 Then
-						swOutFile.WriteLine(strMostRecentProgressLine)
-					End If
-				End If
+                    ElseIf strLineIn.StartsWith("Deconvolution finished") Then
+                        ' Possibly write out the most recent progress line
+                        If String.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) <> 0 Then
+                            swOutFile.WriteLine(strMostRecentProgressLine)
+                        End If
+                    End If
 
-				If blnKeepLine Then
-					swOutFile.WriteLine(strLineIn)
-				End If
-			Loop
+                    If blnKeepLine Then
+                        swOutFile.WriteLine(strLineIn)
+                    End If
+                Loop
 
-			srInFile.Close()
-			swOutFile.Close()
+            End Using
 
-			' Wait 500 msec, then swap the files
-			System.Threading.Thread.Sleep(500)
+            ' Wait 500 msec, then swap the files
+            System.Threading.Thread.Sleep(500)
 
-			Try
-				System.IO.File.Delete(strConsoleOutputFilePath)
-				System.IO.File.Move(strTrimmedFilePath, strConsoleOutputFilePath)
-			Catch ex As Exception
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error replacing original console output file (" & strConsoleOutputFilePath & ") with trimmed version: " & ex.Message)
-				End If
-			End Try
+            Try
+                System.IO.File.Delete(strConsoleOutputFilePath)
+                System.IO.File.Move(strTrimmedFilePath, strConsoleOutputFilePath)
+            Catch ex As Exception
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error replacing original console output file (" & strConsoleOutputFilePath & ") with trimmed version: " & ex.Message)
+                End If
+            End Try
 
-		Catch ex As Exception
-			' Ignore errors here
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error trimming console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-			End If
-		End Try
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error trimming console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
 
 	End Sub
 
@@ -1155,50 +1146,47 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the MSAlign OUTPUT_TABLE file is not empty")
 			End If
 
-			' Open the input file
-			Using srInFile As IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+            ' Open the input file and
+            ' create the output file
+            Using srInFile = New IO.StreamReader(New System.IO.FileStream(strSourceFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite)),
+                  swOutFile = New IO.StreamWriter(New System.IO.FileStream(strOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-				' Create the output file
-				Using swOutFile As IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine
+                    intLinesRead += 1
 
-					Do While srInFile.Peek > -1
-						strLineIn = srInFile.ReadLine
-						intLinesRead += 1
+                    If Not String.IsNullOrEmpty(strLineIn) Then
 
-						If Not String.IsNullOrEmpty(strLineIn) Then
+                        If intLinesRead = 1 AndAlso strLineIn.EndsWith("FDR" & ControlChars.Tab) Then
+                            ' The header line is missing the final column header; add it
+                            strLineIn &= "FragMethod"
+                        End If
 
-							If intLinesRead = 1 AndAlso strLineIn.EndsWith("FDR" & ControlChars.Tab) Then
-								' The header line is missing the final column header; add it
-								strLineIn &= "FragMethod"
-							End If
+                        If Not blnValidDataFound Then
 
-							If Not blnValidDataFound Then
+                            Dim strSplitLine() As String
+                            strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-								Dim strSplitLine() As String
-								strSplitLine = strLineIn.Split(ControlChars.Tab)
+                            If strSplitLine.Length > 1 Then
+                                ' The first column has the source .msalign file name
+                                ' The second column has Prsm_ID
 
-								If strSplitLine.Length > 1 Then
-									' The first column has the source .msalign file name
-									' The second column has Prsm_ID
+                                ' Look for an integer in the second column
+                                Dim intValue As Integer
+                                If Integer.TryParse(strSplitLine(1), intValue) Then
+                                    ' Integer found; line is valid
+                                    blnValidDataFound = True
+                                End If
+                            End If
 
-									' Look for an integer in the second column
-									Dim intValue As Integer
-									If Integer.TryParse(strSplitLine(1), intValue) Then
-										' Integer found; line is valid
-										blnValidDataFound = True
-									End If
-								End If
+                        End If
 
-							End If
+                        swOutFile.WriteLine(strLineIn)
+                    End If
 
-							swOutFile.WriteLine(strLineIn)
-						End If
+                Loop
 
-					Loop
-
-				End Using
-
-			End Using
+            End Using
 
 			If Not blnValidDataFound Then
 				Dim Msg As String

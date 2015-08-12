@@ -401,8 +401,7 @@ Public Class clsAnalysisToolRunnerProSightQuant
 			End If
 
 
-			Dim srInFile As System.IO.StreamReader
-			Dim strLineIn As String
+            Dim strLineIn As String
 			Dim strLineInLCase As String
 
 			Dim intLinesRead As Integer
@@ -414,73 +413,75 @@ Public Class clsAnalysisToolRunnerProSightQuant
 			Dim intEffectiveProgress As Integer
 			intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING
 
-			srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			mConsoleOutputErrorMsg = String.Empty
+			
+            Using srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-			intLinesRead = 0
-			Do While srInFile.Peek() >= 0
-				strLineIn = srInFile.ReadLine()
-				intLinesRead += 1
+                intLinesRead = 0
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
+                    intLinesRead += 1
 
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-					strLineInLCase = strLineIn.ToLower()
+                        strLineInLCase = strLineIn.ToLower()
 
-					' Update progress if the line contains any one of the expected phrases
-					For Each oItem As System.Collections.Generic.KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
-						If strLineIn.Contains(oItem.Key) Then
-							If intEffectiveProgress < oItem.Value Then
-								intEffectiveProgress = oItem.Value
-							End If
-						End If
-					Next
+                        ' Update progress if the line contains any one of the expected phrases
+                        For Each oItem As KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
+                            If strLineIn.Contains(oItem.Key) Then
+                                If intEffectiveProgress < oItem.Value Then
+                                    intEffectiveProgress = oItem.Value
+                                End If
+                            End If
+                        Next
 
-					If intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED Then
-						oMatch = reSubProgress.Match(strLineIn)
-						If oMatch.Success Then
-							If Double.TryParse(oMatch.Groups(1).Value, dblSubProgressAddon) Then
-								dblSubProgressAddon /= 100
-							End If
-						End If
-					End If
+                        If intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED Then
+                            oMatch = reSubProgress.Match(strLineIn)
+                            If oMatch.Success Then
+                                If Double.TryParse(oMatch.Groups(1).Value, dblSubProgressAddon) Then
+                                    dblSubProgressAddon /= 100
+                                End If
+                            End If
+                        End If
 
-					intCharIndex = strLineInLCase.IndexOf("exception of type")
-					If intCharIndex < 0 Then
-						intCharIndex = strLineInLCase.IndexOf(ControlChars.Tab & "error")
+                        intCharIndex = strLineInLCase.IndexOf("exception of type")
+                        If intCharIndex < 0 Then
+                            intCharIndex = strLineInLCase.IndexOf(ControlChars.Tab & "error")
 
-						If intCharIndex > 0 Then
-							intCharIndex += 1
-						ElseIf strLineInLCase.StartsWith("error") Then
-							intCharIndex = 0
-						End If
-					End If
+                            If intCharIndex > 0 Then
+                                intCharIndex += 1
+                            ElseIf strLineInLCase.StartsWith("error") Then
+                                intCharIndex = 0
+                            End If
+                        End If
 
-					If intCharIndex >= 0 Then
-						' Error message found; update m_message
-						mConsoleOutputErrorMsg = strLineIn.Substring(intCharIndex)
-					End If
+                        If intCharIndex >= 0 Then
+                            ' Error message found; update m_message
+                            mConsoleOutputErrorMsg = strLineIn.Substring(intCharIndex)
+                        End If
 
-				End If
-			Loop
+                    End If
+                Loop
 
-			srInFile.Close()
+            End Using
 
-			Dim sngEffectiveProgress As Single = intEffectiveProgress
+            Dim sngEffectiveProgress As Single = intEffectiveProgress
 
-			' Bump up the effective progress if finding features in positive or negative data
-			If intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED Then
-				sngEffectiveProgress += CSng((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * dblSubProgressAddon)
-			End If
+            ' Bump up the effective progress if finding features in positive or negative data
+            If intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED Then
+                sngEffectiveProgress += CSng((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * dblSubProgressAddon)
+            End If
 
-			If m_progress < sngEffectiveProgress Then
-				m_progress = sngEffectiveProgress
-			End If
+            If m_progress < sngEffectiveProgress Then
+                m_progress = sngEffectiveProgress
+            End If
 
-		Catch ex As Exception
-			' Ignore errors here
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-			End If
-		End Try
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
 
 	End Sub
 

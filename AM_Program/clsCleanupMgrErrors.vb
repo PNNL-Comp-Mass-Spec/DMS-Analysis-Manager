@@ -190,29 +190,34 @@ Public Class clsCleanupMgrErrors
 			For Each fiFile In diWorkFolder.GetFiles()
 				Try
 					fiFile.Delete()
-				Catch ex As Exception
-					' Make sure the readonly bit is not set
-					If (fiFile.IsReadOnly) Then
-						Dim attributes = fiFile.Attributes
-						fiFile.Attributes = attributes And (Not FileAttributes.ReadOnly)
+                Catch ex As Exception
+                    If clsGlobal.IsVimSwapFile(fiFile.Name) Then
+                        ' Ignore this error
+                        Continue For
+                    End If
 
-						Try
-							' Retry the delete
-							fiFile.Delete()
-						Catch ex2 As Exception
-							Dim strFailureMessage As String = "Error deleting file " & fiFile.FullName & ": " & ex2.Message
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
-							Console.WriteLine(strFailureMessage)
-							failedDeleteCount += 1
-						End Try
-					Else
-						Dim strFailureMessage As String = "Error deleting file " & fiFile.FullName & ": " & ex.Message
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
-						Console.WriteLine(strFailureMessage)
-						failedDeleteCount += 1
-					End If
-				End Try
-			Next
+                    ' Make sure the readonly bit is not set
+                    If (fiFile.IsReadOnly) Then
+                        Dim attributes = fiFile.Attributes
+                        fiFile.Attributes = attributes And (Not FileAttributes.ReadOnly)
+
+                        Try
+                            ' Retry the delete
+                            fiFile.Delete()
+                        Catch ex2 As Exception
+                            Dim strFailureMessage As String = "Error deleting file " & fiFile.FullName & ": " & ex2.Message
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
+                            Console.WriteLine(strFailureMessage)
+                            failedDeleteCount += 1
+                        End Try
+                    Else
+                        Dim strFailureMessage As String = "Error deleting file " & fiFile.FullName & ": " & ex.Message
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
+                        Console.WriteLine(strFailureMessage)
+                        failedDeleteCount += 1
+                    End If
+                End Try
+            Next
 
 			'Delete the sub directories
 			For Each diSubDirectory In diWorkFolder.GetDirectories
@@ -290,12 +295,12 @@ Public Class clsCleanupMgrErrors
 			Return False
 		End If
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Creates a dummy file in the application directory when a error has occurred when trying to delete non result files
-	''' </summary>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Creates a dummy file in the application directory when a error has occurred when trying to delete non result files
+    ''' </summary>
+    ''' <remarks></remarks>
 	Public Sub CreateErrorDeletingFilesFlagFile()
 
 		Try

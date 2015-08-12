@@ -352,6 +352,8 @@ Public Class clsAnalysisToolRunnerMODa
             Dim intTotalScans As Integer = 0
             Dim strMODaVersionAndDate As String = String.Empty
 
+            mConsoleOutputErrorMsg = String.Empty
+
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0

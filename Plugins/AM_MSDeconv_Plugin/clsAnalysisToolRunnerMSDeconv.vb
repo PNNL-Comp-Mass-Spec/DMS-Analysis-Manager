@@ -292,71 +292,71 @@ Public Class clsAnalysisToolRunnerMSDeconv
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
 			End If
 
-
-			Dim srInFile As StreamReader
-			Dim strLineIn As String
+            Dim strLineIn As String
 			Dim intLinesRead As Integer
 
 			Dim intProgress As Int16
 			Dim intActualProgress As Int16
 
-			srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+			mConsoleOutputErrorMsg = String.Empty
+			
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-			intLinesRead = 0
-			Do While srInFile.Peek() >= 0
-				strLineIn = srInFile.ReadLine()
-				intLinesRead += 1
+                intLinesRead = 0
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
+                    intLinesRead += 1
 
-				If Not String.IsNullOrWhiteSpace(strLineIn) Then
-					If intLinesRead = 1 Then
-						' Parse out the MSDeconv version
-						If strLineIn.ToLower.Contains("deconv") Then
-							If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSDeconvVersion) Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSDeconv version: " & strLineIn)
-							End If
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                        If intLinesRead = 1 Then
+                            ' Parse out the MSDeconv version
+                            If strLineIn.ToLower.Contains("deconv") Then
+                                If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSDeconvVersion) Then
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSDeconv version: " & strLineIn)
+                                End If
 
-							mMSDeconvVersion = String.Copy(strLineIn)
-						Else
-							If strLineIn.ToLower.Contains("error") Then
-								If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-									mConsoleOutputErrorMsg = "Error running MSDeconv:"
-								End If
-								mConsoleOutputErrorMsg &= "; " & strLineIn
-							End If
-						End If
-					Else
+                                mMSDeconvVersion = String.Copy(strLineIn)
+                            Else
+                                If strLineIn.ToLower.Contains("error") Then
+                                    If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                        mConsoleOutputErrorMsg = "Error running MSDeconv:"
+                                    End If
+                                    mConsoleOutputErrorMsg &= "; " & strLineIn
+                                End If
+                            End If
+                        Else
 
-						' Update progress if the line starts with Processing spectrum
-						If strLineIn.StartsWith("Processing spectrum") Then
-							oMatch = reExtractPercentFinished.Match(strLineIn)
-							If oMatch.Success Then
-								If Int16.TryParse(oMatch.Groups(1).Value, intProgress) Then
-									intActualProgress = intProgress
-								End If
-							End If
+                            ' Update progress if the line starts with Processing spectrum
+                            If strLineIn.StartsWith("Processing spectrum") Then
+                                oMatch = reExtractPercentFinished.Match(strLineIn)
+                                If oMatch.Success Then
+                                    If Int16.TryParse(oMatch.Groups(1).Value, intProgress) Then
+                                        intActualProgress = intProgress
+                                    End If
+                                End If
 
-						ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-							If strLineIn.ToLower.StartsWith("error") Then
-								mConsoleOutputErrorMsg &= "; " & strLineIn
-							End If
-						End If
+                            ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                If strLineIn.ToLower.StartsWith("error") Then
+                                    mConsoleOutputErrorMsg &= "; " & strLineIn
+                                End If
+                            End If
 
-					End If
-				End If
-			Loop
+                        End If
+                    End If
+                Loop
 
-			srInFile.Close()
+            End Using
 
-			If m_progress < intActualProgress Then
-				m_progress = intActualProgress
-			End If
+            If m_progress < intActualProgress Then
+                m_progress = intActualProgress
+            End If
 
-		Catch ex As Exception
-			' Ignore errors here
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-			End If
-		End Try
+        Catch ex As Exception
+            ' Ignore errors here
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            End If
+        End Try
 
 	End Sub
 

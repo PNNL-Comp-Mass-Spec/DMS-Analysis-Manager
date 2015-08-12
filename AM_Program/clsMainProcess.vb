@@ -69,8 +69,6 @@ Public Class clsMainProcess
     ''' <remarks></remarks>
     Public Function Main() As Integer
 
-        Dim ErrMsg As String
-
         Try
 
             If Me.TraceMode Then ShowTraceMessage("Initializing the manager")
@@ -88,9 +86,9 @@ Public Class clsMainProcess
 
         Catch ex As Exception
             'Report any exceptions not handled at a lower level to the system application log
-            ErrMsg = "Critical exception starting application: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            If Me.TraceMode Then ShowTraceMessage(ErrMsg)
-            PostToEventLog(ErrMsg)
+            Dim errMsg = "Critical exception starting application: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            If Me.TraceMode Then ShowTraceMessage(errMsg)
+            PostToEventLog(errMsg)
             If Me.TraceMode Then ShowTraceMessage("Exiting clsMainProcess.Main with error code = 1")
             Return 1
         End Try
@@ -179,17 +177,22 @@ Public Class clsMainProcess
         Dim MyMsg As String = "=== Started Analysis Manager V" & Application.ProductVersion & " ===== "
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, MyMsg)
 
+        Dim configFileName = m_MgrSettings.GetParam("configfilename")
+        If (String.IsNullOrEmpty(configFileName)) Then
+            '  Manager parameter error; log an error and exit
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager")
+            Return False
+        End If
+
         ' Setup a file watcher for the config file
-        m_FileWatcher = New FileSystemWatcher
-        With m_FileWatcher
-            .BeginInit()
-            .Path = m_MgrFolderPath
-            .IncludeSubdirectories = False
-            .Filter = m_MgrSettings.GetParam("configfilename")
-            .NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-            .EndInit()
+        m_FileWatcher = New FileSystemWatcher With {
+            .Path = m_MgrFolderPath,
+            .IncludeSubdirectories = False,
+            .Filter = configFileName,
+            .NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size,
             .EnableRaisingEvents = True
-        End With
+        }
 
         ' Get the debug level
         m_DebugLevel = CInt(m_MgrSettings.GetParam("debuglevel"))
@@ -1825,50 +1828,57 @@ Public Class clsMainProcess
 
     Private Function ValidateWorkingDir() As Boolean
 
-        'Verifies working directory is properly specified and is empty
-        Dim MsgStr As String
+        ' Verifies working directory is properly specified and is empty
+        Dim msgStr As String
 
-        'Verify working directory is valid
+        ' Verify working directory is valid
         If Not VerifyWorkDir() Then
             Return False
         End If
 
-        'Verify the working directory is empty
-        Dim TmpFilArray() As String = Directory.GetFiles(m_WorkDirPath)
-        Dim TmpDirArray() As String = Directory.GetDirectories(m_WorkDirPath)
+        ' Verify the working directory is empty
+        Dim tmpFilArray() As String = Directory.GetFiles(m_WorkDirPath)
+        Dim tmpDirArray() As String = Directory.GetDirectories(m_WorkDirPath)
 
-        If (TmpDirArray.Length = 0) And (TmpFilArray.Length = 1) Then
+        If (tmpDirArray.Length = 0) And (tmpFilArray.Length = 1) Then
             ' If the only file in the working directory is a JobParameters xml file,
             '  then try to delete it, since it's likely left over from a previous job that never actually started
             Dim strFileToCheck As String
-            strFileToCheck = Path.GetFileName(TmpFilArray(0))
+            strFileToCheck = Path.GetFileName(tmpFilArray(0))
 
             If strFileToCheck.StartsWith(clsGlobal.XML_FILENAME_PREFIX) AndAlso _
                strFileToCheck.EndsWith(clsGlobal.XML_FILENAME_EXTENSION) Then
                 Try
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Working directory contains a stray JobParameters file, deleting it: " & TmpFilArray(0))
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Working directory contains a stray JobParameters file, deleting it: " & tmpFilArray(0))
 
-                    File.Delete(TmpFilArray(0))
+                    File.Delete(tmpFilArray(0))
 
-                    ' Wait 0.5 second and then refresh TmpFilArray
+                    ' Wait 0.5 second and then refresh tmpFilArray
                     Thread.Sleep(500)
 
                     ' Now obtain a new listing of files
-                    TmpFilArray = Directory.GetFiles(m_WorkDirPath)
+                    tmpFilArray = Directory.GetFiles(m_WorkDirPath)
                 Catch ex As Exception
                     ' Deletion failed
                 End Try
             End If
         End If
 
-        If (TmpDirArray.Length > 0) Or (TmpFilArray.Length > 0) Then
-            MsgStr = "Working directory not empty: " & m_WorkDirPath
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MsgStr)
-            Return False
+        If tmpDirArray.Length = 0 And tmpFilArray.Length = 0 Then
+            ' No problems found
+            Return True
         End If
 
-        'No problems found
-        Return True
+        Dim errorCount = tmpFilArray.Count(Function(filePath) Not clsGlobal.IsVimSwapFile(filePath))
+
+        If errorCount = 0 Then
+            ' No problems found
+            Return True
+        End If
+
+        msgStr = "Working directory not empty: " & m_WorkDirPath
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msgStr)
+        Return False
 
     End Function
 

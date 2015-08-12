@@ -293,32 +293,34 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
 			End If
 
+            mConsoleOutputErrorMsg = String.Empty
+
 			Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-				Do While srInFile.Peek() >= 0
-					Dim strLineIn = srInFile.ReadLine()
+                Do While Not srInFile.EndOfStream
+                    Dim strLineIn = srInFile.ReadLine()
 
-					If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-						Dim strLineInLCase = strLineIn.ToLower()
+                        Dim strLineInLCase = strLineIn.ToLower()
 
-						If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
-							If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-								mConsoleOutputErrorMsg = "Error running PBFGen:"
-							End If
-							mConsoleOutputErrorMsg &= "; " & strLineIn
-							Continue Do						
-						End If
+                        If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
+                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                mConsoleOutputErrorMsg = "Error running PBFGen:"
+                            End If
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                            Continue Do
+                        End If
 
-						If strLineIn.StartsWith("PbfFormatVersion:") Then
-							' Parse out the version number
-							Dim strVersion = strLineIn.Substring("PbfFormatVersion:".Length).Trim()
+                        If strLineIn.StartsWith("PbfFormatVersion:") Then
+                            ' Parse out the version number
+                            Dim strVersion = strLineIn.Substring("PbfFormatVersion:".Length).Trim()
 
-							mPbfFormatVersion = strVersion
-						End If
+                            mPbfFormatVersion = strVersion
+                        End If
 
-					End If
-				Loop
+                    End If
+                Loop
 
 			End Using
 

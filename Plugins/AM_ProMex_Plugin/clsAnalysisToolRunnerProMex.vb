@@ -93,8 +93,8 @@ Public Class clsAnalysisToolRunnerProMex
                 Else
                     If String.IsNullOrEmpty(m_message) Then
                         m_message = "ProMex results file not found: " & fiResultsFile.Name
-                        blnSuccess = False
                     End If
+                    blnSuccess = False
                 End If
             End If
 
@@ -259,6 +259,7 @@ Public Class clsAnalysisToolRunnerProMex
 
             ' Value between 0 and 100
             Dim progressComplete As Single = 0
+            mConsoleOutputErrorMsg = String.Empty
 
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
@@ -273,7 +274,13 @@ Public Class clsAnalysisToolRunnerProMex
                             If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
                                 mConsoleOutputErrorMsg = "Error running ProMex:"
                             End If
-                            mConsoleOutputErrorMsg &= "; " & strLineIn
+
+                            If strLineInLCase.StartsWith("error:") Then
+                                mConsoleOutputErrorMsg &= " " & strLineIn.Substring("error:".Length).Trim()
+                            Else
+                                mConsoleOutputErrorMsg &= " " & strLineIn
+                            End If
+
                             Continue Do
 
                         Else
@@ -515,10 +522,6 @@ Public Class clsAnalysisToolRunnerProMex
             swConsoleOutputfile.Close()
         End If
 
-        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
-        End If
-
         ' Parse the console output file one more time to check for errors
         System.Threading.Thread.Sleep(250)
         ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
@@ -542,6 +545,9 @@ Public Class clsAnalysisToolRunnerProMex
 
             Return False
 
+        ElseIf mConsoleOutputErrorMsg.Contains("Data file has no MS1 spectra") Then
+            m_message = mConsoleOutputErrorMsg
+            Return False
         End If
 
         If proMexBruker Then

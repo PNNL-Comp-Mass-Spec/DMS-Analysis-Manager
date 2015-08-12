@@ -1292,6 +1292,8 @@ Public Class clsMSGFDBUtils
             Dim oMatch As Text.RegularExpressions.Match
             Dim intThreadCount As Short = 0
 
+            mConsoleOutputErrorMsg = String.Empty
+
             sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
             mContinuumSpectraSkipped = 0
             mSpectraSearched = 0
@@ -1398,7 +1400,7 @@ Public Class clsMSGFDBUtils
                                 ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
                             End If
 
-                        ElseIf Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                        ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
                             If strLineIn.ToLower.Contains("error") Then
                                 mConsoleOutputErrorMsg &= "; " & strLineIn
                             End If

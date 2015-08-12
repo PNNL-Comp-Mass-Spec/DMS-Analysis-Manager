@@ -681,8 +681,9 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             End If
 
             ' Value between 0 and 100
-            Dim ascoreProgress As Integer = 0
-
+            Dim ascoreProgress = 0
+            mConsoleOutputErrorMsg = String.Empty
+			
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 Do While Not srInFile.EndOfStream

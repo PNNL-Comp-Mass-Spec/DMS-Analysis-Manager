@@ -1770,8 +1770,8 @@ Public Class clsAnalysisToolRunnerBase
         Dim strTargetFilePath As String = String.Empty
 
         Dim Files() As String
-        Dim TmpFile As String = String.Empty
-        Dim TmpFileNameLcase As String
+        Dim tmpFileName As String = String.Empty
+        Dim tmpFileNameLcase As String
         Dim OkToMove As Boolean
         Dim strLogMessage As String
 
@@ -1782,7 +1782,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Dim objExtension As Dictionary(Of String, Integer).Enumerator
 
-        Dim blnErrorEncountered As Boolean = False
+        Dim blnErrorEncountered = False
 
         ' Move files into results folder
         Try
@@ -1808,14 +1808,14 @@ Public Class clsAnalysisToolRunnerBase
             Files = Directory.GetFiles(m_WorkDir, "*")
 
             ' Check each file against m_jobParams.m_ResultFileExtensionsToSkip and m_jobParams.m_ResultFilesToKeep
-            For Each TmpFile In Files
+            For Each tmpFileName In Files
 
                 OkToMove = True
-                TmpFileNameLcase = Path.GetFileName(TmpFile).ToLower()
+                tmpFileNameLcase = Path.GetFileName(tmpFileName).ToLower()
 
                 ' Check to see if the filename is defined in ResultFilesToSkip
                 ' Note that entries in ResultFilesToSkip are not case sensitive since they were instantiated using SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
-                If m_jobParams.ResultFilesToSkip.Contains(TmpFileNameLcase) Then
+                If m_jobParams.ResultFilesToSkip.Contains(tmpFileNameLcase) Then
                     ' File found in the ResultFilesToSkip list; do not move it
                     OkToMove = False
                 End If
@@ -1824,7 +1824,7 @@ Public Class clsAnalysisToolRunnerBase
                     ' Check to see if the file ends with an entry specified in m_ResultFileExtensionsToSkip
                     ' Note that entries in m_ResultFileExtensionsToSkip can be extensions, or can even be partial file names, e.g. _peaks.txt
                     For Each ext As String In m_jobParams.ResultFileExtensionsToSkip
-                        If TmpFileNameLcase.EndsWith(ext.ToLower()) Then
+                        If tmpFileNameLcase.EndsWith(ext.ToLower()) Then
                             OkToMove = False
                             Exit For
                         End If
@@ -1833,9 +1833,14 @@ Public Class clsAnalysisToolRunnerBase
 
                 If Not OkToMove Then
                     ' Check to see if the file is a result file that got captured as a non result file
-                    If m_jobParams.ResultFilesToKeep.Contains(TmpFileNameLcase) Then
+                    If m_jobParams.ResultFilesToKeep.Contains(tmpFileNameLcase) Then
                         OkToMove = True
                     End If
+                End If
+
+                If OkToMove AndAlso clsGlobal.IsVimSwapFile(tmpFileName) Then
+                    ' VIM swap file; skip it
+                    OkToMove = False
                 End If
 
                 ' Look for invalid characters in the filename
@@ -1843,18 +1848,18 @@ Public Class clsAnalysisToolRunnerBase
                 ' Note: now evaluating each character in the filename
                 If OkToMove Then
                     Dim intAscValue As Integer
-                    For Each chChar As Char In Path.GetFileName(TmpFile).ToCharArray
+                    For Each chChar As Char In Path.GetFileName(tmpFileName).ToCharArray
                         intAscValue = Convert.ToInt32(chChar)
                         If intAscValue <= 31 Or intAscValue >= 128 Then
                             ' Invalid character found
                             OkToMove = False
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & TmpFile)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & tmpFileName)
                             Exit For
                         End If
                     Next
                 Else
                     If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
-                        strExtension = Path.GetExtension(TmpFile)
+                        strExtension = Path.GetExtension(tmpFileName)
                         If dctRejectStats.TryGetValue(strExtension, intCount) Then
                             dctRejectStats(strExtension) = intCount + 1
                         Else
@@ -1864,46 +1869,47 @@ Public Class clsAnalysisToolRunnerBase
                         ' Only log the first 10 times files of a given extension are rejected
                         '  However, if a file was rejected due to invalid characters in the name, then we don't track that rejection with dctRejectStats
                         If dctRejectStats(strExtension) <= REJECT_LOGGING_THRESHOLD Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected file:  " & TmpFile)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected file:  " & tmpFileName)
                         End If
                     End If
                 End If
+
+                If Not OkToMove Then Continue For
 
                 'If valid file name, then move file to results folder
-                If OkToMove Then
-                    If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
-                        strExtension = Path.GetExtension(TmpFile).ToLower
-                        If dctAcceptStats.TryGetValue(strExtension, intCount) Then
-                            dctAcceptStats(strExtension) = intCount + 1
-                        Else
-                            dctAcceptStats.Add(strExtension, 1)
-                        End If
-
-                        ' Only log the first 50 times files of a given extension are accepted
-                        If dctAcceptStats(strExtension) <= ACCEPT_LOGGING_THRESHOLD Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & TmpFile)
-                        End If
+                If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
+                    strExtension = Path.GetExtension(tmpFileName).ToLower
+                    If dctAcceptStats.TryGetValue(strExtension, intCount) Then
+                        dctAcceptStats(strExtension) = intCount + 1
+                    Else
+                        dctAcceptStats.Add(strExtension, 1)
                     End If
 
-                    Try
-                        strTargetFilePath = Path.Combine(ResFolderNamePath, Path.GetFileName(TmpFile))
-                        File.Move(TmpFile, strTargetFilePath)
-                    Catch ex As Exception
-                        Try
-                            ' Move failed
-                            ' Attempt to copy the file instead of moving the file
-                            File.Copy(TmpFile, strTargetFilePath, True)
-
-                            ' If we get here, then the copy succeeded; the original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
-
-                        Catch ex2 As Exception
-                            ' Copy also failed
-                            ' Continue moving files; we'll fail the results at the end of this function
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " MoveResultFiles: error moving/copying file: " & TmpFile & ex.Message)
-                            blnErrorEncountered = True
-                        End Try
-                    End Try
+                    ' Only log the first 50 times files of a given extension are accepted
+                    If dctAcceptStats(strExtension) <= ACCEPT_LOGGING_THRESHOLD Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " & tmpFileName)
+                    End If
                 End If
+
+                Try
+                    strTargetFilePath = Path.Combine(ResFolderNamePath, Path.GetFileName(tmpFileName))
+                    File.Move(tmpFileName, strTargetFilePath)
+                Catch ex As Exception
+                    Try
+                        ' Move failed
+                        ' Attempt to copy the file instead of moving the file
+                        File.Copy(tmpFileName, strTargetFilePath, True)
+
+                        ' If we get here, then the copy succeeded; the original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
+
+                    Catch ex2 As Exception
+                        ' Copy also failed
+                        ' Continue moving files; we'll fail the results at the end of this function
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " MoveResultFiles: error moving/copying file: " & tmpFileName & ex.Message)
+                        blnErrorEncountered = True
+                    End Try
+                End Try
+
             Next
 
             If m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT Then
@@ -1927,8 +1933,8 @@ Public Class clsAnalysisToolRunnerBase
         Catch Err As Exception
             If m_DebugLevel > 0 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Tmpfile = " & TmpFile)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder name = " & Path.Combine(ResFolderNamePath, Path.GetFileName(TmpFile)))
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Tmpfile = " & tmpFileName)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder name = " & Path.Combine(ResFolderNamePath, Path.GetFileName(tmpFileName)))
             End If
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error moving results files, job " & m_JobNum & Err.Message)
             m_message = clsGlobal.AppendToComment(m_message, "Error moving results files")
@@ -2640,60 +2646,54 @@ Public Class clsAnalysisToolRunnerBase
     ''' <returns>True if success; false if an error</returns>
     ''' <remarks></remarks>
     Protected Function StoreToolVersionInfoViaSystemDiagnostics(ByRef strToolVersionInfo As String, strDLLFilePath As String) As Boolean
-        Dim ioFileInfo As FileInfo
-        Dim blnSuccess As Boolean
 
         Try
-            ioFileInfo = New FileInfo(strDLLFilePath)
+            Dim ioFileInfo = New FileInfo(strDLLFilePath)
 
             If Not ioFileInfo.Exists Then
                 m_message = "File not found by StoreToolVersionInfoViaSystemDiagnostics"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strDLLFilePath)
                 Return False
-            Else
-
-                Dim oFileVersionInfo As FileVersionInfo
-                oFileVersionInfo = FileVersionInfo.GetVersionInfo(strDLLFilePath)
-
-                Dim strName As String
-                Dim strVersion As String
-
-                strName = oFileVersionInfo.FileDescription
-                If String.IsNullOrEmpty(strName) Then
-                    strName = oFileVersionInfo.InternalName
-                End If
-
-                If String.IsNullOrEmpty(strName) Then
-                    strName = oFileVersionInfo.FileName
-                End If
-
-                If String.IsNullOrEmpty(strName) Then
-                    strName = ioFileInfo.Name
-                End If
-
-                strVersion = oFileVersionInfo.FileVersion
-                If String.IsNullOrEmpty(strVersion) Then
-                    strVersion = oFileVersionInfo.ProductVersion
-                End If
-
-                If String.IsNullOrEmpty(strVersion) Then
-                    strVersion = "??"
-                End If
-
-                Dim strNameAndVersion As String
-                strNameAndVersion = strName & ", Version=" & strVersion
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
-
-                blnSuccess = True
             End If
+
+            Dim oFileVersionInfo = FileVersionInfo.GetVersionInfo(strDLLFilePath)
+
+            Dim strName As String
+            Dim strVersion As String
+
+            strName = oFileVersionInfo.FileDescription
+            If String.IsNullOrEmpty(strName) Then
+                strName = oFileVersionInfo.InternalName
+            End If
+
+            If String.IsNullOrEmpty(strName) Then
+                strName = oFileVersionInfo.FileName
+            End If
+
+            If String.IsNullOrEmpty(strName) Then
+                strName = ioFileInfo.Name
+            End If
+
+            strVersion = oFileVersionInfo.FileVersion
+            If String.IsNullOrEmpty(strVersion) Then
+                strVersion = oFileVersionInfo.ProductVersion
+            End If
+
+            If String.IsNullOrEmpty(strVersion) Then
+                strVersion = "??"
+            End If
+
+            Dim strNameAndVersion As String
+            strNameAndVersion = strName & ", Version=" & strVersion
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
+
+            Return True
 
         Catch ex As Exception
             m_message = "Exception determining File Version for " & Path.GetFileName(strDLLFilePath)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            blnSuccess = False
+            Return False
         End Try
-
-        Return blnSuccess
 
     End Function
 
