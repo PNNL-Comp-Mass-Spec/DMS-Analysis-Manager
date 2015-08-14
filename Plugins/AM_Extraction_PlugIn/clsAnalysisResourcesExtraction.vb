@@ -327,7 +327,6 @@ Public Class clsAnalysisResourcesExtraction
         Dim mzidSuffix As String
 
         Dim numberOfClonedSteps = 1
-        Dim pepToProtMapRetrievalError = False
 
         Try
 
@@ -464,7 +463,7 @@ Public Class clsAnalysisResourcesExtraction
                         End If
                     End If
 
-                    pepToProtMapRetrievalError = True
+
                 Else
                     If splitFastaEnabled Then
                         Dim fiPepToProtMapFile As FileInfo

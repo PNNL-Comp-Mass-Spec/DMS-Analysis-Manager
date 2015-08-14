@@ -1288,7 +1288,7 @@ Public Class clsGlobal
             Throw New NotSupportedException("\\ not found at the start of sharePath (" & sharePath & "); The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\")
         End If
 
-        Dim slashLoc = sharePath.IndexOf("\", 3, System.StringComparison.Ordinal)
+        Dim slashLoc = sharePath.IndexOf("\", 3, StringComparison.Ordinal)
 
         If slashLoc < 0 Then
             Throw New Exception("Backslash not found after the 3rd character in SharePath, " & sharePath)

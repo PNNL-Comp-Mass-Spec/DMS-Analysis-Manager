@@ -906,9 +906,11 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+        Dim stepToolName = m_jobParams.GetJobParameter("StepTool", "Unknown")
+
         Dim legacyFastaToUse As String
 
-        If splitFastaEnabled Then
+        If splitFastaEnabled And Not String.Equals(stepToolName, "DataExtractor", StringComparison.CurrentCultureIgnoreCase) Then
 
             If Not usingLegacyFasta Then
                 m_message = "Cannot use protein collections when running a SplitFasta job; choose a Legacy fasta file instead"
@@ -6708,7 +6710,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks></remarks>
     Protected Sub StorePackedJobParameterDictionary(dctItems As Dictionary(Of String, String), strParameterName As String)
 
-        Dim lstItems As List(Of String) = New List(Of String)
+        Dim lstItems = New List(Of String)
 
         For Each item As KeyValuePair(Of String, String) In dctItems
             lstItems.Add(item.Key & "=" & item.Value)

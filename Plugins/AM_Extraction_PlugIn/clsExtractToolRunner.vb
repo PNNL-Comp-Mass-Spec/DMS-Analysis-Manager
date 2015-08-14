@@ -38,7 +38,7 @@ Public Class clsExtractToolRunner
 	Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
 	Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
 
-    Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
+    Protected WithEvents mMSGFDBUtils As clsMSGFDBUtils
     Protected mMSGFDBUtilsError As Boolean
 
 	Protected mGeneratedFastaFilePath As String
@@ -482,7 +482,7 @@ Public Class clsExtractToolRunner
             ' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
             ' The reason?  The AM_MSGFDB_PlugIn uses "MSGFDB" when creating the ToolVersionInfo file
             ' We need to keep the name the same since the PeptideHitResultsProcessor (and possibly other software) expects the file to be named Tool_Version_Info_MSGFDB.txt
-            Dim MSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME)
+            Dim MSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", clsMSGFDBUtils.MSGFPLUS_JAR_NAME)
 
             If String.IsNullOrEmpty(MSGFDbProgLoc) Then
                 If String.IsNullOrEmpty(m_message) Then
@@ -492,7 +492,7 @@ Public Class clsExtractToolRunner
             End If
 
             ' Initialize mMSGFDBUtils
-            mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
+            mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
             mMSGFDBUtilsError = False
 
             Dim strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, MSGFDbProgLoc, m_Dataset, strMZIDFileName)
@@ -566,7 +566,7 @@ Public Class clsExtractToolRunner
                     End If
 
                     Using srSourceFile = New StreamReader(New FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                        While srSourceFile.Peek() > -1
+                        While Not srSourceFile.EndOfStream
                             Dim strLineIn = srSourceFile.ReadLine()
                             linesRead += 1
                             totalLinesProcessed += 1
@@ -619,7 +619,6 @@ Public Class clsExtractToolRunner
                                 End If
 
                                 Dim hitsForScan As clsMSGFPlusPSMs = Nothing
-                                Dim passesFilter As Boolean = False
 
                                 Dim udtPSM As clsMSGFPlusPSMs.udtPSMType
                                 udtPSM.Peptide = peptide
@@ -629,7 +628,7 @@ Public Class clsExtractToolRunner
                                 If dctScanChargeTopHits.TryGetValue(scanChargeCombo, hitsForScan) Then
                                     ' Possibly store this value
 
-                                    passesFilter = hitsForScan.AddPSM(udtPSM, protein)
+                                    Dim passesFilter = hitsForScan.AddPSM(udtPSM, protein)
 
                                     If passesFilter AndAlso specEValue < dctScanChargeBestScore(scanChargeCombo) Then
                                         dctScanChargeBestScore(scanChargeCombo) = specEValue
@@ -725,7 +724,7 @@ Public Class clsExtractToolRunner
                     End If
 
                     Using srSourceFile = New StreamReader(New FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                        While srSourceFile.Peek() > -1
+                        While Not srSourceFile.EndOfStream
                             Dim strLineIn = srSourceFile.ReadLine()
                             linesRead += 1
                             totalLinesProcessed += 1
@@ -1857,34 +1856,33 @@ Public Class clsExtractToolRunner
                 intTotalLinesReadSaved = intTotalLinesRead
                 For intFileIndex = 0 To intFileCount - 1
 
-                    If srInFiles(intFileIndex).Peek >= 0 Then
-                        strLineIn = srInFiles(intFileIndex).ReadLine
+                    If srInFiles(intFileIndex).EndOfStream Then Continue For
 
-                        intLinesRead(intFileIndex) += 1
-                        intTotalLinesRead += 1
+                    strLineIn = srInFiles(intFileIndex).ReadLine
 
-                        If Not strLineIn Is Nothing Then
-                            blnProcessLine = True
+                    intLinesRead(intFileIndex) += 1
+                    intTotalLinesRead += 1
 
-                            If intLinesRead(intFileIndex) = 1 AndAlso blnLookForHeaderLine AndAlso strLineIn.Length > 0 Then
-                                ' Check for a header line
-                                strSplitLine = strLineIn.Split(New Char() {ControlChars.Tab}, 2)
+                    If strLineIn Is Nothing Then Continue For
 
-                                If strSplitLine.Length > 0 AndAlso Not Double.TryParse(strSplitLine(0), 0) Then
-                                    ' First column does not contain a number; this must be a header line
-                                    ' Write the header to the output file (provided intFileIndex=0)
-                                    If intFileIndex = 0 Then
-                                        swOutFile.WriteLine(strLineIn)
-                                    End If
-                                    blnProcessLine = False
-                                End If
-                            End If
+                    blnProcessLine = True
 
-                            If blnProcessLine Then
+                    If intLinesRead(intFileIndex) = 1 AndAlso blnLookForHeaderLine AndAlso strLineIn.Length > 0 Then
+                        ' check for a header line
+                        strSplitLine = strLineIn.Split(New Char() {ControlChars.Tab}, 2)
+
+                        If strSplitLine.Length > 0 AndAlso Not Double.TryParse(strSplitLine(0), 0) Then
+                            ' first column does not contain a number; this must be a header line
+                            ' write the header to the output file (provided intfileindex=0)
+                            If intFileIndex = 0 Then
                                 swOutFile.WriteLine(strLineIn)
                             End If
-
+                            blnProcessLine = False
                         End If
+                    End If
+
+                    If blnProcessLine Then
+                        swOutFile.WriteLine(strLineIn)
                     End If
 
                 Next
@@ -1988,33 +1986,34 @@ Public Class clsExtractToolRunner
                 intLinesRead = 0
                 intTargetFileIndex = 0
 
-                Do While srInFile.Peek >= 0
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine
                     intLinesRead += 1
 
-                    If Not strLineIn Is Nothing Then
-                        blnProcessLine = True
+                    If strLineIn Is Nothing Then Continue Do
 
-                        If intLinesRead = 1 AndAlso blnLookForHeaderLine AndAlso strLineIn.Length > 0 Then
-                            ' Check for a header line
-                            strSplitLine = strLineIn.Split(New Char() {ControlChars.Tab}, 2)
+                    blnProcessLine = True
 
-                            If strSplitLine.Length > 0 AndAlso Not Double.TryParse(strSplitLine(0), 0) Then
-                                ' First column does not contain a number; this must be a header line
-                                ' Write the header to each output file
-                                For intIndex = 0 To intSplitCount - 1
-                                    swOutFiles(intIndex).WriteLine(strLineIn)
-                                Next
-                                blnProcessLine = False
-                            End If
-                        End If
+                    If intLinesRead = 1 AndAlso blnLookForHeaderLine AndAlso strLineIn.Length > 0 Then
+                        ' Check for a header line
+                        strSplitLine = strLineIn.Split(New Char() {ControlChars.Tab}, 2)
 
-                        If blnProcessLine Then
-                            swOutFiles(intTargetFileIndex).WriteLine(strLineIn)
-                            intTargetFileIndex += 1
-                            If intTargetFileIndex = intSplitCount Then intTargetFileIndex = 0
+                        If strSplitLine.Length > 0 AndAlso Not Double.TryParse(strSplitLine(0), 0) Then
+                            ' First column does not contain a number; this must be a header line
+                            ' Write the header to each output file
+                            For intIndex = 0 To intSplitCount - 1
+                                swOutFiles(intIndex).WriteLine(strLineIn)
+                            Next
+                            blnProcessLine = False
                         End If
                     End If
+
+                    If blnProcessLine Then
+                        swOutFiles(intTargetFileIndex).WriteLine(strLineIn)
+                        intTargetFileIndex += 1
+                        If intTargetFileIndex = intSplitCount Then intTargetFileIndex = 0
+                    End If
+
                 Loop
 
                 ' Close the input file
@@ -2114,7 +2113,7 @@ Public Class clsExtractToolRunner
         Try
             Dim oValidator As clsPHRPMassErrorValidator
 
-            oValidator = New clsPHRPMassErrorValidator(m_Dataset, m_WorkDir, m_DebugLevel)
+            oValidator = New clsPHRPMassErrorValidator(m_DebugLevel)
 
             blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, strSearchEngineParamFileName)
             If Not blnSuccess Then

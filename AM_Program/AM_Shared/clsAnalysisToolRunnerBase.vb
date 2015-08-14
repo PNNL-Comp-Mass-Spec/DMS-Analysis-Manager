@@ -11,7 +11,6 @@ Option Strict On
 Imports System.IO
 Imports System.Threading
 Imports System.Runtime.InteropServices
-Imports System.Runtime.Serialization.Formatters
 Imports System.Text.RegularExpressions
 
 ''' <summary>
@@ -2056,7 +2055,7 @@ Public Class clsAnalysisToolRunnerBase
             ' Create / update the purge check file
             Try
                 Using swPurgeCheckFile = New StreamWriter(New FileStream(fiPurgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read))
-                    swPurgeCheckFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) & " - " & m_MachName)
+                    swPurgeCheckFile.WriteLine(DateTime.Now.ToString(DATE_TIME_FORMAT) & " - " & m_MachName)
                 End Using
 
             Catch ex As Exception
@@ -2599,7 +2598,6 @@ Public Class clsAnalysisToolRunnerBase
 
                 Dim oAssembly = Reflection.Assembly.LoadFrom(ioFileInfo.FullName)
                 Dim oAssemblyName = oAssembly.GetName()
-                oAssembly = Nothing
 
                 Dim strNameAndVersion As String
                 strNameAndVersion = oAssemblyName.Name & ", Version=" & oAssemblyName.Version.ToString()

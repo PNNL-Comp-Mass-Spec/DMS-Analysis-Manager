@@ -9,6 +9,7 @@
 '
 '*********************************************************************************************************
 
+Imports System.IO
 Imports AnalysisManagerBase
 
 ''' <summary>
@@ -22,12 +23,10 @@ Public Class clsPeptideProphetWrapper
 #End Region
 
 #Region "Module variables"
-	Private m_PeptideProphetRunnerLocation As String = String.Empty
+    Private ReadOnly m_PeptideProphetRunnerLocation As String = String.Empty
 	Private m_ErrMsg As String = String.Empty
     Private m_DebugLevel As Short = 1
-	Private m_InputFile As String = String.Empty
-	Private m_OutputFolderPath As String = String.Empty
-	Private m_Enzyme As String = String.Empty
+    Private m_InputFile As String = String.Empty
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
@@ -65,23 +64,10 @@ Public Class clsPeptideProphetWrapper
         End Set
     End Property
 
-    Public Property Enzyme() As String
-        Get
-            Return m_Enzyme
-        End Get
-        Set(ByVal Value As String)
-            m_Enzyme = Value
-        End Set
-    End Property
+    Public Property Enzyme As String = String.Empty
 
-    Public Property OutputFolderPath() As String
-        Get
-            Return m_OutputFolderPath
-        End Get
-        Set(ByVal Value As String)
-            m_OutputFolderPath = Value
-        End Set
-    End Property
+    Public Property OutputFolderPath As String = String.Empty
+
 #End Region
 
 #Region "Methods"
@@ -93,19 +79,19 @@ Public Class clsPeptideProphetWrapper
     Public Function CallPeptideProphet() As IJobParams.CloseOutType
 
         Dim CmdStr As String
-        Dim ioInputFile As System.IO.FileInfo
+        Dim ioInputFile As FileInfo
         Dim strPeptideProphetConsoleOutputFilePath As String
 
         Try
             m_ErrMsg = String.Empty
 
-            ioInputFile = New System.IO.FileInfo(m_InputFile)
-            strPeptideProphetConsoleOutputFilePath = System.IO.Path.Combine(ioInputFile.DirectoryName, "PeptideProphetConsoleOutput.txt")
+            ioInputFile = New FileInfo(m_InputFile)
+            strPeptideProphetConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PeptideProphetConsoleOutput.txt")
 
             CmdRunner = New clsRunDosProgram(ioInputFile.Directoryname)
 
             ' verify that program file exists
-            If Not System.IO.File.Exists(m_PeptideProphetRunnerLocation) Then
+            If Not File.Exists(m_PeptideProphetRunnerLocation) Then
                 m_ErrMsg = "PeptideProphetRunner not found at " & m_PeptideProphetRunnerLocation
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -136,14 +122,14 @@ Public Class clsPeptideProphetWrapper
                 ' Parse the console output file for any lines that contain "Error"
                 ' Append them to m_ErrMsg
 
-                Dim ioConsoleOutputFile As System.IO.FileInfo = New System.IO.FileInfo(strPeptideProphetConsoleOutputFilePath)
+                Dim ioConsoleOutputFile As FileInfo = New FileInfo(strPeptideProphetConsoleOutputFilePath)
                 Dim blnErrorMessageFound As Boolean = False
 
                 If ioConsoleOutputFile.Exists Then
-                    Dim srInFile As System.IO.StreamReader
-                    srInFile = New System.IO.StreamReader(New System.IO.FileStream(ioConsoleOutputFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+                    Dim srInFile As StreamReader
+                    srInFile = New StreamReader(New FileStream(ioConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                    Do While srInFile.Peek() >= 0
+                    Do While Not srInFile.EndOfStream
                         Dim strLineIn As String
                         strLineIn = srInFile.ReadLine()
                         If Not String.IsNullOrWhiteSpace(strLineIn) Then
@@ -167,7 +153,7 @@ Public Class clsPeptideProphetWrapper
 
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             m_ErrMsg = "Exception while running peptide prophet: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
@@ -180,11 +166,11 @@ Public Class clsPeptideProphetWrapper
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
         'Update the status (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = DateTime.UtcNow
             RaiseEvent PeptideProphetRunning("Running", 50)
         End If
 

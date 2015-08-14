@@ -9,12 +9,10 @@
 
 Option Strict On
 
-Imports System.Configuration
 Imports AnalysisManagerBase
 Imports System.Data.SqlClient
 Imports System.IO
 Imports System.Xml
-Imports System.Threading
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 

@@ -207,7 +207,7 @@ Public Class clsPepHitResultsProcWrapper
                     Dim srInFile As StreamReader
                     srInFile = New StreamReader(New FileStream(ioConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                    Do While srInFile.Peek() >= 0
+                    Do While Not srInFile.EndOfStream
                         Dim strLineIn As String
                         strLineIn = srInFile.ReadLine()
                         If Not String.IsNullOrWhiteSpace(strLineIn) Then
@@ -306,7 +306,6 @@ Public Class clsPepHitResultsProcWrapper
 
             If File.Exists(m_PHRPConsoleOutputFilePath) Then
                 Using srInFile = New StreamReader(New FileStream(m_PHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
 
                     Do While Not srInFile.EndOfStream
                         Dim strLineIn = srInFile.ReadLine()

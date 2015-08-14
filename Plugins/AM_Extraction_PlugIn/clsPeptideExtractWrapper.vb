@@ -5,6 +5,7 @@
 ' Created 10/09/2008
 '
 '*********************************************************************************************************
+Imports System.IO
 Imports AnalysisManagerBase
 Imports PeptideFileExtractor
 
@@ -22,33 +23,33 @@ Public Class clsPeptideExtractWrapper
 	End Sub
 
 	Private Sub m_ExtractTools_CurrentProgress(ByVal fractionDone As Double) Handles m_ExtractTools.CurrentProgress
-        Const MIN_STATUS_INTERVAL_SECONDS As Integer = 3
-        Const MIN_LOG_INTERVAL_SECONDS As Integer = 5
-        Const MAX_LOG_INTERVAL_SECONDS As Integer = 300
+        Const MIN_STATUS_INTERVAL_SECONDS = 3
+        Const MIN_LOG_INTERVAL_SECONDS = 5
+        Const MAX_LOG_INTERVAL_SECONDS = 300
 
-        Static dtLastStatusUpdate As DateTime = System.DateTime.UtcNow
-        Static dtLastLogTime As DateTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(0, 0, MIN_LOG_INTERVAL_SECONDS * 2))
+        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+        Static dtLastLogTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, MIN_LOG_INTERVAL_SECONDS * 2))
 
         Dim blnUpdateLog As Boolean = False
 
         ' We divide the progress by 3 since creation of the FHT and SYN files takes ~33% of the time, while the remainder is spent running PHRP and PeptideProphet
         m_Progress = CSng(100.0 * fractionDone / 3.0)
 
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS Then
+            dtLastStatusUpdate = DateTime.UtcNow
             m_StatusTools.UpdateAndWrite(m_Progress)
         End If
 
-        If m_DebugLevel > 3 AndAlso System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS Then
+        If m_DebugLevel > 3 AndAlso DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS Then
             ' Over MIN_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
             blnUpdateLog = True
-        ElseIf m_DebugLevel >= 1 AndAlso System.DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS Then
+        ElseIf m_DebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS Then
             ' Over MAX_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
             blnUpdateLog = True
         End If
 
         If blnUpdateLog Then
-            dtLastLogTime = System.DateTime.UtcNow
+            dtLastLogTime = DateTime.UtcNow
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Extraction progress: " & m_Progress.ToString("##0.0") & "%")
         End If
 
@@ -60,13 +61,13 @@ Public Class clsPeptideExtractWrapper
 #End Region
 
 #Region "Module variables"
-    Private m_DebugLevel As Integer
-	Private m_MgrParams As IMgrParams
-	Private m_JobParams As IJobParams
+    Private ReadOnly m_DebugLevel As Integer
+    Private ReadOnly m_MgrParams As IMgrParams
+    Private ReadOnly m_JobParams As IJobParams
 	Private m_ExtractInProgress As Boolean = False
 	Private WithEvents m_ExtractTools As IPeptideFileExtractor
     Private m_Progress As Single = 0.0   'Percent complete, 0-100
-	Private m_StatusTools As IStatusFile
+    Private ReadOnly m_StatusTools As IStatusFile
 #End Region
 
 #Region "Events"
@@ -133,7 +134,7 @@ Public Class clsPeptideExtractWrapper
 
 			'Loop until the extraction finishes
 			While m_ExtractInProgress
-				System.Threading.Thread.Sleep(2000)
+                Threading.Thread.Sleep(2000)
 			End While
 
 			Dim Result As IJobParams.CloseOutType
@@ -148,13 +149,13 @@ Public Class clsPeptideExtractWrapper
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Extraction complete")
 			End If
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		Catch ex As System.Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception while extracting files: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception while extracting files: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		Finally
 			'Make sure no stray objects are hanging around
 			m_ExtractTools = Nothing
-			System.Threading.Thread.Sleep(1000)	'Delay 1 second, then clean up processes
+            Threading.Thread.Sleep(1000)    'Delay 1 second, then clean up processes
 			PRISM.Processes.clsProgRunner.GarbageCollectNow()
 		End Try
 
@@ -163,24 +164,24 @@ Public Class clsPeptideExtractWrapper
 	Private Function TestOutputSynFile() As IJobParams.CloseOutType
 
 		'Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
-		Dim WorkFile As String = String.Empty
-		Dim FoundFile As Boolean = False
+        Dim WorkFile As String = String.Empty
+        Dim FoundFile = False
 
 		'Test for presence of _syn.txt file
-        Dim WorkFiles() As String = System.IO.Directory.GetFiles(m_MgrParams.GetParam("workdir"))
-		For Each WorkFile In WorkFiles
-            If System.Text.RegularExpressions.Regex.IsMatch(WorkFile, "_syn.txt$", System.Text.RegularExpressions.RegexOptions.IgnoreCase) Then
+        Dim WorkFiles() As String = Directory.GetFiles(m_MgrParams.GetParam("workdir"))
+        For Each WorkFile In WorkFiles
+            If Text.RegularExpressions.Regex.IsMatch(WorkFile, "_syn.txt$", Text.RegularExpressions.RegexOptions.IgnoreCase) Then
                 FoundFile = True
                 Exit For
             End If
-		Next
-		If Not FoundFile Then
+        Next
+        If Not FoundFile Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsPeptideExtractor.TestOutputSynFile: No _syn.txt file found")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        End If
 
-		'Get the _syn.txt file size and verify it's > 0 bytes
-        Dim Fi As System.IO.FileInfo = New System.IO.FileInfo(WorkFile)
+        'Get the _syn.txt file size and verify it's > 0 bytes
+        Dim Fi As FileInfo = New FileInfo(WorkFile)
 		If Fi.Length > 0 Then
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 		Else
