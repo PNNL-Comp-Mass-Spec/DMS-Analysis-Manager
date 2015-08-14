@@ -281,7 +281,7 @@ Public Class clsAnalysisMgrSettings
 
     Private Function LoadMgrSettingsFromDBWork(ByVal ManagerName As String, <Out> ByRef dtSettings As DataTable, ByVal blnReturnErrorIfNoParameters As Boolean) As Boolean
 
-        Const RetryCount As Short = 3
+        Const retryCount As Short = 3
 
         ' Data Source=proteinseqs;Initial Catalog=manager_control
         Dim connectionString As String = Me.GetParam("MgrCnfgDbConnectStr", "")
@@ -296,7 +296,7 @@ Public Class clsAnalysisMgrSettings
         Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" & ManagerName & "'"
 
         'Get a table to hold the results of the query
-        Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr, connectionString, "LoadMgrSettingsFromDBWork", RetryCount, dtSettings)
+        Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr, connectionString, "LoadMgrSettingsFromDBWork", retryCount, dtSettings)
 
         'If loop exited due to errors, return false
         If Not blnSuccess Then
@@ -505,7 +505,7 @@ Public Class clsAnalysisMgrSettings
     End Sub
 
     ''' <summary>
-    ''' Writes an error message to application log or manager local log
+    ''' Writes an error message to the application log and the database
     ''' </summary>
     ''' <param name="Message">Message to write</param>
     ''' <remarks></remarks>
