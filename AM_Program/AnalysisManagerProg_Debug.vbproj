@@ -85,6 +85,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FilterMsMsSpectra">
+      <HintPath>..\AM_Common\FilterMsMsSpectra.dll</HintPath>
+    </Reference>
     <Reference Include="Mage">
       <HintPath>..\AM_Common\Mage.dll</HintPath>
     </Reference>

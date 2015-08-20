@@ -97,317 +97,317 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	''' <remarks></remarks>
 	Protected Sub FindMissingMzXmlFiles(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
 
-		Dim lstDatasets As SortedSet(Of String) = New SortedSet(Of String)
-		Dim lstDatasetYearQuarter As SortedSet(Of String) = New SortedSet(Of String)
+        Dim lstDatasets = New SortedSet(Of String)
+        Dim lstDatasetYearQuarter = New SortedSet(Of String)
 
-		Try
-			For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
-				Dim strMzXmlFilePath As String
-				strMzXmlFilePath = IO.Path.Combine(m_WorkingDir, udtJob.Dataset & DOT_MZXML_EXTENSION)
+        Try
+            For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
+                Dim strMzXmlFilePath As String
+                strMzXmlFilePath = IO.Path.Combine(m_WorkingDir, udtJob.Dataset & DOT_MZXML_EXTENSION)
 
-				If Not IO.File.Exists(strMzXmlFilePath) Then
+                If Not IO.File.Exists(strMzXmlFilePath) Then
 
-					' Look for a StoragePathInfo file
-					strMzXmlFilePath &= STORAGE_PATH_INFO_FILE_SUFFIX
-					If Not IO.File.Exists(strMzXmlFilePath) Then
-						If Not lstDatasets.Contains(udtJob.Dataset) Then
-							lstDatasets.Add(udtJob.Dataset)
-							lstDatasetYearQuarter.Add(udtJob.Dataset & "=" & GetDatasetYearQuarter(udtJob.ServerStoragePath))
-						End If
-					End If
+                    ' Look for a StoragePathInfo file
+                    strMzXmlFilePath &= STORAGE_PATH_INFO_FILE_SUFFIX
+                    If Not IO.File.Exists(strMzXmlFilePath) Then
+                        If Not lstDatasets.Contains(udtJob.Dataset) Then
+                            lstDatasets.Add(udtJob.Dataset)
+                            lstDatasetYearQuarter.Add(udtJob.Dataset & "=" & GetDatasetYearQuarter(udtJob.ServerStoragePath))
+                        End If
+                    End If
 
-				End If
-			Next
+                End If
+            Next
 
-			If lstDatasets.Count > 0 Then
-				StorePackedJobParameterList(lstDatasets.ToList(), JOB_PARAM_DATASETS_MISSING_MZXML_FILES)
-				StorePackedJobParameterList(lstDatasetYearQuarter.ToList(), JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER)
-			End If
+            If lstDatasets.Count > 0 Then
+                StorePackedJobParameterList(lstDatasets.ToList(), JOB_PARAM_DATASETS_MISSING_MZXML_FILES)
+                StorePackedJobParameterList(lstDatasetYearQuarter.ToList(), JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER)
+            End If
 
-		Catch ex As Exception
-			m_message = "Exception in FindMissingMzXmlFiles"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in FindMissingMzXmlFiles"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+        End Try
 
-	End Sub
+    End Sub
 
-	Public Shared Function GetGeneratedFastaParamNameForJob(ByVal Job As Integer) As String
-		Return "Job" & Job.ToString() & "_GeneratedFasta"
-	End Function
+    Public Shared Function GetGeneratedFastaParamNameForJob(ByVal Job As Integer) As String
+        Return "Job" & Job.ToString() & "_GeneratedFasta"
+    End Function
 
-	Public Shared Function GetMSGFReportTemplateFilename(ByVal JobParams As IJobParams, ByVal WarnIfJobParamMissing As Boolean) As String
+    Public Shared Function GetMSGFReportTemplateFilename(ByVal JobParams As IJobParams, ByVal WarnIfJobParamMissing As Boolean) As String
 
-		Dim strTemplateFileName As String = JobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, String.Empty)
+        Dim strTemplateFileName As String = JobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, String.Empty)
 
-		If String.IsNullOrEmpty(strTemplateFileName) Then
-			If WarnIfJobParamMissing Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job parameter " & JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME & " is empty; will assume " & strTemplateFileName)
-			End If
-			strTemplateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME
-		End If
+        If String.IsNullOrEmpty(strTemplateFileName) Then
+            If WarnIfJobParamMissing Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job parameter " & JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME & " is empty; will assume " & strTemplateFileName)
+            End If
+            strTemplateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME
+        End If
 
-		Return strTemplateFileName
+        Return strTemplateFileName
 
-	End Function
+    End Function
 
-	Public Shared Function GetPXSubmissionTemplateFilename(ByVal JobParams As IJobParams, ByVal WarnIfJobParamMissing As Boolean) As String
+    Public Shared Function GetPXSubmissionTemplateFilename(ByVal JobParams As IJobParams, ByVal WarnIfJobParamMissing As Boolean) As String
 
-		Dim strTemplateFileName As String = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, String.Empty)
+        Dim strTemplateFileName As String = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, String.Empty)
 
-		If String.IsNullOrEmpty(strTemplateFileName) Then
-			strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
-			If WarnIfJobParamMissing Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job parameter " & JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME & " is empty; will assume " & strTemplateFileName)
-			End If
-		End If
+        If String.IsNullOrEmpty(strTemplateFileName) Then
+            strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
+            If WarnIfJobParamMissing Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job parameter " & JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME & " is empty; will assume " & strTemplateFileName)
+            End If
+        End If
 
-		Return strTemplateFileName
+        Return strTemplateFileName
 
-	End Function
+    End Function
 
-	Protected Function RetrieveFastaFiles(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType)) As Boolean
+    Protected Function RetrieveFastaFiles(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType)) As Boolean
 
-		Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
+        Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
 
-		Dim strLocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
+        Dim strLocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
-		Dim strDictionaryKey As String
+        Dim strDictionaryKey As String
 
-		Dim strOrgDBNameGenerated As String = String.Empty
+        Dim strOrgDBNameGenerated As String = String.Empty
 
-		' This dictionary is used to avoid calling RetrieveOrgDB() for every job
-		' The dictionary keys are LegacyFastaFileName, ProteinOptions, and ProteinCollectionList combined with underscores
-		' The dictionary values are the name of the generated (or retrieved) fasta file
-		Dim dctOrgDBParamsToGeneratedFileNameMap As Dictionary(Of String, String)
+        ' This dictionary is used to avoid calling RetrieveOrgDB() for every job
+        ' The dictionary keys are LegacyFastaFileName, ProteinOptions, and ProteinCollectionList combined with underscores
+        ' The dictionary values are the name of the generated (or retrieved) fasta file
+        Dim dctOrgDBParamsToGeneratedFileNameMap As Dictionary(Of String, String)
 
-		Try
-			dctOrgDBParamsToGeneratedFileNameMap = New Dictionary(Of String, String)
+        Try
+            dctOrgDBParamsToGeneratedFileNameMap = New Dictionary(Of String, String)
 
-			' Cache the current dataset and job info
-			udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
+            ' Cache the current dataset and job info
+            udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
 
-			For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
+            For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
 
-				strDictionaryKey = udtJob.LegacyFastaFileName & "_" & udtJob.ProteinCollectionList & "_" & udtJob.ProteinOptions
+                strDictionaryKey = udtJob.LegacyFastaFileName & "_" & udtJob.ProteinCollectionList & "_" & udtJob.ProteinOptions
 
-				If dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, strOrgDBNameGenerated) Then
-					' Organism DB was already generated
-				Else
-					OverrideCurrentDatasetAndJobInfo(udtJob)
+                If dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, strOrgDBNameGenerated) Then
+                    ' Organism DB was already generated
+                Else
+                    OverrideCurrentDatasetAndJobInfo(udtJob)
 
-					m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", String.Empty)
-					If Not RetrieveOrgDB(strLocalOrgDBFolder) Then
-						If String.IsNullOrEmpty(m_message) Then m_message = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles"
-						Return False
-					End If
+                    m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", String.Empty)
+                    If Not RetrieveOrgDB(strLocalOrgDBFolder) Then
+                        If String.IsNullOrEmpty(m_message) Then m_message = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles"
+                        Return False
+                    End If
 
-					strOrgDBNameGenerated = m_jobParams.GetJobParameter("PeptideSearch", "generatedFastaName", String.Empty)
+                    strOrgDBNameGenerated = m_jobParams.GetJobParameter("PeptideSearch", "generatedFastaName", String.Empty)
 
-					If String.IsNullOrEmpty(strOrgDBNameGenerated) Then
-						m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (class clsAnalysisResourcesPRIDEConverter)")
-						Return False
-					End If
+                    If String.IsNullOrEmpty(strOrgDBNameGenerated) Then
+                        m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (class clsAnalysisResourcesPRIDEConverter)")
+                        Return False
+                    End If
 
-					If strOrgDBNameGenerated <> udtJob.OrganismDBName Then
-						If strOrgDBNameGenerated Is Nothing Then strOrgDBNameGenerated = "??"
-						If udtJob.OrganismDBName Is Nothing Then udtJob.OrganismDBName = "??"
+                    If strOrgDBNameGenerated <> udtJob.OrganismDBName Then
+                        If strOrgDBNameGenerated Is Nothing Then strOrgDBNameGenerated = "??"
+                        If udtJob.OrganismDBName Is Nothing Then udtJob.OrganismDBName = "??"
 
-						m_message = "Generated FASTA file name (" & strOrgDBNameGenerated & ") does not match expected fasta file name (" & udtJob.OrganismDBName & "); aborting"
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (class clsAnalysisResourcesPRIDEConverter)")
-						Return False
-					End If
+                        m_message = "Generated FASTA file name (" & strOrgDBNameGenerated & ") does not match expected fasta file name (" & udtJob.OrganismDBName & "); aborting"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (class clsAnalysisResourcesPRIDEConverter)")
+                        Return False
+                    End If
 
-					dctOrgDBParamsToGeneratedFileNameMap.Add(strDictionaryKey, strOrgDBNameGenerated)
-				End If
+                    dctOrgDBParamsToGeneratedFileNameMap.Add(strDictionaryKey, strOrgDBNameGenerated)
+                End If
 
-				' Add a new job parameter that associates strOrgDBNameGenerated with this job
+                ' Add a new job parameter that associates strOrgDBNameGenerated with this job
 
-				m_jobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job), strOrgDBNameGenerated)
-			Next
+                m_jobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job), strOrgDBNameGenerated)
+            Next
 
-			' Restore the dataset and job info for this aggregation job
-			OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
+            ' Restore the dataset and job info for this aggregation job
+            OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
 
-		Catch ex As Exception
-			m_message = "Exception in RetrieveFastaFiles"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in RetrieveFastaFiles"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Protected Function RetrieveMSGFReportTemplateFile() As Boolean
+    Protected Function RetrieveMSGFReportTemplateFile() As Boolean
 
-		' Retrieve the template .msgf-pride.xml file
-		' Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
+        ' Retrieve the template .msgf-pride.xml file
+        ' Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
 
-		Dim strTemplateFileName As String
-		Dim diDataPackageFolder As IO.DirectoryInfo
-		Dim fiFiles As List(Of IO.FileInfo)
+        Dim strTemplateFileName As String
+        Dim diDataPackageFolder As IO.DirectoryInfo
+        Dim fiFiles As List(Of IO.FileInfo)
 
-		Try
-			strTemplateFileName = GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
+        Try
+            strTemplateFileName = GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
 
-			' First look for the template file in the data package folder
-			Dim strDataPackagePath As String = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", String.Empty)
-			If String.IsNullOrEmpty(strDataPackagePath) Then
-				m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
+            ' First look for the template file in the data package folder
+            Dim strDataPackagePath As String = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", String.Empty)
+            If String.IsNullOrEmpty(strDataPackagePath) Then
+                m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			diDataPackageFolder = New IO.DirectoryInfo(strDataPackagePath)
-			fiFiles = diDataPackageFolder.GetFiles(strTemplateFileName).ToList()
+            diDataPackageFolder = New IO.DirectoryInfo(strDataPackagePath)
+            fiFiles = diDataPackageFolder.GetFiles(strTemplateFileName).ToList()
 
-			If fiFiles.Count = 0 Then
-				' File not found; see if any files ending in MSGF_REPORT_FILE_SUFFIX exist in the data package folder
-				fiFiles = diDataPackageFolder.GetFiles("*" & MSGF_REPORT_FILE_SUFFIX).ToList()
+            If fiFiles.Count = 0 Then
+                ' File not found; see if any files ending in MSGF_REPORT_FILE_SUFFIX exist in the data package folder
+                fiFiles = diDataPackageFolder.GetFiles("*" & MSGF_REPORT_FILE_SUFFIX).ToList()
 
-				If fiFiles.Count = 0 Then
-					' File not found; see if any files containin MSGF_REPORT_FILE_SUFFIX exist in the data package folder
-					fiFiles = diDataPackageFolder.GetFiles("*" & MSGF_REPORT_FILE_SUFFIX & "*").ToList()
+                If fiFiles.Count = 0 Then
+                    ' File not found; see if any files containin MSGF_REPORT_FILE_SUFFIX exist in the data package folder
+                    fiFiles = diDataPackageFolder.GetFiles("*" & MSGF_REPORT_FILE_SUFFIX & "*").ToList()
 
-				End If
-			End If
+                End If
+            End If
 
-			If fiFiles.Count > 0 Then
-				' Template file found in the data package; copy it locally
-				If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName) Then
-					Return False
-				Else
-					strTemplateFileName = fiFiles(0).Name
-				End If
-			Else
-				Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
-				strTemplateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME
+            If fiFiles.Count > 0 Then
+                ' Template file found in the data package; copy it locally
+                If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName) Then
+                    Return False
+                Else
+                    strTemplateFileName = fiFiles(0).Name
+                End If
+            Else
+                Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
+                strTemplateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF Report template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF Report template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
 
-				If String.IsNullOrEmpty(strParamFileStoragePath) Then strParamFileStoragePath = "\\gigasax\dms_parameter_Files\PRIDE_Converter"
+                If String.IsNullOrEmpty(strParamFileStoragePath) Then strParamFileStoragePath = "\\gigasax\dms_parameter_Files\PRIDE_Converter"
 
-				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath) Then
-					Return False
-				End If
-			End If
+                If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath) Then
+                    Return False
+                End If
+            End If
 
-			' Assure that the MSGF Report Template file job parameter is up-to-date
-			m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, strTemplateFileName)
+            ' Assure that the MSGF Report Template file job parameter is up-to-date
+            m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, strTemplateFileName)
 
-			m_jobParams.AddResultFileToSkip(strTemplateFileName)
+            m_jobParams.AddResultFileToSkip(strTemplateFileName)
 
-		Catch ex As Exception
-			m_message = "Exception in RetrieveMSGFReportTemplateFile"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in RetrieveMSGFReportTemplateFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Protected Function RetrievePXSubmissionTemplateFile() As Boolean
+    Protected Function RetrievePXSubmissionTemplateFile() As Boolean
 
-		' Retrieve the template PX Submission file
-		' Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
+        ' Retrieve the template PX Submission file
+        ' Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
 
-		Try
-			Dim strTemplateFileName = GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
+        Try
+            Dim strTemplateFileName = GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing:=True)
 
-			' First look for the template file in the data package folder
-			' Note that transferFolderPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
+            ' First look for the template file in the data package folder
+            ' Note that transferFolderPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
 
-			Dim transferFolderPath As String = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", String.Empty)
-			If String.IsNullOrEmpty(transferFolderPath) Then
-				m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
+            Dim transferFolderPath As String = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", String.Empty)
+            If String.IsNullOrEmpty(transferFolderPath) Then
+                m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
-			Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
+            Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+            Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
-			Dim matchFound = False
-			Dim lstSourceFolders = New List(Of String)
+            Dim matchFound = False
+            Dim lstSourceFolders = New List(Of String)
 
-			lstSourceFolders.Add(GetDataPackageStoragePath(ConnectionString, dataPackageID))
-			lstSourceFolders.Add(transferFolderPath)
+            lstSourceFolders.Add(GetDataPackageStoragePath(ConnectionString, dataPackageID))
+            lstSourceFolders.Add(transferFolderPath)
 
-			For Each sourceFolderPath In lstSourceFolders
+            For Each sourceFolderPath In lstSourceFolders
 
-				If String.IsNullOrEmpty(sourceFolderPath) Then Continue For
+                If String.IsNullOrEmpty(sourceFolderPath) Then Continue For
 
-				Dim diDataPackageFolder = New IO.DirectoryInfo(sourceFolderPath)
-				Dim fiFiles = diDataPackageFolder.GetFiles(strTemplateFileName).ToList()
+                Dim diDataPackageFolder = New IO.DirectoryInfo(sourceFolderPath)
+                Dim fiFiles = diDataPackageFolder.GetFiles(strTemplateFileName).ToList()
 
-				If fiFiles.Count = 0 Then
-					' File not found; see if any files ending in PX_SUBMISSION_FILE_SUFFIX exist in the data package folder
-					fiFiles = diDataPackageFolder.GetFiles("*" & PX_SUBMISSION_FILE_SUFFIX).ToList()
-				End If
+                If fiFiles.Count = 0 Then
+                    ' File not found; see if any files ending in PX_SUBMISSION_FILE_SUFFIX exist in the data package folder
+                    fiFiles = diDataPackageFolder.GetFiles("*" & PX_SUBMISSION_FILE_SUFFIX).ToList()
+                End If
 
-				If fiFiles.Count > 0 Then
-					' Template file found in the data package; copy it locally
-					If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName) Then
-						Return False
-					Else
-						strTemplateFileName = fiFiles(0).Name
-						matchFound = True
-						Exit For
-					End If
-				End If
+                If fiFiles.Count > 0 Then
+                    ' Template file found in the data package; copy it locally
+                    If Not RetrieveFile(fiFiles(0).Name, fiFiles(0).DirectoryName) Then
+                        Return False
+                    Else
+                        strTemplateFileName = fiFiles(0).Name
+                        matchFound = True
+                        Exit For
+                    End If
+                End If
 
-			Next
+            Next
 
-			If Not matchFound Then
-				Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
-				If String.IsNullOrEmpty(strParamFileStoragePath) Then
-					strParamFileStoragePath = "\\gigasax\dms_parameter_Files\PRIDE_Converter"
-				End If
-				strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
+            If Not matchFound Then
+                Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
+                If String.IsNullOrEmpty(strParamFileStoragePath) Then
+                    strParamFileStoragePath = "\\gigasax\dms_parameter_Files\PRIDE_Converter"
+                End If
+                strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PX Submission template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PX Submission template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
 
-				If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath, 1) Then
-					If String.IsNullOrEmpty(m_message) Then
-						m_message = "Template PX file " & strTemplateFileName & " to found in the data package folder"
-					End If
-					Return False
-				End If
-			End If
+                If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath, 1) Then
+                    If String.IsNullOrEmpty(m_message) Then
+                        m_message = "Template PX file " & strTemplateFileName & " to found in the data package folder"
+                    End If
+                    Return False
+                End If
+            End If
 
-			' Assure that the PX Submission Template file job parameter is up-to-date
-			m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, strTemplateFileName)
+            ' Assure that the PX Submission Template file job parameter is up-to-date
+            m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, strTemplateFileName)
 
-			m_jobParams.AddResultFileToSkip(strTemplateFileName)
+            m_jobParams.AddResultFileToSkip(strTemplateFileName)
 
-		Catch ex As Exception
-			m_message = "Exception in RetrievePXSubmissionTemplateFile"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return False
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in RetrievePXSubmissionTemplateFile"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Store the datasets and jobs tracked by lstDataPackagePeptideHitJobs into a packed job parameter
-	''' </summary>
-	''' <param name="lstDataPackagePeptideHitJobs"></param>
-	''' <remarks></remarks>
-	Protected Sub StoreDataPackageJobs(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
-		Dim lstDataPackageJobs As List(Of String) = New List(Of String)
+    ''' <summary>
+    ''' Store the datasets and jobs tracked by lstDataPackagePeptideHitJobs into a packed job parameter
+    ''' </summary>
+    ''' <param name="lstDataPackagePeptideHitJobs"></param>
+    ''' <remarks></remarks>
+    Protected Sub StoreDataPackageJobs(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
+        Dim lstDataPackageJobs = New List(Of String)
 
-		For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
-			lstDataPackageJobs.Add(udtJob.Job.ToString())
-		Next
+        For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
+            lstDataPackageJobs.Add(udtJob.Job.ToString())
+        Next
 
-		If lstDataPackageJobs.Count > 0 Then
-			StorePackedJobParameterList(lstDataPackageJobs, JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
-		End If
+        If lstDataPackageJobs.Count > 0 Then
+            StorePackedJobParameterList(lstDataPackageJobs, JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
+        End If
 
-	End Sub
+    End Sub
 
 End Class
