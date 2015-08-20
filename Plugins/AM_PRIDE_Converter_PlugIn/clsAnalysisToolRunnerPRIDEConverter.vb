@@ -2378,7 +2378,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                     WritePXLine(swPXFile, lstFileInfoCols)
 
-                    If fileTypeName = "result" Then
+                    If fileTypeName = "RESULT" Then
                         lstResultFileIDs.Add(item.Key, item.Value.Filename)
                     End If
                 Next
@@ -2392,12 +2392,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 swPXFile.WriteLine()
 
                 ' Write the header row for the SMH section
-                Dim columnNames = New List(Of String) From {"SMH", "file_id", "species", "tissue"}
-
-                If smhIncludesCellType Then columnNames.Add("cell_type")
-                If smhIncludesDisease Then columnNames.Add("disease")
-
-                columnNames.AddRange(New List(Of String) From {"modification", "instrument", "quantification", "experimental_factor"})
+                Dim columnNames = New List(Of String) From {"SMH", "file_id", "species", "tissue", "cell_type", "disease", "modification", "instrument", "quantification", "experimental_factor"}
 
                 WritePXLine(swPXFile, columnNames)
 
@@ -2427,10 +2422,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                         If smhIncludesCellType Then
                             lstFileInfoCols.Add(udtSampleMetadata.CellType)     ' cell_type
+                        Else
+                            lstFileInfoCols.Add(ControlChars.Tab)
                         End If
 
                         If smhIncludesDisease Then
                             lstFileInfoCols.Add(udtSampleMetadata.Disease)      ' disease
+                        Else
+                            lstFileInfoCols.Add(ControlChars.Tab)
                         End If
 
                         Dim strMods As String = String.Empty
@@ -3051,15 +3050,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     Protected Function PXFileTypeName(ePXFileType As clsPXFileInfo.ePXFileType) As String
         Select Case ePXFileType
             Case clsPXFileInfoBase.ePXFileType.Result, clsPXFileInfoBase.ePXFileType.ResultMzId
-                Return "result"
+                Return "RESULT"
             Case clsPXFileInfoBase.ePXFileType.Raw
-                Return "raw"
+                Return "RAW"
             Case clsPXFileInfoBase.ePXFileType.Search
-                Return "search"
+                Return "SEARCH"
             Case clsPXFileInfoBase.ePXFileType.Peak
-                Return "peak"
+                Return "PEAK"
             Case Else
-                Return "other"
+                Return "OTHER"
         End Select
     End Function
 
@@ -3903,6 +3902,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Next
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strRecentElements)
+            strMzIDFilePath = String.Empty
 
             Return False
         End Try
