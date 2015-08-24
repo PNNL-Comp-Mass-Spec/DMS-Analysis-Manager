@@ -1315,7 +1315,7 @@ Public Class clsMSGFDBUtils
 
                                 mMSGFDbVersion = String.Copy(strLineIn)
                             Else
-                                If strLineIn.ToLower.Contains("error") Then
+                                If strLineIn.ToLower.Contains("error") And Not strLineIn.ToLower.Contains("isotopeerror:") Then
                                     If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
                                         mConsoleOutputErrorMsg = "Error running MSGFDB: "
                                     End If

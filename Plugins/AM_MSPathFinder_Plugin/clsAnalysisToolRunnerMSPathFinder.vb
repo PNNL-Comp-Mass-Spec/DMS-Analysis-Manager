@@ -23,12 +23,29 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     Protected Const MSPATHFINDER_CONSOLE_OUTPUT As String = "MSPathFinder_ConsoleOutput.txt"
 
     Protected Const PROGRESS_PCT_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 2
-    Protected Const PROGRESS_PCT_SEARCHING_DECOY_DB As Single = 50
+    Protected Const PROGRESS_PCT_GENERATING_SEQUENCE_TAGS As Single = 2
+    Protected Const PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB As Single = 3
+    Protected Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 7
+    Protected Const PROGRESS_PCT_CALCULATING_TARGET_EVALUES = 40
+    Protected Const PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB As Single = 50
+    Protected Const PROGRESS_PCT_SEARCHING_DECOY_DB As Single = 54
+    Protected Const PROGRESS_PCT_CALCULATING_DECOY_EVALUES As Single = 85
     Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
     'Protected Const MSPathFinder_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.txt"
     'Protected Const MSPathFinder_FILTERED_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.id.txt"
+
+    Protected Enum MSPathFinderSearchStage
+        Start = 0
+        GeneratingSequenceTags = 1
+        TagBasedSearchingTargetDB = 2
+        SearchingTargetDB = 3
+        CalculatingEValuesForTargetSpectra = 4
+        TagBasedSearchingDecoyDB = 5
+        SearchingDecoyDB = 6
+        CalculatingEValuesForDecoySpectra = 7
+        Complete = 8
+    End Enum
 #End Region
 
 #Region "Module Variables"
@@ -266,6 +283,14 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
     End Function
 
+    Private Function LineStartsWith(strLineIn As String, matchString As String) As Boolean
+        If strLineIn.ToLower().StartsWith(matchString.ToLower()) Then
+            Return True
+        Else
+            Return False
+        End If
+    End Function
+
     ''' <summary>
     ''' Parse the MSPathFinder console output file to track the search progress
     ''' </summary>
@@ -301,29 +326,70 @@ Public Class clsAnalysisToolRunnerMSPathFinder
         ' Getting MS1 features from E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.ms1ft.
         ' Reading raw file...Elapsed Time: 0.0304 sec
         ' Reading ProMex results...332/354 features loaded...Elapsed Time: 5.0866 sec
-        ' Reading the target database...Elapsed Time: 0.0005 sec
-        ' Searching the target database
-        ' Estimated proteins: 7142811
-        ' Processing, 95 proteins done, 1.0% complete, 15.1 sec elapsed
-        ' Processing, 180 proteins done, 1.8% complete, 30.3 sec elapsed
-        ' Processing, 319 proteins done, 3.2% complete, 45.3 sec elapsed
-        ' Processing, 376 proteins done, 3.8% complete, 60.5 sec elapsed
-        ' Processing, 411 proteins done, 4.1% complete, 75.6 sec elapsed
-        ' Processing, 527 proteins done, 5.3% complete, 90.6 sec elapsed
+        ' Generating sequence tags for MS/MS spectra...
+        ' Number of spectra: 6360
+        ' Processing, 0 spectra done, 0.0% complete, 0.1 sec elapsed
+        ' Processing, 1863 spectra done, 29.3% complete, 15.1 sec elapsed
+        ' Processing, 3123 spectra done, 49.1% complete, 30.1 sec elapsed
+        ' Processing, 3917 spectra done, 61.6% complete, 45.1 sec elapsed
+        ' Processing, 4718 spectra done, 74.2% complete, 60.2 sec elapsed
+        ' Processing, 5545 spectra done, 87.2% complete, 75.2 sec elapsed
+        ' Generated sequence tags: 1345048
+        ' Elapsed Time: 87.9 sec
+        ' Reading the target database...Elapsed Time: 0.0 sec
+        ' Tag-based searching the target database
+        ' Processing, 0 spectra done, 0.0% complete, 0.0 sec elapsed
+        ' Processing, 1424 spectra done, 22.4% complete, 15.1 sec elapsed
+        ' Processing, 1550 spectra done, 24.4% complete, 30.2 sec elapsed
         ' ...
-        ' Processing, 14215001 proteins done, 95.8% complete, 5085.3 sec elapsed
-        ' Target database search elapsed Time: 5326.1 sec
-        ' Creating G:\DMS_Temp_Org\ID_005140_7A170668.icsfldecoy.fasta
-        ' Generating G:\DMS_Temp_Org\ID_005140_7A170668.icsfldecoy.icseq and
-        ' Generating G:\DMS_Temp_Org\ID_005140_7A170668.icsfldecoy.icanno ... Done
-        ' Reading the decoy database...Elapsed Time: 3.6 sec
-        ' Searching the decoy database
-        ' Generating G:\DMS_Temp_Org\ID_005140_7A170668.icsfldecoy.icplcp ... Done
-        ' Estimated proteins: 14831487
+        ' Processing, 4703 spectra done, 73.9% complete, 1817.6 sec elapsed
+        ' Processing, 5807 spectra done, 91.3% complete, 2117.9 sec elapsed
+        ' Target database tag-based search elapsed Time: 2147.0 sec
+        ' Searching the target database
+        ' Estimated proteins: 3421782
         ' Processing, 0 proteins done, 0.0% complete, 0.0 sec elapsed
-        ' Processing, 39609 proteins done, 0.3% complete, 15.0 sec elapsed
-        ' Processing, 78739 proteins done, 0.5% complete, 30.0 sec elapsed
-        ' Processing, 114390 proteins done, 0.8% complete, 45.0 sec elapsed
+        ' Processing, 4331 proteins done, 0.1% complete, 15.0 sec elapsed
+        ' Processing, 7092 proteins done, 0.2% complete, 30.0 sec elapsed
+        ' ...
+        ' Processing, 3316784 proteins done, 96.9% complete, 12901.9 sec elapsed
+        ' Processing, 3398701 proteins done, 99.3% complete, 13201.9 sec elapsed
+        ' Target database search elapsed Time: 13275.2 sec
+        ' Calculating spectral E-values for target-spectrum matches
+        ' Estimated matched proteins: 8059
+        ' Processing, 0 proteins done, 0.0% complete, 0.2 sec elapsed
+        ' Processing, 110 proteins done, 1.4% complete, 15.2 sec elapsed
+        ' Processing, 231 proteins done, 2.9% complete, 30.2 sec elapsed
+        ' ...
+        ' Processing, 7222 proteins done, 89.6% complete, 1128.6 sec elapsed
+        ' Processing, 7513 proteins done, 93.2% complete, 1188.6 sec elapsed
+        ' Target-spectrum match E-value calculation elapsed Time: 1429.6 sec
+        ' Reading the decoy database...Elapsed Time: 0.0 sec
+        ' Tag-based searching the decoy database
+        ' Processing, 0 spectra done, 0.0% complete, 0.0 sec elapsed
+        ' Processing, 1544 spectra done, 24.3% complete, 27.0 sec elapsed
+        ' Processing, 1618 spectra done, 25.4% complete, 42.4 sec elapsed
+        ' ...
+        ' Processing, 4150 spectra done, 65.3% complete, 1465.5 sec elapsed
+        ' Processing, 5351 spectra done, 84.1% complete, 1765.6 sec elapsed
+        ' Target database tag-based search elapsed Time: 1990.2 sec
+        ' Searching the decoy database
+        ' Estimated proteins: 3421782
+        ' Processing, 0 proteins done, 0.0% complete, 0.0 sec elapsed
+        ' Processing, 4045 proteins done, 0.1% complete, 15.0 sec elapsed
+        ' ...
+        ' Processing, 3341406 proteins done, 97.7% complete, 16795.6 sec elapsed
+        ' Processing, 3411145 proteins done, 99.7% complete, 17095.6 sec elapsed
+        ' Decoy database search elapsed Time: 17143.6 sec
+        ' Calculating spectral E-values for decoy-spectrum matches
+        ' Estimated matched proteins: 9708
+        ' Processing, 0 proteins done, 0.0% complete, 0.2 sec elapsed
+        ' Processing, 100 proteins done, 1.0% complete, 15.2 sec elapsed
+        ' ...
+        ' Processing, 7277 proteins done, 75.0% complete, 1188.8 sec elapsed
+        ' Processing, 8764 proteins done, 90.3% complete, 1488.8 sec elapsed
+        ' Decoy-spectrum match E-value calculation elapsed Time: 1849.9 sec
+        ' Done.
+        ' Total elapsed time for search: 37962.4 sec (632.71 min)
 
 
         Const EXCEPTION_FLAG = "Exception while processing:"
@@ -351,10 +417,26 @@ Public Class clsAnalysisToolRunnerMSPathFinder
             End If
 
             ' progressComplete values are between 0 and 100
-            Dim progressCompleteTarget As Single = 0
-            Dim progressCompleteDecoy As Single = 0
+            ' MSPathFinder reports % complete values numerous times for each section
+            ' We keep track of the section using currentStage
+            Dim progressCompleteCurrentStage As Single = 0
+            Dim currentStage = MSPathFinderSearchStage.Start
 
             Dim percentCompleteFound = False
+
+            ' This array holds the % complete values at the start of each stage
+            Dim percentCompleteLevels As Single()
+            ReDim percentCompleteLevels(CInt(MSPathFinderSearchStage.Complete))
+
+            percentCompleteLevels(MSPathFinderSearchStage.Start) = 0
+            percentCompleteLevels(MSPathFinderSearchStage.GeneratingSequenceTags) = PROGRESS_PCT_GENERATING_SEQUENCE_TAGS
+            percentCompleteLevels(MSPathFinderSearchStage.TagBasedSearchingTargetDB) = PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB
+            percentCompleteLevels(MSPathFinderSearchStage.SearchingTargetDB) = PROGRESS_PCT_SEARCHING_TARGET_DB
+            percentCompleteLevels(MSPathFinderSearchStage.CalculatingEValuesForTargetSpectra) = PROGRESS_PCT_CALCULATING_TARGET_EVALUES
+            percentCompleteLevels(MSPathFinderSearchStage.TagBasedSearchingDecoyDB) = PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB
+            percentCompleteLevels(MSPathFinderSearchStage.SearchingDecoyDB) = PROGRESS_PCT_SEARCHING_DECOY_DB
+            percentCompleteLevels(MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra) = PROGRESS_PCT_CALCULATING_DECOY_EVALUES
+            percentCompleteLevels(MSPathFinderSearchStage.Complete) = PROGRESS_PCT_COMPLETE
 
             Dim filteredFeatures = 0
             Dim unfilteredFeatures = 0
@@ -410,10 +492,32 @@ Public Class clsAnalysisToolRunnerMSPathFinder
                         mConsoleOutputErrorMsg &= "; " & errorMessage
                         Continue Do
 
-                    ElseIf strLineIn.StartsWith("Searching the decoy database") Then
-                        progressCompleteTarget = 100
+                    ElseIf LineStartsWith(strLineIn, "Generating sequence tags for MS/MS spectra") Then
+                        currentStage = MSPathFinderSearchStage.GeneratingSequenceTags
+
+                    ElseIf LineStartsWith(strLineIn, "Reading the target database") OrElse
+                           LineStartsWith(strLineIn, "tag-based searching the target database") Then
+                        currentStage = MSPathFinderSearchStage.TagBasedSearchingTargetDB
+
+                    ElseIf LineStartsWith(strLineIn, "Searching the target database") Then
+                        currentStage = MSPathFinderSearchStage.SearchingTargetDB
+
+                    ElseIf LineStartsWith(strLineIn, "Calculating spectral E-values for target-spectrum matches") Then
+                        currentStage = MSPathFinderSearchStage.CalculatingEValuesForTargetSpectra
+
+                    ElseIf LineStartsWith(strLineIn, "Reading the decoy database") OrElse
+                           LineStartsWith(strLineIn, "Tag-based searching the decoy database") Then
+                        currentStage = MSPathFinderSearchStage.TagBasedSearchingDecoyDB
                         searchingDecoyDB = True
                         Continue Do
+
+                    ElseIf LineStartsWith(strLineIn, "Searching the decoy database") Then
+                        currentStage = MSPathFinderSearchStage.SearchingDecoyDB
+                        searchingDecoyDB = True
+                        Continue Do
+
+                    ElseIf LineStartsWith(strLineIn, "Calculating spectral E-values for decoy-spectrum matches") Then
+                        currentStage = MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra
 
                     End If
 
@@ -421,12 +525,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
                     If oProgressMatch.Success Then
                         Dim progressValue As Single
                         If Single.TryParse(oProgressMatch.Groups(1).ToString(), progressValue) Then
-                            If searchingDecoyDB Then
-                                progressCompleteDecoy = progressValue
-                            Else
-                                progressCompleteTarget = progressValue
-                            End If
-
+                            progressCompleteCurrentStage = progressValue
                             percentCompleteFound = True
                         End If
                         Continue Do
@@ -471,17 +570,10 @@ Public Class clsAnalysisToolRunnerMSPathFinder
             If percentCompleteFound Then
                 ' Numeric % complete values were found
 
-                ' First compute the MSPathFinder % complete, depending on whether or not we have reached the halfway point
-                ' (at the halfway point, all target (forward) proteins have been searched and we're now searching the decoy proteins)
+                Dim progressCompleteAtStart = percentCompleteLevels(currentStage)
+                Dim progressCompleteAtEnd = percentCompleteLevels(currentStage + 1)
 
-                If searchingDecoyDB Then
-                    progressComplete = ComputeIncrementalProgress(50, 100, progressCompleteDecoy)
-                Else
-                    progressComplete = ComputeIncrementalProgress(0, 50, progressCompleteTarget)
-                End If
-
-                ' Now adjust the % complete value to be between 2% and 99%
-                progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_TARGET_DB, PROGRESS_PCT_COMPLETE, progressComplete)
+                progressComplete = ComputeIncrementalProgress(progressCompleteAtStart, progressCompleteAtEnd, progressCompleteCurrentStage)
 
             ElseIf searchingDecoyDB Then
                 ' Numeric % complete values were not found, but we did encounter "Searching the decoy database" 
