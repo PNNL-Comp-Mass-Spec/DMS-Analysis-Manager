@@ -1305,107 +1305,110 @@ Public Class clsMSGFDBUtils
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        If intLinesRead = 1 Then
-                            ' The first line is the MSGFDB version
-                            If strLineIn.ToLower.Contains("gfdb") OrElse strLineIn.ToLower.Contains("ms-gf+") Then
-                                If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
-                                    ReportMessage("MSGFDB version: " & strLineIn)
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
+
+                    Dim strLineInLcase = strLineIn.ToLower()
+
+                    If intLinesRead = 1 Then
+                        ' The first line is the MSGFDB version
+                        If strLineInLcase.Contains("gfdb") OrElse strLineInLcase.Contains("ms-gf+") Then
+                            If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
+                                ReportMessage("MSGFDB version: " & strLineIn)
+                            End If
+
+                            mMSGFDbVersion = String.Copy(strLineIn)
+                        Else
+                            If strLineInLcase.Contains("error") Then
+                                If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                                    mConsoleOutputErrorMsg = "Error running MSGFDB: "
                                 End If
-
-                                mMSGFDbVersion = String.Copy(strLineIn)
-                            Else
-                                If strLineIn.ToLower.Contains("error") And Not strLineIn.ToLower.Contains("isotopeerror:") Then
-                                    If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                        mConsoleOutputErrorMsg = "Error running MSGFDB: "
-                                    End If
-                                    If Not mConsoleOutputErrorMsg.Contains(strLineIn) Then
-                                        mConsoleOutputErrorMsg &= "; " & strLineIn
-                                    End If
+                                If Not mConsoleOutputErrorMsg.Contains(strLineIn) Then
+                                    mConsoleOutputErrorMsg &= "; " & strLineIn
                                 End If
-                            End If
-                        End If
-
-                        ' Look for warning messages  
-                        ' Additionally, update progress if the line starts with one of the expected phrases
-                        If strLineIn.StartsWith("Ignoring spectrum") Then
-                            ' Spectra are typically ignored either because they have too few ions, or because the data is not centroided
-                            If strLineIn.IndexOf("spectrum is not centroided", StringComparison.CurrentCultureIgnoreCase) > 0 Then
-                                mContinuumSpectraSkipped += 1
-                            End If
-                        ElseIf strLineIn.StartsWith("Loading database files") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
-                            End If
-
-                        ElseIf strLineIn.StartsWith("Reading spectra") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_READING_SPECTRA Then
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_READING_SPECTRA
-                            End If
-                        ElseIf strLineIn.StartsWith("Using") Then
-
-                            ' Extract out the thread count
-                            oMatch = reExtractThreadCount.Match(strLineIn)
-
-                            If oMatch.Success Then
-                                Short.TryParse(oMatch.Groups(1).Value, intThreadCount)
-                            End If
-
-                            ' Now that we know the thread count, initialize the array that will keep track of the progress % complete for each thread
-                            If eThreadProgressBase.Length < intThreadCount Then
-                                ReDim eThreadProgressBase(intThreadCount)
-                                ReDim sngThreadProgressAddon(intThreadCount)
-                            End If
-
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
-                            End If
-
-                        ElseIf strLineIn.StartsWith("Spectrum") Then
-                            ' Extract out the number of spectra that MSGF+ will actually search
-
-                            oMatch = reSpectraSearched.Match(strLineIn)
-
-                            If oMatch.Success Then
-                                Integer.TryParse(oMatch.Groups(1).Value, mSpectraSearched)
-                            End If
-
-                        ElseIf strLineIn.StartsWith("Computing EFDRs") OrElse strLineIn.StartsWith("Computing q-values") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
-                            End If
-
-                        ElseIf strLineIn.StartsWith("MS-GFDB complete") OrElse strLineIn.StartsWith("MS-GF+ complete") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
-                            End If
-
-                        ElseIf strLineIn.Contains("Preprocessing spectra") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                                ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.PreprocessingSpectra, eThreadProgressBase, sngThreadProgressAddon)
-                            End If
-
-                        ElseIf strLineIn.Contains("Database search") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                                ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
-                            End If
-
-                        ElseIf strLineIn.Contains("Computing spectral probabilities finished") OrElse strLineIn.Contains("Computing spectral E-values finished") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                                ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
-                            End If
-
-                        ElseIf strLineIn.Contains("Computing spectral probabilities") OrElse strLineIn.Contains("Computing spectral E-values") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                                ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
-                            End If
-
-                        ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                            If strLineIn.ToLower.Contains("error") Then
-                                mConsoleOutputErrorMsg &= "; " & strLineIn
                             End If
                         End If
                     End If
+
+                    ' Look for warning messages  
+                    ' Additionally, update progress if the line starts with one of the expected phrases
+                    If strLineIn.StartsWith("Ignoring spectrum") Then
+                        ' Spectra are typically ignored either because they have too few ions, or because the data is not centroided
+                        If strLineIn.IndexOf("spectrum is not centroided", StringComparison.CurrentCultureIgnoreCase) > 0 Then
+                            mContinuumSpectraSkipped += 1
+                        End If
+                    ElseIf strLineIn.StartsWith("Loading database files") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
+                        End If
+
+                    ElseIf strLineIn.StartsWith("Reading spectra") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_READING_SPECTRA Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_READING_SPECTRA
+                        End If
+                    ElseIf strLineIn.StartsWith("Using") Then
+
+                        ' Extract out the thread count
+                        oMatch = reExtractThreadCount.Match(strLineIn)
+
+                        If oMatch.Success Then
+                            Short.TryParse(oMatch.Groups(1).Value, intThreadCount)
+                        End If
+
+                        ' Now that we know the thread count, initialize the array that will keep track of the progress % complete for each thread
+                        If eThreadProgressBase.Length < intThreadCount Then
+                            ReDim eThreadProgressBase(intThreadCount)
+                            ReDim sngThreadProgressAddon(intThreadCount)
+                        End If
+
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
+                        End If
+
+                    ElseIf strLineIn.StartsWith("Spectrum") Then
+                        ' Extract out the number of spectra that MSGF+ will actually search
+
+                        oMatch = reSpectraSearched.Match(strLineIn)
+
+                        If oMatch.Success Then
+                            Integer.TryParse(oMatch.Groups(1).Value, mSpectraSearched)
+                        End If
+
+                    ElseIf strLineIn.StartsWith("Computing EFDRs") OrElse strLineIn.StartsWith("Computing q-values") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
+                        End If
+
+                    ElseIf strLineIn.StartsWith("MS-GFDB complete") OrElse strLineIn.StartsWith("MS-GF+ complete") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
+                        End If
+
+                    ElseIf strLineIn.Contains("Preprocessing spectra") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.PreprocessingSpectra, eThreadProgressBase, sngThreadProgressAddon)
+                        End If
+
+                    ElseIf strLineIn.Contains("Database search") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
+                        End If
+
+                    ElseIf strLineIn.Contains("Computing spectral probabilities finished") OrElse strLineIn.Contains("Computing spectral E-values finished") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
+                        End If
+
+                    ElseIf strLineIn.Contains("Computing spectral probabilities") OrElse strLineIn.Contains("Computing spectral E-values") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
+                        End If
+
+                    ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                        If strLineInLcase.Contains("error") And Not strLineInLcase.Contains("isotopeerror:") Then
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                        End If
+                    End If
+
                 Loop
 
             End Using
