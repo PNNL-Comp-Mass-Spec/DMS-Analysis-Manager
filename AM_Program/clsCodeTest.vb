@@ -117,8 +117,18 @@ Public Class clsCodeTest
 		Return objJobParams
 
 	End Function
-	'Public Function Test(ByVal DestFolder As String) As Boolean
-	'       Dim HashString As String = String.Empty
+
+    'Public Sub ParseMSPathFinderConsoleOutput()
+
+    '    Dim filePath = "f:\temp\MSPathFinder_ConsoleOutput.txt"
+    '    Dim msPathFinderTool = New AnalysisManagerMSPathFinderPlugIn.clsAnalysisToolRunnerMSPathFinder()
+
+    '    msPathFinderTool.ParseConsoleOutputFile(filePath)
+
+    'End Sub
+
+    'Public Function Test(ByVal DestFolder As String) As Boolean
+    '       Dim HashString As String = String.Empty
 
 	'	TestException()
 	'	Return False
