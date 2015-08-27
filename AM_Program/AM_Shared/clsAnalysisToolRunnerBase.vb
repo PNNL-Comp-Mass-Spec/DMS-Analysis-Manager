@@ -423,7 +423,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Try
 
-            Dim diCacheFolder As DirectoryInfo = New DirectoryInfo(cacheFolderPath)
+            Dim diCacheFolder = New DirectoryInfo(cacheFolderPath)
 
             If Not diCacheFolder.Exists Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & cacheFolderPath)
@@ -465,7 +465,7 @@ Public Class clsAnalysisToolRunnerBase
                 Return False
             End If
 
-            Dim fiTargetFile As FileInfo = New FileInfo(Path.Combine(diTargetFolder.FullName, Path.GetFileName(sourceFilePath)))
+            Dim fiTargetFile = New FileInfo(Path.Combine(diTargetFolder.FullName, Path.GetFileName(sourceFilePath)))
 
             ResetTimestampForQueueWaitTimeLogging()
             blnSuccess = m_FileTools.CopyFileUsingLocks(sourceFilePath, fiTargetFile.FullName, m_MachName, True)
@@ -481,10 +481,7 @@ Public Class clsAnalysisToolRunnerBase
             m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), True)
 
             If purgeOldFilesIfNeeded Then
-                ' Value prior to December 2014: 3 TB
-                ' Value effective December 2014: 20 TB
-                Const spaceUsageThresholdGB As Integer = 20000
-                PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
+                PurgeOldServerCacheFiles(cacheFolderPath)
             End If
 
         Catch ex As Exception
@@ -569,16 +566,16 @@ Public Class clsAnalysisToolRunnerBase
         Dim sourceFolderPath As String = String.Empty
         Dim targetFolderPath As String
 
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
         Dim strMessage As String
-        Dim blnErrorEncountered As Boolean = False
-        Dim intFailedFileCount As Integer = 0
+        Dim blnErrorEncountered = False
+        Dim intFailedFileCount = 0
 
 
-        Const intRetryCount As Integer = 10
-        Const intRetryHoldoffSeconds As Integer = 15
-        Const blnIncreaseHoldoffOnEachRetry As Boolean = True
+        Const intRetryCount = 10
+        Const intRetryHoldoffSeconds = 15
+        Const blnIncreaseHoldoffOnEachRetry = True
 
         Try
 
@@ -887,7 +884,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks>Raises exception if error occurs</remarks>
     Public Shared Function DeleteFileWithRetries(FileNamePath As String, intDebugLevel As Integer, MaxRetryCount As Integer) As Boolean
 
-        Dim RetryCount As Integer = 0
+        Dim RetryCount = 0
         Dim ErrType As AMFileNotDeletedAfterRetryException.RetryExceptionType
 
         If intDebugLevel > 4 Then
@@ -969,7 +966,7 @@ Public Class clsAnalysisToolRunnerBase
 
         'Deletes the raw data files/folders from the working directory
         Dim IsFile As Boolean
-        Dim IsNetworkDir As Boolean = False
+        Dim IsNetworkDir = False
         Dim FileOrFolderName As String = String.Empty
 
         Select Case eRawDataType
@@ -1211,7 +1208,7 @@ Public Class clsAnalysisToolRunnerBase
     Protected Function ExtractPackedJobParameterDictionary(strPackedJobParameterName As String) As Dictionary(Of String, String)
 
         Dim lstData As List(Of String)
-        Dim dctData As Dictionary(Of String, String) = New Dictionary(Of String, String)
+        Dim dctData = New Dictionary(Of String, String)
 
         lstData = ExtractPackedJobParameterList(strPackedJobParameterName)
 
@@ -1760,9 +1757,9 @@ Public Class clsAnalysisToolRunnerBase
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Protected Function MoveResultFiles() As IJobParams.CloseOutType
-        Const REJECT_LOGGING_THRESHOLD As Integer = 10
-        Const ACCEPT_LOGGING_THRESHOLD As Integer = 50
-        Const LOG_LEVEL_REPORT_ACCEPT_OR_REJECT As Integer = 5
+        Const REJECT_LOGGING_THRESHOLD = 10
+        Const ACCEPT_LOGGING_THRESHOLD = 50
+        Const LOG_LEVEL_REPORT_ACCEPT_OR_REJECT = 5
 
         'Makes results folder and moves files into it
         Dim ResFolderNamePath As String = String.Empty
@@ -1950,7 +1947,7 @@ Public Class clsAnalysisToolRunnerBase
 
         If blnErrorEncountered Then
             ' Try to save whatever files were moved into the results folder
-            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
             objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -1982,7 +1979,7 @@ Public Class clsAnalysisToolRunnerBase
         End If
 
         ' Saves the summary file in the results folder
-        Dim objAssemblyTools As clsAssemblyTools = New clsAssemblyTools
+        Dim objAssemblyTools = New clsAssemblyTools
 
         objAssemblyTools.GetComponentFileVersionInfo(m_SummaryFile)
 
@@ -2005,20 +2002,33 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     Public Sub PurgeOldServerCacheFiles(cacheFolderPath As String)
-        Const spaceUsageThresholdGB As Integer = 20000
+        ' Value prior to December 2014: 3 TB
+        ' Value effective December 2014: 20 TB
+        Const spaceUsageThresholdGB = 20000
         PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
     End Sub
+
+    Public Sub PurgeOldServerCacheFilesTest(cacheFolderPath As String, spaceUsageThresholdGB As Integer)
+        If cacheFolderPath.ToLower().StartsWith("\\proto") Then
+            If Not String.Equals(cacheFolderPath, "\\proto-2\past\PurgeTest", StringComparison.CurrentCultureIgnoreCase) Then
+                Console.WriteLine("This function cannot be used with a \\Proto-x\ server")
+                Return
+            End If
+        End If
+        PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB)
+    End Sub
+
 
     ''' <summary>
     ''' Determines the space usage of data files in the cache folder
     ''' If usage is over intSpaceUsageThresholdGB, then deletes the oldest files until usage falls below intSpaceUsageThresholdGB
     ''' </summary>
     ''' <param name="strCacheFolderPath">Path to the file cache</param>
-    ''' <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 10)</param>
+    ''' <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 1000 on Proto-x servers; 10 otherwise)</param>
     ''' <remarks></remarks>
-    Protected Sub PurgeOldServerCacheFiles(strCacheFolderPath As String, spaceUsageThresholdGB As Integer)
+    Private Sub PurgeOldServerCacheFiles(strCacheFolderPath As String, spaceUsageThresholdGB As Integer)
 
-        Const PURGE_INTERVAL_MINUTES As Integer = 90
+        Const PURGE_INTERVAL_MINUTES = 90
         Static dtLastCheck As DateTime = DateTime.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
 
         Dim diCacheFolder As DirectoryInfo
@@ -2027,12 +2037,20 @@ Public Class clsAnalysisToolRunnerBase
         Dim dblTotalSizeMB As Double = 0
 
         Dim dblSizeDeletedMB As Double = 0
-        Dim intFileDeleteCount As Integer = 0
-        Dim intFileDeleteErrorCount As Integer = 0
+        Dim intFileDeleteCount = 0
+        Dim intFileDeleteErrorCount = 0
 
-        Dim dctErrorSummary As Dictionary(Of String, Integer) = New Dictionary(Of String, Integer)
+        Dim dctErrorSummary = New Dictionary(Of String, Integer)
 
-        If spaceUsageThresholdGB < 10 Then spaceUsageThresholdGB = 10
+        If String.IsNullOrWhiteSpace(strCacheFolderPath) Then
+            Throw New ArgumentOutOfRangeException(strCacheFolderPath, "Cache folder path cannot be empty")
+        End If
+
+        If strCacheFolderPath.ToLower().StartsWith("\\proto-") Then
+            If spaceUsageThresholdGB < 1000 Then spaceUsageThresholdGB = 1000
+        Else
+            If spaceUsageThresholdGB < 10 Then spaceUsageThresholdGB = 10
+        End If
 
         Try
             If DateTime.UtcNow.Subtract(dtLastCheck).TotalMinutes < PURGE_INTERVAL_MINUTES Then
@@ -2059,7 +2077,8 @@ Public Class clsAnalysisToolRunnerBase
                 End Using
 
             Catch ex As Exception
-                ' Likely another manager tried to update the file at the same time; ignore the error
+                ' Likely another manager tried to update the file at the same time
+                ' Ignore the error and proceed to look for files to purge
             End Try
 
             dtLastCheck = DateTime.UtcNow
@@ -2072,7 +2091,7 @@ Public Class clsAnalysisToolRunnerBase
                     Dim strDataFilePath As String
                     strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length)
 
-                    Dim fiDataFile As FileInfo = New FileInfo(strDataFilePath)
+                    Dim fiDataFile = New FileInfo(strDataFilePath)
 
                     If fiDataFile.Exists Then
                         Try
@@ -2087,25 +2106,53 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             Next
 
-
             If dblTotalSizeMB / 1024 > spaceUsageThresholdGB Then
                 ' Purge files until the space usage falls below the threshold
                 ' Start with the earliest file then work our way forward
 
+                ' Keep track of the deleted file info using this list
+                Dim purgedFileLogEntries = New List(Of String)
+
+                Dim fiPurgeLogFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeLog_" & DateTime.Now.Year & ".txt"))
+                If Not fiPurgeLogFile.Exists Then
+                    ' Create the purge log file and write the header line
+                    Try
+                        Using swPurgeLogFile = New StreamWriter(New FileStream(fiPurgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read))
+                            swPurgeLogFile.WriteLine(String.Join(vbTab, New String() {"Date",
+                                                                                      "Manager",
+                                                                                      "Size (MB)",
+                                                                                      "Modification_Date",
+                                                                                      "Path"}))
+                        End Using
+                    Catch ex As Exception
+                        ' Likely another manager tried to create the file at the same time
+                        ' Ignore the error
+                    End Try
+                End If
+
                 Dim lstSortedFiles = (From item In lstDataFiles Select item Order By item.Key)
+                Dim managerName As String = m_mgrParams.GetParam("MgrName", m_MachName)
 
                 For Each kvItem As KeyValuePair(Of DateTime, FileInfo) In lstSortedFiles
 
                     Try
-                        Dim dblFileSizeMB As Double = kvItem.Value.Length / 1024.0 / 1024.0
+                        Dim fileSizeMB As Double = kvItem.Value.Length / 1024.0 / 1024.0
 
-                        Dim strHashcheckPath = kvItem.Value.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-                        Dim fiHashCheckFile = New FileInfo(strHashcheckPath)
+                        Dim hashcheckPath = kvItem.Value.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+                        Dim fiHashCheckFile = New FileInfo(hashcheckPath)
 
-                        dblTotalSizeMB -= dblFileSizeMB
+                        dblTotalSizeMB -= fileSizeMB
 
                         kvItem.Value.Delete()
-                        dblSizeDeletedMB += dblFileSizeMB
+
+                        ' Keep track of the deleted file's details
+                        purgedFileLogEntries.Add(String.Join(vbTab, New String() {DateTime.Now.ToString(DATE_TIME_FORMAT),
+                                                                         managerName,
+                                                                         fileSizeMB.ToString("0.00"),
+                                                                         kvItem.Value.LastWriteTime.ToString(DATE_TIME_FORMAT),
+                                                                         kvItem.Value.FullName}))
+
+                        dblSizeDeletedMB += fileSizeMB
                         intFileDeleteCount += 1
 
                         If fiHashCheckFile.Exists Then
@@ -2116,7 +2163,7 @@ Public Class clsAnalysisToolRunnerBase
                         ' Keep track of the number of times we have an exception
                         intFileDeleteErrorCount += 1
 
-                        Dim intOccurrences As Integer = 1
+                        Dim intOccurrences = 1
                         Dim strExceptionName As String = ex.GetType.ToString()
                         If dctErrorSummary.TryGetValue(strExceptionName, intOccurrences) Then
                             dctErrorSummary(strExceptionName) = intOccurrences + 1
@@ -2140,6 +2187,19 @@ Public Class clsAnalysisToolRunnerBase
                     Next
                 End If
 
+                If purgedFileLogEntries.Count > 0 Then
+                    ' Log the info for each of the deleted files
+                    Try
+                        Using swPurgeLogFile = New StreamWriter(New FileStream(fiPurgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                            For Each purgedFileLogEntry In purgedFileLogEntries
+                                swPurgeLogFile.WriteLine(purgedFileLogEntry)
+                            Next
+                        End Using
+                    Catch ex As Exception
+                        ' Likely another manager tried to create the file at the same time
+                        ' Ignore the error
+                    End Try
+                End If
             End If
 
         Catch ex As Exception
@@ -2181,7 +2241,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim intEqualsLoc As Integer
 
         strVersion = String.Empty
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
 
         Try
 
@@ -2246,7 +2306,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks>List of files to delete is tracked via m_jobParams.ServerFilesToDelete; must store full file paths in ServerFilesToDelete</remarks>
     Public Function RemoveNonResultServerFiles() As Boolean
 
-        Dim FileToDelete As String = ""
+        Dim FileToDelete = ""
 
         Try
             'Log status
@@ -2792,7 +2852,7 @@ Public Class clsAnalysisToolRunnerBase
                 If File.Exists(strVersionInfoFilePath) Then
                     Thread.Sleep(100)
                     File.Delete(strVersionInfoFilePath)
-                End If                
+                End If
             Catch ex As Exception
                 ' Ignore errors here
             End Try
@@ -3231,7 +3291,7 @@ Public Class clsAnalysisToolRunnerBase
     Protected Function ValidateCDTAFile(strDTAFilePath As String) As Boolean
 
         Dim strLineIn As String
-        Dim blnDataFound As Boolean = False
+        Dim blnDataFound = False
 
         Try
             If Not File.Exists(strDTAFilePath) Then
@@ -3240,7 +3300,7 @@ Public Class clsAnalysisToolRunnerBase
                 Return False
             End If
 
-            Using srReader As StreamReader = New StreamReader(New FileStream(strDTAFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srReader = New StreamReader(New FileStream(strDTAFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 Do While Not srReader.EndOfStream
                     strLineIn = srReader.ReadLine()

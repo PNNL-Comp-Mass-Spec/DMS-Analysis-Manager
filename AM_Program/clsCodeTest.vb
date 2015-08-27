@@ -1737,10 +1737,10 @@ Public Class clsCodeTest
         objToolRunner = New clsCodeTestAM
         objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
 
-        Const cacheFolderPath As String = "\\Proto-11\MSXML_Cache"
+        Const cacheFolderPath = "\\proto-2\past\PurgeTest"
 
         Try
-            objToolRunner.PurgeOldServerCacheFiles(cacheFolderPath)
+            objToolRunner.PurgeOldServerCacheFilesTest(cacheFolderPath, 10)
         Catch ex As Exception
             Console.WriteLine("Error calling PurgeOldServerCacheFiles: " & ex.Message)
         End Try
