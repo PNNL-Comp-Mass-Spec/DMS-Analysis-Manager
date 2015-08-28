@@ -90,6 +90,7 @@ Public Class clsPSMInfo
         ''' <summary>
         ''' MSGF SpecProb; will be UNKNOWN_MSGF_SPECPROB (10) if MSGF SpecProb is not available
         ''' </summary>
+        ''' <remarks>MSPathFinder results use this field to store SpecEValue</remarks>
         Public Property MSGF As Double
 
         ''' <summary>
