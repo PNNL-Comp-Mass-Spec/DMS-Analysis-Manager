@@ -33,7 +33,7 @@ Public Class clsMSGFResultsSummarizer
 #End Region
 
 #Region "Structures"
-    
+
     Protected Structure udtPSMStatsType
         ''' <summary>
         ''' Number of spectra with a match
@@ -323,10 +323,10 @@ Public Class clsMSGFResultsSummarizer
 
         If blnUsingMSGFOrEValueFilter Then
             If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-                ' Filter on MSGF
+                ' Filter on EValue
                 blnSuccess = FilterPSMsByEValue(mEValueThreshold, lstNormalizedPSMs, lstFilteredPSMs)
             ElseIf mMSGFThreshold < 1 Then
-                ' Filter on MSGF
+                ' Filter on MSGF (though for MSPathFinder we're using SpecEValue)
                 blnSuccess = FilterPSMsByMSGF(mMSGFThreshold, lstNormalizedPSMs, lstFilteredPSMs)
             Else
                 ' Do not filter
@@ -484,7 +484,7 @@ Public Class clsMSGFResultsSummarizer
 
         For Each kvEntry As KeyValuePair(Of Integer, Double) In lstResultIDtoFDRMap
             If kvEntry.Value > mFDRThreshold Then
-                lstPSMs.Remove(kvEntry.Key)            
+                lstPSMs.Remove(kvEntry.Key)
             End If
         Next
 
@@ -533,7 +533,7 @@ Public Class clsMSGFResultsSummarizer
     End Function
 
     Protected Function GetNormalizedPeptide(peptideCleanSequence As String, modifications As String) As String
-        Return peptideCleanSequence & "_" & modifications        
+        Return peptideCleanSequence & "_" & modifications
     End Function
 
     Protected Function PostJobPSMResults(intJob As Integer) As Boolean
@@ -610,7 +610,6 @@ Public Class clsMSGFResultsSummarizer
                     .Parameters.Item("@MSGFThresholdIsEValue").Value = 0
                 End If
 
-
             End With
 
             'Execute the SP (retry the call up to 3 times)
@@ -670,10 +669,11 @@ Public Class clsMSGFResultsSummarizer
             ' We use the Synopsis file to count the number of peptides and proteins observed
             strPHRPSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(mResultType, mDatasetName)
 
-            If mResultType = clsPHRPReader.ePeptideHitResultType.XTandem Or
-               mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Or
-               mResultType = clsPHRPReader.ePeptideHitResultType.MODa Or
-               mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+            If mResultType = clsPHRPReader.ePeptideHitResultType.XTandem OrElse
+               mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign OrElse
+               mResultType = clsPHRPReader.ePeptideHitResultType.MODa OrElse
+               mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus OrElse
+               mResultType = clsPHRPReader.ePeptideHitResultType.MSPathFinder Then
                 ' These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                 strPHRPFirstHitsFileName = strPHRPSynopsisFileName
             End If
@@ -777,10 +777,15 @@ Public Class clsMSGFResultsSummarizer
 
         Dim blnLoadMSGFResults = True
 
+        lstResultToSeqMap = New SortedList(Of Integer, Integer)
+        lstSeqToProteinMap = New SortedList(Of Integer, List(Of clsProteinInfo))
+        lstSeqInfo = New SortedList(Of Integer, clsSeqInfo)
+
         Try
 
-            If mResultType = clsPHRPReader.ePeptideHitResultType.MODa Or
-               mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+            If mResultType = clsPHRPReader.ePeptideHitResultType.MODa OrElse
+               mResultType = clsPHRPReader.ePeptideHitResultType.MODPlus OrElse
+               mResultType = clsPHRPReader.ePeptideHitResultType.MSPathFinder Then
                 blnLoadMSGFResults = False
             End If
 
@@ -852,8 +857,18 @@ Public Class clsMSGFResultsSummarizer
                         blnValid = True
 
                     ElseIf mResultType = clsPHRPReader.ePeptideHitResultType.MSPathFinder Then
-                        ' Filter on QValue (Future: use SpecProb)
+                        ' Use SpecEValue in place of SpecProb
                         blnValid = True
+
+                        Dim strSpecEValue = String.Empty
+                        If objPSM.TryGetScore(clsPHRPParserMSPathFinder.DATA_COLUMN_SpecEValue, strSpecEValue) Then
+                            If Not String.IsNullOrWhiteSpace(strSpecEValue) Then
+                                blnValid = Double.TryParse(strSpecEValue, dblSpecProb)
+                            End If
+                        Else
+                            ' SpecEValue was not present
+                            ' That's OK, QValue should be present
+                        End If
 
                     Else
                         blnValid = Double.TryParse(objPSM.MSGFSpecProb, dblSpecProb)
@@ -1042,13 +1057,13 @@ Public Class clsMSGFResultsSummarizer
             End If
         Next
 
-        Return GetNormalizedPeptide(peptideCleanSequence, sbModifications.ToString())    
+        Return GetNormalizedPeptide(peptideCleanSequence, sbModifications.ToString())
 
     End Function
 
     Protected Function SaveResultsToFile() As Boolean
 
-        Dim strOutputFilePath As String = "??"
+        Dim strOutputFilePath = "??"
 
         Try
             If Not String.IsNullOrEmpty(mOutputFolderPath) Then
@@ -1058,7 +1073,7 @@ Public Class clsMSGFResultsSummarizer
             End If
             strOutputFilePath = Path.Combine(strOutputFilePath, mDatasetName & "_PSM_Stats.txt")
 
-            Using swOutFile As StreamWriter = New StreamWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swOutFile = New StreamWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 ' Header line
                 swOutFile.WriteLine( _

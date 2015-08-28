@@ -80,7 +80,7 @@ Public Class clsAnalysisResourcesMSGF
         Dim strMzXMLFilePath As String = String.Empty
         Dim strSynFilePath As String = String.Empty
 
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
         Dim blnOnlyCopyFHTandSYNfiles As Boolean
 
         ' Make sure the ResultType is valid
@@ -91,7 +91,8 @@ Public Class clsAnalysisResourcesMSGF
            eResultType = clsPHRPReader.ePeptideHitResultType.Inspect OrElse
            eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB OrElse
            eResultType = clsPHRPReader.ePeptideHitResultType.MODa OrElse
-           eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+           eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus OrElse
+           eResultType = clsPHRPReader.ePeptideHitResultType.MSPathFinder Then
 
             blnSuccess = True
 
@@ -128,9 +129,10 @@ Public Class clsAnalysisResourcesMSGF
                 End If
             End If
         ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Or
-               eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
+               eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Or
+               eResultType = clsPHRPReader.ePeptideHitResultType.MSPathFinder Then
 
-            ' We do not need any raw data files for MODa or modPlus
+            ' We do not need any raw data files for MODa, modPlus, or MSPathFinder
             blnOnlyCopyFHTandSYNfiles = True
 
         Else
@@ -151,7 +153,7 @@ Public Class clsAnalysisResourcesMSGF
         End If
 
         If Not blnOnlyCopyFHTandSYNfiles Then
-            ' Get the Sequest, X!Tandem, Inspect, MSGF+, MODa, or MODPlus parameter file
+            ' Get the Sequest, X!Tandem, Inspect, MSGF+, MODa, MODPlus, or MSPathFinder parameter file
             FileToGet = m_jobParams.GetParam("ParmFileName")
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
                 'Errors were reported in function call, so just return
@@ -169,7 +171,7 @@ Public Class clsAnalysisResourcesMSGF
 
         End If
 
-        ' Get the Sequest, X!Tandem, Inspect, MSGF+, MODa, or MODPlus PHRP _syn.txt file
+        ' Get the PHRP _syn.txt file
         FileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, m_DatasetName)
         If Not String.IsNullOrEmpty(FileToGet) Then
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -180,7 +182,7 @@ Public Class clsAnalysisResourcesMSGF
             strSynFilePath = Path.Combine(m_WorkingDir, FileToGet)
         End If
 
-        ' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _fht.txt file
+        ' Get the PHRP _fht.txt file
         FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
         If Not String.IsNullOrEmpty(FileToGet) Then
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -190,7 +192,7 @@ Public Class clsAnalysisResourcesMSGF
             m_jobParams.AddResultFileToSkip(FileToGet)
         End If
 
-        ' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _ResultToSeqMap.txt file
+        ' Get the PHRP _ResultToSeqMap.txt file
         FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
         If Not String.IsNullOrEmpty(FileToGet) Then
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -200,7 +202,7 @@ Public Class clsAnalysisResourcesMSGF
             m_jobParams.AddResultFileToSkip(FileToGet)
         End If
 
-        ' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _SeqToProteinMap.txt file
+        ' Get the PHRP _SeqToProteinMap.txt file
         FileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName)
         If Not String.IsNullOrEmpty(FileToGet) Then
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -210,7 +212,7 @@ Public Class clsAnalysisResourcesMSGF
             m_jobParams.AddResultFileToSkip(FileToGet)
         End If
 
-        ' Get the Sequest, X!Tandem, Inspect, or MSGF+ PHRP _PepToProtMapMTS.txt file
+        ' Get the PHRP _PepToProtMapMTS.txt file
         FileToGet = clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, m_DatasetName)
         If Not String.IsNullOrEmpty(FileToGet) Then
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
@@ -225,7 +227,7 @@ Public Class clsAnalysisResourcesMSGF
         End If
 
         Dim SynFileSizeBytes As Int64 = 0
-        Dim ioSynFile As FileInfo = New FileInfo(strSynFilePath)
+        Dim ioSynFile = New FileInfo(strSynFilePath)
         If ioSynFile.Exists Then
             SynFileSizeBytes = ioSynFile.Length
         End If
@@ -373,42 +375,42 @@ Public Class clsAnalysisResourcesMSGF
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	Private Function CreateEmptyResultToSeqMapFile(FileName As String) As Boolean
-		Dim strFilePath As String
+    Private Function CreateEmptyResultToSeqMapFile(FileName As String) As Boolean
+        Dim strFilePath As String
 
-		Try
-			strFilePath = Path.Combine(m_WorkingDir, FileName)
-			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
-				swOutfile.WriteLine("Result_ID" & ControlChars.Tab & "Unique_Seq_ID")
-			End Using
-		Catch ex As Exception
-			Dim Msg As String = "Error creating empty ResultToSeqMap file: " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			Return False
-		End Try
+        Try
+            strFilePath = Path.Combine(m_WorkingDir, FileName)
+            Using swOutfile = New StreamWriter(New FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+                swOutfile.WriteLine("Result_ID" & ControlChars.Tab & "Unique_Seq_ID")
+            End Using
+        Catch ex As Exception
+            Dim Msg As String = "Error creating empty ResultToSeqMap file: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            Return False
+        End Try
 
-		Return True
-	End Function
+        Return True
+    End Function
 
-	Private Function CreateEmptySeqToProteinMapFile(FileName As String) As Boolean
-		Dim strFilePath As String
+    Private Function CreateEmptySeqToProteinMapFile(FileName As String) As Boolean
+        Dim strFilePath As String
 
-		Try
-			strFilePath = Path.Combine(m_WorkingDir, FileName)
-			Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
-				swOutfile.WriteLine("Unique_Seq_ID" & ControlChars.Tab & "Cleavage_State" & ControlChars.Tab & "Terminus_State" & ControlChars.Tab & "Protein_Name" & ControlChars.Tab & "Protein_Expectation_Value_Log(e)" & ControlChars.Tab & "Protein_Intensity_Log(I)")
-			End Using
-		Catch ex As Exception
-			Dim Msg As String = "Error creating empty SeqToProteinMap file: " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			Return False
-		End Try
+        Try
+            strFilePath = Path.Combine(m_WorkingDir, FileName)
+            Using swOutfile = New StreamWriter(New FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+                swOutfile.WriteLine("Unique_Seq_ID" & ControlChars.Tab & "Cleavage_State" & ControlChars.Tab & "Terminus_State" & ControlChars.Tab & "Protein_Name" & ControlChars.Tab & "Protein_Expectation_Value_Log(e)" & ControlChars.Tab & "Protein_Intensity_Log(I)")
+            End Using
+        Catch ex As Exception
+            Dim Msg As String = "Error creating empty SeqToProteinMap file: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 #End Region
 
 End Class

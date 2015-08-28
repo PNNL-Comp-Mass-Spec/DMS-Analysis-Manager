@@ -263,7 +263,7 @@ Public MustInherit Class clsMSGFInputCreator
                         strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, 0)
                         mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
                     Else
-                        For intChargeIndex As Integer = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
+                        For intChargeIndex = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
                             strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ParentIonCharges(intChargeIndex))
                             mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
                         Next
@@ -295,7 +295,7 @@ Public MustInherit Class clsMSGFInputCreator
     ''' <remarks></remarks>
     Public Function CreateMSGFFirstHitsFile() As Boolean
 
-        Const MAX_WARNINGS_TO_REPORT As Integer = 10
+        Const MAX_WARNINGS_TO_REPORT = 10
 
         Dim strMSGFFirstHitsResults As String
         Dim strPeptideResultCode As String
@@ -407,7 +407,7 @@ Public MustInherit Class clsMSGFInputCreator
     Public Function CreateMSGFInputFileUsingPHRPResultFiles() As Boolean
 
         Dim strSpectrumFileName As String
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
 
         Try
             If String.IsNullOrEmpty(mDatasetName) Then
@@ -437,7 +437,7 @@ Public MustInherit Class clsMSGFInputCreator
 
 
             ' Create the MSGF Input file that we will write data to
-            Using swMSGFInputFile As StreamWriter = New StreamWriter(New FileStream(mMSGFInputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swMSGFInputFile = New StreamWriter(New FileStream(mMSGFInputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 ' Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source
                 ' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
@@ -575,7 +575,7 @@ Public MustInherit Class clsMSGFInputCreator
         Try
             If mLogFile Is Nothing Then
                 Dim strErrorLogFilePath As String
-                Dim blnWriteHeader As Boolean = True
+                Dim blnWriteHeader = True
 
                 strErrorLogFilePath = Path.Combine(mWorkDir, "MSGFInputCreator_Log.txt")
 
@@ -620,9 +620,9 @@ Public MustInherit Class clsMSGFInputCreator
 
         Dim blnSuccess As Boolean
 
-        Dim intResultIDPrevious As Integer = 0
-        Dim intScanNumberPrevious As Integer = 0
-        Dim intChargePrevious As Integer = 0
+        Dim intResultIDPrevious = 0
+        Dim intScanNumberPrevious = 0
+        Dim intChargePrevious = 0
         Dim strPeptidePrevious As String = String.Empty
 
         Dim strScanAndCharge As String

@@ -145,7 +145,7 @@ Public Class clsMSGFInputCreatorMSGFDB
                 strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
 
                 ' Create the output file
-                Using swMSGFFile As StreamWriter = New StreamWriter(New FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                Using swMSGFFile = New StreamWriter(New FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                     ' Write out the headers to swMSGFFHTFile
                     WriteMSGFResultsHeaders(swMSGFFile)
