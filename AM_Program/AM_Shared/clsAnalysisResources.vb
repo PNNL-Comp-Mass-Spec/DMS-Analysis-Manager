@@ -4116,7 +4116,7 @@ Public MustInherit Class clsAnalysisResources
 
                                 If Not success Then
                                     If String.IsNullOrWhiteSpace(errorMessage) Then
-                                        errorMessage = "Unknown error looking for the .mzML file for " & udtJob.Value.Dataset
+                                        errorMessage = "Unknown error looking for the .mzML file for " & udtJob.Value.Dataset & ", job " & udtJob.Key
                                     End If
 
                                     m_message = errorMessage
@@ -4131,13 +4131,13 @@ Public MustInherit Class clsAnalysisResources
                                 MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName)
 
                                 If m_DebugLevel >= 1 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved the .mzML file for " & udtJob.Value.Dataset)
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved the .mzML file for " & udtJob.Value.Dataset & ", job " & udtJob.Key)
                                 End If
 
                                 Continue For
                             End If
 
-                            m_message = "Could not find a valid folder with file " & sourceFileName
+                            m_message = "Could not find a valid folder with file " & sourceFileName & " for job " & udtJob.Key
                             If m_DebugLevel >= 1 Then
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                             End If
@@ -4145,7 +4145,7 @@ Public MustInherit Class clsAnalysisResources
                         End If
 
                         If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-                            m_message = "CopyFileToWorkDir returned False for " + sourceFileName + " using folder " + sourceFolderPath
+                            m_message = "CopyFileToWorkDir returned False for " & sourceFileName & " using folder " & sourceFolderPath & " for job " & udtJob.Key
                             If m_DebugLevel >= 1 Then
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                             End If
@@ -4167,7 +4167,7 @@ Public MustInherit Class clsAnalysisResources
                         End If
 
                     Catch ex As Exception
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveAggregateFiles; Exception during copy of file: " + sourceFileName + " from folder " + sourceFolderPath, ex)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveAggregateFiles; Exception during copy of file: " & sourceFileName & " from folder " & sourceFolderPath & " for job " & udtJob.Key, ex)
                         Return False
 
                     End Try
