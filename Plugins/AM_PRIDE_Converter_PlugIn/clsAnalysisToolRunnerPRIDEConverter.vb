@@ -32,7 +32,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     Protected Const DEFAULT_CELL_TYPE_CV As String = "[CL, CL:0000081, blood cell, ]"
     Protected Const DEFAULT_DISEASE_TYPE_CV As String = "[DOID, DOID:1612, breast cancer, ]"
     Protected Const DEFAULT_QUANTIFICATION_TYPE_CV As String = "[PRIDE, PRIDE:0000436, Spectral counting,]"
-    Protected Const DELETION_WARNING As String = " -- If you delete this line, you must delete the corresponding column in the SMH/SME section"
+    Protected Const DELETION_WARNING As String = " -- If you delete this line, assure that the corresponding column values on the SME rows are empty (leave the 'cell_type' and 'disease' column headers on the SMH line, but assure that the SME lines have blank entries for this column)"
 
     Protected Const DEFAULT_PVALUE_THRESHOLD As Double = 0.05
 
@@ -2396,7 +2396,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                 WritePXLine(swPXFile, columnNames)
 
-                ' Add the SMH section
+                ' Add the SME lines below the SMH line
                 For Each resultFile In lstResultFileIDs
                     lstFileInfoCols.Clear()
 
@@ -2423,13 +2423,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                         If smhIncludesCellType Then
                             lstFileInfoCols.Add(udtSampleMetadata.CellType)     ' cell_type
                         Else
-                            lstFileInfoCols.Add(ControlChars.Tab)
+                            lstFileInfoCols.Add(String.Empty)
                         End If
 
                         If smhIncludesDisease Then
                             lstFileInfoCols.Add(udtSampleMetadata.Disease)      ' disease
                         Else
-                            lstFileInfoCols.Add(ControlChars.Tab)
+                            lstFileInfoCols.Add(String.Empty)
                         End If
 
                         Dim strMods As String = String.Empty
