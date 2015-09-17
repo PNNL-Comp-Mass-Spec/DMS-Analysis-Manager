@@ -277,6 +277,9 @@ Public MustInherit Class clsAnalysisResources
 
     Private m_ResourceOptions As Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
 
+    Private m_AuroraAvailable As Boolean
+    Private m_MyEmslAvailable As Boolean
+
     Public WithEvents mSpectraTypeClassifier As SpectraTypeClassifier.clsSpectrumTypeClassifier
 #End Region
 
@@ -384,6 +387,9 @@ Public MustInherit Class clsAnalysisResources
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, False)
 
         m_StatusTools = statusTools
+
+        m_AuroraAvailable = m_mgrParams.GetParam("AuroraAvailable", True)
+        m_MyEmslAvailable = m_mgrParams.GetParam("MyEmslAvailable", True)
 
     End Sub
 
@@ -856,7 +862,7 @@ Public MustInherit Class clsAnalysisResources
 
         End If
 
-        Dim retryCount = 3
+        Dim retryCount = 1
 
         While retryCount > 0
             Try
@@ -879,6 +885,8 @@ Public MustInherit Class clsAnalysisResources
                         m_message &= ex.Message
                     End If
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Connection string: " & m_FastaToolsCnStr)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Current user: " & Environment.UserName)
                     Return False
                 End If
                 retryCount -= 1
@@ -1332,7 +1340,7 @@ Public MustInherit Class clsAnalysisResources
     ''' Finds the server or archive folder where specified file is located
     ''' </summary>
     ''' <param name="FileToFind">Name of the file to search for</param>
-    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched</param>
+    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched (m_AuroraAvailable and m_MyEmslAvailable take precedent)</param>
     ''' <param name="LogFileNotFound">True if an error should be logged when a file is not found</param>
     ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
     ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
@@ -1359,8 +1367,12 @@ Public MustInherit Class clsAnalysisResources
             strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"))
 
             If searchArchivedDatasetFolder Then
-                strParentFolderPaths.Add(MYEMSL_PATH_FLAG)
-                strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"))
+                If m_MyEmslAvailable Then
+                    strParentFolderPaths.Add(MYEMSL_PATH_FLAG)
+                End If
+                If m_AuroraAvailable Then
+                    strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"))
+                End If
             End If
 
             Dim foldersToSearch = New List(Of String)
@@ -1436,7 +1448,7 @@ Public MustInherit Class clsAnalysisResources
             ' Log this as a warning if SearchArchivedDatasetFolder=False
 
             If logFileNotFound Then
-                If searchArchivedDatasetFolder Then
+                If searchArchivedDatasetFolder OrElse (Not m_AuroraAvailable And Not m_MyEmslAvailable) Then
                     m_message = "Data file not found: " + fileToFind
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Else
@@ -1905,7 +1917,9 @@ Public MustInherit Class clsAnalysisResources
 
         ' Determine the YearQuarter code for this dataset
         Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
-        If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
+        If String.IsNullOrEmpty(strDatasetStoragePath) AndAlso (m_AuroraAvailable OrElse m_MyEmslAvailable) Then
+            strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
+        End If
 
         Dim strYearQuarter As String = GetDatasetYearQuarter(strDatasetStoragePath)
 
@@ -2140,8 +2154,10 @@ Public MustInherit Class clsAnalysisResources
 				lstPathsToCheck.Remove(MYEMSL_PATH_FLAG)
 			End If
 #End If
+            If m_AuroraAvailable OrElse m_MyEmslAvailable Then
+                lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName))
+            End If
 
-            lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName))
             lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName))
 
             blnFileNotFoundEncountered = False
@@ -3010,7 +3026,9 @@ Public MustInherit Class clsAnalysisResources
         errorMessage = String.Empty
 
         Dim strDatasetStoragePath As String = jobParams.GetParam("JobParameters", "DatasetStoragePath")
-        If String.IsNullOrEmpty(strDatasetStoragePath) Then strDatasetStoragePath = jobParams.GetParam("JobParameters", "DatasetArchivePath")
+        If String.IsNullOrEmpty(strDatasetStoragePath) Then
+            strDatasetStoragePath = jobParams.GetParam("JobParameters", "DatasetArchivePath")
+        End If
 
         If String.IsNullOrEmpty(strDatasetStoragePath) Then
             errorMessage = "JobParameters does not contain DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path"

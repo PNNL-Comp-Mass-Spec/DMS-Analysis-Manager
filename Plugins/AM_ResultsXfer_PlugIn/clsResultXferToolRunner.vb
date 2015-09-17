@@ -140,58 +140,73 @@ Public Class clsResultXferToolRunner
 
 	End Function
 
-	Protected Function LookupLocalPath(ByVal serverName As String, ByVal uncFolderPath As String, ByVal folderFunction As String, ByVal connectionString As String) As String
+    Protected Function LookupLocalPath(
+       ByVal serverName As String,
+       ByVal uncFolderPath As String,
+       ByVal folderFunction As String,
+       ByVal connectionString As String) As String
 
-		Const RetryCount As Short = 3
-		Dim strMsg As String
+        Const retryCount As Short = 3
+        Dim strMsg As String
 
-		' Remove the server name from the start of folderPath
-		Dim charIndex = uncFolderPath.IndexOf("\"c, 2)
+        If Not uncFolderPath.StartsWith("\\") Then
+            ' Not a network path; cannot convert
+            Return String.Empty
+        End If
 
-		If charIndex < 0 OrElse Not uncFolderPath.StartsWith("\\") Then
-			Return String.Empty
-		End If
+        ' Remove the server name from the start of folderPath
+        ' For example, change 
+        '   from: \\proto-6\LTQ_Orb_3\2013_2
+        '   to:   LTQ_Orb_3\2013_2
 
-		uncFolderPath = uncFolderPath.Substring(charIndex + 1)
+        ' First starting from index 2 in the string, find the next slash
+        Dim charIndex = uncFolderPath.IndexOf("\"c, 2)
 
-		' Make sure folderPath does not end in a slash
-		If uncFolderPath.EndsWith("\"c) Then
-			uncFolderPath = uncFolderPath.TrimEnd("\"c)
-		End If
+        If charIndex < 0 Then
+            ' Match not found
+            Return String.Empty
+        End If
 
-		Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
+        uncFolderPath = uncFolderPath.Substring(charIndex + 1)
 
-		' Query V_Storage_Path_Export for the local volume name of the given path
-		'
-		SqlStr.Append(" SELECT TOP 1 VolServer, [Path]")
-		SqlStr.Append(" FROM V_Storage_Path_Export")
-		SqlStr.Append(" WHERE (MachineName = '" + serverName + "') AND")
-		SqlStr.Append("       ([Path] = '" + uncFolderPath + "' OR")
-		SqlStr.Append("        [Path] = '" + uncFolderPath + "\')")
-		SqlStr.Append(" ORDER BY CASE WHEN [Function] = '" + folderFunction + "' THEN 1 ELSE 2 END, ID DESC")
+        ' Make sure folderPath does not end in a slash
+        If uncFolderPath.EndsWith("\"c) Then
+            uncFolderPath = uncFolderPath.TrimEnd("\"c)
+        End If
 
-		' Get a table to hold the results of the query
-		Dim Dt As DataTable = Nothing
-		Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), connectionString, "LookupLocalPath", RetryCount, Dt)
+        Dim sbSql = New Text.StringBuilder
 
-		If Not blnSuccess Then
-			strMsg = "LookupLocalPath; Excessive failures attempting to retrieve folder info from database"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-			Return String.Empty
-		End If
+        ' Query V_Storage_Path_Export for the local volume name of the given path
+        '
+        sbSql.Append(" SELECT TOP 1 VolServer, [Path]")
+        sbSql.Append(" FROM V_Storage_Path_Export")
+        sbSql.Append(" WHERE (MachineName = '" + serverName + "') AND")
+        sbSql.Append("       ([Path] = '" + uncFolderPath + "' OR")
+        sbSql.Append("        [Path] = '" + uncFolderPath + "\')")
+        sbSql.Append(" ORDER BY CASE WHEN [Function] = '" + folderFunction + "' THEN 1 ELSE 2 END, ID DESC")
 
-		For Each CurRow As DataRow In Dt.Rows
-			Dim volServer = clsGlobal.DbCStr(CurRow("VolServer"))
-			Dim localFolderPath = Path.Combine(volServer, uncFolderPath)
-			Return localFolderPath
-		Next
+        ' Get a table to hold the results of the query
+        Dim dt As DataTable = Nothing
+        Dim blnSuccess = clsGlobal.GetDataTableByQuery(sbSql.ToString(), connectionString, "LookupLocalPath", retryCount, dt)
 
-		' No data was returned
-		strMsg = "LookupLocalPath; could not resolve a local volume name for path '" + uncFolderPath + "' on server " + serverName
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-		Return String.Empty
+        If Not blnSuccess Then
+            strMsg = "LookupLocalPath; Excessive failures attempting to retrieve folder info from database"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+            Return String.Empty
+        End If
 
-	End Function
+        For Each curRow As DataRow In dt.Rows
+            Dim volServer = clsGlobal.DbCStr(curRow("VolServer"))
+            Dim localFolderPath = Path.Combine(volServer, uncFolderPath)
+            Return localFolderPath
+        Next
+
+        ' No data was returned
+        strMsg = "LookupLocalPath; could not resolve a local volume name for path '" + uncFolderPath + "' on server " + serverName
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+        Return String.Empty
+
+    End Function
 	
 	''' <summary>
 	''' Moves files from one local directory to another local directory
