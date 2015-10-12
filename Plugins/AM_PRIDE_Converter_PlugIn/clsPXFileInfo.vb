@@ -1,33 +1,33 @@
-﻿
+﻿Imports AnalysisManagerBase.clsAnalysisResources
+
 Public Class clsPXFileInfo
-	Inherits clsPXFileInfoBase
+    Inherits clsPXFileInfoBase
 
 #Region "Module Variables"
-	Protected mFileMappings As List(Of Integer)
+    Protected mFileMappings As List(Of Integer)
 #End Region
 
 #Region "Auto-properties"
-	Public Property PXFileType As ePXFileType
+    Public Property PXFileType As ePXFileType
 #End Region
-
 
 #Region "Properties"
-	Public ReadOnly Property FileMappings() As List(Of Integer)
-		Get
-			Return mFileMappings
-		End Get
-	End Property
+    Public ReadOnly Property FileMappings() As List(Of Integer)
+        Get
+            Return mFileMappings
+        End Get
+    End Property
 #End Region
 
-	Public Sub New(ByVal FileName As String)
-		MyBase.New(FileName)
-		mFileMappings = New List(Of Integer)
-	End Sub
+    Public Sub New(FileName As String, udtJobInfo As udtDataPackageJobInfoType)
+        MyBase.New(FileName, udtJobInfo)
+        mFileMappings = New List(Of Integer)
+    End Sub
 
-	Public Sub AddFileMapping(ByVal intPXFileID As Integer)
-		If Not mFileMappings.Contains(intPXFileID) Then
-			mFileMappings.Add(intPXFileID)
-		End If
-	End Sub
+    Public Sub AddFileMapping(intPXFileID As Integer)
+        If Not mFileMappings.Contains(intPXFileID) Then
+            mFileMappings.Add(intPXFileID)
+        End If
+    End Sub
 
 End Class

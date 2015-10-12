@@ -20,8 +20,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim lstDataPackagePeptideHitJobs As List(Of udtDataPackageJobInfoType)
-		lstDataPackagePeptideHitJobs = New List(Of udtDataPackageJobInfoType)
+        Dim lstDataPackagePeptideHitJobs = New List(Of udtDataPackageJobInfoType)
 
 		Dim blnCreatePrideXMLFiles As Boolean = m_jobParams.GetJobParameter("CreatePrideXMLFiles", False)
 
@@ -95,7 +94,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 	''' </summary>
 	''' <param name="lstDataPackagePeptideHitJobs"></param>
 	''' <remarks></remarks>
-	Protected Sub FindMissingMzXmlFiles(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
+    Protected Sub FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
 
         Dim lstDatasets = New SortedSet(Of String)
         Dim lstDatasetYearQuarter = New SortedSet(Of String)
@@ -131,11 +130,11 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
     End Sub
 
-    Public Shared Function GetGeneratedFastaParamNameForJob(ByVal Job As Integer) As String
+    Public Shared Function GetGeneratedFastaParamNameForJob(Job As Integer) As String
         Return "Job" & Job.ToString() & "_GeneratedFasta"
     End Function
 
-    Public Shared Function GetMSGFReportTemplateFilename(ByVal JobParams As IJobParams, ByVal WarnIfJobParamMissing As Boolean) As String
+    Public Shared Function GetMSGFReportTemplateFilename(JobParams As IJobParams, WarnIfJobParamMissing As Boolean) As String
 
         Dim strTemplateFileName As String = JobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, String.Empty)
 
@@ -150,7 +149,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
     End Function
 
-    Public Shared Function GetPXSubmissionTemplateFilename(ByVal JobParams As IJobParams, ByVal WarnIfJobParamMissing As Boolean) As String
+    Public Shared Function GetPXSubmissionTemplateFilename(JobParams As IJobParams, WarnIfJobParamMissing As Boolean) As String
 
         Dim strTemplateFileName As String = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, String.Empty)
 
@@ -165,7 +164,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
     End Function
 
-    Protected Function RetrieveFastaFiles(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType)) As Boolean
+    Protected Function RetrieveFastaFiles(lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType)) As Boolean
 
         Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
 
@@ -397,7 +396,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
     ''' </summary>
     ''' <param name="lstDataPackagePeptideHitJobs"></param>
     ''' <remarks></remarks>
-    Protected Sub StoreDataPackageJobs(ByVal lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
+    Protected Sub StoreDataPackageJobs(lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
         Dim lstDataPackageJobs = New List(Of String)
 
         For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs

@@ -283,7 +283,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             ' Process each job in mDataPackagePeptideHitJobs
             ' Sort the jobs by dataset so that we can use the same .mzXML file for datasets with multiple jobs
-            Dim linqJobsSortedByDataset = (From item In mDataPackagePeptideHitJobs Select item Order By item.Value.Dataset)
+            Dim linqJobsSortedByDataset = (From item In mDataPackagePeptideHitJobs Select item Order By item.Value.Dataset, SortPreference(item.Value.Tool))
 
             ' Read the PX_Submission_Template.px file
             Dim dctTemplateParameters = ReadTemplatePXSubmissionFile()
@@ -318,6 +318,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Next
 
             TransferPreviousDatasetFiles(objAnalysisResults)
+
+            ' If we were still unable to delete some files, we want to make sure that they don't end up in the results folder
+            For Each fileToDelete In mPreviousDatasetFilesToDelete
+                m_jobParams.AddResultFileToSkip(fileToDelete)
+            Next
 
             ' Create the PX Submission file
             blnSuccess = CreatePXSubmissionFile(dctTemplateParameters)
@@ -383,7 +388,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Sub AddNEWTInfo(ByVal newtID As Integer, newtName As String)
+    Private Function SortPreference(tool As String) As Integer
+
+        If tool.ToLower().StartsWith("msgfplus") Then Return 0
+
+        If tool.ToLower().StartsWith("xtandem") Then Return 1
+
+        Return 5
+
+    End Function
+
+    Protected Sub AddNEWTInfo(newtID As Integer, newtName As String)
 
         If newtID = 0 Then
             newtID = 2323
@@ -396,7 +411,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
-    Protected Function AddPxFileToMasterList(ByVal strFilePath As String, ByVal intJob As Integer, ByVal strDataset As String) As Integer
+    Protected Function AddPxFileToMasterList(strFilePath As String, udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType, strDataset As String) As Integer
 
         Dim fiFile = New FileInfo(strFilePath)
 
@@ -407,10 +422,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Else
             Dim strFilename As String = CheckFilenameCase(fiFile, strDataset)
 
-            oPXFileInfo = New clsPXFileInfoBase(strFilename)
+            oPXFileInfo = New clsPXFileInfoBase(strFilename, udtJobInfo)
 
             oPXFileInfo.FileID = mPxMasterFileList.Count + 1
-            oPXFileInfo.Job = intJob
 
             If fiFile.Exists Then
                 oPXFileInfo.Length = fiFile.Length
@@ -427,7 +441,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function AddPxResultFile(ByVal intFileID As Integer, eFileType As clsPXFileInfoBase.ePXFileType, ByVal strFilePath As String, ByVal strDataset As String) As Boolean
+    Protected Function AddPxResultFile(
+       intFileID As Integer,
+       eFileType As clsPXFileInfoBase.ePXFileType,
+       strFilePath As String,
+       strDataset As String,
+       udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType) As Boolean
 
         Dim fiFile = New FileInfo(strFilePath)
 
@@ -454,7 +473,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             Dim strFilename As String = CheckFilenameCase(fiFile, strDataset)
 
-            oPXFileInfo = New clsPXFileInfo(strFilename)
+            oPXFileInfo = New clsPXFileInfo(strFilename, udtJobInfo)
             oPXFileInfo.Update(oMasterPXFileInfo)
             oPXFileInfo.PXFileType = eFileType
 
@@ -471,13 +490,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="lstList"></param>
     ''' <param name="strValue"></param>
     ''' <remarks></remarks>
-    Protected Sub AddToListIfNew(ByRef lstList As List(Of String), ByVal strValue As String)
+    Protected Sub AddToListIfNew(lstList As List(Of String), strValue As String)
         If Not lstList.Contains(strValue) Then
             lstList.Add(strValue)
         End If
     End Sub
 
-    Protected Function AppendToPXFileInfo(intJob As Integer, strDataset As String, dctDatasetRawFilePaths As Dictionary(Of String, String), udtResultFiles As udtResultFileContainerType) As Boolean
+    Protected Function AppendToPXFileInfo(
+       udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType,
+       strDataset As String,
+       dctDatasetRawFilePaths As Dictionary(Of String, String),
+       udtResultFiles As udtResultFileContainerType) As Boolean
 
         ' Add the files to be submitted to ProteomeXchange to the master file list
         ' In addition, append new mappings to the ProteomeXchange mapping list
@@ -486,8 +509,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         If Not String.IsNullOrEmpty(udtResultFiles.PrideXmlFilePath) Then
             AddToListIfNew(mPreviousDatasetFilesToCopy, udtResultFiles.PrideXmlFilePath)
 
-            intPrideXMLFileID = AddPxFileToMasterList(udtResultFiles.PrideXmlFilePath, intJob, strDataset)
-            If Not AddPxResultFile(intPrideXMLFileID, clsPXFileInfoBase.ePXFileType.Result, udtResultFiles.PrideXmlFilePath, strDataset) Then
+            intPrideXMLFileID = AddPxFileToMasterList(udtResultFiles.PrideXmlFilePath, udtJobInfo, strDataset)
+            If Not AddPxResultFile(intPrideXMLFileID, clsPXFileInfoBase.ePXFileType.Result, udtResultFiles.PrideXmlFilePath, strDataset, udtJobInfo) Then
                 Return False
             End If
         End If
@@ -496,8 +519,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim strDatasetRawFilePath As String = String.Empty
         If dctDatasetRawFilePaths.TryGetValue(strDataset, strDatasetRawFilePath) Then
             If Not String.IsNullOrEmpty(strDatasetRawFilePath) Then
-                intRawFileID = AddPxFileToMasterList(strDatasetRawFilePath, intJob, strDataset)
-                If Not AddPxResultFile(intRawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath, strDataset) Then
+                intRawFileID = AddPxFileToMasterList(strDatasetRawFilePath, udtJobInfo, strDataset)
+                If Not AddPxResultFile(intRawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath, strDataset, udtJobInfo) Then
                     Return False
                 End If
 
@@ -513,8 +536,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         If Not String.IsNullOrEmpty(udtResultFiles.MGFFilePath) Then
             AddToListIfNew(mPreviousDatasetFilesToCopy, udtResultFiles.MGFFilePath)
 
-            intPeakfileID = AddPxFileToMasterList(udtResultFiles.MGFFilePath, intJob, strDataset)
-            If Not AddPxResultFile(intPeakfileID, clsPXFileInfoBase.ePXFileType.Peak, udtResultFiles.MGFFilePath, strDataset) Then
+            intPeakfileID = AddPxFileToMasterList(udtResultFiles.MGFFilePath, udtJobInfo, strDataset)
+            If Not AddPxResultFile(intPeakfileID, clsPXFileInfoBase.ePXFileType.Peak, udtResultFiles.MGFFilePath, strDataset, udtJobInfo) Then
                 Return False
             End If
 
@@ -539,8 +562,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         If Not String.IsNullOrEmpty(udtResultFiles.MzIDFilePath) Then
             AddToListIfNew(mPreviousDatasetFilesToCopy, udtResultFiles.MzIDFilePath)
 
-            intMzIdFileID = AddPxFileToMasterList(udtResultFiles.MzIDFilePath, intJob, strDataset)
-            If Not AddPxResultFile(intMzIdFileID, clsPXFileInfoBase.ePXFileType.ResultMzId, udtResultFiles.MzIDFilePath, strDataset) Then
+            intMzIdFileID = AddPxFileToMasterList(udtResultFiles.MzIDFilePath, udtJobInfo, strDataset)
+            If Not AddPxResultFile(intMzIdFileID, clsPXFileInfoBase.ePXFileType.ResultMzId, udtResultFiles.MzIDFilePath, strDataset, udtJobInfo) Then
                 Return False
             End If
 
@@ -571,7 +594,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function CheckFilenameCase(ByVal fiFile As FileInfo, ByVal strDataset As String) As String
+    Protected Function CheckFilenameCase(fiFile As FileInfo, strDataset As String) As String
 
         Dim strFilename As String = fiFile.Name
 
@@ -597,7 +620,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function ComputeApproximatePValue(ByVal dblMSGFSpecProb As Double) As Double
+    Protected Function ComputeApproximatePValue(dblMSGFSpecProb As Double) As Double
         Dim dblSpecProb As Double
         Dim dblPValueEstimate As Double = dblMSGFSpecProb
 
@@ -621,15 +644,19 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <summary>
     ''' Convert the _dta.txt file to a .mgf file
     ''' </summary>
-    ''' <param name="intJob"></param>
+    ''' <param name="udtJobInfo"></param>
     ''' <param name="strDataset"></param>
     ''' <param name="strMGFFilePath">Output parameter: path of the newly created .mgf file</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function ConvertCDTAToMGF(ByVal intJob As Integer, ByVal strDataset As String, ByRef strMGFFilePath As String) As Boolean
+    Protected Function ConvertCDTAToMGF(
+       udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType,
+       strDataset As String,
+       <Out()> ByRef strMGFFilePath As String) As Boolean
+
+        strMGFFilePath = String.Empty
 
         Try
-            strMGFFilePath = String.Empty
 
             mDTAtoMGF = New DTAtoMGF.clsDTAtoMGF()
             mDTAtoMGF.Combine2And3PlusCharges = False
@@ -641,7 +668,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim fiCDTAFile = New FileInfo(Path.Combine(m_WorkDir, strDataset & "_dta.txt"))
 
             If Not fiCDTAFile.Exists Then
-                m_message = "_dta.txt file not found for job " & intJob
+                m_message = "_dta.txt file not found for job " & udtJobInfo.Job
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiCDTAFile.FullName)
                 Return False
             End If
@@ -650,36 +677,46 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim strMD5Hash As String
             strMD5Hash = clsGlobal.ComputeFileHashMD5(fiCDTAFile.FullName)
 
-            ' Make sure this is either a new_dta.txt file or identical to a previous one
+            ' Make sure this is either a new _dta.txt file or identical to a previous one
             ' Abort processing if the job list contains multiple jobs for the same dataset but those jobs used different _dta.txt files
+            ' However, if one of the jobs is Sequest and one is MSGF+, preferentially use the _dta.txt file from the MSGF+ job
             Dim oFileInfo As clsPXFileInfoBase = Nothing
             If mCDTAFileStats.TryGetValue(fiCDTAFile.Name, oFileInfo) Then
+
+                If oFileInfo.JobInfo.Tool.ToLower().StartsWith("msgf") Then
+                    ' Existing job found, but it's a MSGF+ job (which is fully supported by PRIDE)
+                    ' Just use the existing .mgf file
+                    Return True
+                End If
+
                 If fiCDTAFile.Length <> oFileInfo.Length Then
                     m_message = "Dataset " & strDataset & " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": file size mismatch of " & fiCDTAFile.Length & " for job " & intJob & " vs " & oFileInfo.Length & " for job " & oFileInfo.Job)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": file size mismatch of " & fiCDTAFile.Length & " for job " & udtJobInfo.Job & " vs " & oFileInfo.Length & " for job " & oFileInfo.JobInfo.Job)
                     Return False
                 ElseIf strMD5Hash <> oFileInfo.MD5Hash Then
                     m_message = "Dataset " & strDataset & " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": MD5 hash mismatch of " & strMD5Hash & " for job " & intJob & " vs. " & oFileInfo.MD5Hash & " for job " & oFileInfo.Job)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": MD5 hash mismatch of " & strMD5Hash & " for job " & udtJobInfo.Job & " vs. " & oFileInfo.MD5Hash & " for job " & oFileInfo.JobInfo.Job)
                     Return False
                 End If
+
+                ' The files match; no point in making a new .mgf file
+                Return True
             Else
 
                 Dim strFilename As String = CheckFilenameCase(fiCDTAFile, strDataset)
 
-                oFileInfo = New clsPXFileInfoBase(strFilename)
+                oFileInfo = New clsPXFileInfoBase(strFilename, udtJobInfo)
 
                 ' File ID doesn't matter; just use 0
                 oFileInfo.FileID = 0
                 oFileInfo.Length = fiCDTAFile.Length
                 oFileInfo.MD5Hash = strMD5Hash
-                oFileInfo.Job = intJob
 
                 mCDTAFileStats.Add(fiCDTAFile.Name, oFileInfo)
             End If
 
             If Not mDTAtoMGF.ProcessFile(fiCDTAFile.FullName) Then
-                m_message = "Error converting " & fiCDTAFile.Name & " to a .mgf file for job " & intJob
+                m_message = "Error converting " & fiCDTAFile.Name & " to a .mgf file for job " & udtJobInfo.Job
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
                 Return False
             Else
@@ -699,7 +736,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             If Not fiNewMGFFile.Exists Then
                 ' MGF file was not created
-                m_message = "A .mgf file was not created for the _dta.txt file for job " & intJob
+                m_message = "A .mgf file was not created for the _dta.txt file for job " & udtJobInfo.Job
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
                 Return False
             End If
@@ -761,7 +798,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="eFileType"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function CountResultFilesByType(ByVal eFileType As clsPXFileInfoBase.ePXFileType) As Integer
+    Protected Function CountResultFilesByType(eFileType As clsPXFileInfoBase.ePXFileType) As Integer
         Dim intCount As Integer
         intCount = (From item In mPxResultFiles Where item.Value.PXFileType = eFileType Select item).Count()
 
@@ -776,7 +813,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' </summary>
     ''' <returns>True if the file exists or was created</returns>
     ''' <remarks></remarks>
-    Protected Function CreateMzXMLFileIfMissing(ByVal strDataset As String, ByVal objAnalysisResults As clsAnalysisResults, ByVal dctDatasetRawFilePaths As Dictionary(Of String, String)) As Boolean
+    Protected Function CreateMzXMLFileIfMissing(
+       strDataset As String,
+       objAnalysisResults As clsAnalysisResults,
+       dctDatasetRawFilePaths As Dictionary(Of String, String)) As Boolean
+
         Dim blnSuccess As Boolean
         Dim strDestPath As String = String.Empty
 
@@ -920,11 +961,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function CreatePseudoMSGFFileUsingPHRPReader( _
-      ByVal intJob As Integer, _
-      ByVal strDataset As String, _
-      ByVal udtFilterThresholds As udtFilterThresholdsType, _
-      ByRef lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType))) As String
+    Protected Function CreatePseudoMSGFFileUsingPHRPReader(
+      intJob As Integer,
+      strDataset As String,
+      udtFilterThresholds As udtFilterThresholdsType,
+      lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType))) As String
 
         Const MSGF_SPECPROB_NOTDEFINED = 10
         Const PVALUE_NOTDEFINED = 10
@@ -1387,7 +1428,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="strPrideReportXMLFilePath">Output parameter: the full path of the newly created .msgf-report.xml file</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function CreateMSGFReportFile(ByVal intJob As Integer, ByVal strDataset As String, ByVal udtFilterThresholds As udtFilterThresholdsType, ByRef strPrideReportXMLFilePath As String) As Boolean
+    Protected Function CreateMSGFReportFile(
+       intJob As Integer,
+       strDataset As String,
+       udtFilterThresholds As udtFilterThresholdsType,
+       <Out()> ByRef strPrideReportXMLFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -1398,12 +1443,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim strOrgDBNameGenerated As String
         Dim strProteinCollectionListOrFasta As String
 
-        Dim lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType))
-        lstPseudoMSGFData = New Dictionary(Of String, List(Of udtPseudoMSGFDataType))
+        Dim lstPseudoMSGFData = New Dictionary(Of String, List(Of udtPseudoMSGFDataType))
+
+        strPrideReportXMLFilePath = String.Empty
 
         Try
-
-            strPrideReportXMLFilePath = String.Empty
 
             strTemplateFileName = clsAnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing:=False)
 
@@ -1517,14 +1561,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function CreateMSGFReportXMLFile( _
-      ByVal strTemplateFileName As String, _
-      ByVal udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType, _
-      ByVal strPseudoMsgfFilePath As String, _
-      ByRef lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)), _
-      ByVal strOrgDBNameGenerated As String, _
-      ByVal strProteinCollectionListOrFasta As String, _
-      ByVal udtFilterThresholds As udtFilterThresholdsType) As String
+    Protected Function CreateMSGFReportXMLFile(
+      strTemplateFileName As String,
+      udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType,
+      strPseudoMsgfFilePath As String,
+      lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)),
+      strOrgDBNameGenerated As String,
+      strProteinCollectionListOrFasta As String,
+      udtFilterThresholds As udtFilterThresholdsType) As String
 
 
         Dim strPrideReportXMLFilePath As String
@@ -1704,7 +1748,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                             Return String.Empty
                                         End If
 
-                                        If Not CreateMSGFReportXMLFileWriteProteins(objXmlWriter, lstPseudoMSGFData, strOrgDBNameGenerated) Then
+                                        If Not CreateMSGFReportXMLFileWriteProteins(objXmlWriter, strOrgDBNameGenerated) Then
                                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreateMSGFReportXMLFileWriteProteins returned false; aborting")
                                             Return String.Empty
                                         End If
@@ -1848,11 +1892,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function CreateMSGFReportXMLFileWriteIDs( _
-      ByRef objXmlWriter As XmlTextWriter,
-      ByRef lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)),
-      ByVal strOrgDBNameGenerated As String, _
-      ByVal ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+    Protected Function CreateMSGFReportXMLFileWriteIDs(
+      objXmlWriter As XmlTextWriter,
+      lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)),
+      strOrgDBNameGenerated As String,
+      ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
         Try
 
@@ -1969,10 +2013,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function CreateMSGFReportXMLFileWriteProteins( _
-      ByRef objXmlWriter As XmlTextWriter,
-      ByRef lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)),
-      ByVal strOrgDBNameGenerated As String) As Boolean
+    Protected Function CreateMSGFReportXMLFileWriteProteins(
+      objXmlWriter As XmlTextWriter,
+      strOrgDBNameGenerated As String) As Boolean
 
         Dim strProteinName As String
         Dim intProteinIndex As Integer
@@ -2025,7 +2068,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Sub CreateMSGFReportXmlFileWriteSoftwareVersion(ByRef objXmlReader As XmlTextReader, ByRef objXmlWriter As XmlTextWriter, PeptideHitResultType As clsPHRPReader.ePeptideHitResultType)
+    Protected Sub CreateMSGFReportXmlFileWriteSoftwareVersion(objXmlReader As XmlTextReader, objXmlWriter As XmlTextWriter, PeptideHitResultType As clsPHRPReader.ePeptideHitResultType)
 
         Dim strToolName As String = String.Empty
         Dim strToolVersion As String = String.Empty
@@ -2089,7 +2132,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="strPrideXmlFilePath">Output parameter: the full path of the newly created .msgf-pride.xml file</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function CreatePrideXMLFile(ByVal intJob As Integer, ByVal strDataset As String, ByVal strPrideReportXMLFilePath As String, ByRef strPrideXmlFilePath As String) As Boolean
+    Protected Function CreatePrideXMLFile(
+       intJob As Integer,
+       strDataset As String,
+       strPrideReportXMLFilePath As String,
+       <Out()> ByRef strPrideXmlFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
         Dim strCurrentTask As String
@@ -2098,8 +2145,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim strMsgfResultsFilePath As String
         Dim strMzXMLFilePath As String
 
+        strPrideXmlFilePath = String.Empty
+
         Try
-            strPrideXmlFilePath = String.Empty
 
             strBaseFileName = Path.GetFileName(strPrideReportXMLFilePath).Replace(FILE_EXTENSION_MSGF_REPORT_XML, String.Empty)
             strMsgfResultsFilePath = Path.Combine(m_WorkDir, strBaseFileName & FILE_EXTENSION_PSEUDO_MSGF)
@@ -2508,7 +2556,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function DefinePxFileMapping(ByVal intFileID As Integer, ByVal intParentFileID As Integer) As Boolean
+    Protected Function DefinePxFileMapping(intFileID As Integer, intParentFileID As Integer) As Boolean
 
         Dim oPXFileInfo As clsPXFileInfo = Nothing
 
@@ -2535,11 +2583,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function GetCVString(ByVal cvParamInfo As udtCvParamInfoType) As String
+    Protected Function GetCVString(cvParamInfo As udtCvParamInfoType) As String
         Return GetCVString(cvParamInfo.CvRef, cvParamInfo.Accession, cvParamInfo.Name, cvParamInfo.Value)
     End Function
 
-    Protected Function GetCVString(ByVal cvRef As String, ByVal accession As String, ByVal name As String, ByVal value As String) As String
+    Protected Function GetCVString(cvRef As String, accession As String, name As String, value As String) As String
 
         If String.IsNullOrEmpty(value) Then
             value = String.Empty
@@ -2551,7 +2599,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Return "[" & cvRef & ", " & accession & ", " & name & ", " & value & "]"
     End Function
 
-    Protected Function GetInstrumentCv(ByVal accession As String, ByVal description As String) As String
+    Protected Function GetInstrumentCv(accession As String, description As String) As String
         Dim strInstrumentCV As String
 
         If String.IsNullOrEmpty(accession) Then
@@ -2563,7 +2611,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Return strInstrumentCV
     End Function
 
-    Protected Function GetNEWTCv(ByVal newtID As Integer, ByVal newtName As String) As String
+    Protected Function GetNEWTCv(newtID As Integer, newtName As String) As String
 
         If newtID = 0 And String.IsNullOrWhiteSpace(newtName) Then
             newtID = 2323
@@ -2580,7 +2628,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="accession">Output parameter</param>
     ''' <param name="description">Output parameter</param>
     ''' <remarks></remarks>
-    Protected Sub GetInstrumentAccession(ByVal instrumentGroup As String, ByRef accession As String, ByRef description As String)
+    Protected Sub GetInstrumentAccession(instrumentGroup As String, <Out()> ByRef accession As String, <Out()> ByRef description As String)
 
         accession = String.Empty
         description = String.Empty
@@ -2663,7 +2711,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
-    Protected Function GetPrideConverterVersion(ByVal strPrideConverterProgLoc As String) As String
+    Protected Function GetPrideConverterVersion(strPrideConverterProgLoc As String) As String
 
         Dim CmdStr As String
         Dim strVersionFilePath As String
@@ -2804,7 +2852,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="intJob"></param>
     ''' <returns>True if this job's dataset has multiple jobs in mDataPackagePeptideHitJobs, otherwise False</returns>
     ''' <remarks></remarks>
-    Protected Function JobFileRenameRequired(ByVal intJob As Integer) As Boolean
+    Protected Function JobFileRenameRequired(intJob As Integer) As Boolean
 
         Dim udtJobInfo As clsAnalysisResourcesPRIDEConverter.udtDataPackageJobInfoType = Nothing
 
@@ -2870,7 +2918,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output:
         '
@@ -2939,11 +2987,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     End Sub
 
     Protected Function ProcessJob(
-      ByVal kvJobInfo As KeyValuePair(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType),
-      ByVal udtFilterThresholds As udtFilterThresholdsType,
-      ByVal objAnalysisResults As clsAnalysisResults,
-      ByVal dctDatasetRawFilePaths As Dictionary(Of String, String),
-      ByVal dctTemplateParameters As Dictionary(Of String, String)) As IJobParams.CloseOutType
+      kvJobInfo As KeyValuePair(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType),
+      udtFilterThresholds As udtFilterThresholdsType,
+      objAnalysisResults As clsAnalysisResults,
+      dctDatasetRawFilePaths As Dictionary(Of String, String),
+      dctTemplateParameters As Dictionary(Of String, String)) As IJobParams.CloseOutType
 
         Dim blnSuccess As Boolean
         Dim udtResultFiles As udtResultFileContainerType
@@ -2985,7 +3033,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         udtResultFiles.MGFFilePath = String.Empty
         If mCreateMGFFiles Then
             ' Convert the _dta.txt file to .mgf files
-            blnSuccess = ConvertCDTAToMGF(intJob, strDataset, udtResultFiles.MGFFilePath)
+            blnSuccess = ConvertCDTAToMGF(kvJobInfo.Value, strDataset, udtResultFiles.MGFFilePath)
             If Not blnSuccess Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -3037,7 +3085,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         End If
 
-        blnSuccess = AppendToPXFileInfo(intJob, strDataset, dctDatasetRawFilePaths, udtResultFiles)
+        blnSuccess = AppendToPXFileInfo(kvJobInfo.Value, strDataset, dctDatasetRawFilePaths, udtResultFiles)
 
         If blnSuccess Then
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -3137,7 +3185,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function ReadWriteCvParam(ByVal objXmlReader As XmlTextReader, ByVal objXmlWriter As XmlTextWriter, ByRef lstElementCloseDepths As Stack(Of Integer)) As udtCvParamInfoType
+    Protected Function ReadWriteCvParam(objXmlReader As XmlTextReader, objXmlWriter As XmlTextWriter, lstElementCloseDepths As Stack(Of Integer)) As udtCvParamInfoType
 
         Dim udtCvParam = New udtCvParamInfoType
         udtCvParam.Clear()
@@ -3184,7 +3232,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function RetrievePHRPFiles(ByVal intJob As Integer, ByVal strDataset As String, ByVal objAnalysisResults As clsAnalysisResults) As Boolean
+    Protected Function RetrievePHRPFiles(intJob As Integer, strDataset As String, objAnalysisResults As clsAnalysisResults) As Boolean
         Dim strJobInfoFilePath As String
         Dim lstFilesToCopy = New List(Of String)
 
@@ -3256,15 +3304,21 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function RetrieveStoragePathInfoTargetFile(ByVal strStoragePathInfoFilePath As String, ByVal objAnalysisResults As clsAnalysisResults, ByRef strDestPath As String) As Boolean
+    Protected Function RetrieveStoragePathInfoTargetFile(strStoragePathInfoFilePath As String, objAnalysisResults As clsAnalysisResults, <Out()> ByRef strDestPath As String) As Boolean
         Return RetrieveStoragePathInfoTargetFile(strStoragePathInfoFilePath, objAnalysisResults, IsFolder:=False, strDestPath:=strDestPath)
     End Function
 
-    Protected Function RetrieveStoragePathInfoTargetFile(ByVal strStoragePathInfoFilePath As String, ByVal objAnalysisResults As clsAnalysisResults, ByVal IsFolder As Boolean, ByRef strDestPath As String) As Boolean
+    Protected Function RetrieveStoragePathInfoTargetFile(
+       strStoragePathInfoFilePath As String,
+       objAnalysisResults As clsAnalysisResults,
+       IsFolder As Boolean,
+       <Out()> ByRef strDestPath As String) As Boolean
+
         Dim strSourceFilePath As String = String.Empty
 
+        strDestPath = String.Empty
+
         Try
-            strDestPath = String.Empty
 
             If Not File.Exists(strStoragePathInfoFilePath) Then
                 m_message = "StoragePathInfo file not found"
@@ -3302,7 +3356,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function RunPrideConverter(ByVal intJob As Integer, ByVal strDataset As String, ByVal strMsgfResultsFilePath As String, ByVal strMzXMLFilePath As String, ByVal strPrideReportFilePath As String) As Boolean
+    Protected Function RunPrideConverter(intJob As Integer, strDataset As String, strMsgfResultsFilePath As String, strMzXMLFilePath As String, strPrideReportFilePath As String) As Boolean
 
         Dim CmdStr As String
 
@@ -3374,7 +3428,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Sub StoreInstrumentInfo(ByVal udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType)
+    Protected Sub StoreInstrumentInfo(udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType)
 
         Dim lstInstruments As List(Of String) = Nothing
         If mInstrumentGroupsStored.TryGetValue(udtJobInfo.InstrumentGroup, lstInstruments) Then
@@ -3388,7 +3442,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
-    Protected Sub StoreMzIdSampleInfo(ByVal strMzIdFilePath As String, ByVal udtSampleMetadata As udtSampleMetadataType)
+    Protected Sub StoreMzIdSampleInfo(strMzIdFilePath As String, udtSampleMetadata As udtSampleMetadataType)
         Dim fiFile = New FileInfo(strMzIdFilePath)
 
         If Not mMzIdSampleInfo.ContainsKey(fiFile.Name) Then
@@ -3403,7 +3457,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="strPrideConverterProgLoc"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strPrideConverterProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strPrideConverterProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim fiPrideConverter As FileInfo
@@ -3532,7 +3586,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
-    Protected Function UpdateMSGFReportXMLFileLocation(ByVal eFileLocation As eMSGFReportXMLFileLocation, ByVal strElementName As String, ByVal blnInsideMzDataDescription As Boolean) As eMSGFReportXMLFileLocation
+    Protected Function UpdateMSGFReportXMLFileLocation(eFileLocation As eMSGFReportXMLFileLocation, strElementName As String, blnInsideMzDataDescription As Boolean) As eMSGFReportXMLFileLocation
 
         Select Case strElementName
             Case "SearchResultIdentifier"
@@ -3580,12 +3634,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Private Function UpdateMzIdFile(
-      ByVal intJob As Integer,
-      ByVal strDataset As String,
-      ByVal jobInfo As clsAnalysisResources.udtDataPackageJobInfoType,
-      ByVal blnCreatedMGFFiles As Boolean,
+      intJob As Integer,
+      strDataset As String,
+      jobInfo As clsAnalysisResources.udtDataPackageJobInfoType,
+      blnCreatedMGFFiles As Boolean,
       <Out()> ByRef strMzIDFilePath As String,
-      ByVal dctTemplateParameters As Dictionary(Of String, String)) As Boolean
+      dctTemplateParameters As Dictionary(Of String, String)) As Boolean
 
         Dim blnNodeWritten As Boolean
         Dim blnSkipNode As Boolean
@@ -3634,7 +3688,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             ' <SpectraData location="E:\DMS_WorkDir3\QC_Shew_08_04-pt5-2_11Jan09_Sphinx_08-11-18_dta.txt" name="QC_Shew_08_04-pt5-2_11Jan09_Sphinx_08-11-18_dta.txt" id="SID_1">
 
             lstElementCloseDepths = New Stack(Of Integer)
-            strMzIDFilePath = String.Empty
 
             Dim strSourceFileName As String
             Dim strUpdatedFilePathTemp As String
@@ -3911,7 +3964,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Function UpdateMZidXMLFileLocation(ByVal eFileLocation As eMzIDXMLFileLocation, ByVal strElementName As String) As eMzIDXMLFileLocation
+    Protected Function UpdateMZidXMLFileLocation(eFileLocation As eMzIDXMLFileLocation, strElementName As String) As eMzIDXMLFileLocation
 
         Select Case strElementName
             Case "SequenceCollection"
@@ -3953,7 +4006,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="strValue"></param>
     ''' <returns>The actual value used (strValue)</returns>
     ''' <remarks></remarks>
-    Protected Function WritePXHeader(ByVal swPXFile As StreamWriter, ByVal strType As String, ByVal strValue As String) As String
+    Protected Function WritePXHeader(swPXFile As StreamWriter, strType As String, strValue As String) As String
         Return WritePXHeader(swPXFile, strType, strValue, New Dictionary(Of String, String))
     End Function
 
@@ -3966,7 +4019,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="dctParameters"></param>
     ''' <returns>The actual value used (either strValue or the cached value in dctParameters)</returns>
     ''' <remarks></remarks>
-    Protected Function WritePXHeader(ByVal swPXFile As StreamWriter, ByVal strType As String, ByVal strValue As String, ByVal dctParameters As Dictionary(Of String, String)) As String
+    Protected Function WritePXHeader(swPXFile As StreamWriter, strType As String, strValue As String, dctParameters As Dictionary(Of String, String)) As String
 
         Return WritePXHeader(swPXFile, strType, strValue, dctParameters, intMinimumValueLength:=0)
     End Function
@@ -3982,11 +4035,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <returns>The actual value used (either strValue or the cached value in dctParameters)</returns>
     ''' <remarks></remarks>
     Protected Function WritePXHeader(
-      ByVal swPXFile As StreamWriter,
-      ByVal strType As String,
-      ByVal strValue As String,
-      ByVal dctParameters As Dictionary(Of String, String),
-      ByVal intMinimumValueLength As Integer) As String
+      swPXFile As StreamWriter,
+      strType As String,
+      strValue As String,
+      dctParameters As Dictionary(Of String, String),
+      intMinimumValueLength As Integer) As String
 
         Dim strValueOverride As String = String.Empty
 
@@ -4010,7 +4063,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Sub WritePXInstruments(ByVal swPXFile As StreamWriter)
+    Protected Sub WritePXInstruments(swPXFile As StreamWriter)
 
         For Each kvInstrumentGroup In mInstrumentGroupsStored
 
@@ -4031,13 +4084,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
-    Protected Sub WritePXLine(ByVal swPXFile As StreamWriter, ByVal lstItems As List(Of String))
+    Protected Sub WritePXLine(swPXFile As StreamWriter, lstItems As List(Of String))
         If lstItems.Count > 0 Then
             swPXFile.WriteLine(String.Join(ControlChars.Tab, lstItems))
         End If
     End Sub
 
-    Protected Sub WritePXMods(ByVal swPXFile As StreamWriter)
+    Protected Sub WritePXMods(swPXFile As StreamWriter)
 
         If mModificationsUsed.Count = 0 Then
             WritePXHeader(swPXFile, "modification", GetCVString("PRIDE", "PRIDE:0000398", "No PTMs are included in the dataset", ""))
@@ -4074,7 +4127,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
-    Protected Function WriteXMLInstrumentInfo(ByVal oWriter As XmlTextWriter, ByVal strInstrumentGroup As String) As Boolean
+    Protected Function WriteXMLInstrumentInfo(oWriter As XmlTextWriter, strInstrumentGroup As String) As Boolean
 
         Dim blnInstrumentDetailsAutoDefined As Boolean
 
@@ -4163,7 +4216,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Protected Sub WriteXMLInstrumentInfoAnalyzer(ByVal oWriter As XmlTextWriter, ByVal strNamespace As String, ByVal strAccession As String, ByVal strDescription As String)
+    Protected Sub WriteXMLInstrumentInfoAnalyzer(oWriter As XmlTextWriter, strNamespace As String, strAccession As String, strDescription As String)
 
         oWriter.WriteStartElement("analyzer")
         WriteCVParam(oWriter, strNamespace, strAccession, strDescription, String.Empty)
@@ -4171,7 +4224,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
-    Protected Sub WriteXMLInstrumentInfoDetector(ByVal oWriter As XmlTextWriter, ByVal strNamespace As String, ByVal strAccession As String, ByVal strDescription As String)
+    Protected Sub WriteXMLInstrumentInfoDetector(oWriter As XmlTextWriter, strNamespace As String, strAccession As String, strDescription As String)
 
         oWriter.WriteStartElement("detector")
         WriteCVParam(oWriter, strNamespace, strAccession, strDescription, String.Empty)
@@ -4180,7 +4233,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     End Sub
 
 
-    Protected Sub WriteXMLInstrumentInfoESI(ByVal oWriter As XmlTextWriter, ByVal strPolarity As String)
+    Protected Sub WriteXMLInstrumentInfoESI(oWriter As XmlTextWriter, strPolarity As String)
 
         If String.IsNullOrEmpty(strPolarity) Then strPolarity = "positive"
 

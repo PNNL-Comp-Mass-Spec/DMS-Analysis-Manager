@@ -43,111 +43,110 @@ Public Class clsAnalysisResourcesSMAQC
 	Protected Function RetrieveLLRCFiles() As Boolean
 
 		Dim strLLRCRunnerProgLoc As String = m_mgrParams.GetParam("LLRCRunnerProgLoc", "\\gigasax\DMS_Programs\LLRCRunner")
-		Dim lstFilesToCopy As List(Of String) = New List(Of String)
+        Dim lstFilesToCopy = New List(Of String)
 
-		lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_ALLDATA)
-		lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_MODELS)
+        lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_ALLDATA)
+        lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_MODELS)
 
-		For Each strFileName As String In lstFilesToCopy
-			Dim fiSourceFile As FileInfo = New FileInfo(IO.Path.Combine(strLLRCRunnerProgLoc, strFileName))
+        For Each strFileName As String In lstFilesToCopy
+            Dim fiSourceFile = New FileInfo(Path.Combine(strLLRCRunnerProgLoc, strFileName))
 
-			If Not fiSourceFile.Exists Then
-				m_message = "LLRC RData file not found: " & fiSourceFile.FullName
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			Else
-				fiSourceFile.CopyTo(IO.Path.Combine(m_WorkingDir, fiSourceFile.Name))
-				m_jobParams.AddResultFileToSkip(fiSourceFile.Name)
-			End If
+            If Not fiSourceFile.Exists Then
+                m_message = "LLRC RData file not found: " & fiSourceFile.FullName
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            Else
+                fiSourceFile.CopyTo(Path.Combine(m_WorkingDir, fiSourceFile.Name))
+                m_jobParams.AddResultFileToSkip(fiSourceFile.Name)
+            End If
 
-		Next
+        Next
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Protected Function RetrieveMASICFiles() As Boolean
+    Protected Function RetrieveMASICFiles() As Boolean
 
-		Dim CreateStoragePathInfoFile As Boolean = False
+        Dim createStoragePathInfoFile = False
 
-		Dim strMASICResultsFolderName As String = String.Empty
-		strMASICResultsFolderName = m_jobParams.GetParam("MASIC_Results_Folder_Name")
+        Dim strMASICResultsFolderName As String = m_jobParams.GetParam("MASIC_Results_Folder_Name")
 
-		m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)		' _ScanStats.txt
-		m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)		' _ScanStatsEx.txt
-		m_jobParams.AddResultFileExtensionToSkip("_SICstats.txt")
+        m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)        ' _ScanStats.txt
+        m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)     ' _ScanStatsEx.txt
+        m_jobParams.AddResultFileExtensionToSkip("_SICstats.txt")
 
-		Dim lstNonCriticalFileSuffixes As List(Of String)
-		lstNonCriticalFileSuffixes = New List(Of String) From {SCAN_STATS_EX_FILE_SUFFIX}
+        Dim lstNonCriticalFileSuffixes As List(Of String)
+        lstNonCriticalFileSuffixes = New List(Of String) From {SCAN_STATS_EX_FILE_SUFFIX}
 
-		If String.IsNullOrEmpty(strMASICResultsFolderName) Then
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the MASIC files by searching for any valid MASIC folder")
-			End If
+        If String.IsNullOrEmpty(strMASICResultsFolderName) Then
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the MASIC files by searching for any valid MASIC folder")
+            End If
 
-			Return RetrieveScanAndSICStatsFiles(
-			  RetrieveSICStatsFile:=True,
-			  CreateStoragePathInfoOnly:=CreateStoragePathInfoFile,
-			  RetrieveScanStatsFile:=True,
-			  RetrieveScanStatsExFile:=True,
-			  lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
+            Return RetrieveScanAndSICStatsFiles(
+              retrieveSICStatsFile:=True,
+              createStoragePathInfoOnly:=createStoragePathInfoFile,
+              retrieveScanStatsFile:=True,
+              retrieveScanStatsExFile:=True,
+              lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 
-		Else
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the MASIC files from " & strMASICResultsFolderName)
-			End If
+        Else
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the MASIC files from " & strMASICResultsFolderName)
+            End If
 
-			Dim ServerPath As String
-			ServerPath = FindValidFolder(m_DatasetName, "", strMASICResultsFolderName, 2)
+            Dim ServerPath As String
+            ServerPath = FindValidFolder(m_DatasetName, "", strMASICResultsFolderName, 2)
 
-			If String.IsNullOrEmpty(ServerPath) Then
-				m_message = "Dataset folder path not defined"
-			Else
+            If String.IsNullOrEmpty(ServerPath) Then
+                m_message = "Dataset folder path not defined"
+            Else
 
-				If ServerPath.StartsWith(MYEMSL_PATH_FLAG) Then
+                If ServerPath.StartsWith(MYEMSL_PATH_FLAG) Then
 
-					Dim BestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName)
+                    Dim bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName)
 
-					Return RetrieveScanAndSICStatsFiles(
-					  BestSICFolderPath,
-					  RetrieveSICStatsFile:=True,
-					  CreateStoragePathInfoOnly:=CreateStoragePathInfoFile,
-					  RetrieveScanStatsFile:=True,
-					  RetrieveScanStatsExFile:=True,
-					  lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
-				End If
+                    Return RetrieveScanAndSICStatsFiles(
+                      bestSICFolderPath,
+                      RetrieveSICStatsFile:=True,
+                      createStoragePathInfoOnly:=createStoragePathInfoFile,
+                      RetrieveScanStatsFile:=True,
+                      RetrieveScanStatsExFile:=True,
+                      lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
+                End If
 
-				Dim diFolderInfo As DirectoryInfo
-				Dim diMASICFolderInfo As DirectoryInfo
-				diFolderInfo = New DirectoryInfo(ServerPath)
+                Dim diFolderInfo As DirectoryInfo
+                Dim diMASICFolderInfo As DirectoryInfo
+                diFolderInfo = New DirectoryInfo(ServerPath)
 
-				If Not diFolderInfo.Exists Then
-					m_message = "Dataset folder not found: " & diFolderInfo.FullName
-				Else
+                If Not diFolderInfo.Exists Then
+                    m_message = "Dataset folder not found: " & diFolderInfo.FullName
+                Else
 
-					'See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
-					diMASICFolderInfo = New DirectoryInfo(Path.Combine(diFolderInfo.FullName, strMASICResultsFolderName))
+                    'See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
+                    diMASICFolderInfo = New DirectoryInfo(Path.Combine(diFolderInfo.FullName, strMASICResultsFolderName))
 
-					If Not diMASICFolderInfo.Exists Then
-						m_message = "Unable to find MASIC results folder " & strMASICResultsFolderName
-					Else
+                    If Not diMASICFolderInfo.Exists Then
+                        m_message = "Unable to find MASIC results folder " & strMASICResultsFolderName
+                    Else
 
-						Return RetrieveScanAndSICStatsFiles(
-						  diMASICFolderInfo.FullName,
-						  RetrieveSICStatsFile:=True,
-						  CreateStoragePathInfoOnly:=CreateStoragePathInfoFile,
-						  RetrieveScanStatsFile:=True,
-						  RetrieveScanStatsExFile:=True,
-						  lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
+                        Return RetrieveScanAndSICStatsFiles(
+                          diMASICFolderInfo.FullName,
+                          RetrieveSICStatsFile:=True,
+                          createStoragePathInfoOnly:=createStoragePathInfoFile,
+                          RetrieveScanStatsFile:=True,
+                          RetrieveScanStatsExFile:=True,
+                          lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 
-					End If
-				End If
-			End If
-		End If
+                    End If
+                End If
+            End If
+        End If
 
-		Return False
+        Return False
 
-	End Function
+    End Function
 
 	Protected Function RetrievePHRPFiles() As Boolean
 
