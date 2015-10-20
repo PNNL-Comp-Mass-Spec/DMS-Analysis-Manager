@@ -358,9 +358,9 @@
 		AssemblyFile="AnalysisManagerMODPlusPlugin.dll" 
 	/>
 	<ToolRunner 
-		Tool="qaim" 
-		Class="AnalysisManagerQAIMPlugin.clsAnalysisToolRunnerQAIM" 
-		AssemblyFile="AnalysisManagerQAIMPlugin.dll" 
+		Tool="qc_art" 
+		Class="AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART" 
+		AssemblyFile="AnalysisManagerQCARTPlugin.dll" 
 	/>
 
 </ToolRunners>
@@ -722,9 +722,9 @@
 		AssemblyFile="AnalysisManagerMODPlusPlugin.dll" 
 	/>
 	<Resourcer 
-		Tool="qaim" 
-		Class="AnalysisManagerQAIMPlugin.clsAnalysisResourcesQAIM" 
-		AssemblyFile="AnalysisManagerQAIMPlugin.dll" 
+		Tool="qc_art" 
+		Class="AnalysisManagerQCARTPlugin.clsAnalysisResourcesQCART" 
+		AssemblyFile="AnalysisManagerQCARTPlugin.dll" 
 	/>
 </Resourcers>
 
