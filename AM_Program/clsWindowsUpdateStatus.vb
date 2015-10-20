@@ -2,12 +2,22 @@
 
 Public Class clsWindowsUpdateStatus
 
+    ''' <summary>
+    ''' Checks whether Windows Updates are expected to occur close to the current time of day
+    ''' </summary>
+    ''' <returns>True if Windows updates are likely pending on this computer or the Windows servers</returns>
+    ''' <remarks></remarks>
+    Public Shared Function UpdatesArePending() As Boolean
+        Dim pendingWindowsUpdateMessage As String = Nothing
+        Return UpdatesArePending(DateTime.Now, pendingWindowsUpdateMessage)
+    End Function
+
 	''' <summary>
 	''' Checks whether Windows Updates are expected to occur close to the current time of day
 	''' </summary>
 	''' <param name="pendingWindowsUpdateMessage">Output: description of the pending or recent Windows updates</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
+    ''' <returns>True if Windows updates are likely pending on this computer or the Windows servers</returns>
+    ''' <remarks></remarks>
 	Public Shared Function UpdatesArePending(<Out()> ByRef pendingWindowsUpdateMessage As String) As Boolean
 		Return UpdatesArePending(DateTime.Now, pendingWindowsUpdateMessage)
 	End Function
@@ -17,8 +27,8 @@ Public Class clsWindowsUpdateStatus
 	''' </summary>
 	''' <param name="currentTime">Current time of day</param>
 	''' <param name="pendingWindowsUpdateMessage">Output: description of the pending or recent Windows updates</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
+    ''' <returns>True if Windows updates are likely pending on this computer or the Windows servers</returns>
+    ''' <remarks></remarks>
 	Public Shared Function UpdatesArePending(ByVal currentTime As DateTime, <Out()> ByRef pendingWindowsUpdateMessage As String) As Boolean
 
 		pendingWindowsUpdateMessage = "No pending update"
@@ -56,22 +66,22 @@ Public Class clsWindowsUpdateStatus
 		Dim dtExclusionStart2 = secondTuesdayInMonth.AddDays(5).AddHours(9)
 		Dim dtExclusionEnd2 = secondTuesdayInMonth.AddDays(5).AddHours(11)
 
-		If (currentTime >= dtExclusionStart AndAlso currentTime < dtExclusionEnd) OrElse
-		   (currentTime >= dtExclusionStart2 AndAlso currentTime < dtExclusionEnd2) Then
+        If (currentTime >= dtExclusionStart AndAlso currentTime < dtExclusionEnd) OrElse
+           (currentTime >= dtExclusionStart2 AndAlso currentTime < dtExclusionEnd2) Then
 
-			Dim dtPendingUpdateTime1 = secondTuesdayInMonth.AddDays(5).AddHours(3)
-			Dim dtPendingUpdateTime2 = secondTuesdayInMonth.AddDays(5).AddHours(10)
+            Dim dtPendingUpdateTime1 = secondTuesdayInMonth.AddDays(5).AddHours(3)
+            Dim dtPendingUpdateTime2 = secondTuesdayInMonth.AddDays(5).AddHours(10)
 
-			Dim pendingUpdateTimeText = dtPendingUpdateTime1.ToString("hh:mm:ss tt") & " or " & dtPendingUpdateTime2.ToString("hh:mm:ss tt")
+            Dim pendingUpdateTimeText = dtPendingUpdateTime1.ToString("hh:mm:ss tt") & " or " & dtPendingUpdateTime2.ToString("hh:mm:ss tt")
 
-			If currentTime < dtPendingUpdateTime2 Then
-				pendingWindowsUpdateMessage = "Servers are expected to install Windows updates around " & pendingUpdateTimeText
-			Else
-				pendingWindowsUpdateMessage = "Servers should have installed Windows updates around " & pendingUpdateTimeText
-			End If
+            If currentTime < dtPendingUpdateTime2 Then
+                pendingWindowsUpdateMessage = "Servers are expected to install Windows updates around " & pendingUpdateTimeText
+            Else
+                pendingWindowsUpdateMessage = "Servers should have installed Windows updates around " & pendingUpdateTimeText
+            End If
 
-			Return True
-		End If
+            Return True
+        End If
 
 		Return False
 

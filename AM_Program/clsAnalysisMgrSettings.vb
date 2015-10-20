@@ -298,15 +298,19 @@ Public Class clsAnalysisMgrSettings
         'Get a table to hold the results of the query
         Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr, connectionString, "LoadMgrSettingsFromDBWork", retryCount, dtSettings)
 
-        'If loop exited due to errors, return false
+        ' If unable to retrieve the data, return false
         If Not blnSuccess Then
+            ' Log the message to the DB if the monthly Windows updates are not pending
+            Dim allowLogToDB = Not (clsWindowsUpdateStatus.UpdatesArePending())
+
             m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database for manager '" & ManagerName & "'"
-            WriteErrorMsg(m_ErrMsg)
+            WriteErrorMsg(m_ErrMsg, allowLogToDB)
+
             If Not dtSettings Is Nothing Then dtSettings.Dispose()
             Return False
         End If
 
-        'Verify at least one row returned
+        ' Verify at least one row returned
         If dtSettings.Rows.Count < 1 And blnReturnErrorIfNoParameters Then
             ' No data was returned
             m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" & ManagerName & "' not defined in the manager control database; using " & connectionString
@@ -507,15 +511,17 @@ Public Class clsAnalysisMgrSettings
     ''' <summary>
     ''' Writes an error message to the application log and the database
     ''' </summary>
-    ''' <param name="Message">Message to write</param>
+    ''' <param name="errorMessage">Message to write</param>
     ''' <remarks></remarks>
-    Private Sub WriteErrorMsg(ByVal Message As String)
+    Private Sub WriteErrorMsg(ByVal errorMessage As String, Optional ByVal allowLogToDB As Boolean = True)
 
-        WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, Message)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
+        WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, errorMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
 
-        ' Also post a log to the database
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message)
+        If (allowLogToDB) Then
+            ' Also post a log to the database
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage)
+        End If
 
     End Sub
 
