@@ -15,6 +15,7 @@ Imports System.IO
 Imports System.Xml
 Imports System.Reflection
 Imports System.Runtime.InteropServices
+Imports PRISM
 
 Public Class clsAnalysisMgrSettings
     Implements IMgrParams

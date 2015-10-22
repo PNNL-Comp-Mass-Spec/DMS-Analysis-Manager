@@ -12,6 +12,7 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports AnalysisManagerBase
+Imports PRISM
 
 ''' <summary>
 ''' Master processing class for analysis manager

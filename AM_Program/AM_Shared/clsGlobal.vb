@@ -125,163 +125,163 @@ Public Class clsGlobal
 		Dim pwdBytes = New List(Of Byte)
 		Dim pwdCharsAdj = New List(Of Char)
 
-		For i As Integer = 0 To pwdChars.Length - 1
-			pwdBytes.Add(Convert.ToByte(pwdChars(i)))
-		Next
+        For i = 0 To pwdChars.Length - 1
+            pwdBytes.Add(Convert.ToByte(pwdChars(i)))
+        Next
 
-		' Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
+        ' Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
 
-		For byteCntr As Integer = 0 To pwdBytes.Count - 1
-			If (byteCntr Mod 2) = 0 Then
-				pwdBytes(byteCntr) += CByte(1)
-			Else
-				pwdBytes(byteCntr) -= CByte(1)
-			End If
-			pwdCharsAdj.Add(Convert.ToChar(pwdBytes(byteCntr)))
-		Next
+        For byteCntr = 0 To pwdBytes.Count - 1
+            If (byteCntr Mod 2) = 0 Then
+                pwdBytes(byteCntr) += CByte(1)
+            Else
+                pwdBytes(byteCntr) -= CByte(1)
+            End If
+            pwdCharsAdj.Add(Convert.ToChar(pwdBytes(byteCntr)))
+        Next
 
-		Return String.Join("", pwdCharsAdj)
+        Return String.Join("", pwdCharsAdj)
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Flatten a list of items into a single string, with items separated by chDelimiter
-	''' </summary>
-	''' <param name="lstItems"></param>
-	''' <param name="chDelimiter"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Shared Function FlattenList(ByVal lstItems As List(Of String), ByVal chDelimiter As Char) As String
+    ''' <summary>
+    ''' Flatten a list of items into a single string, with items separated by chDelimiter
+    ''' </summary>
+    ''' <param name="lstItems"></param>
+    ''' <param name="chDelimiter"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared Function FlattenList(ByVal lstItems As List(Of String), ByVal chDelimiter As Char) As String
 
-		If lstItems Is Nothing OrElse lstItems.Count = 0 Then
-			Return String.Empty
-		Else
-			Return String.Join(chDelimiter, lstItems)
-		End If
+        If lstItems Is Nothing OrElse lstItems.Count = 0 Then
+            Return String.Empty
+        Else
+            Return String.Join(chDelimiter, lstItems)
+        End If
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Returns the directory in which the entry assembly (typically the Program .exe file) resides 
-	''' </summary>
-	''' <returns>Full directory path</returns>
-	Public Shared Function GetAppFolderPath() As String
+    ''' <summary>
+    ''' Returns the directory in which the entry assembly (typically the Program .exe file) resides 
+    ''' </summary>
+    ''' <returns>Full directory path</returns>
+    Public Shared Function GetAppFolderPath() As String
 
-		Static strAppFolderPath As String = String.Empty
+        Static strAppFolderPath As String = String.Empty
 
-		If String.IsNullOrEmpty(strAppFolderPath) Then
-			Dim objAssembly As Reflection.Assembly
-			objAssembly = Reflection.Assembly.GetEntryAssembly()
+        If String.IsNullOrEmpty(strAppFolderPath) Then
+            Dim objAssembly As Reflection.Assembly
+            objAssembly = Reflection.Assembly.GetEntryAssembly()
 
-			Dim fiAssemblyFile As FileInfo
-			fiAssemblyFile = New FileInfo(objAssembly.Location)
+            Dim fiAssemblyFile As FileInfo
+            fiAssemblyFile = New FileInfo(objAssembly.Location)
 
-			strAppFolderPath = fiAssemblyFile.DirectoryName
-		End If
+            strAppFolderPath = fiAssemblyFile.DirectoryName
+        End If
 
-		Return strAppFolderPath
+        Return strAppFolderPath
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Returns the version string of the entry assembly (typically the Program .exe file)
-	''' </summary>
-	''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
-	Public Shared Function GetAssemblyVersion() As String
-		Dim objEntryAssembly As Reflection.Assembly
-		objEntryAssembly = Reflection.Assembly.GetEntryAssembly()
+    ''' <summary>
+    ''' Returns the version string of the entry assembly (typically the Program .exe file)
+    ''' </summary>
+    ''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
+    Public Shared Function GetAssemblyVersion() As String
+        Dim objEntryAssembly As Reflection.Assembly
+        objEntryAssembly = Reflection.Assembly.GetEntryAssembly()
 
-		Return GetAssemblyVersion(objEntryAssembly)
+        Return GetAssemblyVersion(objEntryAssembly)
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Returns the version string of the specified assembly
-	''' </summary>
-	''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
-	Public Shared Function GetAssemblyVersion(ByRef objAssembly As Reflection.Assembly) As String
-		' objAssembly.FullName typically returns something like this:
-		' AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
-		' 
-		' the goal is to extract out the text after Version= but before the next comma
+    ''' <summary>
+    ''' Returns the version string of the specified assembly
+    ''' </summary>
+    ''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
+    Public Shared Function GetAssemblyVersion(ByRef objAssembly As Reflection.Assembly) As String
+        ' objAssembly.FullName typically returns something like this:
+        ' AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
+        ' 
+        ' the goal is to extract out the text after Version= but before the next comma
 
         Dim reGetVersion = New Regex("version=([0-9.]+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-		Dim reMatch As Match
-		Dim strVersion As String
+        Dim reMatch As Match
+        Dim strVersion As String
 
-		strVersion = objAssembly.FullName
+        strVersion = objAssembly.FullName
 
-		reMatch = reGetVersion.Match(strVersion)
+        reMatch = reGetVersion.Match(strVersion)
 
-		If reMatch.Success Then
-			strVersion = reMatch.Groups(1).Value
-		End If
+        If reMatch.Success Then
+            strVersion = reMatch.Groups(1).Value
+        End If
 
-		Return strVersion
+        Return strVersion
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Runs the specified Sql query
-	''' </summary>
-	''' <param name="sqlStr">Sql query</param>
-	''' <param name="connectionString">Connection string</param>
-	''' <param name="callingFunction">Name of the calling function</param>
-	''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
-	''' <param name="dtResults">Datatable (Output Parameter)</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks>Uses a timeout of 30 seconds</remarks>
-	Public Shared Function GetDataTableByQuery(
-	  ByVal sqlStr As String,
-	  ByVal connectionString As String,
-	  ByVal callingFunction As String,
-	  ByVal retryCount As Short,
-	  <Out()> ByRef dtResults As DataTable) As Boolean
+    ''' <summary>
+    ''' Runs the specified Sql query
+    ''' </summary>
+    ''' <param name="sqlStr">Sql query</param>
+    ''' <param name="connectionString">Connection string</param>
+    ''' <param name="callingFunction">Name of the calling function</param>
+    ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
+    ''' <param name="dtResults">Datatable (Output Parameter)</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks>Uses a timeout of 30 seconds</remarks>
+    Public Shared Function GetDataTableByQuery(
+      ByVal sqlStr As String,
+      ByVal connectionString As String,
+      ByVal callingFunction As String,
+      ByVal retryCount As Short,
+      <Out()> ByRef dtResults As DataTable) As Boolean
 
-		Const timeoutSeconds = 30
+        Const timeoutSeconds = 30
 
-		Return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
+        Return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Runs the specified Sql query
-	''' </summary>
-	''' <param name="sqlStr">Sql query</param>
-	''' <param name="connectionString">Connection string</param>
-	''' <param name="callingFunction">Name of the calling function</param>
-	''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
-	''' <param name="dtResults">Datatable (Output Parameter)</param>
-	''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks></remarks>
-	Public Shared Function GetDataTableByQuery(
-	  ByVal sqlStr As String,
-	  ByVal connectionString As String,
-	  ByVal callingFunction As String,
-	  ByVal retryCount As Short,
-	  <Out()> ByRef dtResults As DataTable,
-	  ByVal timeoutSeconds As Integer) As Boolean
+    ''' <summary>
+    ''' Runs the specified Sql query
+    ''' </summary>
+    ''' <param name="sqlStr">Sql query</param>
+    ''' <param name="connectionString">Connection string</param>
+    ''' <param name="callingFunction">Name of the calling function</param>
+    ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
+    ''' <param name="dtResults">Datatable (Output Parameter)</param>
+    ''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
+    Public Shared Function GetDataTableByQuery(
+      ByVal sqlStr As String,
+      ByVal connectionString As String,
+      ByVal callingFunction As String,
+      ByVal retryCount As Short,
+      <Out()> ByRef dtResults As DataTable,
+      ByVal timeoutSeconds As Integer) As Boolean
 
         Dim cmd = New SqlCommand()
-		cmd.CommandType = CommandType.Text
-		cmd.CommandText = sqlStr
+        cmd.CommandType = CommandType.Text
+        cmd.CommandText = sqlStr
 
-		Return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
+        Return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Runs the stored procedure or database query defined by "cmd"
-	''' </summary>
+    ''' <summary>
+    ''' Runs the stored procedure or database query defined by "cmd"
+    ''' </summary>
     ''' <param name="cmd">SqlCommand object (query or stored procedure)</param>
-	''' <param name="connectionString">Connection string</param>
-	''' <param name="callingFunction">Name of the calling function</param>
-	''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
-	''' <param name="dtResults">Datatable (Output Parameter)</param>
-	''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-	''' <returns>True if success, false if an error</returns>
-	''' <remarks></remarks>
+    ''' <param name="connectionString">Connection string</param>
+    ''' <param name="callingFunction">Name of the calling function</param>
+    ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
+    ''' <param name="dtResults">Datatable (Output Parameter)</param>
+    ''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
     Public Shared Function GetDataTableByCmd(
       ByVal cmd As SqlCommand,
       ByVal connectionString As String,
@@ -300,13 +300,13 @@ Public Class clsGlobal
 
         While retryCount > 0
             Try
-                Using Cn As SqlConnection = New SqlConnection(connectionString)
+                Using Cn = New SqlConnection(connectionString)
 
                     cmd.Connection = Cn
                     cmd.CommandTimeout = timeoutSeconds
 
-                    Using Da As SqlDataAdapter = New SqlDataAdapter(cmd)
-                        Using Ds As DataSet = New DataSet
+                    Using Da = New SqlDataAdapter(cmd)
+                        Using Ds = New DataSet
                             Da.Fill(Ds)
                             dtResults = Ds.Tables(0)
                         End Using
@@ -408,7 +408,7 @@ Public Class clsGlobal
 
         While retryCount > 0
             Try
-                Using dbConnection As SqlConnection = New SqlConnection(connectionString)
+                Using dbConnection = New SqlConnection(connectionString)
                     Using cmd = New SqlCommand(sqlQuery, dbConnection)
 
                         cmd.CommandTimeout = timeoutSeconds
@@ -548,7 +548,7 @@ Public Class clsGlobal
             If isCaseSensitive Then
                 colIndex = lstColumns.IndexOf(headerName)
             Else
-                For i As Integer = 0 To lstColumns.Count - 1
+                For i = 0 To lstColumns.Count - 1
                     If IsMatch(lstColumns(i), headerName) Then
                         colIndex = i
                         Exit For
@@ -877,7 +877,7 @@ Public Class clsGlobal
 
         Dim strOutput As New Text.StringBuilder(arrInput.Length)
 
-        For i As Integer = 0 To arrInput.Length - 1
+        For i = 0 To arrInput.Length - 1
             strOutput.Append(arrInput(i).ToString("X2"))
         Next
 
@@ -952,7 +952,7 @@ Public Class clsGlobal
         strHashFilePath = fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX
         If String.IsNullOrWhiteSpace(strMD5Hash) Then strMD5Hash = String.Empty
 
-        Using swOutFile As StreamWriter = New StreamWriter(New FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+        Using swOutFile = New StreamWriter(New FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             swOutFile.WriteLine("# Hashcheck file created " & DateTime.Now().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
             swOutFile.WriteLine("size=" & fiDataFile.Length)
             swOutFile.WriteLine("modification_date_utc=" & fiDataFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"))
@@ -1008,8 +1008,8 @@ Public Class clsGlobal
                 Return False
             End If
 
-            Using srFile1 As BinaryReader = New BinaryReader(New FileStream(fiFile1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                Using srFile2 As BinaryReader = New BinaryReader(New FileStream(fiFile2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srFile1 = New BinaryReader(New FileStream(fiFile1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                Using srFile2 = New BinaryReader(New FileStream(fiFile2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                     While srFile1.BaseStream.Position < fiFile1.Length
                         If srFile1.ReadByte <> srFile2.ReadByte Then
                             Return False
@@ -1144,7 +1144,7 @@ Public Class clsGlobal
         Dim strLineIn2 As String
 
         Dim chWhiteSpaceChars() As Char
-        Dim intLineNumber As Integer = 0
+        Dim intLineNumber = 0
 
         ReDim chWhiteSpaceChars(1)
         chWhiteSpaceChars(0) = ControlChars.Tab
@@ -1306,7 +1306,7 @@ Public Class clsGlobal
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Shared Function UsingVirtualMachineOnPIC() As Boolean
-        Dim rePub1000 As Regex = New Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
+        Dim rePub1000 = New Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
 
         If rePub1000.IsMatch(Environment.MachineName) Then
             ' The Memory performance counters are not available on Windows instances running under VMWare on PIC
@@ -1364,7 +1364,7 @@ Public Class clsGlobal
     ''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
     Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByVal strHashFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean, ByVal blnCheckSize As Boolean) As Boolean
 
-        Dim blnValidFile As Boolean = False
+        Dim blnValidFile = False
         strErrorMessage = String.Empty
 
         Dim lngExpectedFileSizeBytes As Int64 = 0
@@ -1373,10 +1373,10 @@ Public Class clsGlobal
 
         Try
 
-            Dim fiDataFile As FileInfo = New FileInfo(strDataFilePath)
+            Dim fiDataFile = New FileInfo(strDataFilePath)
 
             If String.IsNullOrEmpty(strHashFilePath) Then strHashFilePath = fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-            Dim fiHashCheck As FileInfo = New FileInfo(strHashFilePath)
+            Dim fiHashCheck = New FileInfo(strHashFilePath)
 
             If Not fiDataFile.Exists Then
                 strErrorMessage = "Data file not found at " & fiDataFile.FullName
@@ -1392,7 +1392,7 @@ Public Class clsGlobal
             Dim strLineIn As String
             Dim strSplitLine As String()
 
-            Using srInfile As StreamReader = New StreamReader(New FileStream(fiHashCheck.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInfile = New StreamReader(New FileStream(fiHashCheck.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 While Not srInfile.EndOfStream
                     strLineIn = srInfile.ReadLine()
 
