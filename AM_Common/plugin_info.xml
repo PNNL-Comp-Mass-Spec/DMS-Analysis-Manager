@@ -357,7 +357,12 @@
 		Class="AnalysisManagerMODPlusPlugin.clsAnalysisToolRunnerMODPlus" 
 		AssemblyFile="AnalysisManagerMODPlusPlugin.dll" 
 	/>
-	
+	<ToolRunner 
+		Tool="qc_art" 
+		Class="AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART" 
+		AssemblyFile="AnalysisManagerQCARTPlugin.dll" 
+	/>
+
 </ToolRunners>
 
 <Resourcers>
@@ -695,7 +700,7 @@
 		Tool="mz_refinery" 
 		Class="AnalysisManagerMzRefineryPlugIn.clsAnalysisResourcesMzRefinery" 
 		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll" 
-	/>			
+	/>
 	<Resourcer 
 		Tool="promex" 
 		Class="AnalysisManagerProMexPlugIn.clsAnalysisResourcesProMex" 
@@ -716,8 +721,11 @@
 		Class="AnalysisManagerMODPlusPlugin.clsAnalysisResourcesMODPlus" 
 		AssemblyFile="AnalysisManagerMODPlusPlugin.dll" 
 	/>
-	
-		
+	<Resourcer 
+		Tool="qc_art" 
+		Class="AnalysisManagerQCARTPlugin.clsAnalysisResourcesQCART" 
+		AssemblyFile="AnalysisManagerQCARTPlugin.dll" 
+	/>
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">
@@ -741,6 +749,5 @@
 		AssemblyFile="MsMsSpectrumFilterAM.dll" 
 	/>
 </DTAFilters>
-
 
 </Plugins>

@@ -22,153 +22,153 @@ Public Class clsSqLiteUtilities
 	''' <returns>True if success, false if a problem</returns>
 	''' <remarks>If the target database already exists, then missing tables (and data) will be appended to the file</remarks>
 	Public Function CloneDB(ByVal sourceDBPath As String, ByVal targetDBPath As String) As Boolean
-		Const appendToExistingDB As Boolean = True
-		Dim tablesToSkip = New List(Of String)()
-		Return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip)
-	End Function
+        Const appendToExistingDB = True
+        Dim tablesToSkip = New List(Of String)()
+        Return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip)
+    End Function
 
-	''' <summary>
-	''' Clones a database, optionally skipping tables in list tablesToSkip
-	''' </summary>
-	''' <param name="sourceDBPath">Source database path</param>
-	''' <param name="targetDBPath">Target database path</param>
-	''' <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
-	''' <returns>True if success, false if a problem</returns>
-	Public Function CloneDB(ByVal sourceDBPath As String, ByVal targetDBPath As String, ByVal appendToExistingDB As Boolean) As Boolean
-		Dim tablesToSkip = New List(Of String)()
-		Return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip)
-	End Function
+    ''' <summary>
+    ''' Clones a database, optionally skipping tables in list tablesToSkip
+    ''' </summary>
+    ''' <param name="sourceDBPath">Source database path</param>
+    ''' <param name="targetDBPath">Target database path</param>
+    ''' <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
+    ''' <returns>True if success, false if a problem</returns>
+    Public Function CloneDB(ByVal sourceDBPath As String, ByVal targetDBPath As String, ByVal appendToExistingDB As Boolean) As Boolean
+        Dim tablesToSkip = New List(Of String)()
+        Return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip)
+    End Function
 
-	''' <summary>
-	''' Clones a database, optionally skipping tables in list tablesToSkip
-	''' </summary>
-	''' <param name="sourceDBPath">Source database path</param>
-	''' <param name="targetDBPath">Target database path</param>
-	''' <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
-	''' <param name="tablesToSkip">A list of table names (e.g. Frame_Scans) that should not be copied.</param>
-	''' <returns>True if success, false if a problem</returns>
-	Public Function CloneDB(ByVal sourceDBPath As String, ByVal targetDBPath As String, ByVal appendToExistingDB As Boolean, ByRef tablesToSkip As List(Of String)) As Boolean
+    ''' <summary>
+    ''' Clones a database, optionally skipping tables in list tablesToSkip
+    ''' </summary>
+    ''' <param name="sourceDBPath">Source database path</param>
+    ''' <param name="targetDBPath">Target database path</param>
+    ''' <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
+    ''' <param name="tablesToSkip">A list of table names (e.g. Frame_Scans) that should not be copied.</param>
+    ''' <returns>True if success, false if a problem</returns>
+    Public Function CloneDB(ByVal sourceDBPath As String, ByVal targetDBPath As String, ByVal appendToExistingDB As Boolean, ByRef tablesToSkip As List(Of String)) As Boolean
 
-		Dim currentTable As String = String.Empty
-		Dim appendingToExistingDB As Boolean = False
+        Dim currentTable As String = String.Empty
+        Dim appendingToExistingDB = False
 
-		Try
+        Try
 
-			Using cnSourceDB = New SQLiteConnection("Data Source = " & sourceDBPath)
-				cnSourceDB.Open()
+            Using cnSourceDB = New SQLiteConnection("Data Source = " & sourceDBPath)
+                cnSourceDB.Open()
 
-				' Get list of tables in source DB					
-				Dim dctTableInfo As Dictionary(Of String, String) = GetDBObjects(cnSourceDB, "table")
+                ' Get list of tables in source DB					
+                Dim dctTableInfo As Dictionary(Of String, String) = GetDBObjects(cnSourceDB, "table")
 
-				' Delete the "sqlite_sequence" database from dctTableInfo if present
-				If dctTableInfo.ContainsKey("sqlite_sequence") Then
-					dctTableInfo.Remove("sqlite_sequence")
-				End If
+                ' Delete the "sqlite_sequence" database from dctTableInfo if present
+                If dctTableInfo.ContainsKey("sqlite_sequence") Then
+                    dctTableInfo.Remove("sqlite_sequence")
+                End If
 
-				' Get list of indices in source DB
-				Dim dctIndexToTableMap As Dictionary(Of String, String) = Nothing
-				Dim dctIndexInfo As Dictionary(Of String, String) = GetDBObjects(cnSourceDB, "index", dctIndexToTableMap)
+                ' Get list of indices in source DB
+                Dim dctIndexToTableMap As Dictionary(Of String, String) = Nothing
+                Dim dctIndexInfo As Dictionary(Of String, String) = GetDBObjects(cnSourceDB, "index", dctIndexToTableMap)
 
-				If File.Exists(targetDBPath) Then
-					If appendToExistingDB Then
-						appendingToExistingDB = True
-					Else
-						File.Delete(targetDBPath)
-					End If
-				End If
+                If File.Exists(targetDBPath) Then
+                    If appendToExistingDB Then
+                        appendingToExistingDB = True
+                    Else
+                        File.Delete(targetDBPath)
+                    End If
+                End If
 
-				Try
-					Dim sTargetConnectionString As String = ("Data Source = " & targetDBPath) + "; Version=3; DateTimeFormat=Ticks;"
-					Dim cnTargetDB As New SQLiteConnection(sTargetConnectionString)
+                Try
+                    Dim sTargetConnectionString As String = ("Data Source = " & targetDBPath) + "; Version=3; DateTimeFormat=Ticks;"
+                    Dim cnTargetDB As New SQLiteConnection(sTargetConnectionString)
 
-					cnTargetDB.Open()
-					Dim cmdTargetDB As SQLiteCommand = cnTargetDB.CreateCommand()
+                    cnTargetDB.Open()
+                    Dim cmdTargetDB As SQLiteCommand = cnTargetDB.CreateCommand()
 
 
-					Dim dctExistingTables As Dictionary(Of String, String)
-					If appendingToExistingDB Then
-						' Lookup the table names that already exist in the target
-						dctExistingTables = GetDBObjects(cnTargetDB, "table")
-					Else
-						dctExistingTables = New Dictionary(Of String, String)()
-					End If
+                    Dim dctExistingTables As Dictionary(Of String, String)
+                    If appendingToExistingDB Then
+                        ' Lookup the table names that already exist in the target
+                        dctExistingTables = GetDBObjects(cnTargetDB, "table")
+                    Else
+                        dctExistingTables = New Dictionary(Of String, String)()
+                    End If
 
-					' Create each table
-					For Each kvp As KeyValuePair(Of String, String) In dctTableInfo
-						If Not String.IsNullOrEmpty(kvp.Value) Then
-							If dctExistingTables.ContainsKey(kvp.Key) Then
-								If Not tablesToSkip.Contains(kvp.Key) Then
-									tablesToSkip.Add(kvp.Key)
-								End If
-							Else
-								currentTable = String.Copy(kvp.Key)
-								cmdTargetDB.CommandText = kvp.Value
-								cmdTargetDB.ExecuteNonQuery()
-							End If
-						End If
-					Next
+                    ' Create each table
+                    For Each kvp As KeyValuePair(Of String, String) In dctTableInfo
+                        If Not String.IsNullOrEmpty(kvp.Value) Then
+                            If dctExistingTables.ContainsKey(kvp.Key) Then
+                                If Not tablesToSkip.Contains(kvp.Key) Then
+                                    tablesToSkip.Add(kvp.Key)
+                                End If
+                            Else
+                                currentTable = String.Copy(kvp.Key)
+                                cmdTargetDB.CommandText = kvp.Value
+                                cmdTargetDB.ExecuteNonQuery()
+                            End If
+                        End If
+                    Next
 
-					For Each kvp As KeyValuePair(Of String, String) In dctIndexInfo
-						If Not String.IsNullOrEmpty(kvp.Value) Then
-							Dim createIndex As Boolean = True
+                    For Each kvp As KeyValuePair(Of String, String) In dctIndexInfo
+                        If Not String.IsNullOrEmpty(kvp.Value) Then
+                            Dim createIndex = True
 
-							If appendingToExistingDB Then
-								Dim indexTargetTable As String = String.Empty
-								If dctIndexToTableMap.TryGetValue(kvp.Key, indexTargetTable) Then
-									If dctExistingTables.ContainsKey(indexTargetTable) Then
-										createIndex = False
-									End If
-								End If
-							End If
+                            If appendingToExistingDB Then
+                                Dim indexTargetTable As String = String.Empty
+                                If dctIndexToTableMap.TryGetValue(kvp.Key, indexTargetTable) Then
+                                    If dctExistingTables.ContainsKey(indexTargetTable) Then
+                                        createIndex = False
+                                    End If
+                                End If
+                            End If
 
-							If createIndex Then
-								currentTable = kvp.Key + " (create index)"
-								cmdTargetDB.CommandText = kvp.Value
-								cmdTargetDB.ExecuteNonQuery()
-							End If
-						End If
-					Next
+                            If createIndex Then
+                                currentTable = kvp.Key + " (create index)"
+                                cmdTargetDB.CommandText = kvp.Value
+                                cmdTargetDB.ExecuteNonQuery()
+                            End If
+                        End If
+                    Next
 
-					Try
-						cmdTargetDB.CommandText = ("ATTACH DATABASE '" & sourceDBPath) + "' AS SourceDB;"
-						cmdTargetDB.ExecuteNonQuery()
+                    Try
+                        cmdTargetDB.CommandText = ("ATTACH DATABASE '" & sourceDBPath) + "' AS SourceDB;"
+                        cmdTargetDB.ExecuteNonQuery()
 
-						' Populate each table
-						For Each kvp As KeyValuePair(Of String, String) In dctTableInfo
-							currentTable = String.Copy(kvp.Key)
+                        ' Populate each table
+                        For Each kvp As KeyValuePair(Of String, String) In dctTableInfo
+                            currentTable = String.Copy(kvp.Key)
 
-							If Not tablesToSkip.Contains(currentTable) Then
-								Dim sSql As String = "INSERT INTO main." & currentTable & " SELECT * FROM SourceDB." & currentTable + ";"
+                            If Not tablesToSkip.Contains(currentTable) Then
+                                Dim sSql As String = "INSERT INTO main." & currentTable & " SELECT * FROM SourceDB." & currentTable + ";"
 
-								cmdTargetDB.CommandText = sSql
-								cmdTargetDB.ExecuteNonQuery()
-							End If
-						Next
+                                cmdTargetDB.CommandText = sSql
+                                cmdTargetDB.ExecuteNonQuery()
+                            End If
+                        Next
 
-						currentTable = "(DETACH DATABASE)"
+                        currentTable = "(DETACH DATABASE)"
 
-						' Detach the source DB
-						cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';"
-						cmdTargetDB.ExecuteNonQuery()
-					Catch ex As Exception
-						Throw New Exception("Error copying data into cloned database, table " & currentTable, ex)
-					End Try
+                        ' Detach the source DB
+                        cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';"
+                        cmdTargetDB.ExecuteNonQuery()
+                    Catch ex As Exception
+                        Throw New Exception("Error copying data into cloned database, table " & currentTable, ex)
+                    End Try
 
-					cmdTargetDB.Dispose()
+                    cmdTargetDB.Dispose()
 
-					cnTargetDB.Close()
-				Catch ex As Exception
-					Throw New Exception("Error initializing cloned database", ex)
-				End Try
+                    cnTargetDB.Close()
+                Catch ex As Exception
+                    Throw New Exception("Error initializing cloned database", ex)
+                End Try
 
-				cnSourceDB.Close()
-			End Using
-		Catch ex As Exception
-			Throw New Exception("Error cloning database", ex)
-		End Try
+                cnSourceDB.Close()
+            End Using
+        Catch ex As Exception
+            Throw New Exception("Error cloning database", ex)
+        End Try
 
-		Return True
-	End Function
+        Return True
+    End Function
 
 	Public Function CopySqliteTable(ByVal sourceDBPath As String, ByVal tableName As String, ByVal targetDBPath As String) As Boolean
 

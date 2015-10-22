@@ -383,6 +383,8 @@ Public Class clsMainProcess
                 End If
 
                 ' Check whether the computer is likely to install the monthly Windows Updates within the next few hours
+                ' Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
+                ' Do not request a job between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
                 Dim pendingWindowsUpdateMessage As String = String.Empty
                 If clsWindowsUpdateStatus.UpdatesArePending(pendingWindowsUpdateMessage) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, pendingWindowsUpdateMessage)

@@ -302,7 +302,7 @@ Public Class clsAnalysisMgrSettings
         ' If unable to retrieve the data, return false
         If Not blnSuccess Then
             ' Log the message to the DB if the monthly Windows updates are not pending
-            Dim allowLogToDB = Not (clsWindowsUpdateStatus.UpdatesArePending())
+            Dim allowLogToDB = Not (clsWindowsUpdateStatus.ServerUpdatesArePending())
 
             m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database for manager '" & ManagerName & "'"
             WriteErrorMsg(m_ErrMsg, allowLogToDB)
