@@ -1,0 +1,54 @@
+
+== Example IDPicker-related commands ==
+
+# This converts search scores from a set of pepXMLs to q-values
+idpqonvert.exe -MaxFDR 0.1 -ProteinDatabase ID_003285_7A0F8809.fasta -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1 -NormalizedSearchScores "msgfspecprob" -DecoyPrefix "Reversed_" -dump *.pepXML
+
+# This organizes the search results into a hierarchy
+idpassemble.exe Assemble.xml -MaxFDR 0.1 -b Assemble.txt
+
+# This applies parsimony in protein assembly and generates reports.
+idpreport.exe report Assemble.xml -MaxFDR 0.05 -MinDistinctPeptides 2 -MinAdditionalPeptides 2 -OutputTextReport true -ModsAreDistinctByDefault true -MaxAmbiguousIds 2 -MinSpectraPerProtein 2
+
+
+
+== Additional examples from David Tabb == 
+
+# This converts search scores from a set of pepXMLs to q-values, creating .idpXML files
+idpqonvert.exe -MaxFDR 0.1 -ProteinDatabase h:\fasta\20111201-RefSeq-Human-37-Mouse-37-Trypsin.fasta -SearchScoreWeights "mvh 1 mzFidelity 1 xcorr 1" -OptimizeScoreWeights 1 -NormalizedSearchScores  "mvh mzFidelity xcorr" -dump *.pepXML
+
+# This organizes the search results into a hierarchy (see below for the Assemble.txt file)
+idpassemble.exe Assemble.xml -MaxFDR 0.1 -b Assemble.txt
+
+# This applies parsimony in protein assembly and generates reports.
+idpreport.exe report Assemble.xml -MaxFDR 0.05 -MinDistinctPeptides 2 -MinAdditionalPeptides 2 -OutputTextReport true -ModsAreDistinctByDefault true -MaxAmbiguousIds 2 -MinSpectraPerProtein 2 -QuantitationMethod itraq4plex -RawSourcePath "G:\samples\20120202-CompRef-PNNL"
+
+
+
+
+== Contents of Assemble.txt ==
+
+PNNL/fr01 CPTAC_CompRef_00_iTRAQ_01_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr02 CPTAC_CompRef_00_iTRAQ_02_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr03 CPTAC_CompRef_00_iTRAQ_03_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr04 CPTAC_CompRef_00_iTRAQ_04_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr05 CPTAC_CompRef_00_iTRAQ_05_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr06 CPTAC_CompRef_00_iTRAQ_06_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr07 CPTAC_CompRef_00_iTRAQ_07_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr08 CPTAC_CompRef_00_iTRAQ_08_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr09 CPTAC_CompRef_00_iTRAQ_09_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr10 CPTAC_CompRef_00_iTRAQ_10_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr11 CPTAC_CompRef_00_iTRAQ_11_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr12 CPTAC_CompRef_00_iTRAQ_12_5Feb12_Cougar_11-10-11.idpXML
+PNNL/fr13 CPTAC_CompRef_00_iTRAQ_13_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr14 CPTAC_CompRef_00_iTRAQ_14_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr15 CPTAC_CompRef_00_iTRAQ_15_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr16 CPTAC_CompRef_00_iTRAQ_16_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr17 CPTAC_CompRef_00_iTRAQ_17_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr18 CPTAC_CompRef_00_iTRAQ_18_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr19 CPTAC_CompRef_00_iTRAQ_19_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr20 CPTAC_CompRef_00_iTRAQ_20_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr21 CPTAC_CompRef_00_iTRAQ_21_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr22 CPTAC_CompRef_00_iTRAQ_22_2Feb12_Cougar_11-10-11.idpXML
+PNNL/fr23 CPTAC_CompRef_00_iTRAQ_23_2Feb12_Cougar_11-10-09.idpXML
+PNNL/fr24 CPTAC_CompRef_00_iTRAQ_24_2Feb12_Cougar_11-10-11.idpXML

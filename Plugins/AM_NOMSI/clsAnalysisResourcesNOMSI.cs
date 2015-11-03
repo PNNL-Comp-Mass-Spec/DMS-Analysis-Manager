@@ -21,6 +21,7 @@ namespace AnalysisManagerNOMSIPlugin
             try
             {
                 // Retrieve the parameter file
+                currentTask = "Retrieve the parameter file";
                 var paramFileName = m_jobParams.GetParam("ParmFileName");
                 var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
 
@@ -30,6 +31,7 @@ namespace AnalysisManagerNOMSIPlugin
                 }
 
                 // Retrieve the targets file
+                currentTask = "Retrieve the targets file";
                 var targetsFileName = m_jobParams.GetParam("dm_target_file");
                 if (string.IsNullOrWhiteSpace(targetsFileName))
                 {
@@ -37,6 +39,7 @@ namespace AnalysisManagerNOMSIPlugin
                     return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
+                currentTask = "Retrieve the transformations file";
                 paramFileStoragePath = Path.Combine(paramFileStoragePath, "Transformations");
                 if (!Directory.Exists(paramFileStoragePath))
                 {
@@ -50,6 +53,7 @@ namespace AnalysisManagerNOMSIPlugin
                 }
 
                 // Retrieve the zip file that has the XML files from the Bruker_Data_Analysis step
+                currentTask = "Retrieve the Bruker_Data_Analysis _scans.zip file";
                 var fileToGet = m_DatasetName + "_scans.zip";
 
                 if (!FindAndRetrieveMiscFiles(fileToGet, false))
@@ -59,6 +63,7 @@ namespace AnalysisManagerNOMSIPlugin
                 }
                 m_jobParams.AddResultFileToSkip(fileToGet);
 
+				currentTask = "Process the MyEMSL download queue";
                 if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
 			        return IJobParams.CloseOutType.CLOSEOUT_FAILED;

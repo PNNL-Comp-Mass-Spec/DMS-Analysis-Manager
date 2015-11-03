@@ -579,138 +579,141 @@ Public MustInherit Class clsAnalysisResources
     ''' <summary>
     ''' Copies specified file from storage server to local working directory
     ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
+    ''' <param name="sourceFileName">Name of file to copy</param>
+    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
+    ''' <param name="targetFolderPath">Destination directory for file copy</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(InpFile As String, InpFolder As String, OutDir As String) As Boolean
-        Const MaxCopyAttempts = 3
-        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+    Protected Function CopyFileToWorkDir(
+      sourceFileName As String,
+      sourceFolderPath As String,
+      targetFolderPath As String) As Boolean
+
+        Const MAX_ATTEMPTS = 3
+        Return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, maxCopyAttempts:=MAX_ATTEMPTS)
+
     End Function
 
     ''' <summary>
     ''' Copies specified file from storage server to local working directory
     ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
+    ''' <param name="sourceFileName">Name of file to copy</param>
+    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
+    ''' <param name="targetFolderPath">Destination directory for file copy</param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(InpFile As String, _
-      InpFolder As String, _
-      OutDir As String, _
+    Protected Function CopyFileToWorkDir(
+      sourceFileName As String,
+      sourceFolderPath As String,
+      targetFolderPath As String,
       eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
-        Const MaxCopyAttempts = 3
-        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+        Const MAX_ATTEMPTS = 3
+        Return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, maxCopyAttempts:=MAX_ATTEMPTS)
 
     End Function
 
     ''' <summary>
     ''' Copies specified file from storage server to local working directory
     ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
+    ''' <param name="sourceFileName">Name of file to copy</param>
+    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
+    ''' <param name="targetFolderPath">Destination directory for file copy</param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+    ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(InpFile As String, _
-      InpFolder As String, _
-      OutDir As String, _
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-      MaxCopyAttempts As Integer) As Boolean
+    Protected Function CopyFileToWorkDir(
+      sourceFileName As String,
+      sourceFolderPath As String,
+      targetFolderPath As String,
+      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
+      maxCopyAttempts As Integer) As Boolean
 
-        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
+        Return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, maxCopyAttempts:=maxCopyAttempts)
 
     End Function
 
     ''' <summary>
     ''' Copies specified file from storage server to local working directory
     ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
+    ''' <param name="sourceFileName">Name of file to copy</param>
+    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
+    ''' <param name="targetFolderPath">Destination directory for file copy</param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(InpFile As String, _
-      InpFolder As String, _
-      OutDir As String, _
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
+    Protected Function CopyFileToWorkDir(
+      sourceFileName As String,
+      sourceFolderPath As String,
+      targetFolderPath As String,
+      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
       createStoragePathInfoOnly As Boolean) As Boolean
 
-        Const MaxCopyAttempts = 3
-        Return CopyFileToWorkDir(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly, MaxCopyAttempts)
+        Const MAX_ATTEMPTS = 3
+        Return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, eLogMsgTypeIfNotFound, createStoragePathInfoOnly, MAX_ATTEMPTS)
 
     End Function
 
     ''' <summary>
     ''' Copies specified file from storage server to local working directory
     ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
+    ''' <param name="sourceFileName">Name of file to copy</param>
+    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
+    ''' <param name="targetFolderPath">Destination directory for file copy</param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
     ''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
     Protected Function CopyFileToWorkDir(
-      InpFile As String, _
-      InpFolder As String, _
-      OutDir As String, _
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-      createStoragePathInfoOnly As Boolean, _
-      MaxCopyAttempts As Integer) As Boolean
+      sourceFileName As String,
+      sourceFolderPath As String,
+      targetFolderPath As String,
+      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
+      createStoragePathInfoOnly As Boolean,
+      maxCopyAttempts As Integer) As Boolean
 
-        Dim SourceFile As String = String.Empty
-        Dim DestFilePath As String
 
         Try
 
-            If InpFolder.StartsWith(MYEMSL_PATH_FLAG) Then
-                Return AddFileToMyEMSLDownloadQueue(InpFolder)
+            If sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
+                Return AddFileToMyEMSLDownloadQueue(sourceFolderPath)
             End If
 
-            SourceFile = Path.Combine(InpFolder, InpFile)
-            DestFilePath = Path.Combine(OutDir, InpFile)
+            Dim sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName)
+            Dim destFilePath = Path.Combine(targetFolderPath, sourceFileName)
 
             'Verify source file exists
-            Const HoldoffSeconds = 1
-            Const MaxAttempts = 1
-            If Not FileExistsWithRetry(SourceFile, HoldoffSeconds, eLogMsgTypeIfNotFound, MaxAttempts) Then
-                m_message = "File not found: " + SourceFile
+            Const HOLDOFF_SECONDS = 1
+            Const MAX_ATTEMPTS = 1
+            If Not FileExistsWithRetry(sourceFilePath, HOLDOFF_SECONDS, eLogMsgTypeIfNotFound, MAX_ATTEMPTS) Then
+                m_message = "File not found: " + sourceFilePath
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
                 Return False
             End If
 
             If createStoragePathInfoOnly Then
                 ' Create a storage path info file
-                Return CreateStoragePathInfoFile(SourceFile, DestFilePath)
+                Return CreateStoragePathInfoFile(sourceFilePath, destFilePath)
             End If
 
-            If CopyFileWithRetry(SourceFile, DestFilePath, True, MaxCopyAttempts) Then
+            If CopyFileWithRetry(sourceFilePath, DestFilePath, True, maxCopyAttempts) Then
                 If m_DebugLevel > 3 Then
-                    Dim Msg As String = "CopyFileToWorkDir, File copied: " + SourceFile
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
+                    Dim errorMessage = "CopyFileToWorkDir, File copied: " + sourceFilePath
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, errorMessage)
                 End If
                 Return True
             Else
-                m_message = "Error copying file " + SourceFile
+                m_message = "Error copying file " + sourceFilePath
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Return False
             End If
 
         Catch ex As Exception
-            If SourceFile Is Nothing Then SourceFile = InpFile
-            If SourceFile Is Nothing Then SourceFile = "??"
-
-            m_message = "Exception in CopyFileToWorkDir for " + SourceFile
+            m_message = "Exception in CopyFileToWorkDir for " + Path.Combine(sourceFolderPath, sourceFileName)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
         End Try
 
@@ -3444,7 +3447,7 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
-    ''' Lookups up dataset information the data package associated with this analysis job
+    ''' Lookups up dataset information for the data package associated with this analysis job
     ''' </summary>
     ''' <param name="dctDataPackageJobs"></param>
     ''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
@@ -3475,124 +3478,110 @@ Public MustInherit Class clsAnalysisResources
     Public Shared Function LoadDataPackageJobInfo(ConnectionString As String, DataPackageID As Integer, <Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
         'Requests Dataset information from a data package
-        Const RetryCount As Short = 3
-        Dim strMsg As String
+        Const RETRY_COUNT As Short = 3
 
         dctDataPackageJobs = New Dictionary(Of Integer, udtDataPackageJobInfoType)
 
-        Dim SqlStr = New Text.StringBuilder
+        Dim sqlStr = New Text.StringBuilder
 
-        SqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ")
-        SqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
-        SqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ")
-        SqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
-        SqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType")
-        SqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs")
-        SqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
-        SqlStr.Append(" ORDER BY Dataset, Tool")
+        ' Note that this queries view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database
+        ' That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
+        ' The two views have the same name, but some columns differ
 
-        Dim Dt As DataTable = Nothing
+        sqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ")
+        sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
+        sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ")
+        sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
+        sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType")
+        sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs")
+        sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
+        sqlStr.Append(" ORDER BY Dataset, Tool")
+
+        Dim resultSet As DataTable = Nothing
 
         'Get a table to hold the results of the query
-        Dim blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
+        Dim success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, resultSet)
 
-        If Not blnSuccess Then
-            strMsg = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-            Dt.Dispose()
+        If Not success Then
+            Dim errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+            resultSet.Dispose()
             Return False
         End If
 
         'Verify at least one row returned
-        If Dt.Rows.Count < 1 Then
+        If resultSet.Rows.Count < 1 Then
             ' No data was returned
+            Dim warningMessage As String
 
             ' If the data package exists and has datasets associated with it, then Log this as a warning but return true
             ' Otherwise, log an error and return false
 
-            SqlStr.Clear()
-            SqlStr.Append(" SELECT Count(*) AS Datasets")
-            SqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets")
-            SqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
+            sqlStr.Clear()
+            sqlStr.Append(" SELECT Count(*) AS Datasets")
+            sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets")
+            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
 
             'Get a table to hold the results of the query
-            blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RetryCount, Dt)
-            If blnSuccess AndAlso Dt.Rows.Count > 0 Then
-                For Each curRow As DataRow In Dt.Rows
+            success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, resultSet)
+            If success AndAlso resultSet.Rows.Count > 0 Then
+                For Each curRow As DataRow In resultSet.Rows
                     Dim datasetCount = clsGlobal.DbCInt(curRow(0))
 
                     If datasetCount > 0 Then
-                        strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID & ", but it does have " & datasetCount & " dataset"
-                        If datasetCount > 1 Then strMsg &= "s"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMsg)
+                        warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID & ", but it does have " & datasetCount & " dataset"
+                        If datasetCount > 1 Then warningMessage &= "s"
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
                         Return True
                     End If
                 Next
             End If
 
-            strMsg = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
+            warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage)
             Return False
-        Else
-            For Each CurRow As DataRow In Dt.Rows
-                Dim udtDataPackageInfo = New udtDataPackageJobInfoType
-
-                With udtDataPackageInfo
-                    .Job = clsGlobal.DbCInt(CurRow("Job"))
-                    .Dataset = clsGlobal.DbCStr(CurRow("Dataset"))
-                    .DatasetID = clsGlobal.DbCInt(CurRow("DatasetID"))
-                    .Instrument = clsGlobal.DbCStr(CurRow("Instrument"))
-                    .InstrumentGroup = clsGlobal.DbCStr(CurRow("InstrumentGroup"))
-                    .Experiment = clsGlobal.DbCStr(CurRow("Experiment"))
-                    .Experiment_Reason = clsGlobal.DbCStr(CurRow("Experiment_Reason"))
-                    .Experiment_Comment = clsGlobal.DbCStr(CurRow("Experiment_Comment"))
-                    .Experiment_Organism = clsGlobal.DbCStr(CurRow("Organism"))
-                    .Experiment_NEWT_ID = clsGlobal.DbCInt(CurRow("Experiment_NEWT_ID"))
-                    .Experiment_NEWT_Name = clsGlobal.DbCStr(CurRow("Experiment_NEWT_Name"))
-                    .Tool = clsGlobal.DbCStr(CurRow("Tool"))
-                    .ResultType = clsGlobal.DbCStr(CurRow("ResultType"))
-                    .PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(.ResultType)
-                    .SettingsFileName = clsGlobal.DbCStr(CurRow("SettingsFileName"))
-                    .ParameterFileName = clsGlobal.DbCStr(CurRow("ParameterFileName"))
-                    .OrganismDBName = clsGlobal.DbCStr(CurRow("OrganismDBName"))
-                    .ProteinCollectionList = clsGlobal.DbCStr(CurRow("ProteinCollectionList"))
-                    .ProteinOptions = clsGlobal.DbCStr(CurRow("ProteinOptions"))
-
-                    If String.IsNullOrWhiteSpace(.ProteinCollectionList) OrElse .ProteinCollectionList = "na" Then
-                        .LegacyFastaFileName = String.Copy(.OrganismDBName)
-                    Else
-                        .LegacyFastaFileName = "na"
-                    End If
-
-                    .ServerStoragePath = clsGlobal.DbCStr(CurRow("ServerStoragePath"))
-                    .ArchiveStoragePath = clsGlobal.DbCStr(CurRow("ArchiveStoragePath"))
-                    .ResultsFolderName = clsGlobal.DbCStr(CurRow("ResultsFolder"))
-                    .DatasetFolderName = clsGlobal.DbCStr(CurRow("DatasetFolder"))
-                    .SharedResultsFolder = clsGlobal.DbCStr(CurRow("SharedResultsFolder"))
-                    .RawDataType = clsGlobal.DbCStr(CurRow("RawDataType"))
-                End With
-
-                If Not dctDataPackageJobs.ContainsKey(udtDataPackageInfo.Job) Then
-                    dctDataPackageJobs.Add(udtDataPackageInfo.Job, udtDataPackageInfo)
-                End If
-            Next
-
-            Dt.Dispose()
-            Return True
         End If
+
+        For Each curRow As DataRow In resultSet.Rows
+            Dim udtJobInfo = ParseDataPackageJobInfoRow(curRow)
+
+            If Not dctDataPackageJobs.ContainsKey(udtJobInfo.Job) Then
+                dctDataPackageJobs.Add(udtJobInfo.Job, udtJobInfo)
+            End If
+        Next
+
+        resultSet.Dispose()
+        Return True
 
     End Function
 
+    ''' <summary>
+    ''' Update m_message to be the error message, then write to the local log file
+    ''' </summary>
+    ''' <param name="errorMessage">Error message</param>
+    ''' <remarks></remarks>
     Protected Sub LogError(errorMessage As String)
         m_message = errorMessage
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
     End Sub
 
+    ''' <summary>
+    ''' Update m_message to be the error message, then write to the local log file
+    ''' </summary>
+    ''' <param name="errorMessage">Error message</param>
+    ''' <param name="ex">Exception</param>
+    ''' <remarks></remarks>
     Protected Sub LogError(errorMessage As String, ex As Exception)
         m_message = String.Copy(errorMessage)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage, ex)
     End Sub
 
+    ''' <summary>
+    ''' Update m_message to be the error message, then write the detailed error message to the local log file
+    ''' </summary>
+    ''' <param name="errorMessage">Error message</param>
+    ''' <param name="detailedMessage">Detailed error message</param>
+    ''' <remarks></remarks>
     Protected Sub LogError(errorMessage As String, detailedMessage As String)
         m_message = String.Copy(errorMessage)
         If String.IsNullOrEmpty(detailedMessage) Then
@@ -3601,6 +3590,56 @@ Public MustInherit Class clsAnalysisResources
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
         End If
     End Sub
+
+    ''' <summary>
+    ''' Retrieve the information for the specified analysis job
+    ''' </summary>
+    ''' <param name="jobNumber">Job number</param>
+    ''' <param name="udtJobInfo">Output parameter: Job Info</param>
+    ''' <returns>Queries DMS_Pipeline for the job information</returns>
+    ''' <remarks></remarks>
+    Protected Function LookupJobInfo(jobNumber As Integer, <Out> ByRef udtJobInfo As udtDataPackageJobInfoType) As Boolean
+
+        Const RETRY_COUNT = 3
+
+        Dim sqlStr = New Text.StringBuilder
+
+        sqlStr.Append("SELECT Job, Dataset, DatasetID, InstrumentName as Instrument, InstrumentGroup,")
+        sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
+        sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName,")
+        sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
+        sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, '' AS SharedResultsFolder, RawDataType")
+        sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg")
+        sqlStr.Append("WHERE Job = " & jobNumber)
+
+        Dim resultSet As DataTable = Nothing
+        udtJobInfo = New udtDataPackageJobInfoType
+
+        ' Gigasax.DMS5
+        Dim dmsConnectionString = m_mgrParams.GetParam("connectionstring")
+
+        'Get a table to hold the results of the query
+        Dim success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "LookupJobInfo", RETRY_COUNT, resultSet)
+
+        If Not success Then
+            Dim errorMessage = "LookupJobInfo; Excessive failures attempting to retrieve data package job info from database"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+            resultSet.Dispose()
+            Return False
+        End If
+
+        'Verify at least one row returned
+        If resultSet.Rows.Count < 1 Then
+            ' No data was returned
+            LogError("Job " & jobNumber & " not found in view V_Analysis_Job_Export_DataPkg")
+            Return False
+        End If
+
+        udtJobInfo = ParseDataPackageJobInfoRow(resultSet.Rows.Item(0))
+
+        Return True
+
+    End Function
 
     ''' <summary>
     ''' Moves a file from one folder to another folder
@@ -3707,6 +3746,47 @@ Public MustInherit Class clsAnalysisResources
         End With
 
         Return True
+
+    End Function
+
+    Private Shared Function ParseDataPackageJobInfoRow(curRow As DataRow) As udtDataPackageJobInfoType
+
+        Dim udtJobInfo = New udtDataPackageJobInfoType
+
+        udtJobInfo.Job = clsGlobal.DbCInt(curRow("Job"))
+        udtJobInfo.Dataset = clsGlobal.DbCStr(curRow("Dataset"))
+        udtJobInfo.DatasetID = clsGlobal.DbCInt(curRow("DatasetID"))
+        udtJobInfo.Instrument = clsGlobal.DbCStr(curRow("Instrument"))
+        udtJobInfo.InstrumentGroup = clsGlobal.DbCStr(curRow("InstrumentGroup"))
+        udtJobInfo.Experiment = clsGlobal.DbCStr(curRow("Experiment"))
+        udtJobInfo.Experiment_Reason = clsGlobal.DbCStr(curRow("Experiment_Reason"))
+        udtJobInfo.Experiment_Comment = clsGlobal.DbCStr(curRow("Experiment_Comment"))
+        udtJobInfo.Experiment_Organism = clsGlobal.DbCStr(curRow("Organism"))
+        udtJobInfo.Experiment_NEWT_ID = clsGlobal.DbCInt(curRow("Experiment_NEWT_ID"))
+        udtJobInfo.Experiment_NEWT_Name = clsGlobal.DbCStr(curRow("Experiment_NEWT_Name"))
+        udtJobInfo.Tool = clsGlobal.DbCStr(curRow("Tool"))
+        udtJobInfo.ResultType = clsGlobal.DbCStr(curRow("ResultType"))
+        udtJobInfo.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(udtJobInfo.ResultType)
+        udtJobInfo.SettingsFileName = clsGlobal.DbCStr(curRow("SettingsFileName"))
+        udtJobInfo.ParameterFileName = clsGlobal.DbCStr(curRow("ParameterFileName"))
+        udtJobInfo.OrganismDBName = clsGlobal.DbCStr(curRow("OrganismDBName"))
+        udtJobInfo.ProteinCollectionList = clsGlobal.DbCStr(curRow("ProteinCollectionList"))
+        udtJobInfo.ProteinOptions = clsGlobal.DbCStr(curRow("ProteinOptions"))
+
+        If String.IsNullOrWhiteSpace(udtJobInfo.ProteinCollectionList) OrElse udtJobInfo.ProteinCollectionList = "na" Then
+            udtJobInfo.LegacyFastaFileName = String.Copy(udtJobInfo.OrganismDBName)
+        Else
+            udtJobInfo.LegacyFastaFileName = "na"
+        End If
+
+        udtJobInfo.ServerStoragePath = clsGlobal.DbCStr(curRow("ServerStoragePath"))
+        udtJobInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow("ArchiveStoragePath"))
+        udtJobInfo.ResultsFolderName = clsGlobal.DbCStr(curRow("ResultsFolder"))
+        udtJobInfo.DatasetFolderName = clsGlobal.DbCStr(curRow("DatasetFolder"))
+        udtJobInfo.SharedResultsFolder = clsGlobal.DbCStr(curRow("SharedResultsFolder"))
+        udtJobInfo.RawDataType = clsGlobal.DbCStr(curRow("RawDataType"))
+
+        Return udtJobInfo
 
     End Function
 
@@ -6425,7 +6505,7 @@ Public MustInherit Class clsAnalysisResources
 
         'Copy the file
         If MaxCopyAttempts < 1 Then MaxCopyAttempts = 1
-        If Not CopyFileToWorkDir(FileName, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts) Then
+        If Not CopyFileToWorkDir(FileName, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, maxCopyAttempts:=MaxCopyAttempts) Then
             Return False
         End If
 

@@ -137,7 +137,6 @@
     <Compile Include="clsMainProcess.vb" />
     <Compile Include="clsParseCommandLine.vb" />
     <Compile Include="clsPluginLoader.vb" />
-    <Compile Include="clsWindowsUpdateStatus.vb" />
     <Compile Include="modMain.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">

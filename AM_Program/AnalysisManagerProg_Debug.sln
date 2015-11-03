@@ -6,7 +6,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProg_Debug",
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AM_Shared", "AM_Shared\AM_Shared.vbproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerQCRPMPlugIn", "..\Plugins\AM_QCRPM_PlugIn\AnalysisManagerQCRPMPlugIn.csproj", "{F418E32A-6B5F-4F40-809E-730D20F32FA1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerQCARTPlugIn", "..\Plugins\AM_QC-ART_PlugIn\AnalysisManagerQCARTPlugIn.csproj", "{F418E32A-6B5F-4F40-809E-730D20F32FA1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

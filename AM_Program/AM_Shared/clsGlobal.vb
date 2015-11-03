@@ -13,6 +13,7 @@ Imports System.Threading
 Imports System.Text.RegularExpressions
 Imports System.Runtime.InteropServices
 Imports System.Data.SqlClient
+Imports System.Security.Cryptography
 
 Public Class clsGlobal
 
@@ -892,16 +893,111 @@ Public Class clsGlobal
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Shared Function ComputeFileHashMD5(ByVal strPath As String) As String
-        ' Calculates the MD5 hash of a given file
 
-        Dim objMD5 As New Security.Cryptography.MD5CryptoServiceProvider
-        Dim arrHash() As Byte
+        Dim hashValue As String
 
         ' open file (as read-only)
-        Using objReader As Stream = New FileStream(strPath, FileMode.Open, FileAccess.Read)
-            ' hash contents of this stream
-            arrHash = objMD5.ComputeHash(objReader)
+        Using objReader As Stream = New FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)
+            ' Hash contents of this stream
+            hashValue = ComputeMD5Hash(objReader)
         End Using
+
+        Return hashValue
+
+    End Function
+
+    ''' <summary>
+    ''' Computes the MD5 hash for a string
+    ''' </summary>
+    ''' <param name="text"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared Function ComputeStringHashMD5(ByVal text As String) As String
+
+        Dim hashValue As String
+
+        Using reader As New StreamReader(text)
+            hashValue = ComputeMD5Hash(reader.BaseStream)
+        End Using
+
+        Return hashValue
+
+    End Function
+    
+    ''' <summary>
+    ''' Computes the SHA-1 hash for a file
+    ''' </summary>
+    ''' <param name="strPath"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared Function ComputeFileHashSha1(ByVal strPath As String) As String
+
+        Dim hashValue As String
+
+        ' open file (as read-only)
+        Using objReader As Stream = New FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)
+            ' Hash contents of this stream
+            hashValue = ComputeSha1Hash(objReader)
+        End Using
+
+        Return hashValue
+
+    End Function
+
+    ''' <summary>
+    ''' Computes the SHA-1 hash for a string
+    ''' </summary>
+    ''' <param name="text"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared Function ComputeStringHashSha1(ByVal text As String) As String
+
+        Dim hashValue As String
+
+        Using reader As New StreamReader(text)
+            hashValue = ComputeSha1Hash(reader.BaseStream)
+        End Using
+
+        Return hashValue
+
+    End Function
+
+    ''' <summary>
+    ''' Computes the MD5 hash of a given stream
+    ''' </summary>
+    ''' <param name="data"></param>
+    ''' <returns>MD5 hash, as a string</returns>
+    ''' <remarks></remarks>
+    Private Shared Function ComputeMD5Hash(ByVal data As Stream) As String
+
+        Dim objMD5 As New Security.Cryptography.MD5CryptoServiceProvider
+        Return ComputeHash(objMD5, data)
+
+    End Function
+
+    ''' <summary>
+    ''' Computes the SHA-1 hash of a given stream
+    ''' </summary>
+    ''' <param name="data"></param>
+    ''' <returns>SHA1 hash, as a string</returns>
+    ''' <remarks></remarks>
+    Private Shared Function ComputeSha1Hash(ByVal data As Stream) As String
+
+        Dim objSha1 As New Security.Cryptography.SHA1CryptoServiceProvider
+        Return ComputeHash(objSha1, data)
+
+    End Function
+
+    ''' <summary>
+    ''' Use the given hash algorithm to compute a hash of the data stream
+    ''' </summary>
+    ''' <param name="hasher"></param>
+    ''' <param name="data"></param>
+    ''' <returns>Hash string</returns>
+    ''' <remarks></remarks>
+    Private Shared Function ComputeHash(ByVal hasher As HashAlgorithm, ByVal data As Stream) As String
+        ' hash contents of this stream
+        Dim arrHash = hasher.ComputeHash(data)
 
         ' Return the hash, formatted as a string
         Return ByteArrayToString(arrHash)
@@ -960,29 +1056,6 @@ Public Class clsGlobal
         End Using
 
         Return strHashFilePath
-
-    End Function
-
-    ''' <summary>
-    ''' Computes the Sha-1 hash for a file
-    ''' </summary>
-    ''' <param name="strPath"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function ComputeFileHashSha1(ByVal strPath As String) As String
-        ' Calculates the Sha-1 hash of a given file
-
-        Dim objSha1 As New Security.Cryptography.SHA1CryptoServiceProvider
-        Dim arrHash() As Byte
-
-        ' open file (as read-only)
-        Using objReader As Stream = New FileStream(strPath, FileMode.Open, FileAccess.Read)
-            ' hash contents of this stream
-            arrHash = objSha1.ComputeHash(objReader)
-        End Using
-
-        ' Return the hash, formatted as a string
-        Return ByteArrayToString(arrHash)
 
     End Function
 

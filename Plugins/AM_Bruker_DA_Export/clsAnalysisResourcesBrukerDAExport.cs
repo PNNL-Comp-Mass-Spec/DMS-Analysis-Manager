@@ -21,7 +21,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             try
             {
                 // Retrieve the export script
-
+				currentTask = "Get parameter BrukerSpectraExportScriptFile";
                 var exportScriptName = m_jobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
                 if (string.IsNullOrEmpty(exportScriptName))
                 {
@@ -81,7 +81,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         break;
                     }
 
-                    currentTask = "ProcessMyEMSLDownloadQueue";
+                    currentTask = "Process the MyEMSL download queue";
                     if (ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
                         break;
