@@ -1,0 +1,15 @@
+/32Bit_2015-05-08
+/AM_Common/AnalysisManager*PlugIn.dll
+/AM_Common/PHRP
+/AM_Common/ActiveMQ
+/AM_Common/AScore
+/AM_Common/DeconEngine_200*
+/AM_Common/DeconMSn_200*
+/AM_Program/Legacy
+/AM_Common/*.lnk
+/AM_Common/MSMSSpectrumFilterAM.dll
+/AM_Common/AnalysisManagerProg.exe
+/*.zip
+/Plugins/_Trash
+/AM_Common/AnalysisManagerPBFGenerator.dll
+/AM_Common/Ape_Decompiled.dll
