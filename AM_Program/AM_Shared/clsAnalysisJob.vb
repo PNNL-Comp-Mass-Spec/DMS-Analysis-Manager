@@ -823,18 +823,21 @@ Public Class clsAnalysisJob
     ''' <param name="EvalMsg">Message describing evaluation results</param>
     ''' <returns>True for success, False for failure</returns>
     ''' <remarks>EvalCode and EvalMsg not presently used</remarks>
-    Protected Function SetAnalysisJobComplete(ByVal SpName As String,
-       ByVal CompCode As Integer, ByVal CompMsg As String, _
-       ByVal EvalCode As Integer, ByVal EvalMsg As String) As Boolean
+    Protected Function SetAnalysisJobComplete(
+       ByVal spName As String,
+       ByVal compCode As Integer,
+       ByVal compMsg As String, _
+       ByVal evalCode As Integer,
+       ByVal evalMsg As String) As Boolean
 
-        Dim Outcome As Boolean
-        Dim ResCode As Integer
+        Dim success As Boolean
+        Dim returnCode As Integer
 
-        'Setup for execution of the stored procedure
+        ' Setup for execution of the stored procedure
         Dim MyCmd As New SqlCommand
         With MyCmd
             .CommandType = CommandType.StoredProcedure
-            .CommandText = SpName
+            .CommandText = spName
 
             .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
             .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
@@ -849,19 +852,19 @@ Public Class clsAnalysisJob
 
             .Parameters.Add(New SqlParameter("@completionCode", SqlDbType.Int))
             .Parameters.Item("@completionCode").Direction = ParameterDirection.Input
-            .Parameters.Item("@completionCode").Value = CompCode
+            .Parameters.Item("@completionCode").Value = compCode
 
             .Parameters.Add(New SqlParameter("@completionMessage", SqlDbType.VarChar, 256))
             .Parameters.Item("@completionMessage").Direction = ParameterDirection.Input
-            .Parameters.Item("@completionMessage").Value = CompMsg
+            .Parameters.Item("@completionMessage").Value = compMsg
 
             .Parameters.Add(New SqlParameter("@evaluationCode", SqlDbType.Int))
             .Parameters.Item("@evaluationCode").Direction = ParameterDirection.Input
-            .Parameters.Item("@evaluationCode").Value = EvalCode
+            .Parameters.Item("@evaluationCode").Value = evalCode
 
             .Parameters.Add(New SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256))
             .Parameters.Item("@evaluationMessage").Direction = ParameterDirection.Input
-            .Parameters.Item("@evaluationMessage").Value = EvalMsg
+            .Parameters.Item("@evaluationMessage").Value = evalMsg
 
             .Parameters.Add(New SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
             .Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
@@ -876,18 +879,18 @@ Public Class clsAnalysisJob
         End With
 
         ' Execute the Stored Procedure (retry the call up to 20 times)
-        ResCode = PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 20)
+        returnCode = PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 20)
 
-        If ResCode = 0 Then
-            Outcome = True
+        If returnCode = 0 Then
+            success = True
         Else
-            Dim Msg As String = "Error " & ResCode.ToString & " setting analysis job complete"
+            Dim Msg As String = "Error " & returnCode.ToString & " setting analysis job complete"
             '			Msg &= "; Message = " & CStr(MyCmd.Parameters("@message").Value)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Outcome = False
+            success = False
         End If
 
-        Return Outcome
+        Return success
 
     End Function
 

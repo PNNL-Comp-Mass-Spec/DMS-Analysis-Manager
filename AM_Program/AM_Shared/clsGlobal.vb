@@ -914,11 +914,7 @@ Public Class clsGlobal
     ''' <remarks></remarks>
     Public Shared Function ComputeStringHashMD5(ByVal text As String) As String
 
-        Dim hashValue As String
-
-        Using reader As New StreamReader(text)
-            hashValue = ComputeMD5Hash(reader.BaseStream)
-        End Using
+        Dim hashValue = ComputeMD5Hash(New MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)))
 
         Return hashValue
 
@@ -952,11 +948,7 @@ Public Class clsGlobal
     ''' <remarks></remarks>
     Public Shared Function ComputeStringHashSha1(ByVal text As String) As String
 
-        Dim hashValue As String
-
-        Using reader As New StreamReader(text)
-            hashValue = ComputeSha1Hash(reader.BaseStream)
-        End Using
+        Dim hashValue = ComputeSha1Hash(New MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)))
 
         Return hashValue
 

@@ -6,13 +6,16 @@
 *****************************************************************/
 
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml;
 using AnalysisManagerBase;
+using PRISM.DataBase;
+using PRISM.Files;
 
 namespace AnalysisManagerQCARTPlugin
 {
@@ -23,8 +26,8 @@ namespace AnalysisManagerQCARTPlugin
         protected const float PROGRESS_PCT_STARTING = 5;
         protected const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const string QCART_CONSOLE_OUTPUT_BASE = "QCART_ConsoleOutput_scan";
-        protected const string COMPRESSED_QCART_RESULTS_BASE = "QCART_Results_scan";
+        protected const string QCART_CONSOLE_OUTPUT_BASE = "QCART_ConsoleOutput";
+        protected const string STORE_QCART_RESULTS = "StoreQCARTResults";
 
         #endregion
 
@@ -45,7 +48,7 @@ namespace AnalysisManagerQCARTPlugin
         #region "Methods"
 
         /// <summary>
-        /// Processes data using QCART
+        /// Processes data using QC-ART
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
@@ -56,6 +59,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Call base class for initial setup
                 if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
+                    DeleteLockFileIfRequired();
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -71,70 +75,52 @@ namespace AnalysisManagerQCARTPlugin
                 mTotalSpectra = 0;
                 mSpectraProcessed = 0;
 
-                // Determine the path to QCART
-                var progLoc = DetermineProgramLocation("QCART", "QCARTProgLoc", "QCART.exe");
+                // Determine the path to R
+                var rProgLoc = DetermineProgramLocation("QCART", "QCARTProgLoc", "QCART.exe");
 
-                if (string.IsNullOrWhiteSpace(progLoc))
+                if (string.IsNullOrWhiteSpace(rProgLoc))
                 {
+                    DeleteLockFileIfRequired();
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Store the QCART.exe version info in the database
-                if (!StoreToolVersionInfo(progLoc))
+                if (!StoreToolVersionInfo(rProgLoc))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining QCART version";
+                    m_message = "Error determining R version";
+                    DeleteLockFileIfRequired();
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Unzip the XML files
-                var compressedXMLFiles = Path.Combine(m_WorkDir, m_Dataset + "_scans.zip");
-                var success = UnzipFile(compressedXMLFiles, m_WorkDir);
-                if (!success)
+                var existingBaselineResultsFileName = m_jobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
+
+                // Retrieve the baseline dataset names and corresponding Masic job numbers
+                var datasetNamesAndJobs = GetPackedDatasetNamesAndJobs();
+                if (datasetNamesAndJobs.Count == 0)
                 {
-                    if (string.IsNullOrEmpty(m_message))
-                    {
-                        m_message = "Unknown error extracting the XML spectra files";
-                    }
+                    LogError("Baseline dataset names/jobs parameter was empty; this is unexpected");
+                    DeleteLockFileIfRequired();
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                bool noPeaksFound;
-
-                // Process the XML files using QCART                
-                success = ProcessScansWithQCART(progLoc, out noPeaksFound);
+                var success = ProcessDatasetWithQCART(rProgLoc, existingBaselineResultsFileName, datasetNamesAndJobs);
 
                 var eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
-                if (noPeaksFound)
-                {
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_NO_DATA;                   
-                }
-                else if (!success)
+                if (!success)
                 {
                     eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
                 else
                 {
                     // Look for the result files
-
-                    var diWorkDir = new DirectoryInfo(m_WorkDir);
-                    var fiResultsFiles = diWorkDir.GetFiles("Distributions.zip").ToList();
-                    if (fiResultsFiles.Count == 0)
-                    {
-                        fiResultsFiles = diWorkDir.GetFiles(COMPRESSED_QCART_RESULTS_BASE + "*.zip").ToList();
-                    }
-
-                    if (fiResultsFiles.Count == 0)
-                    {
-                        if (string.IsNullOrEmpty(m_message))
-                        {
-                            m_message = "QCART results not found";
-                            success = false;
-                            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
-                        }
-                    }
+                    success = PostProcessResults(datasetNamesAndJobs, existingBaselineResultsFileName);
+                    if (!success)
+                        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                DeleteLockFileIfRequired();
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
@@ -197,6 +183,68 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
+        /// <summary>
+        /// Append a new element and value to the Xml
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="elementName"></param>
+        /// <param name="value"></param>
+        private void AppendXmlElementWithValue(XmlWriter writer, string elementName, string value)
+        {
+            writer.WriteStartElement(elementName);
+            writer.WriteValue(value);
+            writer.WriteEndElement();
+        }
+
+
+        /// <summary>
+        /// Converts the QCDM to xml to be used by database
+        /// </summary>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="masicJob">Masic job for the dataset</param>
+        /// <param name="qcartValue">QC-ART value</param>
+        /// <returns></returns>
+        private string ConstructXmlForDbPosting(string datasetName, int masicJob, float qcartValue)
+        {
+
+            try
+            {
+
+                var sb = new StringBuilder();
+                var settings = new XmlWriterSettings
+                {
+                    OmitXmlDeclaration = true,
+                    Indent = true
+                };
+
+                using (var writer = XmlWriter.Create(sb, settings))
+                {
+                    writer.WriteStartElement("QCART_Results");
+                    AppendXmlElementWithValue(writer, "Dataset", datasetName);
+                    AppendXmlElementWithValue(writer, "MASIC_Job", masicJob.ToString());
+
+                    writer.WriteStartElement("Measurements");
+                    writer.WriteStartElement("Measurement");
+                    writer.WriteAttributeString("Name", "QCART");
+                    writer.WriteValue(qcartValue.ToString("0.0000"));
+                    writer.WriteEndElement(); // Measurement
+                    writer.WriteEndElement(); // Measurements
+
+                    writer.WriteEndElement(); // QCART_Results
+                }
+
+                return sb.ToString();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error converting Quameter results to XML; details:");
+                Console.WriteLine(ex);
+                return string.Empty;
+            }
+
+        }
+
         protected void CopyFailedResultsToArchiveFolder()
         {
             var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
@@ -211,20 +259,6 @@ namespace AnalysisManagerQCARTPlugin
 
             // Try to save whatever files are in the work directory (however, delete the XML files first)
             var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
-                var fiSpectraFiles = GetXMLSpectraFiles(diWorkDir);
-
-                foreach (var file in fiSpectraFiles)
-                    file.Delete();
-
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
 
             // Make the results folder
             var result = MakeResultsFolder();
@@ -245,41 +279,163 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
-        private string GetUsername()
+        private bool CreateBaselineMetricsMetadataFile(Dictionary<string, int> datasetNamesAndJobs)
         {
-            var currentUser = System.Security.Principal.WindowsIdentity.GetCurrent();
-            if (currentUser != null)
+            try
             {
-                var userName = currentUser.Name;
-                var lastSlashIndex = userName.LastIndexOf('\\');
-                if (lastSlashIndex >= 0)
-                    userName = userName.Substring(lastSlashIndex + 1);
+                var cacheFolderPath = m_jobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER, string.Empty);
 
-                return userName;
+                var baselineMetadataFileName = m_jobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME, string.Empty);
+                var baselineMetadataPathLocal = Path.Combine(m_WorkDir, baselineMetadataFileName);
+                var baselineMetadataPathRemote = Path.Combine(cacheFolderPath, baselineMetadataFileName);
+
+                var baselineResultsDataFileName = baselineMetadataFileName + "_" +
+                                                  DateTime.Now.ToString("yyyy-MM-dd_hhmm") + ".csv";
+                var baselineResultsPathLocal = Path.Combine(m_WorkDir, baselineResultsDataFileName);
+                var baselineResultsPathRemote = Path.Combine(cacheFolderPath, baselineResultsDataFileName);
+
+                m_jobParams.AddResultFileToSkip(baselineResultsPathLocal);
+
+                var projectName = m_jobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_PROJECT_NAME, string.Empty);
+
+                // Create the new metadata file
+                var baselineResultsTimestamp = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt");
+
+                using (var writer = new XmlTextWriter(new FileStream(baselineMetadataPathLocal, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
+                {
+                    writer.Formatting = Formatting.Indented;
+                    writer.Indentation = 4;
+                    writer.IndentChar = '\t';
+
+                    writer.WriteStartElement("Parameters");
+                    
+                    writer.WriteStartElement("Metadata");
+                    AppendXmlElementWithValue(writer, "Project", projectName);
+                    writer.WriteEndElement();
+
+                    writer.WriteStartElement("BaselineList");
+                    
+                    var query = (from item in datasetNamesAndJobs orderby item.Key select item);
+                    foreach (var item in query)
+                    {
+                        writer.WriteStartElement("BaselineDataset");
+                        AppendXmlElementWithValue(writer, "MasicJob", item.Value.ToString());
+                        AppendXmlElementWithValue(writer, "Dataset", item.Key);
+                        writer.WriteEndElement();
+                    }
+                    writer.WriteEndElement();
+
+                    writer.WriteStartElement("Results");
+                    AppendXmlElementWithValue(writer, "Timestamp", baselineResultsTimestamp);
+                    AppendXmlElementWithValue(writer, "BaselineResultsDataFile", baselineResultsDataFileName);
+                    writer.WriteEndElement();
+
+                    writer.WriteEndElement(); // </Parameters>
+                }
+
+                try 
+                {
+                    // Copy the metadata file to the remote path
+                    m_FileTools.CopyFile(baselineMetadataPathLocal, baselineMetadataPathRemote);
+                }
+                catch (Exception ex)
+                {
+                    m_message = "Exception copying the baseline metadata file to the cache folder";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         m_message + ": " + ex.Message);
+                    return false;
+                }
+
+                try
+                {
+                    // Copy the baseline results file to the remote path
+                    m_FileTools.CopyFile(baselineResultsPathLocal, baselineResultsPathRemote);
+                }
+                catch (Exception ex)
+                {
+                    m_message = "Exception copying the baseline results file to the cache folder";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         m_message + ": " + ex.Message);
+                    return false;
+                }
+
+            
+                return true;
             }
-
-            return string.Empty;
+            catch (Exception ex)
+            {
+                m_message = "Exception creating the baseline metrics metadata file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     m_message + ": " + ex.Message);
+                return false;
+            }
         }
 
-        private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo diWorkDir)
+        /// <summary>
+        /// Delete the baseline metadata lock file if it exists
+        /// </summary>
+        private void DeleteLockFileIfRequired()
         {
-            var fiSpectraFiles = diWorkDir.GetFiles(m_Dataset + "_scan*.xml").ToList();
-            return fiSpectraFiles;
-        }
+            var lockFilePath = m_jobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_METADATA_LOCKFILE, string.Empty);
 
+            if (string.IsNullOrWhiteSpace(lockFilePath))
+                return;
 
-        private int MoveWorkDirFiles(DirectoryInfo diZipWork, string fileMask)
-        {
-            var diWorkDir = new DirectoryInfo(m_WorkDir);
-            var filesToMove = diWorkDir.GetFiles(fileMask).ToList();
-
-            foreach (var fiFile in filesToMove)
+            try
             {
-                fiFile.MoveTo(Path.Combine(diZipWork.FullName, fiFile.Name));
+                var fiLockFile = new FileInfo(lockFilePath);
+                if (fiLockFile.Exists)
+                    fiLockFile.Delete();
+            }
+            catch
+            {
+                // Ignore errors here
             }
 
-            return filesToMove.Count;
+        }
 
+        /// <summary>
+        /// Retrieve the baseline dataset names and corresponding Masic jobs that were stored by clsAnalysisResourcesQCART
+        /// </summary>
+        /// <returns>Dictionary of dataset names and Masic jobs</returns>
+        private Dictionary<string, int> GetPackedDatasetNamesAndJobs()
+        {
+
+            var datasetNamesAndJobsText = ExtractPackedJobParameterDictionary(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);
+
+            var datasetNamesAndJobs = new Dictionary<string, int>(datasetNamesAndJobsText.Count);
+
+            foreach (var item in datasetNamesAndJobsText)
+            {
+                int masicJob;
+                if (int.TryParse(item.Value, out masicJob))
+                {
+                    datasetNamesAndJobs.Add(item.Key, masicJob);
+                }
+
+            }
+
+            return datasetNamesAndJobs;
+
+        }
+
+        private bool LoadQCARTResults(FileInfo fiResults, out float qcartValue)
+        {
+            qcartValue = 0;
+
+            try
+            {
+
+                m_message = "LoadQCARTResults not implemented!";
+
+                throw new NotImplementedException();
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception loading QC-Art results";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message + ": " + ex.Message);
+                return false;              
+            }
         }
 
         /// <summary>
@@ -291,75 +447,13 @@ namespace AnalysisManagerQCARTPlugin
         {
             // Example Console output
             //
-            // start=5/4/2015 2:16:45 PM
-            // dataset_path=E:\DMS_WorkDir\2015_04_05_ESIL_Pos_ESIL_HighMass_TOF1p4_000001_scan1.xml
-            // param_file_path=E:\DMS_WorkDir\QCART_DI_Diagnostics_Targets_Pairs_2015-04-30.param
-            // 	err	[Only one peak found; cannot run diagnostics]
-            // diagnostics=failure
-            // summary=success
-            // end=5/4/2015 2:16:45 PM
+            // ...
             // 
 
             try
             {
 
-                var reErrorMessage = new Regex(@"err\t\[(.+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-                if (!File.Exists(strConsoleOutputFilePath))
-                {
-                    if (m_DebugLevel >= 4)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " + strConsoleOutputFilePath);
-                    }
-
-                    return;
-                }
-
-                if (m_DebugLevel >= 4)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
-                }
-
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-
-                    while (!srInFile.EndOfStream)
-                    {
-                        var strLineIn = srInFile.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(strLineIn))
-                        {
-                            continue;
-                        }
-
-                        if (strLineIn.ToLower().StartsWith("error "))
-                        {
-                            StoreConsoleErrorMessage(srInFile, strLineIn);
-                        }
-
-                        var reMatch = reErrorMessage.Match(strLineIn);
-                        if (reMatch.Success)
-                        {
-                            var errorMessage = reMatch.Groups[1].Value;
-
-                            if (errorMessage.Contains("No peaks found") ||
-                                errorMessage.Contains("Only one peak found"))
-                            {
-                                mNoPeaksFound = true;
-                            }
-                            else
-                            {
-                                mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, errorMessage);                                    
-                            }
-                        }
-                        else if (strLineIn.Contains("No peaks found") ||
-                            strLineIn.Contains("Only one peak found"))
-                        {
-                            mNoPeaksFound = true;
-                        }
-                    }
-
-                }
+                // Nothing to do
 
             }
             catch (Exception ex)
@@ -373,65 +467,60 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
-        private void PostProcessResultsOneScan(DirectoryInfo diZipWork, int scanCount, int scanNumber)
+        private bool PostProcessResults(Dictionary<string, int> datasetNamesAndJobs, string existingBaselineResultsFileName)
         {
-            diZipWork.Refresh();
-            if (diZipWork.Exists)
+            try
             {
-                foreach (var fileToRemove in diZipWork.GetFiles("*").ToList())
+                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var fiResultsFiles = diWorkDir.GetFiles("QCART_results.csv").ToList();
+
+                if (fiResultsFiles.Count == 0)
                 {
-                    fileToRemove.Delete();
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        m_message = "QCART results not found";
+                    }
+                    return false;
                 }
+
+                float qcartValue;
+
+                var success = LoadQCARTResults(fiResultsFiles.FirstOrDefault(), out qcartValue);
+                if (!success)
+                {
+                    return false;
+                }
+
+                success = StoreResultsInDb(datasetNamesAndJobs, qcartValue);
+
+                if (success && string.IsNullOrWhiteSpace(existingBaselineResultsFileName))
+                {
+                    CreateBaselineMetricsMetadataFile(datasetNamesAndJobs);
+                }
+
+                return success;
+
             }
-            else
+            catch (Exception ex)
             {
-                diZipWork.Create();
-            }
-
-            var filesMatched = 0;
-
-            if (scanCount == 1)
-            {
-                // Skip the console output file and QCART summary file
-                m_jobParams.AddResultFileToSkip(mCurrentConsoleOutputFile);
-                m_jobParams.AddResultFileToSkip("QCART_summary.txt");
-
-                // Combine the distribution files into a single .zip file
-                filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
-
-                if (filesMatched > 0)
-                    m_IonicZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, "Distributions.zip"));
-            }
-            else
-            {
-                // Combine the distribution files, the dm_ files, and the console output file into a zip file
-                // Example name: QCART_Results_scan1.zip
-
-                filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
-                filesMatched += MoveWorkDirFiles(diZipWork, "dm_pairs*.txt");
-                filesMatched += MoveWorkDirFiles(diZipWork, "dm_stats*.txt");
-                filesMatched += MoveWorkDirFiles(diZipWork, "QCART_ConsoleOutput_scan*.txt");
-
-                if (filesMatched > 0)
-                    m_IonicZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, COMPRESSED_QCART_RESULTS_BASE + scanNumber + ".zip"));
+                m_message = "Exception post processing results";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message + ": " + ex.Message);
+                return false;              
             }
         }
-
-        private bool ProcessOneFileWithQCART(
-            string progLoc,
-            FileInfo spectrumFile,
-            string paramFilePath,
-            int filesProcessed,
-            out int scanNumber)
+  
+        private bool ProcessDatasetWithQCART(
+            string rProgLoc,
+            string existingBaselineResultsFileName,
+            Dictionary<string, int> datasetNamesAndJobs)
         {
-            // Set up and execute a program runner to run QCART
-
-            var reGetScanNumber = new Regex(@"scan(\d+).xml", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            // Set up and execute a program runner to run QC-ART
+            // We create a batch file that calls R using a custom R script
 
             var cmdStr = string.Empty;
-            cmdStr += " " + PossiblyQuotePath(spectrumFile.FullName);
-            cmdStr += " " + PossiblyQuotePath(paramFilePath);
+            // cmdStr += " " + PossiblyQuotePath(spectrumFile.FullName);
 
+            /*
             if (m_DebugLevel >= 1)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + cmdStr);
@@ -525,118 +614,11 @@ namespace AnalysisManagerQCARTPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
                                      "QCART failed (but exit code is 0)");
             }
+            */
 
             return false;
         }
 
-        private bool ProcessScansWithQCART(string progLoc, out bool noPeaksFound)
-        {
-
-            noPeaksFound = false;
-
-            try
-            {
-
-                mConsoleOutputErrorMsg = string.Empty;
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing data using QCART");
-
-                var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
-
-                if (!File.Exists(paramFilePath))
-                {
-                    LogError("Parameter file not found", "Parameter file not found: " + paramFilePath);
-                    return false;
-                }
-
-                var targetsFileName = m_jobParams.GetParam("dm_target_file");
-
-                // Update the parameter file to use the targets file specified by the settings file
-                var success = UpdateParameterFile(paramFilePath, targetsFileName);
-                if (!success)
-                    return false;
-
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
-                var spectraFiles = GetXMLSpectraFiles(diWorkDir);
-
-                mTotalSpectra = spectraFiles.Count;
-
-                if (mTotalSpectra == 0)
-                {
-                    m_message = "XML spectrum files not found";
-                    return false;
-                }
-
-                m_progress = PROGRESS_PCT_STARTING;
-
-                var diZipWork = new DirectoryInfo(Path.Combine(m_WorkDir, "ScanResultsZipWork"));
-
-                var filesProcessed = 0;
-                var fileCountNoPeaks = 0;
-
-                foreach (var spectrumFile in spectraFiles)
-                {
-                    mNoPeaksFound = false;
-
-                    int scanNumber;
-                    success = ProcessOneFileWithQCART(progLoc, spectrumFile, paramFilePath, filesProcessed, out scanNumber);
-                    if (!success)
-                        return false;
-
-                    m_jobParams.AddResultFileToSkip(spectrumFile.Name);
-
-                    PostProcessResultsOneScan(diZipWork, spectraFiles.Count, scanNumber);
-
-                    if (mNoPeaksFound)
-                        fileCountNoPeaks++;
-
-                    filesProcessed++;
-                }
-
-                m_jobParams.AddResultFileToSkip(targetsFileName);
-
-                m_progress = PROGRESS_PCT_COMPLETE;
-                m_StatusTools.UpdateAndWrite(m_progress);
-                if (m_DebugLevel >= 3)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "QCART processing Complete");
-                }
-
-                if (fileCountNoPeaks <= 0)
-                {
-                    return true;
-                }
-
-                if (filesProcessed == 1 || fileCountNoPeaks >= filesProcessed)
-                {
-                    // None of the scans had peaks
-                    m_message = "No peaks found";
-                    if (filesProcessed > 1)
-                        m_EvalMessage = "None of the scans had peaks";
-                    else
-                        m_EvalMessage = "Scan did not have peaks";
-
-                    noPeaksFound = true;
-
-                    m_jobParams.AddResultFileToSkip(paramFilePath);
-                }
-                else
-                {
-                    // Some of the scans had no peaks
-                    m_EvalMessage = fileCountNoPeaks + " / " + filesProcessed + " scans had no peaks";
-                }
-
-                return true;
-
-            }
-            catch (Exception ex)
-            {
-                m_message = "Error in QCARTPlugin->StartQCART";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return false;
-            }
-
-        }
 
         private void StoreConsoleErrorMessage(StreamReader srInFile, string strLineIn)
         {
@@ -657,6 +639,69 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
             }
+        }
+
+        private bool StoreResultsInDb(Dictionary<string, int> datasetNamesAndJobs, float qcartValue)
+        {
+              
+            try
+            {
+               
+                var query = (from item in datasetNamesAndJobs where string.Equals(item.Key, m_Dataset, StringComparison.CurrentCultureIgnoreCase) select item.Value).ToList();
+                if (query.Count == 0)
+                {
+                    LogError("Dataset " + m_Dataset + " not found in the cached dataset names and jobs");
+                    return false;
+                }
+
+                var xmlData = ConstructXmlForDbPosting(m_Dataset, query.First(), qcartValue);
+
+                // Gigasax.DMS5
+                var connectionString = m_mgrParams.GetParam("connectionstring");
+                var datasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0);
+
+
+                // Call stored procedure StoreQCARTResults
+                // Retry up to 3 times
+
+                var objCommand = new System.Data.SqlClient.SqlCommand();
+
+                {
+                    objCommand.CommandType = System.Data.CommandType.StoredProcedure;
+                    objCommand.CommandText = STORE_QCART_RESULTS;
+
+                    objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
+                    objCommand.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+
+                    objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@DatasetID", System.Data.SqlDbType.Int));
+                    objCommand.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
+                    objCommand.Parameters["@DatasetID"].Value = datasetID;
+
+                    objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ResultsXML", System.Data.SqlDbType.Xml));
+                    objCommand.Parameters["@ResultsXML"].Direction = System.Data.ParameterDirection.Input;
+                    objCommand.Parameters["@ResultsXML"].Value = xmlData;
+                }
+
+                var executor = new clsExecuteDatabaseSP(connectionString);
+
+                var returnCode = executor.ExecuteSP(objCommand, 3);
+
+                if (returnCode == 0)
+                {
+                    return true;
+                }
+
+                LogError("Error storing the QC-ART result in the database");
+                return false;
+
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception storing QCART Results in database";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message + ": " + ex.Message);
+                return false;
+            }
+
         }
 
         /// <summary>
@@ -792,7 +837,7 @@ namespace AnalysisManagerQCARTPlugin
 
                     LogProgress("QCART");
                 }
-                
+
             }
 
         }

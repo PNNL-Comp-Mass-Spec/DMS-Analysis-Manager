@@ -200,6 +200,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Plugins\AM_QC-ART_PlugIn\AnalysisManagerQCARTPlugIn.csproj">
+      <Project>{f418e32a-6b5f-4f40-809e-730d20f32fa1}</Project>
+      <Name>AnalysisManagerQCARTPlugIn</Name>
+    </ProjectReference>
     <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>
