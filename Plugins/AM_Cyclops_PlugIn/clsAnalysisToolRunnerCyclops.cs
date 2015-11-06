@@ -44,19 +44,21 @@ namespace AnalysisManager_Cyclops_PlugIn
                 }
 
 				// Determine the path to R
-				string RProgLocFromRegistry = GetRPathFromWindowsRegistry();
+				var rProgLocFromRegistry = GetRPathFromWindowsRegistry();
+                if (string.IsNullOrEmpty(rProgLocFromRegistry))
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
-				if (!Directory.Exists(RProgLocFromRegistry))
+                if (!Directory.Exists(rProgLocFromRegistry))
 				{
 					m_message = "R folder not found (path determined from the Windows Registry)";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + RProgLocFromRegistry);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + rProgLocFromRegistry);
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
 				var d_Params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 				{
 					{"Job", m_jobParams.GetParam("Job")},
-					{"RDLL", RProgLocFromRegistry},
+					{"RDLL", rProgLocFromRegistry},
 					{"CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName")},
 					{"workDir", m_WorkDir},
 					{"Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor")},
@@ -66,7 +68,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 				};
 
 				//Change the name of the log file for the local log file to the plug in log filename
-				String LogFileName = Path.Combine(m_WorkDir, "Cyclops_Log");
+				var LogFileName = Path.Combine(m_WorkDir, "Cyclops_Log");
 				log4net.GlobalContext.Properties["LogName"] = LogFileName;
 				clsLogTools.ChangeLogFileName(LogFileName);
 
@@ -120,7 +122,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 				m_Dataset = m_jobParams.GetParam("OutputFolderName");
 				m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-				IJobParams.CloseOutType result = MakeResultsFolder();
+				var result = MakeResultsFolder();
 				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					// MakeResultsFolder handles posting to local log, so set database error message and exit
@@ -139,7 +141,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 				if (diPlotsFolder.Exists) 
 				{
-					string strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+					var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
 					diPlotsFolder.MoveTo(strTargetFolderPath);
 				}
 
@@ -162,7 +164,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         protected void CopyFailedResultsToArchiveFolder()
         {
-	        string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+	        var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
@@ -173,7 +175,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory
-	        string strFolderPathToArchive = string.Copy(m_WorkDir);
+	        var strFolderPathToArchive = string.Copy(m_WorkDir);
 
 			// If necessary, delete extra files with the following
 			/* 
@@ -189,7 +191,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 		    */
 
             // Make the results folder
-            IJobParams.CloseOutType result = MakeResultsFolder();
+            var result = MakeResultsFolder();
             if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
@@ -215,16 +217,16 @@ namespace AnalysisManager_Cyclops_PlugIn
         protected bool StoreToolVersionInfo()
         {
 
-			string strToolVersionInfo = string.Empty;
+			var strToolVersionInfo = string.Empty;
 
 			if (m_DebugLevel >= 2) {
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 			}
 
 			try {
-				System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Cyclops").GetName();
+				var oAssemblyName = System.Reflection.Assembly.Load("Cyclops").GetName();
 
-				string strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
+				var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
 				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
 			} catch (Exception ex) {
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Cyclops: " + ex.Message);
@@ -246,39 +248,6 @@ namespace AnalysisManager_Cyclops_PlugIn
 
 
         }
-
-		/// <summary>
-		/// Determines the folder that contains R.exe and Rcmd.exe
-		/// </summary>
-		/// <returns>Folder path, e.g. C:\Program Files\R\R-2.15.1\bin\x64</returns>
-        private string GetRPathFromWindowsRegistry()
-        {
-			const string RCORE_SUBKEY = @"SOFTWARE\R-core";
-
-			Microsoft.Win32.RegistryKey regRCore = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(RCORE_SUBKEY);
-            if (regRCore == null)
-            {
-	            m_message = "Registry key is not found: " + RCORE_SUBKEY;
-				throw new ApplicationException(m_message);
-            }
-            bool is64Bit = Environment.Is64BitProcess;
-			string sRSubKey = is64Bit ? "R64" : "R";
-			Microsoft.Win32.RegistryKey regR = regRCore.OpenSubKey(sRSubKey);
-            if (regR == null)
-            {
-	            m_message = "Registry key is not found: " + RCORE_SUBKEY + @"\" + sRSubKey;
-                throw new ApplicationException(m_message);
-            }
-            var currentVersion = new Version((string)regR.GetValue("Current Version"));
-            var installPath = (string)regR.GetValue("InstallPath");
-            string bin = Path.Combine(installPath, "bin");
-
-            // Up to 2.11.x, DLLs are installed in R_HOME\bin.
-            // From 2.12.0, DLLs are installed in the one level deeper directory.
-			if (currentVersion < new Version(2, 12))
-				return bin;
-			
-			return Path.Combine(bin, is64Bit ? "x64" : "i386");
-        }
+		
 	}
 }

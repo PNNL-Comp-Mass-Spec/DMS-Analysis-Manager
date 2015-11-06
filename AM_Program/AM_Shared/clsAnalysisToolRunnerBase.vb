@@ -1198,7 +1198,7 @@ Public Class clsAnalysisToolRunnerBase
         Return progLoc
 
     End Function
-
+    
     ''' <summary>
     ''' Gets the dictionary for the packed job parameter
     ''' </summary>
@@ -1425,6 +1425,47 @@ Public Class clsAnalysisToolRunnerBase
         End If
 
         Return strMSXmlGeneratorExe
+    End Function
+
+    ''' <summary>
+    ''' Determines the folder that contains R.exe and Rcmd.exe (queries the registry)
+    ''' </summary>
+    ''' <returns>Folder path, e.g. C:\Program Files\R\R-3.2.2\bin\x64</returns>
+    Protected Function GetRPathFromWindowsRegistry() As String
+        Const RCORE_SUBKEY = "SOFTWARE\R-core"
+
+        Dim regRCore As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(RCORE_SUBKEY)
+        If regRCore Is Nothing Then
+            LogError("Registry key is not found: " & RCORE_SUBKEY)
+            Return String.Empty
+        End If
+
+        Dim is64Bit As Boolean = Environment.Is64BitProcess
+        Dim sRSubKey As String = If(is64Bit, "R64", "R")
+        Dim regR As Microsoft.Win32.RegistryKey = regRCore.OpenSubKey(sRSubKey)
+        If regR Is Nothing Then
+            LogError("Registry key is not found: " & RCORE_SUBKEY + "\" & sRSubKey)
+            Return String.Empty
+        End If
+
+        Dim currentVersion = New Version(DirectCast(regR.GetValue("Current Version"), String))
+        Dim installPath = DirectCast(regR.GetValue("InstallPath"), String)
+
+        Dim bin As String = Path.Combine(installPath, "bin")
+
+        ' Up to 2.11.x, DLLs are installed in R_HOME\bin
+        ' From 2.12.0, DLLs are installed in either i386 or x64 (or both) below the bin folder
+        ' The bin folder has an R.exe file but it does not have Rcmd.exe or R.dll
+        If currentVersion < New Version(2, 12) Then
+            Return bin
+        End If
+
+        If is64Bit Then
+            Return Path.Combine(bin, "x64")
+        Else
+            Return Path.Combine(bin, "i386")
+        End If
+
     End Function
 
     ''' <summary>

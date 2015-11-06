@@ -10,12 +10,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
 using PRISM.DataBase;
-using PRISM.Files;
 
 namespace AnalysisManagerQCARTPlugin
 {
@@ -23,25 +21,22 @@ namespace AnalysisManagerQCARTPlugin
     {
         #region "Constants and Enums"
 
-        protected const float PROGRESS_PCT_STARTING = 5;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        private const float PROGRESS_PCT_STARTING = 5;
+        private const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const string QCART_CONSOLE_OUTPUT_BASE = "QCART_ConsoleOutput";
-        protected const string STORE_QCART_RESULTS = "StoreQCARTResults";
+        private const string QCART_R_SCRIPT_NAME = "QCARTscript.r";
+        private const string QCART_CONSOLE_OUTPUT = "QCART_ConsoleOutput.txt";
+        private const string STORE_QCART_RESULTS = "StoreQCARTResults";
 
         #endregion
 
         #region "Module Variables"
 
-        protected string mCurrentConsoleOutputFile;
-        protected string mConsoleOutputErrorMsg;
-        protected bool mNoPeaksFound;
+        private string mConsoleOutputFile;
+        private string mConsoleOutputErrorMsg;
 
-        protected DateTime mLastConsoleOutputParse;
-        protected DateTime mLastProgressWriteTime;
-
-        protected int mTotalSpectra;
-        protected int mSpectraProcessed;
+        private DateTime mLastConsoleOutputParse;
+        private DateTime mLastProgressWriteTime;
 
         #endregion
 
@@ -72,19 +67,26 @@ namespace AnalysisManagerQCARTPlugin
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mLastProgressWriteTime = DateTime.UtcNow;
 
-                mTotalSpectra = 0;
-                mSpectraProcessed = 0;
 
                 // Determine the path to R
-                var rProgLoc = DetermineProgramLocation("QCART", "QCARTProgLoc", "QCART.exe");
-
-                if (string.IsNullOrWhiteSpace(rProgLoc))
+                var rProgLocFromRegistry = GetRPathFromWindowsRegistry();
+                if (string.IsNullOrEmpty(rProgLocFromRegistry))
                 {
                     DeleteLockFileIfRequired();
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Store the QCART.exe version info in the database
+                if (!Directory.Exists(rProgLocFromRegistry))
+                {
+                    m_message = "R folder not found (path determined from the Windows Registry)";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + rProgLocFromRegistry);
+                    DeleteLockFileIfRequired();
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var rProgLoc = Path.Combine(rProgLocFromRegistry, "R.exe");
+
+                // Store the R.exe version info in the database
                 if (!StoreToolVersionInfo(rProgLoc))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
@@ -146,9 +148,12 @@ namespace AnalysisManagerQCARTPlugin
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // No need to keep the JobParameters file
+                // No need to keep several files; exclude them now
                 m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
-
+                m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.DATASET_METRIC_FILE_NAME);
+                m_jobParams.AddResultFileToSkip(QCART_R_SCRIPT_NAME);
+                m_jobParams.AddResultFileToSkip(QCART_R_SCRIPT_NAME + ".Rout");
+                
                 var result = MakeResultsFolder();
                 if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -245,7 +250,7 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        private void CopyFailedResultsToArchiveFolder()
         {
             var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
@@ -515,26 +520,29 @@ namespace AnalysisManagerQCARTPlugin
             Dictionary<string, int> datasetNamesAndJobs)
         {
             // Set up and execute a program runner to run QC-ART
-            // We create a batch file that calls R using a custom R script
+            // We call R.exe passing it the path to an R script file
 
-            var cmdStr = string.Empty;
-            // cmdStr += " " + PossiblyQuotePath(spectrumFile.FullName);
+            // First create the script file
 
-            /*
+            var rScriptPath = Path.Combine(m_WorkDir, QCART_R_SCRIPT_NAME);
+            m_jobParams.AddResultFileToSkip(rScriptPath);
+
+            using (var writer = new StreamWriter(new FileStream(rScriptPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+            {
+                writer.WriteLine("require(QCART)");
+                writer.WriteLine("baselineResultsPath <- \"E:/DMS_WorkDir/" + existingBaselineResultsFileName + "\"");
+                writer.WriteLine("outputFolderPath <- \"E:/DMS_WorkDir/\"");
+                writer.WriteLine("computeScore(modelsFile=paste(outputFolder,\"Models_paper.Rdata\",sep=\"\"), outputFolder=outputFolder)");
+            }
+
+            var cmdStr = "CMD BATCH --vanilla --slave " + PossiblyQuotePath(rScriptPath);
+
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + cmdStr);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, rProgLoc + " " + cmdStr);
             }
 
-            scanNumber = filesProcessed;
-
-            var reMatch = reGetScanNumber.Match(spectrumFile.Name);
-            if (reMatch.Success)
-            {
-                int.TryParse(reMatch.Groups[1].Value, out scanNumber);
-            }
-
-            mCurrentConsoleOutputFile = Path.Combine(m_WorkDir, QCART_CONSOLE_OUTPUT_BASE + scanNumber + ".txt");
+            mConsoleOutputFile = Path.Combine(m_WorkDir, QCART_CONSOLE_OUTPUT);
 
             var cmdRunner = new clsRunDosProgram(m_WorkDir)
             {
@@ -547,20 +555,16 @@ namespace AnalysisManagerQCARTPlugin
 
             cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
 
-            var subTaskProgress = filesProcessed / (float)mTotalSpectra * 100;
+            m_progress = PROGRESS_PCT_STARTING;
 
-            m_progress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
-
-            var success = cmdRunner.RunProgram(progLoc, cmdStr, "QCART", true);
+            var success = cmdRunner.RunProgram(rProgLoc, cmdStr, "QCART", true);
 
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
                 Thread.Sleep(250);
 
-                var swConsoleOutputfile =
-                    new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create,
-                                                    FileAccess.Write, FileShare.Read));
+                var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
                 swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
                 swConsoleOutputfile.Close();
             }
@@ -574,16 +578,6 @@ namespace AnalysisManagerQCARTPlugin
             // Parse the QCART_summary file to look for errors
             Thread.Sleep(250);
             var fiLogSummaryFile = new FileInfo(Path.Combine(m_WorkDir, "QCART_summary.txt"));
-            if (!fiLogSummaryFile.Exists)
-            {
-                // Summary file not created
-                // Look for a log file in folder C:\Users\d3l243\AppData\Local\
-                var alternateLogPath = Path.Combine(@"C:\Users", GetUsername(), @"AppData\Local\QCART.log");
-
-                var fiAlternateLogFile = new FileInfo(alternateLogPath);
-                if (fiAlternateLogFile.Exists)
-                    fiAlternateLogFile.CopyTo(fiLogSummaryFile.FullName, true);
-            }
 
             ParseConsoleOutputFile(fiLogSummaryFile.FullName);
 
@@ -598,23 +592,20 @@ namespace AnalysisManagerQCARTPlugin
                 return true;
             }
 
-            var msg = "Error processing scan " + scanNumber + " using QCART";
-            m_message = clsGlobal.AppendToComment(m_message, msg);
+            m_message = "Error running QC-ART";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 msg + ", job " + m_JobNum);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
 
             if (cmdRunner.ExitCode != 0)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                     "QCART returned a non-zero exit code: " + cmdRunner.ExitCode);
+                                     "R.exe returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
             else
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                     "QCART failed (but exit code is 0)");
+                                     "R.exe failed (but exit code is 0)");
             }
-            */
 
             return false;
         }
@@ -708,7 +699,7 @@ namespace AnalysisManagerQCARTPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strProgLoc)
+        private bool StoreToolVersionInfo(string strProgLoc)
         {
 
             var strToolVersionInfo = string.Empty;
@@ -735,7 +726,7 @@ namespace AnalysisManagerQCARTPlugin
             }
 
             // Lookup the version of the .NET program
-            StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
+            StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
 
             // Store paths to key DLLs in ioToolFiles
             var ioToolFiles = new List<FileInfo>
@@ -833,7 +824,7 @@ namespace AnalysisManagerQCARTPlugin
                 {
                     mLastConsoleOutputParse = DateTime.UtcNow;
 
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, mCurrentConsoleOutputFile));
+                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, mConsoleOutputFile));
 
                     LogProgress("QCART");
                 }

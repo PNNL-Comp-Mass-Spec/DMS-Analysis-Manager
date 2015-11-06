@@ -467,7 +467,14 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="dataFileDescription">User friendly description of the data file, e.g. LipidMapsDB</param>
     ''' <param name="statusTools">Status Tools object</param>
     ''' <param name="maxWaitTimeMinutes">Maximum age of the lock file</param>
-    ''' <remarks></remarks>
+    ''' <remarks>
+    ''' Typical steps for using lock files to assure that only one manager is creating a specific file
+    ''' 1. Call CheckForLockFile() to check for a lock file; wait for it to age
+    ''' 2. Once CheckForLockFile() exits, check for the required data file; exit the function if the desired file is found
+    ''' 3. If the file was not found, create a new lock file by calling CreateLockFile()
+    ''' 4. Do the work and create the data file, including copying to the central location
+    ''' 5. Delete the lock file by calling DeleteLockFile() or by deleting the file path returned by CreateLockFile()
+    ''' </remarks>
     Public Shared Sub CheckForLockFile(
        dataFilePath As String,
        dataFileDescription As String,
