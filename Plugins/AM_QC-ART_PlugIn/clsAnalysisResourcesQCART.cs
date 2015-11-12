@@ -20,7 +20,7 @@ namespace AnalysisManagerQCARTPlugin
     public class clsAnalysisResourcesQCART : clsAnalysisResources
     {
         public const string JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS = "QC-ART_Baseline_Dataset_NamesAndJobs";
-        
+
         public const string JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER = "QC-ART_Baseline_Results_Cache_Folder_Path";
 
         public const string JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME = "QC-ART_Baseline_Metadata_File_Name";
@@ -31,10 +31,19 @@ namespace AnalysisManagerQCARTPlugin
 
         public const string JOB_PARAMETER_QCART_PROJECT_NAME = "QC-ART_Project_Name";
 
-        public const string DATASET_METRIC_FILE_NAME = "DatasetMetricFile.txt";
-        public const string REPORT_IONS_FILE_SUFFIX = "_ReporterIons.txt";
+        public const string SMAQC_DATA_FILE_NAME = "SMAQC_Data.csv";
+        public const string REPORTER_IONS_FILE_SUFFIX = "_ReporterIons.txt";
+
+        public const string QCART_PROCESSING_SCRIPT_NAME = "QC_ART_Processing_Script.R";
+        public const string QCART_RESULTS_FILE_NAME = "QC_ART_Results.txt";
+
+        public const string NEW_BASELINE_RESULTS_FILENAME = "NewBaselineDatasets_BaselineResults.csv";
+
+        public const string NEW_BASELINE_DATASET_FILE_CACHE = "QCART_Cache_NewBaselineDatasets.csv";
+
 
         private string mProjectName;
+        private int mTargetDatasetFraction;
 
         /// <summary>
         /// Constructor
@@ -42,6 +51,7 @@ namespace AnalysisManagerQCARTPlugin
         public clsAnalysisResourcesQCART()
         {
             mProjectName = string.Empty;
+            mTargetDatasetFraction = 0;
         }
 
         public override IJobParams.CloseOutType GetResources()
@@ -61,6 +71,18 @@ namespace AnalysisManagerQCARTPlugin
                 var success = RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)
                 {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Retrieve the QC_ART R script
+                currentTask = "Retrieve the R script";
+                var rScriptName = m_jobParams.GetParam("QCARTRScriptName", "QC_ART_2015-11-11.R");
+                var rScriptStoragePath = Path.Combine(paramFileStoragePath, "Template_Scripts");
+
+                success = RetrieveFile(rScriptName, rScriptStoragePath);
+                if (!success)
+                {
+                    m_message = "Template QC-ART R Script not found: " + rScriptName;
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -90,7 +112,7 @@ namespace AnalysisManagerQCARTPlugin
                 // baseline datasets so that the QC-ART tool can compute a new baseline
 
                 currentTask = "Get existing baseline results";
-                
+
                 string baselineMetadataFilePath;
                 bool criticalError;
 
@@ -104,18 +126,21 @@ namespace AnalysisManagerQCARTPlugin
                     var lockFilePath = CreateLockFile(baselineMetadataFilePath, "Creating QCART baseline data via " + m_MgrName);
 
                     m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAMETER_QCART_BASELINE_METADATA_LOCKFILE, lockFilePath);
-                    
+
                 }
                 // This list contains the dataset names for which we need to obtain QC Metric values (P_2C, MS1_2B, etc.)
-                var datasetNamesToRetrieveMectrics = new List<string>
+                var datasetNamesToRetrieveMetrics = new List<string>
                 {
                     m_DatasetName
                 };
 
+                // Also need to obtain the QC Metric values for the baseline datasets (regardless of whether we're using an existing baseline file)
+                datasetNamesToRetrieveMetrics.AddRange(baselineDatasets.Keys);
+
                 // Cache the current dataset and job info
                 var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-                currentTask = "Retrieve " + REPORT_IONS_FILE_SUFFIX + " file for " + m_DatasetName;
+                currentTask = "Retrieve " + REPORTER_IONS_FILE_SUFFIX + " file for " + m_DatasetName;
 
                 success = RetrieveReporterIonsFile(udtCurrentDatasetAndJobInfo);
                 if (!success)
@@ -125,7 +150,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 if (!baselineResultsFound)
                 {
-                    currentTask = "Retrieve " + REPORT_IONS_FILE_SUFFIX + " files for the baseline datasets";
+                    currentTask = "Retrieve " + REPORTER_IONS_FILE_SUFFIX + " files for the baseline datasets";
 
                     success = RetrieveDataForBaselineDatasets(paramFileName, baselineDatasets);
                     if (!success)
@@ -133,8 +158,6 @@ namespace AnalysisManagerQCARTPlugin
 
                     // Restore the dataset and job info using udtCurrentDatasetAndJobInfo
                     OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);
-
-                    datasetNamesToRetrieveMectrics.AddRange(baselineDatasets.Keys);
                 }
 
                 currentTask = "Process the MyEMSL download queue";
@@ -149,7 +172,14 @@ namespace AnalysisManagerQCARTPlugin
                 StorePackedJobParameterDictionary(baselineDatasets, JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);
 
                 currentTask = "Retrieve QC Metrics from DMS";
-                success = RetrieveQCMetricsFromDB(datasetNamesToRetrieveMectrics);
+                success = RetrieveQCMetricsFromDB(datasetNamesToRetrieveMetrics);
+                if (!success)
+                {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Customize the QC-ART R Script
+                success = CustomizeQCRScript(rScriptName, baselineResultsFound);
                 if (!success)
                 {
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
@@ -164,6 +194,149 @@ namespace AnalysisManagerQCARTPlugin
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
 
+        }
+
+        /// <summary>
+        /// Customize the RScript to replace the template parameters with actual values
+        /// </summary>
+        /// <param name="rScriptName"></param>
+        /// <param name="baselineResultsFound"></param>
+        /// <returns></returns>
+        private bool CustomizeQCRScript(string rScriptName, bool baselineResultsFound)
+        {
+            try
+            {
+                var templateMatcher = new Regex(@"{\$([^}]+)}", RegexOptions.Compiled);
+
+                var fiTemplateFile = new FileInfo(Path.Combine(m_WorkingDir, rScriptName));
+                var fiCustomizedScript = new FileInfo(Path.Combine(m_WorkingDir, QCART_PROCESSING_SCRIPT_NAME));
+
+                using (var reader = new StreamReader(new FileStream(fiTemplateFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(fiCustomizedScript.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                        {
+                            writer.WriteLine();
+                            continue;
+                        }
+
+                        var reMatch = templateMatcher.Match(dataLine);
+
+                        if (!reMatch.Success)
+                        {
+                            writer.WriteLine(dataLine);
+                            continue;
+                        }
+
+                        var paramName = reMatch.Groups[1].Value;
+                        string customValue;
+
+                        switch (paramName)
+                        {
+                            case "WORKING_DIRECTORY_PATH":
+                                // Example value: E:/DMS_WorkDir1/
+                                customValue = ToUnixFolderPath(m_WorkingDir);
+                                break;
+
+                            case "TARGET_DATASET_NAME":
+                                customValue = m_DatasetName;
+                                break;
+
+                            case "TARGET_DATASET_FRACTION":
+                                if (mTargetDatasetFraction == 0)
+                                {
+                                    var errorMsg = "Error in CustomizeQCRScript: SCX fraction for dataset " + m_DatasetName + " is 0";
+                                    LogError(errorMsg, errorMsg + "; should have been determined in RetrieveQCMetricsFromDB");
+                                    return false;
+                                }
+                                customValue = mTargetDatasetFraction.ToString();
+                                break;
+
+                            case "USE_EXISTING_BASELINE":
+                                customValue = baselineResultsFound ? "TRUE" : "FALSE";
+                                break;
+
+                            case "NEW_BASELINE_DATASET_INFO_FILENAME":
+                                customValue = baselineResultsFound ? "NULL" : NEW_BASELINE_RESULTS_FILENAME;
+                                break;
+
+                            case "EXISTING_BASELINE_CSV_NAME":
+                                if (baselineResultsFound)
+                                {
+                                    customValue = m_jobParams.GetJobParameter(JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
+                                    if (string.IsNullOrWhiteSpace(customValue))
+                                    {
+                                        var errorMsg = "Error in CustomizeQCRScript: " + JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME + " is undefined";
+                                        LogError(errorMsg, errorMsg + "; should have been stored in RetrieveExistingBaselineResultFile");
+                                        return false;
+                                    }
+                                }
+                                else
+                                {
+                                    customValue = "UndefinedFile_since_NewBaselineDatasets.csv";
+                                }
+                                break;
+
+                            case "NEW_BASELINE_DATA_FILENAME":
+                                if (baselineResultsFound)
+                                {
+                                    customValue = "UndefinedFile_sinceExistingBaselineDatasetFile.csv";
+                                }
+                                else
+                                {
+                                    customValue = NEW_BASELINE_DATASET_FILE_CACHE;
+                                }
+                                break;
+
+                            case "SMAQC_DATA_FILENAME":
+                                customValue = SMAQC_DATA_FILE_NAME;
+                                break;
+
+                            case "TARGET_DATASET_RESULTS":
+                                customValue = QCART_RESULTS_FILE_NAME;
+                                break;
+
+                            default:
+                                LogError("Unrecognized template name in the QC-ART template script: " + paramName + " in " + rScriptName);
+                                return false;
+                        }
+
+                        var updatedLine = templateMatcher.Replace(dataLine, customValue);
+
+                        writer.WriteLine(updatedLine);
+                    }
+                }
+
+                m_jobParams.AddResultFileToSkip(fiTemplateFile.Name);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in CustomizeQCRScript", ex);
+                return false;
+            }
+
+
+        }
+
+        /// <summary>
+        /// Converts a Windows folder path to a Unix-style folder path
+        /// </summary>
+        /// <param name="folderPath"></param>
+        /// <returns>New folder path, ending in /</returns>
+        private static string ToUnixFolderPath(string folderPath)
+        {
+            var unixPath = folderPath.Replace("\\", "/");
+
+            if (unixPath.EndsWith("/"))
+                return unixPath;
+
+            return unixPath + "/";
         }
 
         /// <summary>
@@ -200,9 +373,9 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns>True if existing results were found and successfully copied locally; otherwise false</returns>
         /// <remarks>Also uses mProjectName and baselineDatasets</remarks>
         private bool FindBaselineResults(
-            string paramFilePath, 
-            string baselineMetadataKey, 
-            out string baselineMetadataFilePath, 
+            string paramFilePath,
+            string baselineMetadataKey,
+            out string baselineMetadataFilePath,
             out bool criticalError)
         {
             baselineMetadataFilePath = String.Empty;
@@ -392,7 +565,7 @@ namespace AnalysisManagerQCARTPlugin
 
 
                 // Compute the MD5 Hash of the datasets and jobs in baselineDatasets
-                
+
                 var sbTextToHash = new StringBuilder();
                 var query = (from item in baselineDatasets orderby item.Key select item);
 
@@ -555,12 +728,13 @@ namespace AnalysisManagerQCARTPlugin
         private bool RetrieveQCMetricsFromDB(ICollection<string> datasetNamesToRetrieveMectrics)
         {
             const int RETRY_COUNT = 3;
-            const string DATASET_COLUMN = "Dataset";
+            const string DATASET_COLUMN = "DatasetName";
+            const string FRACTION_COLUMN = "Fraction";
 
             try
             {
                 var datasetParseErrors = new List<string>();
-                var datasetsMatched = new List<string>();
+                var datasetsMatched = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
 
                 if (datasetNamesToRetrieveMectrics.Count == 0)
                 {
@@ -580,13 +754,14 @@ namespace AnalysisManagerQCARTPlugin
 
                 var sqlStr = new StringBuilder();
 
-                sqlStr.Append("SELECT Dataset_ID, Acq_Time_Start AS StartTime, Dataset_Rating AS Rating, " + DATASET_COLUMN + ", ");
-                sqlStr.Append(string.Join(", ", metricNames) + " ");
-                sqlStr.Append("FROM V_Dataset_QC_Metrics_Export ");
-                sqlStr.Append("WHERE Dataset IN (");
+                sqlStr.AppendLine("SELECT Dataset AS " + DATASET_COLUMN + ", 0 AS " + FRACTION_COLUMN + ",");
+                sqlStr.AppendLine("       Dataset_ID, Acq_Time_Start AS [Date], Dataset_Rating AS Rating,");
+                sqlStr.AppendLine(string.Join(", ", metricNames) + " ");
+                sqlStr.AppendLine("FROM V_Dataset_QC_Metrics_Export ");
+                sqlStr.AppendLine("WHERE Dataset IN (");
 
                 sqlStr.Append("'" + string.Join("', '", datasetNamesToRetrieveMectrics) + "'");
-                sqlStr.Append(")");
+                sqlStr.AppendLine(")");
 
                 DataTable resultSet;
 
@@ -617,17 +792,29 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                var datasetAndMetricFilePath = Path.Combine(m_WorkingDir, DATASET_METRIC_FILE_NAME);
+                var datasetAndMetricFilePath = Path.Combine(m_WorkingDir, SMAQC_DATA_FILE_NAME);
                 using (var writer = new StreamWriter(new FileStream(datasetAndMetricFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    // Write the header line
+                    // Parse the headers
                     var headers = (from DataColumn item in resultSet.Columns select item.ColumnName).ToList();
 
-                    // Add the SCX fraction header
-                    headers.Add("SCX_Fraction");
+                    var datasetNameIndex = 0;
+                    var fractionColIndex = -1;
 
-                    writer.WriteLine(clsGlobal.CollapseList(headers));
+                    for (var colIndex = 0; colIndex < headers.Count; colIndex++)
+                    {
+                        if (string.Equals(headers[colIndex], FRACTION_COLUMN))
+                            fractionColIndex = colIndex;
 
+                        if (string.Equals(headers[colIndex], DATASET_COLUMN))
+                            datasetNameIndex = colIndex;
+
+                    }
+
+                    // Write the header line
+                    writer.WriteLine(clsGlobal.FlattenList(headers, ','));
+
+                    // Write each data line
                     foreach (DataRow row in resultSet.Rows)
                     {
                         var dataValues = new List<string>();
@@ -637,7 +824,7 @@ namespace AnalysisManagerQCARTPlugin
                             dataValues.Add(clsGlobal.DbCStr(dataVal));
                         }
 
-                        var datasetName = row[DATASET_COLUMN].ToString();
+                        var datasetName = dataValues[datasetNameIndex];
 
                         // Parse the dataset name to determine the SCX Fraction
                         var fractionNumber = ExtractFractionFromDatasetName(datasetName);
@@ -646,18 +833,23 @@ namespace AnalysisManagerQCARTPlugin
                         {
                             datasetParseErrors.Add(datasetName);
                         }
+                        else if (fractionColIndex >= 0)
+                        {
+                            dataValues[fractionColIndex] = fractionNumber.ToString();
 
-                        dataValues.Add(fractionNumber.ToString());
+                            if (clsGlobal.IsMatch(datasetName, m_DatasetName))
+                                mTargetDatasetFraction = fractionNumber;
+                        }
 
-                        if (datasetsMatched.Contains(datasetName, StringComparer.CurrentCultureIgnoreCase))
+                        if (datasetsMatched.Contains(datasetName))
                         {
                             // Dataset already defined
-                            // Unexpected, but skip it
+                            // This is unexpected; we will skip it
                             continue;
                         }
 
                         datasetsMatched.Add(datasetName);
-                        writer.WriteLine(clsGlobal.CollapseList(dataValues));
+                        writer.WriteLine(clsGlobal.FlattenList(dataValues, ','));
                     }
                 }
 
@@ -677,7 +869,7 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                // SCX fraction parse errors
+                // One or more SCX fraction parse errors
 
                 errorMessage = "Could not determine SCX fraction number";
                 LogErrorForOneOrMoreDatasets(errorMessage, datasetParseErrors);
@@ -737,12 +929,12 @@ namespace AnalysisManagerQCARTPlugin
                     m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", udtJobInfo.ResultsFolderName);
                 }
 
-                var reporterIonsFileName = m_DatasetName + REPORT_IONS_FILE_SUFFIX;
+                var reporterIonsFileName = m_DatasetName + REPORTER_IONS_FILE_SUFFIX;
 
                 var success = FindAndRetrieveMiscFiles(reporterIonsFileName, false);
                 if (!success)
                 {
-                    LogError(REPORT_IONS_FILE_SUFFIX + " file not found for dataset " + udtJobInfo.Dataset + ", job " + udtJobInfo.Job);
+                    LogError(REPORTER_IONS_FILE_SUFFIX + " file not found for dataset " + udtJobInfo.Dataset + ", job " + udtJobInfo.Job);
                     return false;
                 }
 

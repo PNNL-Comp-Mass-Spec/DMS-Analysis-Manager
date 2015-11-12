@@ -24,7 +24,6 @@ namespace AnalysisManagerQCARTPlugin
         private const float PROGRESS_PCT_STARTING = 5;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
-        private const string QCART_R_SCRIPT_NAME = "QCARTscript.r";
         private const string QCART_CONSOLE_OUTPUT = "QCART_ConsoleOutput.txt";
         private const string STORE_QCART_RESULTS = "StoreQCARTResults";
 
@@ -95,8 +94,6 @@ namespace AnalysisManagerQCARTPlugin
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var existingBaselineResultsFileName = m_jobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
-
                 // Retrieve the baseline dataset names and corresponding Masic job numbers
                 var datasetNamesAndJobs = GetPackedDatasetNamesAndJobs();
                 if (datasetNamesAndJobs.Count == 0)
@@ -106,7 +103,7 @@ namespace AnalysisManagerQCARTPlugin
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = ProcessDatasetWithQCART(rProgLoc, existingBaselineResultsFileName, datasetNamesAndJobs);
+                var success = ProcessDatasetWithQCART(rProgLoc);
 
                 var eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
@@ -117,7 +114,7 @@ namespace AnalysisManagerQCARTPlugin
                 else
                 {
                     // Look for the result files
-                    success = PostProcessResults(datasetNamesAndJobs, existingBaselineResultsFileName);
+                    success = PostProcessResults(datasetNamesAndJobs);
                     if (!success)
                         eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -150,9 +147,9 @@ namespace AnalysisManagerQCARTPlugin
 
                 // No need to keep several files; exclude them now
                 m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
-                m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.DATASET_METRIC_FILE_NAME);
-                m_jobParams.AddResultFileToSkip(QCART_R_SCRIPT_NAME);
-                m_jobParams.AddResultFileToSkip(QCART_R_SCRIPT_NAME + ".Rout");
+                m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.SMAQC_DATA_FILE_NAME);
+                m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME);
+                m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_RESULTS_FILE_NAME);
                 
                 var result = MakeResultsFolder();
                 if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
@@ -284,7 +281,9 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
-        private bool CreateBaselineMetricsMetadataFile(Dictionary<string, int> datasetNamesAndJobs)
+        private bool CreateBaselineMetricsMetadataFile(
+            Dictionary<string, int> datasetNamesAndJobs,
+            FileInfo fiNewBaselineResults)
         {
             try
             {
@@ -294,17 +293,18 @@ namespace AnalysisManagerQCARTPlugin
                 var baselineMetadataPathLocal = Path.Combine(m_WorkDir, baselineMetadataFileName);
                 var baselineMetadataPathRemote = Path.Combine(cacheFolderPath, baselineMetadataFileName);
 
-                var baselineResultsDataFileName = baselineMetadataFileName + "_" +
-                                                  DateTime.Now.ToString("yyyy-MM-dd_hhmm") + ".csv";
-                var baselineResultsPathLocal = Path.Combine(m_WorkDir, baselineResultsDataFileName);
-                var baselineResultsPathRemote = Path.Combine(cacheFolderPath, baselineResultsDataFileName);
+                var dtCurrentTime = DateTime.Now;
 
-                m_jobParams.AddResultFileToSkip(baselineResultsPathLocal);
+                var baselineResultsFinalFileName = baselineMetadataFileName + "_" + dtCurrentTime.ToString("yyyy-MM-dd_hhmm") + ".csv";
+
+                var baselineResultsPathRemote = Path.Combine(cacheFolderPath, baselineResultsFinalFileName);
+
+                m_jobParams.AddResultFileToSkip(fiNewBaselineResults.Name);
 
                 var projectName = m_jobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_PROJECT_NAME, string.Empty);
 
                 // Create the new metadata file
-                var baselineResultsTimestamp = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt");
+                var baselineResultsTimestamp = dtCurrentTime.ToString("yyyy-MM-dd hh:mm:ss tt");
 
                 using (var writer = new XmlTextWriter(new FileStream(baselineMetadataPathLocal, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
                 {
@@ -332,7 +332,7 @@ namespace AnalysisManagerQCARTPlugin
 
                     writer.WriteStartElement("Results");
                     AppendXmlElementWithValue(writer, "Timestamp", baselineResultsTimestamp);
-                    AppendXmlElementWithValue(writer, "BaselineResultsDataFile", baselineResultsDataFileName);
+                    AppendXmlElementWithValue(writer, "BaselineResultsDataFile", baselineResultsFinalFileName);
                     writer.WriteEndElement();
 
                     writer.WriteEndElement(); // </Parameters>
@@ -346,21 +346,19 @@ namespace AnalysisManagerQCARTPlugin
                 catch (Exception ex)
                 {
                     m_message = "Exception copying the baseline metadata file to the cache folder";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         m_message + ": " + ex.Message);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
                     return false;
                 }
 
                 try
                 {
                     // Copy the baseline results file to the remote path
-                    m_FileTools.CopyFile(baselineResultsPathLocal, baselineResultsPathRemote);
+                    m_FileTools.CopyFile(fiNewBaselineResults.FullName, baselineResultsPathRemote);
                 }
                 catch (Exception ex)
                 {
                     m_message = "Exception copying the baseline results file to the cache folder";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         m_message + ": " + ex.Message);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
                     return false;
                 }
 
@@ -370,8 +368,7 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Exception creating the baseline metrics metadata file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     m_message + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -438,7 +435,7 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Exception loading QC-Art results";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
                 return false;              
             }
         }
@@ -472,12 +469,13 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
-        private bool PostProcessResults(Dictionary<string, int> datasetNamesAndJobs, string existingBaselineResultsFileName)
+        private bool PostProcessResults(Dictionary<string, int> datasetNamesAndJobs)
         {
             try
             {
+                // Load the QC-ART results for the target dataset
                 var diWorkDir = new DirectoryInfo(m_WorkDir);
-                var fiResultsFiles = diWorkDir.GetFiles("QCART_results.csv").ToList();
+                var fiResultsFiles = diWorkDir.GetFiles(clsAnalysisResourcesQCART.QCART_RESULTS_FILE_NAME).ToList();
 
                 if (fiResultsFiles.Count == 0)
                 {
@@ -497,11 +495,29 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 success = StoreResultsInDb(datasetNamesAndJobs, qcartValue);
-
-                if (success && string.IsNullOrWhiteSpace(existingBaselineResultsFileName))
+                if (!success)
                 {
-                    CreateBaselineMetricsMetadataFile(datasetNamesAndJobs);
+                    return false;
                 }
+
+                // Determine whether or not we used existing an baseline results file
+                var existingBaselineResultsFileName = m_jobParams.GetJobParameter(clsAnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
+
+                if (!string.IsNullOrWhiteSpace(existingBaselineResultsFileName))
+                {
+                    // Existing results used
+                    return true;
+                }
+
+                var fiNewBaselineResults = new FileInfo(Path.Combine(m_WorkDir, clsAnalysisResourcesQCART.NEW_BASELINE_RESULTS_FILENAME));
+                if (!fiNewBaselineResults.Exists)
+                {
+                    m_message = "QC-ART Processing error: new baseline results file not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + fiNewBaselineResults.Name);
+
+                }
+
+                success = CreateBaselineMetricsMetadataFile(datasetNamesAndJobs, fiNewBaselineResults);
 
                 return success;
 
@@ -509,31 +525,17 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Exception post processing results";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
                 return false;              
             }
         }
   
-        private bool ProcessDatasetWithQCART(
-            string rProgLoc,
-            string existingBaselineResultsFileName,
-            Dictionary<string, int> datasetNamesAndJobs)
+        private bool ProcessDatasetWithQCART(string rProgLoc)
         {
             // Set up and execute a program runner to run QC-ART
-            // We call R.exe passing it the path to an R script file
+            // We call R.exe passing it the path to the R script file customized by clsAnalysisResourcesQCART
 
-            // First create the script file
-
-            var rScriptPath = Path.Combine(m_WorkDir, QCART_R_SCRIPT_NAME);
-            m_jobParams.AddResultFileToSkip(rScriptPath);
-
-            using (var writer = new StreamWriter(new FileStream(rScriptPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-            {
-                writer.WriteLine("require(QCART)");
-                writer.WriteLine("baselineResultsPath <- \"E:/DMS_WorkDir/" + existingBaselineResultsFileName + "\"");
-                writer.WriteLine("outputFolderPath <- \"E:/DMS_WorkDir/\"");
-                writer.WriteLine("computeScore(modelsFile=paste(outputFolder,\"Models_paper.Rdata\",sep=\"\"), outputFolder=outputFolder)");
-            }
+            var rScriptPath = Path.Combine(m_WorkDir, clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME);
 
             var cmdStr = "CMD BATCH --vanilla --slave " + PossiblyQuotePath(rScriptPath);
 
@@ -689,7 +691,7 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Exception storing QCART Results in database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
                 return false;
             }
 
