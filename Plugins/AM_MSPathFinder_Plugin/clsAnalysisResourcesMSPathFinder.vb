@@ -46,54 +46,54 @@ Public Class clsAnalysisResourcesMSPathFinder
 
 	Private Function RetrieveFastaAndParamFile() As Boolean
 
-		Dim currentTask As String = "Initializing"
+        Dim currentTask = "Initializing"
 
-		Try
+        Try
 
-			' Retrieve the Fasta file
-			Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+            ' Retrieve the Fasta file
+            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
 
-			currentTask = "RetrieveOrgDB to " & localOrgDbFolder
+            currentTask = "RetrieveOrgDB to " & localOrgDbFolder
 
-			If Not RetrieveOrgDB(localOrgDbFolder) Then Return False
+            If Not RetrieveOrgDB(localOrgDbFolder) Then Return False
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
-			' Retrieve the parameter file
-			' This will also obtain the _ModDefs.txt file using query 
-			'  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
-			'  FROM V_Param_File_Mass_Mod_Info 
-			'  WHERE Param_File_Name = 'ParamFileName'
+            ' Retrieve the parameter file
+            ' This will also obtain the _ModDefs.txt file using query 
+            '  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
+            '  FROM V_Param_File_Mass_Mod_Info 
+            '  WHERE Param_File_Name = 'ParamFileName'
 
-			Dim paramFileName = m_jobParams.GetParam("ParmFileName")
+            Dim paramFileName = m_jobParams.GetParam("ParmFileName")
 
-			currentTask = "RetrieveGeneratedParamFile " & paramFileName
+            currentTask = "RetrieveGeneratedParamFile " & paramFileName
 
             If Not RetrieveGeneratedParamFile(paramFileName) Then
                 Return False
             End If
 
-			Return True
+            Return True
 
-		Catch ex As Exception
-			m_message = "Exception in RetrieveFastaAndParamFile: " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-			Return False
-		End Try
+        Catch ex As Exception
+            m_message = "Exception in RetrieveFastaAndParamFile: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            Return False
+        End Try
 
-	End Function
+    End Function
 
     Protected Function RetrievePBFFile() As IJobParams.CloseOutType
 
-        Const PBF_GEN_FOLDER_PREFIX As String = "PBF_GEN"
+        Const PBF_GEN_FOLDER_PREFIX = "PBF_GEN"
 
-        Dim currentTask As String = "Initializing"
+        Dim currentTask = "Initializing"
 
         Try
 
             ' Cache the input folder name
             Dim inputFolderNameCached = m_jobParams.GetJobParameter("InputFolderName", String.Empty)
-            Dim inputFolderNameWasUpdated As Boolean = False
+            Dim inputFolderNameWasUpdated = False
 
             If Not inputFolderNameCached.ToUpper().StartsWith(PBF_GEN_FOLDER_PREFIX) Then
                 ' Update the input folder to be the PBF_Gen input folder for this job (should be the input_folder of the previous job step)
@@ -139,7 +139,7 @@ Public Class clsAnalysisResourcesMSPathFinder
                 Return eResult
             End If
 
-            m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION)            
+            m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION)
 
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 

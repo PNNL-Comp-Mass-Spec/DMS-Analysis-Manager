@@ -130,14 +130,18 @@ namespace AnalysisManagerQCARTPlugin
 
                 }
                 // This list contains the dataset names for which we need to obtain QC Metric values (P_2C, MS1_2B, etc.)
-                var datasetNamesToRetrieveMetrics = new List<string>
+                var datasetNamesToRetrieveMetrics = new SortedSet<string>
                 {
                     m_DatasetName
                 };
 
                 // Also need to obtain the QC Metric values for the baseline datasets 
                 // (regardless of whether we're using an existing baseline file)
-                datasetNamesToRetrieveMetrics.AddRange(baselineDatasets.Keys);
+                foreach (var datasetName in baselineDatasets.Keys.Except(datasetNamesToRetrieveMetrics))
+                {
+                    datasetNamesToRetrieveMetrics.Add(datasetName);
+                }
+               
 
                 // Cache the current dataset and job info
                 var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();

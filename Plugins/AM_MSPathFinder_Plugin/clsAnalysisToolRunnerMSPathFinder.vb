@@ -11,6 +11,9 @@ Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Runtime.InteropServices
+Imports System.Text
+Imports System.Threading
+Imports PRISM.Processes
 
 ''' <summary>
 ''' Class for running MSPathFinder analysis of top down data
@@ -145,7 +148,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
             CmdRunner = Nothing
 
             'Make sure objects are released
-            Threading.Thread.Sleep(500)        ' 500 msec delay
+            Thread.Sleep(500)        ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             If Not blnSuccess Then
@@ -219,7 +222,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -243,6 +246,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
         dctParamNames.Add("minMass", "minMass")
         dctParamNames.Add("maxMass", "maxMass")
+
+        dctParamNames.Add("tagSearch", "tagSearch")
 
         ' The following are special cases; 
         ' do not add to dctParamNames
@@ -296,7 +301,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output
 
@@ -604,13 +609,14 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' <param name="lstDynamicMods">List of Dynamic Mods</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function ParseMSPathFinderModifications(ByVal strParameterFilePath As String, _
-      ByRef sbOptions As Text.StringBuilder, _
-      ByVal intNumMods As Integer, _
-      ByRef lstStaticMods As List(Of String), _
-      ByRef lstDynamicMods As List(Of String)) As Boolean
+    Protected Function ParseMSPathFinderModifications(
+     strParameterFilePath As String,
+     sbOptions As StringBuilder,
+     intNumMods As Integer,
+     lstStaticMods As List(Of String),
+     lstDynamicMods As List(Of String)) As Boolean
 
-        Const MOD_FILE_NAME As String = "MSPathFinder_Mods.txt"
+        Const MOD_FILE_NAME = "MSPathFinder_Mods.txt"
         Dim blnSuccess As Boolean
         Dim strModFilePath As String
         Dim errMsg As String
@@ -696,11 +702,14 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' <param name="strCmdLineOptions">Output: MSGFDb command line arguments</param>
     ''' <returns>Options string if success; empty string if an error</returns>
     ''' <remarks></remarks>
-    Public Function ParseMSPathFinderParameterFile(ByVal fastaFileIsDecoy As Boolean, <Out()> ByRef strCmdLineOptions As String, <Out()> tdaEnabled As Boolean) As IJobParams.CloseOutType
+    Public Function ParseMSPathFinderParameterFile(
+      fastaFileIsDecoy As Boolean,
+      <Out()> ByRef strCmdLineOptions As String,
+      <Out()> ByRef tdaEnabled As Boolean) As IJobParams.CloseOutType
 
-        Dim intNumMods As Integer = 0
-        Dim lstStaticMods As List(Of String) = New List(Of String)
-        Dim lstDynamicMods As List(Of String) = New List(Of String)
+        Dim intNumMods = 0
+        Dim lstStaticMods = New List(Of String)
+        Dim lstDynamicMods = New List(Of String)
 
         Dim errMsg As String
 
@@ -714,7 +723,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
-        Dim sbOptions = New Text.StringBuilder(500)
+        Dim sbOptions = New StringBuilder(500)
 
         Try
 
@@ -799,7 +808,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
     ''' <returns>True if valid; false if invalid</returns>
     ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-    Protected Function ParseMSPathFinderValidateMod(ByVal strMod As String, <Out()> ByRef strModClean As String) As Boolean
+    Protected Function ParseMSPathFinderValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
 
         Dim intPoundIndex As Integer
         Dim strSplitMod() As String
@@ -830,7 +839,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
         ' Reconstruct the mod definition, making sure there is no whitespace
         strModClean = strSplitMod(0).Trim()
-        For intIndex As Integer = 1 To strSplitMod.Length - 1
+        For intIndex = 1 To strSplitMod.Length - 1
             strModClean &= "," & strSplitMod(intIndex).Trim()
         Next
 
@@ -848,14 +857,14 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     Private Function PostProcessMSPathFinderResults() As Boolean
 
         ' Move the output files into a subfolder so that we can zip them
-        Dim compressDirPath = String.Empty
+        Dim compressDirPath As String
 
         Try
             Dim diWorkDir = New DirectoryInfo(m_WorkDir)
 
             ' Make sure MSPathFinder has released the file handles
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-            Threading.Thread.Sleep(500)
+            clsProgRunner.GarbageCollectNow()
+            Thread.Sleep(500)
 
             Dim diCompressDir = New DirectoryInfo(Path.Combine(m_WorkDir, "TempCompress"))
             If diCompressDir.Exists Then
@@ -910,7 +919,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
     End Function
 
-    Protected Function StartMSPathFinder(ByVal progLoc As String, ByVal fastaFileIsDecoy As Boolean, <Out()> ByRef tdaEnabled As Boolean) As Boolean
+    Protected Function StartMSPathFinder(progLoc As String, fastaFileIsDecoy As Boolean, <Out()> ByRef tdaEnabled As Boolean) As Boolean
 
         Dim CmdStr As String
         Dim blnSuccess As Boolean
@@ -971,15 +980,15 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
         If Not CmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
-            System.Threading.Thread.Sleep(250)
+            Thread.Sleep(250)
 
-            Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+            Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
             swConsoleOutputfile.Close()
         End If
 
         ' Parse the console output file one more time to check for errors
-        System.Threading.Thread.Sleep(250)
+        Thread.Sleep(250)
         ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -1025,7 +1034,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strProgLoc As String) As Boolean
 
         Dim strToolVersionInfo = String.Empty
         Dim blnSuccess As Boolean

@@ -170,19 +170,21 @@ Public Class clsAnalysisToolRunnerSMAQC
 				End If
 			End If
 
-			If Not blnProcessingError Then
-				Dim blnSuccessLLRC As Boolean
+            ' In use from June 2013 through November 12, 2015
+            '
+            'If Not blnProcessingError Then
+            '	Dim blnSuccessLLRC As Boolean
 
-				blnSuccessLLRC = ComputeLLRC()
+            '	blnSuccessLLRC = ComputeLLRC()
 
-				If Not blnSuccessLLRC Then
-					' Do not treat this as a fatal error
-					If String.IsNullOrEmpty(m_EvalMessage) Then
-						m_EvalMessage = "Unknown error computing QCDM using LLRC"
-					End If
-				End If
+            '	If Not blnSuccessLLRC Then
+            '		' Do not treat this as a fatal error
+            '		If String.IsNullOrEmpty(m_EvalMessage) Then
+            '			m_EvalMessage = "Unknown error computing QCDM using LLRC"
+            '		End If
+            '	End If
 
-			End If
+            'End If
 
 			' Rename the SMAQC log file to remove the datestamp
             Dim logFilePath = RenameSMAQCLogFile()
@@ -247,47 +249,55 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 	End Function
 
-	Protected Function ComputeLLRC() As Boolean
-		Dim blnSuccess As Boolean
+    ''' <summary>
+    ''' Use the SMAQC metrics to compute the LLRC score
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks>
+    ''' QCDM_2013.09.27.zip requires R 2.x
+    ''' We updated to R 3.x in November 2015 and have thus deprecated this method</remarks>
+    <Obsolete("No longer used")>
+    Protected Function ComputeLLRC() As Boolean
+        Dim blnSuccess As Boolean
 
-		Dim lstDatasetIDs = New List(Of Integer)
+        Dim lstDatasetIDs = New List(Of Integer)
 
-		Dim intDatasetID As Integer
-		intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1)
+        Dim intDatasetID As Integer
+        intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1)
 
-		If intDatasetID < 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Job parameter DatasetID is missing; cannot compute LLRC")
-			Return False
-		End If
+        If intDatasetID < 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Job parameter DatasetID is missing; cannot compute LLRC")
+            Return False
+        End If
 
-		lstDatasetIDs.Add(intDatasetID)
+        lstDatasetIDs.Add(intDatasetID)
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LLRC to compute QCDM")
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LLRC to compute QCDM")
 
-		Dim oLLRC = New LLRC.LLRCWrapper()
-		oLLRC.PostToDB = True
-		oLLRC.WorkingDirectory = m_WorkDir
+        Dim oLLRC = New LLRC.LLRCWrapper()
+        oLLRC.PostToDB = True
+        oLLRC.WorkingDirectory = m_WorkDir
 
-		' Add result files to skip
-		m_jobParams.AddResultFileExtensionToSkip(".Rdata")
-		m_jobParams.AddResultFileExtensionToSkip(".Rout")
-		m_jobParams.AddResultFileExtensionToSkip(".r")
-		m_jobParams.AddResultFileExtensionToSkip(".bat")
-		m_jobParams.AddResultFileToSkip("data.csv")
-		m_jobParams.AddResultFileToSkip("TestingDataset.csv")
+        ' Add result files to skip
+        m_jobParams.AddResultFileExtensionToSkip(".Rdata")
+        m_jobParams.AddResultFileExtensionToSkip(".Rout")
+        m_jobParams.AddResultFileExtensionToSkip(".r")
+        m_jobParams.AddResultFileExtensionToSkip(".bat")
+        m_jobParams.AddResultFileToSkip("data.csv")
+        m_jobParams.AddResultFileToSkip("TestingDataset.csv")
 
-		blnSuccess = oLLRC.ProcessDatasets(lstDatasetIDs)
+        blnSuccess = oLLRC.ProcessDatasets(lstDatasetIDs)
 
-		If Not blnSuccess Then
-			m_EvalMessage = "Error running LLRC: " & oLLRC.ErrorMessage
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-		ElseIf m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "LLRC Succeeded")
-		End If
+        If Not blnSuccess Then
+            m_EvalMessage = "Error running LLRC: " & oLLRC.ErrorMessage
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+        ElseIf m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "LLRC Succeeded")
+        End If
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Looks up the InstrumentID for the dataset associated with this job
