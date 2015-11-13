@@ -171,7 +171,7 @@ Public Class clsAnalysisToolRunnerBase
        mgrParams As IMgrParams,
        jobParams As IJobParams,
        statusTools As IStatusFile,
-       ByRef SummaryFile As clsSummaryFile) Implements IToolRunner.Setup
+       SummaryFile As clsSummaryFile) Implements IToolRunner.Setup
 
         m_mgrParams = mgrParams
         m_jobParams = jobParams
@@ -659,9 +659,9 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks></remarks>
     Private Function CopyResultsFolderRecursive(
       RootSourceFolderPath As String, SourceFolderPath As String, TargetFolderPath As String,
-      ByRef objAnalysisResults As clsAnalysisResults,
-      ByRef blnErrorEncountered As Boolean,
-      ByRef intFailedFileCount As Integer,
+      objAnalysisResults As clsAnalysisResults,
+      <Out()> ByRef blnErrorEncountered As Boolean,
+      <Out()> ByRef intFailedFileCount As Integer,
       intRetryCount As Integer,
       intRetryHoldoffSeconds As Integer,
       blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
@@ -1644,17 +1644,18 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Lookups up dataset information the data package associated with this analysis job
+    ''' Lookups up dataset information for the data package associated with this analysis job
     ''' </summary>
     ''' <param name="dctDataPackageJobs"></param>
     ''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
     ''' <remarks></remarks>
-    Protected Function LoadDataPackageJobInfo(ByRef dctDataPackageJobs As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)) As Boolean
+    Protected Function LoadDataPackageJobInfo(<Out()> ByRef dctDataPackageJobs As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)) As Boolean
 
         Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
         Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
         If DataPackageID < 0 Then
+            dctDataPackageJobs = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
             Return False
         Else
             Return clsAnalysisResources.LoadDataPackageJobInfo(ConnectionString, DataPackageID, dctDataPackageJobs)
@@ -2273,7 +2274,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="strVersion"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function ReadVersionInfoFile(strDLLFilePath As String, strVersionInfoFilePath As String, ByRef strVersion As String) As Boolean
+    Protected Function ReadVersionInfoFile(strDLLFilePath As String, strVersionInfoFilePath As String, <Out()> ByRef strVersion As String) As Boolean
 
         ' Open strVersionInfoFilePath and read the Version= line
         Dim srInFile As StreamReader
@@ -3262,7 +3263,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' </summary>
     ''' <param name="sngPercentComplete">Percent complete</param>
     ''' <remarks></remarks>
-    Protected Sub UpdateStatusFile(ByVal sngPercentComplete As Single)
+    Protected Sub UpdateStatusFile(sngPercentComplete As Single)
         Dim frequencySeconds = 15
         UpdateStatusFile(sngPercentComplete, frequencySeconds)
     End Sub
@@ -3273,7 +3274,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="sngPercentComplete">Percent complete</param>
     ''' <param name="frequencySeconds">Minimum time between updates, in seconds (must be at least 5)</param>
     ''' <remarks></remarks>
-    Protected Sub UpdateStatusFile(ByVal sngPercentComplete As Single, frequencySeconds As Integer)
+    Protected Sub UpdateStatusFile(sngPercentComplete As Single, frequencySeconds As Integer)
 
         If frequencySeconds < 5 Then frequencySeconds = 5
 
@@ -3298,7 +3299,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' </summary>
     ''' <param name="sngPercentComplete"></param>
     ''' <remarks></remarks>
-    Protected Sub UpdateStatusRunning(ByVal sngPercentComplete As Single)
+    Protected Sub UpdateStatusRunning(sngPercentComplete As Single)
         m_progress = sngPercentComplete
         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, 0, "", "", "", False)
     End Sub
@@ -3309,7 +3310,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="sngPercentComplete"></param>
     ''' <param name="spectrumCountTotal"></param>
     ''' <remarks></remarks>
-    Protected Sub UpdateStatusRunning(ByVal sngPercentComplete As Single, ByVal spectrumCountTotal As Integer)
+    Protected Sub UpdateStatusRunning(sngPercentComplete As Single, spectrumCountTotal As Integer)
         m_progress = sngPercentComplete
         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, sngPercentComplete, spectrumCountTotal, "", "", "", False)
     End Sub

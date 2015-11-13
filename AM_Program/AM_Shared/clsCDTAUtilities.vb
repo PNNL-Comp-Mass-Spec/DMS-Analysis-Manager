@@ -1,428 +1,429 @@
 ﻿Option Strict On
 
 Imports System.IO
+Imports System.Runtime.InteropServices
 Imports System.Threading
 
 Public Class clsCDTAUtilities
 
-	Protected WithEvents m_CDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
-
-	''' <summary>
-	''' Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
-	''' </summary>
-	''' <param name="strWorkDir">Folder with the CDTA file</param>
-	''' <param name="strInputFileName">CDTA filename</param>
-	''' <returns>True if success; false if an error</returns>
-	Public Function RemoveSparseSpectra(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
-
-		Const MINIMUM_ION_COUNT As Integer = 3
+    Protected WithEvents m_CDTACondenser As CondenseCDTAFile.clsCDTAFileCondenser
+
+    ''' <summary>
+    ''' Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
+    ''' </summary>
+    ''' <param name="strWorkDir">Folder with the CDTA file</param>
+    ''' <param name="strInputFileName">CDTA filename</param>
+    ''' <returns>True if success; false if an error</returns>
+    Public Function RemoveSparseSpectra(strWorkDir As String, strInputFileName As String) As Boolean
+
+        Const MINIMUM_ION_COUNT As Integer = 3
 
-		Dim strSourceFilePath As String
-		Dim fiOriginalFile As FileInfo
-		Dim fiUpdatedFile As FileInfo
+        Dim strSourceFilePath As String
+        Dim fiOriginalFile As FileInfo
+        Dim fiUpdatedFile As FileInfo
 
-		Dim strLineIn As String
+        Dim strLineIn As String
 
-		Dim blnParentIonLineIsNext As Boolean
+        Dim blnParentIonLineIsNext As Boolean
 
-		Dim intIonCount As Integer = 0
-		Dim intSpectraParsed As Integer = 0
-		Dim intSpectraRemoved As Integer = 0
+        Dim intIonCount As Integer = 0
+        Dim intSpectraParsed As Integer = 0
+        Dim intSpectraRemoved As Integer = 0
 
-		Dim sbCurrentSpectrum As Text.StringBuilder = New Text.StringBuilder
+        Dim sbCurrentSpectrum As Text.StringBuilder = New Text.StringBuilder
 
-		Try
+        Try
 
-			strSourceFilePath = Path.Combine(strWorkDir, strInputFileName)
-
-			If String.IsNullOrEmpty(strWorkDir) Then
-				ReportError("Error in RemoveSparseSpectra: strWorkDir is empty")
-				Return False
-			End If
-
-			If String.IsNullOrEmpty(strInputFileName) Then
-				ReportError("Error in RemoveSparseSpectra: strInputFileName is empty")
-				Return False
-			End If
-
-			fiOriginalFile = New FileInfo(strSourceFilePath)
-			If Not fiOriginalFile.Exists Then
-				ReportError("Error in RemoveSparseSpectra: source file not found: " + strSourceFilePath)
-				Return False
-			End If
-
-			fiUpdatedFile = New FileInfo(strSourceFilePath + ".tmp")
-
-			' Open the input file
-			Using srInFile As StreamReader = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-				' Create the output file
-				Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-					Do While Not srInfile.EndOfStream
-						strLineIn = srInFile.ReadLine()
-
-						If String.IsNullOrEmpty(strLineIn) Then
-							sbCurrentSpectrum.AppendLine()
-						Else
-							If strLineIn.StartsWith("="c) Then
-
-								' DTA header line, for example:
-								' =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
-
-								If sbCurrentSpectrum.Length > 0 Then
-									If intIonCount >= MINIMUM_ION_COUNT OrElse intSpectraParsed = 0 Then
-										' Write the cached spectrum
-										swOutFile.Write(sbCurrentSpectrum.ToString)
-									Else
-										intSpectraRemoved += 1
-									End If
-									sbCurrentSpectrum.Clear()
-									intIonCount = 0
-								End If
-
-								blnParentIonLineIsNext = True
-								intSpectraParsed += 1
-
-							ElseIf blnParentIonLineIsNext Then
-								' strLineIn contains the parent ion line text
+            strSourceFilePath = Path.Combine(strWorkDir, strInputFileName)
+
+            If String.IsNullOrEmpty(strWorkDir) Then
+                ReportError("Error in RemoveSparseSpectra: strWorkDir is empty")
+                Return False
+            End If
+
+            If String.IsNullOrEmpty(strInputFileName) Then
+                ReportError("Error in RemoveSparseSpectra: strInputFileName is empty")
+                Return False
+            End If
+
+            fiOriginalFile = New FileInfo(strSourceFilePath)
+            If Not fiOriginalFile.Exists Then
+                ReportError("Error in RemoveSparseSpectra: source file not found: " + strSourceFilePath)
+                Return False
+            End If
+
+            fiUpdatedFile = New FileInfo(strSourceFilePath + ".tmp")
+
+            ' Open the input file
+            Using srInFile As StreamReader = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+                ' Create the output file
+                Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+                    Do While Not srInFile.EndOfStream
+                        strLineIn = srInFile.ReadLine()
+
+                        If String.IsNullOrEmpty(strLineIn) Then
+                            sbCurrentSpectrum.AppendLine()
+                        Else
+                            If strLineIn.StartsWith("="c) Then
+
+                                ' DTA header line, for example:
+                                ' =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
+
+                                If sbCurrentSpectrum.Length > 0 Then
+                                    If intIonCount >= MINIMUM_ION_COUNT OrElse intSpectraParsed = 0 Then
+                                        ' Write the cached spectrum
+                                        swOutFile.Write(sbCurrentSpectrum.ToString)
+                                    Else
+                                        intSpectraRemoved += 1
+                                    End If
+                                    sbCurrentSpectrum.Clear()
+                                    intIonCount = 0
+                                End If
+
+                                blnParentIonLineIsNext = True
+                                intSpectraParsed += 1
+
+                            ElseIf blnParentIonLineIsNext Then
+                                ' strLineIn contains the parent ion line text
 
-								blnParentIonLineIsNext = False
-							Else
-								' Line is not a header or the parent ion line
-								' Assume a data line
-								intIonCount += 1
-							End If
+                                blnParentIonLineIsNext = False
+                            Else
+                                ' Line is not a header or the parent ion line
+                                ' Assume a data line
+                                intIonCount += 1
+                            End If
 
-							sbCurrentSpectrum.AppendLine(strLineIn)
-
-						End If
-					Loop
-
-					If sbCurrentSpectrum.Length > 0 Then
-						If intIonCount >= MINIMUM_ION_COUNT Then
-							' Write the cached spectrum
-							swOutFile.Write(sbCurrentSpectrum.ToString)
-						Else
-							intSpectraRemoved += 1
-						End If
-					End If
-
-				End Using
-			End Using
-
-			Dim blnSpectraRemoved As Boolean = False
-			Const blnReplaceSourceFile As Boolean = True
-			Const blnDeleteSourceFileIfUpdated As Boolean = True
-
-			If intSpectraRemoved > 0 Then
-				ReportInfo("Removed " & intSpectraRemoved & " spectra from " & strInputFileName & " since fewer than " & MINIMUM_ION_COUNT & " ions", 1)
-				blnSpectraRemoved = True
-			End If
+                            sbCurrentSpectrum.AppendLine(strLineIn)
+
+                        End If
+                    Loop
+
+                    If sbCurrentSpectrum.Length > 0 Then
+                        If intIonCount >= MINIMUM_ION_COUNT Then
+                            ' Write the cached spectrum
+                            swOutFile.Write(sbCurrentSpectrum.ToString)
+                        Else
+                            intSpectraRemoved += 1
+                        End If
+                    End If
+
+                End Using
+            End Using
+
+            Dim blnSpectraRemoved As Boolean = False
+            Const blnReplaceSourceFile As Boolean = True
+            Const blnDeleteSourceFileIfUpdated As Boolean = True
+
+            If intSpectraRemoved > 0 Then
+                ReportInfo("Removed " & intSpectraRemoved & " spectra from " & strInputFileName & " since fewer than " & MINIMUM_ION_COUNT & " ions", 1)
+                blnSpectraRemoved = True
+            End If
 
-			FinalizeCDTAValidation(blnSpectraRemoved, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, fiOriginalFile, fiUpdatedFile)
+            FinalizeCDTAValidation(blnSpectraRemoved, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, fiOriginalFile, fiUpdatedFile)
 
-		Catch ex As Exception
-			ReportError("Exception in RemoveSparseSpectra: " + ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            ReportError("Exception in RemoveSparseSpectra: " + ex.Message)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
-	''' <summary>
-	''' Replaces the original file with a new CDTA file if blnNewCDTAFileHasUpdates=True; deletes the new CDTA file if blnNewCDTAFileHasUpdates=false
-	''' </summary>
-	''' <param name="blnNewCDTAFileHasUpdates">True if the new CDTA file has updated info</param>
-	''' <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
-	''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
-	''' <param name="fiOriginalFile">File handle to the original CDTA file</param>
-	''' <param name="fiUpdatedFile">File handle to the new CDTA file</param>
-	''' <remarks></remarks>
-	Protected Sub FinalizeCDTAValidation(ByVal blnNewCDTAFileHasUpdates As Boolean, ByVal blnReplaceSourceFile As Boolean, ByVal blnDeleteSourceFileIfUpdated As Boolean, ByVal fiOriginalFile As FileInfo, ByVal fiUpdatedFile As FileInfo)
-
-		If blnNewCDTAFileHasUpdates Then
-			Thread.Sleep(100)
-
-			Dim strSourceFilePath As String = fiOriginalFile.FullName
-
-			If blnReplaceSourceFile Then
-				' Replace the original file with the new one
-				Dim strOldFilePath As String
-				Dim intAddon As Integer = 0
-
-				Do
-					strOldFilePath = fiOriginalFile.FullName + ".old"
-					If intAddon > 0 Then
-						strOldFilePath &= intAddon.ToString()
-					End If
-					intAddon += 1
-				Loop While File.Exists(strOldFilePath)
-
-				fiOriginalFile.MoveTo(strOldFilePath)
-				Thread.Sleep(100)
-
-				fiUpdatedFile.MoveTo(strSourceFilePath)
-
-				If blnDeleteSourceFileIfUpdated Then
-					Thread.Sleep(125)
-					PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-					fiOriginalFile.Delete()
-				End If
-
+    End Function
+    ''' <summary>
+    ''' Replaces the original file with a new CDTA file if blnNewCDTAFileHasUpdates=True; deletes the new CDTA file if blnNewCDTAFileHasUpdates=false
+    ''' </summary>
+    ''' <param name="blnNewCDTAFileHasUpdates">True if the new CDTA file has updated info</param>
+    ''' <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
+    ''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
+    ''' <param name="fiOriginalFile">File handle to the original CDTA file</param>
+    ''' <param name="fiUpdatedFile">File handle to the new CDTA file</param>
+    ''' <remarks></remarks>
+    Protected Sub FinalizeCDTAValidation(blnNewCDTAFileHasUpdates As Boolean, blnReplaceSourceFile As Boolean, blnDeleteSourceFileIfUpdated As Boolean, fiOriginalFile As FileInfo, fiUpdatedFile As FileInfo)
+
+        If blnNewCDTAFileHasUpdates Then
+            Thread.Sleep(100)
+
+            Dim strSourceFilePath As String = fiOriginalFile.FullName
+
+            If blnReplaceSourceFile Then
+                ' Replace the original file with the new one
+                Dim strOldFilePath As String
+                Dim intAddon As Integer = 0
+
+                Do
+                    strOldFilePath = fiOriginalFile.FullName + ".old"
+                    If intAddon > 0 Then
+                        strOldFilePath &= intAddon.ToString()
+                    End If
+                    intAddon += 1
+                Loop While File.Exists(strOldFilePath)
+
+                fiOriginalFile.MoveTo(strOldFilePath)
+                Thread.Sleep(100)
+
+                fiUpdatedFile.MoveTo(strSourceFilePath)
+
+                If blnDeleteSourceFileIfUpdated Then
+                    Thread.Sleep(125)
+                    PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+                    fiOriginalFile.Delete()
+                End If
+
 
-			Else
-				' Directly wrote to the output file; nothing to rename
-
-			End If
-		Else
-			' No changes were made; nothing to update
-			' However, delete the new file we created
-			Thread.Sleep(125)
-			PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-			fiUpdatedFile.Delete()
-
-		End If
-
-	End Sub
-
-	''' <summary>
-	''' Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
-	''' </summary>
-	''' <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
-	''' <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
-	''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
-	''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
-	''' <returns>True if success; false if an error</returns>
-	Public Function ValidateCDTAFileScanAndCSTags(ByVal strSourceFilePath As String, ByVal blnReplaceSourceFile As Boolean, ByVal blnDeleteSourceFileIfUpdated As Boolean, ByRef strOutputFilePath As String) As Boolean
+            Else
+                ' Directly wrote to the output file; nothing to rename
+
+            End If
+        Else
+            ' No changes were made; nothing to update
+            ' However, delete the new file we created
+            Thread.Sleep(125)
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+            fiUpdatedFile.Delete()
+
+        End If
+
+    End Sub
+
+    ''' <summary>
+    ''' Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
+    ''' </summary>
+    ''' <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
+    ''' <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
+    ''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
+    ''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
+    ''' <returns>True if success; false if an error</returns>
+    Public Function ValidateCDTAFileScanAndCSTags(strSourceFilePath As String, blnReplaceSourceFile As Boolean, blnDeleteSourceFileIfUpdated As Boolean, strOutputFilePath As String) As Boolean
 
-		Dim strOutputFilePathTemp As String
-		Dim strLineIn As String
-		Dim strDTAHeader As String
+        Dim strOutputFilePathTemp As String
+        Dim strLineIn As String
+        Dim strDTAHeader As String
 
-		Dim intScanNumberStart As Integer
-		Dim intScanNumberEnd As Integer
-		Dim intScanCount As Integer
-		Dim intCharge As Integer
+        Dim intScanNumberStart As Integer
+        Dim intScanNumberEnd As Integer
+        Dim intScanCount As Integer
+        Dim intCharge As Integer
 
-		Dim blnParentIonLineIsNext As Boolean = False
-		Dim blnParentIonLineUpdated As Boolean = False
+        Dim blnParentIonLineIsNext As Boolean = False
+        Dim blnParentIonLineUpdated As Boolean = False
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		' We use the DtaTextFileReader to parse out the scan and charge from the header line
-		Dim objReader As MSDataFileReader.clsDtaTextFileReader
+        ' We use the DtaTextFileReader to parse out the scan and charge from the header line
+        Dim objReader As MSDataFileReader.clsDtaTextFileReader
 
-		Dim fiOriginalFile As FileInfo
-		Dim fiUpdatedFile As FileInfo
+        Dim fiOriginalFile As FileInfo
+        Dim fiUpdatedFile As FileInfo
 
-		Try
+        Try
 
-			If String.IsNullOrEmpty(strSourceFilePath) Then
-				ReportError("Error in ValidateCDTAFileScanAndCSTags: strSourceFilePath is empty")
-				Return False
-			End If
+            If String.IsNullOrEmpty(strSourceFilePath) Then
+                ReportError("Error in ValidateCDTAFileScanAndCSTags: strSourceFilePath is empty")
+                Return False
+            End If
 
-			fiOriginalFile = New FileInfo(strSourceFilePath)
-			If Not fiOriginalFile.Exists Then
-				ReportError("Error in ValidateCDTAFileScanAndCSTags: source file not found: " + strSourceFilePath)
-				Return False
-			End If
+            fiOriginalFile = New FileInfo(strSourceFilePath)
+            If Not fiOriginalFile.Exists Then
+                ReportError("Error in ValidateCDTAFileScanAndCSTags: source file not found: " + strSourceFilePath)
+                Return False
+            End If
 
-			If blnReplaceSourceFile Then
-				strOutputFilePathTemp = strSourceFilePath + ".tmp"
-			Else
-				' strOutputFilePath must contain a valid file path
-				If String.IsNullOrEmpty(strOutputFilePath) Then
-					ReportError("Error in ValidateCDTAFileScanAndCSTags: variable strOutputFilePath must define a file path when blnReplaceSourceFile=False")
-					Return False
-				End If
-				strOutputFilePathTemp = strOutputFilePath
-			End If
+            If blnReplaceSourceFile Then
+                strOutputFilePathTemp = strSourceFilePath + ".tmp"
+            Else
+                ' strOutputFilePath must contain a valid file path
+                If String.IsNullOrEmpty(strOutputFilePath) Then
+                    ReportError("Error in ValidateCDTAFileScanAndCSTags: variable strOutputFilePath must define a file path when blnReplaceSourceFile=False")
+                    Return False
+                End If
+                strOutputFilePathTemp = strOutputFilePath
+            End If
 
-			fiUpdatedFile = New FileInfo(strOutputFilePathTemp)
+            fiUpdatedFile = New FileInfo(strOutputFilePathTemp)
 
-			objReader = New MSDataFileReader.clsDtaTextFileReader(False)
+            objReader = New MSDataFileReader.clsDtaTextFileReader(False)
 
-			' Open the input file
-			Using srInFile As StreamReader = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            ' Open the input file
+            Using srInFile As StreamReader = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				' Create the output file
-				Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                ' Create the output file
+                Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-					Do While Not srInfile.EndOfStream
-						strLineIn = srInFile.ReadLine()
+                    Do While Not srInFile.EndOfStream
+                        strLineIn = srInFile.ReadLine()
 
-						If String.IsNullOrEmpty(strLineIn) Then
-							swOutFile.WriteLine()
-						Else
-							If strLineIn.StartsWith("="c) Then
-								' Parse the DTA header line, for example:
-								' =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
+                        If String.IsNullOrEmpty(strLineIn) Then
+                            swOutFile.WriteLine()
+                        Else
+                            If strLineIn.StartsWith("="c) Then
+                                ' Parse the DTA header line, for example:
+                                ' =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
 
-								' Remove the leading and trailing characters, then extract the scan and charge
-								strDTAHeader = strLineIn.Trim(New Char() {"="c, " "c, ControlChars.Quote})
-								objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, intScanNumberStart, intScanNumberEnd, intScanCount, intCharge)
+                                ' Remove the leading and trailing characters, then extract the scan and charge
+                                strDTAHeader = strLineIn.Trim(New Char() {"="c, " "c, ControlChars.Quote})
+                                objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, intScanNumberStart, intScanNumberEnd, intScanCount, intCharge)
 
-								blnParentIonLineIsNext = True
+                                blnParentIonLineIsNext = True
 
-							ElseIf blnParentIonLineIsNext Then
-								' strLineIn contains the parent ion line text
+                            ElseIf blnParentIonLineIsNext Then
+                                ' strLineIn contains the parent ion line text
 
-								' Construct the parent ion line to write out
-								' Will contain the MH+ value of the parent ion (thus always the 1+ mass, even if actually a different charge)
-								' Next contains the charge state, then scan= and cs= tags, for example:
-								' 447.34573 1   scan=3 cs=1
+                                ' Construct the parent ion line to write out
+                                ' Will contain the MH+ value of the parent ion (thus always the 1+ mass, even if actually a different charge)
+                                ' Next contains the charge state, then scan= and cs= tags, for example:
+                                ' 447.34573 1   scan=3 cs=1
 
-								If Not strLineIn.Contains("scan=") Then
-									' Append scan=x to the parent ion line
-									strLineIn = strLineIn.Trim() + "   scan=" + intScanNumberStart.ToString()
-									blnParentIonLineUpdated = True
-								End If
+                                If Not strLineIn.Contains("scan=") Then
+                                    ' Append scan=x to the parent ion line
+                                    strLineIn = strLineIn.Trim() + "   scan=" + intScanNumberStart.ToString()
+                                    blnParentIonLineUpdated = True
+                                End If
 
-								If Not strLineIn.Contains("cs=") Then
-									' Append cs=y to the parent ion line
-									strLineIn = strLineIn.Trim() + " cs=" + intCharge.ToString()
-									blnParentIonLineUpdated = True
-								End If
+                                If Not strLineIn.Contains("cs=") Then
+                                    ' Append cs=y to the parent ion line
+                                    strLineIn = strLineIn.Trim() + " cs=" + intCharge.ToString()
+                                    blnParentIonLineUpdated = True
+                                End If
 
-								blnParentIonLineIsNext = False
+                                blnParentIonLineIsNext = False
 
-							End If
+                            End If
 
-							swOutFile.WriteLine(strLineIn)
+                            swOutFile.WriteLine(strLineIn)
 
-						End If
-					Loop
+                        End If
+                    Loop
 
-				End Using
-			End Using
+                End Using
+            End Using
 
-			FinalizeCDTAValidation(blnParentIonLineUpdated, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, fiOriginalFile, fiUpdatedFile)
+            FinalizeCDTAValidation(blnParentIonLineUpdated, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, fiOriginalFile, fiUpdatedFile)
 
-			blnSuccess = True
+            blnSuccess = True
 
-		Catch ex As Exception
-			ReportError("Exception in ValidateCDTAFileScanAndCSTags: " + ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            ReportError("Exception in ValidateCDTAFileScanAndCSTags: " + ex.Message)
+            Return False
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Condenses CDTA files that are over 2 GB in size
-	''' </summary>
-	''' <param name="strWorkDir">Folder with the CDTA file</param>
-	''' <param name="strInputFileName">CDTA filename</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Function ValidateCDTAFileSize(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
-		Const FILE_SIZE_THRESHOLD As Integer = Int32.MaxValue
+    ''' <summary>
+    ''' Condenses CDTA files that are over 2 GB in size
+    ''' </summary>
+    ''' <param name="strWorkDir">Folder with the CDTA file</param>
+    ''' <param name="strInputFileName">CDTA filename</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function ValidateCDTAFileSize(strWorkDir As String, strInputFileName As String) As Boolean
+        Const FILE_SIZE_THRESHOLD As Integer = Int32.MaxValue
 
-		Dim ioFileInfo As FileInfo
-		Dim strInputFilePath As String
-		Dim strFilePathOld As String
+        Dim ioFileInfo As FileInfo
+        Dim strInputFilePath As String
+        Dim strFilePathOld As String
 
-		Dim strMessage As String
+        Dim strMessage As String
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		Try
-			strInputFilePath = Path.Combine(strWorkDir, strInputFileName)
-			ioFileInfo = New FileInfo(strInputFilePath)
+        Try
+            strInputFilePath = Path.Combine(strWorkDir, strInputFileName)
+            ioFileInfo = New FileInfo(strInputFilePath)
 
-			If Not ioFileInfo.Exists Then
-				ReportError("_DTA.txt file not found: " & strInputFilePath)
-				Return False
-			End If
+            If Not ioFileInfo.Exists Then
+                ReportError("_DTA.txt file not found: " & strInputFilePath)
+                Return False
+            End If
 
-			If ioFileInfo.Length >= FILE_SIZE_THRESHOLD Then
-				' Need to condense the file
+            If ioFileInfo.Length >= FILE_SIZE_THRESHOLD Then
+                ' Need to condense the file
 
-				strMessage = ioFileInfo.Name & " is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB in size; will now condense it by combining data points with consecutive zero-intensity values"
-				ReportInfo(strMessage, 0)
+                strMessage = ioFileInfo.Name & " is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB in size; will now condense it by combining data points with consecutive zero-intensity values"
+                ReportInfo(strMessage, 0)
 
-				m_CDTACondenser = New CondenseCDTAFile.clsCDTAFileCondenser
+                m_CDTACondenser = New CondenseCDTAFile.clsCDTAFileCondenser
 
-				blnSuccess = m_CDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName)
+                blnSuccess = m_CDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName)
 
-				If Not blnSuccess Then
-					ReportError("Error condensing _DTA.txt file: " & m_CDTACondenser.GetErrorMessage())
-					Return False
-				Else
-					' Wait 500 msec, then check the size of the new _dta.txt file
-					Thread.Sleep(500)
+                If Not blnSuccess Then
+                    ReportError("Error condensing _DTA.txt file: " & m_CDTACondenser.GetErrorMessage())
+                    Return False
+                Else
+                    ' Wait 500 msec, then check the size of the new _dta.txt file
+                    Thread.Sleep(500)
 
-					ioFileInfo.Refresh()
+                    ioFileInfo.Refresh()
 
-					ReportInfo("Condensing complete; size of the new _dta.txt file is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB", 1)
+                    ReportInfo("Condensing complete; size of the new _dta.txt file is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB", 1)
 
-					Try
-						strFilePathOld = Path.Combine(strWorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.FullName) & "_Old.txt")
+                    Try
+                        strFilePathOld = Path.Combine(strWorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.FullName) & "_Old.txt")
 
-						ReportInfo("Now deleting file " & strFilePathOld, 2)
+                        ReportInfo("Now deleting file " & strFilePathOld, 2)
 
-						ioFileInfo = New FileInfo(strFilePathOld)
-						If ioFileInfo.Exists Then
-							ioFileInfo.Delete()
-						Else
-							ReportError("Old _DTA.txt file not found:" & ioFileInfo.FullName & "; cannot delete")
-						End If
+                        ioFileInfo = New FileInfo(strFilePathOld)
+                        If ioFileInfo.Exists Then
+                            ioFileInfo.Delete()
+                        Else
+                            ReportError("Old _DTA.txt file not found:" & ioFileInfo.FullName & "; cannot delete")
+                        End If
 
-					Catch ex As Exception
-						' Error deleting the file; log it but keep processing
-						ReportWarning("Exception deleting _dta_old.txt file: " & ex.Message)
-					End Try
+                    Catch ex As Exception
+                        ' Error deleting the file; log it but keep processing
+                        ReportWarning("Exception deleting _dta_old.txt file: " & ex.Message)
+                    End Try
 
-				End If
-			End If
+                End If
+            End If
 
-			blnSuccess = True
+            blnSuccess = True
 
-		Catch ex As Exception
-			ReportError("Exception in ValidateCDTAFileSize: " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            ReportError("Exception in ValidateCDTAFileSize: " & ex.Message)
+            Return False
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 #Region "Event Handlers"
 
-	Private Sub m_CDTACondenser_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_CDTACondenser.ProgressChanged
+    Private Sub m_CDTACondenser_ProgressChanged(taskDescription As String, percentComplete As Single) Handles m_CDTACondenser.ProgressChanged
 
-		ReportProgress(taskDescription, percentComplete)
-	
-	End Sub
+        ReportProgress(taskDescription, percentComplete)
+
+    End Sub
 
 #End Region
 
 #Region "Events"
-	Public Event ErrorEvent(ByVal ErrorMessage As String)
-	Public Event InfoEvent(ByVal Message As String, DebugLevel As Integer)
-	Public Event ProgressEvent(ByVal taskDescription As String, ByVal PercentComplete As Single)
-	Public Event WarningEvent(ByVal Message As String)
+    Public Event ErrorEvent(ErrorMessage As String)
+    Public Event InfoEvent(Message As String, DebugLevel As Integer)
+    Public Event ProgressEvent(taskDescription As String, PercentComplete As Single)
+    Public Event WarningEvent(Message As String)
 
-	Protected Sub ReportError(ByVal strErrorMessage As String)
-		RaiseEvent ErrorEvent(strErrorMessage)
-	End Sub
+    Protected Sub ReportError(strErrorMessage As String)
+        RaiseEvent ErrorEvent(strErrorMessage)
+    End Sub
 
-	Protected Sub ReportInfo(ByVal strMessage As String, ByVal intDebugLevel As Integer)
-		RaiseEvent InfoEvent(strMessage, intDebugLevel)
-	End Sub
+    Protected Sub ReportInfo(strMessage As String, intDebugLevel As Integer)
+        RaiseEvent InfoEvent(strMessage, intDebugLevel)
+    End Sub
 
-	Protected Sub ReportProgress(ByVal taskDescription As String, ByVal PercentComplete As Single)
-		RaiseEvent ProgressEvent(taskDescription, PercentComplete)
-	End Sub
+    Protected Sub ReportProgress(taskDescription As String, PercentComplete As Single)
+        RaiseEvent ProgressEvent(taskDescription, PercentComplete)
+    End Sub
 
-	Protected Sub ReportWarning(ByVal strMessage As String)
-		RaiseEvent WarningEvent(strMessage)
-	End Sub
+    Protected Sub ReportWarning(strMessage As String)
+        RaiseEvent WarningEvent(strMessage)
+    End Sub
 #End Region
 
 End Class

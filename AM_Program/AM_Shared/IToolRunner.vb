@@ -32,7 +32,7 @@ Public Interface IToolRunner
 #End Region
 
 #Region "Methods"
-	Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal StatusTools As IStatusFile, ByRef SummaryFile As clsSummaryFile)
+    Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, StatusTools As IStatusFile, SummaryFile As clsSummaryFile)
 
 	Function RunTool() As IJobParams.CloseOutType
 

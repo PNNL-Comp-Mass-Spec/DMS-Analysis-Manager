@@ -9,6 +9,7 @@
 Option Strict On
 
 Imports System.IO
+Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports AnalysisManagerBase
@@ -99,7 +100,7 @@ Public Class clsMainProcess
     ''' <summary>
     ''' Constructor
     ''' </summary>	
-    Public Sub New(ByVal blnTraceModeEnabled As Boolean)
+    Public Sub New(blnTraceModeEnabled As Boolean)
         Me.TraceMode = blnTraceModeEnabled
         m_ConfigChanged = False
         m_DebugLevel = 0
@@ -794,7 +795,7 @@ Public Class clsMainProcess
             Else
                 'Clean the working directory
                 Try
-                    If Not clsCleanupMgrErrors.CleanWorkDir(m_WorkDirPath, 1, "") Then
+                    If Not clsCleanupMgrErrors.CleanWorkDir(m_WorkDirPath, 1) Then
                         If Me.TraceMode Then ShowTraceMessage("Error cleaning working directory; closing job step task")
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job"))
                         m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
@@ -837,7 +838,7 @@ Public Class clsMainProcess
     ''' <param name="ToolName">Tool name (or step tool name)</param>
     ''' <returns>Info string, similar to: Job 375797; DataExtractor (XTandem), Step 4; QC_Shew_09_01_b_pt5_25Mar09_Griffin_09-02-03; 3/26/2009 3:17:57 AM</returns>
     ''' <remarks></remarks>
-    Protected Function ConstructMostRecentJobInfoText(ByVal JobStartTimeStamp As String, ByVal Job As Integer, ByVal Dataset As String, ByVal ToolName As String) As String
+    Protected Function ConstructMostRecentJobInfoText(JobStartTimeStamp As String, Job As Integer, Dataset As String, ToolName As String) As String
 
         Try
             If JobStartTimeStamp Is Nothing Then JobStartTimeStamp = String.Empty
@@ -863,7 +864,7 @@ Public Class clsMainProcess
         End If
     End Sub
 
-    Protected Shared Function CreateAnalysisManagerEventLog(ByVal SourceName As String, ByVal LogName As String) As Boolean
+    Protected Shared Function CreateAnalysisManagerEventLog(SourceName As String, LogName As String) As Boolean
 
         Try
             If String.IsNullOrEmpty(SourceName) Then
@@ -914,7 +915,7 @@ Public Class clsMainProcess
     ''' <param name="strLogFilePath"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function DecrementLogFilePath(ByVal strLogFilePath As String) As String
+    Protected Function DecrementLogFilePath(strLogFilePath As String) As String
 
         Dim reLogFileName As Regex
         Dim objMatch As Match
@@ -961,7 +962,7 @@ Public Class clsMainProcess
     ''' <param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function DetermineRecentErrorMessages(ByVal intErrorMessageCountToReturn As Integer, ByRef strMostRecentJobInfo As String) As String()
+    Public Function DetermineRecentErrorMessages(intErrorMessageCountToReturn As Integer, <Out()> ByRef strMostRecentJobInfo As String) As String()
 
         ' This regex will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
         Const ERROR_MATCH_REGEX As String = "^([^,]+),(.+), Error, *$"
@@ -1004,8 +1005,10 @@ Public Class clsMainProcess
         Dim strTimestamp As String
         Dim strErrorMessageClean As String
 
+        If strMostRecentJobInfo Is Nothing Then strMostRecentJobInfo = String.Empty
+
         Try
-            If strMostRecentJobInfo Is Nothing Then strMostRecentJobInfo = String.Empty
+
             strMostRecentJobInfoFromLogs = String.Empty
 
             'If objLogger Is Nothing Then
@@ -1161,7 +1164,7 @@ Public Class clsMainProcess
                 Array.Reverse(strRecentErrorMessages)
             End If
 
-            If strMostRecentJobInfo.Length = 0 Then
+            If String.IsNullOrEmpty(strMostRecentJobInfo) Then
                 If Not strMostRecentJobInfoFromLogs Is Nothing AndAlso strMostRecentJobInfoFromLogs.Length > 0 Then
                     ' Update strMostRecentJobInfo
                     strMostRecentJobInfo = strMostRecentJobInfoFromLogs
@@ -1182,18 +1185,17 @@ Public Class clsMainProcess
     End Function
 
     Protected Sub DetermineRecentErrorCacheError(
-     ByRef objMatch As Match,
-     ByVal strErrorMessage As String,
-     ByRef htUniqueErrorMessages As Hashtable,
-     ByRef qErrorMsgQueue As Queue,
-     ByVal intMaxErrorMessageCountToReturn As Integer)
+     objMatch As Match,
+     strErrorMessage As String,
+     htUniqueErrorMessages As Hashtable,
+     qErrorMsgQueue As Queue,
+     intMaxErrorMessageCountToReturn As Integer)
 
         Dim strTimestamp As String
         Dim strErrorMessageClean As String
         Dim strQueuedError As String
 
         Dim blnAddItemToQueue As Boolean
-        Dim objItem As Object
 
         ' See if this error is present in htUniqueErrorMessages yet
         ' If it is present, update the timestamp in htUniqueErrorMessages
@@ -1209,7 +1211,7 @@ Public Class clsMainProcess
         End If
 
         ' Check whether strErrorMessageClean is in the hash table
-        objItem = htUniqueErrorMessages.Item(strErrorMessageClean)
+        Dim objItem = htUniqueErrorMessages.Item(strErrorMessageClean)
         If Not objItem Is Nothing Then
             ' The error message is present
             ' Update the timestamp associated with strErrorMessageClean if the time stamp is newer than the stored one
@@ -1268,7 +1270,6 @@ Public Class clsMainProcess
         End If
 
     End Sub
-
 
     ''' <summary>
     ''' Sets the local mgr_active flag to False for serious problems
@@ -1421,7 +1422,7 @@ Public Class clsMainProcess
         Return False
     End Function
 
-    Private Sub PostToEventLog(ByVal ErrMsg As String)
+    Private Sub PostToEventLog(ErrMsg As String)
         Const EVENT_LOG_NAME = "DMSAnalysisManager"
 
         Try
@@ -1609,11 +1610,11 @@ Public Class clsMainProcess
 
     End Function
 
-    Public Shared Sub ShowTraceMessage(ByVal strMessage As String)
+    Public Shared Sub ShowTraceMessage(strMessage As String)
         Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
     End Sub
 
-    Protected Sub UpdateClose(ByVal ManagerCloseMessage As String)
+    Protected Sub UpdateClose(ManagerCloseMessage As String)
         Dim strErrorMessages() As String
         strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
 
@@ -1628,7 +1629,7 @@ Public Class clsMainProcess
     ''' <param name="MinutesBetweenUpdates"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function UpdateManagerSettings(ByRef dtLastConfigDBUpdate As DateTime, ByVal MinutesBetweenUpdates As Double) As Boolean
+    Protected Function UpdateManagerSettings(ByRef dtLastConfigDBUpdate As DateTime, MinutesBetweenUpdates As Double) As Boolean
 
         Dim blnSuccess As Boolean = True
 
@@ -1662,7 +1663,7 @@ Public Class clsMainProcess
 
     End Function
 
-    Protected Sub UpdateStatusDisabled(ByVal managerStatus As IStatusFile.EnumMgrStatus, ByVal managerDisableMessage As String)
+    Protected Sub UpdateStatusDisabled(managerStatus As IStatusFile.EnumMgrStatus, managerDisableMessage As String)
         Dim strErrorMessages() As String
         strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
         m_StatusTools.UpdateDisabled(managerStatus, managerDisableMessage, strErrorMessages, m_MostRecentJobInfo)
@@ -1676,14 +1677,14 @@ Public Class clsMainProcess
         Console.WriteLine("Flag file exists")
     End Sub
 
-    Protected Sub UpdateStatusIdle(ByVal ManagerIdleMessage As String)
+    Protected Sub UpdateStatusIdle(ManagerIdleMessage As String)
         Dim strErrorMessages() As String
         strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
 
         m_StatusTools.UpdateIdle(ManagerIdleMessage, strErrorMessages, m_MostRecentJobInfo, True)
     End Sub
 
-    Private Sub UpdateStatusToolLoggingSettings(ByRef objStatusFile As clsStatusFile)
+    Private Sub UpdateStatusToolLoggingSettings(objStatusFile As clsStatusFile)
 
 
         Dim logMemoryUsage As Boolean = m_MgrSettings.GetParam("LogMemoryUsage", False)
@@ -1719,7 +1720,7 @@ Public Class clsMainProcess
     ''' <param name="ErrorMessage"></param>
     ''' <returns></returns>
     ''' <remarks>Disables the manager if the working directory drive does not have enough space</remarks>
-    Private Function ValidateFreeDiskSpace(ByRef ErrorMessage As String) As Boolean
+    Private Function ValidateFreeDiskSpace(<Out> ByRef ErrorMessage As String) As Boolean
 
         Const DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB = 10
         Const DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB = 10
@@ -1817,7 +1818,12 @@ Public Class clsMainProcess
 
     End Function
 
-    Private Function ValidateFreeDiskSpaceWork(ByVal directoryDescription As String, ByVal directoryPath As String, ByVal minFreeSpaceMB As Integer, ByRef errorMessage As String, ByVal eLogLocationIfNotFound As clsLogTools.LoggerTypes) As Boolean
+    Private Function ValidateFreeDiskSpaceWork(
+      directoryDescription As String,
+      directoryPath As String,
+      minFreeSpaceMB As Integer,
+     <Out()> ByRef errorMessage As String,
+      eLogLocationIfNotFound As clsLogTools.LoggerTypes) As Boolean
 
         Return clsGlobal.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, eLogLocationIfNotFound, errorMessage)
 
@@ -1902,7 +1908,7 @@ Public Class clsMainProcess
     ''' <param name="sender"></param>
     ''' <param name="e"></param>
     ''' <remarks></remarks>
-    Private Sub m_FileWatcher_Changed(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles m_FileWatcher.Changed
+    Private Sub m_FileWatcher_Changed(sender As Object, e As FileSystemEventArgs) Handles m_FileWatcher.Changed
 
         m_FileWatcher.EnableRaisingEvents = False
         m_ConfigChanged = True

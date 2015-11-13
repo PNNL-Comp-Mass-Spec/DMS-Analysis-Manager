@@ -37,21 +37,21 @@ Public Class clsGlobal
 
 #Region "Module variables"
     Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" (
-      ByVal lpRootPathName As String,
+      lpRootPathName As String,
       ByRef lpFreeBytesAvailable As Long,
       ByRef lpTotalNumberOfBytes As Long,
       ByRef lpTotalNumberOfFreeBytes As Long) As Integer
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Appends a string to a job comment string
-	''' </summary>
+    ''' <summary>
+    ''' Appends a string to a job comment string
+    ''' </summary>
     ''' <param name="baseComment">Comment currently in job params</param>
     ''' <param name="addnlComment">Comment to be appened</param>
-	''' <returns>String containing both comments</returns>
-	''' <remarks></remarks>
-    Public Shared Function AppendToComment(ByVal baseComment As String, ByVal addnlComment As String) As String
+    ''' <returns>String containing both comments</returns>
+    ''' <remarks></remarks>
+    Public Shared Function AppendToComment(baseComment As String, addnlComment As String) As String
 
         'Appends a comment string to an existing comment string
 
@@ -68,63 +68,63 @@ Public Class clsGlobal
 
     End Function
 
-	''' <summary>
-	'''Examines intCount to determine which string to return
-	''' </summary>
-	''' <param name="intCount"></param>
-	''' <param name="strTextIfOneItem"></param>
-	''' <param name="strTextIfZeroOrMultiple"></param>
-	''' <returns>Returns strTextIfOneItem if intCount is 1; otherwise, returns strTextIfZeroOrMultiple</returns>
-	''' <remarks></remarks>
-	Public Shared Function CheckPlural(ByVal intCount As Integer, ByVal strTextIfOneItem As String, ByVal strTextIfZeroOrMultiple As String) As String
+    ''' <summary>
+    '''Examines intCount to determine which string to return
+    ''' </summary>
+    ''' <param name="intCount"></param>
+    ''' <param name="strTextIfOneItem"></param>
+    ''' <param name="strTextIfZeroOrMultiple"></param>
+    ''' <returns>Returns strTextIfOneItem if intCount is 1; otherwise, returns strTextIfZeroOrMultiple</returns>
+    ''' <remarks></remarks>
+    Public Shared Function CheckPlural(intCount As Integer, strTextIfOneItem As String, strTextIfZeroOrMultiple As String) As String
 
-		If intCount = 1 Then
-			Return strTextIfOneItem
-		Else
-			Return strTextIfZeroOrMultiple
-		End If
+        If intCount = 1 Then
+            Return strTextIfOneItem
+        Else
+            Return strTextIfZeroOrMultiple
+        End If
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Collapse an array of items to a tab-delimited list
-	''' </summary>
-	''' <param name="strItems"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Shared Function CollapseLine(ByRef strItems() As String) As String
-		If strItems Is Nothing OrElse strItems.Length = 0 Then
-			Return String.Empty
-		Else
-			Return CollapseList(strItems.ToList())
-		End If
-	End Function
+    ''' <summary>
+    ''' Collapse an array of items to a tab-delimited list
+    ''' </summary>
+    ''' <param name="strItems"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared Function CollapseLine(strItems() As String) As String
+        If strItems Is Nothing OrElse strItems.Length = 0 Then
+            Return String.Empty
+        Else
+            Return CollapseList(strItems.ToList())
+        End If
+    End Function
 
-	''' <summary>
-	''' Collapse a list of items to a tab-delimited list
-	''' </summary>
-	''' <param name="lstFields"></param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Shared Function CollapseList(lstFields As List(Of String)) As String
+    ''' <summary>
+    ''' Collapse a list of items to a tab-delimited list
+    ''' </summary>
+    ''' <param name="lstFields"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared Function CollapseList(lstFields As List(Of String)) As String
 
-		Return FlattenList(lstFields, ControlChars.Tab)
+        Return FlattenList(lstFields, ControlChars.Tab)
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Decrypts password received from ini file
-	''' </summary>
-	''' <param name="enPwd">Encoded password</param>
-	''' <returns>Clear text password</returns>
-	Public Shared Function DecodePassword(ByVal enPwd As String) As String
-		' Decrypts password received from ini file
-		' Password was created by alternately subtracting or adding 1 to the ASCII value of each character
+    ''' <summary>
+    ''' Decrypts password received from ini file
+    ''' </summary>
+    ''' <param name="enPwd">Encoded password</param>
+    ''' <returns>Clear text password</returns>
+    Public Shared Function DecodePassword(enPwd As String) As String
+        ' Decrypts password received from ini file
+        ' Password was created by alternately subtracting or adding 1 to the ASCII value of each character
 
-		' Convert the password string to a character array
-		Dim pwdChars As Char() = enPwd.ToCharArray()
-		Dim pwdBytes = New List(Of Byte)
-		Dim pwdCharsAdj = New List(Of Char)
+        ' Convert the password string to a character array
+        Dim pwdChars As Char() = enPwd.ToCharArray()
+        Dim pwdBytes = New List(Of Byte)
+        Dim pwdCharsAdj = New List(Of Char)
 
         For i = 0 To pwdChars.Length - 1
             pwdBytes.Add(Convert.ToByte(pwdChars(i)))
@@ -152,7 +152,7 @@ Public Class clsGlobal
     ''' <param name="chDelimiter"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function FlattenList(ByVal lstItems As List(Of String), ByVal chDelimiter As Char) As String
+    Public Shared Function FlattenList(lstItems As List(Of String), chDelimiter As Char) As String
 
         If lstItems Is Nothing OrElse lstItems.Count = 0 Then
             Return String.Empty
@@ -200,7 +200,7 @@ Public Class clsGlobal
     ''' Returns the version string of the specified assembly
     ''' </summary>
     ''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
-    Public Shared Function GetAssemblyVersion(ByRef objAssembly As Reflection.Assembly) As String
+    Public Shared Function GetAssemblyVersion(objAssembly As Reflection.Assembly) As String
         ' objAssembly.FullName typically returns something like this:
         ' AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
         ' 
@@ -233,10 +233,10 @@ Public Class clsGlobal
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>Uses a timeout of 30 seconds</remarks>
     Public Shared Function GetDataTableByQuery(
-      ByVal sqlStr As String,
-      ByVal connectionString As String,
-      ByVal callingFunction As String,
-      ByVal retryCount As Short,
+      sqlStr As String,
+      connectionString As String,
+      callingFunction As String,
+      retryCount As Short,
       <Out()> ByRef dtResults As DataTable) As Boolean
 
         Const timeoutSeconds = 30
@@ -257,12 +257,12 @@ Public Class clsGlobal
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Public Shared Function GetDataTableByQuery(
-      ByVal sqlStr As String,
-      ByVal connectionString As String,
-      ByVal callingFunction As String,
-      ByVal retryCount As Short,
+      sqlStr As String,
+      connectionString As String,
+      callingFunction As String,
+      retryCount As Short,
       <Out()> ByRef dtResults As DataTable,
-      ByVal timeoutSeconds As Integer) As Boolean
+      timeoutSeconds As Integer) As Boolean
 
         Dim cmd = New SqlCommand()
         cmd.CommandType = CommandType.Text
@@ -284,12 +284,12 @@ Public Class clsGlobal
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Public Shared Function GetDataTableByCmd(
-      ByVal cmd As SqlCommand,
-      ByVal connectionString As String,
-      ByVal callingFunction As String,
-      ByVal retryCount As Short,
+      cmd As SqlCommand,
+      connectionString As String,
+      callingFunction As String,
+      retryCount As Short,
       <Out()> ByRef dtResults As DataTable,
-      ByVal timeoutSeconds As Integer) As Boolean
+      timeoutSeconds As Integer) As Boolean
 
         Dim strMsg As String
 
@@ -357,12 +357,12 @@ Public Class clsGlobal
     ''' Use the GetDataTable functions in this class if you need to retain numeric values or null values
     ''' </remarks>
     Public Shared Function GetQueryResultsTopRow(
-      ByVal sqlQuery As String,
-      ByVal connectionString As String,
+      sqlQuery As String,
+      connectionString As String,
       <Out()> ByRef lstResults As List(Of String),
-      ByVal callingFunction As String,
-      Optional ByVal retryCount As Short = 3,
-      Optional ByVal timeoutSeconds As Integer = 5) As Boolean
+      callingFunction As String,
+      Optional retryCount As Short = 3,
+      Optional timeoutSeconds As Integer = 5) As Boolean
 
         Dim lstResultTable As List(Of List(Of String)) = Nothing
 
@@ -394,13 +394,13 @@ Public Class clsGlobal
     ''' Use the GetDataTable functions in this class if you need to retain numeric values or null values
     ''' </remarks>
     Public Shared Function GetQueryResults(
-      ByVal sqlQuery As String,
-      ByVal connectionString As String,
+      sqlQuery As String,
+      connectionString As String,
       <Out()> ByRef lstResults As List(Of List(Of String)),
-      ByVal callingFunction As String,
-      Optional ByVal retryCount As Short = 3,
-      Optional ByVal timeoutSeconds As Integer = 5,
-      Optional ByVal maxRowsToReturn As Integer = 0) As Boolean
+      callingFunction As String,
+      Optional retryCount As Short = 3,
+      Optional timeoutSeconds As Integer = 5,
+      Optional maxRowsToReturn As Integer = 0) As Boolean
 
         If retryCount < 1 Then retryCount = 1
         If timeoutSeconds < 5 Then timeoutSeconds = 5
@@ -465,13 +465,13 @@ Public Class clsGlobal
     ''' <param name="objException"></param>
     ''' <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
     ''' <remarks></remarks>
-    Public Shared Function GetExceptionStackTrace(ByVal objException As Exception) As String
+    Public Shared Function GetExceptionStackTrace(objException As Exception) As String
 
         Return PRISM.Logging.Utilities.GetExceptionStackTrace(objException)
 
     End Function
 
-    Public Shared Function GetKeyValueSetting(ByVal strText As String) As KeyValuePair(Of String, String)
+    Public Shared Function GetKeyValueSetting(strText As String) As KeyValuePair(Of String, String)
 
         Dim strKey As String = String.Empty
         Dim strValue As String = String.Empty
@@ -506,7 +506,7 @@ Public Class clsGlobal
     ''' <param name="strText2"></param>
     ''' <returns>True if they match; false if not</returns>
     ''' <remarks></remarks>
-    Public Shared Function IsMatch(ByVal strText1 As String, ByVal strText2 As String) As Boolean
+    Public Shared Function IsMatch(strText1 As String, strText2 As String) As Boolean
         If String.Compare(strText1, strText2, True) = 0 Then
             Return True
         Else
@@ -538,7 +538,7 @@ Public Class clsGlobal
     ''' <param name="lstHeaderNames"></param>
     ''' <returns>Dictionary with the header names and 0-based column index</returns>
     ''' <remarks>Header names not found in strHeaderLine will have an index of -1</remarks>
-    Public Shared Function ParseHeaderLine(ByVal strHeaderLine As String, ByVal lstHeaderNames As List(Of String), ByVal isCaseSensitive As Boolean) As Dictionary(Of String, Integer)
+    Public Shared Function ParseHeaderLine(strHeaderLine As String, lstHeaderNames As List(Of String), isCaseSensitive As Boolean) As Dictionary(Of String, Integer)
         Dim dctHeaderMapping = New Dictionary(Of String, Integer)
 
         Dim lstColumns = strHeaderLine.Split(ControlChars.Tab).ToList()
@@ -570,7 +570,7 @@ Public Class clsGlobal
     ''' <param name="strPath"></param>
     ''' <returns>strPath as-is if no spaces, otherwise strPath surrounded by double quotes </returns>
     ''' <remarks></remarks>
-    Public Shared Function PossiblyQuotePath(ByVal strPath As String) As String
+    Public Shared Function PossiblyQuotePath(strPath As String) As String
         If String.IsNullOrWhiteSpace(strPath) Then
             Return String.Empty
         Else
@@ -596,7 +596,7 @@ Public Class clsGlobal
     ''' <param name="Value"></param>
     ''' <returns></returns>
     ''' <remarks>Returns false if an exception</remarks>
-    Public Shared Function CBoolSafe(ByVal Value As String) As Boolean
+    Public Shared Function CBoolSafe(Value As String) As Boolean
         Dim blnValue As Boolean
 
         Try
@@ -620,7 +620,7 @@ Public Class clsGlobal
     ''' <param name="blnDefaultValue">Boolean value to return if Value is empty or an exception occurs</param>
     ''' <returns></returns>
     ''' <remarks>Returns false if an exception</remarks>
-    Public Shared Function CBoolSafe(ByVal Value As String, ByVal blnDefaultValue As Boolean) As Boolean
+    Public Shared Function CBoolSafe(Value As String, blnDefaultValue As Boolean) As Boolean
         Dim blnValue As Boolean
 
         Try
@@ -644,7 +644,7 @@ Public Class clsGlobal
     ''' <param name="intDefaultValue">Integer to return if Value is not numeric</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function CIntSafe(ByVal Value As String, ByVal intDefaultValue As Integer) As Integer
+    Public Shared Function CIntSafe(Value As String, intDefaultValue As Integer) As Integer
         Dim intValue As Integer
 
         Try
@@ -668,7 +668,7 @@ Public Class clsGlobal
     ''' <param name="sngDefaultValue">Single to return if Value is not numeric</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function CSngSafe(ByVal Value As String, ByVal sngDefaultValue As Single) As Single
+    Public Shared Function CSngSafe(Value As String, sngDefaultValue As Single) As Single
         Dim sngValue As Single
 
         Try
@@ -698,10 +698,10 @@ Public Class clsGlobal
     ''' <returns>True if Success, false if failure </returns>
     ''' <remarks></remarks>
     Public Shared Function CopyAndRenameFileWithBackup(
-      ByVal SourceFilePath As String,
-      ByVal TargetFolder As String,
-      ByVal TargetFileName As String,
-      ByVal VersionCountToKeep As Integer) As Boolean
+      SourceFilePath As String,
+      TargetFolder As String,
+      TargetFileName As String,
+      VersionCountToKeep As Integer) As Boolean
 
         Dim ioSrcFile As FileInfo
         Dim ioFileToRename As FileInfo
@@ -777,7 +777,7 @@ Public Class clsGlobal
     ''' <param name="InpObj"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function DbCStr(ByVal InpObj As Object) As String
+    Public Shared Function DbCStr(InpObj As Object) As String
 
         'If input object is DbNull, returns "", otherwise returns String representation of object
         If InpObj Is DBNull.Value Then
@@ -794,7 +794,7 @@ Public Class clsGlobal
     ''' <param name="InpObj"></param>
     ''' <returns></returns>
     ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCSng(ByVal InpObj As Object) As Single
+    Public Shared Function DbCSng(InpObj As Object) As Single
 
         'If input object is DbNull, returns 0.0, otherwise returns Single representation of object
         If InpObj Is DBNull.Value Then
@@ -811,7 +811,7 @@ Public Class clsGlobal
     ''' <param name="InpObj"></param>
     ''' <returns></returns>
     ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCDbl(ByVal InpObj As Object) As Double
+    Public Shared Function DbCDbl(InpObj As Object) As Double
 
         'If input object is DbNull, returns 0.0, otherwise returns Double representation of object
         If InpObj Is DBNull.Value Then
@@ -828,7 +828,7 @@ Public Class clsGlobal
     ''' <param name="InpObj"></param>
     ''' <returns></returns>
     ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCInt(ByVal InpObj As Object) As Integer
+    Public Shared Function DbCInt(InpObj As Object) As Integer
 
         'If input object is DbNull, returns 0, otherwise returns Integer representation of object
         If InpObj Is DBNull.Value Then
@@ -845,7 +845,7 @@ Public Class clsGlobal
     ''' <param name="InpObj"></param>
     ''' <returns></returns>
     ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCLng(ByVal InpObj As Object) As Long
+    Public Shared Function DbCLng(InpObj As Object) As Long
 
         'If input object is DbNull, returns 0, otherwise returns Integer representation of object
         If InpObj Is DBNull.Value Then
@@ -862,7 +862,7 @@ Public Class clsGlobal
     ''' <param name="InpObj"></param>
     ''' <returns></returns>
     ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCDec(ByVal InpObj As Object) As Decimal
+    Public Shared Function DbCDec(InpObj As Object) As Decimal
 
         'If input object is DbNull, returns 0, otherwise returns Decimal representation of object
         If InpObj Is DBNull.Value Then
@@ -873,7 +873,7 @@ Public Class clsGlobal
 
     End Function
 
-    Private Shared Function ByteArrayToString(ByVal arrInput() As Byte) As String
+    Private Shared Function ByteArrayToString(arrInput() As Byte) As String
         ' Converts a byte array into a hex string
 
         Dim strOutput As New Text.StringBuilder(arrInput.Length)
@@ -892,7 +892,7 @@ Public Class clsGlobal
     ''' <param name="strPath"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function ComputeFileHashMD5(ByVal strPath As String) As String
+    Public Shared Function ComputeFileHashMD5(strPath As String) As String
 
         Dim hashValue As String
 
@@ -912,21 +912,21 @@ Public Class clsGlobal
     ''' <param name="text"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function ComputeStringHashMD5(ByVal text As String) As String
+    Public Shared Function ComputeStringHashMD5(text As String) As String
 
         Dim hashValue = ComputeMD5Hash(New MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)))
 
         Return hashValue
 
     End Function
-    
+
     ''' <summary>
     ''' Computes the SHA-1 hash for a file
     ''' </summary>
     ''' <param name="strPath"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function ComputeFileHashSha1(ByVal strPath As String) As String
+    Public Shared Function ComputeFileHashSha1(strPath As String) As String
 
         Dim hashValue As String
 
@@ -946,7 +946,7 @@ Public Class clsGlobal
     ''' <param name="text"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function ComputeStringHashSha1(ByVal text As String) As String
+    Public Shared Function ComputeStringHashSha1(text As String) As String
 
         Dim hashValue = ComputeSha1Hash(New MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)))
 
@@ -960,7 +960,7 @@ Public Class clsGlobal
     ''' <param name="data"></param>
     ''' <returns>MD5 hash, as a string</returns>
     ''' <remarks></remarks>
-    Private Shared Function ComputeMD5Hash(ByVal data As Stream) As String
+    Private Shared Function ComputeMD5Hash(data As Stream) As String
 
         Dim objMD5 As New Security.Cryptography.MD5CryptoServiceProvider
         Return ComputeHash(objMD5, data)
@@ -973,7 +973,7 @@ Public Class clsGlobal
     ''' <param name="data"></param>
     ''' <returns>SHA1 hash, as a string</returns>
     ''' <remarks></remarks>
-    Private Shared Function ComputeSha1Hash(ByVal data As Stream) As String
+    Private Shared Function ComputeSha1Hash(data As Stream) As String
 
         Dim objSha1 As New Security.Cryptography.SHA1CryptoServiceProvider
         Return ComputeHash(objSha1, data)
@@ -987,7 +987,7 @@ Public Class clsGlobal
     ''' <param name="data"></param>
     ''' <returns>Hash string</returns>
     ''' <remarks></remarks>
-    Private Shared Function ComputeHash(ByVal hasher As HashAlgorithm, ByVal data As Stream) As String
+    Private Shared Function ComputeHash(hasher As HashAlgorithm, data As Stream) As String
         ' hash contents of this stream
         Dim arrHash = hasher.ComputeHash(data)
 
@@ -1004,7 +1004,7 @@ Public Class clsGlobal
     ''' <param name="blnComputeMD5Hash">If True, then computes the MD5 hash</param>
     ''' <returns>The full path to the .hashcheck file; empty string if a problem</returns>
     ''' <remarks></remarks>
-    Public Shared Function CreateHashcheckFile(ByVal strDataFilePath As String, ByVal blnComputeMD5Hash As Boolean) As String
+    Public Shared Function CreateHashcheckFile(strDataFilePath As String, blnComputeMD5Hash As Boolean) As String
 
         Dim strMD5Hash As String
 
@@ -1028,7 +1028,7 @@ Public Class clsGlobal
     ''' <param name="strMD5Hash"></param>
     ''' <returns>The full path to the .hashcheck file; empty string if a problem</returns>
     ''' <remarks></remarks>
-    Public Shared Function CreateHashcheckFile(ByVal strDataFilePath As String, ByVal strMD5Hash As String) As String
+    Public Shared Function CreateHashcheckFile(strDataFilePath As String, strMD5Hash As String) As String
 
         Dim fiDataFile As FileInfo
         Dim strHashFilePath As String
@@ -1058,7 +1058,7 @@ Public Class clsGlobal
     ''' <param name="strFilePath2">Path to the second file</param>
     ''' <returns>True if the files match; false if they don't match; also returns false if either file is missing</returns>
     ''' <remarks></remarks>
-    Public Shared Function FilesMatch(ByVal strFilePath1 As String, ByVal strFilePath2 As String) As Boolean
+    Public Shared Function FilesMatch(strFilePath1 As String, strFilePath2 As String) As Boolean
 
         Dim fiFile1 As FileInfo
         Dim fiFile2 As FileInfo
@@ -1103,7 +1103,11 @@ Public Class clsGlobal
     ''' <param name="lngTotalNumberOfFreeBytes"></param>
     ''' <returns>True if success, false if a problem</returns>
     ''' <remarks></remarks>
-    Private Shared Function GetDiskFreeSpace(ByVal strDirectoryPath As String, ByRef lngFreeBytesAvailableToUser As Int64, ByRef lngTotalDriveCapacityBytes As Int64, ByRef lngTotalNumberOfFreeBytes As Int64) As Boolean
+    Private Shared Function GetDiskFreeSpace(
+        strDirectoryPath As String,
+        <Out()> ByRef lngFreeBytesAvailableToUser As Int64,
+        <Out()> ByRef lngTotalDriveCapacityBytes As Int64,
+        <Out()> ByRef lngTotalNumberOfFreeBytes As Int64) As Boolean
 
         Dim intResult As Integer
 
@@ -1125,7 +1129,7 @@ Public Class clsGlobal
     ''' <param name="strReplacementText"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function ReplaceIgnoreCase(ByVal strTextToSearch As String, strTextToFind As String, strReplacementText As String) As String
+    Public Shared Function ReplaceIgnoreCase(strTextToSearch As String, strTextToFind As String, strReplacementText As String) As String
 
         Dim intCharIndex As Integer
         intCharIndex = strTextToSearch.ToLower().IndexOf(strTextToFind.ToLower(), StringComparison.Ordinal)
@@ -1159,7 +1163,7 @@ Public Class clsGlobal
     ''' <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function TextFilesMatch(ByVal filePath1 As String, ByVal filePath2 As String, ByVal ignoreWhitespace As Boolean) As Boolean
+    Public Shared Function TextFilesMatch(filePath1 As String, filePath2 As String, ignoreWhitespace As Boolean) As Boolean
 
         Const comparisonStartLine = 0
         Const comparisonEndLine = 0
@@ -1180,9 +1184,9 @@ Public Class clsGlobal
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Shared Function TextFilesMatch(
-     ByVal filePath1 As String, ByVal filePath2 As String,
-     ByVal comparisonStartLine As Integer, ByVal comparisonEndLine As Integer,
-     ByVal ignoreWhitespace As Boolean) As Boolean
+     filePath1 As String, filePath2 As String,
+     comparisonStartLine As Integer, comparisonEndLine As Integer,
+     ignoreWhitespace As Boolean) As Boolean
 
         Return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, Nothing)
 
@@ -1200,10 +1204,10 @@ Public Class clsGlobal
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Shared Function TextFilesMatch(
-      ByVal filePath1 As String, ByVal filePath2 As String,
-      ByVal comparisonStartLine As Integer, ByVal comparisonEndLine As Integer,
-      ByVal ignoreWhitespace As Boolean,
-      ByRef lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
+      filePath1 As String, filePath2 As String,
+      comparisonStartLine As Integer, comparisonEndLine As Integer,
+      ignoreWhitespace As Boolean,
+      lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
 
         Dim strLineIn1 As String
         Dim strLineIn2 As String
@@ -1317,7 +1321,7 @@ Public Class clsGlobal
 
     End Function
 
-    Protected Shared Function TextFilesMatchIgnoreLine(ByVal strText As String, ByVal lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
+    Protected Shared Function TextFilesMatchIgnoreLine(strText As String, lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
 
         If Not lstLineIgnoreRegExSpecs Is Nothing Then
             For Each matchSpec In lstLineIgnoreRegExSpecs
@@ -1339,7 +1343,7 @@ Public Class clsGlobal
     ''' <param name="newHostName"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function UpdateHostName(ByVal sharePath As String, ByVal newHostName As String) As String
+    Public Shared Function UpdateHostName(sharePath As String, newHostName As String) As String
 
         If Not newHostName.StartsWith("\\") Then
             Throw New NotSupportedException("\\ not found at the start of newHostName (" & newHostName & "); The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\")
@@ -1393,7 +1397,7 @@ Public Class clsGlobal
     ''' <param name="strErrorMessage"></param>
     ''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
     ''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-    Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByVal strHashFilePath As String, ByRef strErrorMessage As String) As Boolean
+    Public Shared Function ValidateFileVsHashcheck(strDataFilePath As String, strHashFilePath As String, <Out()> ByRef strErrorMessage As String) As Boolean
         Return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=False, blnCheckSize:=True)
     End Function
 
@@ -1410,7 +1414,7 @@ Public Class clsGlobal
     ''' <param name="blnComputeHash"></param>
     ''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
     ''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-    Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByVal strHashFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean) As Boolean
+    Public Shared Function ValidateFileVsHashcheck(strDataFilePath As String, strHashFilePath As String, <Out()> ByRef strErrorMessage As String, blnCheckDate As Boolean, blnComputeHash As Boolean) As Boolean
         Return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, strErrorMessage, blnCheckDate, blnComputeHash, blnCheckSize:=True)
     End Function
 
@@ -1427,7 +1431,7 @@ Public Class clsGlobal
     ''' <param name="blnCheckSize"></param>
     ''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
     ''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-    Public Shared Function ValidateFileVsHashcheck(ByVal strDataFilePath As String, ByVal strHashFilePath As String, ByRef strErrorMessage As String, ByVal blnCheckDate As Boolean, ByVal blnComputeHash As Boolean, ByVal blnCheckSize As Boolean) As Boolean
+    Public Shared Function ValidateFileVsHashcheck(strDataFilePath As String, strHashFilePath As String, <Out()> ByRef strErrorMessage As String, blnCheckDate As Boolean, blnComputeHash As Boolean, blnCheckSize As Boolean) As Boolean
 
         Dim blnValidFile = False
         strErrorMessage = String.Empty
@@ -1517,7 +1521,7 @@ Public Class clsGlobal
 
     End Function
 
-    Public Shared Function ValidateFreeDiskSpace(ByVal directoryDescription As String, ByVal directoryPath As String, ByVal minFreeSpaceMB As Integer, ByVal eLogLocationIfNotFound As clsLogTools.LoggerTypes, <Out()> ByRef errorMessage As String) As Boolean
+    Public Shared Function ValidateFreeDiskSpace(directoryDescription As String, directoryPath As String, minFreeSpaceMB As Integer, eLogLocationIfNotFound As clsLogTools.LoggerTypes, <Out()> ByRef errorMessage As String) As Boolean
 
         Dim diDirectory As DirectoryInfo
         Dim diDrive As DriveInfo

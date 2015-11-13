@@ -100,7 +100,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="EmergencyLogSource">Source name registered for emergency logging</param>
     ''' <param name="EmergencyLogName">Name of system log for emergency logging</param>
     ''' <remarks></remarks>
-    Public Sub New(ByVal EmergencyLogSource As String, ByVal EmergencyLogName As String, ByVal lstMgrSettings As Dictionary(Of String, String), ByVal MgrFolderPath As String)
+    Public Sub New(EmergencyLogSource As String, EmergencyLogName As String, lstMgrSettings As Dictionary(Of String, String), MgrFolderPath As String)
         m_EmergencyLogName = EmergencyLogName
         m_EmergencyLogSource = EmergencyLogSource
         m_MgrFolderPath = MgrFolderPath
@@ -122,7 +122,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="ConfigFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
     ''' <returns>True if successful; False on error</returns>
     ''' <remarks></remarks>
-    Public Function LoadSettings(ByVal ConfigFileSettings As Dictionary(Of String, String)) As Boolean Implements IMgrParams.LoadSettings
+    Public Function LoadSettings(ConfigFileSettings As Dictionary(Of String, String)) As Boolean Implements IMgrParams.LoadSettings
 
         m_ErrMsg = ""
 
@@ -158,7 +158,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="InpDict"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function CheckInitialSettings(ByRef InpDict As Dictionary(Of String, String)) As Boolean
+    Private Function CheckInitialSettings(InpDict As Dictionary(Of String, String)) As Boolean
 
         Dim MyMsg As String
 
@@ -190,7 +190,7 @@ Public Class clsAnalysisMgrSettings
 
     End Function
 
-    Private Function GetGroupNameFromSettings(ByVal dtSettings As DataTable) As String
+    Private Function GetGroupNameFromSettings(dtSettings As DataTable) As String
 
         For Each oRow As DataRow In dtSettings.Rows
             'Add the column heading and value to the dictionary
@@ -209,7 +209,7 @@ Public Class clsAnalysisMgrSettings
         Return String.Empty
 
     End Function
-    
+
     ' Retrieves the manager and global settings from various databases
     Public Function LoadDBSettings() As Boolean Implements IMgrParams.LoadDBSettings
         Dim blnSuccess As Boolean
@@ -280,7 +280,7 @@ Public Class clsAnalysisMgrSettings
 
     End Function
 
-    Private Function LoadMgrSettingsFromDBWork(ByVal ManagerName As String, <Out> ByRef dtSettings As DataTable, ByVal blnReturnErrorIfNoParameters As Boolean) As Boolean
+    Private Function LoadMgrSettingsFromDBWork(ManagerName As String, <Out()> ByRef dtSettings As DataTable, blnReturnErrorIfNoParameters As Boolean) As Boolean
 
         Const retryCount As Short = 3
 
@@ -324,7 +324,7 @@ Public Class clsAnalysisMgrSettings
 
     End Function
 
-    Private Function StoreParameters(ByVal dtSettings As DataTable, ByVal blnSkipExisting As Boolean, ByVal ManagerName As String) As Boolean
+    Private Function StoreParameters(dtSettings As DataTable, blnSkipExisting As Boolean, ManagerName As String) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -440,7 +440,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="ItemKey">Key name for item</param>
     ''' <returns>String value associated with specified key</returns>
     ''' <remarks>Returns empty string if key isn't found</remarks>
-    Public Function GetParam(ByVal ItemKey As String) As String Implements IMgrParams.GetParam
+    Public Function GetParam(ItemKey As String) As String Implements IMgrParams.GetParam
         Dim Value As String = String.Empty
 
         If Not m_ParamDictionary Is Nothing Then
@@ -463,7 +463,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="ItemKey">Key name for item</param>
     ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
     ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Boolean) As Boolean Implements IMgrParams.GetParam
+    Public Function GetParam(ItemKey As String, ValueIfMissing As Boolean) As Boolean Implements IMgrParams.GetParam
         Return clsGlobal.CBoolSafe(GetParam(ItemKey), ValueIfMissing)
     End Function
 
@@ -473,7 +473,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="ItemKey">Key name for item</param>
     ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
     ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Integer) As Integer Implements IMgrParams.GetParam
+    Public Function GetParam(ItemKey As String, ValueIfMissing As Integer) As Integer Implements IMgrParams.GetParam
         Return clsGlobal.CIntSafe(GetParam(ItemKey), ValueIfMissing)
     End Function
 
@@ -483,7 +483,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="ItemKey">Key name for item</param>
     ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
     ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As String) As String Implements IMgrParams.GetParam
+    Public Function GetParam(ItemKey As String, ValueIfMissing As String) As String Implements IMgrParams.GetParam
         Dim strValue As String
         strValue = GetParam(ItemKey)
         If String.IsNullOrEmpty(strValue) Then
@@ -499,7 +499,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="ItemKey">Key name for the item</param>
     ''' <param name="ItemValue">Value to assign to the key</param>
     ''' <remarks></remarks>
-    Public Sub SetParam(ByVal ItemKey As String, ByVal ItemValue As String) Implements IMgrParams.SetParam
+    Public Sub SetParam(ItemKey As String, ItemValue As String) Implements IMgrParams.SetParam
 
         If m_ParamDictionary.ContainsKey(ItemKey) Then
             m_ParamDictionary(ItemKey) = ItemValue
@@ -514,7 +514,7 @@ Public Class clsAnalysisMgrSettings
     ''' </summary>
     ''' <param name="errorMessage">Message to write</param>
     ''' <remarks></remarks>
-    Private Sub WriteErrorMsg(ByVal errorMessage As String, Optional ByVal allowLogToDB As Boolean = True)
+    Private Sub WriteErrorMsg(errorMessage As String, Optional allowLogToDB As Boolean = True)
 
         WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, errorMessage)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
@@ -532,7 +532,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="InpObj"></param>
     ''' <returns>String equivalent of object; empty string if object is dbNull</returns>
     ''' <remarks></remarks>
-    Protected Function DbCStr(ByVal InpObj As Object) As String
+    Protected Function DbCStr(InpObj As Object) As String
 
         'If input object is DbNull, returns "", otherwise returns String representation of object
         If InpObj Is DBNull.Value Then
@@ -550,7 +550,7 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="Value">New value for parameter</param>
     ''' <returns>TRUE for success; FALSE for error (ErrMsg property contains reason)</returns>
     ''' <remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
-    Public Function WriteConfigSetting(ByVal Key As String, ByVal Value As String) As Boolean
+    Public Function WriteConfigSetting(Key As String, Value As String) As Boolean
 
         m_ErrMsg = ""
 
@@ -589,7 +589,7 @@ Public Class clsAnalysisMgrSettings
 
     End Function
 
-    Protected Sub WriteToEmergencyLog(ByVal SourceName As String, ByVal LogName As String, ByVal Message As String)
+    Protected Sub WriteToEmergencyLog(SourceName As String, LogName As String, Message As String)
         ' Post a message to the the Windows application event log named LogName
         ' If the application log does not exist yet, we will try to create it
         ' However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt

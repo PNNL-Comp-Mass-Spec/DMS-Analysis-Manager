@@ -11,6 +11,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Runtime.InteropServices
 Imports System.Xml
 
 Public Class clsPluginLoader
@@ -31,7 +32,7 @@ Public Class clsPluginLoader
         Get
             Return m_pluginConfigFile
         End Get
-        Set(ByVal Value As String)
+        Set(Value As String)
             m_pluginConfigFile = Value
         End Set
     End Property
@@ -52,7 +53,7 @@ Public Class clsPluginLoader
 
 #Region "Methods"
 
-    Public Sub New(ByRef objSummaryFile As clsSummaryFile, ByVal MgrFolderPath As String)
+    Public Sub New(objSummaryFile As clsSummaryFile, MgrFolderPath As String)
         m_SummaryFile = objSummaryFile
         m_MgrFolderPath = MgrFolderPath
     End Sub
@@ -71,7 +72,7 @@ Public Class clsPluginLoader
 
 #If PLUGIN_DEBUG_MODE_ENABLED Then
 
-    Private Function DebugModeGetToolRunner(ByVal className As String) As IToolRunner
+    Private Function DebugModeGetToolRunner(className As String) As IToolRunner
 
         Dim myToolRunner As IToolRunner = Nothing
 
@@ -204,7 +205,7 @@ Public Class clsPluginLoader
         Return myToolRunner
     End Function
 
-    Private Function DebugModeGetAnalysisResources(ByVal className As String) As IAnalysisResources
+    Private Function DebugModeGetAnalysisResources(className As String) As IAnalysisResources
 
         Dim myModule As IAnalysisResources = Nothing
 
@@ -346,7 +347,7 @@ Public Class clsPluginLoader
     ''' <param name="assyName">Name of assembly for plugin (return value)</param>
     ''' <returns>TRUE for success, FALSE for failure</returns>
     ''' <remarks></remarks>
-    Private Function GetPluginInfo(ByVal XPath As String, ByRef className As String, ByRef assyName As String) As Boolean
+    Private Function GetPluginInfo(XPath As String, <Out()> ByRef className As String, <Out()> ByRef assyName As String) As Boolean
         Dim doc As XmlDocument = New XmlDocument
         Dim nodeList As XmlNodeList
         Dim n As XmlElement
@@ -389,7 +390,7 @@ Public Class clsPluginLoader
     ''' <param name="assyName">Name of assembly to load (from GetPluginInfo)</param>
     ''' <returns>An object referencing the specified dll</returns>
     ''' <remarks></remarks>
-    Private Function LoadObject(ByVal className As String, ByVal assyName As String) As Object
+    Private Function LoadObject(className As String, assyName As String) As Object
         Dim obj As Object = Nothing
         m_msgList.Clear()
 
@@ -412,7 +413,7 @@ Public Class clsPluginLoader
     ''' <param name="ToolName">Name of tool</param>
     ''' <returns>An object meeting the IToolRunner interface</returns>
     ''' <remarks></remarks>
-    Public Function GetToolRunner(ByVal ToolName As String) As IToolRunner
+    Public Function GetToolRunner(ToolName As String) As IToolRunner
 
         Dim xpath As String = "//ToolRunners/ToolRunner[@Tool='" & ToolName.ToLower() & "']"
 
@@ -449,7 +450,7 @@ Public Class clsPluginLoader
     ''' <param name="ToolName">Name of analysis tool</param>
     ''' <returns>An object meeting the IAnalysisResources interface</returns>
     ''' <remarks></remarks>
-    Public Function GetAnalysisResources(ByVal ToolName As String) As IAnalysisResources
+    Public Function GetAnalysisResources(ToolName As String) As IAnalysisResources
 
         Dim xpath As String = "//Resourcers/Resourcer[@Tool='" & ToolName & "']"
         Dim className As String = ""
@@ -487,7 +488,7 @@ Public Class clsPluginLoader
     ''' <param name="PluginInfoFileName">Name of plugin info file</param>
     ''' <returns>Path to plugin info file</returns>
     ''' <remarks></remarks>
-    Private Function GetPluginInfoFilePath(ByVal PluginInfoFileName As String) As String
+    Private Function GetPluginInfoFilePath(PluginInfoFileName As String) As String
         Return Path.Combine(m_MgrFolderPath, PluginInfoFileName)
     End Function
 #End Region

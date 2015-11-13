@@ -173,25 +173,25 @@ Module modMain
 	''' <param name="strProgramDate"></param>
 	''' <returns></returns>
 	''' <remarks></remarks>
-	Private Function GetAppVersion(ByVal strProgramDate As String) As String
-		Return Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & strProgramDate & ")"
-	End Function
+    Private Function GetAppVersion(strProgramDate As String) As String
+        Return Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & strProgramDate & ")"
+    End Function
 
-	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
-		' Returns True if no problems; otherwise, returns false
+    Private Function SetOptionsUsingCommandLineParameters(objParseCommandLine As clsParseCommandLine) As Boolean
+        ' Returns True if no problems; otherwise, returns false
 
-		Dim strValue As String = String.Empty
+        Dim strValue As String = String.Empty
         Dim lstValidParameters As List(Of String) = New List(Of String) From {"T", "Test", "Trace", "EL", "NQ"}
 
-		Try
-			' Make sure no invalid parameters are present
-			If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
-				ShowErrorMessage("Invalid commmand line parameters",
-				  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
-				Return False
-			Else
-				With objParseCommandLine
-					' Query objParseCommandLine to see if various parameters are present
+        Try
+            ' Make sure no invalid parameters are present
+            If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
+                ShowErrorMessage("Invalid commmand line parameters",
+                  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
+                Return False
+            Else
+                With objParseCommandLine
+                    ' Query objParseCommandLine to see if various parameters are present
 
                     If .IsParameterPresent("T") Then mCodeTestMode = True
                     If .IsParameterPresent("Test") Then mCodeTestMode = True
@@ -203,79 +203,79 @@ Module modMain
                     If .IsParameterPresent("NQ") Then mDisableMessageQueue = True
                 End With
 
-				Return True
-			End If
+                Return True
+            End If
 
-		Catch ex As Exception
-			ShowErrorMessage("Error parsing the command line parameters: " & Environment.NewLine & ex.Message)
-		End Try
+        Catch ex As Exception
+            ShowErrorMessage("Error parsing the command line parameters: " & Environment.NewLine & ex.Message)
+        End Try
 
-		Return False
+        Return False
 
-	End Function
+    End Function
 
-	Private Sub ShowErrorMessage(ByVal strMessage As String)
-		Const strSeparator As String = "------------------------------------------------------------------------------"
+    Private Sub ShowErrorMessage(strMessage As String)
+        Const strSeparator As String = "------------------------------------------------------------------------------"
 
-		Console.WriteLine()
-		Console.WriteLine(strSeparator)
-		Console.WriteLine(strMessage)
-		Console.WriteLine(strSeparator)
-		Console.WriteLine()
+        Console.WriteLine()
+        Console.WriteLine(strSeparator)
+        Console.WriteLine(strMessage)
+        Console.WriteLine(strSeparator)
+        Console.WriteLine()
 
-		WriteToErrorStream(strMessage)
-	End Sub
+        WriteToErrorStream(strMessage)
+    End Sub
 
-	Private Sub ShowErrorMessage(ByVal strTitle As String, ByVal items As IEnumerable(Of String))
-		Const strSeparator As String = "------------------------------------------------------------------------------"
-		Dim strMessage As String
+    Private Sub ShowErrorMessage(strTitle As String, items As IEnumerable(Of String))
+        Const strSeparator As String = "------------------------------------------------------------------------------"
+        Dim strMessage As String
 
-		Console.WriteLine()
-		Console.WriteLine(strSeparator)
-		Console.WriteLine(strTitle)
-		strMessage = strTitle & ":"
+        Console.WriteLine()
+        Console.WriteLine(strSeparator)
+        Console.WriteLine(strTitle)
+        strMessage = strTitle & ":"
 
-		For Each item As String In items
-			Console.WriteLine("   " + item)
-			strMessage &= " " & item
-		Next
-		Console.WriteLine(strSeparator)
-		Console.WriteLine()
+        For Each item As String In items
+            Console.WriteLine("   " + item)
+            strMessage &= " " & item
+        Next
+        Console.WriteLine(strSeparator)
+        Console.WriteLine()
 
-		WriteToErrorStream(strMessage)
-	End Sub
+        WriteToErrorStream(strMessage)
+    End Sub
 
-	Private Sub ShowProgramHelp()
+    Private Sub ShowProgramHelp()
 
-		Try
+        Try
 
-			Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.")
-			Console.WriteLine()
+            Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.")
+            Console.WriteLine()
             Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(GetAppPath()) & " [/EL] [/NQ] [/T] [/Trace] [/Q]")
-			Console.WriteLine()
+            Console.WriteLine()
 
-			Console.WriteLine("Use /EL to create the Windows Event Log named '" & clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
+            Console.WriteLine("Use /EL to create the Windows Event Log named '" & clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
             Console.WriteLine()
             Console.WriteLine("Use /NQ to disable posting status messages to the message queue")
             Console.WriteLine()
-			Console.WriteLine("Use /T or /Test to start the program in code test mode.")
-			Console.WriteLine()
-			Console.WriteLine("Use /Trace to enable trace mode, where debug messages are written to the command prompt")
-			Console.WriteLine()
+            Console.WriteLine("Use /T or /Test to start the program in code test mode.")
+            Console.WriteLine()
+            Console.WriteLine("Use /Trace to enable trace mode, where debug messages are written to the command prompt")
+            Console.WriteLine()
 
-			Console.WriteLine("Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)")
-			Console.WriteLine()
+            Console.WriteLine("Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)")
+            Console.WriteLine()
 
-			Console.WriteLine("Version: " & GetAppVersion(PROGRAM_DATE))
-			Console.WriteLine()
+            Console.WriteLine("Version: " & GetAppVersion(PROGRAM_DATE))
+            Console.WriteLine()
 
-			Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
-			Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
-			Console.WriteLine()
+            Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
+            Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
+            Console.WriteLine()
 
             Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " &
                               "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0")
-			Console.WriteLine()
+            Console.WriteLine()
 
             Console.WriteLine("Notice: This computer software was prepared by Battelle Memorial Institute, " &
                   "hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the " &
@@ -286,28 +286,28 @@ Module modMain
                   "SOFTWARE.  This notice including this sentence must appear on any copies of " &
                   "this computer software.")
 
-			' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-			Thread.Sleep(750)
+            ' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+            Thread.Sleep(750)
 
-		Catch ex As Exception
-			ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
-		End Try
+        Catch ex As Exception
+            ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
+        End Try
 
-	End Sub
+    End Sub
 
-	Private Sub WriteToErrorStream(strErrorMessage As String)
-		Try
-			Using swErrorStream As StreamWriter = New StreamWriter(Console.OpenStandardError())
-				swErrorStream.WriteLine(strErrorMessage)
-			End Using
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
-	End Sub
+    Private Sub WriteToErrorStream(strErrorMessage As String)
+        Try
+            Using swErrorStream As StreamWriter = New StreamWriter(Console.OpenStandardError())
+                swErrorStream.WriteLine(strErrorMessage)
+            End Using
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
+    End Sub
 
-	Public Sub ShowTraceMessage(ByVal strMessage As String)
-		clsMainProcess.ShowTraceMessage(strMessage)
-	End Sub
+    Public Sub ShowTraceMessage(strMessage As String)
+        clsMainProcess.ShowTraceMessage(strMessage)
+    End Sub
 End Module
 
 

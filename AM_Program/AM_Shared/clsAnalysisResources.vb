@@ -1255,7 +1255,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="strFilesToDelete">Queue of files to delete (full file paths)</param>
     ''' <param name="strFileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
     ''' <remarks></remarks>
-    Protected Sub DeleteQueuedFiles(ByRef strFilesToDelete As Queue(Of String), strFileToQueueForDeletion As String)
+    Protected Sub DeleteQueuedFiles(strFilesToDelete As Queue(Of String), strFileToQueueForDeletion As String)
 
         If strFilesToDelete.Count > 0 Then
             ' Call the garbage collector, then try to delete the first queued file
@@ -1922,7 +1922,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
     ''' <returns>Full path to the file, if found; empty string if no match</returns>
     ''' <remarks>Supports both gzipped mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-    Protected Function FindMZXmlFile(ByRef strHashcheckFilePath As String) As String
+    Protected Function FindMZXmlFile(<Out()> ByRef strHashcheckFilePath As String) As String
 
         ' First look in the MsXML cache folder
         Dim strMatchingFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzXML, strHashcheckFilePath)
@@ -2018,7 +2018,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
     ''' <returns>Full path to the file if a match; empty string if no match</returns>
     ''' <remarks>Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-    Protected Function FindMsXmlFileInCache(msXmlType As MSXMLOutputTypeConstants, ByRef strHashcheckFilePath As String) As String
+    Protected Function FindMsXmlFileInCache(msXmlType As MSXMLOutputTypeConstants, <Out()> ByRef strHashcheckFilePath As String) As String
 
         Dim MsXMLFilename As String = m_DatasetName
         strHashcheckFilePath = String.Empty
@@ -2708,9 +2708,9 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks></remarks>
     Public Shared Function GetBrukerImagingFileCoords(
       strCoord As String,
-      ByRef R As Integer,
-      ByRef X As Integer,
-      ByRef Y As Integer) As Boolean
+      <Out()> ByRef R As Integer,
+      <Out()> ByRef X As Integer,
+      <Out()> ByRef Y As Integer) As Boolean
 
         Static reRegExRXY As Text.RegularExpressions.Regex
         Static reRegExRX As Text.RegularExpressions.Regex
@@ -2741,6 +2741,11 @@ Public MustInherit Class clsAnalysisResources
             If reMatch.Success Then
                 If Integer.TryParse(reMatch.Groups.Item(1).Value, R) Then blnSuccess = True
                 If Integer.TryParse(reMatch.Groups.Item(2).Value, X) Then blnSuccess = True
+                Y = 0
+            Else
+                R = 0
+                X = 0
+                Y = 0
             End If
         End If
 
@@ -2756,9 +2761,9 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Shared Function GetBrukerImagingSectionFilter(
-      ByRef objJobParams As IJobParams,
-      ByRef StartSectionX As Integer,
-      ByRef EndSectionX As Integer) As Boolean
+      objJobParams As IJobParams,
+      <Out()> ByRef StartSectionX As Integer,
+      <Out()> ByRef EndSectionX As Integer) As Boolean
 
         Dim blnApplySectionFilter As Boolean
 
@@ -2786,7 +2791,7 @@ Public MustInherit Class clsAnalysisResources
 
     End Function
 
-    Protected Function GetCachedArchivedFileInfo(myEMSLFileID As Int64, ByRef fileInfoOut As MyEMSLReader.ArchivedFileInfo) As Boolean
+    Protected Function GetCachedArchivedFileInfo(myEMSLFileID As Int64, <Out()> ByRef fileInfoOut As MyEMSLReader.ArchivedFileInfo) As Boolean
 
         fileInfoOut = Nothing
 
@@ -3115,7 +3120,7 @@ Public MustInherit Class clsAnalysisResources
     Public Shared Function GetMSXmlCacheFolderPath(
       cacheFolderPathBase As String,
       jobParams As IJobParams,
-      ByRef errorMessage As String) As String
+      <Out()> ByRef errorMessage As String) As String
 
         ' Lookup the output folder; e.g. MSXML_Gen_1_120_275966
         Dim outputFolderName = jobParams.GetJobParameter("OutputFolderName", String.Empty)
@@ -3149,7 +3154,7 @@ Public MustInherit Class clsAnalysisResources
       cacheFolderPathBase As String,
       jobParams As IJobParams,
       msXmlToolNameVersionFolder As String,
-      ByRef errorMessage As String) As String
+      <Out()> ByRef errorMessage As String) As String
 
         errorMessage = String.Empty
 
@@ -3287,7 +3292,7 @@ Public MustInherit Class clsAnalysisResources
 
     Protected Function HandleMsXmlRetrieveFailure(
       fileMissingFromCache As Boolean,
-      ByRef errorMessage As String,
+      <Out()> ByRef errorMessage As String,
       msXmlExtension As String) As IJobParams.CloseOutType
 
         If fileMissingFromCache Then
@@ -5397,7 +5402,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="SourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
     ''' <returns>True if the file was found and retrieved, otherwise False</returns>
     ''' <remarks>The retrieved file might be gzipped</remarks>
-    Protected Function RetrieveMZXmlFile(createStoragePathInfoOnly As Boolean, ByRef sourceFilePath As String) As Boolean
+    Protected Function RetrieveMZXmlFile(createStoragePathInfoOnly As Boolean, <Out()> ByRef sourceFilePath As String) As Boolean
 
         Dim hashcheckFilePath As String = String.Empty
         sourceFilePath = FindMZXmlFile(hashcheckFilePath)
@@ -6644,7 +6649,7 @@ Public MustInherit Class clsAnalysisResources
     ''' </summary>
     ''' <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
     ''' <remarks></remarks>
-    Protected Function FindCDTAFile(ByRef strErrorMessage As String) As String
+    Protected Function FindCDTAFile(<Out()> ByRef strErrorMessage As String) As String
 
         Dim SourceFileName As String
         Dim SourceFolderPath As String
@@ -6693,7 +6698,7 @@ Public MustInherit Class clsAnalysisResources
     ''' </summary>
     ''' <returns>The path to the .pbf file</returns>
     ''' <remarks></remarks>
-    Protected Function FindPBFFile(ByRef strErrorMessage As String) As String
+    Protected Function FindPBFFile(<Out()> ByRef strErrorMessage As String) As String
 
         Dim SourceFileName As String
         Dim SourceFolderPath As String
@@ -7113,7 +7118,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
     ''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
     ''' <returns>True if success; false if an error</returns>
-    Protected Function ValidateCDTAFileScanAndCSTags(strSourceFilePath As String, blnReplaceSourceFile As Boolean, blnDeleteSourceFileIfUpdated As Boolean, ByRef strOutputFilePath As String) As Boolean
+    Protected Function ValidateCDTAFileScanAndCSTags(strSourceFilePath As String, blnReplaceSourceFile As Boolean, blnDeleteSourceFileIfUpdated As Boolean, <Out()> ByRef strOutputFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -7209,7 +7214,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="strFileDescription">File description, e.g. Synopsis</param>
     ''' <returns>True if the file has data; otherwise false</returns>
     ''' <remarks></remarks>
-    Public Shared Function ValidateFileHasData(strFilePath As String, strFileDescription As String, ByRef strErrorMessage As String) As Boolean
+    Public Shared Function ValidateFileHasData(strFilePath As String, strFileDescription As String, <Out()> ByRef strErrorMessage As String) As Boolean
         Const intNumericDataColIndex = 0
         Return ValidateFileHasData(strFilePath, strFileDescription, strErrorMessage, intNumericDataColIndex)
     End Function
@@ -7222,7 +7227,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="intNumericDataColIndex">Index of the numeric data column; use -1 to simply look for any text in the file</param>
     ''' <returns>True if the file has data; otherwise false</returns>
     ''' <remarks></remarks>
-    Public Shared Function ValidateFileHasData(strFilePath As String, strFileDescription As String, ByRef strErrorMessage As String, intNumericDataColIndex As Integer) As Boolean
+    Public Shared Function ValidateFileHasData(strFilePath As String, strFileDescription As String, <Out()> ByRef strErrorMessage As String, intNumericDataColIndex As Integer) As Boolean
 
         Dim fiFileInfo As FileInfo
 
