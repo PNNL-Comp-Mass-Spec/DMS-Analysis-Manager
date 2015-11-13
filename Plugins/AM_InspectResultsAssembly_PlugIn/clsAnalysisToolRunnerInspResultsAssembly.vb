@@ -244,14 +244,13 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <param name="jobParams">Object containing job parameters</param>
     ''' <param name="StatusTools">Object for updating status file as job progresses</param>
     ''' <remarks></remarks>
-	Public Overrides Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, _
-	  ByVal StatusTools As IStatusFile, ByRef SummaryFile As clsSummaryFile)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, StatusTools As IStatusFile, SummaryFile As clsSummaryFile)
 
-		MyBase.Setup(mgrParams, jobParams, StatusTools, SummaryFile)
+        MyBase.Setup(mgrParams, jobParams, StatusTools, SummaryFile)
 
-		mInspectResultsFileName = m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX
+        mInspectResultsFileName = m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX
 
-	End Sub
+    End Sub
 
     Private Function AssembleResults(ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType

@@ -119,14 +119,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					else
 					{
 						// See if a .mzXML or .mzML file already exists for this dataset
-						string strHashcheckFilePath = string.Empty;
+						string strHashcheckFilePath;
 
-						string mzXMLFilePath = FindMZXmlFile(ref strHashcheckFilePath);
-						string mzMLFilePath = string.Empty;
+						var mzXMLFilePath = FindMZXmlFile(out strHashcheckFilePath);
+						var mzMLFilePath = string.Empty;
 
 						if (string.IsNullOrEmpty(mzXMLFilePath))
 						{
-							mzMLFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzML, ref strHashcheckFilePath);
+							mzMLFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzML, out strHashcheckFilePath);
 						}
 
 						if (!string.IsNullOrEmpty(mzXMLFilePath))

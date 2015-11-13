@@ -113,7 +113,6 @@ F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\Jayrock.Json.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\AM_Shared.pdb
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\PRISM.pdb
-F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\PRISM.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\ThermoRawFileReaderDLL.pdb
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\ThermoRawFileReaderDLL.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\ParamFileGenerator.pdb
@@ -122,8 +121,6 @@ F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\Ionic.Zip.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\log4net.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\MSFileInfoScannerInterfaces.pdb
-F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\MSFileInfoScannerInterfaces.xml
-F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\bin\Debug\System.Data.SQLite.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.xml
 F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_ICR2LS_PlugIn\obj\Debug\AnalysisManagerICR2LSPlugIn.pdb
