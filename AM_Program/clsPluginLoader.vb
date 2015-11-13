@@ -196,8 +196,8 @@ Public Class clsPluginLoader
             'Case "AnalysisManagerNOMSIPlugin.clsAnalysisToolRunnerNOMSI".ToLower()
             '    myToolRunner = DirectCast(New AnalysisManagerNOMSIPlugin.clsAnalysisToolRunnerNOMSI, IToolRunner)
 
-            Case "AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART".ToLower()
-                myToolRunner = DirectCast(New AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART, IToolRunner)
+            'Case "AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART".ToLower()
+            '    myToolRunner = DirectCast(New AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART, IToolRunner)
 
         End Select
 
@@ -327,8 +327,8 @@ Public Class clsPluginLoader
             'Case "AnalysisManagerGlyQIQPlugin.clsAnalysisResourcesGlyQIQ".ToLower()
             '    myModule = DirectCast(New AnalysisManagerGlyQIQPlugIn.clsAnalysisResourcesGlyQIQ, IAnalysisResources)
 
-            Case "AnalysisManagerQCARTPlugIn.clsAnalysisResourcesQCART".ToLower()
-                myModule = DirectCast(New AnalysisManagerQCARTPlugin.clsAnalysisResourcesQCART, IAnalysisResources)
+            'Case "AnalysisManagerQCARTPlugIn.clsAnalysisResourcesQCART".ToLower()
+            '    myModule = DirectCast(New AnalysisManagerQCARTPlugin.clsAnalysisResourcesQCART, IAnalysisResources)
 
 
         End Select

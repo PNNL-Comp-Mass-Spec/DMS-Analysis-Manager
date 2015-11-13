@@ -40,10 +40,11 @@ Public Class clsCleanupMgrErrors
 
 #End Region
 
-	Public Sub New(ByVal strMgrConfigDBConnectionString As String, _
-	   ByVal strManagerName As String, _
-	   ByVal strMgrFolderPath As String, _
-	   ByVal strWorkingDirPath As String)
+    Public Sub New(
+       ByVal strMgrConfigDBConnectionString As String,
+       ByVal strManagerName As String,
+       ByVal strMgrFolderPath As String,
+       ByVal strWorkingDirPath As String)
 
         If String.IsNullOrEmpty(strMgrConfigDBConnectionString) Then
             Throw New Exception("Manager config DB connection string is not defined")
@@ -59,7 +60,7 @@ Public Class clsCleanupMgrErrors
             mInitialized = True
         End If
 
-	End Sub
+    End Sub
 
     Public Function AutoCleanupManagerErrors(ByVal eManagerErrorCleanupMode As eCleanupModeConstants, ByVal debugLevel As Integer) As Boolean
         Dim blnSuccess As Boolean

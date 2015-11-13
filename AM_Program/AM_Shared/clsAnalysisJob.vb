@@ -35,626 +35,635 @@ Public Class clsAnalysisJob
 	Protected m_TaskWasClosed As Boolean
 
 	Protected m_ResultFilesToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)				' List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
-	Protected m_ResultFileExtensionsToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)		' List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder; comparison checks if the end of the filename matches any entry ResultFileExtensionsToSkip: If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
-	Protected m_ResultFilesToKeep As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)				' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
-	Protected m_ServerFilesToDelete As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)			' List of file path to delete from the storage server (must be full file paths)
+    Protected m_ResultFileExtensionsToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)     ' List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder; comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip: If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
+    Protected m_ResultFilesToKeep As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)              ' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
+    Protected m_ServerFilesToDelete As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)            ' List of file path to delete from the storage server (must be full file paths)
 
-	Protected m_DatasetInfoList As New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)		   ' List of dataset names and dataset IDs
+    Protected m_DatasetInfoList As New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)         ' List of dataset names and dataset IDs
 
 #End Region
 
 #Region "Properties"
 
-	''' <summary>
-	'''  List of dataset names and dataset IDs associated with this aggregation job
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public ReadOnly Property DatasetInfoList As Dictionary(Of String, Integer) Implements IJobParams.DatasetInfoList
-		Get
-			Return m_DatasetInfoList
-		End Get
-	End Property
+    ''' <summary>
+    '''  List of dataset names and dataset IDs associated with this aggregation job
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property DatasetInfoList As Dictionary(Of String, Integer) Implements IJobParams.DatasetInfoList
+        Get
+            Return m_DatasetInfoList
+        End Get
+    End Property
 
-	''' <summary>
-	''' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public ReadOnly Property ResultFilesToKeep As SortedSet(Of String) Implements IJobParams.ResultFilesToKeep
-		Get
-			Return m_ResultFilesToKeep
-		End Get
-	End Property
+    ''' <summary>
+    ''' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property ResultFilesToKeep As SortedSet(Of String) Implements IJobParams.ResultFilesToKeep
+        Get
+            Return m_ResultFilesToKeep
+        End Get
+    End Property
 
-	''' <summary>
-	''' List of file names to NOT move to the result folder
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public ReadOnly Property ResultFilesToSkip As SortedSet(Of String) Implements IJobParams.ResultFilesToSkip
-		Get
-			Return m_ResultFilesToSkip
-		End Get
-	End Property
+    ''' <summary>
+    ''' List of file names to NOT move to the result folder
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property ResultFilesToSkip As SortedSet(Of String) Implements IJobParams.ResultFilesToSkip
+        Get
+            Return m_ResultFilesToSkip
+        End Get
+    End Property
 
-	''' <summary>
-	''' List of file extensions to NOT move to the result folder; comparison checks if the end of the filename matches any entry in ResultFileExtensionsToSkip
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public ReadOnly Property ResultFileExtensionsToSkip As SortedSet(Of String) Implements IJobParams.ResultFileExtensionsToSkip
-		Get
-			Return m_ResultFileExtensionsToSkip
-		End Get
-	End Property
+    ''' <summary>
+    ''' List of file extensions to NOT move to the result folder; comparison checks if the end of the fileName matches any entry in ResultFileExtensionsToSkip
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property ResultFileExtensionsToSkip As SortedSet(Of String) Implements IJobParams.ResultFileExtensionsToSkip
+        Get
+            Return m_ResultFileExtensionsToSkip
+        End Get
+    End Property
 
-	''' <summary>
-	''' List of file paths to remove from the storage server (full file paths)
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
+    ''' <summary>
+    ''' List of file paths to remove from the storage server (full file paths)
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
     ''' <remarks>Used by clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
-	Public ReadOnly Property ServerFilesToDelete As SortedSet(Of String) Implements IJobParams.ServerFilesToDelete
-		Get
-			Return m_ServerFilesToDelete
-		End Get
-	End Property
+    Public ReadOnly Property ServerFilesToDelete As SortedSet(Of String) Implements IJobParams.ServerFilesToDelete
+        Get
+            Return m_ServerFilesToDelete
+        End Get
+    End Property
 #End Region
 
 #Region "Methods"
 
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="mgrParams">IMgrParams object containing manager parameters</param>
-	''' <remarks></remarks>
-	Public Sub New(ByVal mgrParams As IMgrParams, ByVal DebugLvl As Integer)
-
-		MyBase.New(mgrParams, DebugLvl)
-
-		Reset()
-
-	End Sub
-
-	''' <summary>
-	''' Adds (or updates) a job parameter
-	''' </summary>
-	''' <param name="SectionName">Section name for parameter</param>
-	''' <param name="ParamName">Name of parameter</param>
-	''' <param name="ParamValue">Value for parameter</param>
-	''' <returns>True if success, False if an error</returns>
-	''' <remarks></remarks>
-	Public Function AddAdditionalParameter(ByVal SectionName As String, ByVal ParamName As String, ByVal ParamValue As String) As Boolean Implements IJobParams.AddAdditionalParameter
-
-		Try
-			If ParamValue Is Nothing Then ParamValue = String.Empty
-
-			SetParam(SectionName, ParamName, ParamValue)
-
-			Return True
-		Catch ex As Exception
-			Dim Msg As String = "Exception adding parameter: " & ParamName & " Value: " & ParamValue & "; " & clsGlobal.GetExceptionStackTrace(ex)
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			Return False
-		End Try
-
-	End Function
-
-	''' <summary>
-	''' Add new dataset name and ID to DatasetInfoList
-	''' </summary>
-	''' <param name="DatasetName"></param>
-	''' <param name="DatasetID"></param>
-	''' <remarks></remarks>
-	Public Sub AddDatasetInfo(ByVal DatasetName As String, ByVal DatasetID As Integer) Implements IJobParams.AddDatasetInfo
-		If Not m_DatasetInfoList.ContainsKey(DatasetName) Then
-			m_DatasetInfoList.Add(DatasetName, DatasetID)
-		End If
-	End Sub
-
-	''' <summary>
-	''' Add a filename extension to not move to the results folder
-	''' </summary>
-	''' <param name="Extension"></param>
-	''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
-	Public Sub AddResultFileExtensionToSkip(ByVal Extension As String) Implements IJobParams.AddResultFileExtensionToSkip
-		If Not m_ResultFileExtensionsToSkip.Contains(Extension) Then
-			m_ResultFileExtensionsToSkip.Add(Extension)
-		End If
-	End Sub
-
-	''' <summary>
-	''' Add a filename to definitely move to the results folder
-	''' </summary>
-	''' <param name="FileName"></param>
-	''' <remarks></remarks>
-	Public Sub AddResultFileToKeep(ByVal FileName As String) Implements IJobParams.AddResultFileToKeep
-		FileName = Path.GetFileName(FileName)
-		If Not m_ResultFilesToKeep.Contains(FileName) Then
-			m_ResultFilesToKeep.Add(FileName)
-		End If
-	End Sub
-
-	''' <summary>
-	''' Add a filename to not move to the results folder
-	''' </summary>
-	''' <param name="FileName"></param>
-	''' <remarks></remarks>
-	Public Sub AddResultFileToSkip(ByVal FileName As String) Implements IJobParams.AddResultFileToSkip
-		FileName = Path.GetFileName(FileName)
-		If Not m_ResultFilesToSkip.Contains(FileName) Then
-			m_ResultFilesToSkip.Add(FileName)
-		End If
-	End Sub
-
-	''' <summary>
-	''' Add a file to be deleted from the storage server (requires full file path)
-	''' </summary>
-	''' <param name="FilePath">Full path to the file</param>
-	''' <remarks></remarks>
-	Public Sub AddServerFileToDelete(ByVal FilePath As String) Implements IJobParams.AddServerFileToDelete
-		If Not m_ServerFilesToDelete.Contains(FilePath) Then
-			m_ServerFilesToDelete.Add(FilePath)
-		End If
-	End Sub
-
-	''' <summary>
-	''' Gets a job parameter with the given name (in any parameter section)
-	''' </summary>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	''' <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
-	Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
-
-		Dim strValue As String
-
-		Try
-			strValue = GetParam(Name)
-
-			If String.IsNullOrEmpty(strValue) Then
-				Return ValueIfMissing
-			End If
-
-		Catch
-			Return ValueIfMissing
-		End Try
-
-		' Note: if strValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
-		Return CBool(strValue)
-
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name (in any parameter section)
-	''' </summary>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
-
-		Dim strValue As String
-
-		Try
-			strValue = GetParam(Name)
-
-			If String.IsNullOrEmpty(strValue) Then
-				Return ValueIfMissing
-			End If
-
-		Catch
-			Return ValueIfMissing
-		End Try
-
-		Return strValue
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name (in any parameter section)
-	''' </summary>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
-		Dim strValue As String
-
-		Try
-			strValue = GetParam(Name)
-
-			If String.IsNullOrEmpty(strValue) Then
-				Return ValueIfMissing
-			End If
-
-		Catch
-			Return ValueIfMissing
-		End Try
-
-		' Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
-		Return CInt(strValue)
-
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name (in any parameter section)
-	''' </summary>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Short) As Short Implements IJobParams.GetJobParameter
-		Return CShort(GetJobParameter(Name, CInt(ValueIfMissing)))
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name (in any parameter section)
-	''' </summary>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
-		Return clsGlobal.CSngSafe(GetParam(Name), ValueIfMissing)
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name, preferentially using the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section name for parameter</param>
-	''' <param name="Name">Key name for parameter</param>
-	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
-		Return clsGlobal.CBoolSafe(GetParam(Section, Name), ValueIfMissing)
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name, preferentially using the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section name for parameter</param>
-	''' <param name="Name">Key name for parameter</param>
-	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
-		Return clsGlobal.CIntSafe(GetParam(Section, Name), ValueIfMissing)
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name, preferentially using the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section name for parameter</param>
-	''' <param name="Name">Key name for parameter</param>
-	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
-		Dim strValue As String
-		strValue = GetParam(Section, Name)
-		If String.IsNullOrEmpty(strValue) Then
-			Return ValueIfMissing
-		Else
-			Return strValue
-		End If
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name, preferentially using the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section name for parameter</param>
-	''' <param name="Name">Key name for parameter</param>
-	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
-		Return clsGlobal.CSngSafe(GetParam(Section, Name), ValueIfMissing)
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name (in any parameter section)
-	''' </summary>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; empty string if not found</returns>
-	''' <remarks></remarks>
-	Public Function GetParam(ByVal Name As String) As String Implements IJobParams.GetParam
-
-		Dim strValue As String = String.Empty
-
-		If TryGetParam(Name, strValue) Then
-			Return strValue
-		Else
-			Return String.Empty
-		End If
-
-	End Function
-
-	''' <summary>
-	''' Gets a job parameter with the given name, preferentially using the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section name for parameter</param>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; empty string if not found</returns>
-	''' <remarks></remarks>
-	Public Function GetParam(ByVal Section As String, ByVal Name As String) As String Implements IJobParams.GetParam
-
-		Dim strValue As String = String.Empty
-
-		If String.IsNullOrEmpty(Name) Then
-			' User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
-			Return GetParam(Section)
-		End If
-
-		If TryGetParam(Section, Name, strValue) Then
-			Return strValue
-		Else
-			Return String.Empty
-		End If
-
-	End Function
-
-	Public Shared Function JobParametersFilename(jobNum As String) As String
-		Return clsGlobal.XML_FILENAME_PREFIX & jobNum & "." & clsGlobal.XML_FILENAME_EXTENSION
-	End Function
-
-	''' <summary>
-	''' Add/updates the value for the given parameter (searches all sections)
-	''' </summary>
-	''' <param name="ParamName">Parameter name</param>
-	''' <param name="ParamValue">Parameter value</param>
-	''' <remarks></remarks>
-	Public Sub SetParam(ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
-
-		Dim blnMatchFound As Boolean
-
-		If ParamValue Is Nothing Then ParamValue = String.Empty
-
-		For Each oSection In m_JobParams		
-			If oSection.Value.ContainsKey(ParamName) Then
-				oSection.Value(ParamName) = ParamValue
-				blnMatchFound = True
-			End If
-		Next
-
-		If Not blnMatchFound AndAlso m_JobParams.Count > 0 Then
-			' Add the parameter to the first section
-			m_JobParams.First.Value.Add(ParamName, ParamValue)
-		End If
-
-	End Sub
-
-	''' <summary>
-	''' Add/updates the value for the given parameter
-	''' </summary>
-	''' <param name="Section">Section name</param>
-	''' <param name="ParamName">Parameter name</param>
-	''' <param name="ParamValue">Parameter value</param>
-	''' <remarks></remarks>
-	Public Sub SetParam(ByVal Section As String, ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
-
-		Dim oParams As Dictionary(Of String, String) = Nothing
-
-		If Not m_JobParams.TryGetValue(Section, oParams) Then
-			' Need to add a section with a blank name
-			oParams = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
-			m_JobParams.Add(Section, oParams)
-		End If
-
-		If ParamValue Is Nothing Then ParamValue = String.Empty
-
-		If oParams.ContainsKey(ParamName) Then
-			oParams(ParamName) = ParamValue
-		Else
-			oParams.Add(ParamName, ParamValue)
-		End If
-
-	End Sub
-
-	''' <summary>
-	''' Attempts to retrieve the specified parameter (looks in all parameter sections)
-	''' </summary>
-	''' <param name="ParamName">Parameter Name</param>
-	''' <param name="ParamValue">Output: parameter value</param>
-	''' <returns>True if success, False if not found</returns>
-	''' <remarks></remarks>
-	Public Function TryGetParam(ByVal ParamName As String, ByRef ParamValue As String) As Boolean
-
-		ParamValue = String.Empty
-
-		If Not m_JobParams Is Nothing Then
-			For Each oEntry As KeyValuePair(Of String, Dictionary(Of String, String)) In m_JobParams
-				If oEntry.Value.TryGetValue(ParamName, ParamValue) Then
-					If String.IsNullOrWhiteSpace(ParamValue) Then
-						ParamValue = String.Empty
-					End If
-					Return True
-				End If
-			Next
-		End If
-
-		Return False
-
-	End Function
-
-	''' <summary>
-	''' Attempts to retrieve the specified parameter in the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section Name</param>
-	''' <param name="ParamName">Parameter Name</param>
-	''' <param name="ParamValue">Output: parameter value</param>
-	''' <returns>True if success, False if not found</returns>
-	''' <remarks></remarks>
-	Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String) As Boolean
-		Return TryGetParam(Section, ParamName, ParamValue, True)
-	End Function
-
-	''' <summary>
-	''' Attempts to retrieve the specified parameter in the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section Name</param>
-	''' <param name="ParamName">Parameter Name</param>
-	''' <param name="ParamValue">Output: parameter value</param>
-	''' <param name="SearchAllSectionsIfNotFound">If True, then searches other sections for the parameter if not found in the specified section</param>
-	''' <returns>True if success, False if not found</returns>
-	''' <remarks></remarks>
-	Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String, ByVal SearchAllSectionsIfNotFound As Boolean) As Boolean
-
-		Dim oParams As Dictionary(Of String, String) = Nothing
-		ParamValue = String.Empty
-
-		If Not m_JobParams Is Nothing Then
-			If m_JobParams.TryGetValue(Section, oParams) Then
-				If oParams.TryGetValue(ParamName, ParamValue) Then
-					If String.IsNullOrWhiteSpace(ParamValue) Then
-						ParamValue = String.Empty
-					End If
-					Return True
-				End If
-			End If
-		End If
-
-		If SearchAllSectionsIfNotFound Then
-			' Parameter not found in the specified section
-			' Search for the entry in other sections
-			Return TryGetParam(ParamName, ParamValue)
-		Else
-			Return False
-		End If
-
-	End Function
-
-	''' <summary>
-	''' Remove a filename that was previously added to ResultFilesToSkip
-	''' </summary>
-	''' <param name="FileName"></param>
-	''' <remarks></remarks>
-	Public Sub RemoveResultFileToSkip(ByVal FileName As String) Implements IJobParams.RemoveResultFileToSkip
-
-		If m_ResultFilesToSkip.Contains(FileName) Then
-			m_ResultFilesToSkip.Remove(FileName)
-		End If
-
-	End Sub
-	
-	Private Function RemoveXmlSection(ByVal paramXml As String, ByVal sectionName As String) As String
-
-		Try
-
-			Dim doc = New XmlDocument()
-
-			doc.LoadXml(paramXml)
-
-			Dim lstSections = doc.GetElementsByTagName("section")
-
-			Dim intindex = 0
-			While intindex < lstSections.Count
-
-				Dim section As XmlNode = lstSections(intindex)
-
-				Dim removeNode = (From item As XmlAttribute In section.Attributes.Cast(Of XmlAttribute)()
-				   Where item.Name = "name" And item.Value = sectionName
-				   Select item).ToList().Any()
-
-				If removeNode Then
-					section.ParentNode.RemoveChild(section)
-				Else
-					intindex += 1
-				End If
-			End While
-
-			Dim sbOutput = New StringBuilder
-
-			Dim settings = New XmlWriterSettings()
-			settings.Indent = True
-			settings.IndentChars = "  "
-			settings.OmitXmlDeclaration = True
-
-			Using writer As XmlWriter = XmlWriter.Create(sbOutput, settings)
-				doc.Save(writer)
-			End Using
-
-			Dim filteredXML = sbOutput.ToString()
-
-			Return filteredXML
-
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RemoveXmlSection: " & ex.Message)
-			Return paramXml
-		End Try
-
-	End Function
-
-	''' <summary>
-	''' Requests a task from the database
-	''' </summary>
-	''' <returns>Enum indicating if task was found</returns>
-	''' <remarks></remarks>
-	Public Overrides Function RequestTask() As RequestTaskResult Implements IJobParams.RequestTask
-
-		Dim RetVal As RequestTaskResult
-
-		RetVal = RequestAnalysisJob()
-		Select Case RetVal
-			Case RequestTaskResult.NoTaskFound
-				m_TaskWasAssigned = False
-			Case RequestTaskResult.TaskFound
-				m_TaskWasAssigned = True
-			Case Else
-				m_TaskWasAssigned = False
-		End Select
-		Return RetVal
-
-	End Function
-
-	''' <summary>
-	''' Requests a single analysis job using RequestStepTaskXML
-	''' </summary>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Private Function RequestAnalysisJob() As RequestTaskResult
-
-		Dim MyCmd As New SqlCommand
-		Dim Outcome As RequestTaskResult
-		Dim RetVal As Integer
-		Dim paramXml As String
-
-		Dim strProductVersion As String = clsGlobal.GetAssemblyVersion()
-		If strProductVersion Is Nothing Then strProductVersion = "??"
-
-		Reset()
-
-		Try
-			'Set up the command object prior to SP execution
-			With MyCmd
-				.CommandType = CommandType.StoredProcedure
-				.CommandText = SP_NAME_REQUEST_TASK
-				.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-				.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-				.Parameters.Add(New SqlParameter("@processorName", SqlDbType.VarChar, 128))
-				.Parameters.Item("@processorName").Direction = ParameterDirection.Input
-				.Parameters.Item("@processorName").Value = m_MgrParams.GetParam("MgrName")
-
-				.Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int))
-				.Parameters.Item("@jobNumber").Direction = ParameterDirection.Output
-
-				.Parameters.Add(New SqlParameter("@parameters", SqlDbType.VarChar, 8000))
-				.Parameters.Item("@parameters").Direction = ParameterDirection.Output
-				.Parameters.Item("@parameters").Value = ""
-
-				.Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
-				.Parameters.Item("@message").Direction = ParameterDirection.Output
-				.Parameters.Item("@message").Value = ""
-
-				.Parameters.Add(New SqlParameter("@infoOnly", SqlDbType.TinyInt))
-				.Parameters.Item("@infoOnly").Direction = ParameterDirection.Input
-				.Parameters.Item("@infoOnly").Value = 0
-
-				.Parameters.Add(New SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128))
-				.Parameters.Item("@AnalysisManagerVersion").Direction = ParameterDirection.Input
-				.Parameters.Item("@AnalysisManagerVersion").Value = strProductVersion
-			End With
-
-			If m_DebugLevel > 4 Then
-				Dim MyMsg As String = "clsAnalysisJob.RequestAnalysisJob(), connection string: " & m_BrokerConnStr
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, MyMsg)
-				MyMsg = "clsAnalysisJob.RequestAnalysisJob(), printing param list"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, MyMsg)
-				PrintCommandParams(MyCmd)
-			End If
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="mgrParams">IMgrParams object containing manager parameters</param>
+    ''' <remarks></remarks>
+    Public Sub New(ByVal mgrParams As IMgrParams, ByVal DebugLvl As Integer)
+
+        MyBase.New(mgrParams, DebugLvl)
+
+        Reset()
+
+    End Sub
+
+    ''' <summary>
+    ''' Adds (or updates) a job parameter
+    ''' </summary>
+    ''' <param name="SectionName">Section name for parameter</param>
+    ''' <param name="ParamName">Name of parameter</param>
+    ''' <param name="ParamValue">Value for parameter</param>
+    ''' <returns>True if success, False if an error</returns>
+    ''' <remarks></remarks>
+    Public Function AddAdditionalParameter(ByVal SectionName As String, ByVal ParamName As String, ByVal ParamValue As String) As Boolean Implements IJobParams.AddAdditionalParameter
+
+        Try
+            If ParamValue Is Nothing Then ParamValue = String.Empty
+
+            SetParam(SectionName, ParamName, ParamValue)
+
+            Return True
+        Catch ex As Exception
+            Dim Msg As String = "Exception adding parameter: " & ParamName & " Value: " & ParamValue & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            Return False
+        End Try
+
+    End Function
+
+    ''' <summary>
+    ''' Add new dataset name and ID to DatasetInfoList
+    ''' </summary>
+    ''' <param name="datasetName"></param>
+    ''' <param name="datasetID"></param>
+    ''' <remarks></remarks>
+    Public Sub AddDatasetInfo(ByVal datasetName As String, ByVal datasetID As Integer) Implements IJobParams.AddDatasetInfo
+        If String.IsNullOrWhiteSpace(datasetName) Then Exit Sub
+        If Not m_DatasetInfoList.ContainsKey(datasetName) Then
+            m_DatasetInfoList.Add(datasetName, datasetID)
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Add a fileName extension to not move to the results folder
+    ''' </summary>
+    ''' <param name="fileExtension"></param>
+    ''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
+    Public Sub AddResultFileExtensionToSkip(ByVal fileExtension As String) Implements IJobParams.AddResultFileExtensionToSkip
+        If String.IsNullOrWhiteSpace(fileExtension) Then Exit Sub
+
+        If Not m_ResultFileExtensionsToSkip.Contains(fileExtension) Then
+            m_ResultFileExtensionsToSkip.Add(fileExtension)
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Add a fileName to definitely move to the results folder
+    ''' </summary>
+    ''' <param name="fileName"></param>
+    ''' <remarks></remarks>
+    Public Sub AddResultFileToKeep(ByVal fileName As String) Implements IJobParams.AddResultFileToKeep
+        If String.IsNullOrWhiteSpace(fileName) Then Exit Sub
+
+        fileName = Path.GetFileName(fileName)
+        If Not m_ResultFilesToKeep.Contains(fileName) Then
+            m_ResultFilesToKeep.Add(fileName)
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Add a fileName to not move to the results folder
+    ''' </summary>
+    ''' <param name="fileName"></param>
+    ''' <remarks></remarks>
+    Public Sub AddResultFileToSkip(ByVal fileName As String) Implements IJobParams.AddResultFileToSkip
+        If String.IsNullOrWhiteSpace(fileName) Then Exit Sub
+
+        fileName = Path.GetFileName(fileName)
+        If Not m_ResultFilesToSkip.Contains(fileName) Then
+            m_ResultFilesToSkip.Add(fileName)
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Add a file to be deleted from the storage server (requires full file path)
+    ''' </summary>
+    ''' <param name="filePath">Full path to the file</param>
+    ''' <remarks></remarks>
+    Public Sub AddServerFileToDelete(ByVal filePath As String) Implements IJobParams.AddServerFileToDelete
+        If String.IsNullOrWhiteSpace(filePath) Then Exit Sub
+
+        If Not m_ServerFilesToDelete.Contains(filePath) Then
+            m_ServerFilesToDelete.Add(filePath)
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name (in any parameter section)
+    ''' </summary>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    ''' <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
+    Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
+
+        Dim strValue As String
+
+        Try
+            strValue = GetParam(Name)
+
+            If String.IsNullOrEmpty(strValue) Then
+                Return ValueIfMissing
+            End If
+
+        Catch
+            Return ValueIfMissing
+        End Try
+
+        ' Note: if strValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
+        Return CBool(strValue)
+
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name (in any parameter section)
+    ''' </summary>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
+
+        Dim strValue As String
+
+        Try
+            strValue = GetParam(Name)
+
+            If String.IsNullOrEmpty(strValue) Then
+                Return ValueIfMissing
+            End If
+
+        Catch
+            Return ValueIfMissing
+        End Try
+
+        Return strValue
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name (in any parameter section)
+    ''' </summary>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
+        Dim strValue As String
+
+        Try
+            strValue = GetParam(Name)
+
+            If String.IsNullOrEmpty(strValue) Then
+                Return ValueIfMissing
+            End If
+
+        Catch
+            Return ValueIfMissing
+        End Try
+
+        ' Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
+        Return CInt(strValue)
+
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name (in any parameter section)
+    ''' </summary>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Short) As Short Implements IJobParams.GetJobParameter
+        Return CShort(GetJobParameter(Name, CInt(ValueIfMissing)))
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name (in any parameter section)
+    ''' </summary>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    Public Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
+        Return clsGlobal.CSngSafe(GetParam(Name), ValueIfMissing)
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section name for parameter</param>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
+        Return clsGlobal.CBoolSafe(GetParam(Section, Name), ValueIfMissing)
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section name for parameter</param>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
+        Return clsGlobal.CIntSafe(GetParam(Section, Name), ValueIfMissing)
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section name for parameter</param>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
+        Dim strValue As String
+        strValue = GetParam(Section, Name)
+        If String.IsNullOrEmpty(strValue) Then
+            Return ValueIfMissing
+        Else
+            Return strValue
+        End If
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section name for parameter</param>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    Public Function GetJobParameter(ByVal Section As String, ByVal Name As String, ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
+        Return clsGlobal.CSngSafe(GetParam(Section, Name), ValueIfMissing)
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name (in any parameter section)
+    ''' </summary>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; empty string if not found</returns>
+    ''' <remarks></remarks>
+    Public Function GetParam(ByVal Name As String) As String Implements IJobParams.GetParam
+
+        Dim strValue As String = String.Empty
+
+        If TryGetParam(Name, strValue) Then
+            Return strValue
+        Else
+            Return String.Empty
+        End If
+
+    End Function
+
+    ''' <summary>
+    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section name for parameter</param>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; empty string if not found</returns>
+    ''' <remarks></remarks>
+    Public Function GetParam(ByVal Section As String, ByVal Name As String) As String Implements IJobParams.GetParam
+
+        Dim strValue As String = String.Empty
+
+        If String.IsNullOrEmpty(Name) Then
+            ' User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
+            Return GetParam(Section)
+        End If
+
+        If TryGetParam(Section, Name, strValue) Then
+            Return strValue
+        Else
+            Return String.Empty
+        End If
+
+    End Function
+
+    Public Shared Function JobParametersFilename(jobNum As String) As String
+        Return clsGlobal.XML_FILENAME_PREFIX & jobNum & "." & clsGlobal.XML_FILENAME_EXTENSION
+    End Function
+
+    ''' <summary>
+    ''' Add/updates the value for the given parameter (searches all sections)
+    ''' </summary>
+    ''' <param name="ParamName">Parameter name</param>
+    ''' <param name="ParamValue">Parameter value</param>
+    ''' <remarks></remarks>
+    Public Sub SetParam(ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
+
+        Dim blnMatchFound As Boolean
+
+        If ParamValue Is Nothing Then ParamValue = String.Empty
+
+        For Each oSection In m_JobParams
+            If oSection.Value.ContainsKey(ParamName) Then
+                oSection.Value(ParamName) = ParamValue
+                blnMatchFound = True
+            End If
+        Next
+
+        If Not blnMatchFound AndAlso m_JobParams.Count > 0 Then
+            ' Add the parameter to the first section
+            m_JobParams.First.Value.Add(ParamName, ParamValue)
+        End If
+
+    End Sub
+
+    ''' <summary>
+    ''' Add/updates the value for the given parameter
+    ''' </summary>
+    ''' <param name="Section">Section name</param>
+    ''' <param name="ParamName">Parameter name</param>
+    ''' <param name="ParamValue">Parameter value</param>
+    ''' <remarks></remarks>
+    Public Sub SetParam(ByVal Section As String, ByVal ParamName As String, ByVal ParamValue As String) Implements IJobParams.SetParam
+
+        Dim oParams As Dictionary(Of String, String) = Nothing
+
+        If Not m_JobParams.TryGetValue(Section, oParams) Then
+            ' Need to add a section with a blank name
+            oParams = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+            m_JobParams.Add(Section, oParams)
+        End If
+
+        If ParamValue Is Nothing Then ParamValue = String.Empty
+
+        If oParams.ContainsKey(ParamName) Then
+            oParams(ParamName) = ParamValue
+        Else
+            oParams.Add(ParamName, ParamValue)
+        End If
+
+    End Sub
+
+    ''' <summary>
+    ''' Attempts to retrieve the specified parameter (looks in all parameter sections)
+    ''' </summary>
+    ''' <param name="ParamName">Parameter Name</param>
+    ''' <param name="ParamValue">Output: parameter value</param>
+    ''' <returns>True if success, False if not found</returns>
+    ''' <remarks></remarks>
+    Public Function TryGetParam(ByVal ParamName As String, ByRef ParamValue As String) As Boolean
+
+        ParamValue = String.Empty
+
+        If Not m_JobParams Is Nothing Then
+            For Each oEntry As KeyValuePair(Of String, Dictionary(Of String, String)) In m_JobParams
+                If oEntry.Value.TryGetValue(ParamName, ParamValue) Then
+                    If String.IsNullOrWhiteSpace(ParamValue) Then
+                        ParamValue = String.Empty
+                    End If
+                    Return True
+                End If
+            Next
+        End If
+
+        Return False
+
+    End Function
+
+    ''' <summary>
+    ''' Attempts to retrieve the specified parameter in the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section Name</param>
+    ''' <param name="ParamName">Parameter Name</param>
+    ''' <param name="ParamValue">Output: parameter value</param>
+    ''' <returns>True if success, False if not found</returns>
+    ''' <remarks></remarks>
+    Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String) As Boolean
+        Return TryGetParam(Section, ParamName, ParamValue, True)
+    End Function
+
+    ''' <summary>
+    ''' Attempts to retrieve the specified parameter in the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section Name</param>
+    ''' <param name="ParamName">Parameter Name</param>
+    ''' <param name="ParamValue">Output: parameter value</param>
+    ''' <param name="SearchAllSectionsIfNotFound">If True, then searches other sections for the parameter if not found in the specified section</param>
+    ''' <returns>True if success, False if not found</returns>
+    ''' <remarks></remarks>
+    Public Function TryGetParam(ByVal Section As String, ByVal ParamName As String, ByRef ParamValue As String, ByVal SearchAllSectionsIfNotFound As Boolean) As Boolean
+
+        Dim oParams As Dictionary(Of String, String) = Nothing
+        ParamValue = String.Empty
+
+        If Not m_JobParams Is Nothing Then
+            If m_JobParams.TryGetValue(Section, oParams) Then
+                If oParams.TryGetValue(ParamName, ParamValue) Then
+                    If String.IsNullOrWhiteSpace(ParamValue) Then
+                        ParamValue = String.Empty
+                    End If
+                    Return True
+                End If
+            End If
+        End If
+
+        If SearchAllSectionsIfNotFound Then
+            ' Parameter not found in the specified section
+            ' Search for the entry in other sections
+            Return TryGetParam(ParamName, ParamValue)
+        Else
+            Return False
+        End If
+
+    End Function
+
+    ''' <summary>
+    ''' Remove a fileName that was previously added to ResultFilesToSkip
+    ''' </summary>
+    ''' <param name="fileName"></param>
+    ''' <remarks></remarks>
+    Public Sub RemoveResultFileToSkip(ByVal fileName As String) Implements IJobParams.RemoveResultFileToSkip
+
+        If m_ResultFilesToSkip.Contains(fileName) Then
+            m_ResultFilesToSkip.Remove(fileName)
+        End If
+
+    End Sub
+
+    Private Function RemoveXmlSection(ByVal paramXml As String, ByVal sectionName As String) As String
+
+        Try
+
+            Dim doc = New XmlDocument()
+
+            doc.LoadXml(paramXml)
+
+            Dim lstSections = doc.GetElementsByTagName("section")
+
+            Dim intindex = 0
+            While intindex < lstSections.Count
+
+                Dim section As XmlNode = lstSections(intindex)
+
+                Dim removeNode = (From item As XmlAttribute In section.Attributes.Cast(Of XmlAttribute)()
+                   Where item.Name = "name" And item.Value = sectionName
+                   Select item).ToList().Any()
+
+                If removeNode Then
+                    section.ParentNode.RemoveChild(section)
+                Else
+                    intindex += 1
+                End If
+            End While
+
+            Dim sbOutput = New StringBuilder
+
+            Dim settings = New XmlWriterSettings()
+            settings.Indent = True
+            settings.IndentChars = "  "
+            settings.OmitXmlDeclaration = True
+
+            Using writer As XmlWriter = XmlWriter.Create(sbOutput, settings)
+                doc.Save(writer)
+            End Using
+
+            Dim filteredXML = sbOutput.ToString()
+
+            Return filteredXML
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RemoveXmlSection: " & ex.Message)
+            Return paramXml
+        End Try
+
+    End Function
+
+    ''' <summary>
+    ''' Requests a task from the database
+    ''' </summary>
+    ''' <returns>Enum indicating if task was found</returns>
+    ''' <remarks></remarks>
+    Public Overrides Function RequestTask() As RequestTaskResult Implements IJobParams.RequestTask
+
+        Dim RetVal As RequestTaskResult
+
+        RetVal = RequestAnalysisJob()
+        Select Case RetVal
+            Case RequestTaskResult.NoTaskFound
+                m_TaskWasAssigned = False
+            Case RequestTaskResult.TaskFound
+                m_TaskWasAssigned = True
+            Case Else
+                m_TaskWasAssigned = False
+        End Select
+        Return RetVal
+
+    End Function
+
+    ''' <summary>
+    ''' Requests a single analysis job using RequestStepTaskXML
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function RequestAnalysisJob() As RequestTaskResult
+
+        Dim MyCmd As New SqlCommand
+        Dim Outcome As RequestTaskResult
+        Dim RetVal As Integer
+        Dim paramXml As String
+
+        Dim strProductVersion As String = clsGlobal.GetAssemblyVersion()
+        If strProductVersion Is Nothing Then strProductVersion = "??"
+
+        Reset()
+
+        Try
+            'Set up the command object prior to SP execution
+            With MyCmd
+                .CommandType = CommandType.StoredProcedure
+                .CommandText = SP_NAME_REQUEST_TASK
+                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
+                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+
+                .Parameters.Add(New SqlParameter("@processorName", SqlDbType.VarChar, 128))
+                .Parameters.Item("@processorName").Direction = ParameterDirection.Input
+                .Parameters.Item("@processorName").Value = m_MgrParams.GetParam("MgrName")
+
+                .Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int))
+                .Parameters.Item("@jobNumber").Direction = ParameterDirection.Output
+
+                .Parameters.Add(New SqlParameter("@parameters", SqlDbType.VarChar, 8000))
+                .Parameters.Item("@parameters").Direction = ParameterDirection.Output
+                .Parameters.Item("@parameters").Value = ""
+
+                .Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
+                .Parameters.Item("@message").Direction = ParameterDirection.Output
+                .Parameters.Item("@message").Value = ""
+
+                .Parameters.Add(New SqlParameter("@infoOnly", SqlDbType.TinyInt))
+                .Parameters.Item("@infoOnly").Direction = ParameterDirection.Input
+                .Parameters.Item("@infoOnly").Value = 0
+
+                .Parameters.Add(New SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128))
+                .Parameters.Item("@AnalysisManagerVersion").Direction = ParameterDirection.Input
+                .Parameters.Item("@AnalysisManagerVersion").Value = strProductVersion
+            End With
+
+            If m_DebugLevel > 4 Then
+                Dim MyMsg As String = "clsAnalysisJob.RequestAnalysisJob(), connection string: " & m_BrokerConnStr
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, MyMsg)
+                MyMsg = "clsAnalysisJob.RequestAnalysisJob(), printing param list"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, MyMsg)
+                PrintCommandParams(MyCmd)
+            End If
 
             ' Execute the SP
             RetVal = PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 1)
@@ -826,7 +835,7 @@ Public Class clsAnalysisJob
     Protected Function SetAnalysisJobComplete(
        ByVal spName As String,
        ByVal compCode As Integer,
-       ByVal compMsg As String, _
+       ByVal compMsg As String,
        ByVal evalCode As Integer,
        ByVal evalMsg As String) As Boolean
 
@@ -894,45 +903,45 @@ Public Class clsAnalysisJob
 
     End Function
 
-	''' <summary>
-	''' Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
-	''' Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
-	''' </summary>
-	''' <returns>Tool name</returns>
-	''' <remarks></remarks>
-	Public Function GetCurrentJobToolDescription() As String Implements IJobParams.GetCurrentJobToolDescription
-		Dim strTool As String
+    ''' <summary>
+    ''' Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
+    ''' Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
+    ''' </summary>
+    ''' <returns>Tool name</returns>
+    ''' <remarks></remarks>
+    Public Function GetCurrentJobToolDescription() As String Implements IJobParams.GetCurrentJobToolDescription
+        Dim strTool As String
 
-		Dim strToolAndStepTool As String
-		Dim strStep As String
+        Dim strToolAndStepTool As String
+        Dim strStep As String
 
-		If m_JobParams Is Nothing Then
-			strToolAndStepTool = "??"
-		Else
-			strTool = GetParam("ToolName")
+        If m_JobParams Is Nothing Then
+            strToolAndStepTool = "??"
+        Else
+            strTool = GetParam("ToolName")
 
-			strToolAndStepTool = GetParam("StepTool")
-			If strToolAndStepTool Is Nothing Then strToolAndStepTool = String.Empty
+            strToolAndStepTool = GetParam("StepTool")
+            If strToolAndStepTool Is Nothing Then strToolAndStepTool = String.Empty
 
-			strStep = GetParam("StepParameters", "Step")
-			If strStep Is Nothing Then strStep = String.Empty
+            strStep = GetParam("StepParameters", "Step")
+            If strStep Is Nothing Then strStep = String.Empty
 
-			If strToolAndStepTool <> strTool Then
-				If strToolAndStepTool.Length > 0 Then
-					strToolAndStepTool &= " (" & strTool & ")"
-				Else
-					strToolAndStepTool &= strTool
-				End If
-			End If
+            If strToolAndStepTool <> strTool Then
+                If strToolAndStepTool.Length > 0 Then
+                    strToolAndStepTool &= " (" & strTool & ")"
+                Else
+                    strToolAndStepTool &= strTool
+                End If
+            End If
 
-			If strStep.Length > 0 Then
-				strToolAndStepTool &= ", Step " & strStep
-			End If
-		End If
+            If strStep.Length > 0 Then
+                strToolAndStepTool &= ", Step " & strStep
+            End If
+        End If
 
-		Return strToolAndStepTool
+        Return strToolAndStepTool
 
-	End Function
+    End Function
 
 #End Region
 

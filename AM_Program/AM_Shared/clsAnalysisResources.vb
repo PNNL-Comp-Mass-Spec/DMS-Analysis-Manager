@@ -315,8 +315,8 @@ Public MustInherit Class clsAnalysisResources
 
         If m_DebugLevel >= 3 OrElse blnForcelog Then
             ' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
-            If blnForcelog OrElse _
-               DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse _
+            If blnForcelog OrElse
+               DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse
                fractionDone - dblFractionDoneSaved >= 0.25 Then
                 dtLastLogTime = DateTime.UtcNow
                 dblFractionDoneSaved = fractionDone
@@ -493,7 +493,9 @@ Public MustInherit Class clsAnalysisResources
                 blnWaitingForLockFile = True
                 dtLockFileCreated = fiLockFile.LastWriteTimeUtc
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, dataFileDescription & " lock file found; will wait for file to be deleted or age; " & fiLockFile.Name & " created " & fiLockFile.LastWriteTime.ToString())
+                Dim debugMessage = dataFileDescription & " lock file found; will wait for file to be deleted or age; " & fiLockFile.Name & " created " & fiLockFile.LastWriteTime.ToString()
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, debugMessage)
+                Console.WriteLine(debugMessage)
             Else
                 ' Lock file has aged; delete it
                 fiLockFile.Delete()
@@ -519,6 +521,7 @@ Public MustInherit Class clsAnalysisResources
                     If DateTime.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes Then
                         Dim debugMessage = "Waiting for lock file " & fiLockFile.Name
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, debugMessage)
+                        Console.WriteLine(debugMessage)
 
                         If Not statusTools Is Nothing Then
                             statusTools.CurrentOperation = debugMessage
@@ -666,8 +669,7 @@ Public MustInherit Class clsAnalysisResources
                     Return False
                 End If
             Catch ex As Exception
-                Dim ErrMsg As String = "Exception copying file " + srcFilePath + " to " + destFilePath + ": " + _
-                  ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex)
+                Dim ErrMsg As String = "Exception copying file " + srcFilePath + " to " + destFilePath + ": " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex)
 
                 ErrMsg &= " Retry Count = " + retryCount.ToString
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
@@ -846,8 +848,9 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="OutDir">Destination directory for file copy</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Function CopyFileToWorkDirWithRename(InpFile As String, _
-      InpFolder As String, _
+    Protected Function CopyFileToWorkDirWithRename(
+      InpFile As String,
+      InpFolder As String,
       OutDir As String) As Boolean
         Const MaxCopyAttempts = 3
         Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
@@ -862,9 +865,10 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Function CopyFileToWorkDirWithRename(InpFile As String, _
-      InpFolder As String, _
-      OutDir As String, _
+    Protected Function CopyFileToWorkDirWithRename(
+      InpFile As String,
+      InpFolder As String,
+      OutDir As String,
       eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
         Const MaxCopyAttempts = 3
         Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
@@ -880,10 +884,11 @@ Public MustInherit Class clsAnalysisResources
     ''' ''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Function CopyFileToWorkDirWithRename(InpFile As String, _
-      InpFolder As String, _
-      OutDir As String, _
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
+    Protected Function CopyFileToWorkDirWithRename(
+      InpFile As String,
+      InpFolder As String,
+      OutDir As String,
+      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
       MaxCopyAttempts As Integer) As Boolean
         Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
     End Function
@@ -899,11 +904,12 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Function CopyFileToWorkDirWithRename(InpFile As String, _
-      InpFolder As String, _
-      OutDir As String, _
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels, _
-      createStoragePathInfoOnly As Boolean, _
+    Protected Function CopyFileToWorkDirWithRename(
+      InpFile As String,
+      InpFolder As String,
+      OutDir As String,
+      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
+      createStoragePathInfoOnly As Boolean,
       MaxCopyAttempts As Integer) As Boolean
 
 
@@ -1588,9 +1594,10 @@ Public MustInherit Class clsAnalysisResources
 
     End Function
 
-    Private Function FindDataFileAddFolder(strParentFolderPath As String, _
-       strDatasetFolderName As String, _
-       strInputFolderName As String) As String
+    Private Function FindDataFileAddFolder(
+      strParentFolderPath As String,
+      strDatasetFolderName As String,
+      strInputFolderName As String) As String
         Dim strTargetFolderPath As String
 
         strTargetFolderPath = Path.Combine(strParentFolderPath, strDatasetFolderName)
@@ -1692,7 +1699,7 @@ Public MustInherit Class clsAnalysisResources
         Select Case eRawDataType
             Case eRawDataTypeConstants.AgilentDFolder           'Agilent ion trap data
 
-                If StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) OrElse _
+                If StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) OrElse
                    StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()) Then
                     ' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
                     '  we would pre-process the data beforehand to create MGF files
@@ -2548,9 +2555,10 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function FolderExistsWithRetry(FolderName As String, _
-      RetryHoldoffSeconds As Integer, _
-      maxAttempts As Integer, _
+    Private Function FolderExistsWithRetry(
+      FolderName As String,
+      RetryHoldoffSeconds As Integer,
+      maxAttempts As Integer,
       LogFolderNotFound As Boolean) As Boolean
 
         If maxAttempts < 1 Then maxAttempts = 1
@@ -2698,9 +2706,10 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="Y"></param>
     ''' <returns>True if success, false otherwise</returns>
     ''' <remarks></remarks>
-    Public Shared Function GetBrukerImagingFileCoords(strCoord As String, _
-      ByRef R As Integer, _
-      ByRef X As Integer, _
+    Public Shared Function GetBrukerImagingFileCoords(
+      strCoord As String,
+      ByRef R As Integer,
+      ByRef X As Integer,
       ByRef Y As Integer) As Boolean
 
         Static reRegExRXY As Text.RegularExpressions.Regex
@@ -2746,8 +2755,9 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="objJobParams"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function GetBrukerImagingSectionFilter(ByRef objJobParams As IJobParams, _
-      ByRef StartSectionX As Integer, _
+    Public Shared Function GetBrukerImagingSectionFilter(
+      ByRef objJobParams As IJobParams,
+      ByRef StartSectionX As Integer,
       ByRef EndSectionX As Integer) As Boolean
 
         Dim blnApplySectionFilter As Boolean
@@ -6980,62 +6990,56 @@ Public MustInherit Class clsAnalysisResources
     ''' If the file is less than 1.25 GB in size (IONIC_ZIP_MAX_FILESIZE_MB) then uses Ionic.Zip
     ''' Otherwise, uses PKZipC (provided PKZipC.exe exists)
     ''' </summary>
-    ''' <param name="ZipFilePath">File to unzip</param>
-    ''' <param name="OutFolderPath">Target directory for the extracted files</param>
-    ''' <param name="CallingFunctionName">Calling function name (used for debugging purposes)</param>
-    ''' <param name="ForceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
-    ''' <returns></returns>
+    ''' <param name="zipFilePath">File to unzip</param>
+    ''' <param name="outFolderPath">Target directory for the extracted files</param>
+    ''' <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
+    ''' <param name="forceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
+    ''' <returns>True if success, otherwise false</returns>
     ''' <remarks></remarks>
-    Public Function UnzipFileStart(ZipFilePath As String, _
-      OutFolderPath As String, _
-      CallingFunctionName As String, _
-      ForceExternalZipProgramUse As Boolean) As Boolean
+    Public Function UnzipFileStart(
+      zipFilePath As String,
+      outFolderPath As String,
+      callingFunctionName As String,
+      forceExternalZipProgramUse As Boolean) As Boolean
 
-        Dim fiFileInfo As FileInfo
-        Dim sngFileSizeMB As Single
-
-        Dim blnUseExternalUnzipper = False
-        Dim blnSuccess As Boolean
-
-        Dim strExternalUnzipperFilePath As String
-        Dim strUnzipperName As String = String.Empty
-
-        Dim dtStartTime As DateTime
-        Dim dtEndTime As DateTime
+        Dim strUnzipperName As String = "??"
 
         Try
-            If ZipFilePath Is Nothing Then ZipFilePath = String.Empty
-
-            If String.IsNullOrEmpty(CallingFunctionName) Then
-                CallingFunctionName = "??"
+            If String.IsNullOrEmpty(callingFunctionName) Then
+                callingFunctionName = "??"
             End If
 
-            strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram")
-            If strExternalUnzipperFilePath Is Nothing Then strExternalUnzipperFilePath = String.Empty
-
-            fiFileInfo = New FileInfo(ZipFilePath)
-            sngFileSizeMB = CSng(fiFileInfo.Length / 1024.0 / 1024)
-
-            If Not fiFileInfo.Exists Then
-                ' File not found
-                m_message = "Error unzipping '" + ZipFilePath + "': File not found (called from " + CallingFunctionName + ")"
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            If zipFilePath Is Nothing Then
+                LogError(callingFunctionName & " called UnzipFileStart with an empty file path")
                 Return False
             End If
 
-            If ZipFilePath.ToLower().EndsWith(DOT_GZ_EXTENSION) Then
+            Dim strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram", String.Empty)
+
+            Dim fiFileInfo = New FileInfo(zipFilePath)
+            Dim sngFileSizeMB = CSng(fiFileInfo.Length / 1024.0 / 1024)
+
+            If Not fiFileInfo.Exists Then
+                ' File not found
+                m_message = "Error unzipping '" + zipFilePath + "': File not found"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, callingFunctionName + ": " + m_message)
+                Return False
+            End If
+
+            Dim blnUseExternalUnzipper As Boolean
+
+            If zipFilePath.ToLower().EndsWith(DOT_GZ_EXTENSION) Then
                 ' This is a gzipped file
                 ' Use Ionic.Zip
                 strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME
                 m_IonicZipTools.DebugLevel = m_DebugLevel
-                Return m_IonicZipTools.GUnzipFile(ZipFilePath, OutFolderPath)
+                Return m_IonicZipTools.GUnzipFile(zipFilePath, outFolderPath)
             End If
 
             ' Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
             ' However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
-            If ForceExternalZipProgramUse OrElse sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
-                If strExternalUnzipperFilePath.Length > 0 AndAlso _
+            If forceExternalZipProgramUse OrElse sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
+                If strExternalUnzipperFilePath.Length > 0 AndAlso
                    strExternalUnzipperFilePath.ToLower() <> "na" Then
                     If File.Exists(strExternalUnzipperFilePath) Then
                         blnUseExternalUnzipper = True
@@ -7050,34 +7054,36 @@ Public MustInherit Class clsAnalysisResources
             If blnUseExternalUnzipper Then
                 strUnzipperName = Path.GetFileName(strExternalUnzipperFilePath)
 
-                Dim UnZipper As New PRISM.Files.ZipTools(OutFolderPath, strExternalUnzipperFilePath)
+                Dim UnZipper As New PRISM.Files.ZipTools(outFolderPath, strExternalUnzipperFilePath)
 
-                dtStartTime = DateTime.UtcNow
-                blnSuccess = UnZipper.UnzipFile("", ZipFilePath, OutFolderPath)
-                dtEndTime = DateTime.UtcNow
+                Dim dtStartTime = DateTime.UtcNow
+                Dim blnSuccess = UnZipper.UnzipFile("", zipFilePath, outFolderPath)
+                Dim dtEndTime = DateTime.UtcNow
 
                 If blnSuccess Then
                     m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
                 Else
-                    m_message = "Error unzipping " + Path.GetFileName(ZipFilePath) + " using " + strUnzipperName
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, CallingFunctionName + ": " + m_message)
+                    m_message = "Error unzipping " + Path.GetFileName(zipFilePath) + " using " + strUnzipperName
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, callingFunctionName + ": " + m_message)
                 End If
+
+                Return blnSuccess
             Else
                 ' Use Ionic.Zip
                 strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME
                 m_IonicZipTools.DebugLevel = m_DebugLevel
-                blnSuccess = m_IonicZipTools.UnzipFile(ZipFilePath, OutFolderPath)
+                Dim blnSuccess = m_IonicZipTools.UnzipFile(zipFilePath, outFolderPath)
+
+                Return blnSuccess
             End If
 
         Catch ex As Exception
-            m_message = "Exception while unzipping '" + ZipFilePath + "'"
+            m_message = "Exception while unzipping '" + zipFilePath + "'"
             If Not String.IsNullOrEmpty(strUnzipperName) Then m_message &= " using " + strUnzipperName
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex))
-            blnSuccess = False
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, callingFunctionName + ": " + m_message, ex)
+            Return False
         End Try
-
-        Return blnSuccess
 
     End Function
 

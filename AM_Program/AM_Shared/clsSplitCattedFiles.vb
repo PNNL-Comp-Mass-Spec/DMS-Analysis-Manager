@@ -172,12 +172,12 @@ Public Class clsSplitCattedFiles
 
 						If objFileNameParts.Success Then
 							With objFileNameParts
-								fileName = _
-								  .Groups("rootname").Value + "." + _
-								  .Groups("startscan").Value.ToString + "." + _
-								  .Groups("endscan").Value.ToString + "." + _
-								  .Groups("chargestate").Value + "." + _
-								  .Groups("filetype").Value
+                                fileName =
+                                  .Groups("rootname").Value + "." +
+                                  .Groups("startscan").Value.ToString + "." +
+                                  .Groups("endscan").Value.ToString + "." +
+                                  .Groups("chargestate").Value + "." +
+                                  .Groups("filetype").Value
 							End With
 						Else
 							fileName = objFileSepMatch.Groups("filename").Value
@@ -217,48 +217,48 @@ Public Class clsSplitCattedFiles
 
 	End Function
 
-	Private Sub ProcessSplitFile( _
-	 ByRef fileText As Queue(Of String), _
-	 ByVal exportFileName As String, _
-	 ByVal resultsFolder As String, _
-	 ByRef lstFilesToSkip As SortedSet(Of String))
+    Private Sub ProcessSplitFile(
+     ByRef fileText As Queue(Of String),
+     ByVal exportFileName As String,
+     ByVal resultsFolder As String,
+     ByRef lstFilesToSkip As SortedSet(Of String))
 
-		If lstFilesToSkip.Contains(exportFileName) Then
-			' Empty the queue and skip this file
-			fileText.Clear()
-			Return
-		End If
+        If lstFilesToSkip.Contains(exportFileName) Then
+            ' Empty the queue and skip this file
+            fileText.Clear()
+            Return
+        End If
 
-		Using swOutFile As StreamWriter = New StreamWriter(New FileStream(Path.Combine(resultsFolder, exportFileName), FileMode.Create, FileAccess.Write, FileShare.Read))
+        Using swOutFile As StreamWriter = New StreamWriter(New FileStream(Path.Combine(resultsFolder, exportFileName), FileMode.Create, FileAccess.Write, FileShare.Read))
 
-			Dim dtaLineMatch As Match
-			Dim outputLine As String
+            Dim dtaLineMatch As Match
+            Dim outputLine As String
 
-			If fileText.Count > 0 AndAlso Me.r_DTAFirstLine.IsMatch(fileText.Peek) Then
-				outputLine = fileText.Dequeue
+            If fileText.Count > 0 AndAlso Me.r_DTAFirstLine.IsMatch(fileText.Peek) Then
+                outputLine = fileText.Dequeue
 
-				' See if this line contains the extra information of the form: scan=1000 cs=1
-				dtaLineMatch = Me.r_DTAFirstLine.Match(outputLine)
-				If dtaLineMatch.Success Then
-					' Yes, it has the extra information
-					' Only write out the parent mass and charge state for the line
-					outputLine = dtaLineMatch.Groups("parentmass").Value + " " + _
-					 dtaLineMatch.Groups("chargestate").Value
-				Else
-					' This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
-				End If
-				swOutFile.WriteLine(outputLine)
-			End If
+                ' See if this line contains the extra information of the form: scan=1000 cs=1
+                dtaLineMatch = Me.r_DTAFirstLine.Match(outputLine)
+                If dtaLineMatch.Success Then
+                    ' Yes, it has the extra information
+                    ' Only write out the parent mass and charge state for the line
+                    outputLine = dtaLineMatch.Groups("parentmass").Value + " " +
+                                 dtaLineMatch.Groups("chargestate").Value
+                Else
+                    ' This code should never be reached since we used Me.r_DTAFirstLine.IsMatch() to check the line in the first place
+                End If
+                swOutFile.WriteLine(outputLine)
+            End If
 
-			While fileText.Count > 0
-				outputLine = fileText.Dequeue
-				swOutFile.WriteLine(outputLine)
-			End While
+            While fileText.Count > 0
+                outputLine = fileText.Dequeue
+                swOutFile.WriteLine(outputLine)
+            End While
 
-		End Using
+        End Using
 
 
-	End Sub
+    End Sub
 
 	Private Sub CountOutFiles(ByVal filePath As String)
 

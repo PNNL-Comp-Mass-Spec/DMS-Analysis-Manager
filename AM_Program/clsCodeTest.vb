@@ -242,12 +242,12 @@ Public Class clsCodeTest
 		'   "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
 		'   " WHERE (JSH.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JSH.Tool = 'DTA_Refinery') AND (JSH.Most_Recent_Entry = 1) AND (JSH.State = 5)"
 
-		Dim strSql As String = _
-		  "SELECT JS.Dataset, J.Dataset_ID, JS.Job, JS.Output_Folder, DFP.Dataset_Folder_Path, JS.Transfer_Folder_Path" &
-		  " FROM DMS_Pipeline.dbo.V_Job_Steps JS INNER JOIN" &
-		  "      DMS_Pipeline.dbo.T_Jobs J ON JS.Job = J.Job INNER JOIN" &
-		  "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
-		  " WHERE (JS.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JS.Tool = 'DTA_Refinery') AND (JS.State = 5)"
+        Dim strSql As String =
+          "SELECT JS.Dataset, J.Dataset_ID, JS.Job, JS.Output_Folder, DFP.Dataset_Folder_Path, JS.Transfer_Folder_Path" &
+          " FROM DMS_Pipeline.dbo.V_Job_Steps JS INNER JOIN" &
+          "      DMS_Pipeline.dbo.T_Jobs J ON JS.Job = J.Job INNER JOIN" &
+          "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
+          " WHERE (JS.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JS.Tool = 'DTA_Refinery') AND (JS.State = 5)"
 
 		Const strConnectionString As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
 		Const RetryCount As Short = 2
@@ -484,56 +484,59 @@ Public Class clsCodeTest
 
 		End If
 
-	End Function
-
-	Public Function TestProteinDBExport(ByVal DestFolder As String, _
-	   ByVal strLegacyFasta As String, _
-	   ByVal strProteinCollectionList As String, _
-	   ByVal strProteinOptions As String) As Boolean
-
-		'Instantiate fasta tool if not already done
-		If m_FastaTools Is Nothing Then
-			If m_FastaToolsCnStr = "" Then
-				Console.WriteLine("Protein database connection string not specified")
-				Return False
-			End If
-			m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
-		End If
-
-		'Initialize fasta generation state variables
-		m_GenerationStarted = False
-		m_GenerationComplete = False
-
-		' Setup a timer to prevent an infinite loop if there's a fasta generation problem
-		m_FastaTimer = New System.Timers.Timer
-		m_FastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000
-		m_FastaTimer.AutoReset = False
-
-		' Create the fasta file
-		m_FastaGenTimeOut = False
-		Try
-			m_FastaTimer.Start()
-			Dim HashString = m_FastaTools.ExportFASTAFile(strProteinCollectionList, strProteinOptions, strLegacyFasta, DestFolder)
-		Catch ex As Exception
-			Console.WriteLine("clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file: " & ex.Message)
-			Return False
-		End Try
-
-		' Wait for fasta creation to finish
-		While Not m_GenerationComplete
-			System.Threading.Thread.Sleep(2000)
-		End While
-
-		If m_FastaGenTimeOut Then
-			'Fasta generator hung - report error and exit
-			Console.WriteLine("Timeout error while generating OrdDb file (" & FASTA_GEN_TIMEOUT_INTERVAL_SEC.ToString & " seconds have elapsed)")
-			Return False
-		End If
-
-		'If we got to here, everything worked OK
-		Return True
+        Return blnSuccess
 
 	End Function
+
+    Public Function TestProteinDBExport(
+       ByVal DestFolder As String,
+       ByVal strLegacyFasta As String,
+       ByVal strProteinCollectionList As String,
+       ByVal strProteinOptions As String) As Boolean
+
+        'Instantiate fasta tool if not already done
+        If m_FastaTools Is Nothing Then
+            If m_FastaToolsCnStr = "" Then
+                Console.WriteLine("Protein database connection string not specified")
+                Return False
+            End If
+            m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
+        End If
+
+        'Initialize fasta generation state variables
+        m_GenerationStarted = False
+        m_GenerationComplete = False
+
+        ' Setup a timer to prevent an infinite loop if there's a fasta generation problem
+        m_FastaTimer = New System.Timers.Timer
+        m_FastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000
+        m_FastaTimer.AutoReset = False
+
+        ' Create the fasta file
+        m_FastaGenTimeOut = False
+        Try
+            m_FastaTimer.Start()
+            Dim HashString = m_FastaTools.ExportFASTAFile(strProteinCollectionList, strProteinOptions, strLegacyFasta, DestFolder)
+        Catch ex As Exception
+            Console.WriteLine("clsAnalysisResources.CreateFastaFile(), Exception generating OrgDb file: " & ex.Message)
+            Return False
+        End Try
+
+        ' Wait for fasta creation to finish
+        While Not m_GenerationComplete
+            System.Threading.Thread.Sleep(2000)
+        End While
+
+        If m_FastaGenTimeOut Then
+            'Fasta generator hung - report error and exit
+            Console.WriteLine("Timeout error while generating OrdDb file (" & FASTA_GEN_TIMEOUT_INTERVAL_SEC.ToString & " seconds have elapsed)")
+            Return False
+        End If
+
+        'If we got to here, everything worked OK
+        Return True
+
+    End Function
 
 	Public Sub TestDeleteFiles()
 
@@ -913,9 +916,9 @@ Public Class clsCodeTest
 
 			If True Then
 				' Make sure the Peptide Prophet output file was actually created
-				strPepProphetOutputFilePath = Path.Combine(Path.GetDirectoryName(strFileList(intFileIndex)), _
-				   Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
-				   PEPPROPHET_RESULT_FILE_SUFFIX)
+                strPepProphetOutputFilePath = Path.Combine(Path.GetDirectoryName(strFileList(intFileIndex)),
+                   Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) &
+                   PEPPROPHET_RESULT_FILE_SUFFIX)
 
 				If Not File.Exists(strPepProphetOutputFilePath) Then
 
@@ -930,8 +933,7 @@ Public Class clsCodeTest
 					End If
 				End If
 			Else
-				Msg = "clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " & strSynFileNameAndSize & _
-				   ": "
+                Msg = "clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " & strSynFileNameAndSize & ": "
 				''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
 
 				If blnIgnorePeptideProphetErrors Then
@@ -978,62 +980,63 @@ Public Class clsCodeTest
 
 	End Function
 
-	Protected Function InterleaveFiles(ByRef strFileList() As String, _
-	  ByVal strCombinedFilePath As String, _
-	  ByVal blnLookForHeaderLine As Boolean) As Boolean
+    Protected Function InterleaveFiles(
+      ByRef strFileList() As String,
+      ByVal strCombinedFilePath As String,
+      ByVal blnLookForHeaderLine As Boolean) As Boolean
 
-		Dim Msg As String
-		Dim intIndex As Integer
+        Dim Msg As String
+        Dim intIndex As Integer
 
-		Dim intFileCount As Integer
-		Dim srInFiles() As StreamReader
-		Dim swOutFile As StreamWriter
+        Dim intFileCount As Integer
+        Dim srInFiles() As StreamReader
+        Dim swOutFile As StreamWriter
 
-		Dim strLineIn As String = String.Empty
-		Dim strSplitLine() As String
+        Dim strLineIn As String = String.Empty
+        Dim strSplitLine() As String
 
-		Dim intFileIndex As Integer
-		Dim intLinesRead() As Integer
-		Dim intTotalLinesRead As Integer
+        Dim intFileIndex As Integer
+        Dim intLinesRead() As Integer
+        Dim intTotalLinesRead As Integer
 
-		Dim intTotalLinesReadSaved As Integer
+        Dim intTotalLinesReadSaved As Integer
 
-		Dim blnContinueReading As Boolean
-		Dim blnProcessLine As Boolean
-		Dim blnSuccess As Boolean
+        Dim blnContinueReading As Boolean
+        Dim blnProcessLine As Boolean
+        Dim blnSuccess As Boolean
 
-		Try
-			If strFileList Is Nothing OrElse strFileList.Length = 0 Then
-				' Nothing to do
-				Return False
-			End If
+        Try
+            If strFileList Is Nothing OrElse strFileList.Length = 0 Then
+                ' Nothing to do
+                Return False
+            End If
 
-			intFileCount = strFileList.Length
-			ReDim srInFiles(intFileCount - 1)
-			ReDim intLinesRead(intFileCount - 1)
+            intFileCount = strFileList.Length
+            ReDim srInFiles(intFileCount - 1)
+            ReDim intLinesRead(intFileCount - 1)
 
-			' Open each of the input files
-			For intIndex = 0 To intFileCount - 1
-				If File.Exists(strFileList(intIndex)) Then
-					srInFiles(intIndex) = New StreamReader(New FileStream(strFileList(intIndex), FileMode.Open, FileAccess.Read, FileShare.Read))
-				Else
-					' File not found; unable to continue
-					Msg = "Source peptide prophet file not found, unable to continue: " & strFileList(intIndex)
-					''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-					Return False
-				End If
-			Next
+            ' Open each of the input files
+            For intIndex = 0 To intFileCount - 1
+                If File.Exists(strFileList(intIndex)) Then
+                    srInFiles(intIndex) = New StreamReader(New FileStream(strFileList(intIndex), FileMode.Open, FileAccess.Read, FileShare.Read))
+                Else
+                    ' File not found; unable to continue
+                    Msg = "Source peptide prophet file not found, unable to continue: " & strFileList(intIndex)
+                    ''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+                    Return False
+                End If
+            Next
 
-			' Create the output file
+            ' Create the output file
 
-			swOutFile = New StreamWriter(New FileStream(strCombinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            swOutFile = New StreamWriter(New FileStream(strCombinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-			intTotalLinesRead = 0
-			blnContinueReading = True
+            intTotalLinesRead = 0
+            blnContinueReading = True
 
-			Do While blnContinueReading
-				intTotalLinesReadSaved = intTotalLinesRead
-				For intFileIndex = 0 To intFileCount - 1
+            Do While blnContinueReading
+                intTotalLinesReadSaved = intTotalLinesRead
+                For intFileIndex = 0 To intFileCount - 1
 
                     If Not srInFiles(intFileIndex).EndOfStream Then
                         strLineIn = srInFiles(intFileIndex).ReadLine
@@ -1065,33 +1068,33 @@ Public Class clsCodeTest
                         End If
                     End If
 
-				Next
+                Next
 
-				If intTotalLinesRead = intTotalLinesReadSaved Then
-					blnContinueReading = False
-				End If
-			Loop
+                If intTotalLinesRead = intTotalLinesReadSaved Then
+                    blnContinueReading = False
+                End If
+            Loop
 
-			' Close the input files
-			For intIndex = 0 To intFileCount - 1
-				srInFiles(intIndex).Close()
-			Next
+            ' Close the input files
+            For intIndex = 0 To intFileCount - 1
+                srInFiles(intIndex).Close()
+            Next
 
-			' Close the output file
-			swOutFile.Close()
+            ' Close the output file
+            swOutFile.Close()
 
-			blnSuccess = True
+            blnSuccess = True
 
 
-		Catch ex As System.Exception
-			Msg = "Exception in clsExtractToolRunner.InterleaveFiles: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-			''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-			blnSuccess = False
-		End Try
+        Catch ex As System.Exception
+            Msg = "Exception in clsExtractToolRunner.InterleaveFiles: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            ''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+            blnSuccess = False
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 	''' <summary>
 	''' Examines the X!Tndem param file to determine if ETD mode is enabled
@@ -1173,66 +1176,67 @@ Public Class clsCodeTest
 	''' <param name="strSplitFileList">Output array listing the full paths to the split files that were created</param>
 	''' <returns>True if success, False if failure</returns>
 	''' <remarks></remarks>
-	Private Function SplitFileRoundRobin(ByVal strSrcFilePath As String, _
-	 ByVal lngMaxSizeBytes As Int64, _
-	 ByVal blnLookForHeaderLine As Boolean, _
-	 ByRef strSplitFileList() As String) As Boolean
+    Private Function SplitFileRoundRobin(
+     ByVal strSrcFilePath As String,
+     ByVal lngMaxSizeBytes As Int64,
+     ByVal blnLookForHeaderLine As Boolean,
+     ByRef strSplitFileList() As String) As Boolean
 
-		Dim fiFileInfo As FileInfo
-		Dim strBaseName As String
+        Dim fiFileInfo As FileInfo
+        Dim strBaseName As String
 
-		Dim intLinesRead As Integer = 0
-		Dim intTargetFileIndex As Integer
+        Dim intLinesRead As Integer = 0
+        Dim intTargetFileIndex As Integer
 
-		Dim Msg As String
-		Dim strLineIn As String = String.Empty
-		Dim strSplitLine() As String
+        Dim Msg As String
+        Dim strLineIn As String = String.Empty
+        Dim strSplitLine() As String
 
-		Dim srInFile As StreamReader
-		Dim swOutFiles() As StreamWriter
+        Dim srInFile As StreamReader
+        Dim swOutFiles() As StreamWriter
 
-		Dim intSplitCount As Integer
-		Dim intIndex As Integer
+        Dim intSplitCount As Integer
+        Dim intIndex As Integer
 
-		Dim blnProcessLine As Boolean
-		Dim blnSuccess As Boolean = False
+        Dim blnProcessLine As Boolean
+        Dim blnSuccess As Boolean = False
 
-		Try
-			fiFileInfo = New FileInfo(strSrcFilePath)
-			If Not fiFileInfo.Exists Then Return False
+        Try
+            fiFileInfo = New FileInfo(strSrcFilePath)
+            If Not fiFileInfo.Exists Then Return False
 
-			If fiFileInfo.Length <= lngMaxSizeBytes Then
-				' File is already less than the limit
-				ReDim strSplitFileList(0)
-				strSplitFileList(0) = fiFileInfo.FullName
+            If fiFileInfo.Length <= lngMaxSizeBytes Then
+                ' File is already less than the limit
+                ReDim strSplitFileList(0)
+                strSplitFileList(0) = fiFileInfo.FullName
 
-				blnSuccess = True
-			Else
+                blnSuccess = True
+            Else
 
-				' Determine the number of parts to split the file into
-				intSplitCount = CInt(Math.Ceiling(fiFileInfo.Length / CDbl(lngMaxSizeBytes)))
+                ' Determine the number of parts to split the file into
+                intSplitCount = CInt(Math.Ceiling(fiFileInfo.Length / CDbl(lngMaxSizeBytes)))
 
-				If intSplitCount < 2 Then
-					' This code should never be reached; we'll set intSplitCount to 2
-					intSplitCount = 2
-				End If
+                If intSplitCount < 2 Then
+                    ' This code should never be reached; we'll set intSplitCount to 2
+                    intSplitCount = 2
+                End If
 
-				' Open the input file
-				srInFile = New StreamReader(New FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                ' Open the input file
+                srInFile = New StreamReader(New FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				' Create each of the output files
-				ReDim strSplitFileList(intSplitCount - 1)
-				ReDim swOutFiles(intSplitCount - 1)
+                ' Create each of the output files
+                ReDim strSplitFileList(intSplitCount - 1)
+                ReDim swOutFiles(intSplitCount - 1)
 
-				strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name))
+                strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name))
 
-				For intIndex = 0 To intSplitCount - 1
-					strSplitFileList(intIndex) = strBaseName & "_part" & (intIndex + 1).ToString & Path.GetExtension(fiFileInfo.Name)
-					swOutFiles(intIndex) = New StreamWriter(New FileStream(strSplitFileList(intIndex), FileMode.Create, FileAccess.Write, FileShare.Read))
-				Next
+                For intIndex = 0 To intSplitCount - 1
+                    strSplitFileList(intIndex) = strBaseName & "_part" & (intIndex + 1).ToString & Path.GetExtension(fiFileInfo.Name)
+                    swOutFiles(intIndex) = New StreamWriter(New FileStream(strSplitFileList(intIndex), FileMode.Create, FileAccess.Write, FileShare.Read))
+                Next
 
-				intLinesRead = 0
-				intTargetFileIndex = 0
+                intLinesRead = 0
+                intTargetFileIndex = 0
 
                 Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine
@@ -1263,27 +1267,27 @@ Public Class clsCodeTest
                     End If
                 Loop
 
-				' Close the input file
-				srInFile.Close()
+                ' Close the input file
+                srInFile.Close()
 
-				' Close the output files
-				For intIndex = 0 To intSplitCount - 1
-					swOutFiles(intIndex).Close()
-				Next
+                ' Close the output files
+                For intIndex = 0 To intSplitCount - 1
+                    swOutFiles(intIndex).Close()
+                Next
 
-				blnSuccess = True
-			End If
+                blnSuccess = True
+            End If
 
 
-		Catch ex As System.Exception
-			Msg = "Exception in clsExtractToolRunner.SplitFileRoundRobin: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-			''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-			blnSuccess = False
-		End Try
+        Catch ex As System.Exception
+            Msg = "Exception in clsExtractToolRunner.SplitFileRoundRobin: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            ''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+            blnSuccess = False
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 	Public Sub TestResultsTransfer()
 		Dim strTransferFolderPath As String = "\\proto-5\DMS3_XFER"
@@ -1294,96 +1298,97 @@ Public Class clsCodeTest
 		PerformResultsXfer(strTransferFolderPath, strDatasetFolderPath, strDatasetName, strInputFolderName)
 	End Sub
 
-	Protected Overridable Function PerformResultsXfer(ByVal strTransferFolderPath As String, _
-	  ByVal strDatasetFolderPath As String, _
-	  ByVal strDatasetName As String, _
-	  ByVal strInputFolderName As String) As IJobParams.CloseOutType
+    Protected Overridable Function PerformResultsXfer(
+      ByVal strTransferFolderPath As String,
+      ByVal strDatasetFolderPath As String,
+      ByVal strDatasetName As String,
+      ByVal strInputFolderName As String) As IJobParams.CloseOutType
 
-		m_DebugLevel = 3
+        m_DebugLevel = 3
 
-		Dim Msg As String
-		Dim FolderToMove As String
-		Dim DatasetDir As String
-		Dim TargetDir As String
-		Dim diDatasetFolder As DirectoryInfo
+        Dim Msg As String
+        Dim FolderToMove As String
+        Dim DatasetDir As String
+        Dim TargetDir As String
+        Dim diDatasetFolder As DirectoryInfo
 
-		'Verify input folder exists in storage server xfer folder
-		FolderToMove = Path.Combine(strTransferFolderPath, strDatasetName)
-		FolderToMove = Path.Combine(FolderToMove, strInputFolderName)
-		If Not Directory.Exists(FolderToMove) Then
-			Msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " & FolderToMove & " not found"
-			'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		ElseIf m_DebugLevel >= 4 Then
-			'' m_logger.PostEntry("Results folder to move: " & FolderToMove, ILogger.logMsgType.logDebug, True)
-		End If
+        'Verify input folder exists in storage server xfer folder
+        FolderToMove = Path.Combine(strTransferFolderPath, strDatasetName)
+        FolderToMove = Path.Combine(FolderToMove, strInputFolderName)
+        If Not Directory.Exists(FolderToMove) Then
+            Msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " & FolderToMove & " not found"
+            '' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        ElseIf m_DebugLevel >= 4 Then
+            '' m_logger.PostEntry("Results folder to move: " & FolderToMove, ILogger.logMsgType.logDebug, True)
+        End If
 
-		' Verify dataset folder exists on storage server
-		' If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
-		DatasetDir = Path.Combine(strDatasetFolderPath, strDatasetName)
-		diDatasetFolder = New DirectoryInfo(DatasetDir)
-		If Not diDatasetFolder.Exists Then
-			Msg = "clsResultXferToolRunner.PerformResultsXfer(); dataset folder " & DatasetDir & " not found; will attempt to make it"
-			'' m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, clsGlobal.LOG_LOCAL_ONLY)
+        ' Verify dataset folder exists on storage server
+        ' If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
+        DatasetDir = Path.Combine(strDatasetFolderPath, strDatasetName)
+        diDatasetFolder = New DirectoryInfo(DatasetDir)
+        If Not diDatasetFolder.Exists Then
+            Msg = "clsResultXferToolRunner.PerformResultsXfer(); dataset folder " & DatasetDir & " not found; will attempt to make it"
+            '' m_logger.PostEntry(Msg, ILogger.logMsgType.logWarning, clsGlobal.LOG_LOCAL_ONLY)
 
-			Try
+            Try
 
-				If diDatasetFolder.Parent.Exists Then
-					' Parent folder exists; try to create the dataset folder
-					diDatasetFolder.Create()
+                If diDatasetFolder.Parent.Exists Then
+                    ' Parent folder exists; try to create the dataset folder
+                    diDatasetFolder.Create()
 
-					System.Threading.Thread.Sleep(500)
-					diDatasetFolder.Refresh()
-					If Not diDatasetFolder.Exists Then
-						' Creation of the dataset folder failed; unable to continue
-						Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": folder creation failed for unknown reason"
-						'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-					End If
-				Else
-					Msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " & diDatasetFolder.Parent.FullName & "; unable to continue"
-					'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
+                    System.Threading.Thread.Sleep(500)
+                    diDatasetFolder.Refresh()
+                    If Not diDatasetFolder.Exists Then
+                        ' Creation of the dataset folder failed; unable to continue
+                        Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": folder creation failed for unknown reason"
+                        '' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    End If
+                Else
+                    Msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " & diDatasetFolder.Parent.FullName & "; unable to continue"
+                    '' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
 
-			Catch ex As Exception
-				Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": " & ex.Message
-				'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+            Catch ex As Exception
+                Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": " & ex.Message
+                '' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
 
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Try
-
-
-		ElseIf m_DebugLevel >= 4 Then
-			'' m_logger.PostEntry("Dataset folder path: " & DatasetDir, ILogger.logMsgType.logDebug, True)
-		End If
-
-		'Determine if output folder already exists on storage server
-		TargetDir = Path.Combine(DatasetDir, strInputFolderName)
-		If Directory.Exists(TargetDir) Then
-			Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
-			'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
-
-		'Move the directory
-		Try
-			If m_DebugLevel >= 3 Then
-				'' m_logger.PostEntry("Moving '" & FolderToMove & "' to '" & TargetDir & "'", ILogger.logMsgType.logDebug, True)
-			End If
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End Try
 
 
-			My.Computer.FileSystem.MoveDirectory(FolderToMove, TargetDir, False)
+        ElseIf m_DebugLevel >= 4 Then
+            '' m_logger.PostEntry("Dataset folder path: " & DatasetDir, ILogger.logMsgType.logDebug, True)
+        End If
 
-		Catch ex As Exception
-			Msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " & FolderToMove & ": " & ex.Message
-			'' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+        'Determine if output folder already exists on storage server
+        TargetDir = Path.Combine(DatasetDir, strInputFolderName)
+        If Directory.Exists(TargetDir) Then
+            Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
+            '' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        'Move the directory
+        Try
+            If m_DebugLevel >= 3 Then
+                '' m_logger.PostEntry("Moving '" & FolderToMove & "' to '" & TargetDir & "'", ILogger.logMsgType.logDebug, True)
+            End If
 
-	End Function
+
+            My.Computer.FileSystem.MoveDirectory(FolderToMove, TargetDir, False)
+
+        Catch ex As Exception
+            Msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " & FolderToMove & ": " & ex.Message
+            '' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
 
 	Private Sub m_FastaTools_FileGenerationStarted1(ByVal taskMsg As String) Handles m_FastaTools.FileGenerationStarted
 
@@ -1668,9 +1673,7 @@ Public Class clsCodeTest
 			.MonitorInterval = 1000
 		End With
 
-		blnSuccess = objProgRunner.RunProgram( _
-		 strAppPath, _
-		 "input.xml", "X!Tandem", False)
+        blnSuccess = objProgRunner.RunProgram(strAppPath, "input.xml", "X!Tandem", False)
 
 
 		If objProgRunner.CacheStandardOutput And Not objProgRunner.EchoOutputToConsole Then
@@ -2329,9 +2332,10 @@ Public Class clsCodeTest
 						sngProcessingRate = 0
 						dctHostProcessingRate.TryGetValue(objItem.Key, sngProcessingRate)
 
-						strProcessingMsg = "Host " & objItem.Key & " processed " & objItem.Value & " DTA" & CheckForPlurality(objItem.Value) & _
-						  " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) & _
-						  " (" & sngProcessingRate.ToString("0.0") & " DTAs/node)"
+                        strProcessingMsg = "Host " & objItem.Key & " processed " & objItem.Value &
+                            " DTA" & CheckForPlurality(objItem.Value) &
+                            " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) &
+                            " (" & sngProcessingRate.ToString("0.0") & " DTAs/node)"
 
 						If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg)

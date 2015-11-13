@@ -990,9 +990,9 @@ Public Class clsStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Public Sub UpdateClose(
-      ByVal ManagerIdleMessage As String, _
-      ByRef RecentErrorMessages() As String, _
-      ByVal JobInfo As String, _
+      ByVal ManagerIdleMessage As String,
+      ByRef RecentErrorMessages() As String,
+      ByVal JobInfo As String,
       ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateClose
 
         ClearCachedInfo()
@@ -1076,14 +1076,14 @@ Public Class clsStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Public Sub UpdateAndWrite(
-      ByVal eMgrStatus As IStatusFile.EnumMgrStatus, _
-      ByVal eTaskStatus As IStatusFile.EnumTaskStatus, _
-      ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail, _
-      ByVal PercentComplete As Single, _
-      ByVal DTACount As Integer, _
-      ByVal MostRecentLogMessage As String, _
-      ByVal MostRecentErrorMessage As String, _
-      ByVal RecentJobInfo As String, _
+      ByVal eMgrStatus As IStatusFile.EnumMgrStatus,
+      ByVal eTaskStatus As IStatusFile.EnumTaskStatus,
+      ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail,
+      ByVal PercentComplete As Single,
+      ByVal DTACount As Integer,
+      ByVal MostRecentLogMessage As String,
+      ByVal MostRecentErrorMessage As String,
+      ByVal RecentJobInfo As String,
       ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateAndWrite
 
         m_MgrStatus = eMgrStatus
@@ -1131,9 +1131,9 @@ Public Class clsStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Public Sub UpdateIdle(
-      ByVal ManagerIdleMessage As String, _
-      ByVal IdleErrorMessage As String, _
-      ByVal RecentJobInfo As String, _
+      ByVal ManagerIdleMessage As String,
+      ByVal IdleErrorMessage As String,
+      ByVal RecentJobInfo As String,
       ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
         ClearCachedInfo()
         m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
@@ -1155,9 +1155,9 @@ Public Class clsStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Public Sub UpdateIdle(
-      ByVal ManagerIdleMessage As String, _
-      ByRef RecentErrorMessages() As String, _
-      ByVal RecentJobInfo As String, _
+      ByVal ManagerIdleMessage As String,
+      ByRef RecentErrorMessages() As String,
+      ByVal RecentJobInfo As String,
       ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
 
         ClearCachedInfo()

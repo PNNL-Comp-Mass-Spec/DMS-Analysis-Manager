@@ -69,9 +69,10 @@ Public Class clsConcatToolWrapper
         Return ConcatenateFiles(FileType, RootFileName, False)
     End Function
 
-    Public Function ConcatenateFiles(ByVal FileType As ConcatFileTypes, _
-                                     ByVal RootFileName As String, _
-                                     ByVal blnDeleteSourceFilesWhenConcatenating As Boolean) As Boolean
+    Public Function ConcatenateFiles(
+      ByVal FileType As ConcatFileTypes,
+      ByVal RootFileName As String,
+      ByVal blnDeleteSourceFilesWhenConcatenating As Boolean) As Boolean
 
         Try
             'Perform the concatenation
@@ -96,13 +97,13 @@ Public Class clsConcatToolWrapper
 
             'Loop until the concatenation finishes
             While m_CatInProgress
-				Thread.Sleep(1000)
+                Thread.Sleep(1000)
             End While
 
             'Concatenation must have finished successfully, so exit
             Return True
         Catch ex As Exception
-			m_ErrMsg = "Exception while concatenating files: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            m_ErrMsg = "Exception while concatenating files: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             Return False
         End Try
 

@@ -623,8 +623,8 @@ Public Class clsAnalysisToolRunnerBase
             Dim eResult As IJobParams.CloseOutType
 
             ' Copy the files and subfolders
-            eResult = CopyResultsFolderRecursive(sourceFolderPath, sourceFolderPath, targetFolderPath, _
-              objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+            eResult = CopyResultsFolderRecursive(sourceFolderPath, sourceFolderPath, targetFolderPath,
+              objAnalysisResults, blnErrorEncountered, intFailedFileCount,
               intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
             If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
@@ -657,12 +657,13 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="SourceFolderPath"></param>
     ''' <param name="TargetFolderPath"></param>
     ''' <remarks></remarks>
-    Private Function CopyResultsFolderRecursive(RootSourceFolderPath As String, SourceFolderPath As String, TargetFolderPath As String, _
-      ByRef objAnalysisResults As clsAnalysisResults, _
-      ByRef blnErrorEncountered As Boolean, _
-      ByRef intFailedFileCount As Integer, _
-      intRetryCount As Integer, _
-      intRetryHoldoffSeconds As Integer, _
+    Private Function CopyResultsFolderRecursive(
+      RootSourceFolderPath As String, SourceFolderPath As String, TargetFolderPath As String,
+      ByRef objAnalysisResults As clsAnalysisResults,
+      ByRef blnErrorEncountered As Boolean,
+      ByRef intFailedFileCount As Integer,
+      intRetryCount As Integer,
+      intRetryHoldoffSeconds As Integer,
       blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
 
         Dim objSourceFolderInfo As DirectoryInfo
@@ -733,12 +734,12 @@ Public Class clsAnalysisToolRunnerBase
             Try
                 If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
                     ' Copy file and overwrite existing
-                    objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
+                    objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True,
                      intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
                 Else
                     ' Copy file only if it doesn't currently exist
                     If Not File.Exists(strTargetPath) Then
-                        objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True, _
+                        objAnalysisResults.CopyFileWithRetry(FileToCopy, strTargetPath, True,
                          intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
                     End If
                 End If
@@ -762,8 +763,8 @@ Public Class clsAnalysisToolRunnerBase
         For Each objSubFolder As DirectoryInfo In diSourceFolder.GetDirectories()
             strTargetFolderPathCurrent = Path.Combine(TargetFolderPath, objSubFolder.Name)
 
-            eResult = CopyResultsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strTargetFolderPathCurrent, _
-             objAnalysisResults, blnErrorEncountered, intFailedFileCount, _
+            eResult = CopyResultsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strTargetFolderPathCurrent,
+             objAnalysisResults, blnErrorEncountered, intFailedFileCount,
              intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
             If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
@@ -912,8 +913,7 @@ Public Class clsAnalysisToolRunnerBase
                     If Not Err1.InnerException Is Nothing Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " & Err1.InnerException.Message)
                     End If
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " may be read-only, attribute reset attempt #" & _
-                     RetryCount.ToString)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " & FileNamePath & " may be read-only, attribute reset attempt #" & RetryCount.ToString)
                 End If
                 File.SetAttributes(FileNamePath, File.GetAttributes(FileNamePath) And (Not FileAttributes.ReadOnly))
                 ErrType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception
@@ -1069,8 +1069,8 @@ Public Class clsAnalysisToolRunnerBase
                 End If
 
             Catch ex As Exception
-                m_message = "Exception deleting raw data file " & FileOrFolderName & ": " & _
-                ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                m_message = "Exception deleting raw data file " & FileOrFolderName & ": " &
+                    ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End Try
         ElseIf IsNetworkDir Then
@@ -1084,8 +1084,8 @@ Public Class clsAnalysisToolRunnerBase
                 End If
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             Catch ex As Exception
-                m_message = "Exception deleting raw data folder " & FileOrFolderName & ": " & _
-                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                m_message = "Exception deleting raw data folder " & FileOrFolderName & ": " &
+                    ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End Try
         End If
@@ -1135,9 +1135,10 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="strStepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
     ''' <returns>The path to the program, or an empty string if there is a problem</returns>
     ''' <remarks></remarks>
-    Protected Function DetermineProgramLocation(strStepToolName As String, _
-       strProgLocManagerParamName As String, _
-       strExeName As String, _
+    Protected Function DetermineProgramLocation(
+       strStepToolName As String,
+       strProgLocManagerParamName As String,
+       strExeName As String,
        strStepToolVersion As String) As String
 
         Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion, m_mgrParams, m_message)
@@ -1832,8 +1833,8 @@ Public Class clsAnalysisToolRunnerBase
             If m_DebugLevel >= 2 Then
                 strLogMessage = "Move Result Files to " & ResFolderNamePath
                 If m_DebugLevel >= 3 Then
-                    strLogMessage &= "; ResultFilesToSkip contains " & m_jobParams.ResultFilesToSkip.Count.ToString & " entries" & _
-                      "; ResultFileExtensionsToSkip contains " & m_jobParams.ResultFileExtensionsToSkip.Count.ToString & " entries" & _
+                    strLogMessage &= "; ResultFilesToSkip contains " & m_jobParams.ResultFilesToSkip.Count.ToString & " entries" &
+                      "; ResultFileExtensionsToSkip contains " & m_jobParams.ResultFileExtensionsToSkip.Count.ToString & " entries" &
                       "; ResultFilesToKeep contains " & m_jobParams.ResultFilesToKeep.Count.ToString & " entries"
                 End If
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strLogMessage)
@@ -2486,8 +2487,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
     ''' <returns>True for success, False for failure</returns>
     ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-    Protected Function SetStepTaskToolVersion(strToolVersionInfo As String, _
-       ioToolFiles As List(Of FileInfo)) As Boolean
+    Protected Function SetStepTaskToolVersion(strToolVersionInfo As String, ioToolFiles As List(Of FileInfo)) As Boolean
 
         Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
     End Function
@@ -2499,8 +2499,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
     ''' <returns>True for success, False for failure</returns>
     ''' <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-    Protected Function SetStepTaskToolVersion(strToolVersionInfo As String, _
-       ioToolFiles As IEnumerable(Of FileInfo)) As Boolean
+    Protected Function SetStepTaskToolVersion(strToolVersionInfo As String, ioToolFiles As IEnumerable(Of FileInfo)) As Boolean
 
         Return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, True)
     End Function

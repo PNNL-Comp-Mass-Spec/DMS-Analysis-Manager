@@ -206,10 +206,10 @@ Public Class clsMainProcess
 
         ' Setup the manager cleanup class
         If Me.TraceMode Then ShowTraceMessage("Setup the manager cleanup class")
-        m_MgrErrorCleanup = New clsCleanupMgrErrors( _
-           m_MgrSettings.GetParam("MgrCnfgDbConnectStr"), _
-           m_MgrName, _
-           m_MgrFolderPath, _
+        m_MgrErrorCleanup = New clsCleanupMgrErrors(
+           m_MgrSettings.GetParam("MgrCnfgDbConnectStr"),
+           m_MgrName,
+           m_MgrFolderPath,
            m_WorkDirPath)
 
         If Me.TraceMode Then ShowTraceMessage("Initialize the Summary file")
@@ -445,8 +445,9 @@ Public Class clsMainProcess
                             ' Something went wrong; errors likely were not logged by DoAnalysisJob
                             If Me.TraceMode Then ShowTraceMessage("Exception in DoAnalysisJob; closing job step task")
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " & _
-                             ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                 "clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " &
+                                                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
                             m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
 
                             ' Set the job state to failed
@@ -525,10 +526,11 @@ Public Class clsMainProcess
 
             If Me.TraceMode Then ShowTraceMessage("Closing the manager")
             UpdateClose("Closing manager.")
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysis(), Error encountered, " & _
-             Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
-            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & Err.Message, m_MostRecentJobInfo, True)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "clsMainProcess.DoAnalysis(), Error encountered, " &
+                                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
 
         Finally
             If Not m_StatusTools Is Nothing Then
@@ -649,10 +651,11 @@ Public Class clsMainProcess
                 m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel)
                 Return False
             End If
-        Catch Err As Exception
+        Catch ex As Exception
             If Me.TraceMode Then ShowTraceMessage("Exception getting resources; closing job step task")
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Getting resources, " & _
-             Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "clsMainProcess.DoAnalysisJob(), Getting resources, " &
+                                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
 
             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception getting resources")
 
@@ -662,7 +665,7 @@ Public Class clsMainProcess
                 m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
             End If
 
-            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & Err.Message, m_MostRecentJobInfo, True)
+            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
             Return False
         End Try
 
@@ -685,7 +688,7 @@ Public Class clsMainProcess
                 m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 
                 Try
-                    If m_MostRecentErrorMessage.Contains(DECON2LS_FATAL_REMOTING_ERROR) OrElse _
+                    If m_MostRecentErrorMessage.Contains(DECON2LS_FATAL_REMOTING_ERROR) OrElse
                        m_MostRecentErrorMessage.Contains(DECON2LS_CORRUPTED_MEMORY_ERROR) Then
                         m_NeedToAbortProcessing = True
                     End If
@@ -711,10 +714,12 @@ Public Class clsMainProcess
                 m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
             End If
 
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), running tool, " & Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "clsMainProcess.DoAnalysisJob(), running tool, " &
+                                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
 
-            If Err.Message.Contains(DECON2LS_TCP_ALREADY_REGISTERED_ERROR) Then
+            If ex.Message.Contains(DECON2LS_TCP_ALREADY_REGISTERED_ERROR) Then
                 m_NeedToAbortProcessing = True
             End If
 
@@ -736,7 +741,7 @@ Public Class clsMainProcess
                     m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
                 End If
 
-                If eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES AndAlso _
+                If eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES AndAlso
                    m_AnalysisTask.GetParam("StepTool").ToLower() = "sequest" Then
                     ' This was a Sequest job, but no .DTA files were found
                     ' Return True; do not count this as a manager failure
@@ -748,10 +753,11 @@ Public Class clsMainProcess
                     Return False
                 End If
 
-            Catch Err As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," & _
-                  Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
-                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & Err.Message, m_MostRecentJobInfo, True)
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," &
+                                     ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
                 Return False
             End Try
 
@@ -768,10 +774,11 @@ Public Class clsMainProcess
 
             UpdateStatusIdle("Completed job " & jobNum & ", step " & stepNum)
 
-        Catch err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Close task after normal run," & _
-             err.Message & "; " & clsGlobal.GetExceptionStackTrace(err))
-            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & err.Message, m_MostRecentJobInfo, True)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "clsMainProcess.DoAnalysisJob(), Close task after normal run," &
+                                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
             Return False
         End Try
 
@@ -794,10 +801,11 @@ Public Class clsMainProcess
                         m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
                         Return False
                     End If
-                Catch Err As Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," & _
-                       Err.Message & "; " & clsGlobal.GetExceptionStackTrace(Err))
-                    m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & Err.Message, m_MostRecentJobInfo, True)
+                Catch ex As Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                         "clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," &
+                                         ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                    m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
                     Return False
                 End Try
 
@@ -811,8 +819,9 @@ Public Class clsMainProcess
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMainProcess.DoAnalysisJob(), " & _
-              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "clsMainProcess.DoAnalysisJob(), " & ex.Message & "; " &
+                                 clsGlobal.GetExceptionStackTrace(ex))
             m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
             Return False
         End Try
@@ -1059,10 +1068,9 @@ Public Class clsMainProcess
                                     objMatch = reJobStartLine.Match(strLineIn)
                                     If objMatch.Success Then
                                         Try
-                                            strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(objMatch.Groups(1).Value, _
-                                              CInt(objMatch.Groups(2).Value), _
-                                              objMatch.Groups(3).Value, _
-                                              objMatch.Groups(4).Value)
+                                            strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(
+                                              objMatch.Groups(1).Value, CInt(objMatch.Groups(2).Value),
+                                              objMatch.Groups(3).Value, objMatch.Groups(4).Value)
                                         Catch ex As Exception
                                             ' Ignore errors here
                                         End Try
@@ -1173,10 +1181,11 @@ Public Class clsMainProcess
 
     End Function
 
-    Protected Sub DetermineRecentErrorCacheError(ByRef objMatch As Match, _
-     ByVal strErrorMessage As String, _
-     ByRef htUniqueErrorMessages As Hashtable, _
-     ByRef qErrorMsgQueue As Queue, _
+    Protected Sub DetermineRecentErrorCacheError(
+     ByRef objMatch As Match,
+     ByVal strErrorMessage As String,
+     ByRef htUniqueErrorMessages As Hashtable,
+     ByRef qErrorMsgQueue As Queue,
      ByVal intMaxErrorMessageCountToReturn As Integer)
 
         Dim strTimestamp As String
@@ -1849,7 +1858,7 @@ Public Class clsMainProcess
             Dim strFileToCheck As String
             strFileToCheck = Path.GetFileName(tmpFilArray(0))
 
-            If strFileToCheck.StartsWith(clsGlobal.XML_FILENAME_PREFIX) AndAlso _
+            If strFileToCheck.StartsWith(clsGlobal.XML_FILENAME_PREFIX) AndAlso
                strFileToCheck.EndsWith(clsGlobal.XML_FILENAME_EXTENSION) Then
                 Try
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Working directory contains a stray JobParameters file, deleting it: " & tmpFilArray(0))

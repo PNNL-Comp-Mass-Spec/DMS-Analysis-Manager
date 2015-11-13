@@ -119,39 +119,38 @@ Public Class clsLogTools
 	''' <param name="InpMsg">Message to be logged</param>
 	''' <param name="Ex">Exception to be logged</param>
 	''' <remarks></remarks>
-	Public Shared Sub WriteLog(ByVal LoggerType As LoggerTypes, ByVal LogLevel As LogLevels, ByVal InpMsg As String, _
-	 ByVal Ex As Exception)
+    Public Shared Sub WriteLog(ByVal LoggerType As LoggerTypes, ByVal LogLevel As LogLevels, ByVal InpMsg As String, ByVal Ex As Exception)
 
-		Dim MyLogger As ILog
+        Dim MyLogger As ILog
 
-		'Establish which logger will be used
-		Select Case LoggerType
-			Case LoggerTypes.LogDb
-				MyLogger = m_DbLogger
-			Case LoggerTypes.LogFile
-				MyLogger = m_FileLogger
-			Case LoggerTypes.LogSystem
-				MyLogger = m_SysLogger
-			Case Else
-				Throw New Exception("Invalid logger type specified")
-		End Select
+        'Establish which logger will be used
+        Select Case LoggerType
+            Case LoggerTypes.LogDb
+                MyLogger = m_DbLogger
+            Case LoggerTypes.LogFile
+                MyLogger = m_FileLogger
+            Case LoggerTypes.LogSystem
+                MyLogger = m_SysLogger
+            Case Else
+                Throw New Exception("Invalid logger type specified")
+        End Select
 
-		'Send the log message
-		Select Case LogLevel
-			Case LogLevels.DEBUG
-				If MyLogger.IsDebugEnabled Then MyLogger.Debug(InpMsg, Ex)
-			Case LogLevels.ERROR
-				If MyLogger.IsErrorEnabled Then MyLogger.Error(InpMsg, Ex)
-			Case LogLevels.FATAL
-				If MyLogger.IsFatalEnabled Then MyLogger.Fatal(InpMsg, Ex)
-			Case LogLevels.INFO
-				If MyLogger.IsInfoEnabled Then MyLogger.Info(InpMsg, Ex)
-			Case LogLevels.WARN
-				If MyLogger.IsWarnEnabled Then MyLogger.Warn(InpMsg, Ex)
-			Case Else
-				Throw New Exception("Invalid log level specified")
-		End Select
-	End Sub
+        'Send the log message
+        Select Case LogLevel
+            Case LogLevels.DEBUG
+                If MyLogger.IsDebugEnabled Then MyLogger.Debug(InpMsg, Ex)
+            Case LogLevels.ERROR
+                If MyLogger.IsErrorEnabled Then MyLogger.Error(InpMsg, Ex)
+            Case LogLevels.FATAL
+                If MyLogger.IsFatalEnabled Then MyLogger.Fatal(InpMsg, Ex)
+            Case LogLevels.INFO
+                If MyLogger.IsInfoEnabled Then MyLogger.Info(InpMsg, Ex)
+            Case LogLevels.WARN
+                If MyLogger.IsWarnEnabled Then MyLogger.Warn(InpMsg, Ex)
+            Case Else
+                Throw New Exception("Invalid log level specified")
+        End Select
+    End Sub
 
 	''' <summary>
 	''' Changes the base log file name

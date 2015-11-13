@@ -208,20 +208,22 @@ Public Class clsMemoryUsageLogger
 				End If
 
 				If blnWriteHeader Then
-					swOutFile.WriteLine("Date" & ControlChars.Tab & _
-					  "Time" & ControlChars.Tab & _
-					  "ProcessMemoryUsage_MB" & ControlChars.Tab & _
-					  "FreeMemory_MB" & ControlChars.Tab & _
-					  "PoolPaged_MB" & ControlChars.Tab & _
-					  "PoolNonpaged_MB" & ControlChars.Tab)
+                    swOutFile.WriteLine(
+                      "Date" & ControlChars.Tab &
+                      "Time" & ControlChars.Tab &
+                      "ProcessMemoryUsage_MB" & ControlChars.Tab &
+                      "FreeMemory_MB" & ControlChars.Tab &
+                      "PoolPaged_MB" & ControlChars.Tab &
+                      "PoolNonpaged_MB" & ControlChars.Tab)
 				End If
 
-				swOutFile.WriteLine(DateTime.Now().ToString("yyyy-MM-dd") & ControlChars.Tab & _
-				  DateTime.Now().ToString("hh:mm:ss tt") & ControlChars.Tab & _
-				  GetProcessMemoryUsageMB.ToString("0.0") & ControlChars.Tab & _
-				  GetFreeMemoryMB.ToString("0.0") & ControlChars.Tab & _
-				  GetPoolPagedMemory.ToString("0.0") & ControlChars.Tab & _
-				  GetPoolNonpagedMemory.ToString("0.0") & ControlChars.Tab)
+                swOutFile.WriteLine(
+                    DateTime.Now().ToString("yyyy-MM-dd") & ControlChars.Tab &
+                    DateTime.Now().ToString("hh:mm:ss tt") & ControlChars.Tab &
+                    GetProcessMemoryUsageMB.ToString("0.0") & ControlChars.Tab &
+                    GetFreeMemoryMB.ToString("0.0") & ControlChars.Tab &
+                    GetPoolPagedMemory.ToString("0.0") & ControlChars.Tab &
+                    GetPoolNonpagedMemory.ToString("0.0") & ControlChars.Tab)
 
 			End Using
 

@@ -86,145 +86,145 @@ Public Class clsAnalysisResults
 	''' <param name="MaxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
 	''' <param name="ContinueOnError">When true, then will continue copying even if an error occurs</param>
 	''' <remarks></remarks>
-	Public Sub CopyDirectory(ByVal SourcePath As String, ByVal DestPath As String, _
-	  ByVal Overwrite As Boolean, ByVal MaxRetryCount As Integer, _
-	  ByVal ContinueOnError As Boolean)
+    Public Sub CopyDirectory(
+      ByVal SourcePath As String, ByVal DestPath As String,
+      ByVal Overwrite As Boolean, ByVal MaxRetryCount As Integer,
+      ByVal ContinueOnError As Boolean)
 
-		Dim diSourceDir As DirectoryInfo = New DirectoryInfo(SourcePath)
-		Dim diDestDir As DirectoryInfo = New DirectoryInfo(DestPath)
+        Dim diSourceDir As DirectoryInfo = New DirectoryInfo(SourcePath)
+        Dim diDestDir As DirectoryInfo = New DirectoryInfo(DestPath)
 
-		Dim strTargetPath As String
-		Dim strMessage As String
+        Dim strTargetPath As String
+        Dim strMessage As String
 
-		' The source directory must exist, otherwise throw an exception
-		If Not FolderExistsWithRetry(diSourceDir.FullName, 3, 3) Then
-			strMessage = "Source directory does not exist: " + diSourceDir.FullName
-			If ContinueOnError Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
-				Exit Sub
-			Else
-				Throw New DirectoryNotFoundException(strMessage)
-			End If
-		Else
-			' If destination SubDir's parent SubDir does not exist throw an exception
-			If Not FolderExistsWithRetry(diDestDir.Parent.FullName, 1, 1) Then
-				strMessage = "Destination directory does not exist: " + diDestDir.Parent.FullName
-				If ContinueOnError Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
-					Exit Sub
-				Else
-					Throw New DirectoryNotFoundException(strMessage)
-				End If
-			End If
+        ' The source directory must exist, otherwise throw an exception
+        If Not FolderExistsWithRetry(diSourceDir.FullName, 3, 3) Then
+            strMessage = "Source directory does not exist: " + diSourceDir.FullName
+            If ContinueOnError Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+                Exit Sub
+            Else
+                Throw New DirectoryNotFoundException(strMessage)
+            End If
+        Else
+            ' If destination SubDir's parent SubDir does not exist throw an exception
+            If Not FolderExistsWithRetry(diDestDir.Parent.FullName, 1, 1) Then
+                strMessage = "Destination directory does not exist: " + diDestDir.Parent.FullName
+                If ContinueOnError Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+                    Exit Sub
+                Else
+                    Throw New DirectoryNotFoundException(strMessage)
+                End If
+            End If
 
-			If Not FolderExistsWithRetry(diDestDir.FullName, 3, 3) Then
-				CreateFolderWithRetry(DestPath, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
-			End If
+            If Not FolderExistsWithRetry(diDestDir.FullName, 3, 3) Then
+                CreateFolderWithRetry(DestPath, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
+            End If
 
-			' Copy all the files of the current directory
-			Dim ChildFile As FileInfo
-			For Each ChildFile In diSourceDir.GetFiles()
-				Try
-					strTargetPath = Path.Combine(diDestDir.FullName, ChildFile.Name)
-					If Overwrite Then
-						CopyFileWithRetry(ChildFile.FullName, strTargetPath, _
-						   True, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
+            ' Copy all the files of the current directory
+            Dim ChildFile As FileInfo
+            For Each ChildFile In diSourceDir.GetFiles()
+                Try
+                    strTargetPath = Path.Combine(diDestDir.FullName, ChildFile.Name)
+                    If Overwrite Then
+                        CopyFileWithRetry(ChildFile.FullName, strTargetPath, True, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
 
-					Else
-						' Only copy if the file does not yet exist
-						' We are not throwing an error if the file exists in the target
-						If Not File.Exists(strTargetPath) Then
-							CopyFileWithRetry(ChildFile.FullName, strTargetPath, _
-							   False, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
-						End If
-					End If
+                    Else
+                        ' Only copy if the file does not yet exist
+                        ' We are not throwing an error if the file exists in the target
+                        If Not File.Exists(strTargetPath) Then
+                            CopyFileWithRetry(ChildFile.FullName, strTargetPath, False, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC)
+                        End If
+                    End If
 
-				Catch ex As Exception
-					If ContinueOnError Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResults,CopyDirectory", ex)
-					Else
-						Throw
-					End If
-				End Try
-			Next
+                Catch ex As Exception
+                    If ContinueOnError Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResults,CopyDirectory", ex)
+                    Else
+                        Throw
+                    End If
+                End Try
+            Next
 
-			' Copy all the sub-directories by recursively calling this same routine
-			Dim SubDir As DirectoryInfo
-			For Each SubDir In diSourceDir.GetDirectories()
-				CopyDirectory(SubDir.FullName, _
-				  Path.Combine(diDestDir.FullName, SubDir.Name), _
-				  Overwrite, MaxRetryCount, ContinueOnError)
-			Next
-		End If
+            ' Copy all the sub-directories by recursively calling this same routine
+            Dim SubDir As DirectoryInfo
+            For Each SubDir In diSourceDir.GetDirectories()
+                CopyDirectory(SubDir.FullName, Path.Combine(diDestDir.FullName, SubDir.Name), Overwrite, MaxRetryCount, ContinueOnError)
+            Next
+        End If
 
-	End Sub
+    End Sub
 
 	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean)
 		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
 		CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
-	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, _
-	  ByVal Overwrite As Boolean, ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
-		CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
-	End Sub
+    Public Sub CopyFileWithRetry(
+      ByVal SrcFilePath As String, ByVal DestFilePath As String,
+      ByVal Overwrite As Boolean, ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+        CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
+    End Sub
 
-	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, _
-	  ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
-		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
-		CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-	End Sub
+    Public Sub CopyFileWithRetry(
+      ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean,
+      ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
+        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+    End Sub
 
-	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean, _
-	  ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
-	  ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+    Public Sub CopyFileWithRetry(
+      ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean,
+      ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer,
+      ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
 
-		Dim AttemptCount As Integer = 0
-		Dim blnSuccess As Boolean = False
-		Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
+        Dim AttemptCount As Integer = 0
+        Dim blnSuccess As Boolean = False
+        Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
 
-		If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
-		If MaxRetryCount < 1 Then MaxRetryCount = 1
+        If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
+        If MaxRetryCount < 1 Then MaxRetryCount = 1
 
-		' First make sure the source file exists
-		If Not File.Exists(SrcFilePath) Then
-			Throw New IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " & SrcFilePath)
-		End If
+        ' First make sure the source file exists
+        If Not File.Exists(SrcFilePath) Then
+            Throw New IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " & SrcFilePath)
+        End If
 
-		Do While AttemptCount <= MaxRetryCount And Not blnSuccess
-			AttemptCount += 1
+        Do While AttemptCount <= MaxRetryCount And Not blnSuccess
+            AttemptCount += 1
 
-			Try
-				ResetTimestampForQueueWaitTimeLogging()
-				If m_FileTools.CopyFileUsingLocks(SrcFilePath, DestFilePath, m_MgrName, Overwrite) Then
-					blnSuccess = True
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileUsingLocks returned false copying " & SrcFilePath & " to " & DestFilePath)
-				End If
+            Try
+                ResetTimestampForQueueWaitTimeLogging()
+                If m_FileTools.CopyFileUsingLocks(SrcFilePath, DestFilePath, m_MgrName, Overwrite) Then
+                    blnSuccess = True
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileUsingLocks returned false copying " & SrcFilePath & " to " & DestFilePath)
+                End If
 
-			Catch ex As Exception
-				Dim ErrMsg As String = "clsAnalysisResults,CopyFileWithRetry: error copying " & SrcFilePath & " to " & DestFilePath & ": " & ex.Message
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+            Catch ex As Exception
+                Dim ErrMsg As String = "clsAnalysisResults,CopyFileWithRetry: error copying " & SrcFilePath & " to " & DestFilePath & ": " & ex.Message
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
 
-				If Not Overwrite AndAlso File.Exists(DestFilePath) Then
-					Throw New IOException("Tried to overwrite an existing file when Overwrite = False: " & DestFilePath)
-				End If
+                If Not Overwrite AndAlso File.Exists(DestFilePath) Then
+                    Throw New IOException("Tried to overwrite an existing file when Overwrite = False: " & DestFilePath)
+                End If
 
-				Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
+                Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))     'Wait several seconds before retrying
 
-				PRISM.Processes.clsProgRunner.GarbageCollectNow()
-			End Try
+                PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            End Try
 
-			If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
-				sngRetryHoldoffSeconds *= 1.5!
-			End If
-		Loop
+            If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
+                sngRetryHoldoffSeconds *= 1.5!
+            End If
+        Loop
 
-		If Not blnSuccess Then
-			Throw New IOException("Excessive failures during file copy")
-		End If
+        If Not blnSuccess Then
+            Throw New IOException("Excessive failures during file copy")
+        End If
 
-	End Sub
+    End Sub
 
 	Public Sub CopyFailedResultsToArchiveFolder(ByVal ResultsFolderPath As String)
 
@@ -320,60 +320,64 @@ Public Class clsAnalysisResults
 		CreateFolderWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
 	End Sub
 
-	Public Sub CreateFolderWithRetry(ByVal FolderPath As String, _
-	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
-		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
-		CreateFolderWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-	End Sub
+    Public Sub CreateFolderWithRetry(
+      ByVal FolderPath As String,
+      ByVal MaxRetryCount As Integer,
+      ByVal RetryHoldoffSeconds As Integer)
+        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        CreateFolderWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+    End Sub
 
-	Public Sub CreateFolderWithRetry(ByVal FolderPath As String, _
-	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
-	   ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+    Public Sub CreateFolderWithRetry(
+      ByVal FolderPath As String,
+      ByVal MaxRetryCount As Integer,
+      ByVal RetryHoldoffSeconds As Integer,
+      ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
 
-		Dim AttemptCount As Integer = 0
-		Dim blnSuccess As Boolean = False
-		Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
+        Dim AttemptCount As Integer = 0
+        Dim blnSuccess As Boolean = False
+        Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
 
-		If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
-		If MaxRetryCount < 1 Then MaxRetryCount = 1
+        If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
+        If MaxRetryCount < 1 Then MaxRetryCount = 1
 
-		If String.IsNullOrWhiteSpace(FolderPath) Then
-			Throw New DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry")
-		End If
+        If String.IsNullOrWhiteSpace(FolderPath) Then
+            Throw New DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry")
+        End If
 
-		Do While AttemptCount <= MaxRetryCount And Not blnSuccess
-			AttemptCount += 1
+        Do While AttemptCount <= MaxRetryCount And Not blnSuccess
+            AttemptCount += 1
 
-			Try
-				If Directory.Exists(FolderPath) Then
-					' If the folder already exists, then there is nothing to do
-					blnSuccess = True
-				Else
-					Directory.CreateDirectory(FolderPath)
-					blnSuccess = True
-				End If
+            Try
+                If Directory.Exists(FolderPath) Then
+                    ' If the folder already exists, then there is nothing to do
+                    blnSuccess = True
+                Else
+                    Directory.CreateDirectory(FolderPath)
+                    blnSuccess = True
+                End If
 
-			Catch ex As Exception
-				Dim ErrMsg As String = "clsAnalysisResults: error creating folder " & FolderPath
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
+            Catch ex As Exception
+                Dim ErrMsg As String = "clsAnalysisResults: error creating folder " & FolderPath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
 
-				Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
+                Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))     'Wait several seconds before retrying
 
-				PRISM.Processes.clsProgRunner.GarbageCollectNow()
-			End Try
+                PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            End Try
 
-			If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
-				sngRetryHoldoffSeconds *= 1.5!
-			End If
-		Loop
+            If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
+                sngRetryHoldoffSeconds *= 1.5!
+            End If
+        Loop
 
-		If Not blnSuccess Then
-			If Not FolderExistsWithRetry(FolderPath, 1, 3) Then
-				Throw New IOException("Excessive failures during folder creation")
-			End If
-		End If
+        If Not blnSuccess Then
+            If Not FolderExistsWithRetry(FolderPath, 1, 3) Then
+                Throw New IOException("Excessive failures during folder creation")
+            End If
+        End If
 
-	End Sub
+    End Sub
 
 	Private Sub DeleteOldFailedResultsFolders(ByVal diTargetFolder As DirectoryInfo)
 
@@ -421,55 +425,59 @@ Public Class clsAnalysisResults
 		Return FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
 	End Function
 
-	Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
-	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer) As Boolean
-		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
-		Return FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
-	End Function
+    Public Function FolderExistsWithRetry(
+      ByVal FolderPath As String,
+      ByVal MaxRetryCount As Integer,
+      ByVal RetryHoldoffSeconds As Integer) As Boolean
+        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        Return FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
+    End Function
 
-	Public Function FolderExistsWithRetry(ByVal FolderPath As String, _
-	   ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer, _
-	   ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As Boolean
+    Public Function FolderExistsWithRetry(
+      ByVal FolderPath As String,
+      ByVal MaxRetryCount As Integer,
+      ByVal RetryHoldoffSeconds As Integer,
+      ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As Boolean
 
-		Dim AttemptCount As Integer = 0
-		Dim blnSuccess As Boolean = False
-		Dim blnFolderExists As Boolean = False
+        Dim AttemptCount As Integer = 0
+        Dim blnSuccess As Boolean = False
+        Dim blnFolderExists As Boolean = False
 
-		Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
+        Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
 
-		If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
-		If MaxRetryCount < 1 Then MaxRetryCount = 1
+        If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
+        If MaxRetryCount < 1 Then MaxRetryCount = 1
 
-		Do While AttemptCount <= MaxRetryCount And Not blnSuccess
-			AttemptCount += 1
+        Do While AttemptCount <= MaxRetryCount And Not blnSuccess
+            AttemptCount += 1
 
-			Try
-				blnFolderExists = Directory.Exists(FolderPath)
-				blnSuccess = True
+            Try
+                blnFolderExists = Directory.Exists(FolderPath)
+                blnSuccess = True
 
-			Catch ex As Exception
-				Dim ErrMsg As String = "clsAnalysisResults: error looking for folder " & FolderPath
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
+            Catch ex As Exception
+                Dim ErrMsg As String = "clsAnalysisResults: error looking for folder " & FolderPath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
 
-				Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))	  'Wait several seconds before retrying
+                Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))     'Wait several seconds before retrying
 
-				PRISM.Processes.clsProgRunner.GarbageCollectNow()
-			End Try
+                PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            End Try
 
-			If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
-				sngRetryHoldoffSeconds *= 1.5!
-			End If
+            If Not blnSuccess AndAlso blnIncreaseHoldoffOnEachRetry Then
+                sngRetryHoldoffSeconds *= 1.5!
+            End If
 
-		Loop
+        Loop
 
-		If Not blnSuccess Then
-			' Exception occurred; return False
-			Return False
-		End If
+        If Not blnSuccess Then
+            ' Exception occurred; return False
+            Return False
+        End If
 
-		Return blnFolderExists
+        Return blnFolderExists
 
-	End Function
+    End Function
 
 	Protected Sub ResetTimestampForQueueWaitTimeLogging()
 		m_LastLockQueueWaitTimeLog = DateTime.UtcNow

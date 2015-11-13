@@ -110,8 +110,7 @@ Public Class clsDBStatusLogger
                 Exit Sub
             End If
 
-            If Not blnForceLogToDB AndAlso _
-               DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
+            If Not blnForceLogToDB AndAlso DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
                 ' Not enough time has elapsed since the last write; exit sub
                 Exit Sub
             End If

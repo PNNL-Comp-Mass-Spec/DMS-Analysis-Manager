@@ -383,9 +383,9 @@ Public Class clsAnalysisMgrSettings
         '   FROM V_Pipeline_Step_Tools_Detail_Report
         '   WHERE ISNULL([Param File Storage Path], '') <> ''
         '
-        Const SqlStr As String = " SELECT '" & clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "' + Name AS ParameterName, " & _
-                                 " [Param File Storage Path] AS ParameterValue" & _
-                                 " FROM V_Pipeline_Step_Tools_Detail_Report" & _
+        Const SqlStr As String = " SELECT '" & clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "' + Name AS ParameterName, " &
+                                 " [Param File Storage Path] AS ParameterValue" &
+                                 " FROM V_Pipeline_Step_Tools_Detail_Report" &
                                  " WHERE ISNULL([Param File Storage Path], '') <> ''"
 
         Dim Dt As DataTable = Nothing

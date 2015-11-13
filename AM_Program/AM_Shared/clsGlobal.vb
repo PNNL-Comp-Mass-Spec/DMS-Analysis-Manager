@@ -36,11 +36,11 @@ Public Class clsGlobal
 #End Region
 
 #Region "Module variables"
-	Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" ( _
-	  ByVal lpRootPathName As String, _
-	  ByRef lpFreeBytesAvailable As Long, _
-	  ByRef lpTotalNumberOfBytes As Long, _
-	  ByRef lpTotalNumberOfFreeBytes As Long) As Integer
+    Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" (
+      ByVal lpRootPathName As String,
+      ByRef lpFreeBytesAvailable As Long,
+      ByRef lpTotalNumberOfBytes As Long,
+      ByRef lpTotalNumberOfFreeBytes As Long) As Integer
 #End Region
 
 #Region "Methods"
@@ -697,10 +697,10 @@ Public Class clsGlobal
     ''' <param name="VersionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
     ''' <returns>True if Success, false if failure </returns>
     ''' <remarks></remarks>
-    Public Shared Function CopyAndRenameFileWithBackup( _
-      ByVal SourceFilePath As String, _
-      ByVal TargetFolder As String, _
-      ByVal TargetFileName As String, _
+    Public Shared Function CopyAndRenameFileWithBackup(
+      ByVal SourceFilePath As String,
+      ByVal TargetFolder As String,
+      ByVal TargetFileName As String,
       ByVal VersionCountToKeep As Integer) As Boolean
 
         Dim ioSrcFile As FileInfo
@@ -1180,8 +1180,8 @@ Public Class clsGlobal
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Shared Function TextFilesMatch(
-     ByVal filePath1 As String, ByVal filePath2 As String, _
-     ByVal comparisonStartLine As Integer, ByVal comparisonEndLine As Integer, _
+     ByVal filePath1 As String, ByVal filePath2 As String,
+     ByVal comparisonStartLine As Integer, ByVal comparisonEndLine As Integer,
      ByVal ignoreWhitespace As Boolean) As Boolean
 
         Return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, Nothing)
@@ -1200,9 +1200,9 @@ Public Class clsGlobal
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Shared Function TextFilesMatch(
-      ByVal filePath1 As String, ByVal filePath2 As String, _
-      ByVal comparisonStartLine As Integer, ByVal comparisonEndLine As Integer, _
-      ByVal ignoreWhitespace As Boolean, _
+      ByVal filePath1 As String, ByVal filePath2 As String,
+      ByVal comparisonStartLine As Integer, ByVal comparisonEndLine As Integer,
+      ByVal ignoreWhitespace As Boolean,
       ByRef lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
 
         Dim strLineIn1 As String
@@ -1239,7 +1239,7 @@ Public Class clsGlobal
 
                                 If strLineIn1 <> strLineIn2 Then
                                     ' Lines don't match; are we ignoring both of them?
-                                    If TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) AndAlso _
+                                    If TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) AndAlso
                                        TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
                                         ' Ignoring both lines
                                     Else
