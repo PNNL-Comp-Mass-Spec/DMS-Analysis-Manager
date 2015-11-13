@@ -185,7 +185,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 			End If
 
 			' Rename the SMAQC log file to remove the datestamp
-			RenameSMAQCLogFile()
+            Dim logFilePath = RenameSMAQCLogFile()
 
 			' Don't move the AnalysisSummary.txt file to the results folder; it doesn't have any useful information
 			m_jobParams.AddResultFileToSkip("SMAQC_AnalysisSummary.txt")
@@ -214,6 +214,8 @@ Public Class clsAnalysisToolRunnerSMAQC
 				CopyFailedResultsToArchiveFolder()
 				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 			End If
+
+            m_jobParams.AddResultFileToSkip(logFilePath)
 
 			result = MakeResultsFolder()
 			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -782,36 +784,42 @@ Public Class clsAnalysisToolRunnerSMAQC
 
 	''' <summary>
 	''' Renames the SMAQC log file
-	''' </summary>
+    ''' </summary>
+    ''' <returns>The full path to the renamed log file, or an empty string if the log file was not found</returns>
 	''' <remarks></remarks>
-	Private Sub RenameSMAQCLogFile()
-		Dim diWorkDir As DirectoryInfo
-		Dim fiFiles() As FileInfo
-		Dim strLogFilePathNew As String
+    Private Function RenameSMAQCLogFile() As String
 
-		Try
+        Dim diWorkDir As DirectoryInfo
+        Dim fiFiles() As FileInfo
+        Dim strLogFilePathNew As String
 
-			diWorkDir = New DirectoryInfo(m_WorkDir)
+        Try
 
-			fiFiles = diWorkDir.GetFiles("SMAQC-log*.txt")
+            diWorkDir = New DirectoryInfo(m_WorkDir)
 
-			If Not fiFiles Is Nothing AndAlso fiFiles.Length > 0 Then
+            fiFiles = diWorkDir.GetFiles("SMAQC-log*.txt")
 
-				' There should only be one file; just parse fiFiles(0)
-				strLogFilePathNew = Path.Combine(m_WorkDir, "SMAQC_log.txt")
+            If Not fiFiles Is Nothing AndAlso fiFiles.Length > 0 Then
 
-				If File.Exists(strLogFilePathNew) Then
-					File.Delete(strLogFilePathNew)
-				End If
+                ' There should only be one file; just parse fiFiles(0)
+                strLogFilePathNew = Path.Combine(m_WorkDir, "SMAQC_log.txt")
 
-				fiFiles(0).MoveTo(strLogFilePathNew)
-			End If
+                If File.Exists(strLogFilePathNew) Then
+                    File.Delete(strLogFilePathNew)
+                End If
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception renaming SMAQC log file", ex)
-		End Try
+                fiFiles(0).MoveTo(strLogFilePathNew)
 
-	End Sub
+                Return strLogFilePathNew
+            End If
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception renaming SMAQC log file", ex)
+        End Try
+
+        Return String.Empty
+
+    End Function
 
 	''' <summary>
 	''' Stores the tool version info in the database
