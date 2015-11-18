@@ -119,6 +119,13 @@
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
+    <Reference Include="ThermoRawFileReaderDLL, Version=1.1.5764.21451, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
+    </Reference>
+    <Reference Include="UIMFLibrary">
+      <HintPath>..\..\AM_Common\UIMFLibrary.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Import Include="Microsoft.VisualBasic" />

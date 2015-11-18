@@ -3292,7 +3292,7 @@ Public MustInherit Class clsAnalysisResources
 
     Protected Function HandleMsXmlRetrieveFailure(
       fileMissingFromCache As Boolean,
-      <Out()> ByRef errorMessage As String,
+      errorMessage As String,
       msXmlExtension As String) As IJobParams.CloseOutType
 
         If fileMissingFromCache Then
@@ -3347,6 +3347,46 @@ Public MustInherit Class clsAnalysisResources
             Case Else
                 Return eRawDataTypeConstants.Unknown
         End Select
+
+    End Function
+
+    Public Shared Function GetRawDataTypeName(jobParams As IJobParams, <Out()> ByRef errorMessage As String) As String
+
+        errorMessage = String.Empty
+
+        Dim msXmlOutputType As String = jobParams.GetParam("MSXMLOutputType")
+
+        If String.IsNullOrWhiteSpace(msXmlOutputType) Then
+            Return jobParams.GetParam("RawDataType")
+        Else
+            Select Case msXmlOutputType.ToLower()
+                Case "mzxml"
+                    Return RAW_DATA_TYPE_DOT_MZXML_FILES
+                Case "mzml"
+                    Return RAW_DATA_TYPE_DOT_MZML_FILES
+                Case Else
+                    Return String.Empty
+            End Select
+        End If
+
+    End Function
+
+    Protected Function GetRawDataTypeName() As String
+
+        Dim errorMessage As String = Nothing
+        Dim rawDataTypeName = GetRawDataTypeName(m_jobParams, errorMessage)
+
+        If String.IsNullOrWhiteSpace(rawDataTypeName) Then
+            If String.IsNullOrWhiteSpace(errorMessage) Then
+                LogError("Unable to determine the instrument data type using GetRawDataTypeName")
+            Else
+                LogError(errorMessage)
+            End If
+
+            Return String.Empty
+        End If
+
+        Return rawDataTypeName
 
     End Function
 

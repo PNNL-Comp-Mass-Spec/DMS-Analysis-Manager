@@ -61,7 +61,17 @@ Public Interface IJobParams
 	''' <param name="ParamValue">Value for parameter</param>
 	''' <returns>True if success, False if an error</returns>
 	''' <remarks></remarks>
-	Function AddAdditionalParameter(ByVal ParamSection As String, ByVal ParamName As String, ByVal ParamValue As String) As Boolean
+    Function AddAdditionalParameter(ParamSection As String, ParamName As String, ParamValue As String) As Boolean
+
+    ''' <summary>
+    ''' Adds (or updates) a job parameter
+    ''' </summary>
+    ''' <param name="ParamSection">Section name for parameter</param>
+    ''' <param name="ParamName">Name of parameter</param>
+    ''' <param name="ParamValue">Boolean alue for parameter</param>
+    ''' <returns>True if success, False if an error</returns>
+    ''' <remarks></remarks>
+    Function AddAdditionalParameter(ParamSection As String, ParamName As String, ParamValue As Boolean) As Boolean
 
 	''' <summary>
 	''' Add new dataset name and ID to DatasetInfoList
@@ -69,35 +79,35 @@ Public Interface IJobParams
 	''' <param name="DatasetName"></param>
 	''' <param name="DatasetID"></param>
 	''' <remarks></remarks>
-	Sub AddDatasetInfo(ByVal DatasetName As String, ByVal DatasetID As Integer)
+    Sub AddDatasetInfo(DatasetName As String, DatasetID As Integer)
 
 	''' <summary>
 	''' Add a filename to definitely move to the results folder
 	''' </summary>
 	''' <param name="FileName"></param>
     ''' <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToKeep</remarks>
-	Sub AddResultFileToKeep(ByVal FileName As String)
+    Sub AddResultFileToKeep(FileName As String)
 
 	''' <summary>
 	''' Add a file to be deleted from the storage server (requires full file path)
 	''' </summary>
 	''' <param name="FilePath">Full path to the file</param>
     ''' <remarks>To delete the files, call clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
-	Sub AddServerFileToDelete(ByVal FilePath As String)
+    Sub AddServerFileToDelete(FilePath As String)
 
 	''' <summary>
 	''' Add a filename to not move to the results folder
 	''' </summary>
 	''' <param name="FileName"></param>
     ''' <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
-	Sub AddResultFileToSkip(ByVal FileName As String)
+    Sub AddResultFileToSkip(FileName As String)
 
 	''' <summary>
 	''' Add a filename extension to not move to the results folder
 	''' </summary>
 	''' <param name="Extension"></param>
 	''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
-	Sub AddResultFileExtensionToSkip(ByVal Extension As String)
+    Sub AddResultFileExtensionToSkip(Extension As String)
 
 	''' <summary>
 	''' Contact the Pipeline database to close the analysis job
@@ -105,7 +115,7 @@ Public Interface IJobParams
 	''' <param name="CloseOut"></param>
 	''' <param name="CompMsg"></param>
 	''' <remarks>Implemented in clsAnalysisJob</remarks>
-	Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String)
+    Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String)
 
 	''' <summary>
 	''' Contact the Pipeline database to close the analysis job
@@ -113,7 +123,7 @@ Public Interface IJobParams
 	''' <param name="CloseOut"></param>
 	''' <param name="CompMsg"></param>
 	''' <remarks>Implemented in clsAnalysisJob</remarks>
-	Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String, ByVal EvalCode As Integer, ByVal EvalMessage As String)
+    Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String, EvalCode As Integer, EvalMessage As String)
 
 	''' <summary>
 	''' Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
@@ -129,7 +139,7 @@ Public Interface IJobParams
 	''' <param name="Name">Key name for parameter</param>
 	''' <returns>Value for specified parameter; empty string if not found</returns>
 	''' <remarks></remarks>
-	Function GetParam(ByVal Name As String) As String
+    Function GetParam(Name As String) As String
 
 	''' <summary>
 	''' Gets a job parameter with the given name, preferentially using the specified parameter section
@@ -138,7 +148,7 @@ Public Interface IJobParams
 	''' <param name="Name">Key name for parameter</param>
 	''' <returns>Value for specified parameter; empty string if not found</returns>
 	''' <remarks></remarks>
-	Function GetParam(ByVal Section As String, ByVal Name As String) As String
+    Function GetParam(Section As String, Name As String) As String
 
 	''' <summary>
 	''' Gets a job parameter with the given name (in any parameter section)
@@ -146,11 +156,11 @@ Public Interface IJobParams
 	''' <param name="Name">Key name for parameter</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
 	''' <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
-	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Boolean) As Boolean
-	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As String) As String
-	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Integer) As Integer
-	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Short) As Short
-	Function GetJobParameter(ByVal Name As String, ByVal ValueIfMissing As Single) As Single
+    Function GetJobParameter(Name As String, ValueIfMissing As Boolean) As Boolean
+    Function GetJobParameter(Name As String, ValueIfMissing As String) As String
+    Function GetJobParameter(Name As String, ValueIfMissing As Integer) As Integer
+    Function GetJobParameter(Name As String, ValueIfMissing As Short) As Short
+    Function GetJobParameter(Name As String, ValueIfMissing As Single) As Single
 
 	''' <summary>
 	''' Gets a job parameter with the given name, preferentially using the specified parameter section
@@ -159,41 +169,41 @@ Public Interface IJobParams
 	''' <param name="Name">Key name for parameter</param>
 	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
 	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	Function GetJobParameter(ByVal Section As String, ByVal Name As String, ByVal ValueIfMissing As Boolean) As Boolean
-	Function GetJobParameter(ByVal Section As String, ByVal Name As String, ByVal ValueIfMissing As String) As String
-	Function GetJobParameter(ByVal Section As String, ByVal Name As String, ByVal ValueIfMissing As Integer) As Integer
-	Function GetJobParameter(ByVal Section As String, ByVal Name As String, ByVal ValueIfMissing As Single) As Single
+    Function GetJobParameter(Section As String, Name As String, ValueIfMissing As Boolean) As Boolean
+    Function GetJobParameter(Section As String, Name As String, ValueIfMissing As String) As String
+    Function GetJobParameter(Section As String, Name As String, ValueIfMissing As Integer) As Integer
+    Function GetJobParameter(Section As String, Name As String, ValueIfMissing As Single) As Single
 
-	''' <summary>
-	''' Remove a filename that was previously added to ResultFilesToSkip
-	''' </summary>
-	''' <param name="FileName"></param>
-	''' <remarks></remarks>
-	Sub RemoveResultFileToSkip(ByVal FileName As String)
+    ''' <summary>
+    ''' Remove a filename that was previously added to ResultFilesToSkip
+    ''' </summary>
+    ''' <param name="FileName"></param>
+    ''' <remarks></remarks>
+    Sub RemoveResultFileToSkip(FileName As String)
 
-	''' <summary>
-	''' Requests a task from the database
-	''' </summary>
-	''' <returns>Enum indicating if task was found</returns>
-	''' <remarks></remarks>
-	Function RequestTask() As clsDBTask.RequestTaskResult
+    ''' <summary>
+    ''' Requests a task from the database
+    ''' </summary>
+    ''' <returns>Enum indicating if task was found</returns>
+    ''' <remarks></remarks>
+    Function RequestTask() As clsDBTask.RequestTaskResult
 
-	''' <summary>
-	''' Add/updates the value for the given parameter (searches all sections)
-	''' </summary>
-	''' <param name="KeyName">Parameter name</param>
-	''' <param name="Value">Parameter value</param>
-	''' <remarks></remarks>
-	Sub SetParam(ByVal KeyName As String, ByVal Value As String)
+    ''' <summary>
+    ''' Add/updates the value for the given parameter (searches all sections)
+    ''' </summary>
+    ''' <param name="KeyName">Parameter name</param>
+    ''' <param name="Value">Parameter value</param>
+    ''' <remarks></remarks>
+    Sub SetParam(KeyName As String, Value As String)
 
-	''' <summary>
-	''' Add/updates the value for the given parameter
-	''' </summary>
-	''' <param name="Section">Section name</param>
-	''' <param name="KeyName">Parameter name</param>
-	''' <param name="Value">Parameter value</param>
-	''' <remarks></remarks>
-	Sub SetParam(ByVal Section As String, ByVal KeyName As String, ByVal Value As String)
+    ''' <summary>
+    ''' Add/updates the value for the given parameter
+    ''' </summary>
+    ''' <param name="Section">Section name</param>
+    ''' <param name="KeyName">Parameter name</param>
+    ''' <param name="Value">Parameter value</param>
+    ''' <remarks></remarks>
+    Sub SetParam(Section As String, KeyName As String, Value As String)
 
 #End Region
 
