@@ -4,7 +4,6 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 06/11/2009
 '*********************************************************************************************************
 
 Option Strict On
@@ -51,6 +50,10 @@ Public Interface IStatusFile
 
 	Property MgrStatus() As EnumMgrStatus
 
+    ''' <summary>
+    ''' Overall CPU utilization of all threads
+    ''' </summary>
+    ''' <remarks></remarks>
 	Property CpuUtilization() As Integer
 
 	Property Tool() As String
@@ -70,6 +73,18 @@ Public Interface IStatusFile
 	Property Dataset() As String
 
 	Property MostRecentJobInfo() As String
+
+    ''' <summary>
+    ''' ProcessID of an externally spawned process
+    ''' </summary>
+    ''' <remarks>0 if no external process running</remarks>
+    Property ProgRunnerProcessID As Integer
+
+    ''' <summary>
+    ''' Number of cores in use by an externally spawned process
+    ''' </summary>
+    ''' <remarks></remarks>
+    Property ProgRunnerCoreUsage As Single
 
 	Property SpectrumCount() As Integer
 
@@ -112,9 +127,9 @@ Public Interface IStatusFile
     ''' <param name="JobInfo"></param>
     ''' <param name="ForceLogToBrokerDB"></param>
     ''' <remarks></remarks>
-    Sub UpdateClose(ByVal ManagerIdleMessage As String, _
-      ByRef RecentErrorMessages() As String, _
-      ByVal JobInfo As String, _
+    Sub UpdateClose(ByVal ManagerIdleMessage As String,
+      ByRef RecentErrorMessages() As String,
+      ByVal JobInfo As String,
       ByVal ForceLogToBrokerDB As Boolean)
 
 
@@ -163,9 +178,9 @@ Public Interface IStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Sub UpdateAndWrite(
-      ByVal eMgrStatus As EnumMgrStatus, ByVal eTaskStatus As EnumTaskStatus, ByVal eTaskStatusDetail As EnumTaskStatusDetail, _
-      ByVal PercentComplete As Single, ByVal DTACount As Integer, _
-      ByVal MostRecentLogMessage As String, ByVal MostRecentErrorMessage As String, _
+      ByVal eMgrStatus As EnumMgrStatus, ByVal eTaskStatus As EnumTaskStatus, ByVal eTaskStatusDetail As EnumTaskStatusDetail,
+      ByVal PercentComplete As Single, ByVal DTACount As Integer,
+      ByVal MostRecentLogMessage As String, ByVal MostRecentErrorMessage As String,
       ByVal RecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
 
     ''' <summary>

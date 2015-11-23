@@ -398,6 +398,7 @@ Public Class clsMainProcess
                 'Get an analysis job, if any are available
                 Dim TaskReturn As clsAnalysisJob.RequestTaskResult
                 TaskReturn = m_AnalysisTask.RequestTask()
+
                 Select Case TaskReturn
                     Case clsDBTask.RequestTaskResult.NoTaskFound
                         If Me.TraceMode Then ShowTraceMessage("No tasks found")
@@ -547,10 +548,12 @@ Public Class clsMainProcess
         Dim eToolRunnerResult As IJobParams.CloseOutType
         Dim jobNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0)
         Dim stepNum As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0)
+        Dim cpuLoadExpected As Integer = m_AnalysisTask.GetJobParameter("StepParameters", "CPU_Load", 1)
+
         Dim datasetName As String = m_AnalysisTask.GetParam("JobParameters", "DatasetNum")
         Dim jobToolDescription As String = m_AnalysisTask.GetCurrentJobToolDescription()
 
-        Dim blnRunToolError As Boolean = False
+        Dim blnRunToolError = False
 
         If Me.TraceMode Then ShowTraceMessage("Processing job " & jobNum & ", " & jobToolDescription)
 
@@ -571,6 +574,8 @@ Public Class clsMainProcess
             .JobStep = stepNum
             .Tool = jobToolDescription
             .MgrName = m_MgrName
+            .ProgRunnerProcessID = 0
+            .ProgRunnerCoreUsage = cpuLoadExpected
             .UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RETRIEVING_RESOURCES, 0, 0, "", "", m_MostRecentJobInfo, True)
         End With
 
@@ -591,7 +596,7 @@ Public Class clsMainProcess
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Debug level is " & m_DebugLevel.ToString)
         End If
 
-        'Create an object to manage the job resources
+        ' Create an object to manage the job resources
         If Not SetResourceObject() Then
             If Me.TraceMode Then ShowTraceMessage("Unable to set the Resource object; closing job step task")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": Unable to set the Resource object, job " & jobNum & ", Dataset " & datasetName)
@@ -601,7 +606,7 @@ Public Class clsMainProcess
             Return False
         End If
 
-        'Create an object to run the analysis tool
+        ' Create an object to run the analysis tool
         If Not SetToolRunnerObject() Then
             If Me.TraceMode Then ShowTraceMessage("Unable to set the ToolRunner object; closing job step task")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_MgrName & ": Unable to set the toolRunner object, job " & jobNum & ", Dataset " & datasetName)
@@ -631,7 +636,7 @@ Public Class clsMainProcess
             Return False
         End If
 
-        'Retrieve files required for the job
+        ' Retrieve files required for the job
         m_MgrErrorCleanup.CreateStatusFlagFile()
         Try
             If Me.TraceMode Then ShowTraceMessage("Getting job resources")
@@ -670,7 +675,7 @@ Public Class clsMainProcess
             Return False
         End Try
 
-        'Run the job
+        ' Run the job
         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, 0)
         Try
             If Me.TraceMode Then ShowTraceMessage("Running the step tool")
@@ -764,7 +769,7 @@ Public Class clsMainProcess
 
         End If
 
-        'Close out the job
+        ' Close out the job
         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.CLOSING, IStatusFile.EnumTaskStatusDetail.CLOSING, 100)
         Try
             If Me.TraceMode Then ShowTraceMessage("Task completed successfully; closing the job step task")
@@ -784,7 +789,7 @@ Public Class clsMainProcess
         End Try
 
         Try
-            'If success was reported check to see if there was an error deleting non result files
+            ' If success was reported check to see if there was an error deleting non result files
             If m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile() Then
                 'If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                 ' However, wait another 5 seconds before continuing
@@ -793,7 +798,7 @@ Public Class clsMainProcess
 
                 Return True
             Else
-                'Clean the working directory
+                ' Clean the working directory
                 Try
                     If Not clsCleanupMgrErrors.CleanWorkDir(m_WorkDirPath, 1) Then
                         If Me.TraceMode Then ShowTraceMessage("Error cleaning working directory; closing job step task")

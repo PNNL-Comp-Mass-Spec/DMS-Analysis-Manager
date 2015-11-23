@@ -285,7 +285,7 @@ Public Class clsAnalysisToolRunnerBase
 
         If memorySizeMBPerThread < 512 Then memorySizeMBPerThread = 512
 
-        Dim maxThreadsToAllow = m_StatusTools.GetCoreCount()
+        Dim maxThreadsToAllow = PRISM.Processes.clsProgRunner.GetCoreCount()
 
         Dim freeMemoryMB = m_StatusTools.GetFreeMemoryMB()
 
@@ -1589,18 +1589,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="maxThreadsToAllow">Maximum number of cores to use (0 for all)</param>
     ''' <returns>The core count to use</returns>
     ''' <remarks>Core count will be a minimum of 1 and a maximum of Environment.ProcessorCount</remarks>
-    Public Function ParseThreadCount(threadCountText As String, maxThreadsToAllow As Integer) As Integer
-        Return ParseThreadCount(threadCountText, maxThreadsToAllow, m_StatusTools)
-    End Function
-
-    ''' <summary>
-    ''' Parse a thread count text value to determine the number of threads (cores) to use
-    ''' </summary>
-    ''' <param name="threadCountText">Can be "0" or "all" for all threads, or a number of threads, or "90%"</param>
-    ''' <param name="maxThreadsToAllow">Maximum number of cores to use (0 for all)</param>
-    ''' <returns>The core count to use</returns>
-    ''' <remarks>Core count will be a minimum of 1 and a maximum of Environment.ProcessorCount</remarks>
-    Public Shared Function ParseThreadCount(threadCountText As String, maxThreadsToAllow As Integer, oStatusTools As IStatusFile) As Integer
+    Public Shared Function ParseThreadCount(threadCountText As String, maxThreadsToAllow As Integer) As Integer
 
         Dim rePercentage = New Regex("([0-9.]+)%")
 
@@ -1610,7 +1599,7 @@ Public Class clsAnalysisToolRunnerBase
             threadCountText = threadCountText.Trim()
         End If
 
-        Dim coresOnMachine = oStatusTools.GetCoreCount()
+        Dim coresOnMachine = PRISM.Processes.clsProgRunner.GetCoreCount()
         Dim coreCount = 0
 
         If threadCountText.ToLower().StartsWith("all") Then

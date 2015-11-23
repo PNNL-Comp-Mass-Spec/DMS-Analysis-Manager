@@ -16,10 +16,38 @@ Public Class clsDBStatusLogger
 		Public MgrName As String
 		Public MgrStatus As IStatusFile.EnumMgrStatus
 		Public LastUpdate As DateTime
-		Public LastStartTime As DateTime
-		Public CPUUtilization As Single
+        Public LastStartTime As DateTime
+
+        ''' <summary>
+        ''' Overall CPU utilization of all threads
+        ''' </summary>
+        ''' <remarks></remarks>
+        Public CPUUtilization As Single
+
+        ''' <summary>
+        ''' System-wide free memory
+        ''' </summary>
+        ''' <remarks></remarks>
         Public FreeMemoryMB As Single
+
+        ''' <summary>
+        ''' Return the ProcessID of the Analysis manager
+        ''' </summary>
+        ''' <remarks></remarks>
         Public ProcessID As Integer
+
+        ''' <summary>
+        ''' ProcessID of an externally spawned process
+        ''' </summary>
+        ''' <remarks>0 if no external process running</remarks>
+        Public ProgRunnerProcessID As Integer
+
+        ''' <summary>
+        ''' Number of cores in use by an externally spawned process
+        ''' </summary>
+        ''' <remarks></remarks>
+        Public ProgRunnerCoreUsage As Single
+
 		Public MostRecentErrorMessage As String
 		Public Task As udtTaskInfoType
 	End Structure
@@ -28,7 +56,6 @@ Public Class clsDBStatusLogger
 		Public Tool As String
 		Public Status As IStatusFile.EnumTaskStatus
 		Public DurationHours As Single		 ' Task duration, in hours
-		'Public DurationMinutes As single
 		Public Progress As Single		' Percent complete, value between 0 and 100
 		Public CurrentOperation As String
 		Public TaskDetails As udtTaskDetailsType
@@ -48,6 +75,10 @@ Public Class clsDBStatusLogger
 
 #Region "Module variables"
 
+    ''' <summary>
+    ''' Stored procedure that could be used to report manager status; typically not used
+    ''' </summary>
+    ''' <remarks>This stored procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
 	Private Const SP_NAME_UPDATE_MANAGER_STATUS As String = "UpdateManagerAndTaskStatus"
 
 	'Status file name and location
@@ -92,7 +123,7 @@ Public Class clsDBStatusLogger
 	End Sub
 
     ''' <summary>
-    ''' 
+    ''' Send status information to the database
     ''' </summary>
     ''' <param name="udtStatusInfo"></param>
     ''' <param name="blnForceLogToDB"></param>
@@ -140,6 +171,9 @@ Public Class clsDBStatusLogger
                 AddSPParameter(.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization)
                 AddSPParameter(.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB)
                 AddSPParameter(.Parameters, "@ProcessID", udtStatusInfo.ProcessID)
+                AddSPParameter(.Parameters, "@ProgRunnerProcessID", udtStatusInfo.ProgRunnerProcessID)
+                AddSPParameter(.Parameters, "@ProgRunnerCoreUsage", udtStatusInfo.ProgRunnerCoreUsage)
+
                 AddSPParameter(.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024)
 
                 ' Task items

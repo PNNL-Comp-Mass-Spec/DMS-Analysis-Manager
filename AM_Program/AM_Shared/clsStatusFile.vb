@@ -26,285 +26,167 @@ Public Class clsStatusFile
 	'*********************************************************************************************************
 
 #Region "Module variables"
-	Public Const ABORT_PROCESSING_NOW_FILENAME As String = "AbortProcessingNow.txt"
+    Public Const ABORT_PROCESSING_NOW_FILENAME As String = "AbortProcessingNow.txt"
 
-	'Status file name and location
-	Private m_FileNamePath As String = ""
+    ''' <summary>
+    ''' System-wide free memory
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private m_FreeMemoryMB As Single = 0
 
-	'Manager name
-	Private m_MgrName As String = ""
+    ' Flag to indicate that the ABORT_PROCESSING_NOW_FILENAME file was detected
+    Private m_AbortProcessingNow As Boolean = False
 
-	'Status value
-	Private m_MgrStatus As IStatusFile.EnumMgrStatus = IStatusFile.EnumMgrStatus.STOPPED
+    Private m_MostRecentLogMessage As String
 
-	'CPU utilization
-	Private m_CpuUtilization As Integer = 0
+    Const MAX_ERROR_MESSAGE_COUNT_TO_CACHE As Integer = 10
+    Private m_RecentErrorMessageCount As Integer
 
-	' Free Memory
-	Private m_FreeMemoryMB As Single = 0
+    ' ReSharper disable once FieldCanBeMadeReadOnly.Local
+    Private m_RecentErrorMessages(MAX_ERROR_MESSAGE_COUNT_TO_CACHE - 1) As String
 
-	'Analysis Tool (aka step tool)
-	Private m_Tool As String = ""
+    ' The following provides access to the master logger
+    Protected m_DebugLevel As Integer
 
-	'Task status
-	Private m_TaskStatus As IStatusFile.EnumTaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+    ' Used to log the memory usage to a status file
+    Private m_MemoryUsageLogger As clsMemoryUsageLogger
 
-	'Task start time
-	Private m_TaskStartTime As Date = DateTime.UtcNow
+    ' Used to log messages to the broker DB
+    Private m_BrokerDBLogger As clsDBStatusLogger
 
-	'Progess (in percent)
-	Private m_Progress As Single = 0
+    Private m_MessageQueueLogger As clsMessageQueueLogger
+    Private m_MessageSender As clsMessageSender
+    Private m_QueueLogger As clsMessageQueueLogger
 
-	'Current operation (freeform string)
-	Private m_CurrentOperation As String = ""
-
-	'Task status detail
-	Private m_TaskStatusDetail As IStatusFile.EnumTaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
-
-	'Job number
-	Private m_JobNumber As Integer
-
-	'Job step
-	Private m_JobStep As Integer = 0
-
-	'Dataset name
-	Private m_Dataset As String = ""
-
-	'Most recent job info
-	Private m_MostRecentJobInfo As String = ""
-
-	'Number of spectrum files created
-	Private m_SpectrumCount As Integer = 0
-
-	Private m_LogToMessageQueue As Boolean = False
-	Private m_MessageQueueURI As String
-	Private m_MessageQueueTopic As String
-
-	'Flag to indicate that the ABORT_PROCESSING_NOW_FILENAME file was detected
-	Private m_AbortProcessingNow As Boolean = False
-
-	Private m_MostRecentLogMessage As String
-
-	Const MAX_ERROR_MESSAGE_COUNT_TO_CACHE As Integer = 10
-	Private m_RecentErrorMessageCount As Integer
-
-	' ReSharper disable once FieldCanBeMadeReadOnly.Local
-	Private m_RecentErrorMessages(MAX_ERROR_MESSAGE_COUNT_TO_CACHE - 1) As String
-
-	' The following provides access to the master logger
-	Protected m_DebugLevel As Integer
-
-	' Used to log the memory usage to a status file
-	Private m_MemoryUsageLogger As clsMemoryUsageLogger
-
-	' Used to log messages to the broker DB
-	Private m_BrokerDBLogger As clsDBStatusLogger
-
-	Private m_MessageQueueLogger As clsMessageQueueLogger
-	Private m_MessageSender As clsMessageSender
-	Private m_QueueLogger As clsMessageQueueLogger
-
-	Private mCPUUsagePerformanceCounter As PerformanceCounter
-	Private mFreeMemoryPerformanceCounter As PerformanceCounter
+    Private mCPUUsagePerformanceCounter As PerformanceCounter
+    Private mFreeMemoryPerformanceCounter As PerformanceCounter
 
 #End Region
 
 #Region "Properties"
-	Public Property FileNamePath() As String Implements IStatusFile.FileNamePath
-		Get
-			Return m_FileNamePath
-		End Get
-		Set(ByVal value As String)
-			m_FileNamePath = value
-		End Set
-	End Property
+    Public Property FileNamePath As String Implements IStatusFile.FileNamePath
 
-	Public Property MgrName() As String Implements IStatusFile.MgrName
-		Get
-			Return m_MgrName
-		End Get
-		Set(ByVal Value As String)
-			m_MgrName = Value
-		End Set
-	End Property
+    Public Property MgrName As String Implements IStatusFile.MgrName
 
-	Public Property MgrStatus() As IStatusFile.EnumMgrStatus Implements IStatusFile.MgrStatus
-		Get
-			Return m_MgrStatus
-		End Get
-		Set(ByVal Value As IStatusFile.EnumMgrStatus)
-			m_MgrStatus = Value
-		End Set
-	End Property
+    Public Property MgrStatus As IStatusFile.EnumMgrStatus Implements IStatusFile.MgrStatus
 
-	Public Property CpuUtilization() As Integer Implements IStatusFile.CpuUtilization
-		Get
-			Return m_CpuUtilization
-		End Get
-		Set(ByVal value As Integer)
-			m_CpuUtilization = value
-		End Set
-	End Property
+    ''' <summary>
+    ''' Overall CPU utilization of all threads
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Property CpuUtilization As Integer Implements IStatusFile.CpuUtilization
 
-	Public ReadOnly Property FreeMemoryMB() As Single
-		Get
-			Return m_FreeMemoryMB
-		End Get
-	End Property
-
-	Public Property Tool() As String Implements IStatusFile.Tool
-		Get
-			Return m_Tool
-		End Get
-		Set(ByVal Value As String)
-			m_Tool = Value
-		End Set
-	End Property
-
-	Public Property TaskStatus() As IStatusFile.EnumTaskStatus Implements IStatusFile.TaskStatus
-		Get
-			Return m_TaskStatus
-		End Get
-		Set(ByVal value As IStatusFile.EnumTaskStatus)
-			m_TaskStatus = value
-		End Set
-	End Property
-
-	Public Property TaskStartTime() As DateTime
-		Get
-			Return m_TaskStartTime
-		End Get
-		Set(ByVal value As DateTime)
-			m_TaskStartTime = value
-		End Set
-	End Property
-
-	Public Property Progress() As Single Implements IStatusFile.Progress
-		Get
-			Return m_Progress
-		End Get
-		Set(ByVal Value As Single)
-			m_Progress = Value
-		End Set
-	End Property
-
-	Public Property CurrentOperation() As String Implements IStatusFile.CurrentOperation
-		Get
-			Return m_CurrentOperation
-		End Get
-		Set(ByVal value As String)
-			m_CurrentOperation = value
-		End Set
-	End Property
-
-	Public Property TaskStatusDetail() As IStatusFile.EnumTaskStatusDetail Implements IStatusFile.TaskStatusDetail
-		Get
-			Return m_TaskStatusDetail
-		End Get
-		Set(ByVal value As IStatusFile.EnumTaskStatusDetail)
-			m_TaskStatusDetail = value
-		End Set
-	End Property
-
-	Public Property JobNumber() As Integer Implements IStatusFile.JobNumber
-		Get
-			Return m_JobNumber
-		End Get
-		Set(ByVal Value As Integer)
-			m_JobNumber = Value
-		End Set
-	End Property
-
-	Public Property JobStep() As Integer Implements IStatusFile.JobStep
-		Get
-			Return m_JobStep
-		End Get
-		Set(ByVal value As Integer)
-			m_JobStep = value
-		End Set
-	End Property
-
-	Public Property Dataset() As String Implements IStatusFile.Dataset
-		Get
-			Return m_Dataset
-		End Get
-		Set(ByVal Value As String)
-			m_Dataset = Value
-		End Set
-	End Property
-
-	Public Property MostRecentJobInfo() As String Implements IStatusFile.MostRecentJobInfo
-		Get
-			Return m_MostRecentJobInfo
-		End Get
-		Set(ByVal value As String)
-			m_MostRecentJobInfo = value
-		End Set
-	End Property
-
-	Public Property SpectrumCount() As Integer Implements IStatusFile.SpectrumCount
-		Get
-			Return m_SpectrumCount
-		End Get
-		Set(ByVal value As Integer)
-			m_SpectrumCount = value
-		End Set
-	End Property
-
-	Public Property MessageQueueURI() As String Implements IStatusFile.MessageQueueURI
-		Get
-			Return m_MessageQueueURI
-		End Get
-		Set(ByVal value As String)
-			m_MessageQueueURI = value
-		End Set
-	End Property
-
-	Public Property MessageQueueTopic() As String Implements IStatusFile.MessageQueueTopic
-		Get
-			Return m_MessageQueueTopic
-		End Get
-        Set(ByVal value As String)
-            m_MessageQueueTopic = value
-        End Set
-    End Property
-
-    Public Property LogToMsgQueue() As Boolean Implements IStatusFile.LogToMsgQueue
+    ''' <summary>
+    ''' System-wide free memory
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public ReadOnly Property FreeMemoryMB() As Single
         Get
-            Return m_LogToMessageQueue
+            Return m_FreeMemoryMB
         End Get
-        Set(ByVal value As Boolean)
-            m_LogToMessageQueue = value
-        End Set
     End Property
 
-	Public ReadOnly Property AbortProcessingNow() As Boolean
-		Get
-			Return m_AbortProcessingNow
-		End Get
-	End Property
+    Public Property Tool As String Implements IStatusFile.Tool
+
+    Public Property TaskStatus As IStatusFile.EnumTaskStatus Implements IStatusFile.TaskStatus
+
+    Public Property TaskStartTime As DateTime
+
+    ''' <summary>
+    ''' Progress (value between 0 and 100)
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Progress As Single Implements IStatusFile.Progress
+
+    ''' <summary>
+    ''' ProcessID of an externally spawned process
+    ''' </summary>
+    ''' <remarks>0 if no external process running</remarks>
+    Public Property ProgRunnerProcessID As Integer Implements IStatusFile.ProgRunnerProcessID
+
+    ''' <summary>
+    ''' Number of cores in use by an externally spawned process
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Property ProgRunnerCoreUsage As Single Implements IStatusFile.ProgRunnerCoreUsage
+
+    Public Property CurrentOperation As String Implements IStatusFile.CurrentOperation
+
+    Public Property TaskStatusDetail As IStatusFile.EnumTaskStatusDetail Implements IStatusFile.TaskStatusDetail
+
+    Public Property JobNumber As Integer Implements IStatusFile.JobNumber
+
+    Public Property JobStep As Integer Implements IStatusFile.JobStep
+
+    ''' <summary>
+    ''' Dataset name
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Dataset As String Implements IStatusFile.Dataset
+
+    ''' <summary>
+    ''' Most recent job info
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property MostRecentJobInfo As String Implements IStatusFile.MostRecentJobInfo
+
+    ''' <summary>
+    ''' Number of spectrum files created
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property SpectrumCount As Integer Implements IStatusFile.SpectrumCount
+
+    Public Property MessageQueueURI As String Implements IStatusFile.MessageQueueURI
+
+    Public Property MessageQueueTopic As String Implements IStatusFile.MessageQueueTopic
+
+    Public Property LogToMsgQueue As Boolean Implements IStatusFile.LogToMsgQueue
+
+    Public ReadOnly Property AbortProcessingNow() As Boolean
+        Get
+            Return m_AbortProcessingNow
+        End Get
+    End Property
 #End Region
 
 #Region "Methods"
 
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="FileLocation">Full path to status file</param>
-	''' <remarks></remarks>
-	Public Sub New(ByVal FileLocation As String, ByVal debugLevel As Integer)
-		m_FileNamePath = FileLocation
-		m_TaskStartTime = DateTime.UtcNow
-		m_DebugLevel = debugLevel
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="FileLocation">Full path to status file</param>
+    ''' <remarks></remarks>
+    Public Sub New(ByVal FileLocation As String, ByVal debugLevel As Integer)
+        FileNamePath = FileLocation
+        MgrName = String.Empty
+        MgrStatus = IStatusFile.EnumMgrStatus.STOPPED
 
-		ClearCachedInfo()
+        TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+        TaskStartTime = DateTime.UtcNow
 
-		InitializePerformanceCounters()
-	End Sub
+        Dataset = String.Empty
+        CurrentOperation = String.Empty
+        MostRecentJobInfo = String.Empty
 
-	''' <summary>
-	''' Configure the memory logging settings
-	''' </summary>
+        m_DebugLevel = debugLevel
+
+        ClearCachedInfo()
+
+        InitializePerformanceCounters()
+    End Sub
+
+    ''' <summary>
+    ''' Configure the memory logging settings
+    ''' </summary>
     ''' <param name="logMemoryUsage"></param>
     ''' <param name="minimumMemoryUsageLogIntervalMinutes"></param>
     ''' <param name="memoryUsageLogFolderPath"></param>
@@ -324,255 +206,250 @@ Public Class clsStatusFile
         End If
     End Sub
 
-	''' <summary>
-	''' Configure the Broker DB logging settings
-	''' </summary>
-	''' <param name="LogStatusToBrokerDB"></param>
-	''' <param name="BrokerDBConnectionString"></param>
-	''' <param name="BrokerDBStatusUpdateIntervalMinutes"></param>
-	''' <remarks></remarks>
-	Public Sub ConfigureBrokerDBLogging(ByVal LogStatusToBrokerDB As Boolean, ByVal BrokerDBConnectionString As String, ByVal BrokerDBStatusUpdateIntervalMinutes As Single)
-		If LogStatusToBrokerDB Then
-			If m_BrokerDBLogger Is Nothing Then
-				m_BrokerDBLogger = New clsDBStatusLogger(BrokerDBConnectionString, BrokerDBStatusUpdateIntervalMinutes)
-			Else
-				m_BrokerDBLogger.DBStatusUpdateIntervalMinutes = BrokerDBStatusUpdateIntervalMinutes
-			End If
-		Else
-			If Not m_BrokerDBLogger Is Nothing Then
-				' Stop logging to the broker
-				m_BrokerDBLogger = Nothing
-			End If
-		End If
-	End Sub
+    ''' <summary>
+    ''' Configure the Broker DB logging settings
+    ''' </summary>
+    ''' <param name="LogStatusToBrokerDB"></param>
+    ''' <param name="BrokerDBConnectionString"></param>
+    ''' <param name="BrokerDBStatusUpdateIntervalMinutes"></param>
+    ''' <remarks></remarks>
+    Public Sub ConfigureBrokerDBLogging(ByVal LogStatusToBrokerDB As Boolean, ByVal BrokerDBConnectionString As String, ByVal BrokerDBStatusUpdateIntervalMinutes As Single)
+        If LogStatusToBrokerDB Then
+            If m_BrokerDBLogger Is Nothing Then
+                m_BrokerDBLogger = New clsDBStatusLogger(BrokerDBConnectionString, BrokerDBStatusUpdateIntervalMinutes)
+            Else
+                m_BrokerDBLogger.DBStatusUpdateIntervalMinutes = BrokerDBStatusUpdateIntervalMinutes
+            End If
+        Else
+            If Not m_BrokerDBLogger Is Nothing Then
+                ' Stop logging to the broker
+                m_BrokerDBLogger = Nothing
+            End If
+        End If
+    End Sub
 
-	''' <summary>
-	''' Configure the Message Queue logging settings
-	''' </summary>
-	''' <param name="LogStatusToMessageQueue"></param>
-	''' <param name="MsgQueueURI"></param>
-	''' <param name="MessageQueueTopicMgrStatus"></param>
-	''' <param name="ClientName"></param>
-	''' <remarks></remarks>
-	Public Sub ConfigureMessageQueueLogging(ByVal LogStatusToMessageQueue As Boolean, ByVal MsgQueueURI As String, ByVal MessageQueueTopicMgrStatus As String, ByVal ClientName As String)
-		m_LogToMessageQueue = LogStatusToMessageQueue
-		m_MessageQueueURI = MsgQueueURI
-		m_MessageQueueTopic = MessageQueueTopicMgrStatus
+    ''' <summary>
+    ''' Configure the Message Queue logging settings
+    ''' </summary>
+    ''' <param name="LogStatusToMessageQueue"></param>
+    ''' <param name="MsgQueueURI"></param>
+    ''' <param name="MessageQueueTopicMgrStatus"></param>
+    ''' <param name="ClientName"></param>
+    ''' <remarks></remarks>
+    Public Sub ConfigureMessageQueueLogging(
+      ByVal LogStatusToMessageQueue As Boolean,
+      ByVal MsgQueueURI As String,
+      ByVal MessageQueueTopicMgrStatus As String,
+      ByVal ClientName As String)
 
-		' m_MessageQueueClientName = ClientName
+        LogToMsgQueue = LogStatusToMessageQueue
+        MessageQueueURI = MsgQueueURI
+        MessageQueueTopic = MessageQueueTopicMgrStatus
 
-		If Not m_LogToMessageQueue And Not m_MessageQueueLogger Is Nothing Then
-			' Stop logging to the message queue
-			m_MessageQueueLogger = Nothing
-		End If
-	End Sub
+        If Not LogToMsgQueue And Not m_MessageQueueLogger Is Nothing Then
+            ' Stop logging to the message queue
+            m_MessageQueueLogger = Nothing
+        End If
+    End Sub
 
-	''' <summary>
-	''' Looks for file "AbortProcessingNow.txt"
-	''' If found, sets property AbortProcessingNow to True
-	''' </summary>
-	''' <remarks></remarks>
-	Public Sub CheckForAbortProcessingFile()
-		Dim strPathToCheck As String
-		Dim strNewPath As String
+    ''' <summary>
+    ''' Looks for file "AbortProcessingNow.txt"
+    ''' If found, sets property AbortProcessingNow to True
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub CheckForAbortProcessingFile()
+        Dim strPathToCheck As String
+        Dim strNewPath As String
 
-		Try
-			strPathToCheck = Path.GetDirectoryName(m_FileNamePath)
-			strPathToCheck = Path.Combine(strPathToCheck, ABORT_PROCESSING_NOW_FILENAME)
+        Try
+            strPathToCheck = Path.GetDirectoryName(FileNamePath)
+            strPathToCheck = Path.Combine(strPathToCheck, ABORT_PROCESSING_NOW_FILENAME)
 
-			If File.Exists(strPathToCheck) Then
-				m_AbortProcessingNow = True
+            If File.Exists(strPathToCheck) Then
+                m_AbortProcessingNow = True
 
-				strNewPath = strPathToCheck & ".done"
+                strNewPath = strPathToCheck & ".done"
 
-				File.Delete(strNewPath)
-				File.Move(strPathToCheck, strNewPath)
+                File.Delete(strNewPath)
+                File.Move(strPathToCheck, strNewPath)
 
-			End If
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
+            End If
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Clears the cached information about dataset, job, progress, etc.
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub ClearCachedInfo()
-		m_Progress = 0
-		m_SpectrumCount = 0
-		m_Dataset = ""
-		m_JobNumber = 0
-		m_JobStep = 0
-		m_Tool = ""
+    ''' <summary>
+    ''' Clears the cached information about dataset, job, progress, etc.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub ClearCachedInfo()
+        Progress = 0
+        SpectrumCount = 0
+        Dataset = ""
+        JobNumber = 0
+        JobStep = 0
+        Tool = ""
 
-		' Only clear the recent job info if the variable is Nothing
-		If m_MostRecentJobInfo Is Nothing Then
-			m_MostRecentJobInfo = String.Empty
-		End If
+        ProgRunnerProcessID = 0
+        ProgRunnerCoreUsage = 0
 
-		m_MostRecentLogMessage = String.Empty
+        ' Only clear the recent job info if the variable is Nothing
+        If MostRecentJobInfo Is Nothing Then
+            MostRecentJobInfo = String.Empty
+        End If
 
-		m_RecentErrorMessageCount = 0
-		m_RecentErrorMessages(0) = String.Empty
-	End Sub
+        m_MostRecentLogMessage = String.Empty
 
-	''' <summary>
-	''' Converts the job status enum to a string value
-	''' </summary>
-	''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
-	''' <returns>String representation of input object</returns>
-	''' <remarks></remarks>
-	Private Function ConvertTaskStatusToString(ByVal StatusEnum As IStatusFile.EnumTaskStatus) As String
+        m_RecentErrorMessageCount = 0
+        m_RecentErrorMessages(0) = String.Empty
+    End Sub
 
-		'Converts a status enum to a string
-		Select Case StatusEnum
-			Case IStatusFile.EnumTaskStatus.CLOSING
-				Return "Closing"
-			Case IStatusFile.EnumTaskStatus.NO_TASK
-				Return "No Task"
-			Case IStatusFile.EnumTaskStatus.RUNNING
-				Return "Running"
-			Case IStatusFile.EnumTaskStatus.REQUESTING
-				Return "Requesting"
-			Case IStatusFile.EnumTaskStatus.STOPPED
-				Return "Stopped"
-			Case IStatusFile.EnumTaskStatus.FAILED
-				Return "Failed"
-			Case Else
-				'Should never get here
-				Return "Unknown Task Status"
-		End Select
+    ''' <summary>
+    ''' Converts the job status enum to a string value
+    ''' </summary>
+    ''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
+    ''' <returns>String representation of input object</returns>
+    ''' <remarks></remarks>
+    Private Function ConvertTaskStatusToString(ByVal StatusEnum As IStatusFile.EnumTaskStatus) As String
 
-	End Function
+        'Converts a status enum to a string
+        Select Case StatusEnum
+            Case IStatusFile.EnumTaskStatus.CLOSING
+                Return "Closing"
+            Case IStatusFile.EnumTaskStatus.NO_TASK
+                Return "No Task"
+            Case IStatusFile.EnumTaskStatus.RUNNING
+                Return "Running"
+            Case IStatusFile.EnumTaskStatus.REQUESTING
+                Return "Requesting"
+            Case IStatusFile.EnumTaskStatus.STOPPED
+                Return "Stopped"
+            Case IStatusFile.EnumTaskStatus.FAILED
+                Return "Failed"
+            Case Else
+                'Should never get here
+                Return "Unknown Task Status"
+        End Select
 
-	''' <summary>
-	''' Converts the job status enum to a string value
-	''' </summary>
-	''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
-	''' <returns>String representation of input object</returns>
-	''' <remarks></remarks>
-	Private Function ConvertMgrStatusToString(ByVal StatusEnum As IStatusFile.EnumMgrStatus) As String
+    End Function
 
-		'Converts a status enum to a string
-		Select Case StatusEnum
-			Case IStatusFile.EnumMgrStatus.DISABLED_LOCAL
-				Return "Disabled Local"
-			Case IStatusFile.EnumMgrStatus.DISABLED_MC
-				Return "Disabled MC"
-			Case IStatusFile.EnumMgrStatus.RUNNING
-				Return "Running"
-			Case IStatusFile.EnumMgrStatus.STOPPED
-				Return "Stopped"
-			Case IStatusFile.EnumMgrStatus.STOPPED_ERROR
-				Return "Stopped Error"
-			Case Else
-				'Should never get here
-				Return "Unknown Mgr Status"
-		End Select
+    ''' <summary>
+    ''' Converts the job status enum to a string value
+    ''' </summary>
+    ''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
+    ''' <returns>String representation of input object</returns>
+    ''' <remarks></remarks>
+    Private Function ConvertMgrStatusToString(ByVal StatusEnum As IStatusFile.EnumMgrStatus) As String
 
-	End Function
+        'Converts a status enum to a string
+        Select Case StatusEnum
+            Case IStatusFile.EnumMgrStatus.DISABLED_LOCAL
+                Return "Disabled Local"
+            Case IStatusFile.EnumMgrStatus.DISABLED_MC
+                Return "Disabled MC"
+            Case IStatusFile.EnumMgrStatus.RUNNING
+                Return "Running"
+            Case IStatusFile.EnumMgrStatus.STOPPED
+                Return "Stopped"
+            Case IStatusFile.EnumMgrStatus.STOPPED_ERROR
+                Return "Stopped Error"
+            Case Else
+                'Should never get here
+                Return "Unknown Mgr Status"
+        End Select
 
-	''' <summary>
-	''' Converts the job status enum to a string value
-	''' </summary>
-	''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
-	''' <returns>String representation of input object</returns>
-	''' <remarks></remarks>
-	Private Function ConvertTaskStatusDetailToString(ByVal StatusEnum As IStatusFile.EnumTaskStatusDetail) As String
+    End Function
 
-		'Converts a status enum to a string
-		Select Case StatusEnum
-			Case IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS
-				Return "Delivering Results"
-			Case IStatusFile.EnumTaskStatusDetail.NO_TASK
-				Return "No Task"
-			Case IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS
-				Return "Packaging Results"
-			Case IStatusFile.EnumTaskStatusDetail.RETRIEVING_RESOURCES
-				Return "Retrieving Resources"
-			Case IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL
-				Return "Running Tool"
-			Case IStatusFile.EnumTaskStatusDetail.CLOSING
-				Return "Closing"
-			Case Else
-				'Should never get here
-				Return "Unknown Task Status Detail"
-		End Select
+    ''' <summary>
+    ''' Converts the job status enum to a string value
+    ''' </summary>
+    ''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
+    ''' <returns>String representation of input object</returns>
+    ''' <remarks></remarks>
+    Private Function ConvertTaskStatusDetailToString(ByVal StatusEnum As IStatusFile.EnumTaskStatusDetail) As String
 
-	End Function
+        'Converts a status enum to a string
+        Select Case StatusEnum
+            Case IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS
+                Return "Delivering Results"
+            Case IStatusFile.EnumTaskStatusDetail.NO_TASK
+                Return "No Task"
+            Case IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS
+                Return "Packaging Results"
+            Case IStatusFile.EnumTaskStatusDetail.RETRIEVING_RESOURCES
+                Return "Retrieving Resources"
+            Case IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL
+                Return "Running Tool"
+            Case IStatusFile.EnumTaskStatusDetail.CLOSING
+                Return "Closing"
+            Case Else
+                'Should never get here
+                Return "Unknown Task Status Detail"
+        End Select
 
-	Private Sub InitializePerformanceCounters()
-		Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
+    End Function
 
-		Try
-			mCPUUsagePerformanceCounter = New PerformanceCounter("Processor", "% Processor Time", "_Total")
-			mCPUUsagePerformanceCounter.ReadOnly = True
-		Catch ex As Exception
-			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-			If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Processor.[% Processor Time] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
-			End If
-		End Try
+    Private Sub InitializePerformanceCounters()
+        Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
 
-		Try
-			mFreeMemoryPerformanceCounter = New PerformanceCounter("Memory", "Available MBytes")
-			mFreeMemoryPerformanceCounter.ReadOnly = True
-		Catch ex As Exception
-			' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-			' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
-			' Alternatively, add the user to the "Administrators" group.
-			' In either case, you will need to reboot the computer for the change to take effect
-			If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
-			End If
+        Try
+            mCPUUsagePerformanceCounter = New PerformanceCounter("Processor", "% Processor Time", "_Total")
+            mCPUUsagePerformanceCounter.ReadOnly = True
+        Catch ex As Exception
+            ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+            If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Processor.[% Processor Time] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+            End If
+        End Try
 
-		End Try
-	End Sub
+        Try
+            mFreeMemoryPerformanceCounter = New PerformanceCounter("Memory", "Available MBytes")
+            mFreeMemoryPerformanceCounter.ReadOnly = True
+        Catch ex As Exception
+            ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
+            ' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
+            ' Alternatively, add the user to the "Administrators" group.
+            ' In either case, you will need to reboot the computer for the change to take effect
+            If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+            End If
 
-	''' <summary>
-	''' Returns the CPU usage
-	''' </summary>
-	''' <returns>Value between 0 and 100</returns>
-	''' <remarks>This is CPU usage for all running applications, not just this application</remarks>
-	Private Function GetCPUUtilization() As Single
-		Dim sngCPUUtilization As Single = 0
+        End Try
+    End Sub
 
-		Try
-			If Not mCPUUsagePerformanceCounter Is Nothing Then
-				sngCPUUtilization = mCPUUsagePerformanceCounter.NextValue()
-			End If
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
+    ''' <summary>
+    ''' Returns the CPU usage
+    ''' </summary>
+    ''' <returns>Value between 0 and 100</returns>
+    ''' <remarks>
+    ''' This is CPU usage for all running applications, not just this application
+    ''' For CPU usage of a single application use PRISM.Processes.clsProgRunner.GetCoreUsageByProcessID()
+    ''' </remarks>
+    Private Function GetCPUUtilization() As Single
+        Dim sngCPUUtilization As Single = 0
 
-		Return sngCPUUtilization
+        Try
+            If Not mCPUUsagePerformanceCounter Is Nothing Then
+                sngCPUUtilization = mCPUUsagePerformanceCounter.NextValue()
+            End If
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
 
-	End Function
+        Return sngCPUUtilization
+
+    End Function
 
     ''' <summary>
     ''' Returns the number of cores
     ''' </summary>
     ''' <returns>The number of cores on this computer</returns>
-    ''' <remarks>Should not affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+    ''' <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
     Public Function GetCoreCount() As Integer Implements IStatusFile.GetCoreCount
 
-        Try
-
-            Dim result = New System.Management.ManagementObjectSearcher("Select NumberOfCores from Win32_Processor")
-            Dim coreCount = 0
-
-            For Each item In result.Get()
-                coreCount += Integer.Parse(item("NumberOfCores").ToString())
-            Next
-
-            Return coreCount
-
-        Catch ex As Exception
-            ' This value will be affected by hyperthreading
-            Return Environment.ProcessorCount
-        End Try
+        Return PRISM.Processes.clsProgRunner.GetCoreCount()
 
     End Function
 
@@ -601,7 +478,7 @@ Public Class clsStatusFile
     End Function
 
     ''' <summary>
-    ''' Return the ProcessID of the running process
+    ''' Return the ProcessID of the Analysis manager
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -619,10 +496,10 @@ Public Class clsStatusFile
             If m_MessageSender Is Nothing Then
 
                 If m_DebugLevel >= 5 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Initializing message queue with URI '" & m_MessageQueueURI & "' and Topic '" & m_MessageQueueTopic & "'")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Initializing message queue with URI '" & MessageQueueURI & "' and Topic '" & MessageQueueTopic & "'")
                 End If
 
-                m_MessageSender = New clsMessageSender(m_MessageQueueURI, m_MessageQueueTopic, m_MgrName)
+                m_MessageSender = New clsMessageSender(MessageQueueURI, MessageQueueTopic, MgrName)
 
                 ' message queue logger sets up local message buffering (so calls to log don't block)
                 ' and uses message sender (as a delegate) to actually send off the messages
@@ -630,7 +507,7 @@ Public Class clsStatusFile
                 AddHandler m_QueueLogger.Sender, New MessageSenderDelegate(AddressOf m_MessageSender.SendMessage)
 
                 If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message queue initialized with URI '" & m_MessageQueueURI & "'; posting to Topic '" & m_MessageQueueTopic & "'")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message queue initialized with URI '" & MessageQueueURI & "'; posting to Topic '" & MessageQueueTopic & "'")
                 End If
 
             End If
@@ -650,19 +527,26 @@ Public Class clsStatusFile
 
     End Sub
 
+    ''' <summary>
+    ''' Send status information to the database
+    ''' </summary>
+    ''' <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
     Protected Sub LogStatusToBrokerDatabase(ByVal ForceLogToBrokerDB As Boolean)
 
         Dim intIndex As Integer
 
         Dim udtStatusInfo As clsDBStatusLogger.udtStatusInfoType
         With udtStatusInfo
-            .MgrName = m_MgrName
-            .MgrStatus = m_MgrStatus
+            .MgrName = MgrName
+            .MgrStatus = MgrStatus
             .LastUpdate = DateTime.UtcNow()
-            .LastStartTime = m_TaskStartTime
-            .CPUUtilization = m_CpuUtilization
+            .LastStartTime = TaskStartTime
+            .CPUUtilization = CpuUtilization
             .FreeMemoryMB = m_FreeMemoryMB
             .ProcessID = GetProcessID()
+
+            .ProgRunnerProcessID = ProgRunnerProcessID
+            .ProgRunnerCoreUsage = ProgRunnerCoreUsage
 
             If m_RecentErrorMessageCount = 0 Then
                 .MostRecentErrorMessage = String.Empty
@@ -677,19 +561,19 @@ Public Class clsStatusFile
                 End If
             End If
 
-            .Task.Tool = m_Tool
-            .Task.Status = m_TaskStatus
+            .Task.Tool = Tool
+            .Task.Status = TaskStatus
             .Task.DurationHours = GetRunTime()
-            .Task.Progress = m_Progress
-            .Task.CurrentOperation = m_CurrentOperation
+            .Task.Progress = Progress
+            .Task.CurrentOperation = CurrentOperation
 
-            .Task.TaskDetails.Status = m_TaskStatusDetail
-            .Task.TaskDetails.Job = m_JobNumber
-            .Task.TaskDetails.JobStep = m_JobStep
-            .Task.TaskDetails.Dataset = m_Dataset
+            .Task.TaskDetails.Status = TaskStatusDetail
+            .Task.TaskDetails.Job = JobNumber
+            .Task.TaskDetails.JobStep = JobStep
+            .Task.TaskDetails.Dataset = Dataset
             .Task.TaskDetails.MostRecentLogMessage = m_MostRecentLogMessage
-            .Task.TaskDetails.MostRecentJobInfo = m_MostRecentJobInfo
-            .Task.TaskDetails.SpectrumCount = m_SpectrumCount
+            .Task.TaskDetails.MostRecentJobInfo = MostRecentJobInfo
+            .Task.TaskDetails.SpectrumCount = SpectrumCount
 
         End With
 
@@ -698,7 +582,7 @@ Public Class clsStatusFile
 
     Protected Sub StoreRecentJobInfo(ByVal JobInfo As String)
         If Not JobInfo Is Nothing AndAlso JobInfo.Length > 0 Then
-            m_MostRecentJobInfo = JobInfo
+            MostRecentJobInfo = JobInfo
         End If
     End Sub
 
@@ -786,13 +670,13 @@ Public Class clsStatusFile
             dtLastUpdate = DateTime.UtcNow()
             sngRunTimeHours = GetRunTime()
 
-            m_CpuUtilization = CInt(GetCPUUtilization())
+            CpuUtilization = CInt(GetCPUUtilization())
             m_FreeMemoryMB = GetFreeMemoryMB()
         Catch ex As Exception
             ' Ignore errors here
         End Try
 
-        'Set up the XML writer
+        ' Set up the XML writer
         Try
             ' Create a new memory stream in which to write the XML
             objMemoryStream = New MemoryStream
@@ -809,13 +693,15 @@ Public Class clsStatusFile
                 'Root level element
                 XWriter.WriteStartElement("Root")    ' Root
                 XWriter.WriteStartElement("Manager")  ' Manager
-                XWriter.WriteElementString("MgrName", m_MgrName)
-                XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus))
+                XWriter.WriteElementString("MgrName", MgrName)
+                XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(MgrStatus))
                 XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
-                XWriter.WriteElementString("LastStartTime", m_TaskStartTime.ToLocalTime().ToString())
-                XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString("##0.0"))
+                XWriter.WriteElementString("LastStartTime", TaskStartTime.ToLocalTime().ToString())
+                XWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString("##0.0"))
                 XWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
                 XWriter.WriteElementString("ProcessID", GetProcessID().ToString())
+                XWriter.WriteElementString("ProgRunnerProcessID", ProgRunnerProcessID.ToString())
+                XWriter.WriteElementString("ProgRunnerCoreUsage", ProgRunnerCoreUsage.ToString("0.00"))
                 XWriter.WriteStartElement("RecentErrorMessages")
                 If m_RecentErrorMessageCount = 0 Then
                     XWriter.WriteElementString("ErrMsg", String.Empty)
@@ -828,21 +714,21 @@ Public Class clsStatusFile
                 XWriter.WriteEndElement()               ' Manager
 
                 XWriter.WriteStartElement("Task")       ' Task
-                XWriter.WriteElementString("Tool", m_Tool)
-                XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus))
+                XWriter.WriteElementString("Tool", Tool)
+                XWriter.WriteElementString("Status", ConvertTaskStatusToString(TaskStatus))
                 XWriter.WriteElementString("Duration", sngRunTimeHours.ToString("0.00"))
                 XWriter.WriteElementString("DurationMinutes", (sngRunTimeHours * 60).ToString("0.0"))
-                XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"))
-                XWriter.WriteElementString("CurrentOperation", m_CurrentOperation)
+                XWriter.WriteElementString("Progress", Progress.ToString("##0.00"))
+                XWriter.WriteElementString("CurrentOperation", CurrentOperation)
 
                 XWriter.WriteStartElement("TaskDetails") 'TaskDetails
-                XWriter.WriteElementString("Status", ConvertTaskStatusDetailToString(m_TaskStatusDetail))
-                XWriter.WriteElementString("Job", CStr(m_JobNumber))
-                XWriter.WriteElementString("Step", CStr(m_JobStep))
-                XWriter.WriteElementString("Dataset", m_Dataset)
+                XWriter.WriteElementString("Status", ConvertTaskStatusDetailToString(TaskStatusDetail))
+                XWriter.WriteElementString("Job", CStr(JobNumber))
+                XWriter.WriteElementString("Step", CStr(JobStep))
+                XWriter.WriteElementString("Dataset", Dataset)
                 XWriter.WriteElementString("MostRecentLogMessage", m_MostRecentLogMessage)
-                XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo)
-                XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString)
+                XWriter.WriteElementString("MostRecentJobInfo", MostRecentJobInfo)
+                XWriter.WriteElementString("SpectrumCount", SpectrumCount.ToString)
                 XWriter.WriteEndElement()               ' TaskDetails
                 XWriter.WriteEndElement()               ' Task
                 XWriter.WriteEndElement()               ' Root
@@ -870,7 +756,7 @@ Public Class clsStatusFile
 
         CheckForAbortProcessingFile()
 
-        If m_LogToMessageQueue Then
+        If LogToMsgQueue Then
             ' Send the XML text to a message queue
             LogStatusToMessageQueue(strXMLText)
         End If
@@ -902,25 +788,25 @@ Public Class clsStatusFile
         If DateTime.UtcNow.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
             ' We will write out the Status XML to a temporary file, then rename the temp file to the primary file
 
-            strTempStatusFilePath = Path.Combine(Path.GetDirectoryName(m_FileNamePath), Path.GetFileNameWithoutExtension(m_FileNamePath) & "_Temp.xml")
+            strTempStatusFilePath = Path.Combine(Path.GetDirectoryName(FileNamePath), Path.GetFileNameWithoutExtension(FileNamePath) & "_Temp.xml")
 
             dtLastFileWriteTime = DateTime.UtcNow
 
             Dim logWarning = True
-            If m_Tool.ToLower().Contains("glyq") OrElse m_Tool.ToLower().Contains("modplus") Then
+            If Tool.ToLower().Contains("glyq") OrElse Tool.ToLower().Contains("modplus") Then
                 If m_DebugLevel < 3 Then logWarning = False
             End If
 
             blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText, logWarning)
             If blnSuccess Then
                 Try
-                    File.Copy(strTempStatusFilePath, m_FileNamePath, True)
+                    File.Copy(strTempStatusFilePath, FileNamePath, True)
                 Catch ex As Exception
                     ' Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
                     If logWarning Then
                         ' Log a warning that the file copy failed
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" &
-                          Path.GetFileName(strTempStatusFilePath) & " to " & Path.GetFileName(m_FileNamePath) & "):" & ex.Message)
+                          Path.GetFileName(strTempStatusFilePath) & " to " & Path.GetFileName(FileNamePath) & "):" & ex.Message)
                     End If
 
                 End Try
@@ -938,7 +824,7 @@ Public Class clsStatusFile
 
             Else
                 ' Error writing to the temporary status file; try the primary file
-                blnSuccess = WriteStatusFileToDisk(m_FileNamePath, strXMLText, logWarning)
+                blnSuccess = WriteStatusFileToDisk(FileNamePath, strXMLText, logWarning)
             End If
         End If
 
@@ -996,9 +882,10 @@ Public Class clsStatusFile
       ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateClose
 
         ClearCachedInfo()
-        m_MgrStatus = IStatusFile.EnumMgrStatus.STOPPED
-        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-        m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+
+        MgrStatus = IStatusFile.EnumMgrStatus.STOPPED
+        TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
         m_MostRecentLogMessage = ManagerIdleMessage
 
         StoreRecentErrorMessages(RecentErrorMessages)
@@ -1015,7 +902,7 @@ Public Class clsStatusFile
     ''' <remarks></remarks>
     Public Sub UpdateAndWrite(ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
 
-        m_Progress = PercentComplete
+        Progress = PercentComplete
         WriteStatusFile()
 
     End Sub
@@ -1034,10 +921,10 @@ Public Class clsStatusFile
       ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail,
       ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
 
-        m_MgrStatus = eMgrStatus
-        m_TaskStatus = eTaskStatus
-        m_TaskStatusDetail = eTaskStatusDetail
-        m_Progress = PercentComplete
+        MgrStatus = eMgrStatus
+        TaskStatus = eTaskStatus
+        TaskStatusDetail = eTaskStatusDetail
+        Progress = PercentComplete
         WriteStatusFile()
 
     End Sub
@@ -1054,9 +941,9 @@ Public Class clsStatusFile
       ByVal PercentComplete As Single,
       ByVal SpectrumCountTotal As Integer) Implements IStatusFile.UpdateAndWrite
 
-        m_TaskStatus = Status
-        m_Progress = PercentComplete
-        m_SpectrumCount = SpectrumCountTotal
+        TaskStatus = Status
+        Progress = PercentComplete
+        SpectrumCount = SpectrumCountTotal
 
         WriteStatusFile()
 
@@ -1086,11 +973,11 @@ Public Class clsStatusFile
       ByVal RecentJobInfo As String,
       ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateAndWrite
 
-        m_MgrStatus = eMgrStatus
-        m_TaskStatus = eTaskStatus
-        m_TaskStatusDetail = eTaskStatusDetail
-        m_Progress = PercentComplete
-        m_SpectrumCount = DTACount
+        MgrStatus = eMgrStatus
+        TaskStatus = eTaskStatus
+        TaskStatusDetail = eTaskStatusDetail
+        Progress = PercentComplete
+        SpectrumCount = DTACount
 
         m_MostRecentLogMessage = MostRecentLogMessage
         StoreNewErrorMessage(MostRecentErrorMessage, True)
@@ -1116,7 +1003,7 @@ Public Class clsStatusFile
     ''' <remarks></remarks>
     Public Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
         ClearCachedInfo()
-        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
         m_MostRecentLogMessage = ManagerIdleMessage
 
         WriteStatusFile(ForceLogToBrokerDB)
@@ -1136,7 +1023,7 @@ Public Class clsStatusFile
       ByVal RecentJobInfo As String,
       ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
         ClearCachedInfo()
-        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
         m_MostRecentLogMessage = ManagerIdleMessage
 
         StoreNewErrorMessage(IdleErrorMessage, True)
@@ -1161,9 +1048,9 @@ Public Class clsStatusFile
       ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
 
         ClearCachedInfo()
-        m_MgrStatus = IStatusFile.EnumMgrStatus.RUNNING
-        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-        m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+        MgrStatus = IStatusFile.EnumMgrStatus.RUNNING
+        TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
         m_MostRecentLogMessage = ManagerIdleMessage
 
         StoreRecentErrorMessages(RecentErrorMessages)
@@ -1189,7 +1076,7 @@ Public Class clsStatusFile
         Dim strRecentErrorMessages() As String
         ReDim strRecentErrorMessages(-1)
 
-        UpdateDisabled(ManagerStatus, ManagerDisableMessage, strRecentErrorMessages, m_MostRecentJobInfo)
+        UpdateDisabled(ManagerStatus, ManagerDisableMessage, strRecentErrorMessages, MostRecentJobInfo)
     End Sub
 
     ''' <summary>
@@ -1205,9 +1092,9 @@ Public Class clsStatusFile
         If Not (ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_LOCAL OrElse ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_MC) Then
             ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_LOCAL
         End If
-        m_MgrStatus = ManagerStatus
-        m_TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
-        m_TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+        MgrStatus = ManagerStatus
+        TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
+        TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
         m_MostRecentLogMessage = ManagerDisableMessage
 
         StoreRecentJobInfo(RecentJobInfo)
@@ -1224,7 +1111,7 @@ Public Class clsStatusFile
         Dim strRecentErrorMessages() As String
         ReDim strRecentErrorMessages(-1)
 
-        UpdateFlagFileExists(strRecentErrorMessages, m_MostRecentJobInfo)
+        UpdateFlagFileExists(strRecentErrorMessages, MostRecentJobInfo)
     End Sub
 
     ''' <summary>
@@ -1236,7 +1123,7 @@ Public Class clsStatusFile
     Public Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String) Implements IStatusFile.UpdateFlagFileExists
         ClearCachedInfo()
 
-        m_MgrStatus = IStatusFile.EnumMgrStatus.STOPPED_ERROR
+        MgrStatus = IStatusFile.EnumMgrStatus.STOPPED_ERROR
         m_MostRecentLogMessage = "Flag file"
         StoreRecentErrorMessages(RecentErrorMessages)
         StoreRecentJobInfo(RecentJobInfo)
@@ -1251,7 +1138,7 @@ Public Class clsStatusFile
     ''' <remarks></remarks>
     Private Function GetRunTime() As Single
 
-        Return CSng(DateTime.UtcNow.Subtract(m_TaskStartTime).TotalHours)
+        Return CSng(DateTime.UtcNow.Subtract(TaskStartTime).TotalHours)
 
     End Function
 
