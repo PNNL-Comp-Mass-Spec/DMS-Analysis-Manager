@@ -50,7 +50,7 @@ Public Class clsAnalysisResourcesGlyQIQ
         Dim maxAllowedCores = m_StatusTools.GetCoreCount()
         If maxAllowedCores > 4 Then maxAllowedCores -= 1
 
-        Dim coreCount As Integer = clsAnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores, m_StatusTools)
+        Dim coreCount As Integer = clsAnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores)
 
         m_jobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString())
 

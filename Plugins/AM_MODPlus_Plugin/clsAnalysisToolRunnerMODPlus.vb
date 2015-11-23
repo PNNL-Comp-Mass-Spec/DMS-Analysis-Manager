@@ -893,6 +893,7 @@ Public Class clsAnalysisToolRunnerMODPlus
 
                     Dim stepsComplete = 0
                     Dim progressSum As Double = 0
+                    Dim processIDFirst = 0
 
                     For Each modPlusRunner In mMODPlusRunners
                         Dim eStatus = modPlusRunner.Value.Status
@@ -905,6 +906,10 @@ Public Class clsAnalysisToolRunnerMODPlus
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODPlus thread " & modPlusRunner.Key & " is now complete")
                             End If
 
+                        End If
+
+                        If processIDFirst = 0 AndAlso modPlusRunner.Value.ProgRunner.ProcessID <> 0 Then
+                            processIDFirst = modPlusRunner.Value.ProgRunner.ProcessID
                         End If
 
                         progressSum += modPlusRunner.Value.Progress

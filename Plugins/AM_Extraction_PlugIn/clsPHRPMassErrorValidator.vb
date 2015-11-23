@@ -206,6 +206,9 @@ Public Class clsPHRPMassErrorValidator
                 Dim objCurrentPSM As clsPSM = mPHRPReader.CurrentPSM
 
                 If objCurrentPSM.PeptideMonoisotopicMass > 0 Then
+                    ' PrecursorNeutralMass is based on the mass value reported by the search engine 
+                    '   (will be reported mono mass or could be m/z or MH converted to neutral mass)
+                    ' PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
                     dblMassError = objCurrentPSM.PrecursorNeutralMass - objCurrentPSM.PeptideMonoisotopicMass
 
                     dblToleranceCurrent = dblPrecursorMassTolerance + objCurrentPSM.Charge - 1

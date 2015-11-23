@@ -171,11 +171,6 @@ Public Class clsAnalysisToolRunnerDecon2ls
                 End If
             End If
 
-            If m_jobParams.GetJobParameter(clsAnalysisResourcesDecon2ls.JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, False) Then
-                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Note: auto-enabled ProcessMSMS in the parameter file")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_EvalMessage)
-            End If
-
             Dim strDeconvolutionType As String = oDeconToolsParamFileReader.GetParameter("DeconvolutionType", String.Empty)
             Dim blnEmptyIsosFileExpected As Boolean
 

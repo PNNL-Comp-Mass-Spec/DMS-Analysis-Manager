@@ -17,22 +17,22 @@ Public Class clsMSGFDBUtils
     Public Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 98
     Public Const PROGRESS_PCT_COMPLETE As Single = 99
 
-    Protected Enum eThreadProgressSteps
+    Private Enum eThreadProgressSteps
         PreprocessingSpectra = 0
         DatabaseSearch = 1
         ComputingSpectralProbabilities = 2
         Complete = 3
     End Enum
 
-    Protected Const THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA As Single = 0
-    Protected Const THREAD_PROGRESS_PCT_DATABASE_SEARCH As Single = 5
-    Protected Const THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES As Single = 50
-    Protected Const THREAD_PROGRESS_PCT_COMPLETE As Single = 100
+    Private Const THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA As Single = 0
+    Private Const THREAD_PROGRESS_PCT_DATABASE_SEARCH As Single = 5
+    Private Const THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES As Single = 50
+    Private Const THREAD_PROGRESS_PCT_COMPLETE As Single = 100
 
-    Protected Const MSGFDB_OPTION_TDA As String = "TDA"
-    Protected Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
-    Protected Const MSGFDB_OPTION_FRAGMENTATION_METHOD As String = "FragmentationMethodID"
-    Protected Const MSGFDB_OPTION_INSTRUMENT_ID As String = "InstrumentID"
+    Private Const MSGFDB_OPTION_TDA As String = "TDA"
+    Private Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
+    Private Const MSGFDB_OPTION_FRAGMENTATION_METHOD As String = "FragmentationMethodID"
+    Private Const MSGFDB_OPTION_INSTRUMENT_ID As String = "InstrumentID"
 
     Public Const MSGFDB_TSV_SUFFIX As String = "_msgfdb.tsv"
 
@@ -54,26 +54,26 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Module Variables"
-    Protected m_mgrParams As IMgrParams
-    Protected m_jobParams As IJobParams
+    Private m_mgrParams As IMgrParams
+    Private m_jobParams As IJobParams
 
-    Protected m_WorkDir As String
-    Protected m_JobNum As String
-    Protected m_DebugLevel As Short
+    Private m_WorkDir As String
+    Private m_JobNum As String
+    Private m_DebugLevel As Short
 
-    Protected mMSGFPlus As Boolean
-    Protected mMSGFDbVersion As String = String.Empty
-    Protected mErrorMessage As String = String.Empty
-    Protected mConsoleOutputErrorMsg As String = String.Empty
+    Private mMSGFPlus As Boolean
+    Private mMSGFDbVersion As String = String.Empty
+    Private mErrorMessage As String = String.Empty
+    Private mConsoleOutputErrorMsg As String = String.Empty
 
-    Protected mContinuumSpectraSkipped As Integer
-    Protected mSpectraSearched As Integer
+    Private mContinuumSpectraSkipped As Integer
+    Private mSpectraSearched As Integer
 
-    Protected mPhosphorylationSearch As Boolean
-    Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean
+    Private mPhosphorylationSearch As Boolean
+    Private mResultsIncludeAutoAddedDecoyPeptides As Boolean
 
     ' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
-    Protected WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
+    Private WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 #End Region
 
     Public ReadOnly Property ContinuumSpectraSkipped() As Integer
@@ -130,6 +130,7 @@ Public Class clsMSGFDBUtils
 
         m_mgrParams = oMgrParams
         m_jobParams = oJobParams
+
         m_WorkDir = strWorkDir
 
         m_JobNum = JobNum
@@ -143,7 +144,7 @@ Public Class clsMSGFDBUtils
 
     End Sub
 
-    Protected Sub AdjustSwitchesForMSGFPlus(blnMSGFPlus As Boolean, ByRef strArgumentSwitch As String, ByRef strValue As String)
+    Private Sub AdjustSwitchesForMSGFPlus(blnMSGFPlus As Boolean, ByRef strArgumentSwitch As String, ByRef strValue As String)
 
         Dim intValue As Integer
         Dim intCharIndex As Integer
@@ -453,7 +454,7 @@ Public Class clsMSGFDBUtils
             Dim strLineIn As String
             Dim intLinesRead As Integer
 
-            Using srInFile As StreamReader = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
                 Do While Not srInFile.EndOfStream AndAlso intLinesRead < 10
@@ -602,7 +603,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="maxFastaFileSizeMB">Maximum file size</param>
     ''' <returns>Full path to the trimmed fasta; empty string if a problem</returns>
     ''' <remarks></remarks>
-    Protected Function CreateTrimmedFasta(fastaFilePath As String, maxFastaFileSizeMB As Integer) As String
+    Private Function CreateTrimmedFasta(fastaFilePath As String, maxFastaFileSizeMB As Integer) As String
 
         Try
             Dim fiFastaFile = New FileInfo(fastaFilePath)
@@ -717,7 +718,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="strOutputDirectoryPath">Output folder to create decoy file in</param>
     ''' <returns>Full path to the decoy fasta file</returns>
     ''' <remarks></remarks>
-    Protected Function GenerateDecoyFastaFile(strInputFilePath As String, strOutputDirectoryPath As String) As String
+    Private Function GenerateDecoyFastaFile(strInputFilePath As String, strOutputDirectoryPath As String) As String
 
         Const PROTEIN_LINE_START_CHAR As Char = ">"c
         Const PROTEIN_LINE_ACCESSION_END_CHAR As Char = " "c
@@ -796,28 +797,14 @@ Public Class clsMSGFDBUtils
     ''' Returns the number of cores
     ''' </summary>
     ''' <returns>The number of cores on this computer</returns>
-    ''' <remarks>Should not affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+    ''' <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
     Public Function GetCoreCount() As Integer
 
-        Try
-
-            Dim result = New System.Management.ManagementObjectSearcher("Select NumberOfCores from Win32_Processor")
-            Dim coreCount = 0
-
-            For Each item In result.Get()
-                coreCount += Integer.Parse(item("NumberOfCores").ToString())
-            Next
-
-            Return coreCount
-
-        Catch ex As Exception
-            ' This value will be affected by hyperthreading
-            Return Environment.ProcessorCount
-        End Try
+        Return PRISM.Processes.clsProgRunner.GetCoreCount()
 
     End Function
 
-    Protected Function GetMSFGDBParameterNames() As Dictionary(Of String, String)
+    Private Function GetMSFGDBParameterNames() As Dictionary(Of String, String)
         Dim dctParamNames As Dictionary(Of String, String)
         dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
@@ -850,7 +837,7 @@ Public Class clsMSGFDBUtils
         Return dctParamNames
     End Function
 
-    Protected Function GetSearchEngineName() As String
+    Private Function GetSearchEngineName() As String
         Return GetSearchEngineName(mMSGFPlus)
     End Function
 
@@ -1463,18 +1450,19 @@ Public Class clsMSGFDBUtils
 
     End Function
 
-    Protected Sub ParseConsoleOutputThreadMessage(strLineIn As String, _
-     eThreadProgressStep As eThreadProgressSteps, _
-     ByRef eThreadProgressBase() As eThreadProgressSteps, _
+    Private Sub ParseConsoleOutputThreadMessage(strLineIn As String,
+     eThreadProgressStep As eThreadProgressSteps,
+     ByRef eThreadProgressBase() As eThreadProgressSteps,
      ByRef sngThreadProgressAddon() As Single)
 
         Dim oMatch As Text.RegularExpressions.Match
 
-        Static reExtractThreadNum As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("thread-(\d+)", _
-          Text.RegularExpressions.RegexOptions.Compiled Or _
+        Static reExtractThreadNum As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("thread-(\d+)",
+          Text.RegularExpressions.RegexOptions.Compiled Or
           Text.RegularExpressions.RegexOptions.IgnoreCase)
-        Static reExtractPctComplete As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("([0-9.]+)% complete", _
-          Text.RegularExpressions.RegexOptions.Compiled Or _
+
+        Static reExtractPctComplete As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("([0-9.]+)% complete",
+          Text.RegularExpressions.RegexOptions.Compiled Or
           Text.RegularExpressions.RegexOptions.IgnoreCase)
 
         ' Extract out the thread number
@@ -1527,10 +1515,10 @@ Public Class clsMSGFDBUtils
     ''' <param name="lstDynamicMods">List of Dynamic Mods</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function ParseMSGFDBModifications(strParameterFilePath As String, _
-      ByRef sbOptions As Text.StringBuilder, _
-      intNumMods As Integer, _
-      ByRef lstStaticMods As List(Of String), _
+    Private Function ParseMSGFDBModifications(strParameterFilePath As String,
+      ByRef sbOptions As Text.StringBuilder,
+      intNumMods As Integer,
+      ByRef lstStaticMods As List(Of String),
       ByRef lstDynamicMods As List(Of String)) As Boolean
 
         Dim blnSuccess As Boolean
@@ -2148,7 +2136,7 @@ Public Class clsMSGFDBUtils
 
     End Sub
 
-    Protected Function LookupScanTypesForDataset(
+    Private Function LookupScanTypesForDataset(
       datasetName As String,
       <Out> ByRef countLowResMSn As Integer,
       <Out> ByRef countHighResMSn As Integer,
@@ -2233,7 +2221,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
     ''' <returns>True if valid; false if invalid</returns>
     ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-    Protected Function ParseMSGFDbValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
+    Private Function ParseMSGFDbValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
 
         Dim intPoundIndex As Integer
         Dim strSplitMod() As String
@@ -2290,10 +2278,11 @@ Public Class clsMSGFDBUtils
     ''' <param name="strParameterName"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function ParseMSFDBParamLine(ByRef sbOptions As Text.StringBuilder, _
-       strKeyName As String, _
-       strValue As String, _
-       strParameterName As String) As Boolean
+    Private Function ParseMSFDBParamLine(
+      sbOptions As Text.StringBuilder,
+      strKeyName As String,
+      strValue As String,
+      strParameterName As String) As Boolean
 
         Dim strCommandLineSwitchName As String = strParameterName
 
@@ -2301,10 +2290,10 @@ Public Class clsMSGFDBUtils
 
     End Function
 
-    Protected Function ParseMSFDBParamLine(ByRef sbOptions As Text.StringBuilder, _
-       strKeyName As String, _
-       strValue As String, _
-       strParameterName As String, _
+    Private Function ParseMSFDBParamLine(sbOptions As Text.StringBuilder,
+       strKeyName As String,
+       strValue As String,
+       strParameterName As String,
        strCommandLineSwitchName As String) As Boolean
 
         If clsGlobal.IsMatch(strKeyName, strParameterName) Then
@@ -2440,8 +2429,8 @@ Public Class clsMSGFDBUtils
 
     End Function
 
-    Private Sub WriteProteinSequence(ByRef swOutFile As StreamWriter, strSequence As String)
-        Dim intIndex As Integer = 0
+    Private Sub WriteProteinSequence(swOutFile As StreamWriter, strSequence As String)
+        Dim intIndex = 0
         Dim intLength As Integer
 
         Do While intIndex < strSequence.Length
@@ -2458,18 +2447,18 @@ Public Class clsMSGFDBUtils
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ZipOutputFile(ByRef oToolRunner As clsAnalysisToolRunnerBase, FileName As String) As IJobParams.CloseOutType
-        Dim TmpFilePath As String
+    Public Function ZipOutputFile(oToolRunner As clsAnalysisToolRunnerBase, fileName As String) As IJobParams.CloseOutType
+        Dim tmpFilePath As String
 
         Try
 
-            TmpFilePath = Path.Combine(m_WorkDir, FileName)
-            If Not File.Exists(TmpFilePath) Then
+            tmpFilePath = Path.Combine(m_WorkDir, fileName)
+            If Not File.Exists(tmpFilePath) Then
                 ReportError("MSGF+ results file not found: " & FileName)
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
             End If
 
-            If Not oToolRunner.GZipFile(TmpFilePath, False) Then
+            If Not oToolRunner.GZipFile(tmpFilePath, False) Then
                 Const Msg As String = "Error zipping output files"
                 ReportError(Msg, Msg & ": oToolRunner.ZipFile returned false, job " & m_JobNum)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -2491,19 +2480,19 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Event Methods"
-    Protected Sub ReportError(Message As String)
+    Private Sub ReportError(Message As String)
         ReportError(Message, String.Empty)
     End Sub
 
-    Protected Sub ReportError(Message As String, DetailedMessage As String)
+    Private Sub ReportError(Message As String, DetailedMessage As String)
         RaiseEvent ErrorEvent(Message, DetailedMessage)
     End Sub
 
-    Protected Sub ReportMessage(Message As String)
+    Private Sub ReportMessage(Message As String)
         RaiseEvent MessageEvent(Message)
     End Sub
 
-    Protected Sub ReportWarning(Message As String)
+    Private Sub ReportWarning(Message As String)
         RaiseEvent WarningEvent(Message)
     End Sub
 

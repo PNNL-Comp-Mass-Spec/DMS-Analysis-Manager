@@ -125,7 +125,7 @@ Public Class clsAnalysisResourcesMSGFDB
 				If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 					currentTask = "ValidateCDTAFile"
 					eResult = ValidateCDTAFile()
-				End If
+                End If
 
 			End If
 

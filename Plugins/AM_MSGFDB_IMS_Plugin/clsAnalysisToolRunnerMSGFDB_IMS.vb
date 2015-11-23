@@ -136,7 +136,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 			strScanTypeFilePath = String.Empty
 
 			' Initialize mMSGFDBUtils
-			mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
+            mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
 
 			' Get the FASTA file and index it if necessary
 			' Note that InitializeFastaFile() calls objIndexedDBCreator.CreateSuffixArrayFiles() to index the fasta file
