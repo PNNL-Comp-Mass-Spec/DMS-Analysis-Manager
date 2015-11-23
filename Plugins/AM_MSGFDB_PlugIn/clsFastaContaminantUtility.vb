@@ -6,7 +6,7 @@ Public Class clsFastaContaminantUtility
 	''' Keys are protein names, values are key/value pairs where the key is description and the value is protein sequence
 	''' </summary>
 	''' <remarks></remarks>
-	Protected mProteins As Dictionary(Of String, KeyValuePair(Of String, String))
+    Private mProteins As Dictionary(Of String, KeyValuePair(Of String, String))
 
 	Public ReadOnly Property ProteinNames() As List(Of String)
 		Get

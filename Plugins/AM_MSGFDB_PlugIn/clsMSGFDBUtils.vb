@@ -3,6 +3,7 @@ Imports AnalysisManagerBase
 Imports System.Runtime.InteropServices
 Imports System.IO
 Imports System.Net
+Imports System.Text.RegularExpressions
 
 Public Class clsMSGFDBUtils
 
@@ -54,14 +55,14 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Module Variables"
-    Private m_mgrParams As IMgrParams
-    Private m_jobParams As IJobParams
+    Private ReadOnly m_mgrParams As IMgrParams
+    Private ReadOnly m_jobParams As IJobParams
 
-    Private m_WorkDir As String
-    Private m_JobNum As String
-    Private m_DebugLevel As Short
+    Private ReadOnly m_WorkDir As String
+    Private ReadOnly m_JobNum As String
+    Private ReadOnly m_DebugLevel As Short
 
-    Private mMSGFPlus As Boolean
+    Private ReadOnly mMSGFPlus As Boolean
     Private mMSGFDbVersion As String = String.Empty
     Private mErrorMessage As String = String.Empty
     Private mConsoleOutputErrorMsg As String = String.Empty
@@ -144,6 +145,13 @@ Public Class clsMSGFDBUtils
 
     End Sub
 
+    ''' <summary>
+    ''' Update strArgumentSwitch and strValue if using the MS-GFDB syntax yet should be using the MSGF+ syntax (or vice versa)
+    ''' </summary>
+    ''' <param name="blnMSGFPlus"></param>
+    ''' <param name="strArgumentSwitch"></param>
+    ''' <param name="strValue"></param>
+    ''' <remarks></remarks>
     Private Sub AdjustSwitchesForMSGFPlus(blnMSGFPlus As Boolean, ByRef strArgumentSwitch As String, ByRef strValue As String)
 
         Dim intValue As Integer
@@ -259,12 +267,19 @@ Public Class clsMSGFDBUtils
 
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="instrumentIDCurrent">Current instrument ID; may get updated by this method</param>
+    ''' <param name="instrumentIDNew"></param>
+    ''' <param name="autoSwitchReason"></param>
+    ''' <remarks></remarks>
     Private Sub AutoUpdateInstrumentIDIfChanged(ByRef instrumentIDCurrent As String, instrumentIDNew As String, autoSwitchReason As String)
 
         If Not String.IsNullOrEmpty(instrumentIDNew) AndAlso instrumentIDNew <> instrumentIDCurrent Then
 
             If m_DebugLevel >= 1 Then
-                Dim strInstIDDescription As String = "??"
+                Dim strInstIDDescription = "??"
                 Select Case instrumentIDNew
                     Case "0"
                         strInstIDDescription = "Low-res MSn"
@@ -720,8 +735,8 @@ Public Class clsMSGFDBUtils
     ''' <remarks></remarks>
     Private Function GenerateDecoyFastaFile(strInputFilePath As String, strOutputDirectoryPath As String) As String
 
-        Const PROTEIN_LINE_START_CHAR As Char = ">"c
-        Const PROTEIN_LINE_ACCESSION_END_CHAR As Char = " "c
+        Const PROTEIN_LINE_START_CHAR = ">"c
+        Const PROTEIN_LINE_ACCESSION_END_CHAR = " "c
 
         Dim strDecoyFastaFilePath As String
         Dim ioSourceFile As FileInfo
@@ -761,7 +776,7 @@ Public Class clsMSGFDBUtils
                 strPrefix = "REV_"
             End If
 
-            Using swProteinOutputFile As StreamWriter = New StreamWriter(New FileStream(strDecoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swProteinOutputFile = New StreamWriter(New FileStream(strDecoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 Do
                     blnInputProteinFound = objFastaFileReader.ReadNextProteinEntry()
@@ -865,7 +880,7 @@ Public Class clsMSGFDBUtils
 
         Try
 
-            Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srParamFile.EndOfStream
                     strLineIn = srParamFile.ReadLine()
@@ -1109,14 +1124,19 @@ Public Class clsMSGFDBUtils
     ''' <returns></returns>
     ''' <remarks></remarks>
     Public Function LoadScanTypeFile(strScanTypeFilePath As String,
-      ByRef lstLowResMSn As Dictionary(Of Integer, String),
-      ByRef lstHighResMSn As Dictionary(Of Integer, String),
-      ByRef lstHCDMSn As Dictionary(Of Integer, String),
-      ByRef lstOther As Dictionary(Of Integer, String)) As Boolean
+      <Out()> ByRef lstLowResMSn As Dictionary(Of Integer, String),
+      <Out()> ByRef lstHighResMSn As Dictionary(Of Integer, String),
+      <Out()> ByRef lstHCDMSn As Dictionary(Of Integer, String),
+      <Out()> ByRef lstOther As Dictionary(Of Integer, String)) As Boolean
 
         Dim strLineIn As String
         Dim intScanNumberColIndex As Integer = -1
         Dim intScanTypeNameColIndex As Integer = -1
+
+        lstLowResMSn = New Dictionary(Of Integer, String)
+        lstHighResMSn = New Dictionary(Of Integer, String)
+        lstHCDMSn = New Dictionary(Of Integer, String)
+        lstOther = New Dictionary(Of Integer, String)
 
         Try
             If Not File.Exists(strScanTypeFilePath) Then
@@ -1124,12 +1144,7 @@ Public Class clsMSGFDBUtils
                 Return False
             End If
 
-            lstLowResMSn = New Dictionary(Of Integer, String)
-            lstHighResMSn = New Dictionary(Of Integer, String)
-            lstHCDMSn = New Dictionary(Of Integer, String)
-            lstOther = New Dictionary(Of Integer, String)
-
-            Using srScanTypeFile As StreamReader = New StreamReader(New FileStream(strScanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srScanTypeFile = New StreamReader(New FileStream(strScanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 While Not srScanTypeFile.EndOfStream
                     strLineIn = srScanTypeFile.ReadLine()
@@ -1240,15 +1255,17 @@ Public Class clsMSGFDBUtils
         ' Computing EFDRs finished(elapsed time: 0.78 sec)
         ' MS-GFDB complete (total elapsed time: 699.69 sec)
 
-        Static reExtractThreadCount As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Using (\d+) thread",
-          Text.RegularExpressions.RegexOptions.Compiled Or
-          Text.RegularExpressions.RegexOptions.IgnoreCase)
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
+        Static reExtractThreadCount As Regex = New Regex("Using (\d+) thread",
+          RegexOptions.Compiled Or
+          RegexOptions.IgnoreCase)
 
-        Static reSpectraSearched As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("Spectrum.+\(total: *(\d+)\)",
-          Text.RegularExpressions.RegexOptions.Compiled Or
-          Text.RegularExpressions.RegexOptions.IgnoreCase)
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
+        Static reSpectraSearched As Regex = New Regex("Spectrum.+\(total: *(\d+)\)",
+          RegexOptions.Compiled Or
+          RegexOptions.IgnoreCase)
 
-        Dim strConsoleOutputFilePath As String = "??"
+        Dim strConsoleOutputFilePath = "??"
 
         Dim eThreadProgressBase() As eThreadProgressSteps
         Dim sngThreadProgressAddon() As Single
@@ -1276,7 +1293,7 @@ Public Class clsMSGFDBUtils
             Dim strLineIn As String
             Dim intLinesRead As Integer
 
-            Dim oMatch As Text.RegularExpressions.Match
+            Dim oMatch As Match
             Dim intThreadCount As Short = 0
 
             mConsoleOutputErrorMsg = String.Empty
@@ -1285,7 +1302,7 @@ Public Class clsMSGFDBUtils
             mContinuumSpectraSkipped = 0
             mSpectraSearched = 0
 
-            Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
                 Do While Not srInFile.EndOfStream
@@ -1409,7 +1426,7 @@ Public Class clsMSGFDBUtils
 
                 sngProgressAddonAllThreads = 0
 
-                For intThread As Integer = 1 To intThreadCount
+                For intThread = 1 To intThreadCount
                     sngProgressOneThread = 0
 
                     Select Case eThreadProgressBase(intThread)
@@ -1452,18 +1469,20 @@ Public Class clsMSGFDBUtils
 
     Private Sub ParseConsoleOutputThreadMessage(strLineIn As String,
      eThreadProgressStep As eThreadProgressSteps,
-     ByRef eThreadProgressBase() As eThreadProgressSteps,
-     ByRef sngThreadProgressAddon() As Single)
+     eThreadProgressBase() As eThreadProgressSteps,
+     sngThreadProgressAddon() As Single)
 
-        Dim oMatch As Text.RegularExpressions.Match
+        Dim oMatch As Match
 
-        Static reExtractThreadNum As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("thread-(\d+)",
-          Text.RegularExpressions.RegexOptions.Compiled Or
-          Text.RegularExpressions.RegexOptions.IgnoreCase)
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
+        Static reExtractThreadNum As Regex = New Regex("thread-(\d+)",
+          RegexOptions.Compiled Or
+          RegexOptions.IgnoreCase)
 
-        Static reExtractPctComplete As Text.RegularExpressions.Regex = New Text.RegularExpressions.Regex("([0-9.]+)% complete",
-          Text.RegularExpressions.RegexOptions.Compiled Or
-          Text.RegularExpressions.RegexOptions.IgnoreCase)
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
+        Static reExtractPctComplete As Regex = New Regex("([0-9.]+)% complete",
+          RegexOptions.Compiled Or
+          RegexOptions.IgnoreCase)
 
         ' Extract out the thread number
         ' Line should look like one of these lines:
@@ -1516,10 +1535,10 @@ Public Class clsMSGFDBUtils
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Private Function ParseMSGFDBModifications(strParameterFilePath As String,
-      ByRef sbOptions As Text.StringBuilder,
+     sbOptions As Text.StringBuilder,
       intNumMods As Integer,
-      ByRef lstStaticMods As List(Of String),
-      ByRef lstDynamicMods As List(Of String)) As Boolean
+      lstStaticMods As List(Of String),
+      lstDynamicMods As List(Of String)) As Boolean
 
         Dim blnSuccess As Boolean
         Dim strModFilePath As String
@@ -1535,7 +1554,7 @@ Public Class clsMSGFDBUtils
 
             sbOptions.Append(" -mod " & MOD_FILE_NAME)
 
-            Using swModFile As StreamWriter = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swModFile = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 swModFile.WriteLine("# This file is used to specify modifications for MSGFDB")
                 swModFile.WriteLine("")
@@ -1684,7 +1703,7 @@ Public Class clsMSGFDBUtils
       overrideParams As Dictionary(Of String, String),
       <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
 
-        Const SMALL_FASTA_FILE_THRESHOLD_KB As Integer = 20
+        Const SMALL_FASTA_FILE_THRESHOLD_KB = 20
 
         Dim strLineIn As String
         Dim sbOptions As Text.StringBuilder
@@ -2034,10 +2053,17 @@ Public Class clsMSGFDBUtils
 
     End Function
 
+    ''' <summary>
+    ''' Override Instrument ID based on the instrument class and scan types in the _ScanType file
+    ''' </summary>
+    ''' <param name="instrumentIDCurrent">Current instrument ID; may get updated by this method</param>
+    ''' <param name="scanTypeFilePath"></param>
+    ''' <param name="instrumentGroup"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Private Function DetermineInstrumentID(ByRef instrumentIDCurrent As String, scanTypeFilePath As String, instrumentGroup As String) As IJobParams.CloseOutType
 
-        ' Override Instrument ID based on the instrument class and scan types in the _ScanType file
-
+        ' InstrumentID values:
         ' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
         ' #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
         ' #  2 means TOF
@@ -2154,7 +2180,7 @@ Public Class clsMSGFDBUtils
 
             Dim connectionString As String = m_mgrParams.GetParam("connectionstring")
 
-            Dim sqlStr As Text.StringBuilder = New Text.StringBuilder
+            Dim sqlStr = New Text.StringBuilder
 
             sqlStr.Append(" SELECT HMS, MS, [CID-HMSn], [CID-MSn], ")
             sqlStr.Append("   [HCD-HMSn], [ETD-HMSn], [ETD-MSn], ")
@@ -2247,7 +2273,7 @@ Public Class clsMSGFDBUtils
 
         ' Reconstruct the mod definition, making sure there is no whitespace
         strModClean = strSplitMod(0).Trim()
-        For intIndex As Integer = 1 To strSplitMod.Length - 1
+        For intIndex = 1 To strSplitMod.Length - 1
             strModClean &= "," & strSplitMod(intIndex).Trim()
         Next
 
@@ -2290,11 +2316,12 @@ Public Class clsMSGFDBUtils
 
     End Function
 
-    Private Function ParseMSFDBParamLine(sbOptions As Text.StringBuilder,
-       strKeyName As String,
-       strValue As String,
-       strParameterName As String,
-       strCommandLineSwitchName As String) As Boolean
+    Private Function ParseMSFDBParamLine(
+      sbOptions As Text.StringBuilder,
+      strKeyName As String,
+      strValue As String,
+      strParameterName As String,
+      strCommandLineSwitchName As String) As Boolean
 
         If clsGlobal.IsMatch(strKeyName, strParameterName) Then
             sbOptions.Append(" -" & strCommandLineSwitchName & " " & strValue)
@@ -2302,7 +2329,6 @@ Public Class clsMSGFDBUtils
         Else
             Return False
         End If
-
 
     End Function
 
@@ -2356,13 +2382,13 @@ Public Class clsMSGFDBUtils
 
     Private Function ValidatePeptideToProteinMapResults(strPeptideToProteinMapFilePath As String, blnIgnorePeptideToProteinMapperErrors As Boolean) As Boolean
 
-        Const PROTEIN_NAME_NO_MATCH As String = "__NoMatch__"
+        Const PROTEIN_NAME_NO_MATCH = "__NoMatch__"
 
         Dim blnSuccess As Boolean
 
-        Dim intPeptideCount As Integer = 0
-        Dim intPeptideCountNoMatch As Integer = 0
-        Dim intLinesRead As Integer = 0
+        Dim intPeptideCount = 0
+        Dim intPeptideCountNoMatch = 0
+        Dim intLinesRead = 0
 
         Try
             ' Validate that none of the results in strPeptideToProteinMapFilePath has protein name PROTEIN_NAME_NO_MATCH
@@ -2373,7 +2399,7 @@ Public Class clsMSGFDBUtils
                 ReportMessage("Validating peptide to protein mapping, file " & Path.GetFileName(strPeptideToProteinMapFilePath))
             End If
 
-            Using srInFile As StreamReader = New StreamReader(New FileStream(strPeptideToProteinMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(strPeptideToProteinMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
@@ -2454,18 +2480,18 @@ Public Class clsMSGFDBUtils
 
             tmpFilePath = Path.Combine(m_WorkDir, fileName)
             If Not File.Exists(tmpFilePath) Then
-                ReportError("MSGF+ results file not found: " & FileName)
+                ReportError("MSGF+ results file not found: " & fileName)
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
             End If
 
             If Not oToolRunner.GZipFile(tmpFilePath, False) Then
-                Const Msg As String = "Error zipping output files"
+                Const Msg = "Error zipping output files"
                 ReportError(Msg, Msg & ": oToolRunner.ZipFile returned false, job " & m_JobNum)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
-            m_jobParams.AddResultFileToSkip(FileName)
+            m_jobParams.AddResultFileToSkip(fileName)
 
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
@@ -2498,7 +2524,7 @@ Public Class clsMSGFDBUtils
 
     Private Sub mPeptideToProteinMapper_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
 
-        Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS As Integer = 120
+        Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS = 120
         Static dtLastLogTime As DateTime = DateTime.UtcNow
 
         If m_DebugLevel >= 1 Then

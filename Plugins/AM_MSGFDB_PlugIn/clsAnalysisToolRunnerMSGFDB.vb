@@ -43,7 +43,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     Private mWorkingDirectoryInUse As String
 
+#If EnableHPC = "True" Then
     Private mUsingHPC As Boolean
+#End If
 
     Private mMSGFPlusComplete As Boolean
     Private mMSGFPlusCompletionTime As DateTime
@@ -295,10 +297,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
         ' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
         mToolVersionWritten = False
 
+#If EnableHPC = "True" Then
         mUsingHPC = False
+#End If
+
         mMSGFPlusComplete = False
 
-        Dim eInputFileFormat As eInputFileFormatTypes
+        Dim eInputFileFormat = eInputFileFormatTypes.Unknown
         Dim strScanTypeFilePath As String = String.Empty
         Dim strAssumedScanType As String = String.Empty
 
@@ -545,7 +550,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
       ByVal resultsFileName As String,
       ByVal CmdStr As String,
       ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
-      ByRef criticalError As Boolean) As Boolean
+      <Out()> ByRef criticalError As Boolean) As Boolean
 
         mWorkingDirectoryInUse = String.Copy(udtHPCOptions.WorkDirPath)
         mUsingHPC = True
@@ -818,7 +823,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     End Sub
 
-    Private Function CreateScanTypeFile(ByRef strScanTypeFilePath As String) As Boolean
+    Private Function CreateScanTypeFile(<Out()> ByRef strScanTypeFilePath As String) As Boolean
 
         Dim objScanTypeFileCreator As clsScanTypeFileCreator
         objScanTypeFileCreator = New clsScanTypeFileCreator(m_WorkDir, m_Dataset)

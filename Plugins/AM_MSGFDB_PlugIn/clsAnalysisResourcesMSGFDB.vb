@@ -30,296 +30,296 @@ Public Class clsAnalysisResourcesMSGFDB
 	''' <remarks></remarks>
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim currentTask As String = "Initializing"
+        Dim currentTask = "Initializing"
 
-		Try
+        Try
 
-			currentTask = "GetHPCOptions"
+            currentTask = "GetHPCOptions"
 
-			' Determine whether or not we'll be running MSGF+ in HPC (high performance computing) mode
-			Dim udtHPCOptions As udtHPCOptionsType = GetHPCOptions(m_jobParams, m_MgrName)
+            ' Determine whether or not we'll be running MSGF+ in HPC (high performance computing) mode
+            Dim udtHPCOptions As udtHPCOptionsType = GetHPCOptions(m_jobParams, m_MgrName)
 
-			If udtHPCOptions.UsingHPC Then
-				' Make sure the HPC working directory exists and that it is empty
-				currentTask = "Verify " & udtHPCOptions.WorkDirPath
+            If udtHPCOptions.UsingHPC Then
+                ' Make sure the HPC working directory exists and that it is empty
+                currentTask = "Verify " & udtHPCOptions.WorkDirPath
 
-				Dim diPicFsWorkDir = New DirectoryInfo(udtHPCOptions.WorkDirPath)
-				If diPicFsWorkDir.Exists Then
-					Const blnDeleteFolderIfEmpty = False
-					m_FileTools.DeleteDirectoryFiles(diPicFsWorkDir.FullName, blnDeleteFolderIfEmpty)
-				Else
-					currentTask = "Create " & udtHPCOptions.WorkDirPath
+                Dim diPicFsWorkDir = New DirectoryInfo(udtHPCOptions.WorkDirPath)
+                If diPicFsWorkDir.Exists Then
+                    Const blnDeleteFolderIfEmpty = False
+                    m_FileTools.DeleteDirectoryFiles(diPicFsWorkDir.FullName, blnDeleteFolderIfEmpty)
+                Else
+                    currentTask = "Create " & udtHPCOptions.WorkDirPath
 
-					Try
-						diPicFsWorkDir.Create()
+                    Try
+                        diPicFsWorkDir.Create()
 
-					Catch ex As Exception
-						m_message = "Unable to create folder " & udtHPCOptions.WorkDirPath & ": " & ex.Message
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                    Catch ex As Exception
+                        m_message = "Unable to create folder " & udtHPCOptions.WorkDirPath & ": " & ex.Message
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & clsGlobal.GetExceptionStackTrace(ex))
 
-						CheckParentFolder(diPicFsWorkDir)
+                        CheckParentFolder(diPicFsWorkDir)
 
-						Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-					End Try
+                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    End Try
 
-				End If
-			Else
-				' Make sure the machine has enough free memory to run MSGFDB
-				currentTask = "ValidateFreeMemorySize"
-				If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
-					m_message = "Not enough free memory to run MSGFDB"
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
-			End If
+                End If
+            Else
+                ' Make sure the machine has enough free memory to run MSGFDB
+                currentTask = "ValidateFreeMemorySize"
+                If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
+                    m_message = "Not enough free memory to run MSGFDB"
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
+            End If
 
-			' Retrieve the Fasta file
-			Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+            ' Retrieve the Fasta file
+            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
 
-			If udtHPCOptions.UsingHPC Then
-				' Override the OrgDbDir to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
-				localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
-			End If
+            If udtHPCOptions.UsingHPC Then
+                ' Override the OrgDbDir to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
+                localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
+            End If
 
-			currentTask = "RetrieveOrgDB to " & localOrgDbFolder
+            currentTask = "RetrieveOrgDB to " & localOrgDbFolder
 
-			If Not RetrieveOrgDB(localOrgDbFolder, udtHPCOptions) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not RetrieveOrgDB(localOrgDbFolder, udtHPCOptions) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
-			End If
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
+            End If
 
-			' Retrieve the parameter file
-			' This will also obtain the _ModDefs.txt file using query 
-			'  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
-			'  FROM V_Param_File_Mass_Mod_Info 
-			'  WHERE Param_File_Name = 'ParamFileName'
+            ' Retrieve the parameter file
+            ' This will also obtain the _ModDefs.txt file using query 
+            '  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
+            '  FROM V_Param_File_Mass_Mod_Info 
+            '  WHERE Param_File_Name = 'ParamFileName'
 
-			Dim paramFileName = m_jobParams.GetParam("ParmFileName")
-			currentTask = "RetrieveGeneratedParamFile " & paramFileName
+            Dim paramFileName = m_jobParams.GetParam("ParmFileName")
+            currentTask = "RetrieveGeneratedParamFile " & paramFileName
 
-			If Not RetrieveGeneratedParamFile(paramFileName) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If Not RetrieveGeneratedParamFile(paramFileName) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' The ToolName job parameter holds the name of the job script we are executing
-			Dim strScriptName As String = m_jobParams.GetParam("ToolName")
-			Dim eResult As IJobParams.CloseOutType
+            ' The ToolName job parameter holds the name of the job script we are executing
+            Dim strScriptName As String = m_jobParams.GetParam("ToolName")
+            Dim eResult As IJobParams.CloseOutType
 
-			If strScriptName.ToLower().Contains("mzxml") OrElse strScriptName.ToLower().Contains("msgfplus_bruker") Then
-				currentTask = "Get mzXML file"
-				eResult = GetMzXMLFile()
+            If strScriptName.ToLower().Contains("mzxml") OrElse strScriptName.ToLower().Contains("msgfplus_bruker") Then
+                currentTask = "Get mzXML file"
+                eResult = GetMzXMLFile()
 
-			ElseIf strScriptName.ToLower().Contains("mzml") Then
-				currentTask = "Get mzML file"
-				eResult = GetMzMLFile()
+            ElseIf strScriptName.ToLower().Contains("mzml") Then
+                currentTask = "Get mzML file"
+                eResult = GetMzMLFile()
 
-			Else
-				currentTask = "RetrieveDtaFiles"
-				eResult = GetCDTAFile()
+            Else
+                currentTask = "RetrieveDtaFiles"
+                eResult = GetCDTAFile()
 
-				If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-					currentTask = "GetMasicFiles"
-					eResult = GetMasicFiles()
-				End If
-
-				If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-					currentTask = "ValidateCDTAFile"
-					eResult = ValidateCDTAFile()
+                If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    currentTask = "GetMasicFiles"
+                    eResult = GetMasicFiles()
                 End If
 
-			End If
+                If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    currentTask = "ValidateCDTAFile"
+                    eResult = ValidateCDTAFile()
+                End If
 
-			If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return eResult
-			End If
+            End If
 
-			currentTask = "Add extensions to skip"
+            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return eResult
+            End If
 
-			' Add all the extensions of the files to delete after run
-			' Do not skip all .gz files because the MSGF+ results are compressed using .gz
-			m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
-			m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
-			m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
-			m_jobParams.AddResultFileExtensionToSkip("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
+            currentTask = "Add extensions to skip"
 
-			m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)
-			m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)
+            ' Add all the extensions of the files to delete after run
+            ' Do not skip all .gz files because the MSGF+ results are compressed using .gz
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
+            m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+            m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
+            m_jobParams.AddResultFileExtensionToSkip("temp.tsv") ' MSGFDB creates .txt.temp.tsv files, which we don't need
 
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)
+            m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)
 
-		Catch ex As Exception
-			m_message = "Exception in GetResources: " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+        Catch ex As Exception
+            m_message = "Exception in GetResources: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
-	Private Sub CheckParentFolder(ByVal diPicFsWorkDir As DirectoryInfo)
+    End Function
 
-		Try
-			Dim lstParentDirectories = diPicFsWorkDir.Parent.GetDirectories().ToList()
+    Private Sub CheckParentFolder(ByVal diPicFsWorkDir As DirectoryInfo)
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Found " & lstParentDirectories.Count & " subdirectories in " & diPicFsWorkDir.FullName)
+        Try
+            Dim lstParentDirectories = diPicFsWorkDir.Parent.GetDirectories().ToList()
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking " & diPicFsWorkDir.Parent.FullName & ": " & ex.Message)
-		End Try
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Found " & lstParentDirectories.Count & " subdirectories in " & diPicFsWorkDir.FullName)
 
-	End Sub
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking " & diPicFsWorkDir.Parent.FullName & ": " & ex.Message)
+        End Try
 
-	Private Function GetCDTAFile() As IJobParams.CloseOutType
+    End Sub
 
-		' Retrieve the _DTA.txt file
-		' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+    Private Function GetCDTAFile() As IJobParams.CloseOutType
 
-		If Not RetrieveDtaFiles() Then
-			Dim sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders")
-			If Not String.IsNullOrEmpty(sharedResultsFolder) Then
-				m_message &= "; shared results folder is " & sharedResultsFolder
-			End If
+        ' Retrieve the _DTA.txt file
+        ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-			' Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not RetrieveDtaFiles() Then
+            Dim sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders")
+            If Not String.IsNullOrEmpty(sharedResultsFolder) Then
+                m_message &= "; shared results folder is " & sharedResultsFolder
+            End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            ' Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-	End Function
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	Private Function GetMasicFiles() As IJobParams.CloseOutType
+    End Function
 
-		Dim strAssumedScanType  = m_jobParams.GetParam("AssumedScanType")
+    Private Function GetMasicFiles() As IJobParams.CloseOutType
 
-		If Not String.IsNullOrWhiteSpace(strAssumedScanType) Then
-			' Scan type is assumed; we don't need the Masic ScanStats.txt files or the .Raw file
-			Select Case strAssumedScanType.ToUpper()
-				Case "CID", "ETD", "HCD"
-					If m_DebugLevel >= 1 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Assuming scan type is '" & strAssumedScanType & "'")
-					End If
-				Case Else
-					m_message = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End Select
+        Dim strAssumedScanType = m_jobParams.GetParam("AssumedScanType")
 
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		End If
+        If Not String.IsNullOrWhiteSpace(strAssumedScanType) Then
+            ' Scan type is assumed; we don't need the Masic ScanStats.txt files or the .Raw file
+            Select Case strAssumedScanType.ToUpper()
+                Case "CID", "ETD", "HCD"
+                    If m_DebugLevel >= 1 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Assuming scan type is '" & strAssumedScanType & "'")
+                    End If
+                Case Else
+                    m_message = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End Select
 
-		' Retrieve the MASIC ScanStats.txt file (and possibly the ScanStatsEx.txt file)
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
 
-		Dim blnSuccess As Boolean
-		blnSuccess = RetrieveScanStatsFiles(CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=False)
+        ' Retrieve the MASIC ScanStats.txt file (and possibly the ScanStatsEx.txt file)
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        Dim blnSuccess As Boolean
+        blnSuccess = RetrieveScanStatsFiles(createStoragePathInfoOnly:=False, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=False)
 
-		If blnSuccess Then
-			' Open the ScanStats file and read the header line to see if column ScanTypeName is present
-			' Also confirm that there are MSn spectra labeled as HCD, CID, or ETD
-			Dim strScanStatsOrExFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-			Dim blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsOrExFilePath)
+        If blnSuccess Then
+            ' Open the ScanStats file and read the header line to see if column ScanTypeName is present
+            ' Also confirm that there are MSn spectra labeled as HCD, CID, or ETD
+            Dim strScanStatsOrExFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
 
-			If Not blnScanTypeColumnFound Then
-				' We also have to retrieve the _ScanStatsEx.txt file
-				blnSuccess = RetrieveScanStatsFiles(CreateStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
+            Dim blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsOrExFilePath)
+
+            If Not blnScanTypeColumnFound Then
+                ' We also have to retrieve the _ScanStatsEx.txt file
+                blnSuccess = RetrieveScanStatsFiles(createStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
 
                 If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
-				If blnSuccess Then
-					strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStatsEx.txt")
-				End If
-			End If
+                If blnSuccess Then
+                    strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStatsEx.txt")
+                End If
+            End If
 
-			If blnScanTypeColumnFound OrElse blnSuccess Then
-				Dim detailedScanTypesDefined = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsOrExFilePath)
+            If blnScanTypeColumnFound OrElse blnSuccess Then
+                Dim detailedScanTypesDefined = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsOrExFilePath)
 
-				If Not detailedScanTypesDefined Then
-					If blnScanTypeColumnFound Then
-						m_message = "ScanTypes defined in the ScanTypeName column"
-					Else
-						m_message = "ScanTypes defined in the ""Collision Mode"" column or ""Scan Filter Text"" column"
-					End If
+                If Not detailedScanTypesDefined Then
+                    If blnScanTypeColumnFound Then
+                        m_message = "ScanTypes defined in the ScanTypeName column"
+                    Else
+                        m_message = "ScanTypes defined in the ""Collision Mode"" column or ""Scan Filter Text"" column"
+                    End If
 
-					m_message &= " do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+"
+                    m_message &= " do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+"
 
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
 
-			End If
-		End If
+            End If
+        End If
 
-		If blnSuccess Then
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved MASIC ScanStats and ScanStatsEx files")
-			End If
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		End If
+        If blnSuccess Then
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved MASIC ScanStats and ScanStatsEx files")
+            End If
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        End If
 
-		' _ScanStats.txt file not found
-		' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
-		If Not GenerateScanStatsFile() Then
-			' Error message should already have been logged and stored in m_message
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' _ScanStats.txt file not found
+        ' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
+        If Not GenerateScanStatsFile() Then
+            ' Error message should already have been logged and stored in m_message
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Dim strScanStatsFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
-		Dim detailedScanTypesDefinedNewFile = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath)
+        Dim strScanStatsFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+        Dim detailedScanTypesDefinedNewFile = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath)
 
-		If Not detailedScanTypesDefinedNewFile Then
-			m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not detailedScanTypesDefinedNewFile Then
+            m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	Private Function ValidateCDTAFile() As IJobParams.CloseOutType
+    Private Function ValidateCDTAFile() As IJobParams.CloseOutType
 
-		' If the _dta.txt file is over 2 GB in size, then condense it
-		If Not ValidateCDTAFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
-			' Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' If the _dta.txt file is over 2 GB in size, then condense it
+        If Not ValidateCDTAFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
+            ' Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Remove any spectra from the _DTA.txt file with fewer than 3 ions
-		If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, m_DatasetName & "_dta.txt") Then
-			' Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Remove any spectra from the _DTA.txt file with fewer than 3 ions
+        If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, m_DatasetName & "_dta.txt") Then
+            ' Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Make sure that the spectra are centroided
-		Dim strCDTAPath = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
+        ' Make sure that the spectra are centroided
+        Dim strCDTAPath = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the _dta.txt file has centroided spectra")
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the _dta.txt file has centroided spectra")
 
-		If Not ValidateCDTAFileIsCentroided(strCDTAPath) Then
-			' m_message is already updated
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not ValidateCDTAFileIsCentroided(strCDTAPath) Then
+            ' m_message is already updated
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	Public Shared Function ValidateScanStatsFileHasDetailedScanTypes(ByVal strScanStatsFilePath As String) As Boolean
+    Public Shared Function ValidateScanStatsFileHasDetailedScanTypes(ByVal strScanStatsFilePath As String) As Boolean
 
-		Dim lstColumnNameWithScanType = New List(Of String) From {"ScanTypeName", "Collision Mode", "Scan Filter Text"}
-		Dim lstColumnIndicesToCheck = New List(Of Integer)
+        Dim lstColumnNameWithScanType = New List(Of String) From {"ScanTypeName", "Collision Mode", "Scan Filter Text"}
+        Dim lstColumnIndicesToCheck = New List(Of Integer)
 
-		Dim blnDetailedScanTypesDefined As Boolean = False
+        Dim blnDetailedScanTypesDefined = False
 
-		Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        Using srScanStatsFile = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
             If Not srScanStatsFile.EndOfStream Then
                 ' Parse the scan headers
@@ -369,7 +369,7 @@ Public Class clsAnalysisResourcesMSGFDB
                 End If
             End If
 
-			If lstColumnIndicesToCheck.Count > 0 Then
+            If lstColumnIndicesToCheck.Count > 0 Then
                 Do While Not srScanStatsFile.EndOfStream AndAlso Not blnDetailedScanTypesDefined
                     Dim lstColumns As List(Of String)
                     lstColumns = srScanStatsFile.ReadLine().Split(ControlChars.Tab).ToList()
@@ -387,19 +387,19 @@ Public Class clsAnalysisResourcesMSGFDB
                     Next
 
                 Loop
-			End If
+            End If
 
-		End Using
+        End Using
 
-		Return blnDetailedScanTypesDefined
+        Return blnDetailedScanTypesDefined
 
-	End Function
+    End Function
 
-	Protected Function ValidateScanStatsFileHasScanTypeNameColumn(ByVal strScanStatsFilePath As String) As Boolean
+    Private Function ValidateScanStatsFileHasScanTypeNameColumn(ByVal strScanStatsFilePath As String) As Boolean
 
-		Dim blnScanTypeColumnFound As Boolean = False
+        Dim blnScanTypeColumnFound = False
 
-		Using srScanStatsFile As StreamReader = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        Using srScanStatsFile = New StreamReader(New FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
             If Not srScanStatsFile.EndOfStream Then
                 ' Parse the scan headers to look for ScanTypeName
@@ -423,10 +423,10 @@ Public Class clsAnalysisResourcesMSGFDB
                 End If
             End If
 
-		End Using
+        End Using
 
-		Return blnScanTypeColumnFound
+        Return blnScanTypeColumnFound
 
-	End Function
+    End Function
 
 End Class

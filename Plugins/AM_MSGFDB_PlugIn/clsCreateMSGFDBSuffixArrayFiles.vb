@@ -10,23 +10,24 @@ Option Strict On
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
+Imports System.Text.RegularExpressions
 
 Public Class clsCreateMSGFDBSuffixArrayFiles
 
 #Region "Constants"
 	Public Const LEGACY_MSGFDB_SUBDIRECTORY_NAME As String = "Legacy_MSGFDB"
-	Protected Const MSGF_PLUS_INDEX_FILE_INFO_SUFFIX As String = ".MSGFPlusIndexFileInfo"
+    Private Const MSGF_PLUS_INDEX_FILE_INFO_SUFFIX As String = ".MSGFPlusIndexFileInfo"
 #End Region
 
 #Region "Module Variables"
-	Protected mErrorMessage As String = String.Empty
-	Protected mMgrName As String
+    Private mErrorMessage As String = String.Empty
+    Private ReadOnly mMgrName As String
 
-	Protected mPICHPCUser As String
-	Protected mPICHPCPassword As String
+    Private mPICHPCUser As String
+    Private mPICHPCPassword As String
 
 #If EnableHPC = "True" Then
-	Protected WithEvents mComputeCluster As HPC_Submit.WindowsHPC2012
+	Private WithEvents mComputeCluster As HPC_Submit.WindowsHPC2012
 #End If
 
 #End Region
@@ -37,24 +38,24 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 		End Get
 	End Property
 
-	Public Sub New(ByVal strManagerName As String)
-		Me.New(strManagerName, String.Empty, String.Empty)
-	End Sub
+    Public Sub New(strManagerName As String)
+        Me.New(strManagerName, String.Empty, String.Empty)
+    End Sub
 
-	Public Sub New(ByVal strManagerName As String, ByVal sPICHPCUser As String, ByVal sPICHPCPassword As String)
-		mMgrName = strManagerName
-		mPICHPCUser = sPICHPCUser
-		mPICHPCPassword = sPICHPCPassword
-	End Sub
+    Public Sub New(strManagerName As String, sPICHPCUser As String, sPICHPCPassword As String)
+        mMgrName = strManagerName
+        mPICHPCUser = sPICHPCUser
+        mPICHPCPassword = sPICHPCPassword
+    End Sub
 
-	Protected Function CopyExistingIndexFilesFromRemote(
-	  ByVal fiFastaFile As FileInfo,
-	  ByVal blnUsingLegacyFasta As Boolean,
-	  ByVal strRemoteIndexFolderPath As String,
-	  ByVal blnCheckForLockFile As Boolean,
-	  ByVal intDebugLevel As Integer,
-	  ByVal sngMaxWaitTimeHours As Single,
-	  <Out()> ByRef diskFreeSpaceBelowThreshold As Boolean) As IJobParams.CloseOutType
+    Private Function CopyExistingIndexFilesFromRemote(
+      fiFastaFile As FileInfo,
+      blnUsingLegacyFasta As Boolean,
+      strRemoteIndexFolderPath As String,
+      blnCheckForLockFile As Boolean,
+      intDebugLevel As Integer,
+      sngMaxWaitTimeHours As Single,
+      <Out()> ByRef diskFreeSpaceBelowThreshold As Boolean) As IJobParams.CloseOutType
 
         Dim blnSuccess = False
 
@@ -218,10 +219,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
     End Function
 
-    Protected Function CopyIndexFilesToRemote(
-      ByVal fiFastaFile As FileInfo,
-      ByVal strRemoteIndexFolderPath As String,
-      ByVal intDebugLevel As Integer) As Boolean
+    Private Function CopyIndexFilesToRemote(
+      fiFastaFile As FileInfo,
+      strRemoteIndexFolderPath As String,
+      intDebugLevel As Integer) As Boolean
 
         Dim strErrorMessage As String = String.Empty
         Dim strManager As String = GetPseudoManagerName()
@@ -248,11 +249,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' <returns></returns>
     ''' <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
     Public Shared Function CopyIndexFilesToRemote(
-      ByVal fiFastaFile As FileInfo,
-      ByVal remoteIndexFolderPath As String,
-      ByVal debugLevel As Integer,
-      ByVal managerName As String,
-      ByVal createIndexFileForExistingFiles As Boolean,
+      fiFastaFile As FileInfo,
+      remoteIndexFolderPath As String,
+      debugLevel As Integer,
+      managerName As String,
+      createIndexFileForExistingFiles As Boolean,
       <Out()> ByRef strErrorMessage As String) As Boolean
 
         Dim blnSuccess = False
@@ -352,23 +353,23 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' <param name="JobNum"></param>
     ''' <param name="javaProgLoc"></param>
     ''' <param name="msgfDbProgLoc"></param>
-    ''' <param name="strFASTAFilePath">Input/output parameter; will get updated if running Legacy MSGFDB</param>
+    ''' <param name="strFASTAFilePath">FASTA file path</param>
     ''' <param name="blnFastaFileIsDecoy">When True, then only creates the forward-based index files.  When False, then creates both the forward and reverse index files</param>
     ''' <param name="strMSGFPlusIndexFilesFolderPathBase">Folder path from which to copy (or store) the index files</param>
     ''' <param name="strMSGFPlusIndexFilesFolderPathLegacyDB">Folder path from which to copy (or store) the index files for Legacy DBs (.fasta files not created from the protein sequences database)</param>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Public Function CreateSuffixArrayFiles(
-      ByVal strLogFileDir As String,
-      ByVal intDebugLevel As Integer,
-      ByVal JobNum As String,
-      ByVal javaProgLoc As String,
-      ByVal msgfDbProgLoc As String,
-      ByRef strFASTAFilePath As String,
-      ByVal blnFastaFileIsDecoy As Boolean,
-      ByVal strMSGFPlusIndexFilesFolderPathBase As String,
-      ByVal strMSGFPlusIndexFilesFolderPathLegacyDB As String,
-      ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+      strLogFileDir As String,
+      intDebugLevel As Integer,
+      JobNum As String,
+      javaProgLoc As String,
+      msgfDbProgLoc As String,
+      strFASTAFilePath As String,
+      blnFastaFileIsDecoy As Boolean,
+      strMSGFPlusIndexFilesFolderPathBase As String,
+      strMSGFPlusIndexFilesFolderPathLegacyDB As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
         Const MAX_WAITTIME_HOURS As Single = 1.0
 
@@ -401,7 +402,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
             ' Protein collection files will start with ID_ then have at least 6 integers, then an alphanumeric hash string, for example ID_004208_295531A4.fasta
             ' If the filename does not match that pattern, then we're using a legacy fasta file
-            Dim reProtectionCollectionFasta = New Text.RegularExpressions.Regex("ID_\d{6,}_[0-9a-z]+\.fasta", Text.RegularExpressions.RegexOptions.IgnoreCase)
+            Dim reProtectionCollectionFasta = New Regex("ID_\d{6,}_[0-9a-z]+\.fasta", RegexOptions.IgnoreCase)
             Dim blnUsingLegacyFasta = Not reProtectionCollectionFasta.IsMatch(fiFastaFile.Name)
 
             '  Look for existing suffix array files 
@@ -616,18 +617,18 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
     End Function
 
-    Protected Function CreateSuffixArrayFilesWork(
-      ByVal strLogFileDir As String,
-      ByVal intDebugLevel As Integer,
-      ByVal JobNum As String,
-      ByVal fiFastaFile As FileInfo,
-      ByVal fiLockFile As FileInfo,
-      ByVal JavaProgLoc As String,
-      ByVal msgfDbProgLoc As String,
-      ByVal blnFastaFileIsDecoy As Boolean,
-      ByVal blnMSGFPlus As Boolean,
-      ByVal dbSarrayFilename As String,
-      ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+    Private Function CreateSuffixArrayFilesWork(
+      strLogFileDir As String,
+      intDebugLevel As Integer,
+      JobNum As String,
+      fiFastaFile As FileInfo,
+      fiLockFile As FileInfo,
+      JavaProgLoc As String,
+      msgfDbProgLoc As String,
+      blnFastaFileIsDecoy As Boolean,
+      blnMSGFPlus As Boolean,
+      dbSarrayFilename As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
         Dim strCurrentTask As String = String.Empty
 
@@ -875,7 +876,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' Creates a lock file
     ''' </summary>
     ''' <returns>True if success; false if failure</returns>
-    Protected Function CreateLockFile(ByVal strLockFilePath As String) As Boolean
+    Private Function CreateLockFile(strLockFilePath As String) As Boolean
 
         Try
             Using swLockFile = New StreamWriter(strLockFilePath)
@@ -893,12 +894,12 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
     End Function
 
-    Protected Function CreateRemoteSuffixArrayLockFile(
-      ByVal strFastaFileName As String,
-      ByVal strRemoteIndexFolderPath As String,
-      ByRef fiRemoteLockFile As FileInfo,
-      ByVal intDebugLevel As Integer,
-      ByVal sngMaxWaitTimeHours As Single) As Boolean
+    Private Function CreateRemoteSuffixArrayLockFile(
+      strFastaFileName As String,
+      strRemoteIndexFolderPath As String,
+      <Out()> ByRef fiRemoteLockFile As FileInfo,
+      intDebugLevel As Integer,
+      sngMaxWaitTimeHours As Single) As Boolean
 
         ' ReSharper disable once RedundantAssignment
         Dim strCurrentTask = "Initializing"
@@ -911,6 +912,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         If Not diRemoteIndexFolderPath.Parent.Exists Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot read/write MSGF+ index files from remote share; folder not found; " & diRemoteIndexFolderPath.FullName)
+            fiRemoteLockFile = Nothing
             Return False
         End If
 
@@ -939,8 +941,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
     End Function
 
-
-    Protected Sub DeleteLockFile(ByVal fiLockFile As FileInfo)
+    Private Sub DeleteLockFile(fiLockFile As FileInfo)
         Try
             fiLockFile.Refresh()
             If fiLockFile.Exists Then
@@ -951,13 +952,13 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
         End Try
     End Sub
 
-    Protected Function DetermineRemoteMSGFPlusIndexFilesFolderPath(
-      ByVal strFastaFileName As String,
-      ByVal strMSGFPlusIndexFilesFolderPathBase As String,
-      ByVal strMSGFPlusIndexFilesFolderPathLegacyDB As String) As String
+    Private Function DetermineRemoteMSGFPlusIndexFilesFolderPath(
+      strFastaFileName As String,
+      strMSGFPlusIndexFilesFolderPathBase As String,
+      strMSGFPlusIndexFilesFolderPathLegacyDB As String) As String
 
-        Dim reExtractNum = New Text.RegularExpressions.Regex("^ID_(\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-        Dim reMatch As Text.RegularExpressions.Match
+        Dim reExtractNum = New Regex("^ID_(\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        Dim reMatch As Match
 
         Dim strRemoteIndexFolderPath As String = String.Empty
 
@@ -991,15 +992,15 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' <param name="blnMSGFPlus"></param>
     ''' <param name="strOutputNameBase"></param>
     ''' <param name="strFolderPathToSearch"></param>
-    ''' <param name="lstFilesToFind">Output param: list of files that should exist</param>
+    ''' <param name="lstFilesToFind">List of files that should exist; calling function must have initialized it</param>
     ''' <returns>A list of the files that currently exist</returns>
     ''' <remarks></remarks>
-    Protected Function FindExistingSuffixArrayFiles(
-      ByVal blnFastaFileIsDecoy As Boolean,
-      ByVal blnMSGFPlus As Boolean,
-      ByVal strOutputNameBase As String,
-      ByVal strFolderPathToSearch As String,
-      ByRef lstFilesToFind As List(Of String)) As List(Of FileInfo)
+    Private Function FindExistingSuffixArrayFiles(
+      blnFastaFileIsDecoy As Boolean,
+      blnMSGFPlus As Boolean,
+      strOutputNameBase As String,
+      strFolderPathToSearch As String,
+      lstFilesToFind As List(Of String)) As List(Of FileInfo)
 
         Dim strExistingFiles As String = String.Empty
         Dim strMissingFiles As String = String.Empty
@@ -1016,28 +1017,24 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' <param name="blnMSGFPlus"></param>
     ''' <param name="strOutputNameBase"></param>
     ''' <param name="strFolderPathToSearch"></param>
-    ''' <param name="lstFilesToFind">Output param: list of files that should exist</param>
+    ''' <param name="lstFilesToFind">List of files that should exist; calling function must have initialized it</param>
     ''' <param name="strExistingFiles">Output param: semicolon separated list of existing files</param>
     ''' <param name="strMissingFiles">Output param: semicolon separated list of missing files</param>
     ''' <returns>A list of the files that currently exist</returns>
     ''' <remarks></remarks>
-    Protected Function FindExistingSuffixArrayFiles(
-      ByVal blnFastaFileIsDecoy As Boolean,
-      ByVal blnMSGFPlus As Boolean,
-      ByVal strOutputNameBase As String,
-      ByVal strFolderPathToSearch As String,
-      ByRef lstFilesToFind As List(Of String),
-      ByRef strExistingFiles As String,
-      ByRef strMissingFiles As String) As List(Of FileInfo)
+    Private Function FindExistingSuffixArrayFiles(
+      blnFastaFileIsDecoy As Boolean,
+      blnMSGFPlus As Boolean,
+      strOutputNameBase As String,
+      strFolderPathToSearch As String,
+      lstFilesToFind As List(Of String),
+      <Out()> ByRef strExistingFiles As String,
+      <Out()> ByRef strMissingFiles As String) As List(Of FileInfo)
 
         Dim lstExistingFiles As List(Of FileInfo)
         lstExistingFiles = New List(Of FileInfo)
 
-        If lstFilesToFind Is Nothing Then
-            lstFilesToFind = New List(Of String)
-        Else
-            lstFilesToFind.Clear()
-        End If
+        lstFilesToFind.Clear()
 
         strExistingFiles = String.Empty
         strMissingFiles = String.Empty
@@ -1095,7 +1092,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
         Return lstExistingFiles
     End Function
 
-    Protected Function GetPseudoManagerName() As String
+    Private Function GetPseudoManagerName() As String
 
         Dim strMgrName As String
         strMgrName = mMgrName & "_CreateMSGFDBSuffixArrayFiles"
@@ -1103,7 +1100,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
         Return strMgrName
     End Function
 
-    Public Function IsMSGFPlus(ByVal MSGFDBJarFilePath As String) As Boolean
+    Public Function IsMSGFPlus(MSGFDBJarFilePath As String) As Boolean
         Const MSGFDB_JAR_NAME = "MSGFDB.jar"
 
         Dim fiJarFile As FileInfo
@@ -1128,11 +1125,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' <param name="dtMinWriteTimeThresholdUTC"></param>
     ''' <returns>True if all files are found and are the right size</returns>
     ''' <remarks></remarks>
-    Protected Function ValidateFiles(
-      ByVal strFolderPathToCheck As String,
-      ByVal dctFilesToCopy As Dictionary(Of String, Int64),
-      ByVal blnUsingLegacyFasta As Boolean,
-      ByVal dtMinWriteTimeThresholdUTC As DateTime) As Boolean
+    Private Function ValidateFiles(
+      strFolderPathToCheck As String,
+      dctFilesToCopy As Dictionary(Of String, Int64),
+      blnUsingLegacyFasta As Boolean,
+      dtMinWriteTimeThresholdUTC As DateTime) As Boolean
 
         For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
             Dim fiSourceFile As FileInfo
@@ -1162,7 +1159,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
     End Function
 
-    Protected Sub WaitForExistingLockfile(ByVal fiLockFile As FileInfo, ByVal intDebugLevel As Integer, ByVal sngMaxWaitTimeHours As Single)
+    Private Sub WaitForExistingLockfile(fiLockFile As FileInfo, intDebugLevel As Integer, sngMaxWaitTimeHours As Single)
 
         ' Check to see if another Analysis Manager is already creating the indexed DB files
         If fiLockFile.Exists AndAlso DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60 Then
