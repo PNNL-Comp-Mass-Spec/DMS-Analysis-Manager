@@ -9,7 +9,6 @@
 Option Strict On
 
 Imports AnalysisManagerBase
-Imports System.IO
 
 Public Class clsMSXMLGenReadW
 	Inherits clsMSXmlGen
@@ -22,55 +21,55 @@ Public Class clsMSXMLGenReadW
 
 #Region "Methods"
 
-    Public Sub New(ByVal WorkDir As String,
-      ByVal ReadWProgramPath As String,
-      ByVal DatasetName As String,
-      ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      ByVal CentroidMSXML As Boolean)
+    Public Sub New(WorkDir As String,
+      ReadWProgramPath As String,
+      DatasetName As String,
+      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
+      CentroidMSXML As Boolean)
 
         MyBase.New(WorkDir, ReadWProgramPath, DatasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, eOutputType, CentroidMSXML)
 
         If RawDataType <> clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
-            Const message As String = "clsMSXMLGenReadW can only be used to process Thermo .Raw files"
-            Throw New ArgumentOutOfRangeException(message)
+            Const exceptionMsg = "clsMSXMLGenReadW can only be used to process Thermo .Raw files"
+            Throw New ArgumentOutOfRangeException(exceptionMsg)
         End If
 
         mUseProgRunnerResultCode = True
 
     End Sub
 
-	Protected Overrides Function CreateArguments(ByVal msXmlFormat As String, ByVal RawFilePath As String) As String
+    Protected Overrides Function CreateArguments(msXmlFormat As String, RawFilePath As String) As String
 
-		Dim CmdStr As String
+        Dim CmdStr As String
 
-		If mProgramPath.ToLower.Contains("\v2.") Then
-			' Version 2.x syntax
-			' Syntax is: readw <raw file path> <c/p> [<output file>]
+        If mProgramPath.ToLower.Contains("\v2.") Then
+            ' Version 2.x syntax
+            ' Syntax is: readw <raw file path> <c/p> [<output file>]
 
-			If mCentroidMS1 OrElse mCentroidMS2 Then
-				' Centroiding is enabled
-				CmdStr = " " & RawFilePath & " c"
-			Else
-				CmdStr = " " & RawFilePath & " p"
-			End If
+            If mCentroidMS1 OrElse mCentroidMS2 Then
+                ' Centroiding is enabled
+                CmdStr = " " & RawFilePath & " c"
+            Else
+                CmdStr = " " & RawFilePath & " p"
+            End If
 
-		Else
-			' Version 3 or higher
-			' Syntax is ReAdW [options] <raw file path> [<output file>]
-			'  where Options will include --mzXML and possibly -c
+        Else
+            ' Version 3 or higher
+            ' Syntax is ReAdW [options] <raw file path> [<output file>]
+            '  where Options will include --mzXML and possibly -c
 
-			If mCentroidMS1 OrElse mCentroidMS2 Then
-				' Centroiding is enabled
-				CmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
-			Else
-				CmdStr = " --" & msXmlFormat & " " & RawFilePath
-			End If
-		End If
+            If mCentroidMS1 OrElse mCentroidMS2 Then
+                ' Centroiding is enabled
+                CmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
+            Else
+                CmdStr = " --" & msXmlFormat & " " & RawFilePath
+            End If
+        End If
 
 
-		Return CmdStr
-	End Function
+        Return CmdStr
+    End Function
 
 	Protected Overrides Function SetupTool() As Boolean
 

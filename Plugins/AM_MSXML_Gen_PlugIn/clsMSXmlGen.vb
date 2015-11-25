@@ -28,47 +28,49 @@ Public MustInherit Class clsMSXmlGen
 
 	Protected WithEvents CmdRunner As clsRunDosProgram
 
-	Public Event ProgRunnerStarting(ByVal CommandLine As String)
-	Public Event LoopWaiting()
+    Public Event ProgRunnerStarting(CommandLine As String)
+    Public Event LoopWaiting()
 
 #End Region
 
 #Region "Properties"
-	Public Property DebugLevel() As Integer
-		Get
-			Return mDebugLevel
-		End Get
-		Set(ByVal value As Integer)
-			mDebugLevel = value
-		End Set
-	End Property
 
-	Public ReadOnly Property ErrorMessage() As String
-		Get
-			If mErrorMessage Is Nothing Then
-				Return String.Empty
-			Else
-				Return mErrorMessage
-			End If
-		End Get
-	End Property
+    Public Property DebugLevel() As Integer
+        Get
+            Return mDebugLevel
+        End Get
+        Set(value As Integer)
+            mDebugLevel = value
+        End Set
+    End Property
 
-    Public MustOverride ReadOnly Property ProgramName As String        
+    Public ReadOnly Property ErrorMessage() As String
+        Get
+            If mErrorMessage Is Nothing Then
+                Return String.Empty
+            Else
+                Return mErrorMessage
+            End If
+        End Get
+    End Property
+
+    Public MustOverride ReadOnly Property ProgramName As String
 
     Public ReadOnly Property SourceFilePath As String
         Get
             Return mSourceFilePath
         End Get
     End Property
+
 #End Region
 
     Public Sub New(
-      ByVal WorkDir As String,
-      ByVal ProgramPath As String,
-      ByVal DatasetName As String,
-      ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      ByVal CentroidMSXML As Boolean)
+      WorkDir As String,
+      ProgramPath As String,
+      DatasetName As String,
+      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
+      CentroidMSXML As Boolean)
 
         mWorkDir = WorkDir
         mProgramPath = ProgramPath
@@ -82,13 +84,13 @@ Public MustInherit Class clsMSXmlGen
     End Sub
 
     Public Sub New(
-      ByVal WorkDir As String,
-      ByVal ProgramPath As String,
-      ByVal DatasetName As String,
-      ByVal RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      ByVal CentroidMS1 As Boolean,
-      ByVal CentroidMS2 As Boolean)
+      WorkDir As String,
+      ProgramPath As String,
+      DatasetName As String,
+      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
+      CentroidMS1 As Boolean,
+      CentroidMS2 As Boolean)
 
         mWorkDir = WorkDir
         mProgramPath = ProgramPath
@@ -101,7 +103,7 @@ Public MustInherit Class clsMSXmlGen
         mErrorMessage = String.Empty
     End Sub
 
-    Protected MustOverride Function CreateArguments(ByVal msXmlFormat As String, ByVal RawFilePath As String) As String
+    Protected MustOverride Function CreateArguments(msXmlFormat As String, RawFilePath As String) As String
 
     ''' <summary>
     ''' Generate the mzXML or mzML file
@@ -109,7 +111,7 @@ Public MustInherit Class clsMSXmlGen
     ''' <returns>True if success; false if a failure</returns>
     ''' <remarks></remarks>
     Public Function CreateMSXMLFile() As Boolean
-        Dim msXmlFormat As String = "mzXML"
+        Dim msXmlFormat = "mzXML"
 
         Select Case mRawDataType
             Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
@@ -219,7 +221,7 @@ Public MustInherit Class clsMSXmlGen
 
     End Function
 
-    Public Sub LogCreationStatsRawToMzXml(ByVal dtStartTimeUTC As DateTime, ByVal strWorkDirPath As String, ByVal strDatasetName As String)
+    Public Sub LogCreationStatsRawToMzXml(dtStartTimeUTC As DateTime, strWorkDirPath As String, strDatasetName As String)
 
         Dim strSourceFilePath As String = Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
         Dim strMsXmlFilePath As String = Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
@@ -228,7 +230,7 @@ Public MustInherit Class clsMSXmlGen
 
     End Sub
 
-    Public Sub LogCreationStatsSourceToMsXml(ByVal dtStartTimeUTC As DateTime, ByVal strSourceFilePath As String, ByVal strMsXmlFilePath As String)
+    Public Sub LogCreationStatsSourceToMsXml(dtStartTimeUTC As DateTime, strSourceFilePath As String, strMsXmlFilePath As String)
 
         Try
             ' Save some stats to the log
@@ -275,7 +277,7 @@ Public MustInherit Class clsMSXmlGen
 
     Protected MustOverride Function SetupTool() As Boolean
 
-    Protected Function ValidateMsXmlFile(ByVal eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants, ByVal outputFilePath As String) As Boolean
+    Protected Function ValidateMsXmlFile(eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants, outputFilePath As String) As Boolean
         ' Open the .mzXML or .mzML file and look for </mzXML> or </indexedmzML> at the end of the file
 
         Try

@@ -15,15 +15,15 @@ Public Class clsAnalysisResourcesMASIC
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         ' Get input data file
-        Dim CreateStoragePathInfoOnly As Boolean = False
+        Dim CreateStoragePathInfoOnly = False
         Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
 		Dim toolName As String = m_jobParams.GetParam("ToolName")
 
-        Select Case RawDataType.ToLower
-            Case RAW_DATA_TYPE_DOT_RAW_FILES, _
-                 RAW_DATA_TYPE_DOT_WIFF_FILES, _
-                 RAW_DATA_TYPE_DOT_UIMF_FILES, _
-                 RAW_DATA_TYPE_DOT_MZXML_FILES, _
+        Select Case RawDataType.ToLower()
+            Case RAW_DATA_TYPE_DOT_RAW_FILES,
+                 RAW_DATA_TYPE_DOT_WIFF_FILES,
+                 RAW_DATA_TYPE_DOT_UIMF_FILES,
+                 RAW_DATA_TYPE_DOT_MZXML_FILES,
                  RAW_DATA_TYPE_DOT_D_FOLDERS
 
                 ' If desired, set the following to True to not actually copy the .Raw 
@@ -88,10 +88,9 @@ Public Class clsAnalysisResourcesMASIC
         m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION)
 
         'Retrieve param file
-		If Not RetrieveFile( _
-		  m_jobParams.GetParam("ParmFileName"), _
-		  m_jobParams.GetParam("ParmFileStoragePath")) _
-		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         'All finished
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

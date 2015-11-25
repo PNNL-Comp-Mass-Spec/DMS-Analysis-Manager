@@ -23,18 +23,18 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
 
     'Job running status variable
-	Protected m_JobRunning As Boolean
+    Protected m_JobRunning As Boolean
 
-	Protected m_ErrorMessage As String = String.Empty
-	Protected m_ProcessStep As String = String.Empty
+    Protected m_ErrorMessage As String = String.Empty
+    Protected m_ProcessStep As String = String.Empty
     Protected m_MASICStatusFileName As String = String.Empty
     Protected m_MASICLogFileName As String = String.Empty
 
 #End Region
 
 #Region "Methods"
-	Public Sub New()
-	End Sub
+    Public Sub New()
+    End Sub
 
     Protected Sub ExtractErrorsFromMASICLogFile(strLogFilePath As String)
         ' Read the most recent MASIC_Log file and look for any lines with the text "Error"
@@ -234,6 +234,8 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             .WorkDir = m_WorkDir
         End With
 
+        ResetProgRunnerCpuUsage()
+
         objMasicProgRunner.StartAndMonitorProgram()
 
         'Wait for the job to complete
@@ -376,7 +378,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         End If
 
         'Add all the extensions of the files to delete after run
-        m_JobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX) 'Unzipped, concatenated DTA
+        m_jobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX) 'Unzipped, concatenated DTA
 
         'Add the current job data to the summary file
         Try
@@ -461,76 +463,87 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
     End Function
 
-	Protected Function WaitForJobToFinish(ByRef objMasicProgRunner As PRISM.Processes.clsProgRunner) As Boolean
-        Const MAX_RUNTIME_HOURS As Integer = 12
+    Protected Function WaitForJobToFinish(objMasicProgRunner As PRISM.Processes.clsProgRunner) As Boolean
+        Const MAX_RUNTIME_HOURS = 12
+        Const SECONDS_BETWEEN_UPDATE = 15
 
-        Static sngProgressSaved As Single = -1
+        Dim blnSICsXMLFileExists As Boolean
+        Dim dtStartTime As DateTime = DateTime.UtcNow
+        Dim blnAbortedProgram = False
 
-		Dim blnSICsXMLFileExists As Boolean
-		Dim dtStartTime As DateTime = DateTime.UtcNow
-		Dim blnAbortedProgram As Boolean = False
+        'Wait for completion
+        m_JobRunning = True
 
-		'Wait for completion
-		m_JobRunning = True
+        Dim dtLastUpdate = DateTime.UtcNow
 
-		While m_JobRunning
-			Threading.Thread.Sleep(5000)				'Delay for 5 seconds
+        While m_JobRunning
 
-			If objMasicProgRunner.State = PRISM.Processes.clsProgRunner.States.NotMonitoring Or objMasicProgRunner.State = 10 Then
-				m_JobRunning = False
-			Else
+            ' Wait for 15 seconds
+            While DateTime.UtcNow.Subtract(dtLastUpdate).TotalSeconds < SECONDS_BETWEEN_UPDATE
+                Threading.Thread.Sleep(250)
+            End While
+            dtLastUpdate = DateTime.UtcNow
 
-                CalculateNewStatus(objMasicProgRunner.Program)                       'Update the status
+            If objMasicProgRunner.State = PRISM.Processes.clsProgRunner.States.NotMonitoring Or objMasicProgRunner.State = 10 Then
+                m_JobRunning = False
+            Else
+                ' Update the status
+                CalculateNewStatus(objMasicProgRunner.Program)
                 UpdateStatusFile()
 
+                ' Note that the call to GetCoreUsage() will take at least 1 second
+                Dim coreUsage = objMasicProgRunner.GetCoreUsage()
+
+                UpdateProgRunnerCpuUsage(objMasicProgRunner.PID, coreUsage, SECONDS_BETWEEN_UPDATE)
+
                 LogProgress("MASIC")
-			End If
+            End If
 
-			If DateTime.UtcNow.Subtract(dtStartTime).TotalHours >= MAX_RUNTIME_HOURS Then
-				' Abort processing
-				objMasicProgRunner.StopMonitoringProgram(Kill:=True)
-				blnAbortedProgram = True
-			End If
-		End While
+            If DateTime.UtcNow.Subtract(dtStartTime).TotalHours >= MAX_RUNTIME_HOURS Then
+                ' Abort processing
+                objMasicProgRunner.StopMonitoringProgram(Kill:=True)
+                blnAbortedProgram = True
+            End If
+        End While
 
-		If m_DebugLevel > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended")
-		End If
+        If m_DebugLevel > 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended")
+        End If
 
-		If blnAbortedProgram Then
-			m_ErrorMessage = "Aborted MASIC processing since over " & MAX_RUNTIME_HOURS & " hours have elapsed"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & m_ErrorMessage)
-			Return False
-		ElseIf objMasicProgRunner.State = 10 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10")
-			Return False
-		ElseIf objMasicProgRunner.ExitCode <> 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " & objMasicProgRunner.ExitCode)
+        If blnAbortedProgram Then
+            m_ErrorMessage = "Aborted MASIC processing since over " & MAX_RUNTIME_HOURS & " hours have elapsed"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & m_ErrorMessage)
+            Return False
+        ElseIf objMasicProgRunner.State = 10 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10")
+            Return False
+        ElseIf objMasicProgRunner.ExitCode <> 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " & objMasicProgRunner.ExitCode)
 
-			' See if a _SICs.XML file was created
-			If Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX).Length > 0 Then
-				blnSICsXMLFileExists = True
-			End If
+            ' See if a _SICs.XML file was created
+            If Directory.GetFiles(m_WorkDir, "*" & SICS_XML_FILE_SUFFIX).Length > 0 Then
+                blnSICsXMLFileExists = True
+            End If
 
-			If objMasicProgRunner.ExitCode = 32 Then
-				' FindSICPeaksError
-				' As long as the _SICs.xml file was created, we can safely ignore this error
-				If blnSICsXMLFileExists Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file found, so ignoring non-zero exit code")
-					Return True
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file not found")
-					Return False
-				End If
-			Else
-				' Return False for any other exit codes
-				Return False
-			End If
-		Else
-			Return True
-		End If
+            If objMasicProgRunner.ExitCode = 32 Then
+                ' FindSICPeaksError
+                ' As long as the _SICs.xml file was created, we can safely ignore this error
+                If blnSICsXMLFileExists Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file found, so ignoring non-zero exit code")
+                    Return True
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " & SICS_XML_FILE_SUFFIX & " file not found")
+                    Return False
+                End If
+            Else
+                ' Return False for any other exit codes
+                Return False
+            End If
+        Else
+            Return True
+        End If
 
-	End Function
+    End Function
 
 #End Region
 

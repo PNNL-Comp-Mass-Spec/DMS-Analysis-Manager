@@ -363,7 +363,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     ''' </summary>
     ''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
     ''' <remarks></remarks>
-    Private Sub mMSXmlGen_ProgRunnerStarting(ByVal CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
+    Private Sub mMSXmlGen_ProgRunnerStarting(CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
     End Sub
 #End Region

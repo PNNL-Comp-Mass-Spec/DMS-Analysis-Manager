@@ -10,6 +10,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Runtime.InteropServices
 
 ''' <summary>
 ''' Derived class for performing MASIC analysis on Finnigan datasets
@@ -199,12 +200,14 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
      fiInputFile As FileInfo,
      strScanStatsFilePath As String,
      strScanStatsExFilePath As String,
-     ByRef fiScanStatsOverrideFile As FileInfo,
-     ByRef fiScanStatsExOverrideFile As FileInfo,
-     ByRef strInputFilePath As String) As IJobParams.CloseOutType
+     <Out()> ByRef fiScanStatsOverrideFile As FileInfo,
+     <Out()> ByRef fiScanStatsExOverrideFile As FileInfo,
+     <Out()> ByRef strInputFilePath As String) As IJobParams.CloseOutType
 
         ' .Raw file is over 2 GB in size
         ' Will convert it to mzXML and centroid (so that MASIC will use less memory)
+
+        strInputFilePath = String.Empty
 
         Try
 
@@ -245,6 +248,8 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
         Catch ex As Exception
             m_message = "Error preparing to convert the Raw file to a MzXML file"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (StartConvertRawToMzXML): " & ex.Message)
+            fiScanStatsOverrideFile = Nothing
+            fiScanStatsExOverrideFile = Nothing
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -253,17 +258,17 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
     End Function
 
 #Region "Event Handlers"
-	Private Sub mMSXmlCreator_DebugEvent(Message As String) Handles mMSXmlCreator.DebugEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Message)
-	End Sub
+    Private Sub mMSXmlCreator_DebugEvent(msg As String) Handles mMSXmlCreator.DebugEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
+    End Sub
 
-	Private Sub mMSXmlCreator_ErrorEvent(Message As String) Handles mMSXmlCreator.ErrorEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
-	End Sub
+    Private Sub mMSXmlCreator_ErrorEvent(msg As String) Handles mMSXmlCreator.ErrorEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+    End Sub
 
-	Private Sub mMSXmlCreator_WarningEvent(Message As String) Handles mMSXmlCreator.WarningEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message)
-	End Sub
+    Private Sub mMSXmlCreator_WarningEvent(msg As String) Handles mMSXmlCreator.WarningEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
+    End Sub
 
     Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
 

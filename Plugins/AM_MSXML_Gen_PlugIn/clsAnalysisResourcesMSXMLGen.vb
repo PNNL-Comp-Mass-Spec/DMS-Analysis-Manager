@@ -1,6 +1,5 @@
 Option Strict On
 
-Imports System.Runtime.Serialization.Formatters
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMSXMLGen
@@ -14,7 +13,7 @@ Public Class clsAnalysisResourcesMSXMLGen
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim currentTask As String = "Initializing"
+        Dim currentTask = "Initializing"
 
         Try
 
@@ -100,11 +99,11 @@ Public Class clsAnalysisResourcesMSXMLGen
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & paramFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & mzMLRefineryParmFileStoragePath)
 
                 End If
+
                 'Retrieve param file
-                If Not RetrieveFile( _
-                   mzMLRefParamFile, _
-                   m_jobParams.GetParam("ParmFileStoragePath")) _
-                Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                If Not RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")) Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
 
             End If
 
