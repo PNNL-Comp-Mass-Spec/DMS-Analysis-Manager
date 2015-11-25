@@ -103,9 +103,9 @@ Public Class clsDtaRefLogMassErrorExtractor
                 Return False
             End If
 
-            Using srSourceFile = New StreamReader(New FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srSourceFile = New StreamReader(New FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                Do While srSourceFile.Peek > -1
+                Do While Not srSourceFile.EndOfStream
                     strLineIn = srSourceFile.ReadLine()
 
                     If strLineIn.Contains("ORIGINAL parent ion mass error distribution") Then

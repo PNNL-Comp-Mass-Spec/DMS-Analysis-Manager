@@ -80,7 +80,7 @@ Public Class clsDeconMSnLogFileValidator
 
                 Using swOutFile = New StreamWriter(New FileStream(strTempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
 
-                    Do While srSourceFile.Peek > -1
+                    Do While Not srSourceFile.EndOfStream
                         strLineIn = srSourceFile.ReadLine()
                         intColumnCountUpdated = 0
 

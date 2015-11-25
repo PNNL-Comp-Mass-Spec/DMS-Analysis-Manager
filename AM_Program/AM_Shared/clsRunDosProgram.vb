@@ -337,7 +337,7 @@ Public Class clsRunDosProgram
         End If
 
     End Function
-
+   
     ''' <summary>
     ''' Runs a program and waits for it to exit
     ''' </summary>
@@ -448,7 +448,7 @@ Public Class clsRunDosProgram
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  Aborting ProgRunner since AbortProgramNow() was called")
                         End If
                     End If
-                    m_ProgRunner.StopMonitoringProgram(Kill:=True)                    
+                    m_ProgRunner.StopMonitoringProgram(Kill:=True)
                 End If
             End While
 

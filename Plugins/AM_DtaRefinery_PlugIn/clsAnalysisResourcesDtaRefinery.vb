@@ -98,7 +98,7 @@ Public Class clsAnalysisResourcesDtaRefinery
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' If this is a MSGFPlus script, then make sure that the spectra are centroided
+        ' If this is a MSGFPlus script, make sure that the spectra are centroided
         Dim toolName = m_jobParams.GetParam("ToolName")
         If toolName.StartsWith("MSGFPlus", StringComparison.CurrentCultureIgnoreCase) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the _dta.txt file has centroided spectra (required by MSGF+)")

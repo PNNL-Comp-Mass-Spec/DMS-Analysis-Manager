@@ -3262,6 +3262,37 @@ Public Class clsAnalysisToolRunnerBase
     End Sub
 
     ''' <summary>
+    ''' Update the CPU usage by monitoring a process by nme
+    ''' </summary>
+    ''' <param name="processName">Process name, for example chrome (do not include .exe)</param>
+    ''' <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
+    ''' <param name="defaultProcessID">Process ID to use if not match for processName</param>
+    ''' <returns>Actual CPU usage; -1 if an error</returns>
+    ''' <remarks>This method is used by clsAnalysisToolRunnerDtaRefinery to monitor X!Tandem and DTA_Refinery</remarks>
+    Protected Function UpdateCpuUsageByProcessName(processName As String, secondsBetweenUpdates As Integer, defaultProcessID As Integer) As Single
+        Try
+            Dim processIDs As List(Of Integer) = Nothing
+            Dim processID As Integer = defaultProcessID
+
+            Dim coreUsage = PRISM.Processes.clsProgRunner.GetCoreUsageByProcessName(processName, processIDs)
+            If processIDs.Count > 0 Then
+                processID = processIDs.First
+            End If
+
+            If coreUsage > -1 Then
+                UpdateProgRunnerCpuUsage(processID, coreUsage, secondsBetweenUpdates)
+            End If
+
+            Return coreUsage
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in UpdateCpuUsageByProcessName determining the processor usage of " & processName)
+            Return -1
+        End Try
+
+    End Function
+
+    ''' <summary>
     ''' Cache the new core usage value
     ''' Note: call ResetProgRunnerCpuUsage just before calling CmdRunner.RunProgram()
     ''' </summary>

@@ -23,6 +23,8 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 #Region "Module Variables"
     Private Const PROGRESS_PCT_DTA_REFINERY_RUNNING As Single = 5
 
+    Private mXTandemHasFinished As Boolean
+
     Private WithEvents CmdRunner As clsRunDosProgram
 
     '--------------------------------------------------------------------------------------------
@@ -118,6 +120,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         m_progress = PROGRESS_PCT_DTA_REFINERY_RUNNING
         ResetProgRunnerCpuUsage()
+        mXTandemHasFinished = False
 
         ' Start the program and wait for it to finish
         ' However, while it's running, LoopWaiting will get called via events
@@ -241,6 +244,49 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     End Sub
 
     ''' <summary>
+    ''' Parses the _DTARefineryLog.txt file to check for a message regarding X!Tandem being finished
+    ''' </summary>
+    ''' <returns>True if finished, false if not</returns>
+    ''' <remarks></remarks>
+    Private Function IsXTandemFinished() As Boolean
+
+        Try
+
+            Dim fiSourceFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_dta_DtaRefineryLog.txt"))
+            If Not fiSourceFile.Exists Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DTA_Refinery log file not found by IsXtandenFinished: " & fiSourceFile.Name)
+                Return False
+            End If
+
+            Dim tmpFilePath = fiSourceFile.FullName & ".tmp"
+            fiSourceFile.CopyTo(tmpFilePath, True)
+            m_jobParams.AddResultFileToSkip(tmpFilePath)
+            Thread.Sleep(100)
+
+            Using srSourceFile = New StreamReader(New FileStream(tmpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+                Do While Not srSourceFile.EndOfStream
+                    Dim strLineIn = srSourceFile.ReadLine()
+
+                    If strLineIn.Contains("finished x!tandem") Then
+                        Return True
+                    End If
+
+                Loop
+
+            End Using
+
+            Return False
+
+        Catch ex As Exception
+            m_message = "Exception in IsXTandemFinished"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
@@ -280,44 +326,39 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     ''' </summary>
     ''' <returns>True if no errors, false if a problem</returns>
     ''' <remarks></remarks>
-    Public Function ValidateDTARefineryLogFile() As Boolean
-
-        Dim fiSourceFile As FileInfo
-        Dim srSourceFile As StreamReader
-
-        Dim strLineIn As String
+    Private Function ValidateDTARefineryLogFile() As Boolean
 
         Try
 
-            fiSourceFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_dta_DtaRefineryLog.txt"))
+            Dim fiSourceFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_dta_DtaRefineryLog.txt"))
             If Not fiSourceFile.Exists Then
                 m_message = "DtaRefinery Log file not found"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (" & fiSourceFile.Name & ")")
                 Return False
             End If
 
-            srSourceFile = New StreamReader(New FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srSourceFile = New StreamReader(New FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-            Do While srSourceFile.Peek > -1
-                strLineIn = srSourceFile.ReadLine()
+                Do While Not srSourceFile.EndOfStream
+                    Dim strLineIn = srSourceFile.ReadLine()
 
-                If strLineIn.StartsWith("number of spectra identified less than 2") Then
-                    If srSourceFile.Peek > -1 Then
-                        strLineIn = srSourceFile.ReadLine()
-                        If strLineIn.StartsWith("stop processing") Then
-                            m_message = "X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset"
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                            Return False
+                    If strLineIn.StartsWith("number of spectra identified less than 2") Then
+                        If Not srSourceFile.EndOfStream Then
+                            strLineIn = srSourceFile.ReadLine()
+                            If strLineIn.StartsWith("stop processing") Then
+                                m_message = "X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset"
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                                Return False
+                            End If
                         End If
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly")
                     End If
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly")
+                Loop
 
-                End If
+            End Using
 
-            Loop
-
-            srSourceFile.Close()
 
         Catch ex As Exception
             m_message = "Exception in ValidateDTARefineryLogFile"
@@ -328,8 +369,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         Return True
 
     End Function
-
-
+    
     ''' <summary>
     ''' Zips concatenated XML output file
     ''' </summary>
@@ -416,6 +456,9 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
+        Const DTA_REFINERY_PROCESS_NAME = "dta_refinery"
+        Const XTANDEM_PROCESS_NAME = "tandem_5digit_precision"
+
         Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastCpuUsageCheck As DateTime = DateTime.UtcNow
 
@@ -424,8 +467,18 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         ' Push a new core usage value into the queue every 30 seconds
         If DateTime.UtcNow.Subtract(dtLastCpuUsageCheck).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
             dtLastCpuUsageCheck = DateTime.UtcNow
+            
+            If Not mXTandemHasFinished Then
+                mXTandemHasFinished = IsXTandemFinished()
+            End If
 
-            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
+            If mXTandemHasFinished Then
+                ' Determine the CPU usage of DTA_Refinery
+                UpdateCpuUsageByProcessName(DTA_REFINERY_PROCESS_NAME, SECONDS_BETWEEN_UPDATE, CmdRunner.ProcessID)
+            Else
+                ' Determine the CPU usage of X!Tandem
+                UpdateCpuUsageByProcessName(XTANDEM_PROCESS_NAME, SECONDS_BETWEEN_UPDATE, CmdRunner.ProcessID)
+            End If
 
             LogProgress("DtaRefinery")
         End If
