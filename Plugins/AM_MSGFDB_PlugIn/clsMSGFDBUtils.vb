@@ -368,6 +368,7 @@ Public Class clsMSGFDBUtils
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
             End With
 
+            ' This process is quite fast, so we do not track CPU usage
             Dim blnSuccess = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", True)
 
             If Not blnSuccess Then

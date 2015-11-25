@@ -25,30 +25,25 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
 #Region "Module variables"
 
-    Protected mRawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
-    Protected mRawDataTypeName As String = String.Empty
+    Private mRawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
+    Private mRawDataTypeName As String = String.Empty
 
-    Protected mInputFilePath As String = String.Empty
+    Private mInputFilePath As String = String.Empty
 
-    Protected mDeconConsoleBuild As Integer = 0
+    Private mDeconConsoleBuild As Integer = 0
 
-    Protected mDeconToolsExceptionThrown As Boolean
-    Protected mDeconToolsFinishedDespiteProgRunnerError As Boolean
+    Private mDeconToolsExceptionThrown As Boolean
+    Private mDeconToolsFinishedDespiteProgRunnerError As Boolean
 
-    Protected mDeconToolsStatus As udtDeconToolsStatusType
+    Private mDeconToolsStatus As udtDeconToolsStatusType
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Private WithEvents CmdRunner As clsRunDosProgram
 
 #End Region
 
 #Region "Enums and Structures"
-    ' Used for result file type
-    Protected Enum Decon2LSResultFileType
-        DECON2LS_ISOS = 0
-        DECON2LS_SCANS = 1
-    End Enum
 
-    Protected Enum DeconToolsStateType
+    Private Enum DeconToolsStateType
         Idle = 0
         Running = 1
         Complete = 2
@@ -56,7 +51,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         BadErrorLogFile = 4
     End Enum
 
-    Protected Enum DeconToolsFileTypeConstants
+    Private Enum DeconToolsFileTypeConstants
         Undefined = 0
         Agilent_WIFF = 1
         Agilent_D = 2
@@ -72,7 +67,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         SUNEXTREL = 12
     End Enum
 
-    Protected Structure udtDeconToolsStatusType
+    Private Structure udtDeconToolsStatusType
         Public CurrentLCScan As Integer     ' LC Scan number or IMS Frame Number
         Public PercentComplete As Single
         Public IsUIMF As Boolean
@@ -100,7 +95,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         Dim ScansFilePath As String
         Dim IsosFilePath As String
         Dim PeaksFilePath As String
-        Dim blnDotDFolder As Boolean = False
+        Dim blnDotDFolder = False
 
         Try
 
@@ -217,7 +212,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
     End Function
 
-    Protected Function CacheDeconToolsParamFile(strParamFilePath As String) As clsXMLParamFileReader
+    Private Function CacheDeconToolsParamFile(strParamFilePath As String) As clsXMLParamFileReader
 
         Dim oDeconToolsParamFileReader As clsXMLParamFileReader
 
@@ -243,7 +238,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function CreateQCPlots() As IJobParams.CloseOutType
+    Private Function CreateQCPlots() As IJobParams.CloseOutType
 
         Dim blnSuccess As Boolean
 
@@ -308,7 +303,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' <param name="IsosFilePath"></param>
     ''' <returns>True if it has one or more lines of data, otherwise, returns False</returns>
     ''' <remarks></remarks>
-    Protected Function IsosFileHasData(IsosFilePath As String) As Boolean
+    Private Function IsosFileHasData(IsosFilePath As String) As Boolean
         Dim intDataLineCount As Integer
         Return IsosFileHasData(IsosFilePath, intDataLineCount, False)
     End Function
@@ -321,7 +316,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' <param name="blnCountTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
     ''' <returns>True if it has one or more lines of data, otherwise, returns False</returns>
     ''' <remarks></remarks>
-    Protected Function IsosFileHasData(IsosFilePath As String, ByRef intDataLineCount As Integer, blnCountTotalDataLines As Boolean) As Boolean
+    Private Function IsosFileHasData(IsosFilePath As String, ByRef intDataLineCount As Integer, blnCountTotalDataLines As Boolean) As Boolean
 
         Dim srInFile As StreamReader
 
@@ -379,10 +374,18 @@ Public Class clsAnalysisToolRunnerDecon2ls
     Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim eResult As IJobParams.CloseOutType
-
         Dim eReturnCode As IJobParams.CloseOutType
-
         Dim errorMessage As String = Nothing
+
+        'Do the base class stuff
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        If m_DebugLevel > 4 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2ls.RunTool(): Enter")
+        End If
+
         mRawDataTypeName = clsAnalysisResources.GetRawDataTypeName(m_jobParams, errorMessage)
 
         If String.IsNullOrWhiteSpace(mRawDataTypeName) Then
@@ -399,17 +402,6 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         ' Set this to success for now
         eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.RunTool()")
-        End If
-
-        ' Get the setup file by running the base class method
-        eResult = MyBase.RunTool()
-        If Not eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Error message is generated in base class, so just exit with error
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
 
         ' Run Decon2LS
         eResult = RunDecon2Ls()
@@ -480,7 +472,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
             ' Try to save whatever files were moved into the results folder
-            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
             objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -497,7 +489,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
     End Function
 
-    Protected Function RunDecon2Ls() As IJobParams.CloseOutType
+    Private Function RunDecon2Ls() As IJobParams.CloseOutType
 
         Dim strParamFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
         Dim blnDecon2LSError As Boolean
@@ -562,8 +554,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         End If
 
         ' Start Decon2LS and wait for it to finish
-        Dim eDeconToolsStatus As DeconToolsStateType
-        eDeconToolsStatus = StartDeconTools(progLoc, mInputFilePath, strParamFilePath, filetype)
+        Dim eDeconToolsStatus = StartDeconTools(progLoc, mInputFilePath, strParamFilePath, filetype)
 
         ' Stop the job timer
         m_StopTime = DateTime.UtcNow
@@ -636,13 +627,12 @@ Public Class clsAnalysisToolRunnerDecon2ls
     End Function
 
 
-    Protected Function StartDeconTools(
+    Private Function StartDeconTools(
       ProgLoc As String,
       strInputFilePath As String,
       strParamFilePath As String,
       eFileType As DeconToolsFileTypeConstants) As DeconToolsStateType
 
-        Dim blnSuccess As Boolean
         Dim eDeconToolsStatus As DeconToolsStateType
 
         If m_DebugLevel > 3 Then
@@ -687,12 +677,16 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
             eDeconToolsStatus = DeconToolsStateType.Running
 
-            If Not CmdRunner.RunProgram(ProgLoc, CmdStr, "DeconConsole", True) Then
+            m_progress = 0
+            ResetProgRunnerCpuUsage()
+
+            ' Start the program and wait for it to finish
+            ' However, while it's running, LoopWaiting will get called via events
+            Dim success = CmdRunner.RunProgram(ProgLoc, CmdStr, "DeconConsole", True)
+
+            If Not success Then
                 m_message = "Error running DeconTools"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
-                blnSuccess = False
-            Else
-                blnSuccess = True
             End If
 
             ' Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
@@ -704,7 +698,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
             If mDeconToolsExceptionThrown Then
                 eDeconToolsStatus = DeconToolsStateType.ErrorCode
-            ElseIf blnSuccess Then
+            ElseIf success Then
                 eDeconToolsStatus = DeconToolsStateType.Complete
             ElseIf blnFinishedProcessing Then
                 mDeconToolsFinishedDespiteProgRunnerError = True
@@ -715,8 +709,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
             ' Look for file Dataset*BAD_ERROR_log.txt
             ' If it exists, an exception occurred
-            Dim diWorkdir As DirectoryInfo
-            diWorkdir = New DirectoryInfo(Path.Combine(m_WorkDir))
+            Dim diWorkdir = New DirectoryInfo(Path.Combine(m_WorkDir))
 
             For Each fiFile As FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
                 m_message = "Error running DeconTools; Bad_Error_log file exists"
@@ -735,7 +728,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     End Function
 
 
-    Protected Function GetDeconFileTypeText(eDeconFileType As DeconToolsFileTypeConstants) As String
+    Private Function GetDeconFileTypeText(eDeconFileType As DeconToolsFileTypeConstants) As String
 
         Select Case eDeconFileType
             Case DeconToolsFileTypeConstants.Agilent_WIFF : Return "Agilent_WIFF"
@@ -757,7 +750,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
     End Function
 
-    Protected Function GetInputFileType(eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As DeconToolsFileTypeConstants
+    Private Function GetInputFileType(eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As DeconToolsFileTypeConstants
 
         Dim InstrumentClass As String = m_jobParams.GetParam("instClass")
 
@@ -829,7 +822,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
     End Function
 
-    Protected Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As DateTime)
+    Private Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As DateTime)
 
         Dim fiFileInfo As FileInfo
 
@@ -854,7 +847,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
             If File.Exists(strLogFilePath) Then
 
-                Using srInFile As StreamReader = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                Using srInFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                     Do While srInFile.Peek >= 0
                         strLineIn = srInFile.ReadLine
@@ -921,12 +914,11 @@ Public Class clsAnalysisToolRunnerDecon2ls
             ' It will look like:
             ' Scan/Frame= 347; PercentComplete= 2.7; AccumlatedFeatures= 614
 
-            Dim strProgressStats() As String
             Dim kvStat As KeyValuePair(Of String, String)
 
-            strProgressStats = strScanFrameLine.Split(";"c)
+            Dim strProgressStats = strScanFrameLine.Split(";"c)
 
-            For i As Integer = 0 To strProgressStats.Length - 1
+            For i = 0 To strProgressStats.Length - 1
                 kvStat = ParseKeyValue(strProgressStats(i))
                 If Not String.IsNullOrWhiteSpace(kvStat.Key) Then
                     Select Case kvStat.Key
@@ -954,7 +946,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' <param name="strData"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function ParseKeyValue(strData As String) As KeyValuePair(Of String, String)
+    Private Function ParseKeyValue(strData As String) As KeyValuePair(Of String, String)
         Dim intCharIndex As Integer
         intCharIndex = strData.IndexOf("="c)
 
@@ -976,14 +968,14 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' <param name="strFilePath"></param>
     ''' <returns>True if two or more non-blank lines; otherwise false</returns>
     ''' <remarks></remarks>
-    Protected Function ResultsFileHasData(strFilePath As String) As Boolean
+    Private Function ResultsFileHasData(strFilePath As String) As Boolean
 
         If Not File.Exists(strFilePath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconTools results file not found: " & strFilePath)
             Return False
         End If
 
-        Dim intDataLineCount As Integer = 0
+        Dim intDataLineCount = 0
 
         ' Open the DeconTools results file
         ' The first line is the header lines
@@ -1083,7 +1075,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(strDeconToolsProgLoc As String) As Boolean
+    Private Function StoreToolVersionInfo(strDeconToolsProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioDeconToolsInfo As FileInfo
@@ -1166,7 +1158,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
     End Function
 
-    Private Function ZipPeaksFile() As Boolean
+    Private Sub ZipPeaksFile()
 
         Dim strPeaksFilePath As String
         Dim strZippedPeaksFilePath As String
@@ -1181,7 +1173,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
                     Dim Msg As String = "Error zipping " & DECON2LS_PEAKS_FILE_SUFFIX & " file, job " & m_JobNum
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                     m_message = clsGlobal.AppendToComment(m_message, "Error zipping Peaks.txt file")
-                    Return False
+                    Return
                 End If
 
                 ' Add the _peaks.txt file to .FilesToDelete since we only want to keep the Zipped version
@@ -1191,12 +1183,11 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         Catch ex As Exception
             LogError("Exception zipping Peaks.txt file", ex)
-            Return False
+            Return
         End Try
 
-        Return True
-
-    End Function
+        Return
+    End Sub
 
 
 #End Region
@@ -1207,12 +1198,13 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
+        Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastLogCheckTime As DateTime = DateTime.UtcNow
 
         UpdateStatusFile()
 
         ' Parse the log file every 30 seconds to determine the % complete
-        If DateTime.UtcNow.Subtract(dtLastLogCheckTime).TotalSeconds < 30 Then
+        If DateTime.UtcNow.Subtract(dtLastLogCheckTime).TotalSeconds < SECONDS_BETWEEN_UPDATE Then
             Return
         End If
 
@@ -1222,6 +1214,8 @@ Public Class clsAnalysisToolRunnerDecon2ls
         Dim blnFinishedProcessing As Boolean
 
         ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
+
+        UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
 
         Dim strProgressMessage As String
 
@@ -1248,7 +1242,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         LogProgress(strProgressMessage, logIntervalMinutes)
 
-        Const MAX_LOGFINISHED_WAITTIME_SECONDS As Integer = 120
+        Const MAX_LOGFINISHED_WAITTIME_SECONDS = 120
         If blnFinishedProcessing Then
             ' The Decon2LS Log File reports that the task is complete
             ' If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner

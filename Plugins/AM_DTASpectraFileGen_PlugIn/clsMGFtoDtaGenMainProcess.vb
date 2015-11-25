@@ -29,10 +29,10 @@ Public Class clsMGFtoDtaGenMainProcess
 
 #End Region
 
-    Public Overrides Sub Setup(ByVal InitParams As ISpectraFileProcessor.InitializationParams) 
-        MyBase.Setup(InitParams)
+    Public Overrides Sub Setup(InitParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
+        MyBase.Setup(InitParams, toolRunner)
 
-		m_DtaToolNameLoc = Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll")
+        m_DtaToolNameLoc = Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll")
 
     End Sub
 
@@ -48,168 +48,168 @@ Public Class clsMGFtoDtaGenMainProcess
         End If
 
         'Make the DTA files (the process runs in a separate thread)
-		Try
-			If USE_THREADING Then
-				m_thThread = New Threading.Thread(AddressOf MakeDTAFilesThreaded)
-				m_thThread.Start()
-				m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
-			Else
-				MakeDTAFilesThreaded()
-				m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
-			End If
-			
-		Catch ex As Exception
-			m_ErrMsg = "Error calling MakeDTAFilesFromMGF: " & ex.Message
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-		End Try
+        Try
+            If USE_THREADING Then
+                m_thThread = New Threading.Thread(AddressOf MakeDTAFilesThreaded)
+                m_thThread.Start()
+                m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+            Else
+                MakeDTAFilesThreaded()
+                m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+            End If
+
+        Catch ex As Exception
+            m_ErrMsg = "Error calling MakeDTAFilesFromMGF: " & ex.Message
+            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+        End Try
 
         Return m_Status
 
     End Function
 
-	Private Function VerifyMGFFileExists(ByVal WorkDir As String, ByVal DSName As String) As Boolean
+    Private Function VerifyMGFFileExists(WorkDir As String, DSName As String) As Boolean
 
-		'Verifies a .mgf file exists in specfied directory
-		If File.Exists(Path.Combine(WorkDir, DSName & clsAnalysisResources.DOT_MGF_EXTENSION)) Then
-			m_ErrMsg = ""
-			Return True
-		Else
-			m_ErrMsg = "Data file " & DSName & ".mgf not found in working directory"
-			Return False
-		End If
+        'Verifies a .mgf file exists in specfied directory
+        If File.Exists(Path.Combine(WorkDir, DSName & clsAnalysisResources.DOT_MGF_EXTENSION)) Then
+            m_ErrMsg = ""
+            Return True
+        Else
+            m_ErrMsg = "Data file " & DSName & ".mgf not found in working directory"
+            Return False
+        End If
 
-	End Function
+    End Function
 
-	Protected Overrides Function InitSetup() As Boolean
+    Protected Overrides Function InitSetup() As Boolean
 
-		'Verifies all necessary files exist in the specified locations
+        'Verifies all necessary files exist in the specified locations
 
-		'Do tests specfied in base class
-		If Not MyBase.InitSetup Then Return False
+        'Do tests specfied in base class
+        If Not MyBase.InitSetup Then Return False
 
         'MGF data file exists?
         If Not VerifyMGFFileExists(m_WorkDir, m_Dataset) Then Return False 'Error message handled by VerifyMGFFileExists
 
-		'If we got to here, there was no problem
-		Return True
+        'If we got to here, there was no problem
+        Return True
 
-	End Function
+    End Function
 
-	Protected Sub MakeDTAFilesThreaded()
+    Protected Sub MakeDTAFilesThreaded()
 
-		m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
-		If Not MakeDTAFilesFromMGF() Then
-			If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-				m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-				m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			End If
-		End If
+        m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+        If Not MakeDTAFilesFromMGF() Then
+            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
+                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            End If
+        End If
 
-		If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-			m_Results = ISpectraFileProcessor.ProcessResults.SF_ABORTED
-		ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-		Else
-			'Verify at least one dta file was created
-			If Not VerifyDtaCreation() Then
-				m_Results = ISpectraFileProcessor.ProcessResults.SF_NO_FILES_CREATED
-			Else
-				m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
-			End If
+        If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
+            m_Results = ISpectraFileProcessor.ProcessResults.SF_ABORTED
+        ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
+            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+        Else
+            'Verify at least one dta file was created
+            If Not VerifyDtaCreation() Then
+                m_Results = ISpectraFileProcessor.ProcessResults.SF_NO_FILES_CREATED
+            Else
+                m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
+            End If
 
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
-		End If
+            m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+        End If
 
-	End Sub
+    End Sub
 
-	Private Function MakeDTAFilesFromMGF() As Boolean
+    Private Function MakeDTAFilesFromMGF() As Boolean
 
-		Dim MGFFile As String
+        Dim MGFFile As String
 
-		'Get the parameters from the various setup files
-		MGFFile = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION)
-		mScanStart = m_JobParams.GetJobParameter("ScanStart", 0)
-		mScanStop = m_JobParams.GetJobParameter("ScanStop", 0)
-		mMWLower = m_JobParams.GetJobParameter("MWStart", 0)
-		mMWUpper = m_JobParams.GetJobParameter("MWStop", 0)
+        'Get the parameters from the various setup files
+        MGFFile = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION)
+        mScanStart = m_JobParams.GetJobParameter("ScanStart", 0)
+        mScanStop = m_JobParams.GetJobParameter("ScanStop", 0)
+        mMWLower = m_JobParams.GetJobParameter("MWStart", 0)
+        mMWUpper = m_JobParams.GetJobParameter("MWStop", 0)
 
-		'Run the MGF to DTA converter
-		If Not ConvertMGFtoDTA(MGFFile, m_WorkDir) Then
-			' Note that ConvertMGFtoDTA will have updated m_ErrMsg with the error message
-			m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			Return False
-		End If
+        'Run the MGF to DTA converter
+        If Not ConvertMGFtoDTA(MGFFile, m_WorkDir) Then
+            ' Note that ConvertMGFtoDTA will have updated m_ErrMsg with the error message
+            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            Return False
+        End If
 
-		If m_AbortRequested Then
-			m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
-		End If
+        If m_AbortRequested Then
+            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
+        End If
 
-		'We got this far, everything must have worked
-		If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Or m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-			Return False
-		Else
-			Return True
-		End If
+        'We got this far, everything must have worked
+        If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Or m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
+            Return False
+        Else
+            Return True
+        End If
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-	''' This functon is called by MakeDTAFilesThreaded
-	''' </summary>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks></remarks>
-	Private Function ConvertMGFtoDTA(ByVal strInputFilePathFull As String, ByVal strOutputFolderPath As String) As Boolean
+    ''' <summary>
+    ''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
+    ''' This functon is called by MakeDTAFilesThreaded
+    ''' </summary>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks></remarks>
+    Private Function ConvertMGFtoDTA(strInputFilePathFull As String, strOutputFolderPath As String) As Boolean
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		If m_DebugLevel > 0 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt")
-		End If
+        If m_DebugLevel > 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt")
+        End If
 
-		mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA()
+        mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA()
 
-		With mMGFtoDTA
-			.CreateIndividualDTAFiles = False
-			.MGFFileCommentLineStartChar = .MGFFileCommentLineStartChar
-			.GuesstimateChargeForAllSpectra = m_JobParams.GetJobParameter("GuesstimateChargeForAllSpectra", False)
-			.ForceChargeAddnForPredefined2PlusOr3Plus = m_JobParams.GetJobParameter("ForceChargeAddnForPredefined2PlusOr3Plus", False)
+        With mMGFtoDTA
+            .CreateIndividualDTAFiles = False
+            .MGFFileCommentLineStartChar = .MGFFileCommentLineStartChar
+            .GuesstimateChargeForAllSpectra = m_JobParams.GetJobParameter("GuesstimateChargeForAllSpectra", False)
+            .ForceChargeAddnForPredefined2PlusOr3Plus = m_JobParams.GetJobParameter("ForceChargeAddnForPredefined2PlusOr3Plus", False)
 
-			' Note that these settings are values between 0 and 100
-			.ThresholdIonPctForSingleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForSingleCharge", CInt(.ThresholdIonPctForSingleCharge))
-			.ThresholdIonPctForDoubleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForDoubleCharge", CInt(.ThresholdIonPctForDoubleCharge))
+            ' Note that these settings are values between 0 and 100
+            .ThresholdIonPctForSingleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForSingleCharge", CInt(.ThresholdIonPctForSingleCharge))
+            .ThresholdIonPctForDoubleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForDoubleCharge", CInt(.ThresholdIonPctForDoubleCharge))
 
-			.FilterSpectra = m_JobParams.GetJobParameter("FilterSpectra", False)
+            .FilterSpectra = m_JobParams.GetJobParameter("FilterSpectra", False)
 
-			' Filter spectra options:
-			.DiscardValidSpectra = .DiscardValidSpectra
-			.IonPairMassToleranceHalfWidthDa = .IonPairMassToleranceHalfWidthDa
-			.MinimumStandardMassSpacingIonPairs = .MinimumStandardMassSpacingIonPairs
-			.NoiseLevelIntensityThreshold = .NoiseLevelIntensityThreshold
-			.SequestParamFilePath = .SequestParamFilePath
+            ' Filter spectra options:
+            .DiscardValidSpectra = .DiscardValidSpectra
+            .IonPairMassToleranceHalfWidthDa = .IonPairMassToleranceHalfWidthDa
+            .MinimumStandardMassSpacingIonPairs = .MinimumStandardMassSpacingIonPairs
+            .NoiseLevelIntensityThreshold = .NoiseLevelIntensityThreshold
+            .SequestParamFilePath = .SequestParamFilePath
 
-			.LogMessagesToFile = False
+            .LogMessagesToFile = False
 
-			.MaximumIonsPerSpectrum = m_JobParams.GetJobParameter("MaximumIonsPerSpectrum", 0)
-			.ScanToExportMinimum = mScanStart
-			.ScanToExportMaximum = mScanStop
-			.MinimumParentIonMZ = mMWLower
+            .MaximumIonsPerSpectrum = m_JobParams.GetJobParameter("MaximumIonsPerSpectrum", 0)
+            .ScanToExportMinimum = mScanStart
+            .ScanToExportMaximum = mScanStop
+            .MinimumParentIonMZ = mMWLower
 
-		End With
+        End With
 
-		blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath)
+        blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath)
 
-		If Not blnSuccess AndAlso String.IsNullOrEmpty(m_ErrMsg) Then
-			m_ErrMsg = mMGFtoDTA.GetErrorMessage()
-		End If
+        If Not blnSuccess AndAlso String.IsNullOrEmpty(m_ErrMsg) Then
+            m_ErrMsg = mMGFtoDTA.GetErrorMessage()
+        End If
 
-		m_SpectraFileCount = mMGFtoDTA.SpectraCountWritten
-		m_Progress = 95
+        m_SpectraFileCount = mMGFtoDTA.SpectraCountWritten
+        m_Progress = 95
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 	Private Function VerifyDtaCreation() As Boolean
 

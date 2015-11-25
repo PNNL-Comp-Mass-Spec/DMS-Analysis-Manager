@@ -179,7 +179,10 @@ Public Class clsAnalysisToolRunnerMSAlign
 			End With
 
 			m_progress = PROGRESS_PCT_STARTING
+            ResetProgRunnerCpuUsage()
 
+            ' Start the program and wait for it to finish
+            ' However, while it's running, LoopWaiting will get called via events
 			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign", True)
 
 			If Not mToolVersionWritten Then
@@ -1208,18 +1211,21 @@ Public Class clsAnalysisToolRunnerMSAlign
 	''' <remarks></remarks>
 	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
-		Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
+        Const SECONDS_BETWEEN_UPDATE = 30
+        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         UpdateStatusFile()
 
-		If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-			dtLastConsoleOutputParse = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
+            dtLastConsoleOutputParse = System.DateTime.UtcNow
 
-			ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
+            ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
 
-			If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-				mToolVersionWritten = StoreToolVersionInfo()
-			End If
+            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSAlignVersion) Then
+                mToolVersionWritten = StoreToolVersionInfo()
+            End If
+
+            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("MSAlign")
 

@@ -510,7 +510,10 @@ Public Class clsAnalysisToolRunnerProMex
         End With
 
         m_progress = PROGRESS_PCT_STARTING
+        ResetProgRunnerCpuUsage()
 
+        ' Start the program and wait for it to finish
+        ' However, while it's running, LoopWaiting will get called via events
         blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "ProMex", True)
 
         If Not mCmdRunner.WriteConsoleOutputToFile Then
@@ -531,8 +534,7 @@ Public Class clsAnalysisToolRunnerProMex
         End If
 
         If Not blnSuccess Then
-            Dim Msg As String
-            Msg = "Error running ProMex"
+            Dim Msg = "Error running ProMex"
             m_message = clsGlobal.AppendToComment(m_message, Msg)
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
@@ -671,15 +673,18 @@ Public Class clsAnalysisToolRunnerProMex
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
 
+        Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         UpdateStatusFile()
 
         ' Parse the console output file every 15 seconds
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
             dtLastConsoleOutputParse = DateTime.UtcNow
 
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, ProMex_CONSOLE_OUTPUT))
+            ParseConsoleOutputFile(Path.Combine(m_WorkDir, PROMEX_CONSOLE_OUTPUT))
+
+            UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("ProMex")
         End If

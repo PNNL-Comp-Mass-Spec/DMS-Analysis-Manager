@@ -218,7 +218,10 @@ Public Class clsAnalysisToolRunnerMODa
         End With
 
         m_progress = PROGRESS_PCT_STARTING
+        ResetProgRunnerCpuUsage()
 
+        ' Start the program and wait for it to finish
+        ' However, while it's running, LoopWaiting will get called via events
         blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MODa", True)
 
         If Not mToolVersionWritten Then
@@ -632,11 +635,12 @@ Public Class clsAnalysisToolRunnerMODa
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
+        Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         UpdateStatusFile()
 
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
             dtLastConsoleOutputParse = DateTime.UtcNow
 
             ParseConsoleOutputFile(Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT))
@@ -644,6 +648,8 @@ Public Class clsAnalysisToolRunnerMODa
             If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMODaVersion) Then
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
+
+            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("MODa")
         End If

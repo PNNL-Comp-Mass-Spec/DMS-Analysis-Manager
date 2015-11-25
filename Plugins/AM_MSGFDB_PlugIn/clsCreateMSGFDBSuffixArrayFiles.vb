@@ -835,6 +835,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 strCurrentTask = "Run BuildSA using " & CmdStr
 
                 ' Run BuildSA and wait for it to exit
+                ' This process generally doesn't take that long so we do not track CPU usage
                 success = objBuildSA.RunProgram(JavaProgLoc, CmdStr, "BuildSA", True)
 
             End If

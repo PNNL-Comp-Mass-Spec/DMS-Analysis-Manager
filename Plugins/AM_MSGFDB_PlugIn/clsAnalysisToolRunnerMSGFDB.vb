@@ -50,9 +50,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
     Private mMSGFPlusComplete As Boolean
     Private mMSGFPlusCompletionTime As DateTime
 
-    Private mMSGFPlusStartTime As DateTime
-    Private mCoreUsageHistory As Queue(Of Single)
-
     Private WithEvents mMSGFDBUtils As clsMSGFDBUtils
 
     Private WithEvents CmdRunner As clsRunDosProgram
@@ -110,8 +107,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
             mHPCMonitorInitTimer = New Timers.Timer(30000)
             mHPCMonitorInitTimer.Enabled = False
 #End If
-
-            mCoreUsageHistory = New Queue(Of Single)
 
             ' Determine whether or not we'll be running MSGF+ in HPC (high performance computing) mode
             Dim udtHPCOptions As clsAnalysisResources.udtHPCOptionsType = clsAnalysisResources.GetHPCOptions(m_jobParams, m_MachName)
@@ -729,14 +724,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End With
 
         m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
-        mMSGFPlusStartTime = DateTime.UtcNow
-        mCoreUsageHistory.Clear()
+        ResetProgRunnerCpuUsage()
 
         ' Start the program and wait for it to finish
         ' However, while it's running, LoopWaiting will get called via events
-        Dim blnSuccess = CmdRunner.RunProgram(javaExePath, CmdStr, mSearchEngineName, True)
+        Dim success = CmdRunner.RunProgram(javaExePath, CmdStr, mSearchEngineName, True)
 
-        Return blnSuccess
+        Return success
 
     End Function
 
@@ -905,25 +899,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
-            ' Cache the core usage values for the last 5 minutes
-            ' Note that the call to GetCoreUsage() will take at least 1 second
-            Dim coreUsage = CmdRunner.GetCoreUsage()
-
-            If coreUsage >= 0 Then
-                mCoreUsageHistory.Enqueue(coreUsage)
-                If mCoreUsageHistory.Count > 5 * 60 / SECONDS_BETWEEN_UPDATE Then
-                    mCoreUsageHistory.Dequeue()
-                End If
-            End If
-
-            ' If MSGF+ has been running for at least 3 minutes, store the ProcessID and actual CoreUsage in the database
-            If DateTime.UtcNow.Subtract(mMSGFPlusStartTime).TotalMinutes >= 3 AndAlso mCoreUsageHistory.Count > 0 Then
-                m_StatusTools.ProgRunnerProcessID = CmdRunner.ProcessID
-
-                ' Average the data in the history queue
-                Dim coreUsageAvg = mCoreUsageHistory.ToArray().Average()
-                m_StatusTools.ProgRunnerCoreUsage = coreUsageAvg
-            End If
+            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("MSGF+")
 

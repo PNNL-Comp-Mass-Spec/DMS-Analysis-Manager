@@ -28,21 +28,21 @@ Public Class clsDtaGenMSConvert
 		End Set
 	End Property
 
-	Public Overrides Sub Setup(InitParams As AnalysisManagerBase.ISpectraFileProcessor.InitializationParams)
-		MyBase.Setup(InitParams)
+    Public Overrides Sub Setup(InitParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
+        MyBase.Setup(InitParams, toolRunner)
 
-		' Tool setup for MSConvert involves creating a
-		'  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
-		'  to indicate that we agree to the Thermo license
+        ' Tool setup for MSConvert involves creating a
+        '  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
+        '  to indicate that we agree to the Thermo license
 
-		Dim objProteowizardTools As clsProteowizardTools
-		objProteowizardTools = New clsProteowizardTools(m_DebugLevel)
+        Dim objProteowizardTools As clsProteowizardTools
+        objProteowizardTools = New clsProteowizardTools(m_DebugLevel)
 
-		If Not objProteowizardTools.RegisterProteoWizard() Then
-			Throw New Exception("Unable to register ProteoWizard")
-		End If
+        If Not objProteowizardTools.RegisterProteoWizard() Then
+            Throw New Exception("Unable to register ProteoWizard")
+        End If
 
-	End Sub
+    End Sub
 
 	''' <summary>
 	''' Returns the default path to the DTA generator tool
@@ -129,7 +129,7 @@ Public Class clsDtaGenMSConvert
 	''' <param name="eRawDataType">Raw data file type</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Private Function ConvertRawToMGF(ByVal eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
+    Private Function ConvertRawToMGF(eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
 
         Try
 
@@ -279,6 +279,6 @@ Public Class clsDtaGenMSConvert
             Return False
         End Try
 
-	End Function
+    End Function
 
 End Class

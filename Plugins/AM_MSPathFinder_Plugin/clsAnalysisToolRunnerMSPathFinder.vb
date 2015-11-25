@@ -60,9 +60,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     Protected m_filteredPromexFeatures As Integer = 0
     Protected m_unfilteredPromexFeatures As Integer = 0
 
-    Private mMSPathFinderStartTime As DateTime
-    Private mCoreUsageHistory As Queue(Of Single)
-
     Protected WithEvents CmdRunner As clsRunDosProgram
 
 #End Region
@@ -86,8 +83,6 @@ Public Class clsAnalysisToolRunnerMSPathFinder
             If m_DebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSPathFinder.RunTool(): Enter")
             End If
-
-            mCoreUsageHistory = New Queue(Of Single)
 
             ' Determine the path to the MSPathFinder program (Top-down version)
             Dim progLoc As String
@@ -927,7 +922,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     Protected Function StartMSPathFinder(progLoc As String, fastaFileIsDecoy As Boolean, <Out()> ByRef tdaEnabled As Boolean) As Boolean
 
         Dim CmdStr As String
-        Dim blnSuccess As Boolean
+        Dim success As Boolean
 
         mConsoleOutputErrorMsg = String.Empty
 
@@ -980,12 +975,11 @@ Public Class clsAnalysisToolRunnerMSPathFinder
         End With
 
         m_progress = PROGRESS_PCT_STARTING
-        mMSPathFinderStartTime = DateTime.UtcNow
-        mCoreUsageHistory.Clear()
+        ResetProgRunnerCpuUsage()
 
         ' Start the program and wait for it to finish
         ' However, while it's running, LoopWaiting will get called via events
-        blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "MSPathFinder", True)
+        success = CmdRunner.RunProgram(progLoc, CmdStr, "MSPathFinder", True)
 
         If Not CmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
@@ -1004,7 +998,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
         End If
 
-        If Not blnSuccess Then
+        If Not success Then
             Dim msg = "Error running MSPathFinder"
 
             If mConsoleOutputErrorMsg.Contains("No results found") Then
@@ -1096,36 +1090,17 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
         Const SECONDS_BETWEEN_UPDATE = 30
-
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         UpdateStatusFile()
 
         ' Parse the console output file every 30 seconds
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 30 Then
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
             dtLastConsoleOutputParse = DateTime.UtcNow
 
             ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT))
 
-            ' Cache the core usage values for the last 5 minutes
-            ' Note that the call to GetCoreUsage() will take at least 1 second
-            Dim coreUsage = CmdRunner.GetCoreUsage()
-
-            If coreUsage >= 0 Then
-                mCoreUsageHistory.Enqueue(coreUsage)
-                If mCoreUsageHistory.Count > 5 * 60 / SECONDS_BETWEEN_UPDATE Then
-                    mCoreUsageHistory.Dequeue()
-                End If
-            End If
-
-            ' If MSPathFinder has been running for at least 3 minutes, store the ProcessID and actual CoreUsage in the database
-            If DateTime.UtcNow.Subtract(mMSPathFinderStartTime).TotalMinutes >= 3 AndAlso mCoreUsageHistory.Count > 0 Then
-                m_StatusTools.ProgRunnerProcessID = CmdRunner.ProcessID
-
-                ' Average the data in the history queue
-                Dim coreUsageAvg = mCoreUsageHistory.ToArray().Average()
-                m_StatusTools.ProgRunnerCoreUsage = coreUsageAvg
-            End If
+            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("MSPathFinder")
         End If

@@ -11,7 +11,6 @@ Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Runtime.InteropServices
-Imports System.Runtime.Serialization.Formatters
 Imports System.Threading
 Imports System.Xml
 
@@ -225,7 +224,7 @@ Public Class clsAnalysisToolRunnerMODPlus
         End If
 
         Dim msConvertRunner = New clsRunDosProgram(m_WorkDir)
-        AddHandler msConvertRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+        AddHandler msConvertRunner.LoopWaiting, AddressOf MSConvert_CmdRunner_LoopWaiting
 
         With msConvertRunner
             .CreateNoWindow = True
@@ -237,7 +236,10 @@ Public Class clsAnalysisToolRunnerMODPlus
         End With
 
         m_progress = PROGRESS_PCT_CONVERTING_MSXML_TO_MGF
+        ResetProgRunnerCpuUsage()
 
+        ' Start the program and wait for it to finish
+        ' However, while it's running, LoopWaiting will get called via events
         Dim success = msConvertRunner.RunProgram(msConvertProgLoc, cmdStr, "MSConvert", True)
 
         If success Then
@@ -839,6 +841,7 @@ Public Class clsAnalysisToolRunnerMODPlus
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MODPlus using " & paramFileList.Count & " threads")
 
             m_progress = PROGRESS_PCT_MODPLUS_STARTING
+            ResetProgRunnerCpuUsage()
 
             mMODPlusRunners = New Dictionary(Of Integer, clsMODPlusRunner)()
             Dim lstThreads As New List(Of Thread)
@@ -887,14 +890,19 @@ Public Class clsAnalysisToolRunnerMODPlus
                 Dim dtStartTime = DateTime.UtcNow
                 Dim completedThreads As New SortedSet(Of Integer)
 
+                Const SECONDS_BETWEEN_UPDATES = 15
+                Dim dtLastStatusUpdate = DateTime.UtcNow
+
                 While True
 
                     ' Poll the status of each of the threads
 
                     Dim stepsComplete = 0
                     Dim progressSum As Double = 0
-                    Dim processIDFirst = 0
 
+                    Dim processIDs = New List(Of Integer)
+                    Dim coreUsageOverall As Single
+                    
                     For Each modPlusRunner In mMODPlusRunners
                         Dim eStatus = modPlusRunner.Value.Status
                         If eStatus >= clsMODPlusRunner.MODPlusRunnerStatusCodes.Success Then
@@ -908,11 +916,10 @@ Public Class clsAnalysisToolRunnerMODPlus
 
                         End If
 
-                        If processIDFirst = 0 AndAlso modPlusRunner.Value.ProgRunner.ProcessID <> 0 Then
-                            processIDFirst = modPlusRunner.Value.ProgRunner.ProcessID
-                        End If
+                        processIDs.Add(modPlusRunner.Value.ProcessID)
 
                         progressSum += modPlusRunner.Value.Progress
+                        coreUsageOverall += modPlusRunner.Value.CoreUsage
 
                         If m_DebugLevel >= 1 Then
 
@@ -938,15 +945,20 @@ Public Class clsAnalysisToolRunnerMODPlus
                         ' This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
                         m_progress = updatedProgress
                     End If
-
-                    CmdRunner_LoopWaiting()
+                    
 
                     If stepsComplete >= mMODPlusRunners.Count Then
                         ' All threads are done
                         Exit While
                     End If
 
-                    Thread.Sleep(2000)
+                    While DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds < SECONDS_BETWEEN_UPDATES
+                        Thread.Sleep(250)
+                    End While
+
+                    dtLastStatusUpdate = DateTime.UtcNow
+
+                    CmdRunner_LoopWaiting(processIDs, coreUsageOverall, SECONDS_BETWEEN_UPDATES)
 
                     If DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14 Then
                         LogError("MODPlus ran for over 14 days; aborting")
@@ -1063,13 +1075,23 @@ Public Class clsAnalysisToolRunnerMODPlus
 
 #Region "Event Handlers"
 
+    Private Sub MSConvert_CmdRunner_LoopWaiting()
+        Dim processIDs = New List(Of Integer)
+        processIDs.Add(0)
+
+        ' Pass -1 for coreUsageOverall so that mCoreUsageHistory does not get updated
+        CmdRunner_LoopWaiting(processIDs, coreUsageOverall:=-1, secondsBetweenUpdates:=30)
+    End Sub
+
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
+    Private Sub CmdRunner_LoopWaiting(processIDs As List(Of Integer), coreUsageOverall As Single, secondsBetweenUpdates As Integer)
 
         UpdateStatusFile(m_progress)
+
+        UpdateProgRunnerCpuUsage(processIDs.FirstOrDefault(), coreUsageOverall, secondsBetweenUpdates)
 
         LogProgress("MODPlus")
 

@@ -21,7 +21,7 @@ Public Class clsMODPlusRunner
 #End Region
 
 #Region "Events"
-    Public Event CmdRunnerWaiting()
+    Public Event CmdRunnerWaiting(processIDs As List(Of Integer), coreUsageCurrent As Single, secondsBetweenUpdates As Integer)
 #End Region
 
 #Region "Properties"
@@ -59,6 +59,18 @@ Public Class clsMODPlusRunner
     Public ReadOnly Property ParameterFilePath As String
         Get
             Return mParameterFilePath
+        End Get
+    End Property
+
+    Public ReadOnly Property ProcessID As Integer
+        Get
+            Return mProcessID
+        End Get
+    End Property
+
+    Public ReadOnly Property CoreUsage() As Single
+        Get
+            Return mCoreUsageCurrent
         End Get
     End Property
 
@@ -116,24 +128,27 @@ Public Class clsMODPlusRunner
 
 #Region "Member Variables"
 
-    Protected mConsoleOutputFilePath As String
-    Protected mOutputFilePath As String
-    Protected mCommandLineArgs As String
+    Private mConsoleOutputFilePath As String
+    Private mOutputFilePath As String
+    Private mCommandLineArgs As String
 
-    Protected mProgress As Double
-    Protected mJavaMemorySizeMB As Integer
+    Private mProgress As Double
+    Private mJavaMemorySizeMB As Integer
 
-    Protected mStatus As MODPlusRunnerStatusCodes
-    Protected mReleaseDate As String
+    Private mStatus As MODPlusRunnerStatusCodes
+    Private mReleaseDate As String
 
-    Protected ReadOnly mDataset As String
-    Protected ReadOnly mThread As Integer
-    Protected ReadOnly mWorkingDirectory As String
-    Protected ReadOnly mParameterFilePath As String
-    Protected ReadOnly mJavaProgLog As String
-    Protected ReadOnly mModPlusJarFilePath As String
+    Private ReadOnly mDataset As String
+    Private ReadOnly mThread As Integer
+    Private ReadOnly mWorkingDirectory As String
+    Private ReadOnly mParameterFilePath As String
+    Private ReadOnly mJavaProgLog As String
+    Private ReadOnly mModPlusJarFilePath As String
 
-    Protected WithEvents mCmdRunner As clsRunDosProgram
+    Private mProcessID As Integer
+    Private mCoreUsageCurrent As Single
+
+    Private WithEvents mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -213,6 +228,11 @@ Public Class clsMODPlusRunner
 
         mCommandLineArgs = cmdStr
 
+        mProcessID = 0
+        mCoreUsageCurrent = 1
+
+        ' Start the program and wait for it to finish
+        ' However, while it's running, LoopWaiting will get called via events
         Dim blnSuccess = mCmdRunner.RunProgram(mJavaProgLog, cmdStr, "MODPlus", True)
 
         If blnSuccess Then
@@ -315,16 +335,23 @@ Public Class clsMODPlusRunner
 
     Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
 
+        Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 30 Then
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
             dtLastConsoleOutputParse = DateTime.UtcNow
 
             ParseConsoleOutputFile(mConsoleOutputFilePath)
 
+            ' Note that the call to GetCoreUsage() will take at least 1 second
+            mCoreUsageCurrent = ProgRunner.GetCoreUsage()
+            mProcessID = ProgRunner.ProcessID
         End If
+        
+        Dim processIDs = New List(Of Integer)
+        processIDs.Add(mProcessID)
 
-        RaiseEvent CmdRunnerWaiting()
+        RaiseEvent CmdRunnerWaiting(processIDs, mCoreUsageCurrent, SECONDS_BETWEEN_UPDATE)
     End Sub
 
 End Class
