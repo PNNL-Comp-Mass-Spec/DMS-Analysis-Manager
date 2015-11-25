@@ -92,6 +92,9 @@ Public Class clsAnalysisToolRunnerBase
     Private mLastSortUtilityProgress As DateTime
     Private mSortUtilityErrorMessage As String
 
+    Protected mProgRunnerStartTime As DateTime
+    Protected ReadOnly mCoreUsageHistory As Queue(Of Single)
+
 #End Region
 
 #Region "Properties"
@@ -161,6 +164,15 @@ Public Class clsAnalysisToolRunnerBase
 #Region "Methods"
 
     ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub New()
+        mProgRunnerStartTime = DateTime.UtcNow
+        mCoreUsageHistory = New Queue(Of Single)
+    End Sub
+
+    ''' <summary>
     ''' Initializes class
     ''' </summary>
     ''' <param name="mgrParams">Object holding manager parameters</param>
@@ -201,6 +213,7 @@ Public Class clsAnalysisToolRunnerBase
         m_message = String.Empty
         m_EvalCode = 0
         m_EvalMessage = String.Empty
+
     End Sub
 
     ''' <summary>
@@ -3238,6 +3251,70 @@ Public Class clsAnalysisToolRunnerBase
         Return m_IonicZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
 
     End Function
+
+    ''' <summary>
+    ''' Reset the progrunner start time and the CPU usage queue
+    ''' </summary>
+    ''' <remarks>Public because used by clsDtaGenThermoRaw</remarks>
+    Public Sub ResetProgRunnerCpuUsage()
+        mProgRunnerStartTime = DateTime.UtcNow
+        mCoreUsageHistory.Clear()
+    End Sub
+
+    ''' <summary>
+    ''' Cache the new core usage value
+    ''' Note: call ResetProgRunnerCpuUsage just before calling CmdRunner.RunProgram()
+    ''' </summary>
+    ''' <param name="processID">ProcessID of the externally running process</param>
+    ''' <param name="coreUsage">Number of cores in use by the process; -1 if unknown</param>
+    ''' <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
+    ''' <remarks>This method is used by this class and by clsAnalysisToolRunnerMODPlus</remarks>
+    Protected Sub UpdateProgRunnerCpuUsage(processID As Integer, coreUsage As Single, secondsBetweenUpdates As Integer)
+
+        ' Cache the core usage values for the last 5 minutes
+        If coreUsage >= 0 Then
+            mCoreUsageHistory.Enqueue(coreUsage)
+
+            If secondsBetweenUpdates < 10 Then
+                If mCoreUsageHistory.Count > 5 * 60 / 10 Then
+                    mCoreUsageHistory.Dequeue()
+                End If
+            Else
+                If mCoreUsageHistory.Count > 5 * 60 / secondsBetweenUpdates Then
+                    mCoreUsageHistory.Dequeue()
+                End If
+            End If
+
+        End If
+
+        ' If the Program has been running for at least 3 minutes, store the ProcessID and actual CoreUsage in the database
+        If DateTime.UtcNow.Subtract(mProgRunnerStartTime).TotalMinutes >= 3 AndAlso mCoreUsageHistory.Count > 0 Then
+            m_StatusTools.ProgRunnerProcessID = processID
+
+            ' Average the data in the history queue
+            Dim coreUsageAvg = mCoreUsageHistory.ToArray().Average()
+            m_StatusTools.ProgRunnerCoreUsage = coreUsageAvg
+        End If
+
+    End Sub
+
+    ''' <summary>
+    ''' Update the cached values in mCoreUsageHistory
+    ''' Note: call ResetProgRunnerCpuUsage just before calling CmdRunner.RunProgram()
+    ''' Then, when handling the LoopWaiting event from the cmdRunner instance
+    ''' call this method every secondsBetweenUpdates seconds (typically 30)
+    ''' </summary>
+    ''' <param name="CmdRunner">clsRunDosProgram instance used to run an external process</param>
+    ''' <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
+    ''' <remarks>Public because used by clsDtaGenThermoRaw</remarks>
+    Public Sub UpdateProgRunnerCpuUsage(cmdRunner As clsRunDosProgram, secondsBetweenUpdates As Integer)
+
+        ' Note that the call to GetCoreUsage() will take at least 1 second
+        Dim coreUsage = cmdRunner.GetCoreUsage()
+
+        UpdateProgRunnerCpuUsage(cmdRunner.ProcessID, coreUsage, secondsBetweenUpdates)
+
+    End Sub
 
     ''' <summary>
     ''' Update Status.xml every 15 seconds using m_progress

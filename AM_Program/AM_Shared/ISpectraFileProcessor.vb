@@ -97,7 +97,7 @@ Public Interface ISpectraFileProcessor
 #End Region
 
 #Region "Methods"
-	Sub Setup(ByVal InitParams As InitializationParams)	 'Initializes parameters. Must be called before executing Start()
+    Sub Setup(ByVal InitParams As InitializationParams, toolRunner As clsAnalysisToolRunnerBase)   'Initializes parameters. Must be called before executing Start()
 
 	Function Start() As ISpectraFileProcessor.ProcessStatus	 'Starts the spectra file creation process
 
