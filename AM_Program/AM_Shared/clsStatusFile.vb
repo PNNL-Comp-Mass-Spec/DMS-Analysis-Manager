@@ -13,17 +13,17 @@ Imports System.IO
 Imports System.Xml
 
 Public Class clsStatusFile
-	Implements IStatusFile
-
-	'*********************************************************************************************************
-	'Provides tools for creating and updating an analysis status file
-	' Additional functionality:
-	'  1) Can log memory usage stats to a file using clsMemoryUsageLogger
-	'  2) Looks for the presence of file "AbortProcessingNow.txt"; if found, it sets AbortProcessingNow to true 
-	'	 and renames the file to "AbortProcessingNow.txt.Done"
-	'  3) Posts status messages to the DMS broker DB at the specified interval
-	'
-	'*********************************************************************************************************
+    Implements IStatusFile
+    
+    '*********************************************************************************************************
+    'Provides tools for creating and updating an analysis status file
+    ' Additional functionality:
+    '  1) Can log memory usage stats to a file using clsMemoryUsageLogger
+    '  2) Looks for the presence of file "AbortProcessingNow.txt"; if found, it sets AbortProcessingNow to true 
+    '	 and renames the file to "AbortProcessingNow.txt.Done"
+    '  3) Posts status messages to the DMS broker DB at the specified interval
+    '
+    '*********************************************************************************************************
 
 #Region "Module variables"
     Public Const ABORT_PROCESSING_NOW_FILENAME As String = "AbortProcessingNow.txt"
@@ -44,6 +44,8 @@ Public Class clsStatusFile
 
     ' ReSharper disable once FieldCanBeMadeReadOnly.Local
     Private m_RecentErrorMessages(MAX_ERROR_MESSAGE_COUNT_TO_CACHE - 1) As String
+
+    Private m_ProgRunnerCoreUsageHistory As Queue(Of KeyValuePair(Of DateTime, Single))
 
     ' The following provides access to the master logger
     Protected m_DebugLevel As Integer
@@ -580,6 +582,10 @@ Public Class clsStatusFile
         m_BrokerDBLogger.LogStatus(udtStatusInfo, ForceLogToBrokerDB)
     End Sub
 
+    Public Sub StoreCoreUsageHistory(coreUsageHistory As Queue(Of KeyValuePair(Of DateTime, Single))) Implements IStatusFile.StoreCoreUsageHistory
+        m_ProgRunnerCoreUsageHistory = coreUsageHistory
+    End Sub
+
     Protected Sub StoreRecentJobInfo(ByVal JobInfo As String)
         If Not JobInfo Is Nothing AndAlso JobInfo.Length > 0 Then
             MostRecentJobInfo = JobInfo
@@ -680,62 +686,75 @@ Public Class clsStatusFile
         Try
             ' Create a new memory stream in which to write the XML
             objMemoryStream = New MemoryStream
-            Using XWriter = New XmlTextWriter(objMemoryStream, Text.Encoding.UTF8)
+            Using xWriter = New XmlTextWriter(objMemoryStream, Text.Encoding.UTF8)
 
-                XWriter.Formatting = Formatting.Indented
-                XWriter.Indentation = 2
+                xWriter.Formatting = Formatting.Indented
+                xWriter.Indentation = 2
 
                 'Create the XML document in memory
-                XWriter.WriteStartDocument(True)
-                XWriter.WriteComment("Analysis manager job status")
+                xWriter.WriteStartDocument(True)
+                xWriter.WriteComment("Analysis manager job status")
 
                 'General job information
                 'Root level element
-                XWriter.WriteStartElement("Root")    ' Root
-                XWriter.WriteStartElement("Manager")  ' Manager
-                XWriter.WriteElementString("MgrName", MgrName)
-                XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(MgrStatus))
-                XWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
-                XWriter.WriteElementString("LastStartTime", TaskStartTime.ToLocalTime().ToString())
-                XWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString("##0.0"))
-                XWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
-                XWriter.WriteElementString("ProcessID", GetProcessID().ToString())
-                XWriter.WriteElementString("ProgRunnerProcessID", ProgRunnerProcessID.ToString())
-                XWriter.WriteElementString("ProgRunnerCoreUsage", ProgRunnerCoreUsage.ToString("0.00"))
-                XWriter.WriteStartElement("RecentErrorMessages")
+                xWriter.WriteStartElement("Root")    ' Root
+                xWriter.WriteStartElement("Manager")  ' Manager
+                xWriter.WriteElementString("MgrName", MgrName)
+                xWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(MgrStatus))
+                xWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString())
+                xWriter.WriteElementString("LastStartTime", TaskStartTime.ToLocalTime().ToString())
+                xWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString("##0.0"))
+                xWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"))
+                xWriter.WriteElementString("ProcessID", GetProcessID().ToString())
+                xWriter.WriteElementString("ProgRunnerProcessID", ProgRunnerProcessID.ToString())
+                xWriter.WriteElementString("ProgRunnerCoreUsage", ProgRunnerCoreUsage.ToString("0.00"))
+                xWriter.WriteStartElement("RecentErrorMessages")
                 If m_RecentErrorMessageCount = 0 Then
-                    XWriter.WriteElementString("ErrMsg", String.Empty)
+                    xWriter.WriteElementString("ErrMsg", String.Empty)
                 Else
                     For intErrorMsgIndex As Integer = 0 To m_RecentErrorMessageCount - 1
-                        XWriter.WriteElementString("ErrMsg", m_RecentErrorMessages(intErrorMsgIndex))
+                        xWriter.WriteElementString("ErrMsg", m_RecentErrorMessages(intErrorMsgIndex))
                     Next
                 End If
-                XWriter.WriteEndElement()               ' RecentErrorMessages
-                XWriter.WriteEndElement()               ' Manager
+                xWriter.WriteEndElement()               ' RecentErrorMessages
+                xWriter.WriteEndElement()               ' Manager
 
-                XWriter.WriteStartElement("Task")       ' Task
-                XWriter.WriteElementString("Tool", Tool)
-                XWriter.WriteElementString("Status", ConvertTaskStatusToString(TaskStatus))
-                XWriter.WriteElementString("Duration", sngRunTimeHours.ToString("0.00"))
-                XWriter.WriteElementString("DurationMinutes", (sngRunTimeHours * 60).ToString("0.0"))
-                XWriter.WriteElementString("Progress", Progress.ToString("##0.00"))
-                XWriter.WriteElementString("CurrentOperation", CurrentOperation)
+                xWriter.WriteStartElement("Task")       ' Task
+                xWriter.WriteElementString("Tool", Tool)
+                xWriter.WriteElementString("Status", ConvertTaskStatusToString(TaskStatus))
+                xWriter.WriteElementString("Duration", sngRunTimeHours.ToString("0.00"))
+                xWriter.WriteElementString("DurationMinutes", (sngRunTimeHours * 60).ToString("0.0"))
+                xWriter.WriteElementString("Progress", Progress.ToString("##0.00"))
+                xWriter.WriteElementString("CurrentOperation", CurrentOperation)
 
-                XWriter.WriteStartElement("TaskDetails") 'TaskDetails
-                XWriter.WriteElementString("Status", ConvertTaskStatusDetailToString(TaskStatusDetail))
-                XWriter.WriteElementString("Job", CStr(JobNumber))
-                XWriter.WriteElementString("Step", CStr(JobStep))
-                XWriter.WriteElementString("Dataset", Dataset)
-                XWriter.WriteElementString("MostRecentLogMessage", m_MostRecentLogMessage)
-                XWriter.WriteElementString("MostRecentJobInfo", MostRecentJobInfo)
-                XWriter.WriteElementString("SpectrumCount", SpectrumCount.ToString)
-                XWriter.WriteEndElement()               ' TaskDetails
-                XWriter.WriteEndElement()               ' Task
-                XWriter.WriteEndElement()               ' Root
+                xWriter.WriteStartElement("TaskDetails") 'TaskDetails
+                xWriter.WriteElementString("Status", ConvertTaskStatusDetailToString(TaskStatusDetail))
+                xWriter.WriteElementString("Job", CStr(JobNumber))
+                xWriter.WriteElementString("Step", CStr(JobStep))
+                xWriter.WriteElementString("Dataset", Dataset)
+                xWriter.WriteElementString("MostRecentLogMessage", m_MostRecentLogMessage)
+                xWriter.WriteElementString("MostRecentJobInfo", MostRecentJobInfo)
+                xWriter.WriteElementString("SpectrumCount", SpectrumCount.ToString)
+                xWriter.WriteEndElement()               ' TaskDetails
+                xWriter.WriteEndElement()               ' Task
+
+                If ProgRunnerProcessID <> 0 AndAlso Not m_ProgRunnerCoreUsageHistory Is Nothing Then
+                    xWriter.WriteStartElement("ProgRunnerCoreUsage")
+                    xWriter.WriteAttributeString("Count", m_ProgRunnerCoreUsageHistory.Count.ToString())
+                    For Each coreUsageSample In m_ProgRunnerCoreUsageHistory
+                        xWriter.WriteStartElement("CoreUsageSample")
+                        xWriter.WriteAttributeString("Date", coreUsageSample.Key.ToString("yyyy-MM-dd hh:mm:ss tt"))
+                        xWriter.WriteValue(coreUsageSample.Value.ToString("0.0"))
+                        xWriter.WriteEndElement()       ' CoreUsageSample
+                    Next
+                    xWriter.WriteEndElement()           ' ProgRunnerCoreUsage
+                End If
+
+                xWriter.WriteEndElement()               ' Root
 
                 'Close out the XML document (but do not close XWriter yet)
-                XWriter.WriteEndDocument()
-                XWriter.Flush()
+                xWriter.WriteEndDocument()
+                xWriter.Flush()
 
                 ' Now use a StreamReader to copy the XML text to a string variable
                 objMemoryStream.Seek(0, SeekOrigin.Begin)

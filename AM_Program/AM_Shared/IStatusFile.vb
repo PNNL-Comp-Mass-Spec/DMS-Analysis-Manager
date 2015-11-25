@@ -118,6 +118,7 @@ Public Interface IStatusFile
     ''' <remarks></remarks>
     Function GetProcessID() As Integer
 
+    Sub StoreCoreUsageHistory(coreUsageHistory As Queue(Of KeyValuePair(Of DateTime, Single)))
 
     ''' <summary>
     ''' 

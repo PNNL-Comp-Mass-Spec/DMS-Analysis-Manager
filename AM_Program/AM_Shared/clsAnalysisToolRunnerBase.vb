@@ -93,7 +93,12 @@ Public Class clsAnalysisToolRunnerBase
     Private mSortUtilityErrorMessage As String
 
     Protected mProgRunnerStartTime As DateTime
-    Protected ReadOnly mCoreUsageHistory As Queue(Of Single)
+
+    ''' <summary>
+    ''' Queue tracking recent CPU values from an externally spawned process
+    ''' </summary>
+    ''' <remarks>Keys are the sampling date, value is the CPU usage (number of cores in use)</remarks>
+    Protected ReadOnly mCoreUsageHistory As Queue(Of KeyValuePair(Of DateTime, Single))
 
 #End Region
 
@@ -169,7 +174,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks></remarks>
     Public Sub New()
         mProgRunnerStartTime = DateTime.UtcNow
-        mCoreUsageHistory = New Queue(Of Single)
+        mCoreUsageHistory = New Queue(Of KeyValuePair(Of DateTime, Single))
     End Sub
 
     ''' <summary>
@@ -3304,7 +3309,7 @@ Public Class clsAnalysisToolRunnerBase
 
         ' Cache the core usage values for the last 5 minutes
         If coreUsage >= 0 Then
-            mCoreUsageHistory.Enqueue(coreUsage)
+            mCoreUsageHistory.Enqueue(New KeyValuePair(Of DateTime, Single)(DateTime.Now, coreUsage))
 
             If secondsBetweenUpdates < 10 Then
                 If mCoreUsageHistory.Count > 5 * 60 / 10 Then
@@ -3318,13 +3323,21 @@ Public Class clsAnalysisToolRunnerBase
 
         End If
 
-        ' If the Program has been running for at least 3 minutes, store the ProcessID and actual CoreUsage in the database
-        If DateTime.UtcNow.Subtract(mProgRunnerStartTime).TotalMinutes >= 3 AndAlso mCoreUsageHistory.Count > 0 Then
+        If mCoreUsageHistory.Count > 0 Then
             m_StatusTools.ProgRunnerProcessID = processID
 
-            ' Average the data in the history queue
-            Dim coreUsageAvg = mCoreUsageHistory.ToArray().Average()
-            m_StatusTools.ProgRunnerCoreUsage = coreUsageAvg
+            m_StatusTools.StoreCoreUsageHistory(mCoreUsageHistory)
+
+            ' If the Program has been running for at least 3 minutes, store the actual CoreUsage in the database
+            If DateTime.UtcNow.Subtract(mProgRunnerStartTime).TotalMinutes >= 3 Then
+
+                ' Average the data in the history queue
+
+                Dim coreUsageAvg = (From item In mCoreUsageHistory.ToArray() Select item.Value).Average()
+
+                m_StatusTools.ProgRunnerCoreUsage = coreUsageAvg
+            End If
+
         End If
 
     End Sub
