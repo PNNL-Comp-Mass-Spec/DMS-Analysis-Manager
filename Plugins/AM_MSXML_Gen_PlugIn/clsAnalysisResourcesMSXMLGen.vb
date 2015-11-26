@@ -46,7 +46,7 @@ Public Class clsAnalysisResourcesMSXMLGen
 
                 retrievalAttempts += 1
                 Select Case strRawDataType.ToLower
-                    Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_DOT_D_FOLDERS, RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER
+                    Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_DOT_D_FOLDERS, RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER, RAW_DATA_TYPE_BRUKER_FT_FOLDER
                         currentTask = "Retrieve spectra: " & strRawDataType
 
                         If RetrieveSpectra(strRawDataType) Then
@@ -60,8 +60,10 @@ Public Class clsAnalysisResourcesMSXMLGen
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                                              "clsAnalysisResourcesMSXMLGen.GetResources: " & m_message & "; must be " &
                                              RAW_DATA_TYPE_DOT_RAW_FILES & ", " &
-                                             RAW_DATA_TYPE_DOT_D_FOLDERS & ", or " &
-                                             RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
+                                             RAW_DATA_TYPE_DOT_D_FOLDERS & ", " &
+                                             RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER & ", or " &
+                                             RAW_DATA_TYPE_BRUKER_FT_FOLDER)
+
                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End Select
 

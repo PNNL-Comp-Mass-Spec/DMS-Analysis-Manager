@@ -116,7 +116,7 @@ Public MustInherit Class clsMSXmlGen
         Select Case mRawDataType
             Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
                 mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
-            Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
+            Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
                 mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
             Case Else
                 Throw New ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString())
