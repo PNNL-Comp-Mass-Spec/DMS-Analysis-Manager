@@ -40,8 +40,9 @@ Public Class clsCodeTest
     End Structure
 
     Public Sub New()
-        Const CUSTOM_LOG_SOURCE_NAME As String = "Analysis Manager"
-        Const CUSTOM_LOG_NAME As String = "DMS_AnalysisMgr"
+        Const CUSTOM_LOG_SOURCE_NAME = "Analysis Manager"
+        Const CUSTOM_LOG_NAME = "DMS_AnalysisMgr"
+        Const TRACE_MODE_ENABLED = True
 
         ' Get settings from config file
         Dim lstMgrSettings As Generic.Dictionary(Of String, String)
@@ -49,7 +50,7 @@ Public Class clsCodeTest
         Try
             lstMgrSettings = clsMainProcess.LoadMgrSettingsFromFile()
 
-            m_mgrParams = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, clsGlobal.GetAppFolderPath())
+            m_mgrParams = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED)
 
             m_DebugLevel = 2
 

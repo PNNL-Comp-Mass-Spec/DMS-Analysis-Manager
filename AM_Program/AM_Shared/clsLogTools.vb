@@ -168,7 +168,7 @@ Public Class clsLogTools
 
 		For Each SelectedAppender As IAppender In AppendList
 			'Convert the IAppender object to a RollingFileAppender
-			Dim AppenderToChange As RollingFileAppender = TryCast(SelectedAppender, RollingFileAppender)
+            Dim AppenderToChange As RollingFileAppender = TryCast(SelectedAppender, RollingFileAppender)
 			If AppenderToChange Is Nothing Then
 				WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender")
 				Return

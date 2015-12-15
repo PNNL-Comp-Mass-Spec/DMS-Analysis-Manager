@@ -133,7 +133,7 @@ Public Class clsDBStatusLogger
         Static dtLastWriteTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
         Dim MyConnection As SqlClient.SqlConnection
-        Dim MyCmd As New SqlClient.SqlCommand
+        Dim myCmd As New SqlClient.SqlCommand
 
         Try
             If String.IsNullOrEmpty(m_DBConnectionString) Then
@@ -152,7 +152,7 @@ Public Class clsDBStatusLogger
             MyConnection.Open()
 
             'Set up the command object prior to SP execution
-            With MyCmd
+            With myCmd
 
                 .CommandType = CommandType.StoredProcedure
                 .CommandText = SP_NAME_UPDATE_MANAGER_STATUS
@@ -197,7 +197,7 @@ Public Class clsDBStatusLogger
             End With
 
             'Execute the SP
-            MyCmd.ExecuteNonQuery()
+            myCmd.ExecuteNonQuery()
 
         Catch ex As Exception
             ' Ignore errors here

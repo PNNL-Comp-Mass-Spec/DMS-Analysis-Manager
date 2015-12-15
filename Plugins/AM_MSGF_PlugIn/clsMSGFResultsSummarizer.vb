@@ -540,19 +540,15 @@ Public Class clsMSGFResultsSummarizer
 
         Const MAX_RETRY_COUNT = 3
 
-        Dim objCommand As SqlCommand
-
         Dim blnSuccess As Boolean
 
         Try
 
             ' Call stored procedure StoreJobPSMStats in DMS5
 
-            objCommand = New SqlCommand()
-
+            Dim objCommand = New SqlCommand(STORE_JOB_PSM_RESULTS_SP_NAME)
             With objCommand
                 .CommandType = CommandType.StoredProcedure
-                .CommandText = STORE_JOB_PSM_RESULTS_SP_NAME
 
                 .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
                 .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue

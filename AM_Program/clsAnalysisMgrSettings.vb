@@ -30,17 +30,20 @@ Public Class clsAnalysisMgrSettings
 #Region "Module variables"
     Private Const SP_NAME_ACKMANAGERUPDATE As String = "AckManagerUpdateRequired"
 
-    Private m_ParamDictionary As Dictionary(Of String, String)
-    Private m_ErrMsg As String = ""
-    Private ReadOnly m_EmergencyLogSource As String = ""
-    Private ReadOnly m_EmergencyLogName As String = ""
-    Private ReadOnly m_MgrFolderPath As String
+    Private mParamDictionary As Dictionary(Of String, String)
+    Private mErrMsg As String = ""
+
+    Private ReadOnly mEmergencyLogSource As String
+    Private ReadOnly mEmergencyLogName As String
+    Private ReadOnly mMgrFolderPath As String
+
+    Private ReadOnly mTraceMode As Boolean
 #End Region
 
 #Region "Properties"
     Public ReadOnly Property ErrMsg() As String Implements IMgrParams.ErrMsg
         Get
-            Return m_ErrMsg
+            Return mErrMsg
         End Get
     End Property
 #End Region
@@ -52,21 +55,20 @@ Public Class clsAnalysisMgrSettings
     ''' <remarks></remarks>
     Public Sub AckManagerUpdateRequired() Implements IMgrParams.AckManagerUpdateRequired
 
-        Dim MyConnection As SqlConnection
-        Dim MyCmd As New SqlCommand
-        Dim ConnectionString As String
-
         Try
+
             ' Data Source=proteinseqs;Initial Catalog=manager_control
-            ConnectionString = Me.GetParam("MgrCnfgDbConnectStr")
-            MyConnection = New SqlConnection(ConnectionString)
-            MyConnection.Open()
+            Dim connectionString = Me.GetParam("MgrCnfgDbConnectStr")
+
+            If mTraceMode = True Then ShowTraceMessage("AckManagerUpdateRequired using " & connectionString)
+
+            Dim myConnection = New SqlConnection(connectionString)
+            myConnection.Open()
 
             'Set up the command object prior to SP execution
-            With MyCmd
+            Dim myCmd = New SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection)
+            With myCmd
                 .CommandType = CommandType.StoredProcedure
-                .CommandText = SP_NAME_ACKMANAGERUPDATE
-                .Connection = MyConnection
 
                 .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
                 .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
@@ -81,7 +83,7 @@ Public Class clsAnalysisMgrSettings
             End With
 
             'Execute the SP
-            MyCmd.ExecuteNonQuery()
+            myCmd.ExecuteNonQuery()
 
         Catch ex As Exception
             Const strErrorMessage As String = "Exception calling " & SP_NAME_ACKMANAGERUPDATE
@@ -100,19 +102,27 @@ Public Class clsAnalysisMgrSettings
     ''' <param name="EmergencyLogSource">Source name registered for emergency logging</param>
     ''' <param name="EmergencyLogName">Name of system log for emergency logging</param>
     ''' <remarks></remarks>
-    Public Sub New(EmergencyLogSource As String, EmergencyLogName As String, lstMgrSettings As Dictionary(Of String, String), MgrFolderPath As String)
-        m_EmergencyLogName = EmergencyLogName
-        m_EmergencyLogSource = EmergencyLogSource
-        m_MgrFolderPath = MgrFolderPath
+    Public Sub New(
+       EmergencyLogSource As String,
+       EmergencyLogName As String,
+       lstMgrSettings As Dictionary(Of String, String),
+       MgrFolderPath As String,
+       traceMode As Boolean)
+
+        mEmergencyLogName = EmergencyLogName
+        mEmergencyLogSource = EmergencyLogSource
+        mMgrFolderPath = MgrFolderPath
+        mTraceMode = traceMode
 
         If Not LoadSettings(lstMgrSettings) Then
-            If Not String.IsNullOrEmpty(m_ErrMsg) Then
-                Throw New ApplicationException("Unable to initialize manager settings class: " & m_ErrMsg)
+            If Not String.IsNullOrEmpty(mErrMsg) Then
+                Throw New ApplicationException("Unable to initialize manager settings class: " & mErrMsg)
             Else
                 Throw New ApplicationException("Unable to initialize manager settings class: unknown error")
             End If
-
         End If
+
+        If mTraceMode = True Then ShowTraceMessage("Initialized clsAnalysisMgrSettings")
 
     End Sub
 
@@ -124,20 +134,20 @@ Public Class clsAnalysisMgrSettings
     ''' <remarks></remarks>
     Public Function LoadSettings(ConfigFileSettings As Dictionary(Of String, String)) As Boolean Implements IMgrParams.LoadSettings
 
-        m_ErrMsg = ""
+        mErrMsg = ""
 
-        m_ParamDictionary = ConfigFileSettings
+        mParamDictionary = ConfigFileSettings
 
         'Test the settings retrieved from the config file
-        If Not CheckInitialSettings(m_ParamDictionary) Then
+        If Not CheckInitialSettings(mParamDictionary) Then
             'Error logging handled by CheckInitialSettings
             Return False
         End If
 
         'Determine if manager is deactivated locally
-        If Not CBool(m_ParamDictionary("MgrActive_Local")) Then
-            WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, "Manager deactivated locally")
-            m_ErrMsg = "Manager deactivated locally"
+        If Not CBool(mParamDictionary("MgrActive_Local")) Then
+            WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, "Manager deactivated locally")
+            mErrMsg = "Manager deactivated locally"
             Return False
         End If
 
@@ -160,26 +170,35 @@ Public Class clsAnalysisMgrSettings
     ''' <remarks></remarks>
     Private Function CheckInitialSettings(InpDict As Dictionary(Of String, String)) As Boolean
 
-        Dim MyMsg As String
+        Dim errorMessage As String
 
         'Verify manager settings dictionary exists
         If InpDict Is Nothing Then
-            MyMsg = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found"
-            WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, MyMsg)
+            errorMessage = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found"
+
+            If mTraceMode = True Then ShowTraceMessage("Error in " & errorMessage)
+
+            WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage)
             Return False
         End If
 
         'Verify intact config file was found
         Dim strValue As String = String.Empty
         If Not InpDict.TryGetValue("UsingDefaults", strValue) Then
-            MyMsg = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file"
-            WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, MyMsg)
+            errorMessage = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file"
+
+            If mTraceMode = True Then ShowTraceMessage("Error in " & errorMessage)
+
+            WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage)
         Else
             Dim blnValue As Boolean
             If Boolean.TryParse(strValue, blnValue) Then
                 If blnValue Then
-                    MyMsg = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True"
-                    WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, MyMsg)
+                    errorMessage = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True"
+
+                    If mTraceMode = True Then ShowTraceMessage("Error in " & errorMessage)
+
+                    WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage)
                     Return False
                 End If
             End If
@@ -242,7 +261,10 @@ Public Class clsAnalysisMgrSettings
 
         ManagerName = Me.GetParam("MgrName", "")
         If String.IsNullOrEmpty(ManagerName) Then
-            m_ErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
+            mErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
+
+            If mTraceMode = True Then ShowTraceMessage("Error in LoadMgrSettingsFromDB: " & mErrMsg)
+
             Return False
         End If
 
@@ -290,9 +312,12 @@ Public Class clsAnalysisMgrSettings
         dtSettings = Nothing
 
         If String.IsNullOrEmpty(ManagerName) Then
-            m_ErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
+            mErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
+            If mTraceMode = True Then ShowTraceMessage("LoadMgrSettingsFromDBWork: " & mErrMsg)
             Return False
         End If
+
+        If mTraceMode = True Then ShowTraceMessage("LoadMgrSettingsFromDBWork using [" & connectionString & "] for manager " & ManagerName)
 
         Dim SqlStr As String = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" & ManagerName & "'"
 
@@ -304,8 +329,8 @@ Public Class clsAnalysisMgrSettings
             ' Log the message to the DB if the monthly Windows updates are not pending
             Dim allowLogToDB = Not (clsWindowsUpdateStatus.ServerUpdatesArePending())
 
-            m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database for manager '" & ManagerName & "'"
-            WriteErrorMsg(m_ErrMsg, allowLogToDB)
+            mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database for manager '" & ManagerName & "'"
+            WriteErrorMsg(mErrMsg, allowLogToDB)
 
             If Not dtSettings Is Nothing Then dtSettings.Dispose()
             Return False
@@ -314,8 +339,8 @@ Public Class clsAnalysisMgrSettings
         ' Verify at least one row returned
         If dtSettings.Rows.Count < 1 And blnReturnErrorIfNoParameters Then
             ' No data was returned
-            m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" & ManagerName & "' not defined in the manager control database; using " & connectionString
-            WriteErrorMsg(m_ErrMsg)
+            mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" & ManagerName & "' not defined in the manager control database; using " & connectionString
+            WriteErrorMsg(mErrMsg)
             dtSettings.Dispose()
             Return False
         End If
@@ -335,19 +360,19 @@ Public Class clsAnalysisMgrSettings
                 Dim paramKey As String = DbCStr(oRow(dtSettings.Columns("ParameterName")))
                 Dim paramVal As String = DbCStr(oRow(dtSettings.Columns("ParameterValue")))
 
-                If m_ParamDictionary.ContainsKey(paramKey) Then
+                If mParamDictionary.ContainsKey(paramKey) Then
                     If Not blnSkipExisting Then
-                        m_ParamDictionary(paramKey) = paramVal
+                        mParamDictionary(paramKey) = paramVal
                     End If
                 Else
-                    m_ParamDictionary.Add(paramKey, paramVal)
+                    mParamDictionary.Add(paramKey, paramVal)
                 End If
             Next
             blnSuccess = True
 
         Catch ex As Exception
-            m_ErrMsg = "clsAnalysisMgrSettings.StoreParameters; Exception filling string dictionary from table for manager '" & ManagerName & "': " & ex.Message
-            WriteErrorMsg(m_ErrMsg)
+            mErrMsg = "clsAnalysisMgrSettings.StoreParameters; Exception filling string dictionary from table for manager '" & ManagerName & "': " & ex.Message
+            WriteErrorMsg(mErrMsg)
             blnSuccess = False
         Finally
             If Not dtSettings Is Nothing Then dtSettings.Dispose()
@@ -376,7 +401,9 @@ Public Class clsAnalysisMgrSettings
         Dim MyMsg As String
         Dim ParamKey As String
         Dim ParamVal As String
-        Dim ConnectionString As String = Me.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
+        Dim connectionString As String = Me.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
+
+        If mTraceMode = True Then ShowTraceMessage("LoadBrokerDBSettings has brokerconnectionstring = " & connectionString)
 
         ' Construct the Sql to obtain the information:
         '   SELECT 'StepTool_ParamFileStoragePath_' + Name AS ParameterName, [Param File Storage Path] AS ParameterValue
@@ -391,8 +418,10 @@ Public Class clsAnalysisMgrSettings
         Dim Dt As DataTable = Nothing
         Dim blnSuccess As Boolean
 
+        If mTraceMode = True Then ShowTraceMessage("Query V_Pipeline_Step_Tools_Detail_Report in broker")
+
         'Get a table to hold the results of the query
-        blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), ConnectionString, "LoadBrokerDBSettings", RetryCount, Dt)
+        blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), connectionString, "LoadBrokerDBSettings", RetryCount, Dt)
 
         'If loop exited due to errors, return false
         If Not blnSuccess Then
@@ -405,7 +434,7 @@ Public Class clsAnalysisMgrSettings
         'Verify at least one row returned
         If Dt.Rows.Count < 1 Then
             ' No data was returned
-            MyMsg = "clsMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using " & ConnectionString
+            MyMsg = "clsMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using " & connectionString
             WriteErrorMsg(MyMsg)
             Dt.Dispose()
             Return False
@@ -443,8 +472,8 @@ Public Class clsAnalysisMgrSettings
     Public Function GetParam(ItemKey As String) As String Implements IMgrParams.GetParam
         Dim Value As String = String.Empty
 
-        If Not m_ParamDictionary Is Nothing Then
-            If m_ParamDictionary.TryGetValue(ItemKey, Value) Then
+        If Not mParamDictionary Is Nothing Then
+            If mParamDictionary.TryGetValue(ItemKey, Value) Then
                 If String.IsNullOrWhiteSpace(Value) Then
                     Return String.Empty
                 End If
@@ -493,6 +522,10 @@ Public Class clsAnalysisMgrSettings
         End If
     End Function
 
+    Private Shared Sub ShowTraceMessage(strMessage As String)
+        Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
+    End Sub
+
     ''' <summary>
     ''' Sets a parameter in the parameters string dictionary
     ''' </summary>
@@ -501,10 +534,10 @@ Public Class clsAnalysisMgrSettings
     ''' <remarks></remarks>
     Public Sub SetParam(ItemKey As String, ItemValue As String) Implements IMgrParams.SetParam
 
-        If m_ParamDictionary.ContainsKey(ItemKey) Then
-            m_ParamDictionary(ItemKey) = ItemValue
+        If mParamDictionary.ContainsKey(ItemKey) Then
+            mParamDictionary(ItemKey) = ItemValue
         Else
-            m_ParamDictionary.Add(ItemKey, ItemValue)
+            mParamDictionary.Add(ItemKey, ItemValue)
         End If
 
     End Sub
@@ -516,12 +549,16 @@ Public Class clsAnalysisMgrSettings
     ''' <remarks></remarks>
     Private Sub WriteErrorMsg(errorMessage As String, Optional allowLogToDB As Boolean = True)
 
-        WriteToEmergencyLog(m_EmergencyLogSource, m_EmergencyLogName, errorMessage)
+        WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
 
         If (allowLogToDB) Then
             ' Also post a log to the database
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage)
+        End If
+
+        If mTraceMode Then
+            ShowTraceMessage(errorMessage)
         End If
 
     End Sub
@@ -552,7 +589,7 @@ Public Class clsAnalysisMgrSettings
     ''' <remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
     Public Function WriteConfigSetting(Key As String, Value As String) As Boolean
 
-        m_ErrMsg = ""
+        mErrMsg = ""
 
         'Load the config document
         Dim MyDoc As XmlDocument = LoadConfigDocument()
@@ -565,7 +602,7 @@ Public Class clsAnalysisMgrSettings
         Dim MyNode As XmlNode = MyDoc.SelectSingleNode("//applicationSettings")
 
         If MyNode Is Nothing Then
-            m_ErrMsg = "clsMgrSettings.WriteConfigSettings; appSettings node not found"
+            mErrMsg = "clsMgrSettings.WriteConfigSettings; appSettings node not found"
             Return False
         End If
 
@@ -577,13 +614,13 @@ Public Class clsAnalysisMgrSettings
                 MyElement.InnerText = Value
             Else
                 'Key was not found
-                m_ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " & Key
+                mErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " & Key
                 Return False
             End If
             MyDoc.Save(GetConfigFilePath())
             Return True
         Catch ex As Exception
-            m_ErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " & ex.Message
+            mErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " & ex.Message
             Return False
         End Try
 
@@ -636,7 +673,7 @@ Public Class clsAnalysisMgrSettings
             MyDoc.Load(GetConfigFilePath)
             Return MyDoc
         Catch ex As Exception
-            m_ErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " & ex.Message
+            mErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " & ex.Message
             Return Nothing
         End Try
 
@@ -650,7 +687,7 @@ Public Class clsAnalysisMgrSettings
     Private Function GetConfigFilePath() As String
 
         Dim exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location)
-        Return Path.Combine(m_MgrFolderPath, exeName & ".config")
+        Return Path.Combine(mMgrFolderPath, exeName & ".config")
 
     End Function
 

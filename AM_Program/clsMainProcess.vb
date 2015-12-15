@@ -131,7 +131,7 @@ Public Class clsMainProcess
             '   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
             Try
                 If Me.TraceMode Then ShowTraceMessage("Instantiating clsAnalysisMgrSettings")
-                m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath)
+                m_MgrSettings = New clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath, TraceMode)
             Catch ex As Exception
                 ' Failures are logged by clsMgrSettings to application event logs;
                 '  this includes MgrActive_Local = False

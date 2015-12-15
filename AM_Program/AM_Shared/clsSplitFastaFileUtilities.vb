@@ -240,8 +240,8 @@ Public Class clsSplitFastaFileUtilities
                 splitFastaName = fiSplitFastaFile.Name
 
                 'Setup for execution of the stored procedure
-                Dim MyCmd As New SqlClient.SqlCommand
-                With MyCmd
+                Dim myCmd As New SqlClient.SqlCommand
+                With myCmd
                     .CommandType = CommandType.StoredProcedure
                     .CommandText = SP_NAME_UPDATE_ORGANISM_DB_FILE
 
@@ -280,16 +280,16 @@ Public Class clsSplitFastaFileUtilities
                     Try
                         Using connection As SqlClient.SqlConnection = New SqlClient.SqlConnection(mDMSConnectionString)
                             connection.Open()
-                            MyCmd.Connection = connection
-                            MyCmd.ExecuteNonQuery()
+                            myCmd.Connection = connection
+                            myCmd.ExecuteNonQuery()
 
-                            Dim resultCode = CInt(MyCmd.Parameters("@Return").Value)
+                            Dim resultCode = CInt(myCmd.Parameters("@Return").Value)
 
                             If resultCode <> 0 Then
                                 ' Error occurred
                                 mErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE & " returned a non-zero error code of " & resultCode
 
-                                Dim statusMessage = MyCmd.Parameters("@Message").Value
+                                Dim statusMessage = myCmd.Parameters("@Message").Value
                                 If Not statusMessage Is Nothing Then
                                     mErrorMessage = mErrorMessage & "; " & CStr(statusMessage)
                                 End If
@@ -330,8 +330,8 @@ Public Class clsSplitFastaFileUtilities
         Try
 
             'Setup for execution of the stored procedure
-            Dim MyCmd As New SqlClient.SqlCommand
-            With MyCmd
+            Dim myCmd As New SqlClient.SqlCommand
+            With myCmd
                 .CommandType = CommandType.StoredProcedure
                 .CommandText = SP_NAME_REFRESH_CACHED_ORG_DB_INFO
 
@@ -345,10 +345,10 @@ Public Class clsSplitFastaFileUtilities
                 Try
                     Using connection As SqlClient.SqlConnection = New SqlClient.SqlConnection(mProteinSeqsDBConnectionString)
                         connection.Open()
-                        MyCmd.Connection = connection
-                        MyCmd.ExecuteNonQuery()
+                        myCmd.Connection = connection
+                        myCmd.ExecuteNonQuery()
 
-                        Dim resultCode = CInt(MyCmd.Parameters("@Return").Value)
+                        Dim resultCode = CInt(myCmd.Parameters("@Return").Value)
 
                         If resultCode <> 0 Then
                             ' Error occurred

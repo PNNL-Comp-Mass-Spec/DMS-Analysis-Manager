@@ -264,9 +264,8 @@ Public Class clsGlobal
       <Out()> ByRef dtResults As DataTable,
       timeoutSeconds As Integer) As Boolean
 
-        Dim cmd = New SqlCommand()
+        Dim cmd = New SqlCommand(sqlStr)
         cmd.CommandType = CommandType.Text
-        cmd.CommandText = sqlStr
 
         Return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
 

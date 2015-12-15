@@ -2564,8 +2564,8 @@ Public Class clsAnalysisToolRunnerBase
         End If
 
         'Setup for execution of the stored procedure
-        Dim MyCmd As New SqlClient.SqlCommand
-        With MyCmd
+        Dim myCmd As New SqlClient.SqlCommand
+        With myCmd
             .CommandType = CommandType.StoredProcedure
             .CommandText = SP_NAME_SET_TASK_TOOL_VERSION
 
@@ -2588,7 +2588,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
 
         ' Execute the stored procedure (retry the call up to 4 times)
-        ResCode = objAnalysisTask.PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 4)
+        ResCode = objAnalysisTask.PipelineDBProcedureExecutor.ExecuteSP(myCmd, 4)
 
         If ResCode = 0 Then
             Outcome = True

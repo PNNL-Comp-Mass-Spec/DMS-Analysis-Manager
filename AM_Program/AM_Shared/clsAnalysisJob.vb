@@ -638,7 +638,6 @@ Public Class clsAnalysisJob
     ''' <remarks></remarks>
     Private Function RequestAnalysisJob() As RequestTaskResult
 
-        Dim MyCmd As New SqlCommand
         Dim Outcome As RequestTaskResult
         Dim RetVal As Integer
         Dim paramXml As String
@@ -650,9 +649,10 @@ Public Class clsAnalysisJob
 
         Try
             'Set up the command object prior to SP execution
-            With MyCmd
+            Dim myCmd = New SqlCommand(SP_NAME_REQUEST_TASK)
+            With myCmd
                 .CommandType = CommandType.StoredProcedure
-                .CommandText = SP_NAME_REQUEST_TASK
+
                 .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
                 .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
@@ -685,17 +685,17 @@ Public Class clsAnalysisJob
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, MyMsg)
                 MyMsg = "clsAnalysisJob.RequestAnalysisJob(), printing param list"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, MyMsg)
-                PrintCommandParams(MyCmd)
+                PrintCommandParams(myCmd)
             End If
 
             ' Execute the SP
-            RetVal = PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 1)
+            RetVal = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 1)
 
             Select Case RetVal
                 Case RET_VAL_OK
                     'No errors found in SP call, so see if any step tasks were found
-                    m_JobId = CInt(MyCmd.Parameters("@jobNumber").Value)
-                    paramXml = CStr(MyCmd.Parameters("@parameters").Value)
+                    m_JobId = CInt(myCmd.Parameters("@jobNumber").Value)
+                    paramXml = CStr(myCmd.Parameters("@parameters").Value)
 
                     'Step task was found; get the data for it
                     Dim dctParameters As IEnumerable(Of udtParameterInfoType) = FillParamDictXml(paramXml)
@@ -726,7 +726,7 @@ Public Class clsAnalysisJob
                 Case Else
                     'There was an SP error
                     Dim msg As String = "clsAnalysisJob.RequestAnalysisJob(), SP execution error " & RetVal.ToString
-                    msg &= "; Msg text = " & CStr(MyCmd.Parameters("@message").Value)
+                    msg &= "; Msg text = " & CStr(myCmd.Parameters("@message").Value)
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                     Outcome = RequestTaskResult.ResultError
             End Select
@@ -866,10 +866,9 @@ Public Class clsAnalysisJob
         Dim returnCode As Integer
 
         ' Setup for execution of the stored procedure
-        Dim MyCmd As New SqlCommand
-        With MyCmd
+        Dim myCmd As New SqlCommand(spName)
+        With myCmd
             .CommandType = CommandType.StoredProcedure
-            .CommandText = spName
 
             .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
             .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
@@ -911,13 +910,13 @@ Public Class clsAnalysisJob
         End With
 
         ' Execute the Stored Procedure (retry the call up to 20 times)
-        returnCode = PipelineDBProcedureExecutor.ExecuteSP(MyCmd, 20)
+        returnCode = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 20)
 
         If returnCode = 0 Then
             success = True
         Else
             Dim Msg As String = "Error " & returnCode.ToString & " setting analysis job complete"
-            '			Msg &= "; Message = " & CStr(MyCmd.Parameters("@message").Value)
+            '			Msg &= "; Message = " & CStr(myCmd.Parameters("@message").Value)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             success = False
         End If
