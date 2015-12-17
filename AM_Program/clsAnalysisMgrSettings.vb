@@ -26,6 +26,18 @@ Public Class clsAnalysisMgrSettings
     '		loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
     '		parameters database.
     '*********************************************************************************************************
+    
+#Region "Constants"
+
+    Public Const DEACTIVATED_LOCALLY As String = "Manager deactivated locally"
+
+    Public Const MGR_PARAM_MGR_CFG_DB_CONN_STRING As String = "MgrCnfgDbConnectStr"
+    Public Const MGR_PARAM_MGR_ACTIVE_LOCAL As String = "MgrActive_Local"
+    Public Const MGR_PARAM_MGR_NAME As String = "MgrName"
+    Public Const MGR_PARAM_USING_DEFAULTS As String = "UsingDefaults"
+    Public Const MGR_PARAM_DEFAULT_DMS_CONN_STRING As String = "DefaultDMSConnString"
+
+#End Region
 
 #Region "Module variables"
     Private Const SP_NAME_ACKMANAGERUPDATE As String = "AckManagerUpdateRequired"
@@ -58,7 +70,7 @@ Public Class clsAnalysisMgrSettings
         Try
 
             ' Data Source=proteinseqs;Initial Catalog=manager_control
-            Dim connectionString = Me.GetParam("MgrCnfgDbConnectStr")
+            Dim connectionString = Me.GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING)
 
             If mTraceMode = True Then ShowTraceMessage("AckManagerUpdateRequired using " & connectionString)
 
@@ -75,7 +87,7 @@ Public Class clsAnalysisMgrSettings
 
                 .Parameters.Add(New SqlParameter("@managerName", SqlDbType.VarChar, 128))
                 .Parameters.Item("@managerName").Direction = ParameterDirection.Input
-                .Parameters.Item("@managerName").Value = Me.GetParam("MgrName")
+                .Parameters.Item("@managerName").Value = Me.GetParam(MGR_PARAM_MGR_NAME)
 
                 .Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
                 .Parameters.Item("@message").Direction = ParameterDirection.Output
@@ -93,7 +105,7 @@ Public Class clsAnalysisMgrSettings
     End Sub
 
     Public Function DisableManagerLocally() As Boolean Implements IMgrParams.DisableManagerLocally
-        Return WriteConfigSetting("MgrActive_Local", "False")
+        Return WriteConfigSetting(MGR_PARAM_MGR_ACTIVE_LOCAL, "False")
     End Function
 
     ''' <summary>
@@ -145,9 +157,9 @@ Public Class clsAnalysisMgrSettings
         End If
 
         'Determine if manager is deactivated locally
-        If Not CBool(mParamDictionary("MgrActive_Local")) Then
-            WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, "Manager deactivated locally")
-            mErrMsg = "Manager deactivated locally"
+        If Not CBool(mParamDictionary(MGR_PARAM_MGR_ACTIVE_LOCAL)) Then
+            WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, DEACTIVATED_LOCALLY)
+            mErrMsg = DEACTIVATED_LOCALLY
             Return False
         End If
 
@@ -184,7 +196,7 @@ Public Class clsAnalysisMgrSettings
 
         'Verify intact config file was found
         Dim strValue As String = String.Empty
-        If Not InpDict.TryGetValue("UsingDefaults", strValue) Then
+        If Not InpDict.TryGetValue(MGR_PARAM_USING_DEFAULTS, strValue) Then
             errorMessage = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file"
 
             If mTraceMode = True Then ShowTraceMessage("Error in " & errorMessage)
@@ -259,7 +271,7 @@ Public Class clsAnalysisMgrSettings
         Dim blnSkipExistingParameters As Boolean
         Dim blnReturnErrorIfNoParameters As Boolean
 
-        ManagerName = Me.GetParam("MgrName", "")
+        ManagerName = Me.GetParam(MGR_PARAM_MGR_NAME, "")
         If String.IsNullOrEmpty(ManagerName) Then
             mErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file"
 
@@ -307,7 +319,7 @@ Public Class clsAnalysisMgrSettings
         Const retryCount As Short = 3
 
         ' Data Source=proteinseqs;Initial Catalog=manager_control
-        Dim connectionString As String = Me.GetParam("MgrCnfgDbConnectStr", "")
+        Dim connectionString As String = Me.GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, String.Empty)
 
         dtSettings = Nothing
 

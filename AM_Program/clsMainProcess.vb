@@ -118,6 +118,13 @@ Public Class clsMainProcess
     ''' <returns>TRUE for success, FALSE for failure</returns>
     ''' <remarks></remarks>
     Private Function InitMgr() As Boolean
+        
+        ' Create a database logger connected to DMS5
+        ' Once the initial parameters have been successfully read, 
+        ' we remove this logger than make a new one using the connection string read from the Manager Control DB
+        Dim defaultDmsConnectionString = My.Settings.DefaultDMSConnString
+
+        clsLogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + Net.Dns.GetHostName(), True)
 
         ' Get settings from config file
         Dim lstMgrSettings As Dictionary(Of String, String)
@@ -152,7 +159,6 @@ Public Class clsMainProcess
                 Return False
             End Try
 
-
         Catch ex As Exception
             Console.WriteLine()
             Console.WriteLine("===============================================================")
@@ -163,21 +169,34 @@ Public Class clsMainProcess
             Return False
         End Try
 
-        m_MgrName = m_MgrSettings.GetParam("MgrName")
+        m_MgrName = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME)
         If Me.TraceMode Then ShowTraceMessage("Manager name is " & m_MgrName)
 
         ' Delete any temporary files that may be left in the app directory
         RemoveTempFiles()
 
-        ' Setup the logger
-        Dim LogFileName As String = m_MgrSettings.GetParam("logfilename")
+        ' Confirm that the application event log exists
+        If Not EventLog.SourceExists(CUSTOM_LOG_SOURCE_NAME) Then
+            Dim sourceData = New EventSourceCreationData(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME)
+            EventLog.CreateEventSource(sourceData)
+        End If
+
+        ' Setup the loggers
+
+        Dim logFileName = m_MgrSettings.GetParam("logfilename")
+
+        clsLogTools.CreateFileLogger(logFileName)
+
+        Dim logCnStr = m_MgrSettings.GetParam("connectionstring")
+
+        clsLogTools.RemoveDefaultDbLogger()
+        clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, False)
 
         ' Make the initial log entry
         If Me.TraceMode Then ShowTraceMessage("Initializing log file " & LogFileName)
-        clsLogTools.ChangeLogFileName(LogFileName)
-
-        Dim MyMsg As String = "=== Started Analysis Manager V" & Application.ProductVersion & " ===== "
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, MyMsg)
+        
+        Dim msg As String = "=== Started Analysis Manager V" & Application.ProductVersion & " ===== "
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg)
 
         Dim configFileName = m_MgrSettings.GetParam("configfilename")
         If (String.IsNullOrEmpty(configFileName)) Then
@@ -197,7 +216,7 @@ Public Class clsMainProcess
         }
 
         ' Get the debug level
-        m_DebugLevel = CInt(m_MgrSettings.GetParam("debuglevel"))
+        m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 2)
 
         ' Setup the tool for getting tasks
         If Me.TraceMode Then ShowTraceMessage("Instantiate m_AnalysisTask as new clsAnalysisJob")
@@ -208,7 +227,7 @@ Public Class clsMainProcess
         ' Setup the manager cleanup class
         If Me.TraceMode Then ShowTraceMessage("Setup the manager cleanup class")
         m_MgrErrorCleanup = New clsCleanupMgrErrors(
-           m_MgrSettings.GetParam("MgrCnfgDbConnectStr"),
+           m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING),
            m_MgrName,
            m_MgrFolderPath,
            m_WorkDirPath)
@@ -287,7 +306,7 @@ Public Class clsMainProcess
 
                 ' Check to see if manager is still active
                 Dim MgrActive As Boolean = m_MgrSettings.GetParam("mgractive", False)
-                Dim MgrActiveLocal As Boolean = m_MgrSettings.GetParam("mgractive_local", False)
+                Dim MgrActiveLocal As Boolean = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, False)
                 Dim strManagerDisableReason As String
                 If Not (MgrActive And MgrActiveLocal) Then
                     If Not MgrActiveLocal Then
@@ -1380,7 +1399,7 @@ Public Class clsMainProcess
         Dim lstMgrSettings As New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
         ' Note: When you are editing this project using the Visual Studio IDE, if you edit the values
-        '  ->My Project>Settings.settings, then when you run the program (from within the IDE), then it
+        '  ->My Project>Settings.settings, then when you run the program (from within the IDE), it
         '  will update file AnalysisManagerProg.exe.config with your settings
         ' The manager will exit if the "UsingDefaults" value is "True", thus you need to have 
         '  "UsingDefaults" be "False" to run (and/or debug) the application
@@ -1388,22 +1407,26 @@ Public Class clsMainProcess
         My.Settings.Reload()
 
         'Manager config db connection string
-        lstMgrSettings.Add("MgrCnfgDbConnectStr", My.Settings.MgrCnfgDbConnectStr)
+        lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, My.Settings.MgrCnfgDbConnectStr)
 
         'Manager active flag
-        lstMgrSettings.Add("MgrActive_Local", My.Settings.MgrActive_Local.ToString)
+        lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, My.Settings.MgrActive_Local.ToString())
 
-        'Manager name
-
-
-        ' Note: if the MgrName setting in the AnalysisManagerProg.exe.config file contains the text $ComputerName$
-        '   then that text is replaced with this computer's domain name
+        ' Manager name
+        ' If the MgrName setting in the AnalysisManagerProg.exe.config file contains the text $ComputerName$
+        ' that text is replaced with this computer's domain name
         ' This is a case-sensitive comparison
 
-        lstMgrSettings.Add("MgrName", My.Settings.MgrName.Replace("$ComputerName$", Environment.MachineName))
+        lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, My.Settings.MgrName.Replace("$ComputerName$", Environment.MachineName))
 
         'Default settings in use flag
-        lstMgrSettings.Add("UsingDefaults", My.Settings.UsingDefaults.ToString)
+        Dim usingDefaults = My.Settings.UsingDefaults.ToString()
+        lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS, usingDefaults)
+
+        ' Default connection string for logging errors to the databsae
+        ' Will get updated later when manager settings are loaded from the manager control database
+        Dim defaultDMSConnectionString = My.Settings.DefaultDMSConnString
+        lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, defaultDMSConnectionString)
 
         Return lstMgrSettings
 
@@ -1453,7 +1476,11 @@ Public Class clsMainProcess
 
     End Sub
 
-
+    ''' <summary>
+    ''' Reload the settings from AnalysisManagerProg.exe.config
+    ''' </summary>
+    ''' <returns>True if success, false if now disabled locally or if an error</returns>
+    ''' <remarks></remarks>
     Private Function ReloadManagerSettings() As Boolean
 
         Try

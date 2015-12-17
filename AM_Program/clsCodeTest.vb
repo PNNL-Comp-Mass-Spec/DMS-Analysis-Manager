@@ -55,7 +55,7 @@ Public Class clsCodeTest
             m_DebugLevel = 2
 
             m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-            m_mgrParams.SetParam("MgrName", "Monroe_Test")
+            m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
             m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString)
 
         Catch ex As Exception
@@ -79,7 +79,7 @@ Public Class clsCodeTest
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "3")
         m_mgrParams.SetParam("zipprogram", "C:\PKWARE\PKZIPC\pkzipc.exe")
 
@@ -107,7 +107,7 @@ Public Class clsCodeTest
         Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "1")
 
         objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
@@ -409,7 +409,7 @@ Public Class clsCodeTest
         ''Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
         ''m_mgrParams.SetParam("workdir", "D:\Temp\DMS_Work")
-        ''m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        ''m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         ''m_mgrParams.SetParam("debuglevel", "2")
 
         ''objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
@@ -551,7 +551,7 @@ Public Class clsCodeTest
         Dim objSummaryFile As New clsSummaryFile()
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "0")
 
         objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
@@ -580,7 +580,7 @@ Public Class clsCodeTest
         Dim objSummaryFile As New clsSummaryFile()
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "0")
 
         objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
@@ -698,7 +698,7 @@ Public Class clsCodeTest
         Dim objSummaryFile As New clsSummaryFile()
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "0")
 
         objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
@@ -748,7 +748,7 @@ Public Class clsCodeTest
         Const workDir As String = "E:\DMS_WorkDir"
 
         m_mgrParams.SetParam("workdir", workDir)
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "0")
 
         objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
@@ -804,7 +804,7 @@ Public Class clsCodeTest
         End If
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "3")
         m_mgrParams.SetParam("ChameleonCachedDataFolder", "H:\9T_Imaging")
 
@@ -1736,7 +1736,7 @@ Public Class clsCodeTest
         Dim objSummaryFile As New clsSummaryFile()
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "0")
 
         objToolRunner = New clsCodeTestAM
@@ -1978,7 +1978,7 @@ Public Class clsCodeTest
         Dim objSummaryFile As New clsSummaryFile()
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam("MgrName", "Monroe_Test")
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
         m_mgrParams.SetParam("debuglevel", "0")
 
         objToolRunner = New clsCodeTestAM
