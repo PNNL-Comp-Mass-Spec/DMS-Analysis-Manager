@@ -415,6 +415,9 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
             If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
                 eReturnCode = eResult
+                If String.IsNullOrWhiteSpace(m_message) Then
+                    m_message = "No results in DeconTools Isos file"
+                End If
             Else
                 eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -439,10 +442,14 @@ Public Class clsAnalysisToolRunnerDecon2ls
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file")
         End If
 
+        Dim messageSaved = String.Copy(m_message)
+
         If DeleteRawDataFiles(mRawDataType) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
-            m_message = "Error deleting raw data files"
-            ' Don't treat this as a critical error; leave eReturnCode unchanged
+            ' Don't treat this as a critical error; leave eReturnCode unchanged and restore m_message
+            If Not clsGlobal.IsMatch(m_message, messageSaved) Then
+                m_message = messageSaved
+            End If
         End If
 
         ' Update the job summary file

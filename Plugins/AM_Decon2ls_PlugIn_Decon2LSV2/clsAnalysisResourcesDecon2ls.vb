@@ -88,21 +88,25 @@ Public Class clsAnalysisResourcesDecon2ls
 
         Try
 
-            ' Open the file and parse the XML
-            Dim objParamFile = New Xml.XmlDocument()
-            objParamFile.Load(New FileStream(fiParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile = New FileStream(fiParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)
 
-            ' Look for the XML: <ProcessMSMS></ProcessMSMS>
-            Dim objNode = objParamFile.SelectSingleNode("//parameters/Miscellaneous/ProcessMSMS")
+                ' Open the file and parse the XML
+                Dim objParamFile = New Xml.XmlDocument()
+                objParamFile.Load(srParamFile)
 
-            If Not objNode Is Nothing AndAlso objNode.HasChildNodes Then
-                ' Match found; read the value
-                If Not Boolean.TryParse(objNode.ChildNodes(0).Value, processMSMS) Then
-                    ' Parameter file formatting error
-                    LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False")
-                    Return False
+                ' Look for the XML: <ProcessMSMS></ProcessMSMS>
+                Dim objNode = objParamFile.SelectSingleNode("//parameters/Miscellaneous/ProcessMSMS")
+
+                If Not objNode Is Nothing AndAlso objNode.HasChildNodes Then
+                    ' Match found; read the value
+                    If Not Boolean.TryParse(objNode.ChildNodes(0).Value, processMSMS) Then
+                        ' Parameter file formatting error
+                        LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False")
+                        Return False
+                    End If
                 End If
-            End If
+
+            End Using
 
             Return True
         Catch ex As Exception
