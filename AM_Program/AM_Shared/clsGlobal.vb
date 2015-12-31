@@ -504,8 +504,25 @@ Public Class clsGlobal
     ''' <param name="strText1"></param>
     ''' <param name="strText2"></param>
     ''' <returns>True if they match; false if not</returns>
-    ''' <remarks></remarks>
+    ''' <remarks>A null string is considered equivalent to an empty string.  Thus, two null strings are considered equal</remarks>
     Public Shared Function IsMatch(strText1 As String, strText2 As String) As Boolean
+        Return IsMatch(strText1, strText2, True)
+    End Function
+
+    ''' <summary>
+    ''' Compare two strings (not case sensitive)
+    ''' </summary>
+    ''' <param name="strText1"></param>
+    ''' <param name="strText2"></param>
+    ''' <param name="treatNullAsEmptyString">When true, a null string is considered equivalent to an empty string</param>
+    ''' <returns>True if they match; false if not</returns>
+    ''' <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
+    Public Shared Function IsMatch(strText1 As String, strText2 As String, treatNullAsEmptyString As Boolean) As Boolean
+
+        If treatNullAsEmptyString AndAlso String.IsNullOrWhiteSpace(strText1) AndAlso String.IsNullOrWhiteSpace(strText2) Then
+            Return True
+        End If
+
         If String.Compare(strText1, strText2, True) = 0 Then
             Return True
         Else
