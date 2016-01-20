@@ -49,8 +49,8 @@ Public Class clsAnalysisResourcesXT
         ' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
         ' X!Tandem uses this information to determine the scan number
         Dim strCDTAPath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
-        Const blnReplaceSourceFile As Boolean = True
-        Const blnDeleteSourceFileIfUpdated As Boolean = True
+        Const blnReplaceSourceFile = True
+        Const blnDeleteSourceFileIfUpdated = True
 
         If Not ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, "") Then
             m_message = "Error validating the _DTA.txt file"
@@ -71,21 +71,21 @@ Public Class clsAnalysisResourcesXT
 
         result = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
         If Not result Then
-            Const Msg As String = "clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file."
+            Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         result = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
         If Not result Then
-            Const Msg As String = "clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file."
+            Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         result = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
         If Not result Then
-            Const Msg As String = "clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file."
+            Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -97,7 +97,7 @@ Public Class clsAnalysisResourcesXT
         ' set up taxonomy file to reference the organism DB file (fasta)
         result = MakeTaxonomyFile()
         If Not result Then
-            Const Msg As String = "clsAnalysisResourcesXT.GetResources(), failed making taxonomy file."
+            Const Msg = "clsAnalysisResourcesXT.GetResources(), failed making taxonomy file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -105,7 +105,7 @@ Public Class clsAnalysisResourcesXT
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         result = MakeInputFile()
         If Not result Then
-            Const Msg As String = "clsAnalysisResourcesXT.GetResources(), failed making input file."
+            Const Msg = "clsAnalysisResourcesXT.GetResources(), failed making input file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -122,15 +122,15 @@ Public Class clsAnalysisResourcesXT
         Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
         Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
-		Dim OrgFilePath As String = Path.Combine(LocalOrgDBFolder, OrgDBName)
+        Dim OrgFilePath As String = Path.Combine(LocalOrgDBFolder, OrgDBName)
 
         'edit base taxonomy file into actual
         Try
             ' Create an instance of StreamWriter to write to a file.
-			Dim inputFile As StreamWriter = New StreamWriter(Path.Combine(WorkingDir, "taxonomy.xml"))
+            Dim inputFile = New StreamWriter(Path.Combine(WorkingDir, "taxonomy.xml"))
 
-			' Create an instance of StreamReader to read from a file.
-			Dim inputBase As StreamReader = New StreamReader(Path.Combine(WorkingDir, "taxonomy_base.xml"))
+            ' Create an instance of StreamReader to read from a file.
+            Dim inputBase = New StreamReader(Path.Combine(WorkingDir, "taxonomy_base.xml"))
             Dim inpLine As String
             ' Read and display the lines from the file until the end 
             ' of the file is reached.
@@ -150,22 +150,22 @@ Public Class clsAnalysisResourcesXT
         End Try
 
         'get rid of base file
-		File.Delete(Path.Combine(WorkingDir, "taxonomy_base.xml"))
+        File.Delete(Path.Combine(WorkingDir, "taxonomy_base.xml"))
 
-		Return True
+        Return True
     End Function
 
     Protected Function MakeInputFile() As Boolean
-        Dim result As Boolean = True
+        Dim result = True
 
         ' set up input to reference spectra file, taxonomy file, and parameter file
 
         Dim WorkingDir As String = m_mgrParams.GetParam("WorkDir")
         Dim OrganismName As String = m_jobParams.GetParam("OrganismName")
-		Dim ParamFilePath As String = Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
-		Dim SpectrumFilePath As String = Path.Combine(WorkingDir, m_DatasetName & "_dta.txt")
-		Dim TaxonomyFilePath As String = Path.Combine(WorkingDir, "taxonomy.xml")
-		Dim OutputFilePath As String = Path.Combine(WorkingDir, m_DatasetName & "_xt.xml")
+        Dim ParamFilePath As String = Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"))
+        Dim SpectrumFilePath As String = Path.Combine(WorkingDir, m_DatasetName & "_dta.txt")
+        Dim TaxonomyFilePath As String = Path.Combine(WorkingDir, "taxonomy.xml")
+        Dim OutputFilePath As String = Path.Combine(WorkingDir, m_DatasetName & "_xt.xml")
 
         'make input file
         'start by adding the contents of the parameter file.
@@ -173,34 +173,34 @@ Public Class clsAnalysisResourcesXT
         'and add to input file (in proper XML format)
         Try
             ' Create an instance of StreamWriter to write to a file.
-			Dim inputFile = New StreamWriter(Path.Combine(WorkingDir, "input.xml"))
+            Dim inputFile = New StreamWriter(Path.Combine(WorkingDir, "input.xml"))
             ' Create an instance of StreamReader to read from a file.
-			Dim inputBase = New StreamReader(Path.Combine(WorkingDir, "input_base.txt"))
-			Dim paramFile = New StreamReader(ParamFilePath)
+            Dim inputBase = New StreamReader(Path.Combine(WorkingDir, "input_base.txt"))
+            Dim paramFile = New StreamReader(ParamFilePath)
             Dim paramLine As String
-			Dim inpLine As String
+            Dim inpLine As String
 
-			' Read and display the lines from the file until the end 
-			' of the file is reached.
-			Do
-				paramLine = paramFile.ReadLine()
-				If paramLine Is Nothing Then
-					Exit Do
-				End If
-				inputFile.WriteLine(paramLine)
-				If paramLine.IndexOf("<bioml>", StringComparison.Ordinal) <> -1 Then
-					Do
-						inpLine = inputBase.ReadLine()
-						If Not inpLine Is Nothing Then
-							inpLine = inpLine.Replace("ORGANISM_NAME", OrganismName)
-							inpLine = inpLine.Replace("TAXONOMY_FILE_PATH", TaxonomyFilePath)
-							inpLine = inpLine.Replace("SPECTRUM_FILE_PATH", SpectrumFilePath)
-							inpLine = inpLine.Replace("OUTPUT_FILE_PATH", OutputFilePath)
-							inputFile.WriteLine(inpLine)
-						End If
-					Loop Until inpLine Is Nothing
-				End If
-			Loop Until paramLine Is Nothing
+            ' Read and display the lines from the file until the end 
+            ' of the file is reached.
+            Do
+                paramLine = paramFile.ReadLine()
+                If paramLine Is Nothing Then
+                    Exit Do
+                End If
+                inputFile.WriteLine(paramLine)
+                If paramLine.IndexOf("<bioml>", StringComparison.Ordinal) <> -1 Then
+                    Do
+                        inpLine = inputBase.ReadLine()
+                        If Not inpLine Is Nothing Then
+                            inpLine = inpLine.Replace("ORGANISM_NAME", OrganismName)
+                            inpLine = inpLine.Replace("TAXONOMY_FILE_PATH", TaxonomyFilePath)
+                            inpLine = inpLine.Replace("SPECTRUM_FILE_PATH", SpectrumFilePath)
+                            inpLine = inpLine.Replace("OUTPUT_FILE_PATH", OutputFilePath)
+                            inputFile.WriteLine(inpLine)
+                        End If
+                    Loop Until inpLine Is Nothing
+                End If
+            Loop Until paramLine Is Nothing
             inputBase.Close()
             inputFile.Close()
             paramFile.Close()
@@ -211,7 +211,7 @@ Public Class clsAnalysisResourcesXT
         End Try
 
         'get rid of base file
-		File.Delete(Path.Combine(WorkingDir, "input_base.txt"))
+        File.Delete(Path.Combine(WorkingDir, "input_base.txt"))
 
         Return result
     End Function
