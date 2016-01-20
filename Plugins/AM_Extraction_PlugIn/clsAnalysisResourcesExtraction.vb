@@ -205,7 +205,7 @@ Public Class clsAnalysisResourcesExtraction
         m_jobParams.AddResultFileToSkip(fileToGet)
 
         If Not CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir) Then
-            Const Msg As String = "Failed retrieving default_input.xml file."
+            Const Msg = "Failed retrieving default_input.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
@@ -373,7 +373,7 @@ Public Class clsAnalysisResourcesExtraction
 
             For iteration As Integer = 1 To numberOfClonedSteps
 
-                Dim blnSkipMSGFResultsZipFileCopy As Boolean = False
+                Dim blnSkipMSGFResultsZipFileCopy = False
                 Dim fileToGet As String
                 Dim strBaseName As String
 
@@ -624,6 +624,11 @@ Public Class clsAnalysisResourcesExtraction
                 ' Retrieve it from the transfer folder now
                 FindAndRetrieveMiscFiles(ModDefsFilename, False)
                 fiModDefsFile.Refresh()
+            End If
+
+            If ResultType = RESULT_TYPE_XTANDEM Then
+                ' Retrieve the taxonomy.xml file (PHRPReader looks for it)
+                FindAndRetrieveMiscFiles("taxonomy.xml", False)
             End If
 
             If Not fiModDefsFile.Exists And ResultType <> RESULT_TYPE_MSALIGN Then

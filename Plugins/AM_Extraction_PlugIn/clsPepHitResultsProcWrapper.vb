@@ -122,7 +122,7 @@ Public Class clsPepHitResultsProcWrapper
             Dim progLoc As String = m_MgrParams.GetParam("PHRPProgLoc")
             progLoc = Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe")
 
-            ' verify that program file exists
+            ' Verify that program file exists
             If Not File.Exists(progLoc) Then
                 m_ErrMsg = "PHRP not found at " & progLoc
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
