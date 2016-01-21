@@ -135,6 +135,8 @@ Module modMain
 
                         ' objTest.ParseMSPathFinderConsoleOutput()
 
+                        ' objTest.ParseMSGFDBConsoleOutput()
+
 					Catch ex As Exception
 						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
 					End Try

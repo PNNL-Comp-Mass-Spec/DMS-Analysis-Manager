@@ -70,12 +70,18 @@ Public Class clsMSGFDBUtils
     Private mContinuumSpectraSkipped As Integer
     Private mSpectraSearched As Integer
 
+    Private mThreadCountActual As Integer
+    Private mTaskCountTotal As Integer
+    Private mTaskCountCompleted As Integer
+
     Private mPhosphorylationSearch As Boolean
     Private mResultsIncludeAutoAddedDecoyPeptides As Boolean
 
     ' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
     Private WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 #End Region
+
+#Region "Properties"
 
     Public ReadOnly Property ContinuumSpectraSkipped() As Integer
         Get
@@ -119,6 +125,26 @@ Public Class clsMSGFDBUtils
         End Get
     End Property
 
+    Public ReadOnly Property ThreadCountActual As Integer
+        Get
+            Return mThreadCountActual
+        End Get
+    End Property
+
+    Public ReadOnly Property TaskCountTotal As Integer
+        Get
+            Return mTaskCountTotal
+        End Get
+    End Property
+
+    Public ReadOnly Property TaskCountCompleted As Integer
+        Get
+            Return mTaskCountCompleted
+        End Get
+    End Property
+
+#End Region
+
 #Region "Methods"
 
     Public Sub New(
@@ -143,6 +169,10 @@ Public Class clsMSGFDBUtils
         mContinuumSpectraSkipped = 0
         mSpectraSearched = 0
 
+        mThreadCountActual = 0
+        mTaskCountTotal = 0
+        mTaskCountCompleted = 0
+        
     End Sub
 
     ''' <summary>
@@ -918,13 +948,13 @@ Public Class clsMSGFDBUtils
     End Function
 
     Public Function InitializeFastaFile(
-     javaProgLoc As String,
-     msgfDbProgLoc As String,
-     <Out()> ByRef fastaFileSizeKB As Single,
-     <Out()> ByRef fastaFileIsDecoy As Boolean,
-     <Out()> ByRef fastaFilePath As String,
-     strMSGFDBParameterFilePath As String,
-     udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+      javaProgLoc As String,
+      msgfDbProgLoc As String,
+      <Out()> ByRef fastaFileSizeKB As Single,
+      <Out()> ByRef fastaFileIsDecoy As Boolean,
+      <Out()> ByRef fastaFilePath As String,
+      strMSGFDBParameterFilePath As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
         Return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath, strMSGFDBParameterFilePath, udtHPCOptions, 0)
 
@@ -1213,70 +1243,123 @@ Public Class clsMSGFDBUtils
     End Function
 
     ''' <summary>
-    ''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
+    ''' Parse the MSGFPlus console output file to determine the MSGF+ version and to track the search progress
     ''' </summary>
     ''' <returns>Percent Complete (value between 0 and 100)</returns>
-    ''' <remarks>MSGFDb version is available via the MSGFDbVersion property</remarks>
+    ''' <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
     Public Function ParseMSGFDBConsoleOutputFile() As Single
         Return ParseMSGFDBConsoleOutputFile(m_WorkDir)
     End Function
 
     ''' <summary>
-    ''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
+    ''' Parse the MSGFPlus console output file to determine the MSGF+ version and to track the search progress
     ''' </summary>
     ''' <returns>Percent Complete (value between 0 and 100)</returns>
-    ''' <remarks>MSGFDb version is available via the MSGFDbVersion property</remarks>
+    ''' <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
     Public Function ParseMSGFDBConsoleOutputFile(workingDirectory As String) As Single
 
         ' Example Console output:
         '
-        ' MS-GFDB v6299 (08/22/2011)
+        ' MS-GF+ Release (v2016.01.20) (1/20/2016)
         ' Loading database files...
-        ' Loading database finished (elapsed time: 0.23 sec)
+        ' Loading database finished (elapsed time: 4.93 sec)
         ' Reading spectra...
-        ' Read spectra finished (elapsed time: 9.19 sec)
-        ' Using 4 threads.
-        ' Spectrum 0-12074 (total: 12075)
-        ' pool-1-thread-2: Preprocessing spectra...
+        ' Ignoring 0 profile spectra.
+        ' Ignoring 0 spectra having less than 5 peaks.
+        ' Reading spectra finished (elapsed time: 113.00 sec)
+        ' Using 7 threads.
+        ' Search Parameters:
+        ' 	PrecursorMassTolerance: 20.0ppm
+        ' 	IsotopeError: -1,2
+        ' 	TargetDecoyAnalysis: true
+        ' 	FragmentationMethod: As written in the spectrum or CID if no info
+        ' 	Instrument: LowRes
+        ' 	Enzyme: Tryp
+        ' 	Protocol: Phosphorylation
+        ' 	NumTolerableTermini: 2
+        ' 	MinPeptideLength: 6
+        ' 	MaxPeptideLength: 50
+        ' 	NumMatchesPerSpec: 2
+        ' Spectrum 0-138840 (total: 138841)
+        ' Splitting work into 128 tasks.
+        ' pool-1-thread-1: Starting task 1
+        ' pool-1-thread-2: Starting task 2
+        ' pool-1-thread-4: Starting task 4
+        ' pool-1-thread-7: Starting task 7
+        ' Search progress: 0 / 128 tasks, 0.0%
+        ' pool-1-thread-4: Preprocessing spectra...
+        ' Loading built-in param file: HCD_QExactive_Tryp_Phosphorylation.param
+        ' Loading built-in param file: CID_LowRes_Tryp_Phosphorylation.param
+        ' pool-1-thread-3: Preprocessing spectra...
+        ' Loading built-in param file: ETD_LowRes_Tryp_Phosphorylation.param
+        ' pool-1-thread-6: Preprocessing spectra...
         ' pool-1-thread-1: Preprocessing spectra...
-        ' pool-1-thread-1: Preprocessing spectra finished (elapsed time: 33.00 sec)
-        ' pool-1-thread-1: Database search...
-        ' pool-1-thread-1: Database search progress... 0.0% complete
-        ' pool-1-thread-2: Preprocessing spectra finished (elapsed time: 35.00 sec)
-        ' pool-1-thread-2: Database search...
-        ' pool-1-thread-2: Database search progress... 0.0% complete
-        ' pool-1-thread-1: Database search finished (elapsed time: 36.00 sec)
-        ' pool-1-thread-1: Computing spectral probabilities...
-        ' pool-1-thread-2: Database search finished (elapsed time: 44.00 sec)
-        ' pool-1-thread-2: Computing spectral probabilities...
-        ' pool-1-thread-1: Computing spectral probabilities... 33.1% complete
-        ' pool-1-thread-2: Computing spectral probabilities... 33.1% complete
-        ' pool-1-thread-1: Computing spectral probabilities... 66.2% complete
-        ' Computing FDRs...
-        ' Computing EFDRs finished(elapsed time: 0.78 sec)
-        ' MS-GFDB complete (total elapsed time: 699.69 sec)
+        ' pool-1-thread-6: Preprocessing spectra finished (elapsed time: 16.00 sec)
+        ' pool-1-thread-6: Database search...
+        ' pool-1-thread-6: Database search progress... 0.0% complete
+        ' pool-1-thread-7: Preprocessing spectra finished (elapsed time: 16.00 sec)
+        ' pool-1-thread-7: Database search...
+        ' pool-1-thread-7: Database search progress... 0.0% complete
+        ' pool-1-thread-4: Database search progress... 8.8% complete
+        ' pool-1-thread-7: Computing spectral E-values... 92.2% complete
+        ' pool-1-thread-7: Computing spectral E-values finished (elapsed time: 77.00 sec)
+        ' Search progress: 0 / 128 tasks, 0.0%
+        ' pool-1-thread-7: Task 7 completed.
+        ' pool-1-thread-7: Starting task 8
+        ' pool-1-thread-6: Database search progress... 35.3% complete
+        ' pool-1-thread-2: Database search finished (elapsed time: 498.00 sec)
+        ' pool-1-thread-2: Computing spectral E-values...
+        ' pool-1-thread-2: Database search finished (elapsed time: 500.00 sec)
+        ' pool-1-thread-2: Computing spectral E-values...
+        ' pool-1-thread-5: Computing spectral E-values finished (elapsed time: 63.00 sec)
+        ' pool-1-thread-5: Task 18 completed.
+        ' pool-1-thread-5: Starting task 25
+        ' pool-1-thread-5: Preprocessing spectra...
+        ' Search progress: 18 / 128 tasks, 14.1%
+        ' pool-1-thread-5: Preprocessing spectra finished (elapsed time: 8.00 sec)
+        ' pool-1-thread-5: Database search...
+        ' pool-1-thread-5: Database search progress... 0.0% complete
+        ' pool-1-thread-3: Computing spectral E-values... 92.2% complete
+        ' pool-1-thread-5: Database search progress... 8.8% complete
+        ' Computing q-values...
+        ' Computing q-values finished (elapsed time: 0.13 sec)
+        ' Writing results...
+        ' Writing results finished (elapsed time: 11.50 sec)
+        ' MS-GF+ complete (total elapsed time: 3730.61 sec)
+
 
         ' ReSharper disable once UseImplicitlyTypedVariableEvident
-        Static reExtractThreadCount As Regex = New Regex("Using (\d+) thread",
+        Static reExtractThreadCount As Regex = New Regex("Using (?<ThreadCount>\d+) threads",
           RegexOptions.Compiled Or
           RegexOptions.IgnoreCase)
 
         ' ReSharper disable once UseImplicitlyTypedVariableEvident
-        Static reSpectraSearched As Regex = New Regex("Spectrum.+\(total: *(\d+)\)",
+        Static reExtractTaskCount As Regex = New Regex("Splitting work into +(?<TaskCount>\d+) +tasks",
           RegexOptions.Compiled Or
           RegexOptions.IgnoreCase)
+
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
+        Static reSpectraSearched As Regex = New Regex("Spectrum.+\(total: *(?<SpectrumCount>\d+)\)",
+          RegexOptions.Compiled Or
+          RegexOptions.IgnoreCase)
+
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
+        Static reTaskComplete As Regex = New Regex("pool-\d+-thread-\d+: Task +(?<TaskNumber>\d+) +completed",
+          RegexOptions.Compiled Or
+          RegexOptions.IgnoreCase)
+
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
+        Static rePercentComplete As Regex = New Regex("Search progress: \d+ / \d+ tasks, (?<PercentComplete>[0-9.]+)%",
+          RegexOptions.Compiled Or
+          RegexOptions.IgnoreCase)
+        
 
         Dim strConsoleOutputFilePath = "??"
 
-        Dim eThreadProgressBase() As eThreadProgressSteps
-        Dim sngThreadProgressAddon() As Single
-        Dim sngEffectiveProgress As Single
+        Dim sngEffectiveProgress As Single = 0
+        Dim percentCompleteAllTasks As Single = 0
 
         Try
-            ' Initially reserve space for 32 threads
-            ' We'll expand these arrays later if needed
-            ReDim eThreadProgressBase(32)
-            ReDim sngThreadProgressAddon(32)
 
             strConsoleOutputFilePath = Path.Combine(workingDirectory, MSGFDB_CONSOLE_OUTPUT_FILE)
             If Not File.Exists(strConsoleOutputFilePath) Then
@@ -1294,8 +1377,13 @@ Public Class clsMSGFDBUtils
             Dim strLineIn As String
             Dim intLinesRead As Integer
 
-            Dim oMatch As Match
-            Dim intThreadCount As Short = 0
+            ' This is the total threads that MSGF+ reports that it is using
+            Dim totalThreadCount As Short = 0
+
+            Dim totalTasks = 0
+
+            ' List of completed task numbers
+            Dim completedTasks = New SortedSet(Of Integer)
 
             mConsoleOutputErrorMsg = String.Empty
 
@@ -1352,30 +1440,33 @@ Public Class clsMSGFDBUtils
                         End If
                     ElseIf strLineIn.StartsWith("Using") Then
 
-                        ' Extract out the thread count
-                        oMatch = reExtractThreadCount.Match(strLineIn)
+                        ' Extract out the thread or task count
+                        Dim oThreadMatch = reExtractThreadCount.Match(strLineIn)
 
-                        If oMatch.Success Then
-                            Short.TryParse(oMatch.Groups(1).Value, intThreadCount)
+                        If oThreadMatch.Success Then
+                            Short.TryParse(oThreadMatch.Groups("ThreadCount").Value, totalThreadCount)
+
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
+                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
+                            End If
+
                         End If
 
-                        ' Now that we know the thread count, initialize the array that will keep track of the progress % complete for each thread
-                        If eThreadProgressBase.Length < intThreadCount Then
-                            ReDim eThreadProgressBase(intThreadCount)
-                            ReDim sngThreadProgressAddon(intThreadCount)
-                        End If
+                    ElseIf strLineIn.StartsWith("Splitting") Then
 
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
-                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
+                        Dim oTaskMatch = reExtractTaskCount.Match(strLineIn)
+
+                        If oTaskMatch.Success Then
+                            Integer.TryParse(oTaskMatch.Groups("TaskCount").Value, totalTasks)
                         End If
 
                     ElseIf strLineIn.StartsWith("Spectrum") Then
                         ' Extract out the number of spectra that MSGF+ will actually search
 
-                        oMatch = reSpectraSearched.Match(strLineIn)
+                        Dim oMatch = reSpectraSearched.Match(strLineIn)
 
                         If oMatch.Success Then
-                            Integer.TryParse(oMatch.Groups(1).Value, mSpectraSearched)
+                            Integer.TryParse(oMatch.Groups("SpectrumCount").Value, mSpectraSearched)
                         End If
 
                     ElseIf strLineIn.StartsWith("Computing EFDRs") OrElse strLineIn.StartsWith("Computing q-values") Then
@@ -1388,29 +1479,29 @@ Public Class clsMSGFDBUtils
                             sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
                         End If
 
-                    ElseIf strLineIn.Contains("Preprocessing spectra") Then
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.PreprocessingSpectra, eThreadProgressBase, sngThreadProgressAddon)
-                        End If
-
-                    ElseIf strLineIn.Contains("Database search") Then
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.DatabaseSearch, eThreadProgressBase, sngThreadProgressAddon)
-                        End If
-
-                    ElseIf strLineIn.Contains("Computing spectral probabilities finished") OrElse strLineIn.Contains("Computing spectral E-values finished") Then
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.Complete, eThreadProgressBase, sngThreadProgressAddon)
-                        End If
-
-                    ElseIf strLineIn.Contains("Computing spectral probabilities") OrElse strLineIn.Contains("Computing spectral E-values") Then
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                            ParseConsoleOutputThreadMessage(strLineIn, eThreadProgressSteps.ComputingSpectralProbabilities, eThreadProgressBase, sngThreadProgressAddon)
-                        End If
-
                     ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
                         If strLineInLcase.Contains("error") And Not strLineInLcase.Contains("isotopeerror:") Then
                             mConsoleOutputErrorMsg &= "; " & strLineIn
+                        End If
+                    End If
+
+                    Dim reMatch As Match = reTaskComplete.Match(strLineIn)
+                    If reMatch.Success Then
+                        Dim taskNumber = Integer.Parse(reMatch.Groups("TaskNumber").Value)
+
+                        If completedTasks.Contains(taskNumber) Then
+                            ReportWarning("MSGF+ reported that task " & taskNumber & " completed more than once")
+                        Else
+                            completedTasks.Add(taskNumber)
+                        End If
+
+                    End If
+
+                    Dim reProgressMatch = rePercentComplete.Match(strLineIn)
+                    If reProgressMatch.Success Then
+                        Dim newPercentComplete = Single.Parse(reProgressMatch.Groups("PercentComplete").Value)
+                        If newPercentComplete > percentCompleteAllTasks Then
+                            percentCompleteAllTasks = newPercentComplete
                         End If
                     End If
 
@@ -1418,43 +1509,13 @@ Public Class clsMSGFDBUtils
 
             End Using
 
+            mThreadCountActual = totalThreadCount
 
-            If sngEffectiveProgress >= PROGRESS_PCT_MSGFDB_THREADS_SPAWNED AndAlso sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
+            mTaskCountTotal = totalTasks
+            mTaskCountCompleted = completedTasks.Count
 
-                ' Increment sngEffectiveProgress based on the data in sngThreadProgressBase() and sngThreadProgressAddon()
-                Dim sngProgressAddonAllThreads As Single
-                Dim sngProgressOneThread As Single
-
-                sngProgressAddonAllThreads = 0
-
-                For intThread = 1 To intThreadCount
-                    sngProgressOneThread = 0
-
-                    Select Case eThreadProgressBase(intThread)
-                        Case eThreadProgressSteps.PreprocessingSpectra
-                            sngProgressOneThread = THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA
-                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_DATABASE_SEARCH - THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA) / 100.0!
-
-                        Case eThreadProgressSteps.DatabaseSearch
-                            sngProgressOneThread = THREAD_PROGRESS_PCT_DATABASE_SEARCH
-                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES - THREAD_PROGRESS_PCT_DATABASE_SEARCH) / 100.0!
-
-                        Case eThreadProgressSteps.ComputingSpectralProbabilities
-                            sngProgressOneThread = THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES
-                            sngProgressOneThread += sngThreadProgressAddon(intThread) * (THREAD_PROGRESS_PCT_COMPLETE - THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES) / 100.0!
-
-                        Case eThreadProgressSteps.Complete
-                            sngProgressOneThread = THREAD_PROGRESS_PCT_COMPLETE
-
-                        Case Else
-                            ' Unrecognized step
-                            sngProgressOneThread = sngProgressOneThread
-                    End Select
-
-                    sngProgressAddonAllThreads += sngProgressOneThread / intThreadCount
-                Next
-
-                sngEffectiveProgress += sngProgressAddonAllThreads * (PROGRESS_PCT_MSGFDB_COMPUTING_FDRS - PROGRESS_PCT_MSGFDB_THREADS_SPAWNED) / 100.0!
+            If percentCompleteAllTasks > 0 Then
+                sngEffectiveProgress += percentCompleteAllTasks * (PROGRESS_PCT_MSGFDB_COMPUTING_FDRS - PROGRESS_PCT_MSGFDB_THREADS_SPAWNED) / 100.0!
             End If
 
         Catch ex As Exception
@@ -1467,64 +1528,7 @@ Public Class clsMSGFDBUtils
         Return sngEffectiveProgress
 
     End Function
-
-    Private Sub ParseConsoleOutputThreadMessage(strLineIn As String,
-     eThreadProgressStep As eThreadProgressSteps,
-     eThreadProgressBase() As eThreadProgressSteps,
-     sngThreadProgressAddon() As Single)
-
-        Dim oMatch As Match
-
-        ' ReSharper disable once UseImplicitlyTypedVariableEvident
-        Static reExtractThreadNum As Regex = New Regex("thread-(\d+)",
-          RegexOptions.Compiled Or
-          RegexOptions.IgnoreCase)
-
-        ' ReSharper disable once UseImplicitlyTypedVariableEvident
-        Static reExtractPctComplete As Regex = New Regex("([0-9.]+)% complete",
-          RegexOptions.Compiled Or
-          RegexOptions.IgnoreCase)
-
-        ' Extract out the thread number
-        ' Line should look like one of these lines:
-        '   pool-1-thread-2: Database search...
-        '   pool-1-thread-2: Database search progress... 0.0% complete
-        '   pool-1-thread-3: Preprocessing spectra finished (elapsed time: 40.00 sec)
-        '   pool-1-thread-1: Computing spectral probabilities...
-        '   pool-1-thread-1: Computing spectral probabilities... 66.2% complete
-        '   pool-1-thread-1: Computing spectral probabilities finished (elapsed time: 138.00 sec)
-
-        oMatch = reExtractThreadNum.Match(strLineIn)
-
-        If oMatch.Success Then
-            Dim intThread As Short
-            If Short.TryParse(oMatch.Groups(1).Value, intThread) Then
-
-                If eThreadProgressBase Is Nothing OrElse intThread > eThreadProgressBase.Length Then
-                    ' Array not initialized properly; can't update it
-                Else
-                    If eThreadProgressBase(intThread) < eThreadProgressStep Then
-                        eThreadProgressBase(intThread) = eThreadProgressStep
-                    End If
-
-                    ' Parse out the % complete (if present)
-                    oMatch = reExtractPctComplete.Match(strLineIn)
-                    If oMatch.Success Then
-                        Dim sngProgressPctInLogFile As Single = 0
-                        If Single.TryParse(oMatch.Groups(1).Value, sngProgressPctInLogFile) Then
-                            If sngThreadProgressAddon(intThread) < sngProgressPctInLogFile Then
-                                sngThreadProgressAddon(intThread) = sngProgressPctInLogFile
-                            End If
-                        End If
-                    End If
-
-                End If
-
-            End If
-        End If
-    End Sub
-
-
+    
     ''' <summary>
     ''' Parses the static and dynamic modification information to create the MSGFDB Mods file
     ''' </summary>

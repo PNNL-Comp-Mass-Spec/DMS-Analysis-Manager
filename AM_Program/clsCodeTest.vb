@@ -120,14 +120,34 @@ Public Class clsCodeTest
 
     End Function
 
-    'Public Sub ParseMSPathFinderConsoleOutput()
+    Public Sub ParseMSGFDBConsoleOutput()
 
-    '    Dim filePath = "f:\temp\MSPathFinder_ConsoleOutput.txt"
-    '    Dim msPathFinderTool = New AnalysisManagerMSPathFinderPlugIn.clsAnalysisToolRunnerMSPathFinder()
+        Console.WriteLine("Test disabled since class not loaded")
 
-    '    msPathFinderTool.ParseConsoleOutputFile(filePath)
+        'Dim fiConsoleOutput = New FileInfo("f:\temp\MSGFDB_ConsoleOutput.txt")
+        'Dim oJobParams As IJobParams = InitializeManagerParams()
 
-    'End Sub
+        'Dim utils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, oJobParams, "1234", fiConsoleOutput.DirectoryName, 2, True)
+
+        'Dim progressOverall = utils.ParseMSGFDBConsoleOutputFile(fiConsoleOutput.DirectoryName)
+
+        'Console.WriteLine("Threads: " & utils.ThreadCountActual)
+        'Console.WriteLine("Tasks completed: " & utils.TaskCountCompleted & " / " & utils.TaskCountTotal)
+        'Console.WriteLine("Progress: " & progressOverall)
+        'Console.WriteLine()
+
+    End Sub
+
+    Public Sub ParseMSPathFinderConsoleOutput()
+
+        Console.WriteLine("Test disabled since class not loaded")
+
+        '    Dim filePath = "f:\temp\MSPathFinder_ConsoleOutput.txt"
+        '    Dim msPathFinderTool = New AnalysisManagerMSPathFinderPlugIn.clsAnalysisToolRunnerMSPathFinder()
+
+        '    msPathFinderTool.ParseConsoleOutputFile(filePath)
+
+    End Sub
 
     'Public Function Test(DestFolder As String) As Boolean
     '       Dim HashString As String = String.Empty
@@ -460,8 +480,7 @@ Public Class clsCodeTest
 
         If blnSuccess Then
 
-            Dim oJobParams As IJobParams
-            oJobParams = InitializeManagerParams()
+            Dim oJobParams As IJobParams = InitializeManagerParams()
 
             Dim blnMsgfPlus As Boolean = True
             Dim strJobNum As String = "12345"

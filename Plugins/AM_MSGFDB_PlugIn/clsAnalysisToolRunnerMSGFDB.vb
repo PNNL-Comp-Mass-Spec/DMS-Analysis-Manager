@@ -12,11 +12,11 @@ Imports System.IO
 Imports System.Runtime.InteropServices
 
 Public Class clsAnalysisToolRunnerMSGFDB
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
-	'*********************************************************************************************************
-	'Class for running MSGFDB or MSGF+ analysis
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Class for running MSGFDB or MSGF+ analysis
+    '*********************************************************************************************************
 
 #Region "Constants and Enums"
     Private Enum eInputFileFormatTypes
@@ -153,6 +153,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
             ' Copy any newly created files from PIC back to the local working directory
             ' ToDo: Uncomment this code if we run the PeptideToProteinMapper on HPC
             ' SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir)
+
+            If Not mMSGFPlusComplete Then
+                blnProcessingError = True
+                If String.IsNullOrEmpty(m_message) Then
+                    m_message = "MSGF+ did not reach completion"
+                End If
+            End If
 
             m_progress = clsMSGFDBUtils.PROGRESS_PCT_COMPLETE
 
@@ -359,11 +366,21 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running " & mSearchEngineName)
 
-        ' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
+        ' If an MSGFDB analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java 
         ' The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
         ' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file 
         ' (job 611216 succeeded with a value of 5000)
-        Dim intJavaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 2000)
+
+        ' Prior to January 2016, MSGF+ used 4 to 7 threads, and if MSGFDBJavaMemorySize was too small, 
+        ' we ran the risk of one thread crashing and the results files missing the search results for the spectra assigned to that thread
+        ' For large _dta.txt files, 2000 MB of memory could easily be small enough to result in crashing threads
+        ' Consequently, the default is now 4000 MB
+        '
+        ' Furthermore, the 2016-Jan-21 release uses 128 search tasks (or 10 tasks per thread if over 12 threads), 
+        ' executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that 
+        ' had large numbers of tasks on a small, finite number of threads
+
+        Dim intJavaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000)
         If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
         If udtHPCOptions.UsingHPC AndAlso intJavaMemorySize < 10000 Then
@@ -372,27 +389,27 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End If
 
         'Set up and execute a program runner to run MSGFDB
-        Dim CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
+        Dim cmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
 
         ' Define the input file, output file, and fasta file
         Select Case eInputFileFormat
             Case eInputFileFormatTypes.CDTA
-                CmdStr &= " -s " & m_Dataset & "_dta.txt"
+                cmdStr &= " -s " & m_Dataset & "_dta.txt"
             Case eInputFileFormatTypes.MzML
-                CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION
+                cmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION
             Case eInputFileFormatTypes.MzXML
-                CmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
+                cmdStr &= " -s " & m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION
             Case Else
                 m_message = "Unsupported InputFileFormat: " & eInputFileFormat
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Select
 
-        CmdStr &= " -o " & fiMSGFPlusResults.Name
-        CmdStr &= " -d " & PossiblyQuotePath(fastaFilePath)
+        cmdStr &= " -o " & fiMSGFPlusResults.Name
+        cmdStr &= " -d " & PossiblyQuotePath(fastaFilePath)
 
         ' Append the remaining options loaded from the parameter file
-        CmdStr &= " " & strMSGFDbCmdLineOptions
+        cmdStr &= " " & strMSGFDbCmdLineOptions
 
         ' Make sure the machine has enough free memory to run MSGFDB
         Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
@@ -423,7 +440,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 #End If
 
         Else
-            blnSuccess = StartMSGFPlusLocal(javaExePath, CmdStr)
+            blnSuccess = StartMSGFPlusLocal(javaExePath, cmdStr)
         End If
 
         If Not blnSuccess And String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
@@ -450,6 +467,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 mMSGFPlusCompletionTime = DateTime.UtcNow
             End If
         Else
+
             Dim msg As String
             If mMSGFPlusComplete Then
                 msg = mSearchEngineName & " log file reported it was complete, but aborted the ProgRunner since Java was frozen"
@@ -480,54 +498,62 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         End If
 
-        If mMSGFPlusComplete Then
-            m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
-            m_StatusTools.UpdateAndWrite(m_progress)
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB Search Complete")
-            End If
+        If mMSGFPlusComplete AndAlso mMSGFDBUtils.TaskCountCompleted < mMSGFDBUtils.TaskCountTotal Then
+            mMSGFPlusComplete = False
+            m_message = "MSGF+ reported " & mMSGFDBUtils.TaskCountCompleted & "/ " & mMSGFDBUtils.TaskCountTotal & " completed search tasks"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-            If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
-                ' See if any spectra were processed
-                If Not fiMSGFPlusResults.Exists Then
-                    ' Note that DMS stored procedure AutoResetFailedJobs looks for jobs with these phrases in the job comment
-                    '   "None of the spectra are centroided; unable to process"
-                    '   "skipped xx% of the spectra because they did not appear centroided"
-                    '   "skip xx% of the spectra because they did not appear centroided"
-                    '
-                    ' Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
+        If Not mMSGFPlusComplete Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-                    m_message = clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED & " with " & mSearchEngineName
+        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
+        m_StatusTools.UpdateAndWrite(m_progress)
+        If m_DebugLevel >= 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB Search Complete")
+        End If
+
+        If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
+            ' See if any spectra were processed
+            If Not fiMSGFPlusResults.Exists Then
+                ' Note that DMS stored procedure AutoResetFailedJobs looks for jobs with these phrases in the job comment
+                '   "None of the spectra are centroided; unable to process"
+                '   "skipped xx% of the spectra because they did not appear centroided"
+                '   "skip xx% of the spectra because they did not appear centroided"
+                '
+                ' Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
+
+                m_message = clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED & " with " & mSearchEngineName
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                blnProcessingError = True
+            Else
+                ' Compute the fraction of all potential spectra that were skipped
+                ' If over 20% of the spectra were skipped, and if the source spectra were not centroided, 
+                '   then blnTooManySkippedSpectra will be set to True and the job step will be marked as failed
+
+                Dim dblFractionSkipped As Double
+                Dim strPercentSkipped As String
+                Dim spectraAreCentroided As Boolean
+
+                ' Examine the job parameters to determine if the spectra were definitely centroided by the MSXML_Gen or DTA_Gen tools
+                If m_jobParams.GetJobParameter("CentroidMSXML", False) OrElse
+                   m_jobParams.GetJobParameter("CentroidDTAs", False) OrElse
+                   m_jobParams.GetJobParameter("CentroidMGF", False) Then
+                    spectraAreCentroided = True
+                End If
+
+                dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched)
+                strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") & "%"
+
+                If dblFractionSkipped > 0.2 And Not spectraAreCentroided Then
+                    m_message = mSearchEngineName & " skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    blnProcessingError = True
+                    blnTooManySkippedSpectra = True
                 Else
-                    ' Compute the fraction of all potential spectra that were skipped
-                    ' If over 20% of the spectra were skipped, and if the source spectra were not centroided, 
-                    '   then blnTooManySkippedSpectra will be set to True and the job step will be marked as failed
-
-                    Dim dblFractionSkipped As Double
-                    Dim strPercentSkipped As String
-                    Dim spectraAreCentroided As Boolean
-
-                    ' Examine the job parameters to determine if the spectra were definitely centroided by the MSXML_Gen or DTA_Gen tools
-                    If m_jobParams.GetJobParameter("CentroidMSXML", False) OrElse
-                       m_jobParams.GetJobParameter("CentroidDTAs", False) OrElse
-                       m_jobParams.GetJobParameter("CentroidMGF", False) Then
-                        spectraAreCentroided = True
-                    End If
-
-                    dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched)
-                    strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") & "%"
-
-                    If dblFractionSkipped > 0.2 And Not spectraAreCentroided Then
-                        m_message = mSearchEngineName & " skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                        blnTooManySkippedSpectra = True
-                    Else
-                        m_EvalMessage = mSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-                    End If
-
+                    m_EvalMessage = mSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
                 End If
 
             End If
@@ -903,7 +929,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             LogProgress("MSGF+")
 
-            If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE Then
+            If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE - Single.Epsilon Then
                 If Not mMSGFPlusComplete Then
                     mMSGFPlusComplete = True
                     mMSGFPlusCompletionTime = DateTime.UtcNow
@@ -1130,35 +1156,35 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 #Region "Event Handlers"
 
-	''' <summary>
-	''' Event handler for CmdRunner.LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-		MonitorProgress()
-	End Sub
+    ''' <summary>
+    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+        MonitorProgress()
+    End Sub
 
-	Private Sub mMSGFDBUtils_ErrorEvent(ByVal errorMessage As String, ByVal detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
-		m_message = String.Copy(errorMessage)
-		If String.IsNullOrEmpty(detailedMessage) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
-		End If
+    Private Sub mMSGFDBUtils_ErrorEvent(ByVal errorMessage As String, ByVal detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
+        m_message = String.Copy(errorMessage)
+        If String.IsNullOrEmpty(detailedMessage) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
+        End If
 
-	End Sub
+    End Sub
 
-	Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent() Handles mMSGFDBUtils.IgnorePreviousErrorEvent
-		m_message = String.Empty
-	End Sub
+    Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent() Handles mMSGFDBUtils.IgnorePreviousErrorEvent
+        m_message = String.Empty
+    End Sub
 
-	Private Sub mMSGFDBUtils_MessageEvent(messageText As String) Handles mMSGFDBUtils.MessageEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, messageText)
-	End Sub
+    Private Sub mMSGFDBUtils_MessageEvent(messageText As String) Handles mMSGFDBUtils.MessageEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, messageText)
+    End Sub
 
-	Private Sub mMSGFDBUtils_WarningEvent(warningMessage As String) Handles mMSGFDBUtils.WarningEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-	End Sub
+    Private Sub mMSGFDBUtils_WarningEvent(warningMessage As String) Handles mMSGFDBUtils.WarningEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+    End Sub
 
 #If EnableHPC = "True" Then
 
