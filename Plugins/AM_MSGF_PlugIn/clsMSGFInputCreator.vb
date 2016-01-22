@@ -19,52 +19,52 @@ Imports PHRPReader
 Public MustInherit Class clsMSGFInputCreator
 
 #Region "Constants"
-	Protected Const MSGF_INPUT_FILENAME_SUFFIX As String = "_MSGF_input.txt"
-	Public Const MSGF_RESULT_FILENAME_SUFFIX As String = "_MSGF.txt"
+    Private Const MSGF_INPUT_FILENAME_SUFFIX As String = "_MSGF_input.txt"
+    Public Const MSGF_RESULT_FILENAME_SUFFIX As String = "_MSGF.txt"
 #End Region
 
 #Region "Module variables"
-	Protected mDatasetName As String
-	Protected mWorkDir As String
-    Protected mPeptideHitResultType As clsPHRPReader.ePeptideHitResultType
+    Protected mDatasetName As String
+    Protected mWorkDir As String
+    Private ReadOnly mPeptideHitResultType As clsPHRPReader.ePeptideHitResultType
 
-    Protected mSkippedLineInfo As SortedDictionary(Of Integer, List(Of String))
+    Private ReadOnly mSkippedLineInfo As SortedDictionary(Of Integer, List(Of String))
 
-    Protected mDoNotFilterPeptides As Boolean
-    Protected mMGFInstrumentData As Boolean
+    Private mDoNotFilterPeptides As Boolean
+    Private mMGFInstrumentData As Boolean
 
     ' This dictionary is initially populated with a string constructed using
     ' Scan plus "_" plus charge plus "_" plus the original peptide sequence in the PHRP file
     ' It will contain an entry for every line written to the MSGF input file
     ' It is later updated by AddUpdateMSGFResult() to store the properly formated MSGF result line for each entry
     ' Finally, it will be used by CreateMSGFFirstHitsFile to create the MSGF file that corresponds to the first-hits file
-    Protected mMSGFCachedResults As SortedDictionary(Of String, String)
+    Private ReadOnly mMSGFCachedResults As SortedDictionary(Of String, String)
 
     ' This dictionary holds a mapping between Scan plus "_" plus charge to the spectrum index in the MGF file (first spectrum has index=1)
     ' It is only used if MGFInstrumentData=True
-    Protected mScanAndChargeToMGFIndex As SortedDictionary(Of String, Integer)
+    Private mScanAndChargeToMGFIndex As SortedDictionary(Of String, Integer)
 
     ' This dictionary is the inverse of mScanAndChargeToMGFIndex
     ' mMGFIndexToScan allows for a lookup of Scan Number given the MGF index
     ' It is only used if MGFInstrumentData=True
-    Protected mMGFIndexToScan As SortedDictionary(Of Integer, Integer)
+    Private mMGFIndexToScan As SortedDictionary(Of Integer, Integer)
 
     Protected mErrorMessage As String = String.Empty
 
     Protected mPHRPFirstHitsFilePath As String = String.Empty
     Protected mPHRPSynopsisFilePath As String = String.Empty
 
-    Protected mMSGFInputFilePath As String = String.Empty
-    Protected mMSGFResultsFilePath As String = String.Empty
+    Private mMSGFInputFilePath As String = String.Empty
+    Private mMSGFResultsFilePath As String = String.Empty
 
-    Protected mMSGFInputFileLineCount As Integer = 0
+    Private mMSGFInputFileLineCount As Integer = 0
 
 
     ' Note that this reader is instantiated and disposed of several times
     ' We declare it here as a classwide variable so that we can attach the event handlers
-    Protected WithEvents mPHRPReader As clsPHRPReader
+    Private WithEvents mPHRPReader As clsPHRPReader
 
-    Protected mLogFile As StreamWriter
+    Private mLogFile As StreamWriter
 
 #End Region
 
@@ -158,13 +158,13 @@ Public MustInherit Class clsMSGFInputCreator
 
 #Region "Functions to be defined in derived classes"
     Protected MustOverride Sub InitializeFilePaths()
-    Protected MustOverride Function PassesFilters(ByVal objPSM As PHRPReader.clsPSM) As Boolean
+    Protected MustOverride Function PassesFilters(objPSM As clsPSM) As Boolean
 #End Region
 
     Public Sub AddUpdateMSGFResult(
-      strScanNumber As String, _
-      strCharge As String, _
-      strPeptide As String, _
+      strScanNumber As String,
+      strCharge As String,
+      strPeptide As String,
       strMSGFResultData As String)
 
         Try
@@ -176,11 +176,11 @@ Public MustInherit Class clsMSGFInputCreator
 
     End Sub
 
-    Protected Function AppendText(strText As String, strAddnl As String) As String
+    Private Function AppendText(strText As String, strAddnl As String) As String
         Return AppendText(strText, strAddnl, ": ")
     End Function
 
-    Protected Function AppendText(strText As String, strAddnl As String, strDelimiter As String) As String
+    Private Function AppendText(strText As String, strAddnl As String, strDelimiter As String) As String
         If String.IsNullOrWhiteSpace(strAddnl) Then
             Return strText
         Else
@@ -206,29 +206,29 @@ Public MustInherit Class clsMSGFInputCreator
         End If
     End Function
 
-    Protected Function ConstructMGFMappingCode(intScanNumber As Integer, intCharge As Integer) As String
+    Private Function ConstructMGFMappingCode(intScanNumber As Integer, intCharge As Integer) As String
         Return intScanNumber.ToString & "_" & intCharge.ToString
     End Function
 
-    Protected Function ConstructMSGFResultCode(
-     intScanNumber As Integer, _
-     intCharge As Integer, _
+    Private Function ConstructMSGFResultCode(
+     intScanNumber As Integer,
+     intCharge As Integer,
      strPeptide As String) As String
 
         Return intScanNumber.ToString & "_" & intCharge.ToString & "_" & strPeptide
 
     End Function
 
-    Protected Function ConstructMSGFResultCode(
-     strScanNumber As String, _
-     strCharge As String, _
+    Private Function ConstructMSGFResultCode(
+     strScanNumber As String,
+     strCharge As String,
      strPeptide As String) As String
 
         Return strScanNumber & "_" & strCharge & "_" & strPeptide
 
     End Function
 
-    Protected Function CreateMGFScanToIndexMap(strMGFFilePath As String) As Boolean
+    Private Function CreateMGFScanToIndexMap(strMGFFilePath As String) As Boolean
         Dim objMGFReader As New MsMsDataFileReader.clsMGFReader
 
         Dim intMsMsDataCount As Integer
@@ -441,14 +441,14 @@ Public MustInherit Class clsMSGFInputCreator
 
                 ' Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source
                 ' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
-                swMSGFInputFile.WriteLine(clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile & ControlChars.Tab & _
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Title & ControlChars.Tab & _
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber & ControlChars.Tab & _
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation & ControlChars.Tab & _
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Charge & ControlChars.Tab & _
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Protein_First & ControlChars.Tab & _
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Result_ID & ControlChars.Tab & _
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Data_Source & ControlChars.Tab & _
+                swMSGFInputFile.WriteLine(clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile & ControlChars.Tab &
+                  clsMSGFRunner.MSGF_RESULT_COLUMN_Title & ControlChars.Tab &
+                  clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber & ControlChars.Tab &
+                  clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation & ControlChars.Tab &
+                  clsMSGFRunner.MSGF_RESULT_COLUMN_Charge & ControlChars.Tab &
+                  clsMSGFRunner.MSGF_RESULT_COLUMN_Protein_First & ControlChars.Tab &
+                  clsMSGFRunner.MSGF_RESULT_COLUMN_Result_ID & ControlChars.Tab &
+                  clsMSGFRunner.MSGF_RESULT_COLUMN_Data_Source & ControlChars.Tab &
                   clsMSGFRunner.MSGF_RESULT_COLUMN_Collision_Mode)
 
                 ' Initialize some tracking variables
@@ -570,7 +570,7 @@ Public MustInherit Class clsMSGFInputCreator
 
     End Function
 
-    Protected Sub LogError(strErrorMessage As String)
+    Private Sub LogError(strErrorMessage As String)
 
         Try
             If mLogFile Is Nothing Then
@@ -610,9 +610,9 @@ Public MustInherit Class clsMSGFInputCreator
     ''' <param name="blnParsingSynopsisFile"></param>
     ''' <remarks></remarks>
     Private Sub ReadAndStorePHRPData(
-      objReader As clsPHRPReader, _
-      swMSGFInputFile As StreamWriter, _
-      strSpectrumFileName As String, _
+      objReader As clsPHRPReader,
+      swMSGFInputFile As StreamWriter,
+      strSpectrumFileName As String,
       blnParsingSynopsisFile As Boolean)
 
         Dim strPeptideResultCode As String
@@ -665,8 +665,8 @@ Public MustInherit Class clsMSGFInputCreator
                     ' This happens in Sequest _syn.txt files where the line is repeated for all protein matches
 
 
-                    If intScanNumberPrevious = objPSM.ScanNumber AndAlso _
-                       intChargePrevious = objPSM.Charge AndAlso _
+                    If intScanNumberPrevious = objPSM.ScanNumber AndAlso
+                       intChargePrevious = objPSM.Charge AndAlso
                        strPeptidePrevious = objPSM.Peptide Then
 
                         blnSuccess = False
@@ -723,15 +723,15 @@ Public MustInherit Class clsMSGFInputCreator
                 ' The title column holds the original peptide sequence
                 ' If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
 
-                swMSGFInputFile.WriteLine( _
-                   strSpectrumFileName & ControlChars.Tab & _
-                   objPSM.Peptide & ControlChars.Tab & _
-                   intScanNumberToWrite & ControlChars.Tab & _
-                   objPSM.PeptideWithNumericMods & ControlChars.Tab & _
-                   objPSM.Charge & ControlChars.Tab & _
-                   objPSM.ProteinFirst & ControlChars.Tab & _
-                   objPSM.ResultID & ControlChars.Tab & _
-                   strPHRPSource & ControlChars.Tab & _
+                swMSGFInputFile.WriteLine(
+                   strSpectrumFileName & ControlChars.Tab &
+                   objPSM.Peptide & ControlChars.Tab &
+                   intScanNumberToWrite & ControlChars.Tab &
+                   objPSM.PeptideWithNumericMods & ControlChars.Tab &
+                   objPSM.Charge & ControlChars.Tab &
+                   objPSM.ProteinFirst & ControlChars.Tab &
+                   objPSM.ResultID & ControlChars.Tab &
+                   strPHRPSource & ControlChars.Tab &
                    objPSM.CollisionMode)
 
                 mMSGFInputFileLineCount += 1
@@ -759,7 +759,7 @@ Public MustInherit Class clsMSGFInputCreator
         RaiseEvent ErrorEvent(mErrorMessage)
     End Sub
 
-    Protected Sub ReportWarning(strWarningMessage As String)
+    Private Sub ReportWarning(strWarningMessage As String)
         LogError(strWarningMessage)
         RaiseEvent WarningEvent(strWarningMessage)
     End Sub
@@ -769,19 +769,19 @@ Public MustInherit Class clsMSGFInputCreator
     ''' Define the MSGF input and output file paths
     ''' </summary>
     ''' <remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
-    Protected Sub UpdateMSGFInputOutputFilePaths()
+    Private Sub UpdateMSGFInputOutputFilePaths()
         mMSGFInputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_INPUT_FILENAME_SUFFIX)
         mMSGFResultsFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
     End Sub
 
     Public Sub WriteMSGFResultsHeaders(swOutFile As StreamWriter)
 
-        swOutFile.WriteLine("Result_ID" & ControlChars.Tab & _
-          "Scan" & ControlChars.Tab & _
-          "Charge" & ControlChars.Tab & _
-          "Protein" & ControlChars.Tab & _
-          "Peptide" & ControlChars.Tab & _
-          "SpecProb" & ControlChars.Tab & _
+        swOutFile.WriteLine("Result_ID" & ControlChars.Tab &
+          "Scan" & ControlChars.Tab &
+          "Charge" & ControlChars.Tab &
+          "Protein" & ControlChars.Tab &
+          "Peptide" & ControlChars.Tab &
+          "SpecProb" & ControlChars.Tab &
           "Notes")
     End Sub
 

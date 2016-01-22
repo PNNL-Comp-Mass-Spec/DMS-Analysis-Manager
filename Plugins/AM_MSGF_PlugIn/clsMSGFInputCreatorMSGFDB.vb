@@ -156,13 +156,13 @@ Public Class clsMSGFInputCreatorMSGFDB
 
                         ' objPSM.MSGFSpecProb comes from column MSGFDB_SpecProb   if MS-GFDB
                         '                 it  comes from column MSGFDB_SpecEValue if MS-GF+
-                        swMSGFFile.WriteLine( _
-                           objPSM.ResultID & ControlChars.Tab & _
-                           objPSM.ScanNumber & ControlChars.Tab & _
-                           objPSM.Charge & ControlChars.Tab & _
-                           objPSM.ProteinFirst & ControlChars.Tab & _
-                           objPSM.Peptide & ControlChars.Tab & _
-                           objPSM.MSGFSpecProb & ControlChars.Tab & _
+                        swMSGFFile.WriteLine(
+                           objPSM.ResultID & ControlChars.Tab &
+                           objPSM.ScanNumber & ControlChars.Tab &
+                           objPSM.Charge & ControlChars.Tab &
+                           objPSM.ProteinFirst & ControlChars.Tab &
+                           objPSM.Peptide & ControlChars.Tab &
+                           objPSM.MSGFSpecProb & ControlChars.Tab &
                            String.Empty)
                     Loop
 

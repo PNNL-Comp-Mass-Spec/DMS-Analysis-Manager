@@ -28,13 +28,13 @@ Public Class clsMSGFResultsSummarizer
 
     Public Const DEFAULT_CONNECTION_STRING As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
 
-    Protected Const STORE_JOB_PSM_RESULTS_SP_NAME As String = "StoreJobPSMStats"
+    Private Const STORE_JOB_PSM_RESULTS_SP_NAME As String = "StoreJobPSMStats"
 
 #End Region
 
 #Region "Structures"
 
-    Protected Structure udtPSMStatsType
+    Private Structure udtPSMStatsType
         ''' <summary>
         ''' Number of spectra with a match
         ''' </summary>
@@ -256,31 +256,25 @@ Public Class clsMSGFResultsSummarizer
 
     End Sub
 
-    Protected Function ExamineFirstHitsFile(strFirstHitsFilePath As String) As Boolean
-
-        Dim lstUniqueSpectra As Dictionary(Of String, Integer)
-        Dim strScanChargeCombo As String
-
-        Dim blnSuccess As Boolean
+    Private Sub ExamineFirstHitsFile(strFirstHitsFilePath As String)
 
         Try
 
             ' Initialize the list that will be used to track the number of spectra searched
-            lstUniqueSpectra = New Dictionary(Of String, Integer)
+            Dim lstUniqueSpectra = New SortedSet(Of String)
 
             Dim startupOptions As clsPHRPStartupOptions = clsMSGFInputCreator.GetMinimalMemoryPHRPStartupOptions()
 
             Using objReader = New clsPHRPReader(strFirstHitsFilePath, startupOptions)
                 While objReader.MoveNext()
 
-                    Dim objPSM As clsPSM
-                    objPSM = objReader.CurrentPSM
+                    Dim objPSM = objReader.CurrentPSM
 
                     If objPSM.Charge >= 0 Then
-                        strScanChargeCombo = objPSM.ScanNumber.ToString() & "_" & objPSM.Charge.ToString()
+                        Dim strScanChargeCombo = objPSM.ScanNumber.ToString() & "_" & objPSM.Charge.ToString()
 
-                        If Not lstUniqueSpectra.ContainsKey(strScanChargeCombo) Then
-                            lstUniqueSpectra.Add(strScanChargeCombo, 0)
+                        If Not lstUniqueSpectra.Contains(strScanChargeCombo) Then
+                            lstUniqueSpectra.Add(strScanChargeCombo)
                         End If
 
                     End If
@@ -290,16 +284,14 @@ Public Class clsMSGFResultsSummarizer
 
             mSpectraSearched = lstUniqueSpectra.Count
 
-            blnSuccess = True
+            Return
 
         Catch ex As Exception
             SetErrorMessage(ex.Message)
-            blnSuccess = False
+            Return
         End Try
 
-        Return blnSuccess
-
-    End Function
+    End Sub
 
     ''' <summary>
     ''' Either filter by MSGF or filter by FDR, then update the stats
@@ -310,7 +302,7 @@ Public Class clsMSGFResultsSummarizer
     ''' <param name="lstSeqInfo">Sequence information (empty if the _resultToSeqMap file was not found)</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function FilterAndComputeStats(
+    Private Function FilterAndComputeStats(
       blnUsingMSGFOrEValueFilter As Boolean,
       lstNormalizedPSMs As Dictionary(Of Integer, clsPSMInfo),
       lstSeqToProteinMap As SortedList(Of Integer, List(Of clsProteinInfo)),
@@ -377,7 +369,7 @@ Public Class clsMSGFResultsSummarizer
     ''' <param name="lstPSMs">PSM results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
     ''' <returns>True if success; false if no reverse hits are present or if none of the data has MSGF values</returns>
     ''' <remarks></remarks>
-    Protected Function FilterPSMsByFDR(lstPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
+    Private Function FilterPSMsByFDR(lstPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
 
         Dim lstResultIDtoFDRMap As Dictionary(Of Integer, Double)
 
@@ -443,10 +435,10 @@ Public Class clsMSGFResultsSummarizer
                 ' Inspect reversed/scrambled proteins   'xxx.%'
                 ' MSGFDB (aka MSGF+) reversed proteins  'rev[_]%'
 
-                If strProtein.StartsWith("reversed_") OrElse _
-                   strProtein.StartsWith("scrambled_") OrElse _
-                   strProtein.EndsWith(":reversed") OrElse _
-                   strProtein.StartsWith("xxx.") OrElse _
+                If strProtein.StartsWith("reversed_") OrElse
+                   strProtein.StartsWith("scrambled_") OrElse
+                   strProtein.EndsWith(":reversed") OrElse
+                   strProtein.StartsWith("xxx.") OrElse
                    strProtein.StartsWith("rev_") Then
                     intDecoyResults += 1
                 Else
@@ -492,7 +484,7 @@ Public Class clsMSGFResultsSummarizer
 
     End Function
 
-    Protected Function FilterPSMsByEValue(
+    Private Function FilterPSMsByEValue(
       dblEValueThreshold As Double,
       lstPSMs As Dictionary(Of Integer, clsPSMInfo),
       lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
@@ -512,7 +504,7 @@ Public Class clsMSGFResultsSummarizer
 
     End Function
 
-    Protected Function FilterPSMsByMSGF(
+    Private Function FilterPSMsByMSGF(
       dblMSGFThreshold As Double,
       lstPSMs As Dictionary(Of Integer, clsPSMInfo),
       lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
@@ -532,11 +524,11 @@ Public Class clsMSGFResultsSummarizer
 
     End Function
 
-    Protected Function GetNormalizedPeptide(peptideCleanSequence As String, modifications As String) As String
+    Private Function GetNormalizedPeptide(peptideCleanSequence As String, modifications As String) As String
         Return peptideCleanSequence & "_" & modifications
     End Function
 
-    Protected Function PostJobPSMResults(intJob As Integer) As Boolean
+    Private Function PostJobPSMResults(intJob As Integer) As Boolean
 
         Const MAX_RETRY_COUNT = 3
 
@@ -759,7 +751,7 @@ Public Class clsMSGFResultsSummarizer
     ''' <param name="lstSeqInfo"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function LoadPSMs(
+    Private Function LoadPSMs(
       strPHRPSynopsisFilePath As String,
       lstNormalizedPSMs As Dictionary(Of Integer, clsPSMInfo),
       <Out()> ByRef lstResultToSeqMap As SortedList(Of Integer, Integer),
@@ -818,9 +810,10 @@ Public Class clsMSGFResultsSummarizer
 
 
             ' Keys in this dictionary are normalized peptide sequences (mod symbols have been moved to the end)
-            '   For example, PEPT*IDES and PEPTIDES* are each normalized to PEPTIDES**
-            '   And ... P#EPT*IDES and PEP#T*IDES and P#EPTIDES* all become PEPTIDES#*
+            '   For example, PEPT*IDES and PEPTIDES* are each normalized to PEPTIDES_**
+            '   And ... P#EPT*IDES and PEP#T*IDES and P#EPTIDES* all become PEPTIDES_#*
             '   If sequenceInfoAvailable is True, then instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
+            '   For example, VGVEASEETPQT_Phosph or AGEPNSPDAEEANSPDVTAGCDPAGVHPPR_PhosphIodoAcet
             ' Values are the SeqID value of the first sequence to get normalized to the given peptide
             '   If sequenceInfoAvailable is False, then values are the ResultID value of the first peptide to get normalized to the given peptide
             Dim lstNormalizedPeptides = New Dictionary(Of String, Integer)
@@ -910,7 +903,6 @@ Public Class clsMSGFResultsSummarizer
 
                     If sequenceInfoAvailable And Not lstResultToSeqMap Is Nothing Then
 
-                        ' ReSharper disable once VBWarnings::BC42104
                         If Not lstResultToSeqMap.TryGetValue(objPSM.ResultID, intSeqID) Then
                             intSeqID = clsPSMInfo.UNKNOWN_SEQID
 
@@ -951,11 +943,18 @@ Public Class clsMSGFResultsSummarizer
 
                                 ' Update the scores if this PSM has a better score than the cached one
                                 If psmFDR > clsPSMInfo.UNKNOWN_FDR Then
-                                    observation.FDR = Math.Min(observation.FDR, psmFDR)
+                                    If psmFDR < observation.FDR Then
+                                        observation.FDR = psmFDR
+                                    End If
                                 End If
 
-                                observation.MSGF = Math.Min(observation.MSGF, psmMSGF)
-                                observation.EValue = Math.Min(observation.EValue, psmEValue)
+                                If psmMSGF < observation.MSGF Then
+                                    observation.MSGF = psmMSGF
+                                End If
+
+                                If psmEValue < observation.EValue Then
+                                    observation.EValue = psmEValue
+                                End If
 
                                 addObservation = False
                                 Exit For
@@ -1057,7 +1056,7 @@ Public Class clsMSGFResultsSummarizer
 
     End Function
 
-    Protected Function SaveResultsToFile() As Boolean
+    Private Sub SaveResultsToFile()
 
         Dim strOutputFilePath = "??"
 
@@ -1072,43 +1071,42 @@ Public Class clsMSGFResultsSummarizer
             Using swOutFile = New StreamWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 ' Header line
-                swOutFile.WriteLine( _
-                  "Dataset" & ControlChars.Tab & _
-                  "Job" & ControlChars.Tab & _
-                  "MSGF_Threshold" & ControlChars.Tab & _
-                  "FDR_Threshold" & ControlChars.Tab & _
-                  "Spectra_Searched" & ControlChars.Tab & _
-                  "Total_PSMs_MSGF_Filtered" & ControlChars.Tab & _
-                  "Unique_Peptides_MSGF_Filtered" & ControlChars.Tab & _
-                  "Unique_Proteins_MSGF_Filtered" & ControlChars.Tab & _
-                  "Total_PSMs_FDR_Filtered" & ControlChars.Tab & _
-                  "Unique_Peptides_FDR_Filtered" & ControlChars.Tab & _
+                swOutFile.WriteLine(
+                  "Dataset" & ControlChars.Tab &
+                  "Job" & ControlChars.Tab &
+                  "MSGF_Threshold" & ControlChars.Tab &
+                  "FDR_Threshold" & ControlChars.Tab &
+                  "Spectra_Searched" & ControlChars.Tab &
+                  "Total_PSMs_MSGF_Filtered" & ControlChars.Tab &
+                  "Unique_Peptides_MSGF_Filtered" & ControlChars.Tab &
+                  "Unique_Proteins_MSGF_Filtered" & ControlChars.Tab &
+                  "Total_PSMs_FDR_Filtered" & ControlChars.Tab &
+                  "Unique_Peptides_FDR_Filtered" & ControlChars.Tab &
                   "Unique_Proteins_FDR_Filtered")
 
                 ' Stats
-                swOutFile.WriteLine( _
-                 mDatasetName & ControlChars.Tab & _
-                 mJob & ControlChars.Tab & _
-                 mMSGFThreshold.ToString("0.00E+00") & ControlChars.Tab & _
-                 mFDRThreshold.ToString("0.000") & ControlChars.Tab & _
-                 mSpectraSearched & ControlChars.Tab & _
-                 mMSGFBasedCounts.TotalPSMs & ControlChars.Tab & _
-                 mMSGFBasedCounts.UniquePeptideCount & ControlChars.Tab & _
-                 mMSGFBasedCounts.UniqueProteinCount & ControlChars.Tab & _
-                 mFDRBasedCounts.TotalPSMs & ControlChars.Tab & _
-                 mFDRBasedCounts.UniquePeptideCount & ControlChars.Tab & _
+                swOutFile.WriteLine(
+                 mDatasetName & ControlChars.Tab &
+                 mJob & ControlChars.Tab &
+                 mMSGFThreshold.ToString("0.00E+00") & ControlChars.Tab &
+                 mFDRThreshold.ToString("0.000") & ControlChars.Tab &
+                 mSpectraSearched & ControlChars.Tab &
+                 mMSGFBasedCounts.TotalPSMs & ControlChars.Tab &
+                 mMSGFBasedCounts.UniquePeptideCount & ControlChars.Tab &
+                 mMSGFBasedCounts.UniqueProteinCount & ControlChars.Tab &
+                 mFDRBasedCounts.TotalPSMs & ControlChars.Tab &
+                 mFDRBasedCounts.UniquePeptideCount & ControlChars.Tab &
                  mFDRBasedCounts.UniqueProteinCount)
 
             End Using
 
         Catch ex As Exception
             SetErrorMessage("Exception saving results to " & strOutputFilePath & ": " & ex.Message)
-            Return False
+            Return
         End Try
 
-        Return True
-
-    End Function
+        Return
+    End Sub
 
     Private Sub SetErrorMessage(strMessage As String)
         Console.WriteLine(strMessage)
@@ -1124,7 +1122,7 @@ Public Class clsMSGFResultsSummarizer
     ''' <param name="lstSeqInfo">Sequence information (keys are sequence ID, values are sequences</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function SummarizeResults(
+    Private Function SummarizeResults(
       blnUsingMSGFOrEValueFilter As Boolean,
       lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo),
       lstSeqToProteinMap As SortedList(Of Integer, List(Of clsProteinInfo)),
@@ -1231,7 +1229,7 @@ Public Class clsMSGFResultsSummarizer
 
 #End Region
 
-    Protected Class clsMSGFtoResultIDMapComparer
+    Private Class clsMSGFtoResultIDMapComparer
         Implements IComparer(Of KeyValuePair(Of Double, Integer))
 
         Public Function Compare(x As KeyValuePair(Of Double, Integer), y As KeyValuePair(Of Double, Integer)) As Integer Implements IComparer(Of KeyValuePair(Of Double, Integer)).Compare

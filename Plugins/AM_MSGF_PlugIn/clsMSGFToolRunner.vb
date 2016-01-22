@@ -26,13 +26,13 @@ Public Class clsMSGFRunner
 
 #Region "Constants and enums"
 
-    Protected Const PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD As Single = 2
-    Protected Const PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED As Single = 3
-    Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 6
-    Protected Const PROGRESS_PCT_MZXML_CREATED As Single = 10
-    Protected Const PROGRESS_PCT_MSGF_START As Single = PROGRESS_PCT_MZXML_CREATED
-    Protected Const PROGRESS_PCT_MSGF_COMPLETE As Single = 95
-    Protected Const PROGRESS_PCT_MSGF_POST_PROCESSING As Single = 97
+    Private Const PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD As Single = 2
+    Private Const PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED As Single = 3
+    Private Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 6
+    Private Const PROGRESS_PCT_MZXML_CREATED As Single = 10
+    Private Const PROGRESS_PCT_MSGF_START As Single = PROGRESS_PCT_MZXML_CREATED
+    Private Const PROGRESS_PCT_MSGF_COMPLETE As Single = 95
+    Private Const PROGRESS_PCT_MSGF_POST_PROCESSING As Single = 97
 
     Public Const MSGF_RESULT_COLUMN_SpectrumFile As String = "#SpectrumFile"
     Public Const MSGF_RESULT_COLUMN_Title As String = "Title"
@@ -51,13 +51,13 @@ Public Class clsMSGFRunner
     Public Const MSGF_SEGMENT_ENTRY_COUNT As Integer = 25000
     Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05          ' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
 
-    Protected Const MSGF_CONSOLE_OUTPUT As String = "MSGF_ConsoleOutput.txt"
-    Protected Const MSGF_JAR_NAME As String = "MSGF.jar"
-    Protected Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
-    Protected Const MODa_JAR_NAME As String = "moda.jar"
-    Protected Const MODPlus_JAR_NAME As String = "modp_pnnl.jar"
+    Private Const MSGF_CONSOLE_OUTPUT As String = "MSGF_ConsoleOutput.txt"
+    Private Const MSGF_JAR_NAME As String = "MSGF.jar"
+    Private Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
+    Private Const MODa_JAR_NAME As String = "moda.jar"
+    Private Const MODPlus_JAR_NAME As String = "modp_pnnl.jar"
 
-    Protected Structure udtSegmentFileInfoType
+    Private Structure udtSegmentFileInfoType
         Public Segment As Integer       ' Segment number
         Public FilePath As String       ' Full path to the file
         Public Entries As Integer       ' Number of entries in this segment
@@ -66,39 +66,39 @@ Public Class clsMSGFRunner
 #End Region
 
 #Region "Module variables"
-    Protected mETDMode As Boolean = False
+    Private mETDMode As Boolean = False
 
-    Protected mMSGFInputFilePath As String = String.Empty
-    Protected mMSGFResultsFilePath As String = String.Empty
-    Protected mCurrentMSGFResultsFilePath As String = String.Empty
+    Private mMSGFInputFilePath As String = String.Empty
+    Private mMSGFResultsFilePath As String = String.Empty
+    Private mCurrentMSGFResultsFilePath As String = String.Empty
 
-    Protected mMSGFInputFileLineCount As Integer = 0
-    Protected mMSGFLineCountPreviousSegments As Integer = 0
+    Private mMSGFInputFileLineCount As Integer = 0
+    Private mMSGFLineCountPreviousSegments As Integer = 0
 
-    Protected mProcessingMSGFDBCollisionModeData As Boolean
-    Protected mCollisionModeIteration As Integer
+    Private mProcessingMSGFDBCollisionModeData As Boolean
+    Private mCollisionModeIteration As Integer
 
-    Protected mKeepMSGFInputFiles As Boolean = False
+    Private mKeepMSGFInputFiles As Boolean = False
 
-    Protected mToolVersionWritten As Boolean
-    Protected mMSGFVersion As String = String.Empty
-    Protected mMSGFProgLoc As String = String.Empty
+    Private mToolVersionWritten As Boolean
+    Private mMSGFVersion As String = String.Empty
+    Private mMSGFProgLoc As String = String.Empty
 
-    Protected mMSXmlGeneratorAppPath As String = String.Empty
+    Private mMSXmlGeneratorAppPath As String = String.Empty
 
-    Protected WithEvents mMSXmlCreator As clsMSXMLCreator
+    Private WithEvents mMSXmlCreator As clsMSXMLCreator
 
-    Protected mUsingMSGFDB As Boolean = True
-    Protected mMSGFDBVersion As String = "Unknown"
+    Private mUsingMSGFDB As Boolean = True
+    Private mMSGFDBVersion As String = "Unknown"
 
-    Protected mJavaProgLoc As String = String.Empty
+    Private mJavaProgLoc As String = String.Empty
 
-    Protected mConsoleOutputErrorMsg As String
+    Private mConsoleOutputErrorMsg As String
 
-    Protected WithEvents mMSGFInputCreator As clsMSGFInputCreator
-    Protected WithEvents mMSGFRunner As clsRunDosProgram
+    Private WithEvents mMSGFInputCreator As clsMSGFInputCreator
+    Private WithEvents mMSGFRunner As clsRunDosProgram
 
-    Protected mMSGFInputCreatorErrorCount As Integer
+    Private mMSGFInputCreatorErrorCount As Integer
 
 #End Region
 
@@ -288,11 +288,11 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function AddFileNameSuffix(strFilePath As String, intSuffix As Integer) As String
+    Private Function AddFileNameSuffix(strFilePath As String, intSuffix As Integer) As String
         Return AddFileNameSuffix(strFilePath, intSuffix.ToString())
     End Function
 
-    Protected Function AddFileNameSuffix(strFilePath As String, strSuffix As String) As String
+    Private Function AddFileNameSuffix(strFilePath As String, strSuffix As String) As String
         Dim fiFile As FileInfo
         Dim strFilePathNew As String
 
@@ -309,7 +309,7 @@ Public Class clsMSGFRunner
     ''' <param name="eResultType"></param>
     ''' <param name="strSearchToolParamFilePath"></param>
     ''' <returns>True if success; false if an error</returns>
-    Protected Function CheckETDModeEnabled(eResultType As clsPHRPReader.ePeptideHitResultType, strSearchToolParamFilePath As String) As Boolean
+    Private Function CheckETDModeEnabled(eResultType As clsPHRPReader.ePeptideHitResultType, strSearchToolParamFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -357,7 +357,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath As String) As Boolean
+    Private Function CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath As String) As Boolean
 
 
         Const MSGFDB_FRAG_METHOD_TAG = "FragmentationMethodID"
@@ -382,7 +382,7 @@ Public Class clsMSGFRunner
                 Do While srParamFile.Peek >= 0
                     strLineIn = srParamFile.ReadLine
 
-                    If Not String.IsNullOrEmpty(strLineIn) AndAlso _
+                    If Not String.IsNullOrEmpty(strLineIn) AndAlso
                        strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG) Then
 
                         ' Check whether this line is FragmentationMethodID=2
@@ -426,8 +426,7 @@ Public Class clsMSGFRunner
 
         Catch ex As Exception
             Dim Msg As String
-            Msg = "Error reading the MSGFDB param file: " & _
-             ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Msg = "Error reading the MSGFDB param file: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file")
 
@@ -445,7 +444,7 @@ Public Class clsMSGFRunner
     ''' </summary>
     ''' <param name="strSearchToolParamFilePath">Sequest parameter file to read</param>
     ''' <returns>True if success; false if an error</returns>
-    Protected Function CheckETDModeEnabledSequest(strSearchToolParamFilePath As String) As Boolean
+    Private Function CheckETDModeEnabledSequest(strSearchToolParamFilePath As String) As Boolean
 
         Const SEQUEST_ION_SERIES_TAG = "ion_series"
 
@@ -472,7 +471,7 @@ Public Class clsMSGFRunner
                 Do While srParamFile.Peek >= 0
                     strLineIn = srParamFile.ReadLine
 
-                    If Not String.IsNullOrEmpty(strLineIn) AndAlso _
+                    If Not String.IsNullOrEmpty(strLineIn) AndAlso
                        strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG) Then
 
                         ' This is the ion_series line
@@ -528,7 +527,7 @@ Public Class clsMSGFRunner
 
         Catch ex As Exception
             Dim Msg As String
-            Msg = "Error reading the Sequest param file: " & _
+            Msg = "Error reading the Sequest param file: " &
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file")
@@ -545,7 +544,7 @@ Public Class clsMSGFRunner
     ''' </summary>
     ''' <param name="strSearchToolParamFilePath">X!Tandem XML parameter file to read</param>
     ''' <returns>True if success; false if an error</returns>
-    Protected Function CheckETDModeEnabledXTandem(strSearchToolParamFilePath As String) As Boolean
+    Private Function CheckETDModeEnabledXTandem(strSearchToolParamFilePath As String) As Boolean
 
         Dim objParamFile As XmlDocument
 
@@ -605,7 +604,7 @@ Public Class clsMSGFRunner
         Catch ex As Exception
 
             Dim Msg As String
-            Msg = "Error reading the X!Tandem param file: " & _
+            Msg = "Error reading the X!Tandem param file: " &
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file")
@@ -616,7 +615,7 @@ Public Class clsMSGFRunner
         Return True
     End Function
 
-    Protected Function ConvertMzMLToMzXML() As Boolean
+    Private Function ConvertMzMLToMzXML() As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -646,10 +645,11 @@ Public Class clsMSGFRunner
     ''' <param name="eResultType"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function CreateMSGFInputFile(eResultType As clsPHRPReader.ePeptideHitResultType, _
-     blnDoNotFilterPeptides As Boolean, _
-     blnMGFInstrumentData As Boolean, _
-     <Out()> ByRef intMSGFInputFileLineCount As Integer) As Boolean
+    Private Function CreateMSGFInputFile(
+      eResultType As clsPHRPReader.ePeptideHitResultType,
+      blnDoNotFilterPeptides As Boolean,
+      blnMGFInstrumentData As Boolean,
+      <Out()> ByRef intMSGFInputFileLineCount As Integer) As Boolean
 
         Dim Msg As String
 
@@ -829,7 +829,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function CreateMzXMLFile() As Boolean
+    Private Function CreateMzXMLFile() As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -861,7 +861,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function DefineProgramPaths() As Boolean
+    Private Function DefineProgramPaths() As Boolean
 
         ' mJavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
         ' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
@@ -887,7 +887,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function DetermineMSGFProgramLocation() As String
+    Private Function DetermineMSGFProgramLocation() As String
 
         Dim strStepToolName = "MSGFDB"
         Dim strProgLocManagerParamName = "MSGFDbProgLoc"
@@ -1006,7 +1006,7 @@ Public Class clsMSGFRunner
     ''' <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
     ''' <returns>True if success; false if one or more errors</returns>
     ''' <remarks></remarks>
-    Protected Function PostProcessMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType, strMSGFResultsFilePath As String, blnMGFInstrumentData As Boolean) As Boolean
+    Private Function PostProcessMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType, strMSGFResultsFilePath As String, blnMGFInstrumentData As Boolean) As Boolean
 
         Dim fiInputFile As FileInfo
         Dim fiMSGFSynFile As FileInfo
@@ -1107,11 +1107,12 @@ Public Class clsMSGFRunner
     ''' <param name="blnTooManyErrors">Will be set to True if too many errors occur</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function PostProcessMSGFResultsWork(eResultType As clsPHRPReader.ePeptideHitResultType, _
-      strMSGFResultsFilePath As String, _
-      strMSGFSynopsisResults As String, _
-      blnMGFInstrumentData As Boolean, _
-      <Out()> ByRef blnFirstHitsDataPresent As Boolean, _
+    Private Function PostProcessMSGFResultsWork(
+      eResultType As clsPHRPReader.ePeptideHitResultType,
+      strMSGFResultsFilePath As String,
+      strMSGFSynopsisResults As String,
+      blnMGFInstrumentData As Boolean,
+      <Out()> ByRef blnFirstHitsDataPresent As Boolean,
       <Out()> ByRef blnTooManyErrors As Boolean) As Boolean
 
         Const MAX_ERRORS_TO_LOG = 5
@@ -1274,11 +1275,11 @@ Public Class clsMSGFRunner
                                 strSpecProb = "1"
                             End If
 
-                            strMSGFResultData = strScan & ControlChars.Tab & _
-                              strCharge & ControlChars.Tab & _
-                              strProtein & ControlChars.Tab & _
-                              strOriginalPeptide & ControlChars.Tab & _
-                              strSpecProb & ControlChars.Tab & _
+                            strMSGFResultData = strScan & ControlChars.Tab &
+                              strCharge & ControlChars.Tab &
+                              strProtein & ControlChars.Tab &
+                              strOriginalPeptide & ControlChars.Tab &
+                              strSpecProb & ControlChars.Tab &
                               strNotes
 
                             ' Add this result to the cached string dictionary
@@ -1310,13 +1311,13 @@ Public Class clsMSGFRunner
 
                                         strSkipInfo = objSkipList(intIndex).Split(chSepChars, 2)
 
-                                        swMSGFSynFile.WriteLine( _
-                                          strSkipInfo(0) & ControlChars.Tab & _
-                                          strScan & ControlChars.Tab & _
-                                          strCharge & ControlChars.Tab & _
-                                          strSkipInfo(1) & ControlChars.Tab & _
-                                          strOriginalPeptide & ControlChars.Tab & _
-                                          strSpecProb & ControlChars.Tab & _
+                                        swMSGFSynFile.WriteLine(
+                                          strSkipInfo(0) & ControlChars.Tab &
+                                          strScan & ControlChars.Tab &
+                                          strCharge & ControlChars.Tab &
+                                          strSkipInfo(1) & ControlChars.Tab &
+                                          strOriginalPeptide & ControlChars.Tab &
+                                          strSpecProb & ControlChars.Tab &
                                           strNotes)
 
                                     Next
@@ -1353,10 +1354,10 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function ProcessFileWithMSGF(
-      eResultType As clsPHRPReader.ePeptideHitResultType, _
-      intMSGFInputFileLineCount As Integer, _
-      strMSGFInputFilePath As String, _
+    Private Function ProcessFileWithMSGF(
+      eResultType As clsPHRPReader.ePeptideHitResultType,
+      intMSGFInputFileLineCount As Integer,
+      strMSGFInputFilePath As String,
       strMSGFResultsFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
@@ -1375,7 +1376,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function ProcessFilesWrapper(
+    Private Function ProcessFilesWrapper(
       eRawDataType As clsAnalysisResources.eRawDataTypeConstants,
       eResultType As clsPHRPReader.ePeptideHitResultType,
       blnDoNotFilterPeptides As Boolean,
@@ -1491,7 +1492,7 @@ Public Class clsMSGFRunner
     ''' <param name="strFileNameToFind"></param>
     ''' <returns>True if success; false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function RetrievePreGeneratedDataFile(strFileNameToFind As String) As Boolean
+    Private Function RetrievePreGeneratedDataFile(strFileNameToFind As String) As Boolean
 
         Dim strTransferFolderPath As String
         Dim strInputFolderName As String
@@ -1537,7 +1538,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function RunMSGFonMSGFDB(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String, strMSGFResultsFilePath As String) As Boolean
+    Private Function RunMSGFonMSGFDB(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String, strMSGFResultsFilePath As String) As Boolean
 
         Dim strLineIn As String
         Dim intLinesRead As Integer
@@ -1646,10 +1647,10 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function RunMSGFonMSGFDBCachedData( _
-       lstData As List(Of String), _
-       strMSGFInputFilePath As String, _
-       strMSGFResultsFilePathFinal As String, _
+    Private Function RunMSGFonMSGFDBCachedData(
+       lstData As List(Of String),
+       strMSGFInputFilePath As String,
+       strMSGFResultsFilePathFinal As String,
        strCollisionMode As String) As Boolean
 
         Dim strInputFileTempPath As String
@@ -1716,7 +1717,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function RunMSGF(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String, strMSGFResultsFilePath As String) As Boolean
+    Private Function RunMSGF(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String, strMSGFResultsFilePath As String) As Boolean
 
         Dim intMSGFEntriesPerSegment As Integer
         Dim blnSuccess As Boolean
@@ -1822,7 +1823,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function RunMSGFWork(strInputFilePath As String, strResultsFilePath As String) As Boolean
+    Private Function RunMSGFWork(strInputFilePath As String, strResultsFilePath As String) As Boolean
 
         Dim CmdStr As String
         Dim intJavaMemorySize As Integer
@@ -1948,8 +1949,8 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function CombineMSGFResultFiles(
-      strMSGFOutputFilePath As String, _
+    Private Function CombineMSGFResultFiles(
+      strMSGFOutputFilePath As String,
       lstResultFiles As List(Of String)) As Boolean
 
         Try
@@ -1995,7 +1996,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function LoadMSGFResults(
+    Private Function LoadMSGFResults(
       strMSGFResultsFilePath As String,
       <Out()> ByRef lstMSGFResults As Dictionary(Of Integer, String)) As Boolean
 
@@ -2130,10 +2131,10 @@ Public Class clsMSGFRunner
     End Sub
 
 
-    Protected Function SplitMSGFInputFile(
-      intMSGFinputFileLineCount As Integer, _
-      strMSGFInputFilePath As String, _
-      intMSGFEntriesPerSegment As Integer, _
+    Private Function SplitMSGFInputFile(
+      intMSGFinputFileLineCount As Integer,
+      strMSGFInputFilePath As String,
+      intMSGFEntriesPerSegment As Integer,
       lstSegmentFileInfo As List(Of udtSegmentFileInfoType)) As Boolean
 
         Dim intLinesRead = 0
@@ -2218,7 +2219,7 @@ Public Class clsMSGFRunner
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+    Private Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String
 
@@ -2247,7 +2248,7 @@ Public Class clsMSGFRunner
     ''' Stores the tool version info in the database when using MODa or MSGF+ probabilities to create the MSGF files
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfoPrecomputedProbabilities(eResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+    Private Function StoreToolVersionInfoPrecomputedProbabilities(eResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
 
@@ -2277,7 +2278,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Function SummarizeMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+    Private Function SummarizeMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
         Dim objSummarizer As clsMSGFResultsSummarizer
         Dim strConnectionString As String
@@ -2330,7 +2331,7 @@ Public Class clsMSGFRunner
 
     End Function
 
-    Protected Sub UpdateMSGFProgress(strMSGFResultsFilePath As String)
+    Private Sub UpdateMSGFProgress(strMSGFResultsFilePath As String)
 
         ' ReSharper disable once UseImplicitlyTypedVariableEvident
         Static intErrorCount As Integer = 0
@@ -2379,7 +2380,7 @@ Public Class clsMSGFRunner
         End Try
     End Sub
 
-    Protected Function UpdateProteinModsFile(eResultType As clsPHRPReader.ePeptideHitResultType, strMSGFResultsFilePath As String) As Boolean
+    Private Function UpdateProteinModsFile(eResultType As clsPHRPReader.ePeptideHitResultType, strMSGFResultsFilePath As String) As Boolean
         Dim Msg As String
 
         Dim fiProteinModsFile As FileInfo

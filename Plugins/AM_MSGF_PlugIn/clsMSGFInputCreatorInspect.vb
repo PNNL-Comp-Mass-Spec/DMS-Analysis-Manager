@@ -36,7 +36,7 @@ Public Class clsMSGFInputCreatorInspect
 
     End Sub
 
-    Protected Overrides Function PassesFilters(ByVal objPSM As clsPSM) As Boolean
+    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
         Dim dblPValue As Double
         Dim dblTotalPRMScore As Double
         Dim dblFScore As Double

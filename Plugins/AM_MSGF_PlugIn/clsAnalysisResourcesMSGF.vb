@@ -25,7 +25,7 @@ Public Class clsAnalysisResourcesMSGF
 
 #Region "Module variables"
 	' Keys are the original file name, values are the new name
-	Protected m_PendingFileRenames As Dictionary(Of String, String)
+    Private m_PendingFileRenames As Dictionary(Of String, String)
 #End Region
 
 #Region "Methods"
