@@ -87,7 +87,7 @@ Module modMain
 
         Dim fiSourceFile As FileInfo
 
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
 
         Try
             ' Initialize a dictionary object that will be used to either find the appropriate input file, or determine the file type of the specified input file
@@ -208,8 +208,11 @@ Module modMain
             objSummarizer.OutputFolderPath = mOutputFolderPath
             objSummarizer.PostJobPSMResultsToDB = mPostResultsToDb
             objSummarizer.SaveResultsToTextFile = mSaveResultsAsText
+            objSummarizer.DatasetName = mDatasetName
 
-            blnSuccess = objSummarizer.ProcessMSGFResults()
+            Dim lookupScanStatsFromDMS = mPostResultsToDb
+
+            blnSuccess = objSummarizer.ProcessMSGFResults(lookupScanStatsFromDMS)
 
             If Not blnSuccess Then
                 If Not String.IsNullOrWhiteSpace(objSummarizer.ErrorMessage) Then
@@ -244,7 +247,12 @@ Module modMain
 
             Console.WriteLine()
 
-        Catch ex As Exception
+            Console.WriteLine("Percent MSn Scans No PSM: ".PadRight(38) & objSummarizer.PercentMSnScansNoPSM.ToString("0.0") & "%")
+            Console.WriteLine("Maximum Scan Gap Adjacent MSn Scans: ".PadRight(38) & objSummarizer.MaximumScanGapAdjacentMSn)
+
+            Console.WriteLine()
+
+            Catch ex As Exception
             Console.WriteLine("Exception in SummarizeMSGFResults: " & ex.Message)
         End Try
 

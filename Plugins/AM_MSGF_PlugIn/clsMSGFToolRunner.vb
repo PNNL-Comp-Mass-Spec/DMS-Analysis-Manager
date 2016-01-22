@@ -2317,7 +2317,10 @@ Public Class clsMSGFRunner
                 errMsg &= "; input file name: " & objSummarizer.MSGFSynopsisFileName
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
-
+            Else
+                If objSummarizer.DatasetScanStatsLookupError Then
+                    m_message = clsGlobal.AppendToComment(m_message, objSummarizer.ErrorMessage)
+                End If
             End If
 
         Catch ex As Exception

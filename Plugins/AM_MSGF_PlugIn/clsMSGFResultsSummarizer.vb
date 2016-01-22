@@ -18,6 +18,7 @@ Imports System.Data.SqlClient
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text
+Imports AnalysisManagerBase
 
 Public Class clsMSGFResultsSummarizer
 
@@ -52,10 +53,11 @@ Public Class clsMSGFResultsSummarizer
         Public UniquePeptideCount As Integer
 
         ''' <summary>
-        ''' 
+        ''' Number of distinct proteins
         ''' </summary>
         ''' <remarks></remarks>
         Public UniqueProteinCount As Integer
+
         Public Sub Clear()
             TotalPSMs = 0
             UniquePeptideCount = 0
@@ -72,12 +74,26 @@ Public Class clsMSGFResultsSummarizer
     Private mMSGFThreshold As Double = DEFAULT_MSGF_THRESHOLD
     Private mEValueThreshold As Double = DEFAULT_EVALUE_THRESHOLD
 
+    Private mDatasetScanStatsLookupError As Boolean
     Private mPostJobPSMResultsToDB As Boolean = False
 
     Private mSaveResultsToTextFile As Boolean = True
     Private mOutputFolderPath As String = String.Empty
 
     Private mSpectraSearched As Integer = 0
+
+    ''' <summary>
+    ''' Value between 0 and 100, indicating the percentage of the MS2 spectra with search results that are
+    ''' more than 2 scans away from an adjacent spectrum
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private mPercentMSnScansNoPSM As Double = 0
+
+    ''' <summary>
+    ''' Maximum number of scans separating two MS2 spectra with search results
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private mMaximumScanGapAdjacentMSn As Integer = 0
 
     Private mMSGFBasedCounts As udtPSMStatsType
     Private mFDRBasedCounts As udtPSMStatsType
@@ -95,6 +111,24 @@ Public Class clsMSGFResultsSummarizer
 #End Region
 
 #Region "Properties"
+
+    ''' <summary>
+    ''' Dataset name
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks>
+    ''' Used to contact DMS to lookup the total number of scans and total number of MSn scans
+    ''' This information is used by 
+    ''' </remarks>
+    Public Property DatasetName As String
+
+    Public ReadOnly Property DatasetScanStatsLookupError As Boolean
+        Get
+            Return mDatasetScanStatsLookupError
+        End Get
+    End Property
+
     Public ReadOnly Property ErrorMessage As String
         Get
             If String.IsNullOrEmpty(mErrorMessage) Then
@@ -123,6 +157,12 @@ Public Class clsMSGFResultsSummarizer
         End Set
     End Property
 
+    Public ReadOnly Property MaximumScanGapAdjacentMSn As Integer
+        Get
+            Return mMaximumScanGapAdjacentMSn
+        End Get
+    End Property
+
     Public Property MSGFThreshold As Double
         Get
             Return mMSGFThreshold
@@ -149,6 +189,12 @@ Public Class clsMSGFResultsSummarizer
         Set(value As String)
             mOutputFolderPath = value
         End Set
+    End Property
+
+    Public ReadOnly Property PercentMSnScansNoPSM As Double
+        Get
+            Return mPercentMSnScansNoPSM
+        End Get
     End Property
 
     Public Property PostJobPSMResultsToDB() As Boolean
@@ -222,6 +268,7 @@ Public Class clsMSGFResultsSummarizer
             Return mMSGFBasedCounts.UniqueProteinCount
         End Get
     End Property
+
 #End Region
 
     ''' <summary>
@@ -256,12 +303,13 @@ Public Class clsMSGFResultsSummarizer
 
     End Sub
 
-    Private Sub ExamineFirstHitsFile(strFirstHitsFilePath As String)
+    Private Sub ExamineFirstHitsFile(strFirstHitsFilePath As String, lookupScanStatsFromDMS As Boolean)
 
         Try
 
             ' Initialize the list that will be used to track the number of spectra searched
-            Dim lstUniqueSpectra = New SortedSet(Of String)
+            ' Keys are Scan_Charge, values are Scan number
+            Dim lstUniqueSpectra = New Dictionary(Of String, Integer)
 
             Dim startupOptions As clsPHRPStartupOptions = clsMSGFInputCreator.GetMinimalMemoryPHRPStartupOptions()
 
@@ -273,8 +321,8 @@ Public Class clsMSGFResultsSummarizer
                     If objPSM.Charge >= 0 Then
                         Dim strScanChargeCombo = objPSM.ScanNumber.ToString() & "_" & objPSM.Charge.ToString()
 
-                        If Not lstUniqueSpectra.Contains(strScanChargeCombo) Then
-                            lstUniqueSpectra.Add(strScanChargeCombo)
+                        If Not lstUniqueSpectra.ContainsKey(strScanChargeCombo) Then
+                            lstUniqueSpectra.Add(strScanChargeCombo, objPSM.ScanNumber)
                         End If
 
                     End If
@@ -284,6 +332,10 @@ Public Class clsMSGFResultsSummarizer
 
             mSpectraSearched = lstUniqueSpectra.Count
 
+            Dim scanList = (From item In lstUniqueSpectra.Values.Distinct()).ToList()
+
+            CheckForScanGaps(scanList, lookupScanStatsFromDMS)
+
             Return
 
         Catch ex As Exception
@@ -292,6 +344,126 @@ Public Class clsMSGFResultsSummarizer
         End Try
 
     End Sub
+
+    Private Sub CheckForScanGaps(scanList As List(Of Integer), lookupScanStatsFromDMS As Boolean)
+
+        ' Look for scan range gaps in the spectra list
+        ' The occurrence of large gaps indicates that a processing thread in MSGF+ crashed and the results may be incomplete
+        scanList.Sort()
+
+        Dim totalSpectra = 0
+        Dim totalMSnSpectra = 0
+
+        If lookupScanStatsFromDMS Then
+            Dim success = LookupScanStats(totalSpectra, totalMSnSpectra)
+            If Not success Then
+                mDatasetScanStatsLookupError = True
+            End If
+        End If
+
+        Dim gapCount = 0
+        mMaximumScanGapAdjacentMSn = 0
+
+        For i As Integer = 1 To scanList.Count - 1
+            Dim scanGap = scanList(i) - scanList(i - 1)
+            If scanGap > 2 Then
+                gapCount += 1
+            End If
+
+            If scanGap > mMaximumScanGapAdjacentMSn Then
+                mMaximumScanGapAdjacentMSn = scanGap
+            End If
+        Next
+
+        If totalMSnSpectra > 0 Then
+            mPercentMSnScansNoPSM = scanList.Count / CDbl(totalMSnSpectra) * 100.0
+        Else
+            mPercentMSnScansNoPSM = gapCount / CDbl(scanList.Count) * 100.0
+        End If
+
+        If totalSpectra > 0 Then
+            Dim scanGap = totalSpectra - scanList(scanList.Count - 1) - 1
+
+            If scanGap > mMaximumScanGapAdjacentMSn Then
+                mMaximumScanGapAdjacentMSn = scanGap
+            End If
+
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Lookup the total scans and number of MS/MS scans for the dataset defined by property DatasetName
+    ''' </summary>
+    ''' <param name="totalSpectra"></param>
+    ''' <param name="totalMSnSpectra"></param>
+    ''' <returns></returns>
+    ''' <remarks>True if success; false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
+    Private Function LookupScanStats(<Out()> ByRef totalSpectra As Integer, <Out()> ByRef totalMSnSpectra As Integer) As Boolean
+        totalSpectra = 0
+        totalMSnSpectra = 0
+
+        Try
+
+            If String.IsNullOrEmpty(DatasetName) Then
+                SetErrorMessage("Dataset name is empty; cannot lookup scan stats")
+                Return False
+            End If
+
+            Dim queryScanStats = "" &
+                " SELECT Scan_Count_Total, " &
+                "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" &
+                " FROM V_Dataset_Scans_Export DSE" &
+                " WHERE Dataset = '" & DatasetName & "'" &
+                " GROUP BY Scan_Count_Total"
+
+            Dim lstResults As List(Of List(Of String)) = Nothing
+            Dim success = clsGlobal.GetQueryResults(queryScanStats, mConnectionString, lstResults, "LookupScanStats_V_Dataset_Scans_Export")
+
+            If success AndAlso lstResults.Count > 0 Then
+
+                For Each resultRow In lstResults
+                    Dim scanCountTotal = resultRow(0)
+                    Dim scanCountMSn = resultRow(1)
+
+                    If Not Integer.TryParse(scanCountTotal, totalSpectra) Then
+                        success = False
+                        Exit For
+                    Else
+                        Integer.TryParse(scanCountMSn, totalMSnSpectra)
+                        Return True
+                    End If
+                Next
+
+            End If
+
+            Dim queryScanTotal = "" &
+                " SELECT [Scan Count]" &
+                " FROM V_Dataset_Export" &
+                " WHERE Dataset = '" & DatasetName & "'"
+
+            lstResults.Clear()
+            success = clsGlobal.GetQueryResults(queryScanTotal, mConnectionString, lstResults, "LookupScanStats_V_Dataset_Export")
+
+            If success AndAlso lstResults.Count > 0 Then
+
+                For Each resultRow In lstResults
+                    Dim scanCountTotal = resultRow(0)
+
+                    Integer.TryParse(scanCountTotal, totalSpectra)
+                    Return True
+                Next
+
+            End If
+
+            SetErrorMessage("Dataset not found in the database; cannot retrieve scan counts: " & DatasetName)
+            Return False
+
+        Catch ex As Exception
+            SetErrorMessage("Exception retrieving scan stats from the database: " & ex.Message)
+            Return False
+        End Try
+
+    End Function
 
     ''' <summary>
     ''' Either filter by MSGF or filter by FDR, then update the stats
@@ -312,6 +484,15 @@ Public Class clsMSGFResultsSummarizer
 
         Dim blnSuccess As Boolean
         Dim blnFilterPSMs = True
+
+        ' Make sure .PassesFilter is false for all of the observations
+        For Each kvEntry As KeyValuePair(Of Integer, clsPSMInfo) In lstNormalizedPSMs
+            For Each observation In kvEntry.Value.Observations
+                If observation.PassesFilter Then
+                    observation.PassesFilter = False
+                End If
+            Next
+        Next
 
         If blnUsingMSGFOrEValueFilter Then
             If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
@@ -598,9 +779,17 @@ Public Class clsMSGFResultsSummarizer
                     .Parameters.Item("@MSGFThresholdIsEValue").Value = 0
                 End If
 
+                .Parameters.Add(New SqlParameter("@PercentMSnScansNoPSM", SqlDbType.Float))
+                .Parameters.Item("@PercentMSnScansNoPSM").Direction = ParameterDirection.Input
+                .Parameters.Item("@PercentMSnScansNoPSM").Value = mPercentMSnScansNoPSM
+
+                .Parameters.Add(New SqlParameter("@MaximumScanGapAdjacentMSn", SqlDbType.Int))
+                .Parameters.Item("@MaximumScanGapAdjacentMSn").Direction = ParameterDirection.Input
+                .Parameters.Item("@MaximumScanGapAdjacentMSn").Value = mMaximumScanGapAdjacentMSn
+
             End With
 
-            'Execute the SP (retry the call up to 3 times)
+            ' Execute the SP (retry the call up to 3 times)
             Dim ResCode As Integer
             Dim strErrorMessage As String = String.Empty
             ResCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, strErrorMessage)
@@ -627,9 +816,10 @@ Public Class clsMSGFResultsSummarizer
     ''' <summary>
     ''' Process this dataset's synopsis file to determine the PSM stats
     ''' </summary>
+    ''' <param name="lookupScanStatsFromDMS">True to contact DMS to lookup the number of MS1 and MS2 scans in this dataset</param>
     ''' <returns>True if success; false if an error</returns>
     ''' <remarks></remarks>
-    Public Function ProcessMSGFResults() As Boolean
+    Public Function ProcessMSGFResults(Optional lookupScanStatsFromDMS As Boolean = True) As Boolean
 
         Dim strPHRPFirstHitsFileName As String
         Dim strPHRPFirstHitsFilePath As String
@@ -641,6 +831,8 @@ Public Class clsMSGFResultsSummarizer
 
         Dim blnSuccess As Boolean
         Dim blnSuccessViaFDR As Boolean
+
+        mDatasetScanStatsLookupError = False
 
         Try
             mErrorMessage = String.Empty
@@ -680,7 +872,7 @@ Public Class clsMSGFResultsSummarizer
             ' Determine the number of MS/MS spectra searched
             '
             If File.Exists(strPHRPFirstHitsFilePath) Then
-                ExamineFirstHitsFile(strPHRPFirstHitsFilePath)
+                ExamineFirstHitsFile(strPHRPFirstHitsFilePath, lookupScanStatsFromDMS)
             End If
 
             ''''''''''''''''''''
