@@ -158,6 +158,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 blnProcessingError = True
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "MSGF+ did not reach completion"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 End If
             End If
 
@@ -209,7 +210,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
 
         Catch ex As Exception
-            m_message = "Error in MSGFDbPlugin->RunTool: " & ex.Message
+            m_message = clsGlobal.AppendToComment(m_message, "Error in MSGFDbPlugin->RunTool: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -286,6 +288,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", strMSGFJarfile)
 
         If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
+            ' Returning CLOSEOUT_FAILED will cause the plugin to immediately exit; results and console output files will not be saved
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -311,6 +314,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim result = DetermineAssumedScanType(strAssumedScanType, eInputFileFormat, strScanTypeFilePath)
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Immediately exit the plugin; results and console output files will not be saved
             Return result
         End If
 
@@ -342,6 +346,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
           strParameterFilePath, udtHPCOptions)
 
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Immediately exit the plugin; results and console output files will not be saved
             Return result
         End If
 
@@ -352,11 +357,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         result = mMSGFDBUtils.ParseMSGFDBParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Immediately exit the plugin; results and console output files will not be saved
             Return result
         ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Problem parsing " & mSearchEngineName & " parameter file"
             End If
+            ' Immediately exit the plugin; results and console output files will not be saved
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -402,6 +409,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Case Else
                 m_message = "Unsupported InputFileFormat: " & eInputFileFormat
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                ' Immediately exit the plugin; results and console output files will not be saved
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Select
 
@@ -417,6 +425,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         If Not udtHPCOptions.UsingHPC Then
             If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, mSearchEngineName, blnLogFreeMemoryOnSuccess) Then
                 m_message = "Not enough free memory to run " & mSearchEngineName
+                ' Immediately exit the plugin; results and console output files will not be saved
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         End If
@@ -498,21 +507,43 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         End If
 
-        If mMSGFPlusComplete AndAlso mMSGFDBUtils.TaskCountCompleted < mMSGFDBUtils.TaskCountTotal Then
-            mMSGFPlusComplete = False
-            m_message = "MSGF+ reported " & mMSGFDBUtils.TaskCountCompleted & "/ " & mMSGFDBUtils.TaskCountTotal & " completed search tasks"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+        If mMSGFPlusComplete Then
+            If mMSGFDBUtils.TaskCountCompleted < mMSGFDBUtils.TaskCountTotal Then
+                If mMSGFDBUtils.TaskCountCompleted = mMSGFDBUtils.TaskCountTotal - 1 Then
+                    ' All but one of the tasks finished
+                    m_EvalMessage = mSearchEngineName & " finished, but the logs indicate that one of the " & mMSGFDBUtils.TaskCountTotal & " tasks did not complete; this could indicate an error"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+                Else
+                    ' 2 or more tasks did not finish
+                    mMSGFPlusComplete = False
+                    m_message = mSearchEngineName & " finished, but the logs are incomplete, showing " & mMSGFDBUtils.TaskCountCompleted & " / " & mMSGFDBUtils.TaskCountTotal & " completed search tasks"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 
-        If Not mMSGFPlusComplete Then
+                    ' Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
+                    ' Instead, set processingError to true
+                    blnProcessingError = True
+                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                End If
+            End If
+        Else
+            If mMSGFDBUtils.TaskCountCompleted > 0 Then
+                If String.IsNullOrWhiteSpace(m_message) Then
+                    m_message = "MSGF+ processing failed"
+                End If
+                m_message &= "; logs show " & mMSGFDBUtils.TaskCountCompleted & " / " & mMSGFDBUtils.TaskCountTotal & " completed search tasks"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            End If
+
+            ' Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
+            ' Instead, set processingError to true
+            blnProcessingError = True
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
         m_StatusTools.UpdateAndWrite(m_progress)
         If m_DebugLevel >= 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB Search Complete")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF+ Search Complete")
         End If
 
         If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
@@ -1030,59 +1061,75 @@ Public Class clsAnalysisToolRunnerMSGFDB
       ByVal javaProgLoc As String,
       ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
-        Dim result As IJobParams.CloseOutType
-        Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
+        Dim currentTask = "Starting"
 
-        If splitFastaEnabled Then
-            resultsFileName = ParallelMSGFPlusRenameFile(resultsFileName)
-            ParallelMSGFPlusRenameFile("MSGFDB_ConsoleOutput.txt")
-        End If
+        Try
 
-        ' Zip the output file
-        result = mMSGFDBUtils.ZipOutputFile(Me, resultsFileName)
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            Dim result As IJobParams.CloseOutType
+            Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
 
-        If Not mMSGFPlus Then
-            m_jobParams.AddResultFileToSkip(resultsFileName & ".temp.tsv")
-        End If
+            If splitFastaEnabled Then
+                currentTask = "Calling ParallelMSGFPlusRenameFile for " & resultsFileName
+                resultsFileName = ParallelMSGFPlusRenameFile(resultsFileName)
 
-        Dim strMSGFDBResultsFileName As String
-        If Path.GetExtension(resultsFileName).ToLower() = ".mzid" Then
-
-            ' Convert the .mzid file to a .tsv file 
-            ' If running on HPC this should have already happened, but we need to call ConvertMZIDToTSV() anyway to possibly rename the .tsv file
-
-            UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
-            strMSGFDBResultsFileName = ConvertMZIDToTSV(resultsFileName, javaProgLoc, udtHPCOptions)
-
-            If String.IsNullOrEmpty(strMSGFDBResultsFileName) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                currentTask = "Calling ParallelMSGFPlusRenameFile for MSGFDB_ConsoleOutput.txt"
+                ParallelMSGFPlusRenameFile("MSGFDB_ConsoleOutput.txt")
             End If
 
-        Else
-            strMSGFDBResultsFileName = String.Copy(resultsFileName)
-        End If
+            ' Gzip the output file
+            currentTask = "Zipping " & resultsFileName
+            result = mMSGFDBUtils.ZipOutputFile(Me, resultsFileName)
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return result
+            End If
 
-        ' Create the Peptide to Protein map file
-        ' ToDo: If udtHPCOptions.UsingPIC = True, then run this on PIC by calling 64-bit PeptideToProteinMapper.exe
+            If Not mMSGFPlus Then
+                m_jobParams.AddResultFileToSkip(resultsFileName & ".temp.tsv")
+            End If
 
-        UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
+            Dim strMSGFDBResultsFileName As String
+            If Path.GetExtension(resultsFileName).ToLower() = ".mzid" Then
 
-        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+                ' Convert the .mzid file to a .tsv file 
+                ' If running on HPC this should have already happened, but we need to call ConvertMZIDToTSV() anyway to possibly rename the .tsv file
 
-        If udtHPCOptions.UsingHPC Then
-            ' Override the OrgDbDir to point to Picfs
-            localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
-        End If
+                currentTask = "Calling ConvertMZIDToTSV"
+                UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
+                strMSGFDBResultsFileName = ConvertMZIDToTSV(resultsFileName, javaProgLoc, udtHPCOptions)
 
-        result = mMSGFDBUtils.CreatePeptideToProteinMapping(strMSGFDBResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
-            Return result
-        End If
+                If String.IsNullOrEmpty(strMSGFDBResultsFileName) Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Else
+                strMSGFDBResultsFileName = String.Copy(resultsFileName)
+            End If
+
+            ' Create the Peptide to Protein map file
+            ' ToDo: If udtHPCOptions.UsingPIC = True, then run this on PIC by calling 64-bit PeptideToProteinMapper.exe
+
+            UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
+
+            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+
+            If udtHPCOptions.UsingHPC Then
+                ' Override the OrgDbDir to point to Picfs
+                localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org")
+            End If
+
+            currentTask = "Calling CreatePeptideToProteinMapping"
+            result = mMSGFDBUtils.CreatePeptideToProteinMapping(strMSGFDBResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                Return result
+            End If
+
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+        Catch ex As Exception
+            m_message = clsGlobal.AppendToComment(m_message, "Error in PostProcessMSGFDBResults")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
     End Function
 
@@ -1143,7 +1190,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
 
         Catch ex As Exception
-            m_message = "Error in VerifyHPCMSGFDb"
+            m_message = clsGlobal.AppendToComment(m_message, "Error in VerifyHPCMSGFDb")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
             Return False
         End Try
