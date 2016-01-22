@@ -2302,6 +2302,7 @@ Public Class clsMSGFRunner
             objSummarizer = New clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString)
             objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
 
+            objSummarizer.ContactDatabase = True
             objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB
             objSummarizer.SaveResultsToTextFile = False
 

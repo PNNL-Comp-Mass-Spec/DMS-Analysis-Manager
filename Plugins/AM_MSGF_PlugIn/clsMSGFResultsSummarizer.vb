@@ -123,6 +123,14 @@ Public Class clsMSGFResultsSummarizer
     ''' </remarks>
     Public Property DatasetName As String
 
+    ''' <summary>
+    ''' Set this to false to disable contacting DMS to look up scan stats for the dataset
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks>When this is false, we cannot compute MaximumScanGapAdjacentMSn or PercentMSnScansNoPSM</remarks>
+    Public Property ContactDatabase As Boolean
+
     Public ReadOnly Property DatasetScanStatsLookupError As Boolean
         Get
             Return mDatasetScanStatsLookupError
@@ -303,7 +311,7 @@ Public Class clsMSGFResultsSummarizer
 
     End Sub
 
-    Private Sub ExamineFirstHitsFile(strFirstHitsFilePath As String, lookupScanStatsFromDMS As Boolean)
+    Private Sub ExamineFirstHitsFile(strFirstHitsFilePath As String)
 
         Try
 
@@ -332,10 +340,18 @@ Public Class clsMSGFResultsSummarizer
 
             mSpectraSearched = lstUniqueSpectra.Count
 
+            ' Set these to defaults for now
+            mMaximumScanGapAdjacentMSn = 0
+            mPercentMSnScansNoPSM = 100
+
+            If Not ContactDatabase Then
+                Return
+            End If
+
             Dim scanList = (From item In lstUniqueSpectra.Values.Distinct()).ToList()
 
-            CheckForScanGaps(scanList, lookupScanStatsFromDMS)
-
+            CheckForScanGaps(scanList)
+            
             Return
 
         Catch ex As Exception
@@ -345,7 +361,7 @@ Public Class clsMSGFResultsSummarizer
 
     End Sub
 
-    Private Sub CheckForScanGaps(scanList As List(Of Integer), lookupScanStatsFromDMS As Boolean)
+    Private Sub CheckForScanGaps(scanList As List(Of Integer))
 
         ' Look for scan range gaps in the spectra list
         ' The occurrence of large gaps indicates that a processing thread in MSGF+ crashed and the results may be incomplete
@@ -354,11 +370,10 @@ Public Class clsMSGFResultsSummarizer
         Dim totalSpectra = 0
         Dim totalMSnSpectra = 0
 
-        If lookupScanStatsFromDMS Then
-            Dim success = LookupScanStats(totalSpectra, totalMSnSpectra)
-            If Not success Then
-                mDatasetScanStatsLookupError = True
-            End If
+        Dim success = LookupScanStats(totalSpectra, totalMSnSpectra)
+        If Not success OrElse totalSpectra <= 0 Then
+            mDatasetScanStatsLookupError = True
+            Return
         End If
 
         Dim gapCount = 0
@@ -376,12 +391,14 @@ Public Class clsMSGFResultsSummarizer
         Next
 
         If totalMSnSpectra > 0 Then
-            mPercentMSnScansNoPSM = scanList.Count / CDbl(totalMSnSpectra) * 100.0
+            mPercentMSnScansNoPSM = (1 - scanList.Count / CDbl(totalMSnSpectra)) * 100.0
         Else
-            mPercentMSnScansNoPSM = gapCount / CDbl(scanList.Count) * 100.0
+            ' Report 100% because we cannot accurately compute this value without knowing totalMSnSpectra
+            mPercentMSnScansNoPSM = 100
         End If
 
         If totalSpectra > 0 Then
+            ' Compare the last scan number seen to the total number of scans
             Dim scanGap = totalSpectra - scanList(scanList.Count - 1) - 1
 
             If scanGap > mMaximumScanGapAdjacentMSn Then
@@ -816,10 +833,9 @@ Public Class clsMSGFResultsSummarizer
     ''' <summary>
     ''' Process this dataset's synopsis file to determine the PSM stats
     ''' </summary>
-    ''' <param name="lookupScanStatsFromDMS">True to contact DMS to lookup the number of MS1 and MS2 scans in this dataset</param>
     ''' <returns>True if success; false if an error</returns>
     ''' <remarks></remarks>
-    Public Function ProcessMSGFResults(Optional lookupScanStatsFromDMS As Boolean = True) As Boolean
+    Public Function ProcessMSGFResults() As Boolean
 
         Dim strPHRPFirstHitsFileName As String
         Dim strPHRPFirstHitsFilePath As String
@@ -872,7 +888,7 @@ Public Class clsMSGFResultsSummarizer
             ' Determine the number of MS/MS spectra searched
             '
             If File.Exists(strPHRPFirstHitsFilePath) Then
-                ExamineFirstHitsFile(strPHRPFirstHitsFilePath, lookupScanStatsFromDMS)
+                ExamineFirstHitsFile(strPHRPFirstHitsFilePath)
             End If
 
             ''''''''''''''''''''
@@ -917,18 +933,24 @@ Public Class clsMSGFResultsSummarizer
                 End If
 
                 If mPostJobPSMResultsToDB Then
-                    blnSuccess = PostJobPSMResults(mJob)
-                Else
-                    blnSuccess = True
+                    If ContactDatabase Then
+                        blnSuccess = PostJobPSMResults(mJob)
+                        Return blnSuccess
+                    Else
+                        SetErrorMessage("Cannot post results to the database because ContactDatabase is False")
+                        Return False
+                    End If
                 End If
+
+                blnSuccess = True
             End If
+
+            Return blnSuccess
 
         Catch ex As Exception
             SetErrorMessage(ex.Message)
-            blnSuccess = False
+            Return False
         End Try
-
-        Return blnSuccess
 
     End Function
 

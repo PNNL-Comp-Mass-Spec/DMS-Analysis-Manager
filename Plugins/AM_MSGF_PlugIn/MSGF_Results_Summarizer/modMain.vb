@@ -15,16 +15,17 @@ Imports PHRPReader
 Imports System.IO
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "January 21, 2016"
+    Public Const PROGRAM_DATE As String = "January 22, 2016"
 
 	Private mMSGFSynFilePath As String = String.Empty
 	Private mInputFolderPath As String = String.Empty
 	Private mOutputFolderPath As String = String.Empty
 
 	Private mDatasetName As String = String.Empty
+    Private mContactDatabase As Boolean = True
 
 	Private mJob As Integer = 0
-	Private mSaveResultsAsText As Boolean = True
+    Private mSaveResultsAsText As Boolean = True
 	Private mPostResultsToDb As Boolean = False
 
 	Public Function Main() As Integer
@@ -209,10 +210,9 @@ Module modMain
             objSummarizer.PostJobPSMResultsToDB = mPostResultsToDb
             objSummarizer.SaveResultsToTextFile = mSaveResultsAsText
             objSummarizer.DatasetName = mDatasetName
+            objSummarizer.ContactDatabase = mContactDatabase
 
-            Dim lookupScanStatsFromDMS = mPostResultsToDb
-
-            blnSuccess = objSummarizer.ProcessMSGFResults(lookupScanStatsFromDMS)
+            blnSuccess = objSummarizer.ProcessMSGFResults()
 
             If Not blnSuccess Then
                 If Not String.IsNullOrWhiteSpace(objSummarizer.ErrorMessage) Then
@@ -264,7 +264,7 @@ Module modMain
 		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-		Dim strValidParameters() As String = New String() {"I", "Folder", "Dataset", "Job", "O", "NoText", "DB"}
+        Dim strValidParameters() As String = New String() {"I", "Folder", "Dataset", "Job", "O", "NoDatabase", "NoText", "DB"}
 
 		Try
 			' Make sure no invalid parameters are present
@@ -279,9 +279,13 @@ Module modMain
 						mMSGFSynFilePath = .RetrieveNonSwitchParameter(0)
 					End If
 
-					If .RetrieveValueForParameter("Folder", strValue) Then mInputFolderPath = strValue
+                    If .RetrieveValueForParameter("Folder", strValue) Then
+                        mInputFolderPath = strValue
+                    End If
 
-					If .RetrieveValueForParameter("Dataset", strValue) Then mDatasetName = strValue
+                    If .RetrieveValueForParameter("Dataset", strValue) Then
+                        mDatasetName = strValue
+                    End If
 
 					If .RetrieveValueForParameter("Job", strValue) Then
 						If Not Integer.TryParse(strValue, mJob) Then
@@ -292,13 +296,17 @@ Module modMain
 
 					.RetrieveValueForParameter("O", mOutputFolderPath)
 
-					If .RetrieveValueForParameter("NoText", strValue) Then
-						mSaveResultsAsText = False
-					End If
+                    If .IsParameterPresent("NoDatabase") Then
+                        mContactDatabase = False
+                    End If
 
-					If .RetrieveValueForParameter("DB", strValue) Then
-						mPostResultsToDb = True
-					End If
+                    If .IsParameterPresent("NoText") Then
+                        mSaveResultsAsText = False
+                    End If
+
+                    If .IsParameterPresent("DB") Then
+                        mPostResultsToDb = True
+                    End If
 
 				End With
 
@@ -347,7 +355,9 @@ Module modMain
 			Console.WriteLine("/Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input folder name")
 			Console.WriteLine()
 			Console.WriteLine("Use /O to define a custom output folder path")
-			Console.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Use /NoDatabase to indicate that DMS should not be contacted to lookup scan stats for the dataset")
+            Console.WriteLine()
 			Console.WriteLine("Use /NoText to specify that a text file not be created")
 			Console.WriteLine("Use /DB to post results to DMS")
 			Console.WriteLine()
