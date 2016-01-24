@@ -131,11 +131,13 @@ Module modMain
                         ' Dim testLogger = New PRISM.Logging.clsDBLogger()
                         ' Console.WriteLine(testLogger.MachineName)
 
-                        objTest.TestGetVersionInfo()
+                        ' objTest.TestGetVersionInfo()
 
                         ' objTest.ParseMSPathFinderConsoleOutput()
 
                         ' objTest.ParseMSGFDBConsoleOutput()
+
+                        objTest.RunMSConvert()
 
 					Catch ex As Exception
 						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))

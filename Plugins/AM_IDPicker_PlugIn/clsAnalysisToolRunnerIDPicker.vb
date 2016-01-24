@@ -1164,7 +1164,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="CmdStr"></param>
     ''' <param name="strConsoleOutputFileName">If empty, then does not create a console output file</param>
     ''' <returns></returns>
-    ''' <remarks>IDPicker tools cause clsRunDosProgram to hang when they post errors and warnings to the error stream; thus, strConsoleOutputFileName should be empty for IDPicker tools</remarks>
+    ''' <remarks></remarks>
     Protected Function RunProgramWork(ByVal strProgramDescription As String, ByVal strExePath As String, ByVal CmdStr As String, ByVal strConsoleOutputFileName As String, ByVal blnCaptureConsoleOutputViaDosRedirection As Boolean, ByVal intMaxRuntimeMinutes As Integer) As Boolean
 
         Dim blnSuccess As Boolean

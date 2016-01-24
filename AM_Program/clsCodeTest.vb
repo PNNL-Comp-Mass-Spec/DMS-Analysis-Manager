@@ -321,6 +321,35 @@ Public Class clsCodeTest
 
     End Function
 
+    Protected WithEvents m_RunProgTool As clsRunDosProgram
+
+    Public Sub RunMSConvert()
+
+        Dim workDir = "E:\DMS_WorkDir"
+
+        Dim exePath = "C:\DMS_Programs\ProteoWizard\msconvert.exe"
+        Dim dataFilePath = "E:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw"
+        Dim cmdStr = dataFilePath & " --filter ""peakPicking true 1-"" --filter ""threshold count 500 most-intense"" --mgf -o E:\DMS_WorkDir"
+
+        m_RunProgTool = New clsRunDosProgram(workDir)
+
+        With m_RunProgTool
+            .CreateNoWindow = True
+            .CacheStandardOutput = True
+            .EchoOutputToConsole = True
+
+            .WriteConsoleOutputToFile = True
+            .ConsoleOutputFilePath = ""     ' Allow the console output filename to be auto-generated
+        End With
+
+        If Not m_RunProgTool.RunProgram(exePath, cmdStr, "MSConvert", True) Then
+            Console.WriteLine("Error running MSConvert")
+        Else
+            Console.WriteLine("Done")
+        End If
+
+    End Sub
+
     Public Sub TestArchiveFileStart()
         Dim strParamFilePath As String
         Dim strTargetFolderPath As String

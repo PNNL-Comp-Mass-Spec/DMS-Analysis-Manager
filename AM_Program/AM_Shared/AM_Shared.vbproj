@@ -89,7 +89,7 @@
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM, Version=2.1.4520.23090, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="PRISM, Version=2.2.5866.33246, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>

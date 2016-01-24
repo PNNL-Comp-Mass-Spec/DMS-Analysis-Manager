@@ -773,7 +773,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         With CmdRunner
             .CreateNoWindow = True
-            .CacheStandardOutput = True
+            .CacheStandardOutput = True            
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
