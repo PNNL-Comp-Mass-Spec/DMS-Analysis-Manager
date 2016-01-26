@@ -1515,7 +1515,7 @@ Public Class clsMSGFDBUtils
             mTaskCountCompleted = completedTasks.Count
 
             If percentCompleteAllTasks > 0 Then
-                sngEffectiveProgress += percentCompleteAllTasks * (PROGRESS_PCT_MSGFDB_COMPUTING_FDRS - PROGRESS_PCT_MSGFDB_THREADS_SPAWNED) / 100.0!
+                sngEffectiveProgress = percentCompleteAllTasks * (PROGRESS_PCT_MSGFDB_COMPUTING_FDRS - PROGRESS_PCT_MSGFDB_THREADS_SPAWNED) / 100.0!
             End If
 
         Catch ex As Exception
