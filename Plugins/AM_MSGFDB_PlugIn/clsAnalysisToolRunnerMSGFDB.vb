@@ -37,7 +37,6 @@ Public Class clsAnalysisToolRunnerMSGFDB
     Private mMSGFDbProgLocHPC As String
 
     Private mMSGFPlus As Boolean
-    Private mSearchEngineName As String = "Unknown Search Engine"
 
     Private mResultsIncludeAutoAddedDecoyPeptides As Boolean = False
 
@@ -139,7 +138,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name, javaProgLoc, udtHPCOptions)
                 If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                     If String.IsNullOrEmpty(m_message) Then
-                        m_message = "Unknown error post-processing the " & mSearchEngineName & " results"
+                        m_message = "Unknown error post-processing the MSGF+ results"
                     End If
                     blnProcessingError = True
                 End If
@@ -258,20 +257,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim strMSGFJarfile As String
 
-        ' Obsolete setting:
-        'Dim blnUseLegacyMSGFDB = clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
-
-        'If blnUseLegacyMSGFDB Then
-        '	mMSGFPlus = False
-        '	strMSGFJarfile = clsMSGFDBUtils.MSGFDB_JAR_NAME
-        '	mSearchEngineName = "MS-GFDB"
-        'Else
-        '	mMSGFPlus = True
-        'End If
-
         mMSGFPlus = True
         strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME
-        mSearchEngineName = "MSGF+"
 
         If mMSGFPlus Then
             fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfplus.mzid"))
@@ -361,7 +348,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Return result
         ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
             If String.IsNullOrEmpty(m_message) Then
-                m_message = "Problem parsing " & mSearchEngineName & " parameter file"
+                m_message = "Problem parsing MSGF+ parameter file"
             End If
             ' Immediately exit the plugin; results and console output files will not be saved
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -371,7 +358,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         mResultsIncludeAutoAddedDecoyPeptides = mMSGFDBUtils.ResultsIncludeAutoAddedDecoyPeptides
 
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running " & mSearchEngineName)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGF+")
 
         ' If an MSGFDB analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java 
         ' The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
@@ -423,8 +410,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
 
         If Not udtHPCOptions.UsingHPC Then
-            If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, mSearchEngineName, blnLogFreeMemoryOnSuccess) Then
-                m_message = "Not enough free memory to run " & mSearchEngineName
+            If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess) Then
+                m_message = "Not enough free memory to run MSGF+"
                 ' Immediately exit the plugin; results and console output files will not be saved
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -453,6 +440,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End If
 
         If Not blnSuccess And String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
+            ' Wait 2 seconds to give the log file a chance to finalize
+            Threading.Thread.Sleep(2000)
+
             ' Parse the console output file one more time in hopes of finding an error message
             ParseConsoleOutputFile(mWorkingDirectoryInUse)
         End If
@@ -479,9 +469,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             Dim msg As String
             If mMSGFPlusComplete Then
-                msg = mSearchEngineName & " log file reported it was complete, but aborted the ProgRunner since Java was frozen"
+                msg = "MSGF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen"
             Else
-                msg = "Error running " & mSearchEngineName
+                msg = "Error running MSGF+"
             End If
             m_message = clsGlobal.AppendToComment(m_message, msg)
 
@@ -499,9 +489,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             If Not udtHPCOptions.UsingHPC And Not mMSGFPlusComplete Then
                 If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mSearchEngineName & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF+ returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
                 Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & mSearchEngineName & " failed (but exit code is 0)")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSGF+ failed (but exit code is 0)")
                 End If
             End If
 
@@ -509,14 +499,34 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         If mMSGFPlusComplete Then
             If mMSGFDBUtils.TaskCountCompleted < mMSGFDBUtils.TaskCountTotal Then
+                Dim savedCountCompleted = mMSGFDBUtils.TaskCountCompleted
+
+                ' MSGF+ finished, but the log file doesn't report that all of the threads finished
+                ' Wait 5 more seconds, then parse the log file again
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF+ finished, but the log file reports " & mMSGFDBUtils.TaskCountCompleted & " / " & mMSGFDBUtils.TaskCountTotal & " completed tasks")
+                Threading.Thread.Sleep(5000)
+                mMSGFDBUtils.ParseMSGFDBConsoleOutputFile(mWorkingDirectoryInUse)
+
+                If mMSGFDBUtils.TaskCountCompleted = mMSGFDBUtils.TaskCountTotal Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Reparsing the MSGF+ log file now indicates that all tasks finished")
+                ElseIf mMSGFDBUtils.TaskCountCompleted > savedCountCompleted Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Reparsing the MSGF+ log file now indicates that " & mMSGFDBUtils.TaskCountCompleted & " tasks finished.  That is an increase over the previous value but still not all " & mMSGFDBUtils.TaskCountTotal & " tasks")
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Reparsing the MSGF+ log file indicated the same number of completed tasks")
+                End If
+
+            End If
+
+            If mMSGFDBUtils.TaskCountCompleted < mMSGFDBUtils.TaskCountTotal Then
+
                 If mMSGFDBUtils.TaskCountCompleted = mMSGFDBUtils.TaskCountTotal - 1 Then
                     ' All but one of the tasks finished
-                    m_EvalMessage = mSearchEngineName & " finished, but the logs indicate that one of the " & mMSGFDBUtils.TaskCountTotal & " tasks did not complete; this could indicate an error"
+                    m_EvalMessage = "MSGF+ finished, but the logs indicate that one of the " & mMSGFDBUtils.TaskCountTotal & " tasks did not complete; this could indicate an error"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
                 Else
                     ' 2 or more tasks did not finish
                     mMSGFPlusComplete = False
-                    m_message = mSearchEngineName & " finished, but the logs are incomplete, showing " & mMSGFDBUtils.TaskCountCompleted & " / " & mMSGFDBUtils.TaskCountTotal & " completed search tasks"
+                    m_message = "MSGF+ finished, but the logs are incomplete, showing " & mMSGFDBUtils.TaskCountCompleted & " / " & mMSGFDBUtils.TaskCountTotal & " completed search tasks"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 
                     ' Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
@@ -556,7 +566,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 '
                 ' Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
 
-                m_message = clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED & " with " & mSearchEngineName
+                m_message = clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED & " with MSGF+"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 blnProcessingError = True
             Else
@@ -579,11 +589,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") & "%"
 
                 If dblFractionSkipped > 0.2 And Not spectraAreCentroided Then
-                    m_message = mSearchEngineName & " skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
+                    m_message = "MSGF+ skipped " & strPercentSkipped & " of the spectra because they did not appear centroided"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                     blnTooManySkippedSpectra = True
                 Else
-                    m_EvalMessage = mSearchEngineName & " processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
+                    m_EvalMessage = "MSGF+ processed some of the spectra, but it skipped " & mMSGFDBUtils.ContinuumSpectraSkipped & " spectra that were not centroided (" & strPercentSkipped & " skipped)"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
                 End If
 
@@ -617,9 +627,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim jobStep = m_jobParams.GetJobParameter("StepParameters", "Step", 1)
 
-        Dim jobName As String = mSearchEngineName & "_Job" & m_JobNum & "_Step" & jobStep
+        Dim jobName As String = "MSGF+_Job" & m_JobNum & "_Step" & jobStep
 
-        Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:=mSearchEngineName)
+        Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:="MSGF+")
 
         hpcJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal
         hpcJobInfo.JobParameters.TemplateName = "DMS"        ' If using 32 cores, could use Template "Single"
@@ -715,7 +725,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Dim blnSuccess As Boolean
 
         If mHPCJobID <= 0 Then
-            m_message = mSearchEngineName & " Job was not created in HPC: " & mComputeCluster.ErrorMessage
+            m_message = "MSGF+ Job was not created in HPC: " & mComputeCluster.ErrorMessage
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             blnSuccess = False
         Else
@@ -724,7 +734,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         If blnSuccess Then
             If mComputeCluster.Scheduler Is Nothing Then
-                m_message = "Error: HPC Scheduler is null for " & mSearchEngineName
+                m_message = "Error: HPC Scheduler is null for MSGF+"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 blnSuccess = False
             End If
@@ -773,7 +783,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         With CmdRunner
             .CreateNoWindow = True
-            .CacheStandardOutput = True            
+            .CacheStandardOutput = True
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
@@ -785,7 +795,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         ' Start the program and wait for it to finish
         ' However, while it's running, LoopWaiting will get called via events
-        Dim success = CmdRunner.RunProgram(javaExePath, CmdStr, mSearchEngineName, True)
+        Dim success = CmdRunner.RunProgram(javaExePath, CmdStr, "MSGF+", True)
 
         Return success
 
