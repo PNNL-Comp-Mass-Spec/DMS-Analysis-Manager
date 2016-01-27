@@ -997,6 +997,7 @@ Public Class clsAnalysisToolRunnerMODPlus
                 End If
 
                 If Not String.IsNullOrWhiteSpace(progRunner.CachedConsoleErrors) Then
+                    ' Note that clsProgRunner will have already included these errors in the ConsoleOutput.txt file
                     Dim consoleError = "Console error for thread " & modPlusRunner.Key & ": " & progRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError)
                     blnSuccess = False

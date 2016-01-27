@@ -92,14 +92,14 @@ Public Class clsAnalysisToolRunnerIDPicker
 		Dim strSynFilePath As String
 		Dim strErrorMessage As String = String.Empty
 
-		Dim ePHRPResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
+        Dim ePHRPResultType As clsPHRPReader.ePeptideHitResultType
 
 		Dim result As IJobParams.CloseOutType
 
         ' As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
         Dim blnSkipIDPicker As Boolean = ALWAYS_SKIP_IDPICKER
 
-		Dim blnProcessingError As Boolean = False
+        Dim blnProcessingError = False
 
 		Dim blnSuccess As Boolean
 
@@ -131,14 +131,14 @@ Public Class clsAnalysisToolRunnerIDPicker
 			' Determine the result type
 			strResultType = m_jobParams.GetParam("ResultType")
 
-			ePHRPResultType = PHRPReader.clsPHRPReader.GetPeptideHitResultType(strResultType)
-			If ePHRPResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown Then
-				m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ePHRPResultType = clsPHRPReader.GetPeptideHitResultType(strResultType)
+            If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
+                m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
 			' Define the path to the synopsis file
-			strSynFilePath = Path.Combine(m_WorkDir, PHRPReader.clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset))
+            strSynFilePath = Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset))
 
 			If Not clsAnalysisResources.ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
 				' The synopsis file is empty
@@ -200,7 +200,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 			Else
 
-                Dim blnCriticalError As Boolean = False
+                Dim blnCriticalError = False
 
                 blnSuccess = RunIDPickerWrapper(ePHRPResultType, strSynFilePath, fiFastaFile.FullName, blnProcessingError, blnCriticalError)
 
@@ -291,7 +291,7 @@ Public Class clsAnalysisToolRunnerIDPicker
         <Out> ByRef blnProcessingError As Boolean,
         <Out> ByRef blnCriticalError As Boolean) As Boolean
 
-        Dim blnSuccess = False
+        Dim blnSuccess As Boolean
         blnProcessingError = False
         blnCriticalError = False
 
@@ -389,7 +389,7 @@ Public Class clsAnalysisToolRunnerIDPicker
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -403,7 +403,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <returns>The new argument list</returns>
     ''' <remarks></remarks>
     Protected Function AppendArgument(ByVal CmdArgs As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String) As String
-        Const AppendIfMissing As Boolean = True
+        Const AppendIfMissing = True
         Return AppendArgument(CmdArgs, ArgumentName, ArgumentName, ValueIfMissing, AppendIfMissing)
     End Function
 
@@ -418,7 +418,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <returns>The new argument list</returns>
     ''' <remarks></remarks>
     Protected Function AppendArgument(ByVal CmdArgs As String, ByVal OptionName As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String) As String
-        Const AppendIfMissing As Boolean = True
+        Const AppendIfMissing = True
         Return AppendArgument(CmdArgs, OptionName, ArgumentName, ValueIfMissing, AppendIfMissing)
     End Function
 
@@ -472,7 +472,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             strDatasetLabel = "PNNL/" & m_Dataset.Replace(" ", "_")
 
             ' Create the Assemble.txt file
-            Using swOutfile As StreamWriter = New StreamWriter(New FileStream(strAssembleFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swOutfile = New StreamWriter(New FileStream(strAssembleFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                 swOutfile.WriteLine(strDatasetLabel & " " & Path.GetFileName(mIdpXMLFilePath))
             End Using
 
@@ -526,7 +526,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         ' PepXML file creation should generally be done in less than 10 minutes
         ' However, for huge fasta files, conversion could take an hour
-        Const intMaxRuntimeMinutes As Integer = 60
+        Const intMaxRuntimeMinutes = 60
 
         Dim blnSuccess As Boolean
 
@@ -669,7 +669,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     End Function
 
     Protected Function IgnoreError(ByVal strErrorMessage As String) As Boolean
-        Dim blnIgnore As Boolean = False
+        Dim blnIgnore = False
 
         For Each strIgnoreText As String In mCmdRunnerErrorsToIgnore
             If strErrorMessage.Contains(strIgnoreText) Then
@@ -698,7 +698,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
             strParameterFilePath = Path.Combine(m_WorkDir, mIDPickerParamFileNameLocal)
 
-            Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While srParamFile.Peek > -1
                     strLineIn = srParamFile.ReadLine()
@@ -751,7 +751,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function LookForDecoyProteinsInMSGFDBResults(ByVal strSynFilePath As String, ByVal eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
+    Protected Function LookForDecoyProteinsInMSGFDBResults(ByVal strSynFilePath As String, ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
 
         Dim lstPrefixesToCheck As List(Of String)
 
@@ -765,7 +765,7 @@ Public Class clsAnalysisToolRunnerIDPicker
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the MSGFDB synopsis file")
             End If
 
-            Using oReader As PHRPReader.clsPHRPReader = New PHRPReader.clsPHRPReader(strSynFilePath, eResultType, False, False, False)
+            Using oReader = New clsPHRPReader(strSynFilePath, eResultType, False, False, False)
 
                 Do While oReader.MoveNext
                     For Each strPrefixToCheck As String In lstPrefixesToCheck
@@ -828,8 +828,8 @@ Public Class clsAnalysisToolRunnerIDPicker
             Next
 
             For Each fiFile As FileInfo In fiFilesToMove
-                Dim intAttempts As Integer = 0
-                Dim blnSuccess As Boolean = False
+                Dim intAttempts = 0
+                Dim blnSuccess = False
 
                 Do
                     Try
@@ -857,7 +857,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         If blnErrorEncountered Then
             ' Try to save whatever files were moved into the results folder
-            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
             objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -875,7 +875,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         Try
             If File.Exists(strConsoleOutputFilePath) Then
-                Using srInFile As StreamReader = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                     While srInFile.Peek > -1
                         strLineIn = srInFile.ReadLine
@@ -920,7 +920,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         Dim strAssembleFilePath As String
         Dim progLoc As String
-        Const intMaxRuntimeMinutes As Integer = 30
+        Const intMaxRuntimeMinutes = 30
 
         Dim blnSuccess As Boolean
 
@@ -988,7 +988,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         Dim progLoc As String
         Dim CmdStr As String
-        Const intMaxRuntimeMinutes As Integer = 30
+        Const intMaxRuntimeMinutes = 30
 
         Dim blnSuccess As Boolean
 
@@ -1050,7 +1050,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     Protected Function RunReport() As Boolean
         Dim strOutputFolderName As String
         Dim progLoc As String
-        Const intMaxRuntimeMinutes As Integer = 20
+        Const intMaxRuntimeMinutes = 20
 
         Dim blnSuccess As Boolean
 
@@ -1096,7 +1096,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
             If blnSuccess Then
 
-                Dim blnTSVFileFound As Boolean = False
+                Dim blnTSVFileFound = False
 
                 ' Move the .tsv files from the Report folder up one level
                 For Each fiFile As FileInfo In diReportFolder.GetFiles("*.tsv")
@@ -1200,7 +1200,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             End If
 
             ' Create the batch file
-            Using swBatchFile As StreamWriter = New StreamWriter(New FileStream(strExePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swBatchFile = New StreamWriter(New FileStream(strExePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                 swBatchFile.WriteLine(strExePathOriginal & " " & CmdStrOriginal & " > " & strConsoleOutputFileName & " 2>&1")
             End Using
 
@@ -1234,23 +1234,16 @@ Public Class clsAnalysisToolRunnerIDPicker
         If blnCaptureConsoleOutputViaDosRedirection Then
             ParseConsoleOutputFileForErrors(Path.Combine(m_WorkDir, strConsoleOutputFileName))
 
-        ElseIf mCmdRunnerErrors.Count > 0 AndAlso Not String.IsNullOrEmpty(strConsoleOutputFileName) Then
+        ElseIf mCmdRunnerErrors.Count > 0 Then
 
-            ' Append the error messages to the console output file
-            Threading.Thread.Sleep(250)
-            Using swConsoleOutputAppend As StreamWriter = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
-
-                swConsoleOutputAppend.WriteLine()
-                swConsoleOutputAppend.WriteLine(" ----- Errors and Warnings ---- ")
-                For Each strError As String In mCmdRunnerErrors
-                    swConsoleOutputAppend.WriteLine(strError)
-
-                    If Not strError.ToLower().StartsWith("warning") Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " & strError)
-                    End If
-                Next
-            End Using
-
+            ' Append the error messages to the log
+            ' Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
+            For Each strError As String In mCmdRunnerErrors
+                If Not strError.ToLower().StartsWith("warning") Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " & strError)
+                End If
+            Next
+            
         End If
 
         If Not blnSuccess Then
@@ -1388,7 +1381,7 @@ Public Class clsAnalysisToolRunnerIDPicker
         If Not mCmdRunnerErrors Is Nothing Then
             ' Split NewText on newline characters
             Dim strSplitLine() As String
-            Dim chNewLineChars() As Char = New Char() {ControlChars.Cr, ControlChars.Lf}
+            Dim chNewLineChars = New Char() {ControlChars.Cr, ControlChars.Lf}
 
             strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries)
 

@@ -176,17 +176,11 @@ Public Class clsPepHitResultsProcWrapper
             blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True, intMaxRuntimeSeconds)
 
             If mCmdRunnerErrors.Count > 0 Then
-                ' Append the error messages to the console output file
-                Threading.Thread.Sleep(250)
-                Using swConsoleOutputAppend As StreamWriter = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
-
-                    swConsoleOutputAppend.WriteLine()
-                    swConsoleOutputAppend.WriteLine(" ----- Error details ---- ")
-                    For Each strError As String In mCmdRunnerErrors
-                        swConsoleOutputAppend.WriteLine(strError)
-                    Next
-
-                End Using
+                ' Append the error messages to the log
+                ' Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
+                For Each strError As String In mCmdRunnerErrors
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " & strError)
+                Next
             End If
 
             If Not blnSuccess Then

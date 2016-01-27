@@ -27,7 +27,7 @@ Public Class clsAnalysisResourcesIDPicker
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim eReturnCode As IJobParams.CloseOutType = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Dim eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
         ' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
@@ -397,7 +397,7 @@ Public Class clsAnalysisResourcesIDPicker
             ' PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFDB.txt"
             ' However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
             ' We'll copy the current file locally, then rename it to the expected name
-            Const strOriginalName As String = "Tool_Version_Info_MSGFPlus_IMS.txt"
+            Const strOriginalName = "Tool_Version_Info_MSGFPlus_IMS.txt"
             mInputFileRenames.Add(strOriginalName, strToolVersionFile)
             strToolVersionFile = String.Copy(strOriginalName)
         End If

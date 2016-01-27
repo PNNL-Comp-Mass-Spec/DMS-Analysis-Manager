@@ -786,6 +786,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             currentTask = "Looking for console output error messages"
 
             ' Look for any console output error messages
+            ' Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
             For Each glyQRunner In mGlyQRunners
 
                 Dim progRunner = glyQRunner.Value.ProgRunner

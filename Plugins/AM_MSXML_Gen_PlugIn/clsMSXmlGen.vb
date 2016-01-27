@@ -173,10 +173,7 @@ Public MustInherit Class clsMSXmlGen
 
         If Not String.IsNullOrWhiteSpace(CmdRunner.CachedConsoleErrors) Then
             ' Append the console errors to the log file
-            Using swConsoleOutputFile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-                swConsoleOutputFile.WriteLine()
-                swConsoleOutputFile.WriteLine(CmdRunner.CachedConsoleErrors)
-            End Using
+            ' Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
 
             Dim consoleError = "Console error: " & CmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
             If String.IsNullOrWhiteSpace(mErrorMessage) Then
