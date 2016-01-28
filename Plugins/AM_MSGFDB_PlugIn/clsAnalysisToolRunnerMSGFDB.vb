@@ -503,12 +503,23 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
                 ' MSGF+ finished, but the log file doesn't report that all of the threads finished
                 ' Wait 5 more seconds, then parse the log file again
+                ' Keep checking and waiting for up to 45 seconds
+
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF+ finished, but the log file reports " & mMSGFDBUtils.TaskCountCompleted & " / " & mMSGFDBUtils.TaskCountTotal & " completed tasks")
-                Threading.Thread.Sleep(5000)
-                mMSGFDBUtils.ParseMSGFDBConsoleOutputFile(mWorkingDirectoryInUse)
+
+                Dim waitStartTime = DateTime.UtcNow
+                While DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45
+
+                    Threading.Thread.Sleep(5000)
+                    mMSGFDBUtils.ParseMSGFDBConsoleOutputFile(mWorkingDirectoryInUse)
+
+                    If mMSGFDBUtils.TaskCountCompleted = mMSGFDBUtils.TaskCountTotal Then
+                        Exit While
+                    End If
+                End While
 
                 If mMSGFDBUtils.TaskCountCompleted = mMSGFDBUtils.TaskCountTotal Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Reparsing the MSGF+ log file now indicates that all tasks finished")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Reparsing the MSGF+ log file now indicates that all tasks finished (waited " & DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") & " seconds)")
                 ElseIf mMSGFDBUtils.TaskCountCompleted > savedCountCompleted Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Reparsing the MSGF+ log file now indicates that " & mMSGFDBUtils.TaskCountCompleted & " tasks finished.  That is an increase over the previous value but still not all " & mMSGFDBUtils.TaskCountTotal & " tasks")
                 Else
