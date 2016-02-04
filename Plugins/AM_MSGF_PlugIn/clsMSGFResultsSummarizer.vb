@@ -308,6 +308,7 @@ Public Class clsMSGFResultsSummarizer
         mConnectionString = strConnectionString
 
         mStoredProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(mConnectionString)
+        ContactDatabase = True
 
     End Sub
 

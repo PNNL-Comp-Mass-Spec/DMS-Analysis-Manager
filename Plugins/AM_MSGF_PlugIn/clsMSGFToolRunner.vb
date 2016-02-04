@@ -2305,6 +2305,7 @@ Public Class clsMSGFRunner
             objSummarizer.ContactDatabase = True
             objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB
             objSummarizer.SaveResultsToTextFile = False
+            objSummarizer.DatasetName = m_Dataset
 
             blnSuccess = objSummarizer.ProcessMSGFResults()
 

@@ -242,7 +242,7 @@ Public Class clsExtractToolRunner
 
             If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
                 ' Try to save whatever files were moved into the results folder
-                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+                Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -552,14 +552,14 @@ Public Class clsExtractToolRunner
             Dim dctScanChargeBestScore = New Dictionary(Of String, Double)
 
             Dim totalLinesProcessed As Int64 = 0
-            Dim warningsLogged As Integer = 0
+            Dim warningsLogged = 0
 
             Using swMergedFile = New StreamWriter(New FileStream(mergedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 For iteration As Integer = 1 To numberOfClonedSteps
 
                     Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & ".tsv")
-                    Dim linesRead As Integer = 0
+                    Dim linesRead = 0
 
                     If m_DebugLevel >= 2 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching data from " & sourceFilePath)
@@ -576,7 +576,7 @@ Public Class clsExtractToolRunner
                                     ' Write the header line
                                     swMergedFile.WriteLine(strLineIn)
 
-                                    Const IS_CASE_SENSITIVE As Boolean = False
+                                    Const IS_CASE_SENSITIVE = False
                                     Dim lstHeaderNames = New List(Of String) From {"ScanNum", "Charge", "Peptide", "Protein", "SpecEValue"}
                                     dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE)
 
@@ -655,7 +655,7 @@ Public Class clsExtractToolRunner
 
                 ' Sort the data, then write to disk
                 Dim lstScansByScore = From item In dctScanChargeBestScore Order By item.Value Select item.Key
-                Dim filterPassingPSMCount As Integer = 0
+                Dim filterPassingPSMCount = 0
 
                 For Each scanChargeCombo In lstScansByScore
 
@@ -710,14 +710,14 @@ Public Class clsExtractToolRunner
             Dim lstPepProtMappingWritten = New SortedSet(Of String)
 
             Dim lastPeptideFull As String = String.Empty
-            Dim addCurrentPeptide As Boolean = False
+            Dim addCurrentPeptide = False
 
             Using swTempFile = New StreamWriter(New FileStream(fiTempFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 For iteration As Integer = 1 To numberOfClonedSteps
 
                     Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & "_PepToProtMap.txt")
-                    Dim linesRead As Integer = 0
+                    Dim linesRead = 0
 
                     If m_DebugLevel >= 2 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching data from " & sourceFilePath)
@@ -973,6 +973,7 @@ Public Class clsExtractToolRunner
         End Try
 
         ' Summarize the number of PSMs in _msalign_syn.txt
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
         Const eResultType As clsPHRPReader.ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSAlign
         Dim job = 0
         Dim blnPostResultsToDB As Boolean
@@ -990,8 +991,10 @@ Public Class clsExtractToolRunner
         objSummarizer.EValueThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD
         objSummarizer.FDRThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD
 
+        objSummarizer.ContactDatabase = True
         objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB
         objSummarizer.SaveResultsToTextFile = False
+        objSummarizer.DatasetName = m_Dataset
 
         Dim blnSuccess = objSummarizer.ProcessMSGFResults()
 

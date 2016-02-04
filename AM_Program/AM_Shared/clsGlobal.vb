@@ -459,18 +459,29 @@ Public Class clsGlobal
     End Function
 
     ''' <summary>
-    ''' Parses the .StackTrace text of the given expression to return a compact description of the current stack
+    ''' Parses the .StackTrace text of the given exception to return a compact description of the current stack
     ''' </summary>
-    ''' <param name="objException"></param>
+    ''' <param name="ex"></param>
     ''' <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
     ''' <remarks></remarks>
-    Public Shared Function GetExceptionStackTrace(objException As Exception, Optional multiLineOutput As Boolean = False) As String
+    Public Shared Function GetExceptionStackTrace(ex As Exception) As String
+        Return GetExceptionStackTrace(ex, False)
+    End Function
+
+    ''' <summary>
+    ''' Parses the .StackTrace text of the given exception to return a compact description of the current stack
+    ''' </summary>
+    ''' <param name="ex"></param>
+    ''' <param name="multiLineOutput">When true, format the stack trace using newline characters instead of -:-</param>
+    ''' <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
+    ''' <remarks></remarks>
+    Public Shared Function GetExceptionStackTrace(ex As Exception, multiLineOutput As Boolean) As String
 
         If multiLineOutput Then
-            Return PRISM.Logging.Utilities.GetExceptionStackTraceMultiLine(objException)
-        Else
-            Return PRISM.Logging.Utilities.GetExceptionStackTrace(objException)
+            Return PRISM.Logging.Utilities.GetExceptionStackTraceMultiLine(ex)
         End If
+
+        Return PRISM.Logging.Utilities.GetExceptionStackTrace(ex)
 
     End Function
 
