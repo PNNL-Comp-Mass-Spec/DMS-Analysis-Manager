@@ -207,7 +207,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\x86\SQLite.Interop.dll" "$(TargetDir)" /D</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\x86\SQLite.Interop.dll" "$(TargetDir)" /D /Y
+xcopy "$(TargetDir)AnalysisManagerProg.exe"  "$(ProjectDir)..\AM_Common\" /D /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

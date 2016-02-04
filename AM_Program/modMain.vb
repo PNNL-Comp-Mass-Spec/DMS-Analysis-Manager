@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "December 14, 2015"
+    Public Const PROGRAM_DATE As String = "February 3, 2016"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -159,7 +159,8 @@ Module modMain
 			End If
 
 		Catch ex As Exception
-			ShowErrorMessage("Error occurred in modMain->Main: " & Environment.NewLine & ex.Message)
+            ShowErrorMessage("Error occurred in modMain->Main: " & Environment.NewLine & ex.Message)
+            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
 			intReturnCode = -1
 		End Try
 

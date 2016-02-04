@@ -88,9 +88,9 @@ Public Class clsMainProcess
 
         Catch ex As Exception
             'Report any exceptions not handled at a lower level to the system application log
-            Dim errMsg = "Critical exception starting application: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            If Me.TraceMode Then ShowTraceMessage(errMsg)
-            PostToEventLog(errMsg)
+            Dim errMsg = "Critical exception starting application: " & ex.Message
+            If Me.TraceMode Then ShowTraceMessage(errMsg & "; " & clsGlobal.GetExceptionStackTrace(ex, True))
+            PostToEventLog(errMsg & "; " & clsGlobal.GetExceptionStackTrace(ex, False))
             If Me.TraceMode Then ShowTraceMessage("Exiting clsMainProcess.Main with error code = 1")
             Return 1
         End Try
@@ -1527,7 +1527,7 @@ Public Class clsMainProcess
                 fiFile.Delete()
             Catch ex As Exception
                 msg = "Error deleting IgnoreMe file: " & fiFile.Name
-                Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex, True))
             End Try
         Next
 
@@ -1547,7 +1547,7 @@ Public Class clsMainProcess
                 End If
             Catch ex As Exception
                 msg = "Error deleting file: " & fiFile.Name
-                Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex, True))
             End Try
         Next
 

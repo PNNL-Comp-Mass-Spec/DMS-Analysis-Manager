@@ -464,9 +464,13 @@ Public Class clsGlobal
     ''' <param name="objException"></param>
     ''' <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
     ''' <remarks></remarks>
-    Public Shared Function GetExceptionStackTrace(objException As Exception) As String
+    Public Shared Function GetExceptionStackTrace(objException As Exception, Optional multiLineOutput As Boolean = False) As String
 
-        Return PRISM.Logging.Utilities.GetExceptionStackTrace(objException)
+        If multiLineOutput Then
+            Return PRISM.Logging.Utilities.GetExceptionStackTraceMultiLine(objException)
+        Else
+            Return PRISM.Logging.Utilities.GetExceptionStackTrace(objException)
+        End If
 
     End Function
 

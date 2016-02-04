@@ -232,7 +232,7 @@ Public Class clsCodeTest
         Catch ex As Exception
             Console.WriteLine()
             Console.WriteLine("Error in PerformanceCounterTest: " & ex.Message)
-            Console.WriteLine(ex.StackTrace)
+            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
             Dim rePub1000 As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
             If rePub1000.IsMatch(Environment.MachineName) Then
                 Console.WriteLine("This is a known issue with Windows instances running under VMWare on PIC")
@@ -1035,7 +1035,7 @@ Public Class clsCodeTest
       strCombinedFilePath As String,
       blnLookForHeaderLine As Boolean) As Boolean
 
-        Dim Msg As String
+        Dim msg As String
         Dim intIndex As Integer
 
         Dim intFileCount As Integer
@@ -1071,7 +1071,7 @@ Public Class clsCodeTest
                     srInFiles(intIndex) = New StreamReader(New FileStream(strFileList(intIndex), FileMode.Open, FileAccess.Read, FileShare.Read))
                 Else
                     ' File not found; unable to continue
-                    Msg = "Source peptide prophet file not found, unable to continue: " & strFileList(intIndex)
+                    msg = "Source peptide prophet file not found, unable to continue: " & strFileList(intIndex)
                     ''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
                     Return False
                 End If
@@ -1137,7 +1137,7 @@ Public Class clsCodeTest
 
 
         Catch ex As System.Exception
-            Msg = "Exception in clsExtractToolRunner.InterleaveFiles: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            msg = "Exception in clsExtractToolRunner.InterleaveFiles: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             ''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
             blnSuccess = False
         End Try
@@ -1238,7 +1238,6 @@ Public Class clsCodeTest
         Dim intLinesRead As Integer = 0
         Dim intTargetFileIndex As Integer
 
-        Dim Msg As String
         Dim strLineIn As String = String.Empty
         Dim strSplitLine() As String
 
@@ -1330,7 +1329,8 @@ Public Class clsCodeTest
 
 
         Catch ex As System.Exception
-            Msg = "Exception in clsExtractToolRunner.SplitFileRoundRobin: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Dim msg = "Exception in clsExtractToolRunner.SplitFileRoundRobin: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Console.WriteLine(Msg)
             ''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
             blnSuccess = False
         End Try
@@ -1881,7 +1881,7 @@ Public Class clsCodeTest
         'Catch ex As Exception
         '	Console.WriteLine()
         '	Console.WriteLine("Error in SystemMemoryUsage (A): " & ex.Message)
-        '	Console.WriteLine(ex.StackTrace)
+        '	Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
 
         'End Try
 
@@ -1902,7 +1902,7 @@ Public Class clsCodeTest
 
             Console.WriteLine()
             Console.WriteLine("Error in SystemMemoryUsage (C): " & ex.Message)
-            Console.WriteLine(ex.StackTrace)
+            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
 
 
             Dim rePub1000 As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
@@ -1929,7 +1929,7 @@ Public Class clsCodeTest
             Catch ex2 As Exception
                 Console.WriteLine()
                 Console.WriteLine("Error in SystemMemoryUsage using Microsoft.VisualBasic.Devices.ComputerInfo: " & ex2.Message)
-                Console.WriteLine(ex2.StackTrace)
+                Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex2, True))
             End Try
 
         End Try
