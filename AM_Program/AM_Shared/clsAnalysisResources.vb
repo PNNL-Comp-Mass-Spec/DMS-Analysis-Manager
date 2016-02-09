@@ -5725,7 +5725,7 @@ Public MustInherit Class clsAnalysisResources
                                 createStoragePathInfoOnly,
                                 retrieveScanStatsFile:=retrieveScanStatsFile,
                                 retrieveScanStatsExFile:=retrieveScanStatsExFile,
-                                retrieveReporterIonsFile:=False,
+                                retrieveReporterIonsFile:=retrieveReporterIonsFile,
                                 lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
                         End If
 
