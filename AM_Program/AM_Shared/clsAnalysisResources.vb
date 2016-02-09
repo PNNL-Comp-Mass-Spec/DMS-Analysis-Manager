@@ -122,6 +122,8 @@ Public MustInherit Class clsAnalysisResources
     Public Const SCAN_STATS_FILE_SUFFIX As String = "_ScanStats.txt"
     Public Const SCAN_STATS_EX_FILE_SUFFIX As String = "_ScanStatsEx.txt"
 
+    Public Const REPORTERIONS_FILE_SUFFIX As String = "_ReporterIons.txt"
+
     Public Const DATA_PACKAGE_SPECTRA_FILE_SUFFIX As String = "_SpectraFile"
 
     Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
@@ -5610,7 +5612,11 @@ Public MustInherit Class clsAnalysisResources
       RetrieveScanStatsExFile As Boolean) As Boolean
 
         Dim lstNonCriticalFileSuffixes = New List(Of String)
-        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, lstNonCriticalFileSuffixes)
+        Const RETRIEVE_REPORTERIONS_FILE = False
+
+        Return RetrieveScanAndSICStatsFiles(
+            RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile,
+            RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes)
 
     End Function
 
@@ -5618,10 +5624,12 @@ Public MustInherit Class clsAnalysisResources
     ''' Looks for this dataset's MASIC results files
     ''' Looks for the files in any SIC folder that exists for the dataset
     ''' </summary>
-    ''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
-    ''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-    ''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-    ''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+    ''' <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
+    ''' <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+    ''' <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
+    ''' <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
+    ''' <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
+    ''' <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
     ''' <returns>True if the file was found and retrieved, otherwise False</returns>
     ''' <remarks></remarks>
     Protected Function RetrieveScanAndSICStatsFiles(
@@ -5629,6 +5637,7 @@ Public MustInherit Class clsAnalysisResources
       createStoragePathInfoOnly As Boolean,
       retrieveScanStatsFile As Boolean,
       retrieveScanStatsExFile As Boolean,
+      retrieveReporterIonsFile As Boolean,
       lstNonCriticalFileSuffixes As List(Of String)) As Boolean
 
         Dim ServerPath As String
@@ -5674,6 +5683,7 @@ Public MustInherit Class clsAnalysisResources
                         createStoragePathInfoOnly,
                         retrieveScanStatsFile:=retrieveScanStatsFile,
                         retrieveScanStatsExFile:=retrieveScanStatsExFile,
+                        retrieveReporterIonsFile:=retrieveReporterIonsFile,
                         lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
                 End If
             Else
@@ -5715,6 +5725,7 @@ Public MustInherit Class clsAnalysisResources
                                 createStoragePathInfoOnly,
                                 retrieveScanStatsFile:=retrieveScanStatsFile,
                                 retrieveScanStatsExFile:=retrieveScanStatsExFile,
+                                retrieveReporterIonsFile:=False,
                                 lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
                         End If
 
@@ -5749,18 +5760,23 @@ Public MustInherit Class clsAnalysisResources
       RetrieveScanStatsExFile As Boolean) As Boolean
 
         Dim lstNonCriticalFileSuffixes = New List(Of String)
+        Const RETRIEVE_REPORTERIONS_FILE = False
 
-        Return RetrieveScanAndSICStatsFiles(MASICResultsFolderPath, RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, lstNonCriticalFileSuffixes)
+        Return RetrieveScanAndSICStatsFiles(
+            MASICResultsFolderPath, RetrieveSICStatsFile, createStoragePathInfoOnly,
+            RetrieveScanStatsFile, RetrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE,
+            lstNonCriticalFileSuffixes)
     End Function
 
     ''' <summary>
     ''' Retrieves the MASIC results for this dataset using the specified folder
     ''' </summary>
     ''' <param name="masicResultsFolderPath">Source folder to copy files from</param>
-    ''' <param name="retrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
-    ''' <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-    ''' <param name="retrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-    ''' <param name="retrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+    ''' <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
+    ''' <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+    ''' <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
+    ''' <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
+    ''' <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
     ''' <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
     ''' <returns>True if the file was found and retrieved, otherwise False</returns>
     Protected Function RetrieveScanAndSICStatsFiles(
@@ -5769,6 +5785,7 @@ Public MustInherit Class clsAnalysisResources
       createStoragePathInfoOnly As Boolean,
       retrieveScanStatsFile As Boolean,
       retrieveScanStatsExFile As Boolean,
+      retrieveReporterIonsFile As Boolean,
       lstNonCriticalFileSuffixes As List(Of String)) As Boolean
 
         Const MaxCopyAttempts = 2
@@ -5804,6 +5821,13 @@ Public MustInherit Class clsAnalysisResources
                 End If
             End If
 
+            If retrieveReporterIonsFile Then
+                ' Look for and copy the _SICStats.txt file
+                If Not RetrieveSICFileMyEMSL(m_DatasetName + "_ReporterIons.txt", diSICFolder.Name, lstNonCriticalFileSuffixes) Then
+                    Return False
+                End If
+            End If
+
             ' All files have been found
             ' The calling process should download them using ProcessMyEMSLDownloadQueue()
             Return True
@@ -5834,6 +5858,13 @@ Public MustInherit Class clsAnalysisResources
                 If retrieveSICStatsFile Then
                     ' Look for and copy the _SICStats.txt file
                     If Not RetrieveSICFileUNC(m_DatasetName + "_SICStats.txt", masicResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
+                        Return False
+                    End If
+                End If
+
+                If retrieveReporterIonsFile Then
+                    ' Look for and copy the _SICStats.txt file
+                    If Not RetrieveSICFileUNC(m_DatasetName + "_ReporterIons.txt", masicResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
                         Return False
                     End If
                 End If

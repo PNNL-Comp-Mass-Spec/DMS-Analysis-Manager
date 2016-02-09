@@ -77,7 +77,7 @@ Public Class clsAnalysisResourcesSMAQC
         m_jobParams.AddResultFileExtensionToSkip("_SICstats.txt")
 
         Dim lstNonCriticalFileSuffixes As List(Of String)
-        lstNonCriticalFileSuffixes = New List(Of String) From {SCAN_STATS_EX_FILE_SUFFIX}
+        lstNonCriticalFileSuffixes = New List(Of String) From {SCAN_STATS_EX_FILE_SUFFIX, REPORTERIONS_FILE_SUFFIX}
 
         If String.IsNullOrEmpty(strMASICResultsFolderName) Then
             If m_DebugLevel >= 2 Then
@@ -89,6 +89,7 @@ Public Class clsAnalysisResourcesSMAQC
               createStoragePathInfoOnly:=createStoragePathInfoFile,
               retrieveScanStatsFile:=True,
               retrieveScanStatsExFile:=True,
+              retrieveReporterIonsFile:=True,
               lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 
         Else
@@ -109,10 +110,11 @@ Public Class clsAnalysisResourcesSMAQC
 
                     Return RetrieveScanAndSICStatsFiles(
                       bestSICFolderPath,
-                      RetrieveSICStatsFile:=True,
+                      retrieveSICStatsFile:=True,
                       createStoragePathInfoOnly:=createStoragePathInfoFile,
-                      RetrieveScanStatsFile:=True,
-                      RetrieveScanStatsExFile:=True,
+                      retrieveScanStatsFile:=True,
+                      retrieveScanStatsExFile:=True,
+                      retrieveReporterIonsFile:=True,
                       lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
                 End If
 
@@ -133,10 +135,11 @@ Public Class clsAnalysisResourcesSMAQC
 
                         Return RetrieveScanAndSICStatsFiles(
                           diMASICFolderInfo.FullName,
-                          RetrieveSICStatsFile:=True,
+                          retrieveSICStatsFile:=True,
                           createStoragePathInfoOnly:=createStoragePathInfoFile,
-                          RetrieveScanStatsFile:=True,
-                          RetrieveScanStatsExFile:=True,
+                          retrieveScanStatsFile:=True,
+                          retrieveScanStatsExFile:=True,
+                          retrieveReporterIonsFile:=True,
                           lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
 
                     End If

@@ -794,12 +794,12 @@ namespace AnalysisManagerQCARTPlugin
 
                 var metricNames = new List<string>
                 {
-                    "P_2C",
-                    "MS1_2B",
-                    "RT_MS_Q1",
-                    "RT_MS_Q4",
-                    "RT_MSMS_Q1",
-                    "RT_MSMS_Q4"
+                    "P_2C",         // Number of tryptic peptides; unique peptide count
+                    "MS1_2B",       // Median TIC value for identified peptides from run start through middle 50% of separation
+                    "RT_MS_Q1",     // The interval for the first 25% of all MS events divided by RT-Duration
+                    "RT_MS_Q4",     // The interval for the fourth 25% of all MS events divided by RT-Duration
+                    "RT_MSMS_Q1",   // The interval for the first 25% of all MS/MS events divided by RT-Duration
+                    "RT_MSMS_Q4"    // The interval for the fourth 25% of all MS/MS events divided by RT-Duration
                 };
 
                 var sqlStr = new StringBuilder();
