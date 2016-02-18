@@ -19,23 +19,16 @@ Public Interface IAnalysisResources
 
 #Region "Methods"
 
-	''' <summary>
-	''' Initialize class
-	''' </summary>
-	''' <param name="mgrParams">Manager parameter object</param>
-	''' <param name="jobParams">Job parameter object</param>
-	''' <remarks></remarks>
-    Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams)
-
-	''' <summary>
-	''' Initialize class
-	''' </summary>
-	''' <param name="mgrParams">Manager parameter object</param>
-	''' <param name="jobParams">Job parameter object</param>
-	''' <param name="statusTools">Status tools object</param>
-	''' <remarks></remarks>
-	Sub Setup(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams, ByVal statusTools As IStatusFile)
-
+    ''' <summary>
+    ''' Initialize class
+    ''' </summary>
+    ''' <param name="mgrParams">Manager parameter object</param>
+    ''' <param name="jobParams">Job parameter object</param>
+    ''' <param name="statusTools">Status tools object</param>
+    ''' <param name="myEMSLUtilities">MyEMSL download utilities</param>
+    ''' <remarks></remarks>
+    Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
+    
 	''' <summary>
 	''' Main processing function for obtaining the required resources
 	''' </summary>

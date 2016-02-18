@@ -48,9 +48,12 @@ Public Class clsMainProcess
     Private WithEvents m_FileWatcher As FileSystemWatcher
     Private m_ConfigChanged As Boolean
     Private m_DebugLevel As Integer
+
     Private m_Resource As IAnalysisResources
     Private m_ToolRunner As IToolRunner
     Private m_StatusTools As clsStatusFile
+    Private m_MyEMSLUtilities As clsMyEMSLUtilities
+
     Private m_NeedToAbortProcessing As Boolean
     Private m_MostRecentJobInfo As String
 
@@ -414,7 +417,11 @@ Public Class clsMainProcess
 
                 If Me.TraceMode Then ShowTraceMessage("Requesting a new task from DMS_Pipeline")
 
-                'Get an analysis job, if any are available
+                ' Re-initialize these utilies for each analysis job
+                m_MyEMSLUtilities = New clsMyEMSLUtilities(m_DebugLevel, m_WorkDirPath)
+
+                ' Get an analysis job, if any are available
+
                 Dim TaskReturn As clsAnalysisJob.RequestTaskResult
                 TaskReturn = m_AnalysisTask.RequestTask()
 
@@ -470,6 +477,8 @@ Public Class clsMainProcess
                                                  "clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " &
                                                  ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
                             m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
+
+                            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
 
                             ' Set the job state to failed
                             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob")
@@ -1573,7 +1582,7 @@ Public Class clsMainProcess
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
         End If
 
-        m_Resource.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools)
+        m_Resource.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_MyEMSLUtilities)
         Return True
 
     End Function
@@ -1631,7 +1640,7 @@ Public Class clsMainProcess
 
         Try
             ' Setup the new tool runner
-            m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_SummaryFile)
+            m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_SummaryFile, m_MyEMSLUtilities)
         Catch ex As Exception
             strMessage = "Exception calling ToolRunner.Setup(): " + ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)

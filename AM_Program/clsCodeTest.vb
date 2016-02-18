@@ -9,30 +9,31 @@ Public Class clsCodeTest
     'Imports Protein_Exporter
     'Imports Protein_Exporter.ExportProteinCollectionsIFC
 
+    Private Const WORKING_DIRECTORY = "E:\DMS_WorkDir"
+    
+    Private WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
+    Private m_GenerationStarted As Boolean = False
+    Private m_GenerationComplete As Boolean = False
+    Private m_FastaToolsCnStr As String = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;"
+    Private m_FastaFileName As String = ""
+    Private WithEvents m_FastaTimer As System.Timers.Timer
+    Private m_FastaGenTimeOut As Boolean = False
 
-    Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
-    Protected m_GenerationStarted As Boolean = False
-    Protected m_GenerationComplete As Boolean = False
-    Protected m_FastaToolsCnStr As String = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;"
-    Protected m_FastaFileName As String = ""
-    Protected WithEvents m_FastaTimer As System.Timers.Timer
-    Protected m_FastaGenTimeOut As Boolean = False
+    Private ReadOnly m_mgrParams As AnalysisManagerBase.IMgrParams
 
-    Protected m_mgrParams As AnalysisManagerBase.IMgrParams
+    Private mConsoleOutputErrorMsg As String = String.Empty
 
-    Protected mConsoleOutputErrorMsg As String = String.Empty
+    Private m_EvalMessage As String
+    Private m_EvalCode As Integer
+    Private m_DebugLevel As Integer = 2
 
-    Protected m_EvalMessage As String
-    Protected m_EvalCode As Integer
-    Protected m_DebugLevel As Integer = 2
-
-    Protected m_Progress As Single
-    Protected m_MaxScanInFile As Integer
+    Private m_Progress As Single
+    Private m_MaxScanInFile As Integer
     Private WithEvents mDTAWatcher As FileSystemWatcher
 
-    Protected Const FASTA_GEN_TIMEOUT_INTERVAL_SEC As Integer = 450             ' 7.5 minutes
+    Private Const FASTA_GEN_TIMEOUT_INTERVAL_SEC As Integer = 450             ' 7.5 minutes
 
-    Protected Structure udtPSMJobInfoType
+    Private Structure udtPSMJobInfoType
         Public Dataset As String
         Public DatasetID As Integer
         Public Job As Integer
@@ -70,7 +71,43 @@ Public Class clsCodeTest
 
     End Sub
 
-    Protected Function GetResourcesObject(intDebugLevel As Integer) As clsResourceTestClass
+    Private Function InitializeMgrAndJobParams(intDebugLevel As Integer) As clsAnalysisJob
+
+        Dim objJobParams = New clsAnalysisJob(m_mgrParams, intDebugLevel)
+
+        m_mgrParams.SetParam("workdir", WORKING_DIRECTORY)
+        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
+        m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString())
+
+        objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
+        objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
+
+        objJobParams.SetParam("StepParameters", "Job", "12345")
+        objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
+
+        Return objJobParams
+
+    End Function
+
+    Private Function GetCodeTestToolRunner(<Out()> ByRef objJobParams As clsAnalysisJob, <Out()> ByRef myEMSLUtilities As clsMyEMSLUtilities) As clsCodeTestAM
+
+        Const DEBUG_LEVEL = 2
+
+        objJobParams = InitializeMgrAndJobParams(DEBUG_LEVEL)
+
+        Dim objStatusTools As New clsStatusFile("Status.xml", DEBUG_LEVEL)
+        Dim objSummaryFile As New clsSummaryFile()
+
+        myEMSLUtilities = New clsMyEMSLUtilities(DEBUG_LEVEL, WORKING_DIRECTORY)
+
+        Dim objToolRunner = New clsCodeTestAM
+        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile, myEMSLUtilities)
+
+        Return objToolRunner
+
+    End Function
+
+    Private Function GetResourcesObject(intDebugLevel As Integer) As clsResourceTestClass
         Dim objResources = New clsResourceTestClass
 
         Dim objJobParams As IJobParams
@@ -78,9 +115,11 @@ Public Class clsCodeTest
 
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
-        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
+        Dim myEMSLUtilities As New clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY)
+
+        m_mgrParams.SetParam("workdir", WORKING_DIRECTORY)
         m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "3")
+        m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString())
         m_mgrParams.SetParam("zipprogram", "C:\PKWARE\PKZIPC\pkzipc.exe")
 
         objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
@@ -89,7 +128,7 @@ Public Class clsCodeTest
         objJobParams.SetParam("StepParameters", "Job", "12345")
         objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
 
-        objResources.Setup(m_mgrParams, objJobParams)
+        objResources.Setup(m_mgrParams, objJobParams, objStatusTools, myEMSLUtilities)
 
         Return objResources
 
@@ -100,7 +139,7 @@ Public Class clsCodeTest
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function InitializeManagerParams() As clsAnalysisJob
+    Private Function InitializeManagerParams() As clsAnalysisJob
 
         Dim intDebugLevel As Integer = 1
 
@@ -321,7 +360,7 @@ Public Class clsCodeTest
 
     End Function
 
-    Protected WithEvents m_RunProgTool As clsRunDosProgram
+    Private WithEvents m_RunProgTool As clsRunDosProgram
 
     Public Sub RunMSConvert()
 
@@ -432,11 +471,11 @@ Public Class clsCodeTest
 
     End Sub
 
-    Protected Sub TestException()
+    Private Sub TestException()
         InnerTestException()
     End Sub
 
-    Protected Sub InnerTestException()
+    Private Sub InnerTestException()
         Throw New PathTooLongException
     End Sub
 
@@ -451,27 +490,20 @@ Public Class clsCodeTest
     End Sub
 
     Public Sub TestDTASplit()
-        ''Dim intDebugLevel As Integer = 2
 
-        ''Dim objToolRunner As clsAnalysisToolRunnerDtaSplit
-        ''Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
+        ''Const intDebugLevel As Integer = 2
+
+        ''Dim objJobParams = InitializeMgrAndJobParams(intDebugLevel)
         ''Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
-        ''m_mgrParams.SetParam("workdir", "D:\Temp\DMS_Work")
-        ''m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        ''m_mgrParams.SetParam("debuglevel", "2")
+        ''Dim myEMSLUtilities As New clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY)
 
-        ''objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
-        ''objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
         ''objJobParams.SetParam("JobParameters", "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08")
         ''objJobParams.SetParam("JobParameters", "NumberOfClonedSteps", "25")
-
-        ''objJobParams.SetParam("StepParameters", "Job", "12345")
-        ''objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
         ''objJobParams.SetParam("JobParameters", "ClonedStepsHaveEqualNumSpectra", "True")
 
-        ''objToolRunner = New clsAnalysisToolRunnerDtaSplit
-        ''objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools)
+        ''Dim objToolRunner = New clsAnalysisToolRunnerDtaSplit
+        ''objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, myEMSLUtilities)
 
         ''objToolRunner.RunTool()
 
@@ -590,26 +622,12 @@ Public Class clsCodeTest
 
     Public Sub TestDeleteFiles()
 
-        Dim OutFileName As String = "MyTestDataset_out.txt"
-        Dim intDebugLevel As Integer = 2
+        Dim OutFileName = "MyTestDataset_out.txt"
 
-        Dim objToolRunner As clsCodeTestAM
-        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
-        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
-        Dim objSummaryFile As New clsSummaryFile()
+        Dim objJobParams As clsAnalysisJob = Nothing
+        Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
 
-        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "0")
-
-        objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
-        objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
-
-        objJobParams.SetParam("StepParameters", "Job", "12345")
-        objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
-
-        objToolRunner = New clsCodeTestAM
-        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+        Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
         objJobParams.AddResultFileToSkip(OutFileName)
 
@@ -620,28 +638,15 @@ Public Class clsCodeTest
     Public Sub TestDeliverResults()
 
         Dim OutFileName As String = "MyTestDataset_out.txt"
-        Dim intDebugLevel As Integer = 2
 
-        Dim objToolRunner As clsCodeTestAM
-        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
-        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
-        Dim objSummaryFile As New clsSummaryFile()
+        Dim objJobParams As clsAnalysisJob = Nothing
+        Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
 
-        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "0")
+        Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
-        objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
-        objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
-
-        objJobParams.SetParam("StepParameters", "Job", "12345")
-        objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results_" & System.DateTime.Now.ToString("hh_mm_ss"))
-
+        objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results_" & DateTime.Now.ToString("hh_mm_ss"))
         objJobParams.SetParam("JobParameters", "transferFolderPath", "\\proto-3\DMS3_XFER")
         objJobParams.SetParam("JobParameters", "DatasetNum", "Test_Dataset")
-
-        objToolRunner = New clsCodeTestAM
-        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
 
         objToolRunner.RunTool()
 
@@ -738,25 +743,10 @@ Public Class clsCodeTest
 
     Public Sub TestGZip()
 
-        Const intDebugLevel As Integer = 2
+        Dim objJobParams As clsAnalysisJob = Nothing
+        Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
 
-        Dim objToolRunner As clsCodeTestAM
-        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
-        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
-        Dim objSummaryFile As New clsSummaryFile()
-
-        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "0")
-
-        objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
-        objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
-
-        objJobParams.SetParam("StepParameters", "Job", "12345")
-        objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
-
-        objToolRunner = New clsCodeTestAM
-        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+        Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
         Const sourceFilePath As String = "F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf"
 
@@ -786,27 +776,10 @@ Public Class clsCodeTest
 
     Public Sub TestZip()
 
-        Const intDebugLevel As Integer = 2
+        Dim objJobParams As clsAnalysisJob = Nothing
+        Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
 
-        Dim objToolRunner As clsCodeTestAM
-        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
-        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
-        Dim objSummaryFile As New clsSummaryFile()
-
-        Const workDir As String = "E:\DMS_WorkDir"
-
-        m_mgrParams.SetParam("workdir", workDir)
-        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "0")
-
-        objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
-        objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
-
-        objJobParams.SetParam("StepParameters", "Job", "12345")
-        objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results")
-
-        objToolRunner = New clsCodeTestAM
-        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+        Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
         Const sourceFilePath As String = "F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf"
 
@@ -818,7 +791,7 @@ Public Class clsCodeTest
 
         objToolRunner.UnzipFile(zippedFile, "F:\Temp\ZipTest\UnzipTarget")
 
-        Dim oZipTools = New clsIonicZipTools(1, workDir)
+        Dim oZipTools = New clsIonicZipTools(1, WORKING_DIRECTORY)
         oZipTools.ZipDirectory("F:\Temp\ZipTest\QExact01\", "F:\Temp\ZipTest\QExact01_Folder.zip")
 
     End Sub
@@ -841,34 +814,27 @@ Public Class clsCodeTest
 
         Dim objResources As New clsResourceTestClass
 
-        Dim objJobParams As IJobParams
-        objJobParams = New clsAnalysisJob(m_mgrParams, 0)
-
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
         Dim blnSuccess As Boolean
 
         If String.IsNullOrEmpty(strSourceDatasetFolder) Then
-            strSourceDatasetFolder = "\\proto-4\9T_Imaging_DMS1\ratjoint071110_INCAS_MS"
+            strSourceDatasetFolder = "\\Proto-10\9T_FTICR_Imaging\2010_4\ratjoint071110_INCAS_MS"
         End If
 
-        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "3")
+        Dim objJobParams As clsAnalysisJob = Nothing
+        Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
+
+        Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
+
         m_mgrParams.SetParam("ChameleonCachedDataFolder", "H:\9T_Imaging")
 
-        objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
-        objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
-
-        objJobParams.SetParam("StepParameters", "Job", "12345")
-        objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results")
         objJobParams.SetParam("JobParameters", "DatasetNum", "ratjoint071110_INCAS_MS")
 
-        objJobParams.SetParam("JobParameters", "DatasetStoragePath", "\\proto-4\9T_Imaging_DMS1")
+        objJobParams.SetParam("JobParameters", "DatasetStoragePath", "\\Proto-10\9T_FTICR_Imaging\2010_4\")
         objJobParams.SetParam("JobParameters", "DatasetArchivePath", "\\a2.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1")
-        objJobParams.SetParam("JobParameters", "transferFolderPath", "\\proto-4\DMS3_Xfer")
+        objJobParams.SetParam("JobParameters", "transferFolderPath", "\\proto-10\DMS3_Xfer")
 
-
-        objResources.Setup(m_mgrParams, objJobParams)
+        objResources.Setup(m_mgrParams, objJobParams, objStatusTools, myEMSLUtilities)
 
         blnSuccess = objResources.RetrieveBrukerMALDIImagingFolders(True)
 
@@ -1030,7 +996,7 @@ Public Class clsCodeTest
 
     End Function
 
-    Protected Function InterleaveFiles(
+    Private Function InterleaveFiles(
       strFileList() As String,
       strCombinedFilePath As String,
       blnLookForHeaderLine As Boolean) As Boolean
@@ -1348,7 +1314,7 @@ Public Class clsCodeTest
         PerformResultsXfer(strTransferFolderPath, strDatasetFolderPath, strDatasetName, strInputFolderName)
     End Sub
 
-    Protected Overridable Function PerformResultsXfer(
+    Private Function PerformResultsXfer(
       strTransferFolderPath As String,
       strDatasetFolderPath As String,
       strDatasetName As String,
@@ -1541,7 +1507,7 @@ Public Class clsCodeTest
 
     End Sub
 
-    Protected Sub FindAndReplace(ByRef lineText As String, strOldValue As String, strNewValue As String)
+    Private Sub FindAndReplace(ByRef lineText As String, strOldValue As String, strNewValue As String)
         Dim intMatchIndex As Integer
 
         intMatchIndex = lineText.IndexOf(strOldValue, System.StringComparison.Ordinal)
@@ -1776,19 +1742,10 @@ Public Class clsCodeTest
 
     Public Sub TestMSXmlCachePurge()
 
-        Const intDebugLevel As Integer = 2
+        Dim objJobParams As clsAnalysisJob = Nothing
+        Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
 
-        Dim objToolRunner As clsCodeTestAM
-        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
-        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
-        Dim objSummaryFile As New clsSummaryFile()
-
-        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "0")
-
-        objToolRunner = New clsCodeTestAM
-        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+        Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
         Const cacheFolderPath = "\\proto-2\past\PurgeTest"
 
@@ -2018,19 +1975,10 @@ Public Class clsCodeTest
 
     Public Sub TestGetVersionInfo()
 
-        Dim intDebugLevel As Integer = 2
+        Dim objJobParams As clsAnalysisJob = Nothing
+        Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
 
-        Dim objToolRunner As clsCodeTestAM
-        Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
-        Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
-        Dim objSummaryFile As New clsSummaryFile()
-
-        m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
-        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "0")
-
-        objToolRunner = New clsCodeTestAM
-        objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile)
+        Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
         Dim pathToTestx86 = "F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\32bit_Dll_Examples\UIMFLibrary.dll"
         Dim pathToTestx64 = "F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\64bit_Dll_Examples\UIMFLibrary.dll"
@@ -2433,7 +2381,7 @@ Public Class clsCodeTest
         End If
     End Function
 
-    Protected Class clsResourceTestClass
+    Private Class clsResourceTestClass
         Inherits clsAnalysisResources
 
         Public Overrides Function GetResources() As IJobParams.CloseOutType

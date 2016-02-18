@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "February 3, 2016"
+    Public Const PROGRAM_DATE As String = "February 17, 2016"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -94,7 +94,7 @@ Module modMain
 						'objTest.TestDeleteFiles()
 
 						'objTest.TestZipAndUnzip()
-						'objTest.TestMALDIDataUnzip("")
+                        'objTest.TestMALDIDataUnzip("")
 
 						'objTest.TestMSGFResultsSummarizer()
 
@@ -140,8 +140,11 @@ Module modMain
                         objTest.RunMSConvert()
 
 					Catch ex As Exception
-						Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
-					End Try
+                        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
+                    End Try
+
+                    Return 0
+
 				ElseIf mCreateWindowsEventLog Then
 					clsMainProcess.CreateAnalysisManagerEventLog()
 				Else

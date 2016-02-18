@@ -4,7 +4,6 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 07/29/2008
 '*********************************************************************************************************
 
 Option Strict On
@@ -32,7 +31,7 @@ Public Interface IToolRunner
 #End Region
 
 #Region "Methods"
-    Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, StatusTools As IStatusFile, SummaryFile As clsSummaryFile)
+    Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, summaryFile As clsSummaryFile, myEMSLUtilities As clsMyEMSLUtilities)
 
 	Function RunTool() As IJobParams.CloseOutType
 

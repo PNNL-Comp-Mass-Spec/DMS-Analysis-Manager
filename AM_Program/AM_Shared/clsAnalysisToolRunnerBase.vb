@@ -82,6 +82,8 @@ Public Class clsAnalysisToolRunnerBase
 
     Protected m_SummaryFile As clsSummaryFile
 
+    Protected m_MyEMSLUtilities As clsMyEMSLUtilities
+
     Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
 
     Private m_LastProgressWriteTime As DateTime = DateTime.UtcNow
@@ -176,19 +178,22 @@ Public Class clsAnalysisToolRunnerBase
         mProgRunnerStartTime = DateTime.UtcNow
         mCoreUsageHistory = New Queue(Of KeyValuePair(Of DateTime, Single))
     End Sub
-
+    
     ''' <summary>
     ''' Initializes class
     ''' </summary>
     ''' <param name="mgrParams">Object holding manager parameters</param>
     ''' <param name="jobParams">Object holding job parameters</param>
-    ''' <param name="StatusTools">Object for status reporting</param>
+    ''' <param name="statusTools">Object for status reporting</param>
+    ''' <param name="summaryFile">Object for creating an analysis job summary file</param>
+    ''' <param name="myEMSLUtilities">MyEMSL download Utilities</param>
     ''' <remarks></remarks>
     Public Overridable Sub Setup(
        mgrParams As IMgrParams,
        jobParams As IJobParams,
        statusTools As IStatusFile,
-       SummaryFile As clsSummaryFile) Implements IToolRunner.Setup
+       summaryFile As clsSummaryFile,
+       myEMSLUtilities As clsMyEMSLUtilities) Implements IToolRunner.Setup
 
         m_mgrParams = mgrParams
         m_jobParams = jobParams
@@ -197,10 +202,20 @@ Public Class clsAnalysisToolRunnerBase
         m_MachName = m_mgrParams.GetParam("MgrName")
         m_JobNum = m_jobParams.GetParam("StepParameters", "Job")
         m_Dataset = m_jobParams.GetParam("JobParameters", "DatasetNum")
+
+		If myEMSLUtilities Is Nothing Then
+            m_MyEMSLUtilities = New clsMyEMSLUtilities(m_DebugLevel, m_WorkDir)
+        Else
+            m_MyEMSLUtilities = myEMSLUtilities
+        End If
+        
+        AddHandler m_MyEMSLUtilities.ErrorEvent, AddressOf m_MyEMSLUtilities_ErrorEvent
+        AddHandler m_MyEMSLUtilities.WarningEvent, AddressOf m_MyEMSLUtilities_WarningEvent
+
         m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
         m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
 
-        m_SummaryFile = SummaryFile
+        m_SummaryFile = summaryFile
 
         m_ResFolderName = m_jobParams.GetParam("OutputFolderName")
 
@@ -2859,7 +2874,7 @@ Public Class clsAnalysisToolRunnerBase
                 Return False
             End If
 
-            ' Call DLLVersionInspector.exe to determine the tool version
+            ' Call DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe to determine the tool version
 
             strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_VersionInfo.txt")
 
@@ -3592,6 +3607,15 @@ Public Class clsAnalysisToolRunnerBase
 
     Private Sub mSortUtility_WarningEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SortUtility: " & e.Message)
+    End Sub
+    
+    Private Sub m_MyEMSLUtilities_ErrorEvent(strMessage As String)
+        m_message = strMessage
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+    End Sub
+
+    Private Sub m_MyEMSLUtilities_WarningEvent(strMessage As String)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
     End Sub
 
 #End Region

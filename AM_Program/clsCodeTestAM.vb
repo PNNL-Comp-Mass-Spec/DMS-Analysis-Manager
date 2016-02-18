@@ -4,7 +4,6 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 09/19/2008
 '*********************************************************************************************************
 
 Option Strict On
@@ -28,9 +27,14 @@ Public Class clsCodeTestAM
 	''' <param name="jobParams">Object containing job parameters</param>
 	''' <param name="StatusTools">Object for updating status file as job progresses</param>
 	''' <remarks></remarks>
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, StatusTools As IStatusFile, SummaryFile As clsSummaryFile)
+    Public Overrides Sub Setup(
+       mgrParams As IMgrParams,
+       jobParams As IJobParams,
+       statusTools As IStatusFile,
+       summaryFile As clsSummaryFile,
+       myEMSLUtilities As clsMyEMSLUtilities)
 
-        MyBase.Setup(mgrParams, jobParams, StatusTools, SummaryFile)
+        MyBase.Setup(mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities)
 
         If m_DebugLevel > 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.Setup()")
