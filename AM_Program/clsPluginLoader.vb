@@ -4,7 +4,6 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/19/2007
 '
-' Last modified 01/16/2008
 '*********************************************************************************************************
 
 Option Strict On

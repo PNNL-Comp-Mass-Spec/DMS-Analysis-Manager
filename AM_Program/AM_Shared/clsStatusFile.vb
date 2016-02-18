@@ -4,7 +4,6 @@
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 06/07/2006
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net and status monitoring using activeMQ
 '*********************************************************************************************************
 
 Option Strict On

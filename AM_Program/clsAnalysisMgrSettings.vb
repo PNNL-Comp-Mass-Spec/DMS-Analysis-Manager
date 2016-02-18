@@ -4,7 +4,6 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/18/2007
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On

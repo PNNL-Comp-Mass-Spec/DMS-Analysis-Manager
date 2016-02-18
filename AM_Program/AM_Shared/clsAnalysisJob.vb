@@ -4,7 +4,6 @@
 ' Copyright 2007, Battelle Memorial Institute
 ' Created 12/18/2007
 '
-' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
 Option Strict On
@@ -943,12 +942,12 @@ Public Class clsAnalysisJob
             strTool = GetParam("ToolName")
 
             strToolAndStepTool = GetParam("StepTool")
-            If strToolAndStepTool Is Nothing Then strToolAndStepTool = String.Empty
+            If String.IsNullOrWhiteSpace(strToolAndStepTool) Then strToolAndStepTool = String.Empty
 
             strStep = GetParam("StepParameters", "Step")
             If strStep Is Nothing Then strStep = String.Empty
 
-            If strToolAndStepTool <> strTool Then
+            If Not String.IsNullOrWhiteSpace(strTool) AndAlso Not String.Equals(strToolAndStepTool, strTool) Then
                 If strToolAndStepTool.Length > 0 Then
                     strToolAndStepTool &= " (" & strTool & ")"
                 Else

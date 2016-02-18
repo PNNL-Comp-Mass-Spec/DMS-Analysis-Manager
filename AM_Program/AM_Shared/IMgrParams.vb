@@ -3,7 +3,6 @@
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 12/18/2007
 '
-' Last modified 01/16/2008
 '*********************************************************************************************************
 
 Option Strict On
@@ -20,7 +19,20 @@ Public Interface IMgrParams
 	Sub AckManagerUpdateRequired()
 	Function DisableManagerLocally() As Boolean
 
-	Function GetParam(ByVal ItemKey As String) As String
+    ''' <summary>
+    ''' Gets a parameter from the manager parameters dictionary
+    ''' </summary>
+    ''' <param name="ItemKey">Key name for item</param>
+    ''' <returns>String value associated with specified key</returns>
+    ''' <remarks>Returns empty string if key isn't found</remarks>
+    Function GetParam(ByVal ItemKey As String) As String
+
+    ''' <summary>
+    ''' Gets a parameter from the manager parameters dictionary
+    ''' </summary>
+    ''' <param name="ItemKey">Key name for item</param>
+    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
 	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As String) As String
 	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Boolean) As Boolean
 	Function GetParam(ByVal ItemKey As String, ByVal ValueIfMissing As Integer) As Integer
