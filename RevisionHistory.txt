@@ -1,5 +1,24 @@
 Analysis Tool Manager History
 
+February 17, 2016
+	- Refactored MyEMSL code into clsMyEMSLUtilities; shared by both clsAnalysisResources and clsAnalysisToolRunnerBase
+	- Updated IAnalysisResources and IToolRunner to require passing in an instance of clsMyEMSLUtilities
+
+November 23, 2015
+	- Added support for monitoring actual CPU usage of processes spawned by clsRunDosProgram
+
+November 5, 2015
+	- Added lock file functions to clsAnalysisResources
+
+October 20, 2015
+	- LoadMgrSettingsFromDBWork now checks for pending monthly Windows updates to decide whether to log an "excessive failures" error to the database
+
+September 15, 2015
+	- Added manager parameters AuroraAvailable and MyEmslAvailable
+
+July 27, 2015
+	- Now logging errors to DMS5 if they occur when reading configuration options from the Manager Control DB
+
 May 10, 2015
 	- Updated the .exe and all DLLs to AnyCPU
 
