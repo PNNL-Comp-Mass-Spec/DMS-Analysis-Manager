@@ -376,8 +376,7 @@ Public Class clsSplitFastaFileUtilities
         End Try
 
     End Sub
-
-
+    
     ''' <summary>
     ''' Validate that the split fasta file exists
     ''' </summary>
@@ -415,6 +414,12 @@ Public Class clsSplitFastaFileUtilities
 
             Dim fiBaseFastaFile = New FileInfo(baseFastaFilePath)
 
+            If Not fiBaseFastaFile.Exists Then
+                mErrorMessage = "Cannot split FASTA file; file not found: " + baseFastaFilePath
+                OnErrorEvent(mErrorMessage)
+                Return False
+            End If
+
             ' Try to create a lock file
             Dim lockFilePath As String = String.Empty
             strCurrentTask = "CreateLockStream"
@@ -425,7 +430,7 @@ Public Class clsSplitFastaFileUtilities
                 Throw New Exception("Unable to create lock file required to split " & fiBaseFastaFile.FullName)
             End If
 
-            lockStream.WriteLine("ValidateSplitFastaFile, started at " + DateTime.Now.ToString() + " by " + mManagerName)
+            lockStream.WriteLine("ValidateSplitFastaFile, started at " & DateTime.Now.ToString() & " by " & mManagerName)
 
             ' Check again for the existence of the desired .Fasta file
             ' It's possible another process created the .Fasta file while this process was waiting for the other process's lock file to disappear
