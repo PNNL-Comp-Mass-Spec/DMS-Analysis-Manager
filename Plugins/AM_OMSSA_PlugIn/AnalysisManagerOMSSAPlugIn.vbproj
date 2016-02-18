@@ -90,6 +90,9 @@
     <DebugType>none</DebugType>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
+  <PropertyGroup>
+    <OptionInfer>On</OptionInfer>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>

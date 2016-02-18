@@ -16,15 +16,10 @@ Public Class clsAnalysisResourcesMODPlus
     Friend Const MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY As String = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###"
     Friend Const MINIMUM_PERCENT_DECOY = 25
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
-        MyBase.Setup(mgrParams, jobParams)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
-
-	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
-		MyBase.Setup(mgrParams, jobParams, statusTools)
-		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-	End Sub
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 

@@ -67,12 +67,12 @@ Public Class clsAnalysisResourcesMSXMLGen
                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End Select
 
-                If m_MyEMSLDatasetListInfo.FilesToDownload.Count = 0 Then
+                If m_MyEMSLUtilities.FilesToDownload.Count = 0 Then
                     Exit While
                 End If
 
                 currentTask = "ProcessMyEMSLDownloadQueue"
-                If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
                     Exit While
                 End If
 

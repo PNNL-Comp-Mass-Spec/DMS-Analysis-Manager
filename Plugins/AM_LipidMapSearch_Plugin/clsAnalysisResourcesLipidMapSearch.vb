@@ -31,9 +31,9 @@ Public Class clsAnalysisResourcesLipidMapSearch
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
@@ -201,7 +201,7 @@ Public Class clsAnalysisResourcesLipidMapSearch
 				Dim DSFolderPath As String = FindValidFolder(strDatasetName, strFileToFind)
 				If DSFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
 					' Queue this file for download
-					m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileInfo)
+                    m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo)
 				Else
 					' Raw file still not found; abort processing
 					Return False

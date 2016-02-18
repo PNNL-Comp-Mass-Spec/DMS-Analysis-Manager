@@ -24,7 +24,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 		/// <returns></returns>
 		public override IJobParams.CloseOutType GetResources()
 		{
-			string localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+			var localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
 			// get fasta file(s) for jobs in data package and copy to local organism database working directory
 			int dataPkgId;
@@ -32,13 +32,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			// This list will track non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
 			List<udtDataPackageJobInfoType> lstAdditionalJobs;
 
-			List<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out dataPkgId, out lstAdditionalJobs);
-			bool success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
+			var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out dataPkgId, out lstAdditionalJobs);
+			var success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
 
 			if (!success)
 				return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES;
 
-			bool includeMzXmlFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
+			var includeMzXmlFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
 			success = FindInstrumentDataFiles(lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
             if (!success)
@@ -83,18 +83,18 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			// Cache the current dataset and job info
 			var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-			int missingInstrumentDataCount = 0;
+			var missingInstrumentDataCount = 0;
 
 			// Combine the two job lists provided to this function to determine the master list of jobs to process
 			var jobsToProcess = lstDataPackagePeptideHitJobs.ToList();
 			jobsToProcess.AddRange(lstAdditionalJobs.ToList());
 
-			int jobCountToProcess = jobsToProcess.Count();
-			int jobsProcessed = 0;
+			var jobCountToProcess = jobsToProcess.Count();
+			var jobsProcessed = 0;
 
-			DateTime dtLastProgressUpdate = DateTime.UtcNow;
+			var dtLastProgressUpdate = DateTime.UtcNow;
 
-			foreach (udtDataPackageJobInfoType udtJobInfo in jobsToProcess)
+			foreach (var udtJobInfo in jobsToProcess)
 			{
 				jobsProcessed++;
 				if (dctDatasetRawDataTypes.ContainsKey(udtJobInfo.Dataset))
@@ -162,7 +162,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 				// Note that FindDatasetFileOrFolder will return the default dataset folder path, even if the data file is not found
 				// Therefore, we need to check that strRawFilePath actually exists
-				string strRawFilePath = FindDatasetFileOrFolder(1, out blnIsFolder);
+				var strRawFilePath = FindDatasetFileOrFolder(1, out blnIsFolder);
 
 				if (!strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
 				{
@@ -173,7 +173,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 						if (!dctDatasetRawFilePaths.ContainsKey(udtJobInfo.Dataset))
 						{
-							string msg = "Instrument data file not found for dataset " + udtJobInfo.Dataset;
+							var msg = "Instrument data file not found for dataset " + udtJobInfo.Dataset;
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						}
 					}
@@ -185,7 +185,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 					{
 					    if (strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
 					    {
-					        m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(m_RecentlyFoundMyEMSLFiles.First().FileInfo);
+                            m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);
 					    }
 
 					    dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath);
@@ -193,14 +193,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				}
 
 				// Compute a % complete value between 0 and 2%
-				float percentComplete = (float)jobsProcessed / jobCountToProcess * 2;
+				var percentComplete = (float)jobsProcessed / jobCountToProcess * 2;
 				m_StatusTools.UpdateAndWrite(percentComplete);
 
 				if (DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30)
 				{
 					dtLastProgressUpdate = DateTime.UtcNow;
 
-					string progressMsg = "Finding instrument data";
+					var progressMsg = "Finding instrument data";
 					if (includeMzXmlFiles)
 						progressMsg += " and mzXML files";
 
@@ -214,9 +214,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 			if (missingInstrumentDataCount > 0)
 			{
-				string jobId = m_jobParams.GetJobParameter("Job", "??");
-				string dataPackageID = m_jobParams.GetJobParameter("DataPackageID", "??");
-				string msg = "Instrument data file not found for " + missingInstrumentDataCount + clsGlobal.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
+				var jobId = m_jobParams.GetJobParameter("Job", "??");
+				var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", "??");
+				var msg = "Instrument data file not found for " + missingInstrumentDataCount + clsGlobal.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
 				m_jobParams.AddAdditionalParameter("JobParameters", clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
 
 				msg += " (pipeline job " + jobId + ")";
@@ -243,7 +243,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				RetrieveMzXMLFile = true
 			};
 
-			bool success = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
+			var success = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
 
 			return success;
 
@@ -273,11 +273,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 						udtJob.Dataset + DOT_MZML_EXTENSION + DOT_GZ_EXTENSION
 					};
 
-					bool matchFound = false;
+					var matchFound = false;
 
 					foreach (var candidateFile in candidateFileNames)
 					{
-						string filePath = Path.Combine(m_WorkingDir, candidateFile);
+						var filePath = Path.Combine(m_WorkingDir, candidateFile);
 
 						if (File.Exists(filePath))
 						{
@@ -330,11 +330,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 				var lstGeneratedOrgDBNames = new List<string>();
 
 				// Cache the current dataset and job info
-				udtDataPackageJobInfoType udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
+				var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
 				foreach (var udtJob in lstDataPackagePeptideHitJobs)
 				{
-					string strDictionaryKey = string.Format("{0}_{1}_{2}", udtJob.LegacyFastaFileName, udtJob.ProteinCollectionList,
+					var strDictionaryKey = string.Format("{0}_{1}_{2}", udtJob.LegacyFastaFileName, udtJob.ProteinCollectionList,
 															udtJob.ProteinOptions);
 					string strOrgDBNameGenerated;
 					if (dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, out strOrgDBNameGenerated))

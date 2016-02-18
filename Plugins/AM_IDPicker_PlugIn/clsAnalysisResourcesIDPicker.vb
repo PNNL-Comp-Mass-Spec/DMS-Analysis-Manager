@@ -15,13 +15,8 @@ Public Class clsAnalysisResourcesIDPicker
     ' This dictionary holds any filenames that we need to rename after copying locally
     Protected mInputFileRenames As Dictionary(Of String, String)
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
-        MyBase.Setup(mgrParams, jobParams)
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-    End Sub
-
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
-        MyBase.Setup(mgrParams, jobParams, statusTools)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
@@ -81,7 +76,7 @@ Public Class clsAnalysisResourcesIDPicker
 
         End If
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -226,7 +221,7 @@ Public Class clsAnalysisResourcesIDPicker
 
         Next
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return False
         End If
 
@@ -245,7 +240,7 @@ Public Class clsAnalysisResourcesIDPicker
             Next
         End If
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return False
         End If
 
@@ -320,10 +315,10 @@ Public Class clsAnalysisResourcesIDPicker
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
-            If m_MyEMSLDatasetListInfo.FilesToDownload.Count = 0 Then
+            If m_MyEMSLUtilities.FilesToDownload.Count = 0 Then
                 Exit While
             Else
-                If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
                     Exit While
                 Else
                     ' Look for the MASIC files on the Samba share

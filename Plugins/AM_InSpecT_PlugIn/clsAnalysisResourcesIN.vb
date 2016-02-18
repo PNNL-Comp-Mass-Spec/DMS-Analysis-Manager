@@ -15,15 +15,10 @@ Public Class clsAnalysisResourcesIN
 
 #Region "Methods"
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
-        MyBase.Setup(mgrParams, jobParams)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
-
-	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
-		MyBase.Setup(mgrParams, jobParams, statusTools)
-		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-	End Sub
 
 	''' <summary>
 	''' Retrieves files necessary for performance of Inspect analysis
@@ -95,13 +90,13 @@ Public Class clsAnalysisResourcesIN
 		End If
 
 		If DtaResultFolderName.StartsWith(MYEMSL_PATH_FLAG) Then
-			If ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLDatasetListInfo.DownloadedFiles.First().Value.Filename + " from MyEMSL")
-				End If
-			Else
-				Return False
-			End If
+            If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL")
+                End If
+            Else
+                Return False
+            End If
 		Else
 			'Copy the file
 			If Not CopyFileToWorkDir(DtaResultFileName, DtaResultFolderName, m_WorkingDir) Then

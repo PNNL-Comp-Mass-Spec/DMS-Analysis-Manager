@@ -2094,7 +2094,7 @@ Public Class clsExtractToolRunner
                 If Not blnSuccess Then Return False
 
                 ' Lookup the version of the PeptideProphetLibrary
-                blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"))
+                blnSuccess = MyBase.StoreToolVersionInfoOneFile32Bit(strToolVersionInfo, Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"))
                 If Not blnSuccess Then Return False
             End If
 

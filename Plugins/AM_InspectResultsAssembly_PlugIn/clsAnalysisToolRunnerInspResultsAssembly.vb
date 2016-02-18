@@ -242,11 +242,13 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' </summary>
     ''' <param name="mgrParams">Object containing manager parameters</param>
     ''' <param name="jobParams">Object containing job parameters</param>
-    ''' <param name="StatusTools">Object for updating status file as job progresses</param>
+    ''' <param name="statusTools">Object for updating status file as job progresses</param>
+    ''' <param name="summaryFile">Object for creating an analysis job summary file</param>
+    ''' <param name="myEMSLUtilities">MyEMSL download Utilities</param>
     ''' <remarks></remarks>
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, StatusTools As IStatusFile, SummaryFile As clsSummaryFile)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, summaryFile As clsSummaryFile, myEMSLUtilities As clsMyEMSLUtilities)
 
-        MyBase.Setup(mgrParams, jobParams, StatusTools, SummaryFile)
+        MyBase.Setup(mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities)
 
         mInspectResultsFileName = m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX
 

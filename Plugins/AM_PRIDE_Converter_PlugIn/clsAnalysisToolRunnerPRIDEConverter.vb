@@ -1,10 +1,12 @@
 ﻿Option Strict On
 
+Imports System.ComponentModel
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports PHRPReader
 Imports System.Xml
+Imports MyEMSLReader
 
 Public Class clsAnalysisToolRunnerPRIDEConverter
     Inherits clsAnalysisToolRunnerBase
@@ -274,6 +276,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
+            ' Monitor the FileDownloaded event in this class
+            AddHandler m_MyEMSLUtilities.FileDownloaded, AddressOf m_MyEMSLDatasetListInfo_FileDownloadedEvent
+
             ' The objAnalysisResults object is used to copy files to/from this computer
             Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
@@ -287,7 +292,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             ' Read the PX_Submission_Template.px file
             Dim dctTemplateParameters = ReadTemplatePXSubmissionFile()
-            
+
             Const blnContinueOnError = True
             Const maxErrorCount = 10
             Dim intJobsProcessed = 0
@@ -2376,7 +2381,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 '   [PRIDE, PRIDE:0000440, Normalized Spectral Abundance Factor – NSAF,]
                 '   [PRIDE, PRIDE:0000441, APEX - Absolute Protein Expression,]
                 WritePXHeader(swPXFile, "quantification", TBD & "Optional, e.g. " & DEFAULT_QUANTIFICATION_TYPE_CV, dctTemplateParameters)
-                
+
                 If mInstrumentGroupsStored.Count > 0 Then
                     WritePXInstruments(swPXFile)
                 Else
@@ -2571,7 +2576,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Return True
 
     End Function
-    
+
     Private Function DictionaryHasDefinedValue(dctTemplateParameters As Dictionary(Of String, String), termName As String) As Boolean
         Dim value As String = String.Empty
 
@@ -3256,16 +3261,31 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             ' If the same dataset has multiple jobs then we might overwrite existing files; 
             '   that's OK since results files that we care about will have been auto-renamed based on the call to JobFileRenameRequired
 
-            For Each strSourceFilePath As String In lstFilesToCopy
+            For Each sourceFilePath As String In lstFilesToCopy
 
-                Dim strSourceFileName As String = Path.GetFileName(strSourceFilePath)
+                If sourceFilePath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG) Then
 
-                Dim strTargetFilePath As String
-                strTargetFilePath = Path.Combine(m_WorkDir, strSourceFileName)
+                    ' Make sure the myEMSLUtilities object knows about this dataset
+                    m_MyEMSLUtilities.AddDataset(strDataset)
+                    Dim cleanFilePath As String = Nothing
+                    MyEMSLReader.DatasetInfo.ExtractMyEMSLFileID(sourceFilePath, cleanFilePath)
 
-                objAnalysisResults.CopyFileWithRetry(strSourceFilePath, strTargetFilePath, True)
+                    Dim fiSourceFile = New FileInfo(cleanFilePath)
+                    Dim unzipRequired = (fiSourceFile.Extension.ToLower() = ".zip" OrElse fiSourceFile.Extension.ToLower() = ".gz")
 
-                Dim fiLocalFile = New FileInfo(strTargetFilePath)
+                    m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath, unzipRequired)
+
+                    Continue For
+                End If
+
+                Dim sourceFileName As String = Path.GetFileName(sourceFilePath)
+
+                Dim targetFilePath As String
+                targetFilePath = Path.Combine(m_WorkDir, sourceFileName)
+
+                objAnalysisResults.CopyFileWithRetry(sourceFilePath, targetFilePath, True)
+
+                Dim fiLocalFile = New FileInfo(targetFilePath)
                 If Not fiLocalFile.Exists Then
                     m_message = "PHRP file was not copied locally: " & fiLocalFile.Name
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -3293,6 +3313,21 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 AddToListIfNew(mPreviousDatasetFilesToDelete, fiLocalFile.FullName)
 
             Next
+
+            If m_MyEMSLUtilities.FilesToDownload.Count > 0 Then
+                If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                    If String.IsNullOrWhiteSpace(m_message) Then
+                        m_message = "ProcessMyEMSLDownloadQueue return false"
+                    End If
+                    Return False
+                End If
+
+                If m_MyEMSLUtilities.FilesToDownload.Count > 0 Then
+                    ' The queue should have already been cleared; checking just in case
+                    m_MyEMSLUtilities.ClearDownloadQueue()
+                End If
+
+            End If
 
         Catch ex As Exception
             m_message = "Error in RetrievePHRPFiles"
@@ -4289,6 +4324,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
+    Private Sub m_MyEMSLDatasetListInfo_FileDownloadedEvent(sender As Object, e As FileDownloadedEventArgs)
+
+        If e.UnzipRequired Then
+            For Each kvUnzippedFile In m_MyEMSLUtilities.MostRecentUnzippedFiles
+                AddToListIfNew(mPreviousDatasetFilesToDelete, kvUnzippedFile.Value)
+            Next
+        End If
+
+        AddToListIfNew(mPreviousDatasetFilesToDelete, Path.Combine(e.DownloadFolderPath, e.ArchivedFile.Filename))
+
+    End Sub
 #End Region
 
 End Class

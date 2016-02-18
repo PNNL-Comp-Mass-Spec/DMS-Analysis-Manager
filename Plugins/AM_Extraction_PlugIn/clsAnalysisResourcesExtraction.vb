@@ -31,20 +31,14 @@ Public Class clsAnalysisResourcesExtraction
 
 #Region "Methods"
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
-        Dim statusTools As IStatusFile = Nothing
-        Setup(mgrParams, jobParams, statusTools)
-    End Sub
-
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
-        MyBase.Setup(mgrParams, jobParams, statusTools)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
 
         ' Always retrieve the FASTA file because PHRP uses it
         ' This includes for MSGF+ because it uses the order of the proteins in the 
         ' FASTA file to determine the protein to include in the FHT file
-        Const ORG_DB_REQUIRED = True
 
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, ORG_DB_REQUIRED)
+        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
     ''' <summary>

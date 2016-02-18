@@ -13,13 +13,8 @@ Public Class clsAnalysisResourcesDtaRefinery
     Friend Const XTANDEM_TAXONOMY_LIST_FILE As String = "xtandem_taxonomy_list.xml"
     Friend Const DTA_REFINERY_INPUT_FILE As String = "DtaRefinery_input.xml"
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
-        MyBase.Setup(mgrParams, jobParams)
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-    End Sub
-
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
-        MyBase.Setup(mgrParams, jobParams, statusTools)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 

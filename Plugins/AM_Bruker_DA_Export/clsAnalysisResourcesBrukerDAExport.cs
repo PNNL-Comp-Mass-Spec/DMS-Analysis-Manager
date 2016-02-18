@@ -76,7 +76,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    if (m_MyEMSLDatasetListInfo.FilesToDownload.Count == 0)
+                    if (m_MyEMSLUtilities.FilesToDownload.Count == 0)
                     {
                         break;
                     }

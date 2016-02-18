@@ -77,9 +77,9 @@ Public Class clsAnalysisResourcesPRIDEConverter
 			FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs)
 		End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 		StoreDataPackageJobs(lstDataPackagePeptideHitJobs)
 

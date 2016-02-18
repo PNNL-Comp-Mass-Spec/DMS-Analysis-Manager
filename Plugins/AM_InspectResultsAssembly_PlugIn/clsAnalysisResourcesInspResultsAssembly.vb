@@ -8,15 +8,10 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 
 #Region "Methods"
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams)
-        MyBase.Setup(mgrParams, jobParams)
+    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
-
-	Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile)
-		MyBase.Setup(mgrParams, jobParams, statusTools)
-		SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-	End Sub
 
 	''' <summary>
 	''' Retrieves files necessary for performance of Sequest analysis
