@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "February 17, 2016"
+    Public Const PROGRAM_DATE As String = "February 19, 2016"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
@@ -137,7 +137,10 @@ Module modMain
 
                         ' objTest.ParseMSGFDBConsoleOutput()
 
-                        objTest.RunMSConvert()
+                        'objTest.RunMSConvert()
+
+                        objTest.GetLegacyFastaFileSize()
+
 
 					Catch ex As Exception
                         Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))

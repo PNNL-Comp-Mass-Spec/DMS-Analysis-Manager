@@ -941,17 +941,14 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="DestFolder">Folder where file will be created</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Public Function CreateFastaFile(DestFolder As String) As Boolean
-
-        Dim HashString As String
-        Dim OrgDBDescription As String
+    Public Function CreateFastaFile(proteinCollectionInfo As clsProteinCollectionInfo, destFolder As String) As Boolean
 
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating fasta file at " & DestFolder)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating fasta file at " & destFolder)
         End If
 
-        If Not Directory.Exists(DestFolder) Then
-            Directory.CreateDirectory(DestFolder)
+        If Not Directory.Exists(destFolder) Then
+            Directory.CreateDirectory(destFolder)
         End If
 
         ' Instantiate fasta tool if not already done
@@ -999,30 +996,26 @@ Public MustInherit Class clsAnalysisResources
         m_FastaFileName = String.Empty
 
         ' Set up variables for fasta creation call
-        Dim LegacyFasta As String = m_jobParams.GetParam("LegacyFastaFileName")
-        Dim CreationOpts As String = m_jobParams.GetParam("ProteinOptions")
-        Dim CollectionList As String = m_jobParams.GetParam("ProteinCollectionList")
-        Dim usingLegacyFasta = False
 
-        If Not String.IsNullOrWhiteSpace(CollectionList) AndAlso Not CollectionList.ToLower() = "na" Then
-            OrgDBDescription = "Protein collection: " + CollectionList + " with options " + CreationOpts
-        ElseIf Not String.IsNullOrWhiteSpace(LegacyFasta) AndAlso Not LegacyFasta.ToLower() = "na" Then
-            OrgDBDescription = "Legacy DB: " + LegacyFasta
-            usingLegacyFasta = True
-        Else
-            m_message = "Both the ProteinCollectionList and LegacyFastaFileName parameters are empty or 'na'; unable to obtain Fasta file"
+        If Not proteinCollectionInfo.IsValid Then
+            If String.IsNullOrWhiteSpace(proteinCollectionInfo.ErrorMessage) Then
+                m_message = "Unknown error determining the Fasta file or protein collection to use; unable to obtain Fasta file"
+            Else
+                m_message = proteinCollectionInfo.ErrorMessage & "; unable to obtain Fasta file"
+            End If
+
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateFastaFile: " + m_message)
             Return False
         End If
 
-        Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
         Dim stepToolName = m_jobParams.GetJobParameter("StepTool", "Unknown")
 
         Dim legacyFastaToUse As String
+        Dim orgDBDescription = String.Copy(proteinCollectionInfo.OrgDBDescription)
 
-        If splitFastaEnabled And Not String.Equals(stepToolName, "DataExtractor", StringComparison.CurrentCultureIgnoreCase) Then
+        If proteinCollectionInfo.UsingSplitFasta AndAlso Not String.Equals(stepToolName, "DataExtractor", StringComparison.CurrentCultureIgnoreCase) Then
 
-            If Not usingLegacyFasta Then
+            If Not proteinCollectionInfo.UsingLegacyFasta Then
                 m_message = "Cannot use protein collections when running a SplitFasta job; choose a Legacy fasta file instead"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 Return False
@@ -1039,7 +1032,7 @@ Public MustInherit Class clsAnalysisResources
                 Return False
             End If
 
-            OrgDBDescription = "Legacy DB: " + legacyFastaToUse
+            orgDBDescription = "Legacy DB: " + legacyFastaToUse
 
             ' Lookup connection strings
             ' Proteinseqs.Protein_Sequences
@@ -1079,45 +1072,50 @@ Public MustInherit Class clsAnalysisResources
             m_SplitFastaLastUpdateTime = DateTime.UtcNow
             m_SplitFastaLastPercentComplete = 0
 
-            Dim success = m_SplitFastaFileUtility.ValidateSplitFastaFile(LegacyFasta, legacyFastaToUse)
+            Dim success = m_SplitFastaFileUtility.ValidateSplitFastaFile(proteinCollectionInfo.LegacyFastaName, legacyFastaToUse)
             If Not success Then
                 m_message = m_SplitFastaFileUtility.ErrorMessage
                 Return False
             End If
 
         Else
-            legacyFastaToUse = String.Copy(LegacyFasta)
+            legacyFastaToUse = String.Copy(proteinCollectionInfo.LegacyFastaName)
         End If
 
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProteinCollectionList=" + CollectionList + "; CreationOpts=" + CreationOpts + "; LegacyFasta=" + legacyFastaToUse)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                 "ProteinCollectionList=" + proteinCollectionInfo.ProteinCollectionList + "; " +
+                                 "CreationOpts=" + proteinCollectionInfo.ProteinCollectionOptions + "; " +
+                                 "LegacyFasta=" + legacyFastaToUse)
         End If
 
         Try
-            HashString = m_FastaTools.ExportFASTAFile(CollectionList, CreationOpts, legacyFastaToUse, DestFolder)
-        Catch Ex As Exception
+            Dim hashString = m_FastaTools.ExportFASTAFile(proteinCollectionInfo.ProteinCollectionList, proteinCollectionInfo.ProteinCollectionOptions, legacyFastaToUse, destFolder)
+
+            If String.IsNullOrEmpty(hashString) Then
+                ' Fasta generator returned empty hash string
+                m_message = "m_FastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + orgDBDescription
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+
+        Catch ex As Exception
             m_message = "Exception generating OrgDb file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " + OrgDBDescription + "; " + Ex.Message + "; " + clsGlobal.GetExceptionStackTrace(Ex))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " + orgDBDescription + "; " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex))
             Return False
         End Try
 
-        If String.IsNullOrEmpty(HashString) Then
-            ' Fasta generator returned empty hash string
-            m_message = "m_FastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + OrgDBDescription
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
 
         If String.IsNullOrEmpty(m_FastaFileName) Then
             ' Fasta generator never raised event FileGenerationCompleted
-            m_message = "m_FastaTools did not raise event FileGenerationCompleted; unable to continue; " + OrgDBDescription
+            m_message = "m_FastaTools did not raise event FileGenerationCompleted; unable to continue; " + orgDBDescription
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             Return False
         End If
 
         Dim fiFastaFile As FileInfo
         Dim strFastaFileMsg As String
-        fiFastaFile = New FileInfo(Path.Combine(DestFolder, m_FastaFileName))
+        fiFastaFile = New FileInfo(Path.Combine(destFolder, m_FastaFileName))
 
         If m_DebugLevel >= 1 Then
             ' Log the name of the .Fasta file we're using
@@ -3764,6 +3762,62 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
+    ''' Estimate the amount of disk space required for the FASTA file associated with this analysis job
+    ''' </summary>
+    ''' <param name="proteinCollectionInfo">Collection info object</param>
+    ''' <returns>Space required, in MB</returns>
+    ''' <remarks>Uses both m_jobParams and m_mgrParams; returns 0 if a problem</remarks>
+    Public Function LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo As clsProteinCollectionInfo) As Double
+
+        Try
+
+            Dim dmsConnectionString = m_mgrParams.GetParam("connectionstring")
+            If String.IsNullOrWhiteSpace(dmsConnectionString) Then
+                m_message = "Error in LookupLegacyDBSizeWithIndices: manager parameter connectionstring is not defined"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return 0
+            End If
+
+            Dim legacyFastaName As String
+            If proteinCollectionInfo.UsingSplitFasta Then
+                Dim errorMessage As String = String.Empty
+                legacyFastaName = GetSplitFastaFileName(m_jobParams, errorMessage)
+            Else
+                legacyFastaName = proteinCollectionInfo.LegacyFastaName
+            End If
+
+            Dim sqlQuery As String = "SELECT File_Size_KB FROM V_Organism_DB_File_Export WHERE (FileName = '" & legacyFastaName & "')"
+
+            ' Results, as a list of columns (first row only if multiple rows)
+            Dim lstResults = New List(Of String)
+
+            Dim success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, lstResults, "LookupLegacyDBSizeWithIndices")
+
+            If Not success OrElse lstResults Is Nothing OrElse lstResults.Count = 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Could not determine the legacy fasta file's size for for job " & m_JobNum & ", file " & legacyFastaName)
+                Return 0
+            End If
+
+            Dim fileSizeKB As Integer
+            If Not Integer.TryParse(lstResults.First(), fileSizeKB) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Legacy fasta file size is not numeric, job " & m_JobNum & ", file " & legacyFastaName & ": " & lstResults.First())
+                Return 0
+            End If
+
+            ' Assume that the MSGF+ index files will be 15 times larger than the legacy FASTA file itself
+            Dim fileSizeMB = (fileSizeKB + fileSizeKB * 15) / 1024.0
+
+            ' Pad the expected size by an additional 15%
+            Return fileSizeMB * 1.15
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in LookupLegacyDBSizeWithIndices", ex)
+            Return 0
+        End Try
+
+    End Function
+
+    ''' <summary>
     ''' Moves a file from one folder to another folder
     ''' </summary>
     ''' <param name="diSourceFolder"></param>
@@ -3928,9 +3982,18 @@ Public MustInherit Class clsAnalysisResources
     ''' Purges old fasta files (and related suffix array files) from localOrgDbFolder
     ''' </summary>
     ''' <param name="localOrgDbFolder"></param>
-    ''' <param name="freeSpaceThresholdPercent">Value between 0 and 100</param>
-    ''' <remarks>Minimum allowed value for freeSpaceThresholdPercent is 1; maximum allowed value is 50</remarks>
-    Protected Sub PurgeFastaFilesIfLowFreeSpace(localOrgDbFolder As String, freeSpaceThresholdPercent As Integer)
+    ''' <param name="freeSpaceThresholdPercent">Value between 1 and 50</param>
+    ''' <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given fasta file</param>
+    ''' <param name="legacyFastaFileBaseName">
+    ''' Legacy fasta file name (without .fasta)
+    ''' For split fasta jobs, should not include the splitcount and segment number, e.g. should not include _25x_07 or _25x_08
+    ''' </param>
+    ''' <remarks></remarks>
+    Protected Sub PurgeFastaFilesIfLowFreeSpace(
+      localOrgDbFolder As String,
+      freeSpaceThresholdPercent As Integer,
+      requiredFreeSpaceMB As Double,
+      legacyFastaFileBaseName As String)
 
         If freeSpaceThresholdPercent < 1 Then freeSpaceThresholdPercent = 1
         If freeSpaceThresholdPercent > 50 Then freeSpaceThresholdPercent = 50
@@ -3950,9 +4013,9 @@ Public MustInherit Class clsAnalysisResources
             End If
 
             Dim driveInfo = New DriveInfo(driveLetter)
-            Dim percentFreeSpace As Double = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
+            Dim percentFreeSpaceAtStart As Double = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
 
-            If (percentFreeSpace >= freeSpaceThresholdPercent) Then
+            If (percentFreeSpaceAtStart >= freeSpaceThresholdPercent) Then
                 If m_DebugLevel >= 2 Then
                     Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is over " & freeSpaceThresholdPercent & "% of the total space; purge not required")
@@ -3965,6 +4028,7 @@ Public MustInherit Class clsAnalysisResources
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is " & freeSpaceThresholdPercent & "% of the total space; purge required since less than threshold of " & freeSpaceThresholdPercent & "%")
             End If
 
+            ' Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .lastused file)
             Dim dctFastaFiles = New Dictionary(Of FileInfo, DateTime)
 
             For Each fiFile In diOrgDbFolder.GetFiles("*.fasta")
@@ -4014,9 +4078,14 @@ Public MustInherit Class clsAnalysisResources
                     End If
                 End If
 
-                ' Delete all files associated with this fasta file
                 Dim baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name)
 
+                If Not String.IsNullOrWhiteSpace(legacyFastaFileBaseName) AndAlso baseName.StartsWith(legacyFastaFileBaseName) Then
+                    ' The current job needs this file; do not delete it
+                    Continue For
+                End If
+
+                ' Delete all files associated with this fasta file
                 Dim lstFilesToDelete = New List(Of FileInfo)
                 lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName & ".*"))
 
@@ -4037,19 +4106,39 @@ Public MustInherit Class clsAnalysisResources
                 End Try
 
                 ' Re-check the disk free space
-                percentFreeSpace = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
+                Dim percentFreeSpace = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
                 Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
 
-                If (percentFreeSpace >= freeSpaceThresholdPercent) Then
-                    If m_DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now over " & freeSpaceThresholdPercent & "% of the total space")
+                If requiredFreeSpaceMB > 0 AndAlso freeSpaceMB < requiredFreeSpaceMB Then
+                    ' Required free space is known, and we're not yet there
+                    ' Keep deleting files
+                    If m_DebugLevel >= 2 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now " & freeSpaceThresholdPercent & "% of the total space")
                     End If
-                    Exit Sub
-                ElseIf m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now " & freeSpaceThresholdPercent & "% of the total space")
+                Else
+                    ' Either required free space is not known, or we have more than enough free space
+
+                    If (percentFreeSpace >= freeSpaceThresholdPercent) Then
+                        ' Target threshold reached
+                        If m_DebugLevel >= 1 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now over " & freeSpaceThresholdPercent & "% of the total space")
+                        End If
+                        Exit Sub
+                    ElseIf m_DebugLevel >= 2 Then
+                        ' Keep deleting until we reach the target threshold for free space
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) is now " & freeSpaceThresholdPercent & "% of the total space")
+                    End If
+                End If
+            Next
+
+            If m_DebugLevel >= 1 Then
+                Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+
+                If requiredFreeSpaceMB > 0 AndAlso freeSpaceMB < requiredFreeSpaceMB Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PurgeFastaFilesIfLowFreeSpace was not able to free up the required space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB vs. " & requiredFreeSpaceMB.ToString("#,##0") & " MB required)")
                 End If
 
-            Next
+            End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeFastaFilesIfLowFreeSpace", ex)
@@ -6507,8 +6596,34 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         Try
+            Dim proteinCollectionInfo = New clsProteinCollectionInfo(m_jobParams)
+
+            Dim requiredFreeSpaceMB as Double = 0
+
+            If proteinCollectionInfo.UsingLegacyFasta Then
+                ' Estimate the drive space required to download the fasta file and its associated MSGF+ the index files
+                requiredFreeSpaceMB = LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo)
+            End If
+
+            If Not udtHPCOptions.UsingHPC Then
+                ' Delete old fasta files and suffix array files if getting low on disk space
+                ' Do not delete any files related to the current Legacy Fasta file (if defined)
+
+                Const freeSpaceThresholdPercent = 20
+
+                Dim legacyFastaFileBaseName As String = String.Empty
+                If proteinCollectionInfo.UsingLegacyFasta AndAlso
+                    Not String.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) AndAlso
+                    Not proteinCollectionInfo.LegacyFastaName.ToLower() = "na" Then
+
+                    legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName)
+                End If
+
+                PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName)
+            End If
+
             ' Make a new fasta file from scratch
-            If Not CreateFastaFile(LocalOrgDBFolder) Then
+            If Not CreateFastaFile(proteinCollectionInfo, LocalOrgDBFolder) Then
                 ' There was a problem. Log entries in lower-level routines provide documentation
                 Return False
             End If
@@ -6524,7 +6639,7 @@ Public MustInherit Class clsAnalysisResources
             If Not udtHPCOptions.UsingHPC Then
                 ' Delete old fasta files and suffix array files if getting low on disk space
                 Const freeSpaceThresholdPercent = 20
-                PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent)
+                PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, 0, "")
             End If
 
         Catch ex As Exception

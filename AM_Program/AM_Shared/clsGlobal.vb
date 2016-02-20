@@ -345,7 +345,7 @@ Public Class clsGlobal
     ''' </summary>
     ''' <param name="sqlQuery">Query to run</param>
     ''' <param name="connectionString">Connection string</param>
-    ''' <param name="lstResults">Results (first row only if multiple rows)</param>
+    ''' <param name="lstResults">Results, as a list of columns (first row only if multiple rows)</param>
     ''' <param name="callingFunction">Name of the calling function (for logging purposes)</param>
     ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
     ''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>

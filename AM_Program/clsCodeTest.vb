@@ -108,11 +108,17 @@ Public Class clsCodeTest
     End Function
 
     Private Function GetResourcesObject(intDebugLevel As Integer) As clsResourceTestClass
-        Dim objResources = New clsResourceTestClass
 
         Dim objJobParams As IJobParams
         objJobParams = New clsAnalysisJob(m_mgrParams, 0)
 
+        Return GetResourcesObject(intDebugLevel, objJobParams)
+
+    End Function
+
+    Private Function GetResourcesObject(intDebugLevel As Integer, objJobParams As IJobParams) As clsResourceTestClass
+        Dim objResources = New clsResourceTestClass
+        
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
         Dim myEMSLUtilities As New clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY)
@@ -141,13 +147,13 @@ Public Class clsCodeTest
     ''' <remarks></remarks>
     Private Function InitializeManagerParams() As clsAnalysisJob
 
-        Dim intDebugLevel As Integer = 1
+        Dim intDebugLevel = 1
 
         Dim objJobParams As New clsAnalysisJob(m_mgrParams, 0)
 
         m_mgrParams.SetParam("workdir", "E:\DMS_WorkDir")
         m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test")
-        m_mgrParams.SetParam("debuglevel", "1")
+        m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString())
 
         objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool")
         objJobParams.SetParam("JobParameters", "ToolName", "TestTool")
@@ -491,7 +497,7 @@ Public Class clsCodeTest
 
     Public Sub TestDTASplit()
 
-        ''Const intDebugLevel As Integer = 2
+        ''Const intDebugLevel = 2
 
         ''Dim objJobParams = InitializeMgrAndJobParams(intDebugLevel)
         ''Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
@@ -672,6 +678,44 @@ Public Class clsCodeTest
 
     End Sub
 
+    Public Sub GetLegacyFastaFileSize()
+
+
+        Dim objJobParams As IJobParams
+        objJobParams = New clsAnalysisJob(m_mgrParams, 0)
+
+        objJobParams.SetParam("JobParameters", "ToolName", "MSGFPlus_SplitFasta")
+
+        objJobParams.SetParam("StepParameters", "Step", "50")
+
+        objJobParams.SetParam("ParallelMSGFPlus", "NumberOfClonedSteps", "25")
+        objJobParams.SetParam("ParallelMSGFPlus", "CloneStepRenumberStart", "50")
+        objJobParams.SetParam("ParallelMSGFPlus", "SplitFasta", "True")
+
+        objJobParams.SetParam("PeptideSearch", "legacyFastaFileName", "Uniprot_ArchaeaBacteriaFungi_SprotTrembl_2014-4-16.fasta")
+        objJobParams.SetParam("PeptideSearch", "OrganismName", "Combined_Organism_Rifle_SS")
+        objJobParams.SetParam("PeptideSearch", "ProteinCollectionList", "na")
+        objJobParams.SetParam("PeptideSearch", "ProteinOptions", "na")
+
+        Dim intDebugLevel = 2
+        Dim objResources = GetResourcesObject(intDebugLevel, objJobParams)
+
+        Dim proteinCollectionInfo = New clsProteinCollectionInfo(objJobParams)
+
+        Dim spaceRequiredMB = objResources.LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo)
+
+        Dim legacyFastaName As String
+
+        If proteinCollectionInfo.UsingSplitFasta Then
+            Dim errorMessage As String = String.Empty
+            legacyFastaName = clsAnalysisResources.GetSplitFastaFileName(objJobParams, errorMessage)
+        Else
+            legacyFastaName = proteinCollectionInfo.LegacyFastaName
+        End If
+
+        Console.WriteLine(legacyFastaName & " requires roughly " & spaceRequiredMB.ToString("#,##0") & " MB")
+    End Sub
+
     Public Sub TestRunQuery()
 
         Const sqlStr = "Select top 50 * from t_log_entries"
@@ -764,7 +808,7 @@ Public Class clsCodeTest
 
     Public Function TestUnzip(strZipFilePath As String, strOutFolderPath As String) As Boolean
 
-        Dim intDebugLevel As Integer = 2
+        Dim intDebugLevel = 2
 
         Dim objResources = GetResourcesObject(intDebugLevel)
 
@@ -810,7 +854,7 @@ Public Class clsCodeTest
 
     Public Function TestMALDIDataUnzip(strSourceDatasetFolder As String) As Boolean
 
-        Dim intDebugLevel As Integer = 2
+        Dim intDebugLevel = 2
 
         Dim objResources As New clsResourceTestClass
 
@@ -2008,7 +2052,7 @@ Public Class clsCodeTest
 
     Public Sub ValidateCentroided()
 
-        Const intDebugLevel As Integer = 2
+        Const intDebugLevel = 2
 
         Dim objResources As clsResourceTestClass
         objResources = GetResourcesObject(intDebugLevel)

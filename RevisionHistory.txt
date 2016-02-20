@@ -1,5 +1,8 @@
 Analysis Tool Manager History
 
+February 19, 2016
+	- Now purging old FASTA files before downloading the FASTA file for the current job
+
 February 17, 2016
 	- Refactored MyEMSL code into clsMyEMSLUtilities; shared by both clsAnalysisResources and clsAnalysisToolRunnerBase
 	- Updated IAnalysisResources and IToolRunner to require passing in an instance of clsMyEMSLUtilities
