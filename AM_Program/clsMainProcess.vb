@@ -186,9 +186,9 @@ Public Class clsMainProcess
 
         ' Setup the loggers
 
-        Dim logFileName = m_MgrSettings.GetParam("logfilename")
+        Dim logFileNameBase = m_MgrSettings.GetParam("logfilename")
 
-        clsLogTools.CreateFileLogger(logFileName)
+        clsLogTools.CreateFileLogger(logFileNameBase)
 
         Dim logCnStr = m_MgrSettings.GetParam("connectionstring")
 
@@ -196,7 +196,7 @@ Public Class clsMainProcess
         clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, False)
 
         ' Make the initial log entry
-        If Me.TraceMode Then ShowTraceMessage("Initializing log file " & LogFileName)
+        If Me.TraceMode Then ShowTraceMessage("Initializing log file " & clsLogTools.CurrentFileAppenderPath)
         
         Dim msg As String = "=== Started Analysis Manager V" & Application.ProductVersion & " ===== "
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg)

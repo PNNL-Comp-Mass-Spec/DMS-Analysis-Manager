@@ -24,6 +24,8 @@ Public Class clsLogTools
 #Region "Constants"
     Public Const DB_LOGGER_MGR_CONTROL = "MgrControlDbDefinedAppender"
     Public Const DB_LOGGER_NO_MGR_CONTROL_PARAMS = "DbAppenderBeforeMgrControlParams"
+
+    Private Const LOG_FILE_APPENDER = "FileAppender"
 #End Region
 
 #Region "Enums"
@@ -55,6 +57,22 @@ Public Class clsLogTools
 #End Region
 
 #Region "Properties"
+
+    ''' <summary>
+    ''' File path for the current log file used by the FileAppender
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Shared ReadOnly Property CurrentFileAppenderPath() As String
+        Get
+            If m_FileAppender Is Nothing OrElse String.IsNullOrEmpty(m_FileAppender.File) Then
+                Return String.Empty
+            End If
+            Return m_FileAppender.File
+        End Get
+    End Property
+
     ''' <summary>
     ''' Tells calling program file debug status
     ''' </summary>
@@ -132,23 +150,43 @@ Public Class clsLogTools
         Select Case logLevel
             Case LogLevels.DEBUG
                 If myLogger.IsDebugEnabled Then
-                    If ex Is Nothing Then myLogger.Debug(message) Else myLogger.Debug(message, ex)
+                    If ex Is Nothing Then
+                        myLogger.Debug(message)
+                    Else
+                        myLogger.Debug(message, ex)
+                    End If
                 End If
             Case LogLevels.ERROR
                 If myLogger.IsErrorEnabled Then
-                    If ex Is Nothing Then myLogger.Error(message) Else myLogger.Debug(message, ex)
+                    If ex Is Nothing Then
+                        myLogger.Error(message)
+                    Else
+                        myLogger.Debug(message, ex)
+                    End If
                 End If
             Case LogLevels.FATAL
                 If myLogger.IsFatalEnabled Then
-                    If ex Is Nothing Then myLogger.Fatal(message) Else myLogger.Debug(message, ex)
+                    If ex Is Nothing Then
+                        myLogger.Fatal(message)
+                    Else
+                        myLogger.Debug(message, ex)
+                    End If
                 End If
             Case LogLevels.INFO
                 If myLogger.IsInfoEnabled Then
-                    If ex Is Nothing Then myLogger.Info(message) Else myLogger.Debug(message, ex)
+                    If ex Is Nothing Then
+                        myLogger.Info(message)
+                    Else
+                        myLogger.Debug(message, ex)
+                    End If
                 End If
             Case LogLevels.WARN
                 If myLogger.IsWarnEnabled Then
-                    If ex Is Nothing Then myLogger.Warn(message) Else myLogger.Debug(message, ex)
+                    If ex Is Nothing Then
+                        myLogger.Warn(message)
+                    Else
+                        myLogger.Debug(message, ex)
+                    End If
                 End If
             Case Else
                 Throw New Exception("Invalid log level specified")
@@ -175,19 +213,20 @@ Public Class clsLogTools
     Public Shared Sub ChangeLogFileName(ByVal fileName As String)
 
         ' Get a list of appenders
-        Dim appendList As IEnumerable(Of IAppender) = FindAppenders("RollingFileAppender")
+        Dim appendList As IEnumerable(Of IAppender) = FindAppenders(LOG_FILE_APPENDER)
         If appendList Is Nothing Then
             WriteLog(LoggerTypes.LogSystem, LogLevels.WARN, "Unable to change file name. No appender found")
             Return
         End If
 
         For Each selectedAppender As IAppender In appendList
-            ' Convert the IAppender object to a RollingFileAppender
-            Dim AppenderToChange As RollingFileAppender = TryCast(selectedAppender, RollingFileAppender)
+            ' Convert the IAppender object to a FileAppender instance
+            Dim AppenderToChange As FileAppender = TryCast(selectedAppender, FileAppender)
             If AppenderToChange Is Nothing Then
                 WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender")
                 Return
             End If
+
             ' Change the file name and activate change
             AppenderToChange.File = fileName
             AppenderToChange.ActivateOptions()
@@ -269,11 +308,11 @@ Public Class clsLogTools
     ''' <summary>
     ''' Creates a file appender
     ''' </summary>
-    ''' <param name="logfileName">Log file name for the appender to use</param>
+    ''' <param name="logFileNameBase">Base name for log file</param>
     ''' <returns>A configured file appender</returns>
-    Private Shared Function CreateFileAppender(logfileName As String) As FileAppender
+    Private Shared Function CreateFileAppender(logFileNameBase As String) As FileAppender
         m_FileDate = DateTime.Now.ToString("MM-dd-yyyy")
-        m_BaseFileName = logfileName
+        m_BaseFileName = logFileNameBase
 
         Dim layout = New log4net.Layout.PatternLayout()
         layout.ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline"
@@ -282,7 +321,7 @@ Public Class clsLogTools
 
         Dim returnAppender = New FileAppender()
         With returnAppender
-            .Name = "FileAppender"
+            .Name = LOG_FILE_APPENDER
             .File = m_BaseFileName & "_" & m_FileDate & ".txt"
             .AppendToFile = True
             .Layout = layout
