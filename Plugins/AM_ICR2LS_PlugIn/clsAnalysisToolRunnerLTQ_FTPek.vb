@@ -73,7 +73,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 
         If blnSuccess Then
             If Not VerifyPEKFileExists(m_WorkDir, m_Dataset) Then
-                m_message = "ICR-2LS successfully finished but did not make a .Pek file not found; if all spectra are MS/MS use settings file TQ_FTPEK_ProcessMS2.txt"
+                m_message = "ICR-2LS successfully finished but did not make a .Pek file; if all spectra are MS/MS use settings file LTQ_FTPEK_ProcessMS2.txt"
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         Else
