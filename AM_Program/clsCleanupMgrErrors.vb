@@ -8,54 +8,57 @@ Public Class clsCleanupMgrErrors
 
 #Region "Constants"
 
-    Protected Const SP_NAME_REPORTMGRCLEANUP As String = "ReportManagerErrorCleanup"
-    Protected Const DEFAULT_HOLDOFF_SECONDS = 3
+    Private Const SP_NAME_REPORTMGRCLEANUP As String = "ReportManagerErrorCleanup"
+    Private Const DEFAULT_HOLDOFF_SECONDS = 3
 
-	Public Const FLAG_FILE_NAME As String = "flagFile.txt"
-	Public Const DECON_SERVER_FLAG_FILE_NAME As String = "flagFile_Svr.txt"
-	Public Const ERROR_DELETING_FILES_FILENAME As String = "Error_Deleting_Files_Please_Delete_Me.txt"
+    Public Const FLAG_FILE_NAME As String = "flagFile.txt"
+    Public Const DECON_SERVER_FLAG_FILE_NAME As String = "flagFile_Svr.txt"
+    Public Const ERROR_DELETING_FILES_FILENAME As String = "Error_Deleting_Files_Please_Delete_Me.txt"
 
-	Public Enum eCleanupModeConstants
-		Disabled = 0
-		CleanupOnce = 1
-		CleanupAlways = 2
-	End Enum
+    Public Enum eCleanupModeConstants
+        Disabled = 0
+        CleanupOnce = 1
+        CleanupAlways = 2
+    End Enum
 
-	Public Enum eCleanupActionCodeConstants
-		Start = 1
-		Success = 2
-		Fail = 3
+    Public Enum eCleanupActionCodeConstants
+        Start = 1
+        Success = 2
+        Fail = 3
     End Enum
 
 #End Region
 
 #Region "Class wide Variables"
-	Protected mInitialized As Boolean = False
+    Private ReadOnly mInitialized As Boolean = False
 
-	Protected mMgrConfigDBConnectionString As String = String.Empty
-	Protected mManagerName As String = String.Empty
+    Private ReadOnly mMgrConfigDBConnectionString As String = String.Empty
+    Private ReadOnly mManagerName As String = String.Empty
+    Private ReadOnly mDebugLevel As Integer
 
-	Protected mMgrFolderPath As String = String.Empty
-	Protected mWorkingDirPath As String = String.Empty
+    Private ReadOnly mMgrFolderPath As String = String.Empty
+    Private ReadOnly mWorkingDirPath As String = String.Empty
 
 #End Region
 
     Public Sub New(
-       strMgrConfigDBConnectionString As String,
-       strManagerName As String,
-       strMgrFolderPath As String,
-       strWorkingDirPath As String)
+       mgrConfigDBConnectionString As String,
+       managerName As String,
+       debugLevel As Integer,
+       mgrFolderPath As String,
+       workingDirPath As String)
 
-        If String.IsNullOrEmpty(strMgrConfigDBConnectionString) Then
+        If String.IsNullOrEmpty(mgrConfigDBConnectionString) Then
             Throw New Exception("Manager config DB connection string is not defined")
-        ElseIf String.IsNullOrEmpty(strManagerName) Then
+        ElseIf String.IsNullOrEmpty(managerName) Then
             Throw New Exception("Manager name is not defined")
         Else
-            mMgrConfigDBConnectionString = String.Copy(strMgrConfigDBConnectionString)
-            mManagerName = String.Copy(strManagerName)
+            mMgrConfigDBConnectionString = String.Copy(mgrConfigDBConnectionString)
+            mManagerName = String.Copy(managerName)
+            mDebugLevel = debugLevel
 
-            mMgrFolderPath = strMgrFolderPath
-            mWorkingDirPath = strWorkingDirPath
+            mMgrFolderPath = mgrFolderPath
+            mWorkingDirPath = workingDirPath
 
             mInitialized = True
         End If
@@ -131,17 +134,6 @@ Public Class clsCleanupMgrErrors
         Return CleanWorkDir(mWorkingDirPath, DEFAULT_HOLDOFF_SECONDS)
     End Function
 
-
-    ''' <summary>
-    ''' Deletes all files in working directory (using a 3 second holdoff after calling GC.Collect via PRISM.Processes.clsProgRunner.GarbageCollectNow)
-    ''' </summary>
-    ''' <param name="WorkDir">Full path to working directory</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Public Shared Function CleanWorkDir(workDir As String) As Boolean
-        Return CleanWorkDir(workDir, DEFAULT_HOLDOFF_SECONDS)
-    End Function
-
     ''' <summary>
     ''' Deletes all files in working directory
     ''' </summary>
@@ -149,7 +141,7 @@ Public Class clsCleanupMgrErrors
     ''' <param name="HoldoffSeconds">Number of seconds to wait after calling PRISM.Processes.clsProgRunner.GarbageCollectNow()</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Public Shared Function CleanWorkDir(workDir As String, holdoffSeconds As Single) As Boolean
+    Private Function CleanWorkDir(workDir As String, holdoffSeconds As Single) As Boolean
 
         Dim diWorkFolder As DirectoryInfo
         Dim holdoffMilliseconds As Integer
@@ -178,45 +170,28 @@ Public Class clsCleanupMgrErrors
 
     End Function
 
-    Protected Shared Function DeleteFilesWithRetry(diWorkFolder As DirectoryInfo) As Boolean
+    Private Function DeleteFilesWithRetry(diWorkFolder As DirectoryInfo) As Boolean
+
+        Const DELETE_RETRY_COUNT = 3
 
         Dim failedDeleteCount = 0
+        Dim oFileTools = New PRISM.Files.clsFileTools(mManagerName, mDebugLevel)
 
-        'Delete the files
+        ' Delete the files
         Try
             For Each fiFile In diWorkFolder.GetFiles()
-                Try
-                    fiFile.Delete()
-                Catch ex As Exception
-                    If clsGlobal.IsVimSwapFile(fiFile.Name) Then
-                        ' Ignore this error
-                        Continue For
-                    End If
 
-                    ' Make sure the readonly bit is not set
-                    If (fiFile.IsReadOnly) Then
-                        Dim attributes = fiFile.Attributes
-                        fiFile.Attributes = attributes And (Not FileAttributes.ReadOnly)
+                Dim errorMessage As String = String.Empty
 
-                        Try
-                            ' Retry the delete
-                            fiFile.Delete()
-                        Catch ex2 As Exception
-                            Dim strFailureMessage As String = "Error deleting file " & fiFile.FullName & ": " & ex2.Message
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
-                            Console.WriteLine(strFailureMessage)
-                            failedDeleteCount += 1
-                        End Try
-                    Else
-                        Dim strFailureMessage As String = "Error deleting file " & fiFile.FullName & ": " & ex.Message
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage)
-                        Console.WriteLine(strFailureMessage)
-                        failedDeleteCount += 1
-                    End If
-                End Try
+                If Not oFileTools.DeleteFileWithRetry(fiFile, DELETE_RETRY_COUNT, errorMessage) Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+                    Console.WriteLine(errorMessage)
+                    failedDeleteCount += 1
+                End If
+
             Next
 
-            'Delete the sub directories
+            ' Delete the sub directories
             For Each diSubDirectory In diWorkFolder.GetDirectories
                 If DeleteFilesWithRetry(diSubDirectory) Then
                     ' Remove the folder if it is empty
@@ -227,17 +202,17 @@ Public Class clsCleanupMgrErrors
                         Catch ex As IOException
                             ' Try re-applying the permissions							
 
-                            Dim FolderAcl As New DirectorySecurity
+                            Dim folderAcl As New DirectorySecurity
                             Dim currentUser = Environment.UserDomainName & "\" & Environment.UserName
 
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "IOException deleting " & diSubDirectory.FullName & "; will try granting modify access to user " & currentUser)
-                            FolderAcl.AddAccessRule(New FileSystemAccessRule(currentUser, FileSystemRights.Modify, InheritanceFlags.ContainerInherit Or InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow))
+                            folderAcl.AddAccessRule(New FileSystemAccessRule(currentUser, FileSystemRights.Modify, InheritanceFlags.ContainerInherit Or InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow))
 
                             Try
-                                ' To remove existing permissions, use this: FolderAcl.SetAccessRuleProtection(True, False) 
+                                ' To remove existing permissions, use this: folderAcl.SetAccessRuleProtection(True, False) 
 
                                 ' Add the new access rule
-                                diSubDirectory.SetAccessControl(FolderAcl)
+                                diSubDirectory.SetAccessControl(folderAcl)
 
                                 ' Make sure the readonly flag is not set (it's likely not even possible for a folder to have a readonly flag set, but it doesn't hurt to check)
                                 diSubDirectory.Refresh()
@@ -354,7 +329,7 @@ Public Class clsCleanupMgrErrors
     ''' <param name="strFlagFilePath">Full path to the file to delete</param>
     ''' <returns>True if no flag file exists or if file was successfully deleted</returns>
     ''' <remarks></remarks>
-    Protected Function DeleteFlagFile(strFlagFilePath As String, intDebugLevel As Integer) As Boolean
+    Private Function DeleteFlagFile(strFlagFilePath As String, intDebugLevel As Integer) As Boolean
 
         Try
             If File.Exists(strFlagFilePath) Then
@@ -453,11 +428,11 @@ Public Class clsCleanupMgrErrors
 
     End Sub
 
-    Protected Sub ReportManagerErrorCleanup(eMgrCleanupActionCode As eCleanupActionCodeConstants)
+    Private Sub ReportManagerErrorCleanup(eMgrCleanupActionCode As eCleanupActionCodeConstants)
         ReportManagerErrorCleanup(eMgrCleanupActionCode, String.Empty)
     End Sub
 
-    Protected Sub ReportManagerErrorCleanup(eMgrCleanupActionCode As eCleanupActionCodeConstants, strFailureMessage As String)
+    Private Sub ReportManagerErrorCleanup(eMgrCleanupActionCode As eCleanupActionCodeConstants, strFailureMessage As String)
 
         Dim MyConnection As SqlClient.SqlConnection
         Dim MyCmd As New SqlClient.SqlCommand
@@ -498,8 +473,13 @@ Public Class clsCleanupMgrErrors
             MyCmd.ExecuteNonQuery()
 
         Catch ex As Exception
-            If mMgrConfigDBConnectionString Is Nothing Then mMgrConfigDBConnectionString = String.Empty
-            Dim strErrorMessage As String = "Exception calling " & SP_NAME_REPORTMGRCLEANUP & " in ReportManagerErrorCleanup with connection string " & mMgrConfigDBConnectionString
+            Dim strErrorMessage As String
+            If mMgrConfigDBConnectionString Is Nothing Then
+                strErrorMessage = "Exception calling " & SP_NAME_REPORTMGRCLEANUP & " in ReportManagerErrorCleanup; empty connection string"
+            Else
+                strErrorMessage = "Exception calling " & SP_NAME_REPORTMGRCLEANUP & " in ReportManagerErrorCleanup with connection string " & mMgrConfigDBConnectionString
+            End If
+
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage & ex.Message)
         End Try
 
