@@ -1899,7 +1899,7 @@ Public Class clsAnalysisToolRunnerBase
                     End If
                 End If
 
-                If OkToMove AndAlso clsGlobal.IsVimSwapFile(tmpFileName) Then
+                If OkToMove AndAlso PRISM.Files.clsFileTools.IsVimSwapFile(tmpFileName) Then
                     ' VIM swap file; skip it
                     OkToMove = False
                 End If

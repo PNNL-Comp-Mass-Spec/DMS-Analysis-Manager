@@ -110,7 +110,7 @@ Public Class clsMainProcess
         m_NeedToAbortProcessing = False
         m_MostRecentJobInfo = String.Empty
 
-        Dim fiMgr As FileInfo = New FileInfo(Application.ExecutablePath)
+        Dim fiMgr = New FileInfo(Application.ExecutablePath)
         m_MgrFolderPath = fiMgr.DirectoryName
 
     End Sub
@@ -232,6 +232,7 @@ Public Class clsMainProcess
         m_MgrErrorCleanup = New clsCleanupMgrErrors(
            m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING),
            m_MgrName,
+           m_DebugLevel,
            m_MgrFolderPath,
            m_WorkDirPath)
 
@@ -828,7 +829,7 @@ Public Class clsMainProcess
             Else
                 ' Clean the working directory
                 Try
-                    If Not clsCleanupMgrErrors.CleanWorkDir(m_WorkDirPath, 1) Then
+                    If Not m_MgrErrorCleanup.CleanWorkDir(1) Then
                         If Me.TraceMode Then ShowTraceMessage("Error cleaning working directory; closing job step task")
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job"))
                         m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
@@ -1902,8 +1903,7 @@ Public Class clsMainProcess
         If (tmpDirArray.Length = 0) And (tmpFilArray.Length = 1) Then
             ' If the only file in the working directory is a JobParameters xml file,
             '  then try to delete it, since it's likely left over from a previous job that never actually started
-            Dim strFileToCheck As String
-            strFileToCheck = Path.GetFileName(tmpFilArray(0))
+            Dim strFileToCheck = Path.GetFileName(tmpFilArray(0))
 
             If strFileToCheck.StartsWith(clsGlobal.XML_FILENAME_PREFIX) AndAlso
                strFileToCheck.EndsWith(clsGlobal.XML_FILENAME_EXTENSION) Then
@@ -1928,7 +1928,7 @@ Public Class clsMainProcess
             Return True
         End If
 
-        Dim errorCount = tmpFilArray.Count(Function(filePath) Not clsGlobal.IsVimSwapFile(filePath))
+        Dim errorCount = tmpFilArray.Count(Function(filePath) Not Files.clsFileTools.IsVimSwapFile(filePath))
 
         If errorCount = 0 Then
             ' No problems found

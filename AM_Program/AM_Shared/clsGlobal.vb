@@ -546,23 +546,6 @@ Public Class clsGlobal
     End Function
 
     ''' <summary>
-    ''' Returns true if the file is _.swp or starts with a . and ends with .swp
-    ''' </summary>
-    ''' <param name="filePath"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function IsVimSwapFile(filePath As String) As Boolean
-
-        Dim fileName = Path.GetFileName(filePath)
-
-        If fileName.ToLower() = "_.swp" OrElse fileName.StartsWith(".") AndAlso fileName.ToLower().EndsWith(".swp") Then
-            Return True
-        Else
-            Return False
-        End If
-    End Function
-
-    ''' <summary>
     ''' Parses the headers in strHeaderLine to look for the names specified in lstHeaderNames
     ''' </summary>
     ''' <param name="strHeaderLine"></param>
