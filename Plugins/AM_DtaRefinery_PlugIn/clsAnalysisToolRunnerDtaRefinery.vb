@@ -127,7 +127,35 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         Dim success = CmdRunner.RunProgram(strBatchFilePath, String.Empty, "DTARefinery", True)
 
         If Not success Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running DTARefinery, job " & m_JobNum)
+
+            Thread.Sleep(500)
+
+            ' Open DTARefinery_Console_Output.txt and look for the last line with the text "error"
+            Dim fiConsoleOutputFile = New FileInfo(Path.Combine(m_WorkDir, strConsoleOutputFileName))
+            Dim consoleOutputErrorMessage = String.Empty
+
+            If fiConsoleOutputFile.Exists Then
+                Using consoleOutputReader = New StreamReader(New FileStream(fiConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    While Not consoleOutputReader.EndOfStream
+                        Dim dataLine = consoleOutputReader.ReadLine()
+                        If String.IsNullOrWhiteSpace(dataLine) Then
+                            Continue While
+                        End If
+
+                        If dataLine.IndexOf("error", StringComparison.InvariantCultureIgnoreCase) >= 0 Then
+                            consoleOutputErrorMessage = String.Copy(dataLine)
+                        End If
+                    End While
+                End Using
+
+            End If
+
+            m_message = "Error running DTARefinery"
+            If Not String.IsNullOrWhiteSpace(consoleOutputErrorMessage) Then
+                m_message &= ": " & consoleOutputErrorMessage
+            End If
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 
             ValidateDTARefineryLogFile()
 
