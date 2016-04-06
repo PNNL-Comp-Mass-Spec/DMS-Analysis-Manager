@@ -8,6 +8,7 @@
 
 Option Strict On
 
+Imports System.Diagnostics.Eventing.Reader
 Imports System.IO
 Imports System.Threading
 Imports System.Runtime.InteropServices
@@ -178,7 +179,7 @@ Public Class clsAnalysisToolRunnerBase
         mProgRunnerStartTime = DateTime.UtcNow
         mCoreUsageHistory = New Queue(Of KeyValuePair(Of DateTime, Single))
     End Sub
-    
+
     ''' <summary>
     ''' Initializes class
     ''' </summary>
@@ -203,12 +204,12 @@ Public Class clsAnalysisToolRunnerBase
         m_JobNum = m_jobParams.GetParam("StepParameters", "Job")
         m_Dataset = m_jobParams.GetParam("JobParameters", "DatasetNum")
 
-		If myEMSLUtilities Is Nothing Then
+        If myEMSLUtilities Is Nothing Then
             m_MyEMSLUtilities = New clsMyEMSLUtilities(m_DebugLevel, m_WorkDir)
         Else
             m_MyEMSLUtilities = myEMSLUtilities
         End If
-        
+
         AddHandler m_MyEMSLUtilities.ErrorEvent, AddressOf m_MyEMSLUtilities_ErrorEvent
         AddHandler m_MyEMSLUtilities.WarningEvent, AddressOf m_MyEMSLUtilities_WarningEvent
 
@@ -1232,7 +1233,7 @@ Public Class clsAnalysisToolRunnerBase
         Return progLoc
 
     End Function
-    
+
     ''' <summary>
     ''' Gets the dictionary for the packed job parameter
     ''' </summary>
@@ -1465,40 +1466,120 @@ Public Class clsAnalysisToolRunnerBase
     ''' Determines the folder that contains R.exe and Rcmd.exe (queries the registry)
     ''' </summary>
     ''' <returns>Folder path, e.g. C:\Program Files\R\R-3.2.2\bin\x64</returns>
-    Protected Function GetRPathFromWindowsRegistry() As String
+    ''' <remarks>This function is public because it is used by the Cyclops test harness program</remarks>
+    Public Function GetRPathFromWindowsRegistry() As String
+
         Const RCORE_SUBKEY = "SOFTWARE\R-core"
 
-        Dim regRCore As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(RCORE_SUBKEY)
-        If regRCore Is Nothing Then
-            LogError("Registry key is not found: " & RCORE_SUBKEY)
+        Try
+
+            Dim regRCore = Microsoft.Win32.Registry.LocalMachine.OpenSubKey("SOFTWARE\R-core")
+            If regRCore Is Nothing Then
+                ' Local machine SOFTWARE\R-core not found; try current user
+                regRCore = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE\R-core")
+                If regRCore Is Nothing Then
+                    LogError("Windows Registry key'" + RCORE_SUBKEY + " not found in HKEY_LOCAL_MACHINE nor HKEY_CURRENT_USER")
+                    Return String.Empty
+                End If
+            End If
+
+            Dim is64Bit As Boolean = Environment.Is64BitProcess
+            Dim sRSubKey As String = If(is64Bit, "R64", "R")
+            Dim regR As Microsoft.Win32.RegistryKey = regRCore.OpenSubKey(sRSubKey)
+            If regR Is Nothing Then
+                LogError("Registry key is not found: " & RCORE_SUBKEY + "\" & sRSubKey)
+                Return String.Empty
+            End If
+
+            Dim currentVersionText = DirectCast(regR.GetValue("Current Version"), String)
+
+            Dim installPath As String
+            Dim bin As String
+
+            If String.IsNullOrEmpty(currentVersionText) Then
+                If regR.SubKeyCount = 0 Then
+                    LogError("Unable to determine the R Path: " & RCORE_SUBKEY & "\" & sRSubKey & " has no subkeys")
+                    Return String.Empty
+                End If
+
+                ' Find the newest subkey
+                Dim subKeys = regR.GetSubKeyNames().ToList()
+                subKeys.Sort()
+                subKeys.Reverse()
+
+                Dim newestSubkey = subKeys.FirstOrDefault()
+
+                Dim regRNewest As Microsoft.Win32.RegistryKey = regR.OpenSubKey(newestSubkey)
+                installPath = DirectCast(regRNewest.GetValue("InstallPath"), String)
+                If String.IsNullOrEmpty(installPath) Then
+                    LogError("Unable to determine the R Path: " & newestSubkey & " does not have key InstallPath")
+                    Return String.Empty
+                End If
+
+                bin = Path.Combine(installPath, "bin")
+            Else
+
+                installPath = DirectCast(regR.GetValue("InstallPath"), String)
+                If String.IsNullOrEmpty(installPath) Then
+                    LogError("Unable to determine the R Path: " & RCORE_SUBKEY + "\" & sRSubKey & " does not have key InstallPath")
+                    Return String.Empty
+                End If
+
+                bin = Path.Combine(installPath, "bin")
+
+                ' If version is of the form "3.2.3" (for Major.Minor.Build)
+                ' we can directly instantiate a new Version object from the string
+
+                ' However, in 2016 R version "3.2.4 Revised" was released, and that
+                ' string cannot be directly used to instantiate a new Version object
+
+                ' The following checks for this and removes any non-numeric characters
+                ' (though it requires that the Major version be an integer)
+
+                Dim versionParts = currentVersionText.Split("."c)
+                Dim reconstructVersion = False
+
+                Dim currentVersion As Version
+
+                If currentVersionText.Length <= 1 Then
+                    currentVersion = New Version(currentVersionText)
+                Else
+                    Dim nonNumericChars = New Regex("[^0-9]+", RegexOptions.Compiled)
+
+                    For i = 1 To versionParts.Length - 1
+                        If nonNumericChars.IsMatch(versionParts(i)) Then
+                            versionParts(i) = nonNumericChars.Replace(versionParts(i), String.Empty)
+                            reconstructVersion = True
+                        End If
+                    Next
+
+                    If reconstructVersion Then
+                        currentVersion = New Version(String.Join(".", versionParts))
+                    Else
+                        currentVersion = New Version(currentVersionText)
+                    End If
+
+                End If
+
+                ' Up to 2.11.x, DLLs are installed in R_HOME\bin
+                ' From 2.12.0, DLLs are installed in either i386 or x64 (or both) below the bin folder
+                ' The bin folder has an R.exe file but it does not have Rcmd.exe or R.dll
+                If currentVersion < New Version(2, 12) Then
+                    Return bin
+                End If
+            End If
+
+            If is64Bit Then
+                Return Path.Combine(bin, "x64")
+            Else
+                Return Path.Combine(bin, "i386")
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception in GetRPathFromWindowsRegistry"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
             Return String.Empty
-        End If
-
-        Dim is64Bit As Boolean = Environment.Is64BitProcess
-        Dim sRSubKey As String = If(is64Bit, "R64", "R")
-        Dim regR As Microsoft.Win32.RegistryKey = regRCore.OpenSubKey(sRSubKey)
-        If regR Is Nothing Then
-            LogError("Registry key is not found: " & RCORE_SUBKEY + "\" & sRSubKey)
-            Return String.Empty
-        End If
-
-        Dim currentVersion = New Version(DirectCast(regR.GetValue("Current Version"), String))
-        Dim installPath = DirectCast(regR.GetValue("InstallPath"), String)
-
-        Dim bin As String = Path.Combine(installPath, "bin")
-
-        ' Up to 2.11.x, DLLs are installed in R_HOME\bin
-        ' From 2.12.0, DLLs are installed in either i386 or x64 (or both) below the bin folder
-        ' The bin folder has an R.exe file but it does not have Rcmd.exe or R.dll
-        If currentVersion < New Version(2, 12) Then
-            Return bin
-        End If
-
-        If is64Bit Then
-            Return Path.Combine(bin, "x64")
-        Else
-            Return Path.Combine(bin, "i386")
-        End If
+        End Try
 
     End Function
 
@@ -3608,7 +3689,7 @@ Public Class clsAnalysisToolRunnerBase
     Private Sub mSortUtility_WarningEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SortUtility: " & e.Message)
     End Sub
-    
+
     Private Sub m_MyEMSLUtilities_ErrorEvent(strMessage As String)
         m_message = strMessage
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
