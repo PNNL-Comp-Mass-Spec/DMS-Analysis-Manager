@@ -40,8 +40,8 @@
       <HintPath>..\..\AM_Common\Cyclops.dll</HintPath>
     </Reference>
     <Reference Include="DynamicInterop, Version=0.7.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\AM_Program\packages\DynamicInterop.0.7.4\lib\net40\DynamicInterop.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\DynamicInterop.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
@@ -71,9 +71,6 @@
     <Compile Include="clsAnalysisResourcesCyclops.cs" />
     <Compile Include="clsAnalysisToolRunnerCyclops.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
