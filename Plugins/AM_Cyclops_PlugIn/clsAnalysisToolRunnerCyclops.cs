@@ -19,7 +19,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 			{
 				bool blnSuccess;
 
-				//Do the base class stuff
+				// Do the base class stuff
 				if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
 				{
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
@@ -67,50 +67,69 @@ namespace AnalysisManager_Cyclops_PlugIn
 					{"orgdbdir", m_mgrParams.GetParam("orgdbdir")}
 				};
 
-				//Change the name of the log file for the local log file to the plug in log filename
-				var LogFileName = Path.Combine(m_WorkDir, "Cyclops_Log");
-				log4net.GlobalContext.Properties["LogName"] = LogFileName;
-				clsLogTools.ChangeLogFileName(LogFileName);
+
+			    // Change the name of the log file for the local log file to the plug in log filename
+				var cyclopsLogFile = Path.Combine(m_WorkDir, "Cyclops_Log.txt");
+                log4net.GlobalContext.Properties["LogName"] = cyclopsLogFile;
+                clsLogTools.ChangeLogFileName(cyclopsLogFile);
 
 				try
 				{
 
                     var cyclops = new CyclopsController(d_Params);
+                    
+                    // This is blank; don't show at console: cyclops.OperationsDatabasePath
+                    // This is blank; don't show at console: cyclops.WorkFlowFileName                    
+                    Console.WriteLine("WorkingDirectory: " + cyclops.WorkingDirectory);
+
+				    Console.WriteLine("Parameters:");
+				    foreach (var entry in cyclops.Parameters)
+				    {
+                        Console.WriteLine("  " + entry.Key + ": " + entry.Value);
+				    }
+				    
 					blnSuccess = cyclops.Run();
 
-					//Change the name of the log file for the local log file to the plug in log filename
-					LogFileName = m_mgrParams.GetParam("logfilename");
-					log4net.GlobalContext.Properties["LogName"] = LogFileName;
-					clsLogTools.ChangeLogFileName(LogFileName);
+					//Change the name of the log file for the local log file to the plugin log filename
+					var logFilePath = m_mgrParams.GetParam("logfilename");
+					log4net.GlobalContext.Properties["LogName"] = logFilePath;
+					clsLogTools.ChangeLogFileName(logFilePath);
 
 				}
 				catch (Exception ex)
 				{
-					//Change the name of the log file for the local log file to the plug in log filename
-					LogFileName = m_mgrParams.GetParam("logfilename");
-					log4net.GlobalContext.Properties["LogName"] = LogFileName;
-					clsLogTools.ChangeLogFileName(LogFileName);
+					//Change the name of the log file for the local log file to the plugin log filename
+					var logFilePath = m_mgrParams.GetParam("logfilename");
+					log4net.GlobalContext.Properties["LogName"] = logFilePath;
+					clsLogTools.ChangeLogFileName(logFilePath);
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Cyclops: " + ex.Message);
+					LogError("Error running Cyclops: " + ex.Message);
 					blnSuccess = false;
 				}
   
-				//Stop the job timer
+				// Stop the job timer
 				m_StopTime = DateTime.UtcNow;
 				m_progress = PROGRESS_PCT_CYCLOPS_DONE;
 
-				//Add the current job data to the summary file
+				// Add the current job data to the summary file
 				if (!UpdateSummaryFile())
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
 				}
 
-				//Make sure objects are released
-				//2 second delay
-				System.Threading.Thread.Sleep(2000);
+				// Make sure objects are released
+				System.Threading.Thread.Sleep(500);
 				PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
-				if (!blnSuccess)
+                // Delete the log file if it is empty
+                var fiCyclopsLogFile = new FileInfo(cyclopsLogFile);
+			    if (fiCyclopsLogFile.Exists && fiCyclopsLogFile.Length == 0)
+			    {
+			        string errorMessage;
+			        m_FileTools.DeleteFileWithRetry(fiCyclopsLogFile, out errorMessage);
+			    }
+
+			    if (!blnSuccess)
 				{
 					// Move the source files and any results to the Failed Job folder
 					// Useful for debugging MultiAlign problems

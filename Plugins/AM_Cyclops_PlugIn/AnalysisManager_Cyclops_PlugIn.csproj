@@ -39,6 +39,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\Cyclops.dll</HintPath>
     </Reference>
+    <Reference Include="DynamicInterop, Version=0.7.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\AM_Program\packages\DynamicInterop.0.7.4\lib\net40\DynamicInterop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
@@ -68,12 +72,17 @@
     <Compile Include="clsAnalysisToolRunnerCyclops.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
 copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin"
-copy "$(TargetDir)RDotNet*.dll" "$(ProjectDir)..\..\AM_Program\bin"
-copy "$(TargetDir)Cyclops.dll" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
+xcopy "$(TargetDir)RDotNet*.dll" "$(ProjectDir)..\..\AM_Program\bin" /D /y
+xcopy "$(TargetDir)Cyclops.dll" "$(ProjectDir)..\..\AM_Program\bin" /D /y
+xcopy "$(TargetDir)DynamicInterop.dll" "$(ProjectDir)..\..\AM_Program\bin" /D /y
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
