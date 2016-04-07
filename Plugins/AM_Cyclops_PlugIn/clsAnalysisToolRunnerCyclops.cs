@@ -7,35 +7,40 @@ using Cyclops;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {
-    public class clsAnalysisToolRunnerCyclops: clsAnalysisToolRunnerBase
+    public class clsAnalysisToolRunnerCyclops : clsAnalysisToolRunnerBase
     {
 
-		protected const float PROGRESS_PCT_CYCLOPS_START = 5;
-		protected const float PROGRESS_PCT_CYCLOPS_DONE = 95;
+        private const float PROGRESS_PCT_CYCLOPS_START = 5;
+        private const float PROGRESS_PCT_CYCLOPS_DONE = 95;
+
+        private const string INITIALIZING_LOG_FILE = "Initializing the Cyclops Controller";
+
+        private StreamWriter mCyclopsLogWriter;
 
         public override IJobParams.CloseOutType RunTool()
         {
-			try 
-			{
-				bool blnSuccess;
 
-				// Do the base class stuff
-				if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-				{
-					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-				}
+            try
+            {
+                bool blnSuccess;
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Cyclops");
-				m_progress = PROGRESS_PCT_CYCLOPS_START;
+                // Do the base class stuff
+                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Cyclops");
+                m_progress = PROGRESS_PCT_CYCLOPS_START;
                 UpdateStatusRunning();
 
 
-				if (m_DebugLevel > 4)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerApe.RunTool(): Enter");
-				}            
-           
-				// Store the Cyclops version info in the database
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerApe.RunTool(): Enter");
+                }
+
+                // Store the Cyclops version info in the database
                 if (!StoreToolVersionInfo())
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
@@ -43,19 +48,19 @@ namespace AnalysisManager_Cyclops_PlugIn
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-				// Determine the path to R
-				var rProgLocFromRegistry = GetRPathFromWindowsRegistry();
+                // Determine the path to R
+                var rProgLocFromRegistry = GetRPathFromWindowsRegistry();
                 if (string.IsNullOrEmpty(rProgLocFromRegistry))
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
                 if (!Directory.Exists(rProgLocFromRegistry))
-				{
-					m_message = "R folder not found (path determined from the Windows Registry)";
+                {
+                    m_message = "R folder not found (path determined from the Windows Registry)";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + rProgLocFromRegistry);
-					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-				}
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
 
-				var d_Params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                var d_Params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 				{
 					{"Job", m_jobParams.GetParam("Job")},
 					{"RDLL", rProgLocFromRegistry},
@@ -68,122 +73,197 @@ namespace AnalysisManager_Cyclops_PlugIn
 				};
 
 
-			    // Change the name of the log file for the local log file to the plug in log filename
-				var cyclopsLogFile = Path.Combine(m_WorkDir, "Cyclops_Log.txt");
-                log4net.GlobalContext.Properties["LogName"] = cyclopsLogFile;
-                clsLogTools.ChangeLogFileName(cyclopsLogFile);
+                // Create the cyclops log file
+                // This class will write messages to the log file
+                var cyclopsLogFile = Path.Combine(m_WorkDir, "Cyclops_Log.txt");
+                mCyclopsLogWriter = new StreamWriter(new FileStream(cyclopsLogFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                {
+                    AutoFlush = true
+                };
 
-				try
-				{
+                try
+                {
+                    AppendToCyclopsLog(INITIALIZING_LOG_FILE);
 
                     var cyclops = new CyclopsController(d_Params);
-                    
-                    // This is blank; don't show at console: cyclops.OperationsDatabasePath
-                    // This is blank; don't show at console: cyclops.WorkFlowFileName                    
-                    Console.WriteLine("WorkingDirectory: " + cyclops.WorkingDirectory);
 
-				    Console.WriteLine("Parameters:");
-				    foreach (var entry in cyclops.Parameters)
-				    {
-                        Console.WriteLine("  " + entry.Key + ": " + entry.Value);
-				    }
-				    
-					blnSuccess = cyclops.Run();
+                    cyclops.ErrorEvent += cyclops_ErrorEvent;
+                    cyclops.WarningEvent += cyclops_WarningEvent;
+                    cyclops.MessageEvent += cyclops_MessageEvent;
 
-					//Change the name of the log file for the local log file to the plugin log filename
-					var logFilePath = m_mgrParams.GetParam("logfilename");
-					log4net.GlobalContext.Properties["LogName"] = logFilePath;
-					clsLogTools.ChangeLogFileName(logFilePath);
+                    // Don't log these:
+                    // cyclops.OperationsDatabasePath (always blank)
+                    // cyclops.WorkFlowFileName       (always blank)
+                    // cyclops.WorkingDirectory       (different for each manager)
 
-				}
-				catch (Exception ex)
-				{
-					//Change the name of the log file for the local log file to the plugin log filename
-					var logFilePath = m_mgrParams.GetParam("logfilename");
-					log4net.GlobalContext.Properties["LogName"] = logFilePath;
-					clsLogTools.ChangeLogFileName(logFilePath);
+                    AppendToCyclopsLog("Parameters:");
+                    foreach (var entry in cyclops.Parameters)
+                    {
+                        AppendToCyclopsLog("  " + entry.Key + ": " + entry.Value);
+                    }
 
-					LogError("Error running Cyclops: " + ex.Message);
-					blnSuccess = false;
-				}
-  
-				// Stop the job timer
-				m_StopTime = DateTime.UtcNow;
-				m_progress = PROGRESS_PCT_CYCLOPS_DONE;
+                    blnSuccess = cyclops.Run();
 
-				// Add the current job data to the summary file
-				if (!UpdateSummaryFile())
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-				}
+                }
+                catch (Exception ex)
+                {
+                    AppendToCyclopsLog("Error running Cyclops: " + ex.Message);
+                    LogError("Error running Cyclops: " + ex.Message);
+                    blnSuccess = false;
+                }
 
-				// Make sure objects are released
-				System.Threading.Thread.Sleep(500);
-				PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                mCyclopsLogWriter.Close();
 
-                // Delete the log file if it is empty
-                var fiCyclopsLogFile = new FileInfo(cyclopsLogFile);
-			    if (fiCyclopsLogFile.Exists && fiCyclopsLogFile.Length == 0)
-			    {
-			        string errorMessage;
-			        m_FileTools.DeleteFileWithRetry(fiCyclopsLogFile, out errorMessage);
-			    }
+                // Stop the job timer
+                m_StopTime = DateTime.UtcNow;
+                m_progress = PROGRESS_PCT_CYCLOPS_DONE;
 
-			    if (!blnSuccess)
-				{
-					// Move the source files and any results to the Failed Job folder
-					// Useful for debugging MultiAlign problems
-					CopyFailedResultsToArchiveFolder();
-					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-				}
+                // Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
 
-				m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-				m_Dataset = m_jobParams.GetParam("OutputFolderName");
-				m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
+                // Make sure objects are released
+                System.Threading.Thread.Sleep(500);
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
-				var result = MakeResultsFolder();
-				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-				{
-					// MakeResultsFolder handles posting to local log, so set database error message and exit
-					return result;
-				}
+                // Delete the log file if it only has the "initializing log file" line
+                PossiblyDeleteCyclopsLogFile(cyclopsLogFile);
 
-				result = MoveResultFiles();
-				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-				{
-					// Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-					return result;
-				}
-				
-				// Move the Plots folder to the result files folder
-				var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
+                if (!blnSuccess)
+                {
+                    // Move the source files and any results to the Failed Job folder
+                    // Useful for debugging MultiAlign problems
+                    CopyFailedResultsToArchiveFolder();
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
 
-				if (diPlotsFolder.Exists) 
-				{
-					var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-					diPlotsFolder.MoveTo(strTargetFolderPath);
-				}
+                m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
+                m_Dataset = m_jobParams.GetParam("OutputFolderName");
+                m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-				result = CopyResultsFolderToServer();
-				if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-				{
-					// Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-					return result;
-				}
-			
-			} catch (Exception ex) {
-				m_message = "Error in CyclopsPlugin->RunTool";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-				return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-			}
+                var result = MakeResultsFolder();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // MakeResultsFolder handles posting to local log, so set database error message and exit
+                    return result;
+                }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;            
+                result = MoveResultFiles();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    return result;
+                }
+
+                // Move the Plots folder to the result files folder
+                var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
+
+                if (diPlotsFolder.Exists)
+                {
+                    var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+                    diPlotsFolder.MoveTo(strTargetFolderPath);
+                }
+
+                result = CopyResultsFolderToServer();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    return result;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in CyclopsPlugin->RunTool";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        private void PossiblyDeleteCyclopsLogFile(string cyclopsLogFile)
         {
-	        var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            try
+            {
+
+                var fiCyclopsLogFile = new FileInfo(cyclopsLogFile);
+                if (!fiCyclopsLogFile.Exists)
+                {
+                    return;
+                }
+
+                var deleteFile = false;
+                if (fiCyclopsLogFile.Length == 0)
+                {
+                    deleteFile = true;
+                }
+                else
+                {
+                    var lineCount = 0;
+
+                    using (var logFileReader = new StreamReader(new FileStream(fiCyclopsLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    {
+                        while (!logFileReader.EndOfStream)
+                        {
+                            var dataLine = logFileReader.ReadLine();
+                            lineCount++;
+
+                            if (lineCount == 1)
+                            {
+                                if (string.Equals(dataLine, INITIALIZING_LOG_FILE))
+                                {
+                                    deleteFile = true;
+                                }
+
+                                continue;
+                            }
+
+                            // There is more than one line in the log file
+                            deleteFile = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (deleteFile)
+                {
+                    string errorMessage;
+                    m_FileTools.DeleteFileWithRetry(fiCyclopsLogFile, out errorMessage);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in PossiblyDeleteCyclopsLogFile: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Add a message to the cyclops log file
+        /// </summary>
+        /// <param name="message"></param>
+        private void AppendToCyclopsLog(string message = "")
+        {
+            if (mCyclopsLogWriter == null)
+                return;
+
+            try
+            {
+                mCyclopsLogWriter.WriteLine(message);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in AppendToCyclopsLog: " + ex.Message);
+            }
+        }
+
+        private void CopyFailedResultsToArchiveFolder()
+        {
+            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
@@ -194,20 +274,20 @@ namespace AnalysisManager_Cyclops_PlugIn
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory
-	        var strFolderPathToArchive = string.Copy(m_WorkDir);
+            var strFolderPathToArchive = string.Copy(m_WorkDir);
 
-			// If necessary, delete extra files with the following
-			/* 
-				try
-				{
-					File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-					File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-				}
-				catch
-				{
-					// Ignore errors here
-				}
-		    */
+            // If necessary, delete extra files with the following
+            /* 
+                try
+                {
+                    File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
+                    File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
+                }
+                catch
+                {
+                    // Ignore errors here
+                }
+            */
 
             // Make the results folder
             var result = MakeResultsFolder();
@@ -233,40 +313,87 @@ namespace AnalysisManager_Cyclops_PlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
 
-			var strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
-			if (m_DebugLevel >= 2) {
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
-			}
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
 
-			try {
-				var oAssemblyName = System.Reflection.Assembly.Load("Cyclops").GetName();
+            try
+            {
+                var oAssemblyName = System.Reflection.Assembly.Load("Cyclops").GetName();
 
-				var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
-				strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
-			} catch (Exception ex) {
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Cyclops: " + ex.Message);
-				return false;
-			}
+                var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
+                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Cyclops: " + ex.Message);
+                return false;
+            }
 
-			// Store paths to key DLLs
-			var ioToolFiles = new List<FileInfo>
+            // Store paths to key DLLs
+            var ioToolFiles = new List<FileInfo>
 			{
 				new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll"))
 			};
 
-	        try {
-				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
-			} catch (Exception ex) {
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
-				return false;
-			}
+            try
+            {
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
 
 
         }
-		
-	}
+
+        private void cyclops_ErrorEvent(object sender, MessageEventArgs e)
+        {
+            AppendToCyclopsLog();
+            string errorMessage;
+            if (e.Message.StartsWith("Error", StringComparison.InvariantCultureIgnoreCase))
+                errorMessage = e.Message;
+            else
+                errorMessage = "Error: " + e.Message;
+
+            AppendToCyclopsLog(errorMessage + " (step " + e.Step + ", module " + e.Module + ")");
+
+            // Cyclops error messages sometimes contain a carriage return followed by a stack trace
+            // We don't want that information in m_message so split on \r and \n
+            var messageParts = e.Message.Split('\r', '\n');
+            LogError(messageParts[0]);
+        }
+
+        private void cyclops_WarningEvent(object sender, MessageEventArgs e)
+        {
+            AppendToCyclopsLog();
+
+            string warningMessage;
+            if (e.Message.StartsWith("Warning", StringComparison.InvariantCultureIgnoreCase))
+                warningMessage = e.Message;
+            else
+                warningMessage = "Warning: " + e.Message;
+
+            AppendToCyclopsLog(warningMessage + " (step " + e.Step + ", module " + e.Module + ")");
+
+            // Cyclops messages sometimes contain a carriage return followed by a stack trace
+            // We don't want that information in m_message so split on \r and \n
+            var messageParts = e.Message.Split('\r', '\n');
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, messageParts[0]);
+        }
+
+        private void cyclops_MessageEvent(object sender, MessageEventArgs e)
+        {
+            AppendToCyclopsLog(e.Message + " (step " + e.Step + ", module " + e.Module + ")");
+        }
+
+    }
 }

@@ -27,19 +27,12 @@ namespace AnalysisManager_Cyclops_PlugIn
 					dirLocalRScriptFolder.Create();
 				}
 
-				string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
-				string analysisType = m_jobParams.GetParam("AnalysisType");
-				string sourceFolderName = m_jobParams.GetParam("StepInputFolderName");
-
-				if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, sourceFolderName), m_WorkingDir))
-			{
-					m_message = "Results.db3 file from " + sourceFolderName + " failed to copy over to working directory";
-					//Errors were reported in function call, so just return
-					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
-				}
+				var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
+				var analysisType = m_jobParams.GetParam("AnalysisType");
+				var sourceFolderName = m_jobParams.GetParam("StepInputFolderName");
 
 				// Retrieve the Cyclops Workflow file specified for this job
-				string strCyclopsWorkflowFileName = m_jobParams.GetParam("CyclopsWorkflowName");
+				var strCyclopsWorkflowFileName = m_jobParams.GetParam("CyclopsWorkflowName");
 
 				// Retrieve the Workflow file name specified for this job
 				if (string.IsNullOrEmpty(strCyclopsWorkflowFileName))
@@ -49,14 +42,14 @@ namespace AnalysisManager_Cyclops_PlugIn
 					return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 				}
 
-				string strProteinProphet = m_jobParams.GetParam("RunProteinProphet");
+				var strProteinProphet = m_jobParams.GetParam("RunProteinProphet");
 
 				if (!string.IsNullOrEmpty(strProteinProphet))
 				{
 					// If User requests to run ProteinProphet
 					if (strProteinProphet.ToLower().Equals("true"))
 					{
-						string sProteinOptions = m_jobParams.GetParam("ProteinOptions");
+						var sProteinOptions = m_jobParams.GetParam("ProteinOptions");
 
 						if (sProteinOptions.Length > 0 && !sProteinOptions.ToLower().Equals("na"))
 						{
@@ -65,7 +58,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 						}
 
 						// Generate the path Fasta File
-						string s_FastaDir = m_mgrParams.GetParam("orgdbdir");
+						var s_FastaDir = m_mgrParams.GetParam("orgdbdir");
 						if (!RetrieveOrgDB(s_FastaDir))
 						{
 							m_message = "Cyclops Resourcer failed to retrieve the path to the Fasta file to run ProteinProphet";
@@ -74,7 +67,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 					}
 				}
 
-				string strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
+				var strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
 				var diRemoteRScriptFolder = new DirectoryInfo(Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", "RScript"));
 
 				if (!diRemoteRScriptFolder.Exists)
@@ -85,18 +78,19 @@ namespace AnalysisManager_Cyclops_PlugIn
 				}
 
 				if (m_DebugLevel >= 2)
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Copying FROM: " + diRemoteRScriptFolder.FullName);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying FROM: " + diRemoteRScriptFolder.FullName);
 
-				foreach (FileInfo diRFile in diRemoteRScriptFolder.GetFileSystemInfos("*.R"))
+				foreach (var fileSystemInfo in diRemoteRScriptFolder.GetFileSystemInfos("*.R"))
 				{
+				    var diRFile = (FileInfo)fileSystemInfo;
 
-					if (m_DebugLevel >= 3)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Copying " + diRFile.Name + " to " + dirLocalRScriptFolder.FullName);
+				    if (m_DebugLevel >= 3)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying " + diRFile.Name + " to " + dirLocalRScriptFolder.FullName);
 
 					diRFile.CopyTo(Path.Combine(dirLocalRScriptFolder.FullName, diRFile.Name));
 				}
 
-				string strCyclopsWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", analysisType);
+				var strCyclopsWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", analysisType);
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
 
@@ -107,10 +101,18 @@ namespace AnalysisManager_Cyclops_PlugIn
 					return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 				}
 
+                if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, sourceFolderName), m_WorkingDir))
+                {
+                    m_message = "Results.db3 file from " + sourceFolderName + " failed to copy over to working directory";
+                    //Errors were reported in function call, so just return
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
 			}
 			catch (Exception ex)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception retrieving resources", ex);
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 			}
 
 			return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
