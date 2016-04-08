@@ -64,6 +64,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
             End If
 
             ' Determine the path to the TargetedWorkflowConsole.exe program
+            ' Note that it is part of project DeconTools.Workflows
             mTargetedWorkflowsProgLoc = DetermineProgramLocation("MSAlign_Quant", "TargetedWorkflowsProgLoc", "TargetedWorkflowConsole.exe")
 
             If String.IsNullOrWhiteSpace(mTargetedWorkflowsProgLoc) Then
