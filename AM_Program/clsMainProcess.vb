@@ -126,8 +126,9 @@ Public Class clsMainProcess
         ' Once the initial parameters have been successfully read, 
         ' we remove this logger than make a new one using the connection string read from the Manager Control DB
         Dim defaultDmsConnectionString = My.Settings.DefaultDMSConnString
+        Dim hostName = Net.Dns.GetHostName()
 
-        clsLogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + Net.Dns.GetHostName(), True)
+        clsLogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + hostName, True)
 
         ' Get settings from config file
         Dim lstMgrSettings As Dictionary(Of String, String)
@@ -220,6 +221,21 @@ Public Class clsMainProcess
 
         ' Get the debug level
         m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 2)
+
+        ' Make sure that the manager name matches the machine name (with a few exceptions)
+        If Not hostName.ToLower().StartsWith("emslmq") AndAlso
+           Not hostName.ToLower().StartsWith("emslpub") AndAlso
+           Not hostName.ToLower().StartsWith("monroe") Then
+
+            If Not m_MgrName.ToLower.StartsWith(hostName.ToLower()) Then
+
+                Dim errorMessage = "Manager name does not match the host name: " & m_MgrName & " vs. " & hostName & "; update AnalysisManagerProg.exe.config"
+                Console.WriteLine(errorMessage)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage)
+
+                Return False
+            End If
+        End If
 
         ' Setup the tool for getting tasks
         If Me.TraceMode Then ShowTraceMessage("Instantiate m_AnalysisTask as new clsAnalysisJob")
