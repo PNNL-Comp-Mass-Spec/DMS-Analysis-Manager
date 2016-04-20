@@ -175,6 +175,22 @@ Public MustInherit Class clsAnalysisResources
 #End Region
 
 #Region "Structures"
+    Public Structure udtDataPackageDatasetInfoType
+        Public Dataset As String
+        Public DatasetID As Integer
+        Public Instrument As String
+        Public InstrumentGroup As String
+        Public Experiment As String
+        Public Experiment_Reason As String
+        Public Experiment_Comment As String
+        Public Experiment_Organism As String
+        Public Experiment_NEWT_ID As Integer        ' NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        Public Experiment_NEWT_Name As String       ' NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        Public ServerStoragePath As String
+        Public ArchiveStoragePath As String
+        Public RawDataType As String
+    End Structure
+
     Public Structure udtDataPackageJobInfoType
         Public Job As Integer
         Public Dataset As String
@@ -3262,6 +3278,42 @@ Public MustInherit Class clsAnalysisResources
         Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 
     End Function
+    
+    Public Shared Function GetPseuedoDataPackageJobInfo(udtDatasetInfo As udtDataPackageDatasetInfoType) As udtDataPackageJobInfoType
+
+        Dim udtJobInfo = New udtDataPackageJobInfoType
+        With udtJobInfo
+            .Job = -udtDatasetInfo.DatasetID       ' Store the negative of the dataset ID as the job number
+            .Dataset = udtDatasetInfo.Dataset
+            .DatasetID = udtDatasetInfo.DatasetID
+            .Instrument = udtDatasetInfo.Instrument
+            .InstrumentGroup = udtDatasetInfo.InstrumentGroup
+            .Experiment = udtDatasetInfo.Experiment
+            .Experiment_Reason = udtDatasetInfo.Experiment_Reason
+            .Experiment_Comment = udtDatasetInfo.Experiment_Comment
+            .Experiment_Organism = udtDatasetInfo.Experiment_Organism
+            .Experiment_NEWT_ID = udtDatasetInfo.Experiment_NEWT_ID
+            .Experiment_NEWT_Name = udtDatasetInfo.Experiment_NEWT_Name
+            .Tool = "Dataset info (no tool)"
+            .ResultType = "Dataset info (no type)"
+            .PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown
+            .SettingsFileName = String.Empty
+            .ParameterFileName = String.Empty
+            .OrganismDBName = String.Empty
+            .LegacyFastaFileName = String.Empty
+            .ProteinCollectionList = String.Empty
+            .ProteinOptions = String.Empty
+            .ServerStoragePath = udtDatasetInfo.ServerStoragePath
+            .ArchiveStoragePath = udtDatasetInfo.ArchiveStoragePath
+            .ResultsFolderName = String.Empty
+            .DatasetFolderName = udtDatasetInfo.Dataset
+            .SharedResultsFolder = String.Empty
+            .RawDataType = udtDatasetInfo.RawDataType
+        End With
+
+        Return udtJobInfo
+
+    End Function
 
     Public Shared Function GetRawDataType(strRawDataType As String) As eRawDataTypeConstants
 
@@ -3565,6 +3617,92 @@ Public MustInherit Class clsAnalysisResources
         End If
 
     End Function
+    
+    ''' <summary>
+    ''' Looks up dataset information for a data package
+    ''' </summary>
+    ''' <param name="dctDataPackageDatasets"></param>
+    ''' <returns>True if a data package is defined and it has datasets associated with it</returns>
+    ''' <remarks></remarks>
+    Protected Function LoadDataPackageDatasetInfo(<Out> ByRef dctDataPackageDatasets As Dictionary(Of Integer, udtDataPackageDatasetInfoType)) As Boolean
+
+        ' Gigasax.DMS_Pipeline
+        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+
+        Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
+
+        If dataPackageID < 0 Then
+            dctDataPackageDatasets = New Dictionary(Of Integer, udtDataPackageDatasetInfoType)
+            Return False
+        Else
+            Return LoadDataPackageDatasetInfo(connectionString, dataPackageID, dctDataPackageDatasets)
+        End If
+    End Function
+
+    ''' <summary>
+    ''' Looks up dataset information for a data package
+    ''' </summary>
+    ''' <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+    ''' <param name="DataPackageID">Data Package ID</param>
+    ''' <param name="dctDataPackageDatasets">Datasets associated with the given data package</param>
+    ''' <returns>True if a data package is defined and it has datasets associated with it</returns>
+    ''' <remarks></remarks>
+    Public Shared Function LoadDataPackageDatasetInfo(
+      connectionString As String,
+      dataPackageID As Integer,
+      <Out> ByRef dctDataPackageDatasets As Dictionary(Of Integer, udtDataPackageDatasetInfoType)) As Boolean
+
+        ' Obtains the dataset information for a data package
+        Const RETRY_COUNT As Short = 3
+
+        dctDataPackageDatasets = New Dictionary(Of Integer, udtDataPackageDatasetInfoType)
+
+        Dim sqlStr = New Text.StringBuilder
+
+        ' Note that this queries view V_DMS_Data_Package_Datasets in the DMS_Pipeline database
+        ' That view references   view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
+
+        sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, ")
+        sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
+        sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType")
+        sqlStr.Append(" FROM V_DMS_Data_Package_Datasets")
+        sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID.ToString())
+        sqlStr.Append(" ORDER BY Dataset")
+
+        Dim resultSet As DataTable = Nothing
+
+        ' Get a table to hold the results of the query
+        Dim success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, resultSet)
+
+        If Not success Then
+            Dim errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+            resultSet.Dispose()
+            Return False
+        End If
+
+        ' Verify at least one row returned
+        If resultSet.Rows.Count < 1 Then
+            ' No data was returned
+            Dim warningMessage As String
+
+            warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " & dataPackageID.ToString()
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage)
+            Return False
+        End If
+
+        For Each curRow As DataRow In resultSet.Rows
+            Dim udtDatasetInfo = ParseDataPackageDatasetInfoRow(curRow)
+
+            If Not dctDataPackageDatasets.ContainsKey(udtDatasetInfo.DatasetID) Then
+                dctDataPackageDatasets.Add(udtDatasetInfo.DatasetID, udtDatasetInfo)
+            End If
+        Next
+
+        resultSet.Dispose()
+        Return True
+
+    End Function
 
     ''' <summary>
     ''' Lookups up dataset information for the data package associated with this analysis job
@@ -3575,29 +3713,32 @@ Public MustInherit Class clsAnalysisResources
     Protected Function LoadDataPackageJobInfo(<Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
         ' Gigasax.DMS_Pipeline
-        Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
+        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 
-        Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
+        Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
-        If DataPackageID < 0 Then
+        If dataPackageID < 0 Then
             dctDataPackageJobs = New Dictionary(Of Integer, udtDataPackageJobInfoType)
             Return False
         Else
-            Return LoadDataPackageJobInfo(ConnectionString, DataPackageID, dctDataPackageJobs)
+            Return LoadDataPackageJobInfo(connectionString, dataPackageID, dctDataPackageJobs)
         End If
     End Function
 
     ''' <summary>
-    ''' Lookups up dataset information for a data package
+    ''' Looks up job information for a data package
     ''' </summary>
     ''' <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
     ''' <param name="DataPackageID">Data Package ID</param>
     ''' <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
-    ''' <returns></returns>
+    ''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
     ''' <remarks></remarks>
-    Public Shared Function LoadDataPackageJobInfo(ConnectionString As String, DataPackageID As Integer, <Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
+    Public Shared Function LoadDataPackageJobInfo(
+      ConnectionString As String,
+      DataPackageID As Integer,
+      <Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
 
-        'Requests Dataset information from a data package
+        ' Obtains the job information for a data package
         Const RETRY_COUNT As Short = 3
 
         dctDataPackageJobs = New Dictionary(Of Integer, udtDataPackageJobInfoType)
@@ -3922,6 +4063,28 @@ Public MustInherit Class clsAnalysisResources
         End With
 
         Return True
+
+    End Function
+
+    Private Shared Function ParseDataPackageDatasetInfoRow(curRow As DataRow) As udtDataPackageDatasetInfoType
+
+        Dim udtDatasetInfo = New udtDataPackageDatasetInfoType
+
+        udtDatasetInfo.Dataset = clsGlobal.DbCStr(curRow("Dataset"))
+        udtDatasetInfo.DatasetID = clsGlobal.DbCInt(curRow("DatasetID"))
+        udtDatasetInfo.Instrument = clsGlobal.DbCStr(curRow("Instrument"))
+        udtDatasetInfo.InstrumentGroup = clsGlobal.DbCStr(curRow("InstrumentGroup"))
+        udtDatasetInfo.Experiment = clsGlobal.DbCStr(curRow("Experiment"))
+        udtDatasetInfo.Experiment_Reason = clsGlobal.DbCStr(curRow("Experiment_Reason"))
+        udtDatasetInfo.Experiment_Comment = clsGlobal.DbCStr(curRow("Experiment_Comment"))
+        udtDatasetInfo.Experiment_Organism = clsGlobal.DbCStr(curRow("Organism"))
+        udtDatasetInfo.Experiment_NEWT_ID = clsGlobal.DbCInt(curRow("Experiment_NEWT_ID"))
+        udtDatasetInfo.Experiment_NEWT_Name = clsGlobal.DbCStr(curRow("Experiment_NEWT_Name"))
+        udtDatasetInfo.ServerStoragePath = clsGlobal.DbCStr(curRow("Dataset_Folder_Path"))
+        udtDatasetInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow("Archive_Folder_Path"))
+        udtDatasetInfo.RawDataType = clsGlobal.DbCStr(curRow("RawDataType"))
+
+        Return udtDatasetInfo
 
     End Function
 
@@ -4710,7 +4873,9 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="lstAdditionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
     ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
     ''' <remarks></remarks>
-    Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer, <Out()> ByRef lstAdditionalJobs As List(Of udtDataPackageJobInfoType)) As List(Of udtDataPackageJobInfoType)
+    Protected Function RetrieveDataPackagePeptideHitJobInfo(
+      <Out()> ByRef DataPackageID As Integer,
+      <Out()> ByRef lstAdditionalJobs As List(Of udtDataPackageJobInfoType)) As List(Of udtDataPackageJobInfoType)
 
         ' Gigasax.DMS_Pipeline
         Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
@@ -4862,12 +5027,35 @@ Public MustInherit Class clsAnalysisResources
             lstDataPackagePeptideHitJobs.Clear()
         End If
 
+        ' This dictionary tracks the datasets associated with this aggregation job's data package
+        Dim dctDataPackageDatasets As Dictionary(Of Integer, udtDataPackageDatasetInfoType) = Nothing
+
+        Try
+            Dim success = LoadDataPackageDatasetInfo(dctDataPackageDatasets)
+
+            If Not success OrElse dctDataPackageDatasets.Count = 0 Then
+                If String.IsNullOrEmpty(m_message) Then
+                    m_message = "Did not find any datasets associated with this job's data package ID (" & dataPackageID & ")"
+                End If
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
+                Return False
+            End If
+
+        Catch ex As Exception
+            m_message = "Exception calling LoadDataPackageDatasetInfo"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveDataPackagePeptideHitJobPHRPFiles; " & m_message, ex)
+            Return False
+        End Try
+
         ' The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
         ' The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
         dctInstrumentDataToRetrieve = New Dictionary(Of udtDataPackageJobInfoType, KeyValuePair(Of String, String))
 
+        ' This list tracks analysis jobs that are not PeptideHit jobs
+        Dim lstAdditionalJobs As List(Of udtDataPackageJobInfoType) = Nothing
+
         Try
-            lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(dataPackageID)
+            lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(dataPackageID, lstAdditionalJobs)
 
             If lstDataPackagePeptideHitJobs.Count = 0 Then
                 If String.IsNullOrEmpty(m_message) Then
@@ -5095,55 +5283,52 @@ Public MustInherit Class clsAnalysisResources
 
                 End If
 
-                If udtOptions.RetrieveMzXMLFile Then
-                    ' See if a .mzXML file already exists for this dataset
-                    Dim strMzXMLFilePath As String
-                    Dim strHashcheckFilePath As String = String.Empty
-
-                    strMzXMLFilePath = FindMZXmlFile(strHashcheckFilePath)
-
-                    If String.IsNullOrEmpty(strMzXMLFilePath) Then
-                        ' mzXML file not found
-                        If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
-                            ' Will need to retrieve the .Raw file for this dataset
-                            dctInstrumentDataToRetrieve.Add(udtJobInfo, New KeyValuePair(Of String, String)(String.Empty, String.Empty))
-                        ElseIf udtOptions.RetrieveMzXMLFile Then
-                            m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                            Return False
-                        End If
-                    Else
-                        dctInstrumentDataToRetrieve.Add(udtJobInfo, New KeyValuePair(Of String, String)(strMzXMLFilePath, strHashcheckFilePath))
-                    End If
-                End If
-
-                Dim blnIsFolder = False
-                Dim strRawFilePath As String
-                strRawFilePath = FindDatasetFileOrFolder(blnIsFolder)
-
-                If Not String.IsNullOrEmpty(strRawFilePath) Then
-                    If Not dctRawFileRetrievalCommands.ContainsKey(udtJobInfo.DatasetID) Then
-                        Dim strCopyCommand As String
-                        If blnIsFolder Then
-                            strCopyCommand = "copy " & strRawFilePath & " .\" & Path.GetFileName(strRawFilePath) & " /S /I"
-                        Else
-                            ' Make sure the case of the filename matches the case of the dataset name
-                            ' Also, make sure the extension is lowercase
-                            strCopyCommand = "copy " & strRawFilePath & " " & udtJobInfo.Dataset & Path.GetExtension(strRawFilePath).ToLower()
-                        End If
-                        dctRawFileRetrievalCommands.Add(udtJobInfo.DatasetID, strCopyCommand)
-                        dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, strRawFilePath)
+                ' Find the instrument data file or folder if a new dataset
+                If Not dctRawFileRetrievalCommands.ContainsKey(udtJobInfo.DatasetID) Then
+                    If Not RetrieveDataPackageInstrumentFile(udtJobInfo, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                        Return False
                     End If
                 End If
 
                 intJobsProcessed += 1
-                Dim sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(progressPercentAtStart, progressPercentAtFinish, intJobsProcessed, lstDataPackagePeptideHitJobs.Count)
+                Dim sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(progressPercentAtStart, progressPercentAtFinish, intJobsProcessed, lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count)
                 If Not m_StatusTools Is Nothing Then
-                    m_StatusTools.CurrentOperation = "RetrieveDataPackagePeptideHitJobPHRPFiles"
+                    m_StatusTools.CurrentOperation = "RetrieveDataPackagePeptideHitJobPHRPFiles (PeptideHit Jobs)"
                     m_StatusTools.UpdateAndWrite(sngProgress)
                 End If
 
             Next udtJobInfo     ' in lstDataPackagePeptideHitJobs
+
+            ' Now process the additional jobs to retrieve the instrument data for each one
+            For Each udtJobInfo In lstAdditionalJobs
+
+                ' Find the instrument data file or folder if a new dataset
+                If Not dctRawFileRetrievalCommands.ContainsKey(udtJobInfo.DatasetID) Then                    
+                    If Not RetrieveDataPackageInstrumentFile(udtJobInfo, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                        Return False
+                    End If
+                End If
+
+                intJobsProcessed += 1
+                Dim sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(progressPercentAtStart, progressPercentAtFinish, intJobsProcessed, lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count)
+                If Not m_StatusTools Is Nothing Then
+                    m_StatusTools.CurrentOperation = "RetrieveDataPackagePeptideHitJobPHRPFiles (Additional Jobs)"
+                    m_StatusTools.UpdateAndWrite(sngProgress)
+                End If
+
+            Next        ' in lstAdditionalJobs
+
+            ' Look for any datasets that are associated with this data package yet have no jobs
+            For Each datasetItem In dctDataPackageDatasets
+                If Not dctRawFileRetrievalCommands.ContainsKey(datasetItem.Key) Then
+
+                    Dim udtJobInfo = GetPseuedoDataPackageJobInfo(datasetItem.Value)
+
+                    If Not RetrieveDataPackageInstrumentFile(udtJobInfo, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                        Return False
+                    End If
+                End If
+            Next
 
             ' Restore the dataset and job info for this aggregation job
             OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
@@ -5177,6 +5362,56 @@ Public MustInherit Class clsAnalysisResources
         End Try
 
         Return blnSuccess
+
+    End Function
+    
+    Private Function RetrieveDataPackageInstrumentFile(
+      udtJobInfo As udtDataPackageJobInfoType,
+      udtOptions As udtDataPackageRetrievalOptionsType,
+      dctRawFileRetrievalCommands As IDictionary(Of Integer, String),
+      dctInstrumentDataToRetrieve As IDictionary(Of udtDataPackageJobInfoType, KeyValuePair(Of String, String)),
+      dctDatasetRawFilePaths As IDictionary(Of String, String)) As Boolean
+
+        If udtOptions.RetrieveMzXMLFile Then
+            ' See if a .mzXML file already exists for this dataset
+            Dim mzXMLFilePath As String
+            Dim hashcheckFilePath As String = String.Empty
+
+            mzXMLFilePath = FindMZXmlFile(hashcheckFilePath)
+
+            If String.IsNullOrEmpty(mzXMLFilePath) Then
+                ' mzXML file not found
+                If udtJobInfo.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
+                    ' Will need to retrieve the .Raw file for this dataset
+                    dctInstrumentDataToRetrieve.Add(udtJobInfo, New KeyValuePair(Of String, String)(String.Empty, String.Empty))
+                ElseIf udtOptions.RetrieveMzXMLFile Then
+                    m_message = "mzXML file not found for dataset " & udtJobInfo.Dataset & " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    Return False
+                End If
+            Else
+                dctInstrumentDataToRetrieve.Add(udtJobInfo, New KeyValuePair(Of String, String)(mzXMLFilePath, hashcheckFilePath))
+            End If
+        End If
+
+        Dim blnIsFolder = False
+        Dim rawFilePath = FindDatasetFileOrFolder(blnIsFolder)
+
+        If Not String.IsNullOrEmpty(rawFilePath) Then
+
+            Dim strCopyCommand As String
+            If blnIsFolder Then
+                strCopyCommand = "copy " & rawFilePath & " .\" & Path.GetFileName(rawFilePath) & " /S /I"
+            Else
+                ' Make sure the case of the filename matches the case of the dataset name
+                ' Also, make sure the extension is lowercase
+                strCopyCommand = "copy " & rawFilePath & " " & udtJobInfo.Dataset & Path.GetExtension(rawFilePath).ToLower()
+            End If
+            dctRawFileRetrievalCommands.Add(udtJobInfo.DatasetID, strCopyCommand)
+            dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, rawFilePath)
+        End If
+
+        Return True
 
     End Function
 

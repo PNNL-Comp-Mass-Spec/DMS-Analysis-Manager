@@ -1747,21 +1747,41 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Lookups up dataset information for the data package associated with this analysis job
+    ''' Looks up dataset information for the data package associated with this analysis job
+    ''' </summary>
+    ''' <param name="dctDataPackageDatasets"></param>
+    ''' <returns>True if a data package is defined and it has datasets associated with it</returns>
+    ''' <remarks></remarks>
+    Protected Function LoadDataPackageDatasetInfo(<Out()> ByRef dctDataPackageDatasets As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageDatasetInfoType)) As Boolean
+
+        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
+        Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
+
+        If dataPackageID < 0 Then
+            dctDataPackageDatasets = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageDatasetInfoType)
+            Return False
+        Else
+            Return clsAnalysisResources.LoadDataPackageDatasetInfo(connectionString, dataPackageID, dctDataPackageDatasets)
+        End If
+
+    End Function
+
+    ''' <summary>
+    ''' Looks up job information for the data package associated with this analysis job
     ''' </summary>
     ''' <param name="dctDataPackageJobs"></param>
     ''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
     ''' <remarks></remarks>
     Protected Function LoadDataPackageJobInfo(<Out()> ByRef dctDataPackageJobs As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)) As Boolean
 
-        Dim ConnectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
-        Dim DataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
+        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
+        Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
         If DataPackageID < 0 Then
             dctDataPackageJobs = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
             Return False
         Else
-            Return clsAnalysisResources.LoadDataPackageJobInfo(ConnectionString, DataPackageID, dctDataPackageJobs)
+            Return clsAnalysisResources.LoadDataPackageJobInfo(connectionString, dataPackageID, dctDataPackageJobs)
         End If
 
     End Function
