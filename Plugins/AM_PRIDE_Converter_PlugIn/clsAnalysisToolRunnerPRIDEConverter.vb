@@ -271,6 +271,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PRIDEConverter")
 
+            ' Initialize dctDataPackageDatasets
+            Dim dctDataPackageDatasets As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageDatasetInfoType) = Nothing
+            If Not LoadDataPackageDatasetInfo(dctDataPackageDatasets) Then
+                m_message = "Error loading data package dataset info"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
             ' Initialize mDataPackagePeptideHitJobs			
             If Not LookupDataPackagePeptideHitJobs() Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -283,8 +291,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
             ' Extract the dataset raw file paths
-            Dim dctDatasetRawFilePaths As Dictionary(Of String, String)
-            dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS)
+            Dim dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS)
 
             ' Process each job in mDataPackagePeptideHitJobs
             ' Sort the jobs by dataset so that we can use the same .mzXML file for datasets with multiple jobs
@@ -299,9 +306,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim intJobFailureCount = 0
             Dim dtLastLogTime As DateTime = DateTime.UtcNow
 
+            ' This dictionary tracks the datasets that have been processed
+            ' Keys are dataset ID, values are dataset name
+            Dim dctDatasetsProcessed = New Dictionary(Of Integer, String)
+
             For Each kvJobInfo As KeyValuePair(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType) In linqJobsSortedByDataset
 
-                m_StatusTools.CurrentOperation = "Processing job " & kvJobInfo.Value.Job & ", dataset " & kvJobInfo.Value.Dataset
+                Dim udtCurrentJobInfo = kvJobInfo.Value
+
+                m_StatusTools.CurrentOperation = "Processing job " & udtCurrentJobInfo.Job & ", dataset " & udtCurrentJobInfo.Dataset
 
                 Console.WriteLine()
                 Console.WriteLine((intJobsProcessed + 1).ToString() & ": " & m_StatusTools.CurrentOperation)
@@ -310,6 +323,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                     intJobFailureCount += 1
                     If Not blnContinueOnError OrElse intJobFailureCount > maxErrorCount Then Exit For
+                End If
+
+                If Not dctDatasetsProcessed.ContainsKey(udtCurrentJobInfo.DatasetID) Then
+                    dctDatasetsProcessed.Add(udtCurrentJobInfo.DatasetID, udtCurrentJobInfo.Dataset)
                 End If
 
                 intJobsProcessed += 1
@@ -323,6 +340,20 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Next
 
             TransferPreviousDatasetFiles(objAnalysisResults)
+
+            ' Look for datasets associated with the data package that have no PeptideHit jobs
+            ' Create fake PeptideHit jobs in the .px file to alert the user of the missing jobs
+
+            For Each kvDatasetInfo In dctDataPackageDatasets
+                If Not dctDatasetsProcessed.ContainsKey(kvDatasetInfo.Key) Then
+                    m_StatusTools.CurrentOperation = "Adding dataset " & kvDatasetInfo.Value.Dataset & " (no associated PeptideHit job)"
+
+                    Console.WriteLine()
+                    Console.WriteLine(m_StatusTools.CurrentOperation)
+
+                    AddPlaceholderDatasetEntry(kvDatasetInfo, dctDatasetRawFilePaths)
+                End If
+            Next
 
             ' If we were still unable to delete some files, we want to make sure that they don't end up in the results folder
             For Each fileToDelete In mPreviousDatasetFilesToDelete
@@ -402,6 +433,34 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Return 5
 
     End Function
+
+    Private Sub AddPlaceholderDatasetEntry(
+      ByVal kvDatasetInfo As KeyValuePair(Of Integer, clsAnalysisResources.udtDataPackageDatasetInfoType),
+      ByVal dctDatasetRawFilePaths As Dictionary(Of String, String))
+
+        AddNEWTInfo(kvDatasetInfo.Value.Experiment_NEWT_ID, kvDatasetInfo.Value.Experiment_NEWT_Name)
+
+        ' Store the instrument group and instrument name
+        StoreInstrumentInfo(kvDatasetInfo.Value)
+
+        Dim strDatasetRawFilePath As String = String.Empty
+
+        If dctDatasetRawFilePaths.Count > 0 Then
+            strDatasetRawFilePath = Path.GetDirectoryName(dctDatasetRawFilePaths.FirstOrDefault().Value)
+        Else
+            strDatasetRawFilePath = "D:\Data"
+        End If
+
+        Dim udtDatasetInfo = kvDatasetInfo.Value
+        strDatasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset & ".raw")
+
+        Dim udtJobinfo = clsAnalysisResources.GetPseuedoDataPackageJobInfo(udtDatasetInfo)
+
+        Dim rawFileID = AddPxFileToMasterList(strDatasetRawFilePath, udtJobinfo, udtDatasetInfo.Dataset)
+
+        AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath, udtDatasetInfo.Dataset, udtJobinfo)
+
+    End Sub
 
     Protected Sub AddNEWTInfo(newtID As Integer, newtName As String)
 
@@ -520,17 +579,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End If
         End If
 
-        Dim intRawFileID = 0
+        Dim rawFileID As Integer
         Dim strDatasetRawFilePath As String = String.Empty
         If dctDatasetRawFilePaths.TryGetValue(strDataset, strDatasetRawFilePath) Then
             If Not String.IsNullOrEmpty(strDatasetRawFilePath) Then
-                intRawFileID = AddPxFileToMasterList(strDatasetRawFilePath, udtJobInfo, strDataset)
-                If Not AddPxResultFile(intRawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath, strDataset, udtJobInfo) Then
+                rawFileID = AddPxFileToMasterList(strDatasetRawFilePath, udtJobInfo, strDataset)
+                If Not AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath, strDataset, udtJobInfo) Then
                     Return False
                 End If
 
                 If intPrideXMLFileID > 0 Then
-                    If Not DefinePxFileMapping(intPrideXMLFileID, intRawFileID) Then
+                    If Not DefinePxFileMapping(intPrideXMLFileID, rawFileID) Then
                         Return False
                     End If
                 End If
@@ -548,9 +607,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             If intPrideXMLFileID = 0 Then
                 ' Pride XML file was not created
-                If intRawFileID > 0 AndAlso String.IsNullOrEmpty(udtResultFiles.MzIDFilePath) Then
+                If rawFileID > 0 AndAlso String.IsNullOrEmpty(udtResultFiles.MzIDFilePath) Then
                     ' Only associate Peak files with .Raw files if we do not have a .MzId file
-                    If Not DefinePxFileMapping(intPeakfileID, intRawFileID) Then
+                    If Not DefinePxFileMapping(intPeakfileID, rawFileID) Then
                         Return False
                     End If
                 End If
@@ -580,8 +639,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     End If
                 End If
 
-                If intRawFileID > 0 Then
-                    If Not DefinePxFileMapping(intMzIdFileID, intRawFileID) Then
+                If rawFileID > 0 Then
+                    If Not DefinePxFileMapping(intMzIdFileID, rawFileID) Then
                         Return False
                     End If
                 End If
@@ -2880,8 +2939,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     Protected Function LookupDataPackagePeptideHitJobs() As Boolean
         Dim intJob As Integer
 
-        Dim dctDataPackageJobs As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
-        dctDataPackageJobs = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
+        Dim dctDataPackageJobs = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
 
         If mDataPackagePeptideHitJobs Is Nothing Then
             mDataPackagePeptideHitJobs = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
@@ -2889,13 +2947,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             mDataPackagePeptideHitJobs.Clear()
         End If
 
-        If Not MyBase.LoadDataPackageJobInfo(dctDataPackageJobs) Then
-            m_message = "Error loading data package job info for"
+        If Not LoadDataPackageJobInfo(dctDataPackageJobs) Then
+            m_message = "Error loading data package job info"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": clsAnalysisToolRunnerBase.LoadDataPackageJobInfo() returned false")
             Return False
         Else
-            Dim lstJobsToUse As List(Of String)
-            lstJobsToUse = ExtractPackedJobParameterList(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
+            Dim lstJobsToUse = ExtractPackedJobParameterList(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
 
             If lstJobsToUse.Count = 0 Then
                 m_message = "Packed job parameter " & clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS & " is empty; no jobs to process"
@@ -3463,16 +3520,24 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
+    Protected Sub StoreInstrumentInfo(udtDatasetInfo As clsAnalysisResources.udtDataPackageDatasetInfoType)
+        StoreInstrumentInfo(udtDatasetInfo.InstrumentGroup, udtDatasetInfo.Instrument)
+    End Sub
+
     Protected Sub StoreInstrumentInfo(udtJobInfo As clsAnalysisResources.udtDataPackageJobInfoType)
+        StoreInstrumentInfo(udtJobInfo.InstrumentGroup, udtJobInfo.Instrument)
+    End Sub
+
+    Protected Sub StoreInstrumentInfo(instrumentGroup As String, instrumentName As String)
 
         Dim lstInstruments As List(Of String) = Nothing
-        If mInstrumentGroupsStored.TryGetValue(udtJobInfo.InstrumentGroup, lstInstruments) Then
-            If Not lstInstruments.Contains(udtJobInfo.Instrument) Then
-                lstInstruments.Add(udtJobInfo.Instrument)
+        If mInstrumentGroupsStored.TryGetValue(instrumentGroup, lstInstruments) Then
+            If Not lstInstruments.Contains(instrumentName) Then
+                lstInstruments.Add(instrumentName)
             End If
         Else
-            lstInstruments = New List(Of String) From {udtJobInfo.Instrument}
-            mInstrumentGroupsStored.Add(udtJobInfo.InstrumentGroup, lstInstruments)
+            lstInstruments = New List(Of String) From {instrumentName}
+            mInstrumentGroupsStored.Add(instrumentGroup, lstInstruments)
         End If
 
     End Sub

@@ -19,8 +19,8 @@ Public Class clsPXFileInfo
     End Property
 #End Region
 
-    Public Sub New(FileName As String, udtJobInfo As udtDataPackageJobInfoType)
-        MyBase.New(FileName, udtJobInfo)
+    Public Sub New(fileName As String, udtJobInfo As udtDataPackageJobInfoType)
+        MyBase.New(fileName, udtJobInfo)
         mFileMappings = New List(Of Integer)
     End Sub
 

@@ -38,8 +38,8 @@ Public Class clsPXFileInfoBase
     End Property
 #End Region
 
-    Public Sub New(FileName As String, udtJobInfo As udtDataPackageJobInfoType)
-        mFileName = FileName
+    Public Sub New(fileName As String, udtJobInfo As udtDataPackageJobInfoType)
+        mFileName = fileName
         mJobInfo = udtJobInfo
     End Sub
 
@@ -50,4 +50,9 @@ Public Class clsPXFileInfoBase
         Me.Length = oSource.Length
         Me.MD5Hash = oSource.MD5Hash
     End Sub
+
+    Public Overrides Function ToString() As String
+        Return "Job " & mJobInfo.Job & ": " & mFileName
+    End Function
+
 End Class
