@@ -48,10 +48,10 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Events"
-    Public Event ErrorEvent(Message As String, DetailedMessage As String)
+    Public Event ErrorEvent(message As String, detailedMessage As String)
     Public Event IgnorePreviousErrorEvent()
-    Public Event MessageEvent(Message As String)
-    Public Event WarningEvent(Message As String)
+    Public Event MessageEvent(message As String)
+    Public Event WarningEvent(message As String)
 #End Region
 
 #Region "Module Variables"
@@ -172,7 +172,7 @@ Public Class clsMSGFDBUtils
         mThreadCountActual = 0
         mTaskCountTotal = 0
         mTaskCountCompleted = 0
-        
+
     End Sub
 
     ''' <summary>
@@ -1352,7 +1352,7 @@ Public Class clsMSGFDBUtils
         Static rePercentComplete As Regex = New Regex("Search progress: \d+ / \d+ tasks, (?<PercentComplete>[0-9.]+)%",
           RegexOptions.Compiled Or
           RegexOptions.IgnoreCase)
-        
+
 
         Dim strConsoleOutputFilePath = "??"
 
@@ -1528,7 +1528,7 @@ Public Class clsMSGFDBUtils
         Return sngEffectiveProgress
 
     End Function
-    
+
     ''' <summary>
     ''' Parses the static and dynamic modification information to create the MSGFDB Mods file
     ''' </summary>
@@ -1983,8 +1983,12 @@ Public Class clsMSGFDBUtils
             ' Do not define the thread count when running on HPC; MSGF+ should use all 16 cores (or all 32 cores)
             If intParamFileThreadCount > 0 Then intParamFileThreadCount = 0
 
+            ReportMessage("Running on HPC; " & strSearchEngineName & " will use all available cores")
+
         ElseIf intParamFileThreadCount <= 0 OrElse limitCoreUsage Then
             ' Set intParamFileThreadCount to the number of cores on this computer
+            ' However, do not exceed 8 cores because this can actually slow down MSGF+ due to context switching
+            ' Furthermore, Java will restrict all of the threads to a single NUMA node, and we don't want too many threads on a single node
 
             Dim coreCount = GetCoreCount()
 
@@ -2010,6 +2014,13 @@ Public Class clsMSGFDBUtils
 
             End If
 
+            If intParamFileThreadCount > 8 Then
+                ReportMessage("The system has " & coreCount & " cores; " & strSearchEngineName & " will use 8 cores (bumped down from " & intParamFileThreadCount & " to avoid overloading a single NUMA node)")
+                intParamFileThreadCount = 8
+            Else
+                ' Example message: The system has 8 cores; MSGF+ will use 7 cores")
+                ReportMessage("The system has " & coreCount & " cores; " & strSearchEngineName & " will use " & intParamFileThreadCount & " cores")
+            End If
         End If
 
         If intParamFileThreadCount > 0 Then
@@ -2511,20 +2522,20 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Event Methods"
-    Private Sub ReportError(Message As String)
-        ReportError(Message, String.Empty)
+    Private Sub ReportError(message As String)
+        ReportError(message, String.Empty)
     End Sub
 
-    Private Sub ReportError(Message As String, DetailedMessage As String)
-        RaiseEvent ErrorEvent(Message, DetailedMessage)
+    Private Sub ReportError(message As String, detailedMessage As String)
+        RaiseEvent ErrorEvent(message, detailedMessage)
     End Sub
 
-    Private Sub ReportMessage(Message As String)
-        RaiseEvent MessageEvent(Message)
+    Private Sub ReportMessage(message As String)
+        RaiseEvent MessageEvent(message)
     End Sub
 
-    Private Sub ReportWarning(Message As String)
-        RaiseEvent WarningEvent(Message)
+    Private Sub ReportWarning(message As String)
+        RaiseEvent WarningEvent(message)
     End Sub
 
     Private Sub mPeptideToProteinMapper_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
