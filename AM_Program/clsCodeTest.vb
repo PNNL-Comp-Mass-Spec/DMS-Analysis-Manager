@@ -278,7 +278,7 @@ Public Class clsCodeTest
             Console.WriteLine()
             Console.WriteLine("Error in PerformanceCounterTest: " & ex.Message)
             Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
-            Dim rePub1000 As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
+            Dim rePub1000 = New Text.RegularExpressions.Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
             If rePub1000.IsMatch(Environment.MachineName) Then
                 Console.WriteLine("This is a known issue with Windows instances running under VMWare on PIC")
             End If
@@ -1906,7 +1906,7 @@ Public Class clsCodeTest
             Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
 
 
-            Dim rePub1000 As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
+            Dim rePub1000 = New Text.RegularExpressions.Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
             If rePub1000.IsMatch(Environment.MachineName) Then
                 ' The Memory performance counters are not available on Windows instances running under VMWare on PIC
             Else
