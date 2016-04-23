@@ -28,12 +28,14 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "February 19, 2016"
+    Public Const PROGRAM_DATE As String = "April 22, 2016"
 
 	Private mCodeTestMode As Boolean
 	Private mCreateWindowsEventLog As Boolean
 	Private mTraceMode As Boolean
     Private mDisableMessageQueue As Boolean
+    Private mDisplayDllVersions As Boolean
+    Private mDisplayDllPath As String
 
 	Public Function Main() As Integer
 		' Returns 0 if no error, error code if an error
@@ -45,6 +47,8 @@ Module modMain
 		mCodeTestMode = False
 		mTraceMode = False
         mDisableMessageQueue = False
+        mDisplayDllVersions = False
+        mDisplayDllPath = ""
 
 		Try
 
@@ -68,7 +72,9 @@ Module modMain
 
 					If mTraceMode Then ShowTraceMessage("Code test mode enabled")
 
-					Dim objTest As New clsCodeTest
+                    Dim objTest As New clsCodeTest
+                    objTest.TraceMode = mTraceMode
+
 					Try
 						'objTest.TestFileDateConversion()
 						'objTest.TestArchiveFileStart()
@@ -137,10 +143,11 @@ Module modMain
 
                         ' objTest.ParseMSGFDBConsoleOutput()
 
-                        'objTest.RunMSConvert()
+                        ' objTest.RunMSConvert()
 
-                        objTest.GetLegacyFastaFileSize()
+                        ' objTest.GetLegacyFastaFileSize()
 
+                        objTest.GenerateScanStatsFile()
 
 					Catch ex As Exception
                         Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
@@ -149,10 +156,16 @@ Module modMain
                     Return 0
 
 				ElseIf mCreateWindowsEventLog Then
-					clsMainProcess.CreateAnalysisManagerEventLog()
-				Else
-					' Initiate automated analysis
-					If mTraceMode Then ShowTraceMessage("Instantiating clsMainProcess")
+                    clsMainProcess.CreateAnalysisManagerEventLog()
+
+                ElseIf mDisplayDllVersions Then
+                    Dim objTest As New clsCodeTest
+                    objTest.TraceMode = mTraceMode
+                    objTest.DisplayDllVersions(mDisplayDllPath)
+
+                Else
+                    ' Initiate automated analysis
+                    If mTraceMode Then ShowTraceMessage("Instantiating clsMainProcess")
 
                     Dim objDMSMain = New clsMainProcess(mTraceMode)
                     objDMSMain.DisableMessageQueue = mDisableMessageQueue
@@ -192,7 +205,7 @@ Module modMain
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
-        Dim lstValidParameters As List(Of String) = New List(Of String) From {"T", "Test", "Trace", "EL", "NQ"}
+        Dim lstValidParameters As List(Of String) = New List(Of String) From {"T", "Test", "Trace", "EL", "NQ", "DLL"}
 
         Try
             ' Make sure no invalid parameters are present
@@ -212,6 +225,15 @@ Module modMain
                     If .IsParameterPresent("EL") Then mCreateWindowsEventLog = True
 
                     If .IsParameterPresent("NQ") Then mDisableMessageQueue = True
+
+                    If .IsParameterPresent("DLL") Then
+                        mDisplayDllVersions = True
+                        If .RetrieveValueForParameter("DLL", strValue) Then
+                            If Not String.IsNullOrWhiteSpace(strValue) Then
+                                mDisplayDllPath = strValue
+                            End If
+                        End If
+                    End If
                 End With
 
                 Return True
@@ -262,7 +284,7 @@ Module modMain
 
             Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.")
             Console.WriteLine()
-            Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(GetAppPath()) & " [/EL] [/NQ] [/T] [/Trace] [/Q]")
+            Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(GetAppPath()) & " [/EL] [/NQ] [/T] [/Trace] [/DLL]")
             Console.WriteLine()
 
             Console.WriteLine("Use /EL to create the Windows Event Log named '" & clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
@@ -272,6 +294,9 @@ Module modMain
             Console.WriteLine("Use /T or /Test to start the program in code test mode.")
             Console.WriteLine()
             Console.WriteLine("Use /Trace to enable trace mode, where debug messages are written to the command prompt")
+            Console.WriteLine()
+            Console.WriteLine("Use /DLL to display the version of all DLLs in the same folder as this .exe")
+            Console.WriteLine("Use /DLL:Path to display the version of all DLLs in the specified folder (surround path with double quotes if spaces)")
             Console.WriteLine()
 
             Console.WriteLine("Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)")

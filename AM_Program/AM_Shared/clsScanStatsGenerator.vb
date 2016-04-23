@@ -23,12 +23,30 @@ Public Class clsScanStatsGenerator
 		End Get
 	End Property
 
-	Public Sub New(ByVal MSFileInfoScannerDLLPath As String, DebugLevel As Integer)
-		mMSFileInfoScannerDLLPath = MSFileInfoScannerDLLPath
-		mDebugLevel = DebugLevel
+    ''' <summary>
+    ''' When ScanStart is > 0, will start processing at the specified scan number
+    ''' </summary>
+    Public Property ScanStart As Integer
 
-		mErrorMessage = String.Empty
-	End Sub
+    ''' <summary>
+    ''' When ScanEnd is > 0, will stop processing at the specified scan number
+    ''' </summary>
+    Public Property ScanEnd As Integer
+
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="msFileInfoScannerDLLPath"></param>
+    ''' <param name="debugLevel"></param>
+    ''' <remarks></remarks>
+    Public Sub New(ByVal msFileInfoScannerDLLPath As String, debugLevel As Integer)
+        mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath
+        mDebugLevel = debugLevel
+
+        mErrorMessage = String.Empty
+        ScanStart = 0
+        ScanEnd = 0
+    End Sub
 
 	''' <summary>
 	''' Create the ScanStats file for the given dataset file
@@ -68,20 +86,25 @@ Public Class clsScanStatsGenerator
 			mMSFileInfoScanner.CheckCentroidingStatus = False
 
 			mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
-			mMSFileInfoScanner.DatasetIDOverride = intDatasetID
+            mMSFileInfoScanner.DatasetIDOverride = intDatasetID
 
-			blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath)
+            If Me.ScanStart > 0 Or Me.ScanEnd > 0 Then
+                mMSFileInfoScanner.ScanStart = Me.ScanStart
+                mMSFileInfoScanner.ScanEnd = Me.ScanEnd
+            End If
 
-			If Not blnSuccess Then
-				mErrorMessage = "Error generating ScanStats file using " & strInputFilePath
-				Dim strMsgAddnl As String = mMSFileInfoScanner.GetErrorMessage
+            blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath)
 
-				If Not String.IsNullOrEmpty(strMsgAddnl) Then
-					mErrorMessage = mErrorMessage & ": " & strMsgAddnl
-				End If
-			End If
+            If Not blnSuccess Then
+                mErrorMessage = "Error generating ScanStats file using " & strInputFilePath
+                Dim strMsgAddnl As String = mMSFileInfoScanner.GetErrorMessage
 
-		Catch ex As Exception
+                If Not String.IsNullOrEmpty(strMsgAddnl) Then
+                    mErrorMessage = mErrorMessage & ": " & strMsgAddnl
+                End If
+            End If
+
+        Catch ex As Exception
 			mErrorMessage = "Exception in GenerateScanStatsFile: " & ex.Message
 			Return False
 		End Try

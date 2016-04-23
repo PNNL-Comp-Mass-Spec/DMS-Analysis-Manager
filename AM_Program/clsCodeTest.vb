@@ -2,7 +2,9 @@
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Reflection
 Imports System.Runtime.InteropServices
+Imports System.Runtime.Versioning
 Imports System.Text.RegularExpressions
 
 Public Class clsCodeTest
@@ -40,6 +42,14 @@ Public Class clsCodeTest
         Public DtaRefineryDataFolderPath As String
     End Structure
 
+#Region "Properties"
+    Public Property TraceMode As Boolean
+#End Region
+
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <remarks></remarks>
     Public Sub New()
         Const CUSTOM_LOG_SOURCE_NAME = "Analysis Manager"
         Const CUSTOM_LOG_NAME = "DMS_AnalysisMgr"
@@ -69,6 +79,132 @@ Public Class clsCodeTest
         End Try
 
 
+    End Sub
+
+    Public Sub DisplayDllVersions(displayDllPath As String, Optional fileNameFileSpec As String = "*.dll")
+        Try
+            Dim diSourceFolder As DirectoryInfo
+
+            If String.IsNullOrWhiteSpace(displayDllPath) Then
+                diSourceFolder = New DirectoryInfo(".")
+            Else
+                diSourceFolder = New DirectoryInfo(displayDllPath)
+            End If
+
+            Dim lstFiles As List(Of FileInfo)
+            If String.IsNullOrWhiteSpace(fileNameFileSpec) Then
+                lstFiles = diSourceFolder.GetFiles("*.dll").ToList()
+            Else
+                lstFiles = diSourceFolder.GetFiles(fileNameFileSpec).ToList()
+            End If
+
+            Dim dctResults = New Dictionary(Of String, KeyValuePair(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
+            Dim dctErrors = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+
+            Console.WriteLine("Obtaining versions for " & lstFiles.Count & " files")
+
+            For Each fiFile In lstFiles
+                Try
+                    Console.Write(".")
+
+                    Dim fileAssembly As Assembly = Reflection.Assembly.LoadFrom(fiFile.FullName)
+                    Dim fileVersion As String = fileAssembly.ImageRuntimeVersion
+                    Dim frameworkVersion = "??"
+
+                    Dim customAttributes = fileAssembly.GetCustomAttributes(GetType(TargetFrameworkAttribute))
+                    If Not customAttributes Is Nothing AndAlso customAttributes.Count > 0 Then
+                        Dim frameworkAttribute = DirectCast(customAttributes.First(), TargetFrameworkAttribute)
+                        frameworkVersion = frameworkAttribute.FrameworkDisplayName
+                    ElseIf fileVersion.StartsWith("v1.") OrElse fileVersion.StartsWith("v2.") Then
+                        frameworkVersion = String.Empty
+                    End If
+                    
+                    If dctResults.ContainsKey(fiFile.FullName) Then
+                        Console.WriteLine("Skipping duplicate file: " & fiFile.Name & ", " & fileVersion & " and " & frameworkVersion)
+                    Else
+                        dctResults.Add(fiFile.FullName, New KeyValuePair(Of String, String)(fileVersion, frameworkVersion))
+                    End If
+
+
+                Catch ex As BadImageFormatException
+
+                    ' This may have been a .NET DLL missing a dependency
+                    ' Try a reflection-only load
+
+                    Try
+                        Dim fileAssembly2 As Assembly = Assembly.ReflectionOnlyLoadFrom(fiFile.FullName)
+                        Dim fileVersion2 As String = fileAssembly2.ImageRuntimeVersion
+
+                        If dctResults.ContainsKey(fiFile.FullName) Then
+                            Console.WriteLine("Skipping duplicate file: " & fiFile.Name & ", " & fileVersion2 & " (missing dependencies)")
+                        Else
+                            dctResults.Add(fiFile.FullName, New KeyValuePair(Of String, String)(fileVersion2, "Unknown, missing dependencies"))
+                        End If
+
+                    Catch ex2 As Exception
+
+                        If dctErrors.ContainsKey(fiFile.FullName) Then
+                            Console.WriteLine("Skipping duplicate error: " & fiFile.Name & ": " & ex2.Message)
+                        Else
+                            dctErrors.Add(fiFile.FullName, ex.Message)
+                        End If
+
+                    End Try
+
+                Catch ex As Exception
+                    If dctErrors.ContainsKey(fiFile.FullName) Then
+                        Console.WriteLine("Skipping duplicate error: " & fiFile.Name & ": " & ex.Message)
+                    Else
+                        dctErrors.Add(fiFile.FullName, ex.Message)
+                    End If
+
+                End Try
+            Next
+
+            Console.WriteLine()
+            Console.WriteLine()
+
+            Dim query = (From item In dctResults Order By item.Key Select item).ToList()
+
+            Console.WriteLine(String.Format("{0,-50} {1,-20} {2}", "Filename", ".NET Version", "Target Framework"))
+            For Each result In query
+                Console.WriteLine(String.Format("{0,-50} {1,-20} {2}", Path.GetFileName(result.Key), " " & result.Value.Key, result.Value.Value))
+            Next
+
+            If dctErrors.Count > 0 Then
+                Console.WriteLine()
+                Console.WriteLine()
+                Console.WriteLine("DLLs likely not .NET")
+
+                Dim errorList = (From item In dctErrors Order By item.Key Select item).ToList()
+
+                Console.WriteLine(String.Format("{0,-30} {1}", "Filename", "Error"))
+
+                For Each result In errorList
+                    Console.Write(String.Format("{0,-30} ", Path.GetFileName(result.Key)))
+                    Dim startIndex = 0
+                    While startIndex < result.Value.Length
+                        If startIndex > 0 Then
+                            Console.Write(String.Format("{0,-30} ", String.Empty))
+                        End If
+
+                        If startIndex + 80 > result.Value.Length Then
+                            Console.WriteLine(result.Value.Substring(startIndex, result.Value.Length - startIndex))
+                            Exit While
+                        Else
+                            Console.WriteLine(result.Value.Substring(startIndex, 80))
+                        End If
+                        
+                        startIndex += 80
+                    End While
+
+                    Console.WriteLine()
+                Next
+
+            End If
+        Catch ex As Exception
+            Console.WriteLine("Error finding files to check: " & ex.Message)
+        End Try
     End Sub
 
     Private Function InitializeMgrAndJobParams(intDebugLevel As Integer) As clsAnalysisJob
@@ -118,7 +254,7 @@ Public Class clsCodeTest
 
     Private Function GetResourcesObject(intDebugLevel As Integer, objJobParams As IJobParams) As clsResourceTestClass
         Dim objResources = New clsResourceTestClass
-        
+
         Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
 
         Dim myEMSLUtilities As New clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY)
@@ -1340,10 +1476,42 @@ Public Class clsCodeTest
 
         Catch ex As System.Exception
             Dim msg = "Exception in clsExtractToolRunner.SplitFileRoundRobin: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            Console.WriteLine(Msg)
+            Console.WriteLine(msg)
             ''m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
             blnSuccess = False
         End Try
+
+        Return blnSuccess
+
+    End Function
+
+    Public Sub GenerateScanStatsFile()
+        Const inputFilePath = "QC_Shew_16_01_pt5_run7_11Apr16_Tiger_16-02-05.raw"
+        Const workingDir = "E:\DMS_WorkDir"
+
+        Dim success = GenerateScanStatsFile(Path.Combine(workingDir, inputFilePath), workingDir)
+        Console.WriteLine("Success: " & success)
+
+    End Sub
+
+    Public Function GenerateScanStatsFile(strInputFilePath As String, workingDir As String) As Boolean
+
+        Dim strMSFileInfoScannerDir = "C:\DMS_Programs\MSFileInfoScanner"
+
+        Dim strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
+        If Not File.Exists(strMSFileInfoScannerDLLPath) Then
+            Console.WriteLine("File Not Found: " + strMSFileInfoScannerDLLPath)
+            Return False
+        End If
+
+        Dim objScanStatsGenerator = New clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
+        Const datasetID = 0
+
+        objScanStatsGenerator.ScanStart = 11000
+        objScanStatsGenerator.ScanEnd = 12000
+
+        ' Create the _ScanStats.txt and _ScanStatsEx.txt files
+        Dim blnSuccess = objScanStatsGenerator.GenerateScanStatsFile(strInputFilePath, workingDir, datasetID)
 
         Return blnSuccess
 
