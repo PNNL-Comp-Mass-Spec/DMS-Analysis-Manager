@@ -1,5 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManager_Mage_PlugIn</RootNamespace>
     <AssemblyName>AnalysisManager_Mage_PlugIn</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +31,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -39,6 +42,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\Release\</OutputPath>
@@ -50,32 +54,33 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+    <Reference Include="log4net">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="Mage, Version=1.3.4303.11542, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="Mage">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\Mage.dll</HintPath>
     </Reference>
-    <Reference Include="MageDisplayLib, Version=1.3.4303.11543, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="MageDisplayLib">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MageDisplayLib.dll</HintPath>
     </Reference>
-    <Reference Include="MageExtContentFilters, Version=1.3.4303.11545, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="MageExtContentFilters">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MageExtContentFilters.dll</HintPath>
     </Reference>
-    <Reference Include="MageExtExtractionFilters, Version=1.3.4303.11547, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="MageExtExtractionFilters">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MageExtExtractionFilters.dll</HintPath>
     </Reference>
-    <Reference Include="PHRPReader, Version=1.1.5359.29363, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="PHRPReader">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>

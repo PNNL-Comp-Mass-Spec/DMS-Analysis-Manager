@@ -37,27 +37,27 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="AnalysisManager_Ape_PlugIn, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="AnalysisManager_Ape_PlugIn">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Plugins\AM_Ape_PlugIn\bin\Debug\AnalysisManager_Ape_PlugIn.dll</HintPath>
     </Reference>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+    <Reference Include="log4net">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="Mage, Version=1.3.4303.11542, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="Mage">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\Mage.dll</HintPath>
     </Reference>
-    <Reference Include="MageDisplayLib, Version=1.3.4303.11543, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="MageDisplayLib">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MageDisplayLib.dll</HintPath>
     </Reference>
-    <Reference Include="MageExtContentFilters, Version=1.3.4303.11545, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="MageExtContentFilters">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MageExtContentFilters.dll</HintPath>
     </Reference>
-    <Reference Include="MageExtExtractionFilters, Version=1.3.4303.11547, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="MageExtExtractionFilters">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MageExtExtractionFilters.dll</HintPath>
     </Reference>

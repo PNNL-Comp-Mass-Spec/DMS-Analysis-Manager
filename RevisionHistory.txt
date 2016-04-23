@@ -1,5 +1,9 @@
 Analysis Tool Manager History
 
+April 22, 2016
+	- Update to .NET 4.5.1 due to new MSFileInfoScannerInterfaces.dll that is compiled against v4.5.1 and
+	  uses System.Data.SQLite v1.0.97 compiled for .NET 4.5.1
+
 February 19, 2016
 	- Now purging old FASTA files before downloading the FASTA file for the current job
 

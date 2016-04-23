@@ -86,7 +86,7 @@ Namespace My
          Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
         Public ReadOnly Property UsingDefaults() As Boolean
             Get
-                Return CType(Me("UsingDefaults"), Boolean)
+                Return CType(Me("UsingDefaults"),Boolean)
             End Get
         End Property
         
