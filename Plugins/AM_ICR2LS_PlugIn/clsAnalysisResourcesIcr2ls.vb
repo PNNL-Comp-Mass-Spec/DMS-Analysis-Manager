@@ -72,7 +72,7 @@ Public Class clsAnalysisResourcesIcr2ls
                 If Not String.IsNullOrEmpty(serFileOrFolderPath) Then
                     ' File found in the archive; need to copy it locally
 
-                    Dim dtStartTime As System.DateTime = System.DateTime.UtcNow
+                    Dim dtStartTime As DateTime = DateTime.UtcNow
 
                     If blnIsFolder Then
                         Dim diSourceFolder As DirectoryInfo
@@ -83,7 +83,7 @@ Public Class clsAnalysisResourcesIcr2ls
                         m_FileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name))
 
                         If m_DebugLevel >= 1 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied 0.ser folder in " & System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied 0.ser folder in " & DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
                         End If
 
                     Else
@@ -96,7 +96,9 @@ Public Class clsAnalysisResourcesIcr2ls
                             Return False
                         Else
                             If m_DebugLevel >= 1 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied " & Path.GetFileName(serFileOrFolderPath) & " file in " & System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                                     "Successfully copied " & Path.GetFileName(serFileOrFolderPath) & " file in " &
+                                                     DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
                             End If
                         End If
 
@@ -122,7 +124,7 @@ Public Class clsAnalysisResourcesIcr2ls
     ''' <param name="blnIsFolder"></param>
     ''' <returns>The path to the ser file, fid file, or 0.ser folder, if found.  An empty string if not found</returns>
     ''' <remarks></remarks>
-    Public Shared Function FindSerFileOrFolder(ByVal strFolderToCheck As String, ByRef blnIsFolder As Boolean) As String
+    Public Shared Function FindSerFileOrFolder(strFolderToCheck As String, ByRef blnIsFolder As Boolean) As String
 
         blnIsFolder = False
 
@@ -179,7 +181,7 @@ Public Class clsAnalysisResourcesIcr2ls
             If String.IsNullOrWhiteSpace(transferFolderPath) Then
                 ' Transfer folder path is not defined
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "transferFolderPath is empty; this is unexpected")
-                Exit Try
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             Else
                 transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
                 transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))

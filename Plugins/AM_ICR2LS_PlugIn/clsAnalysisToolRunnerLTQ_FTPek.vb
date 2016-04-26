@@ -15,7 +15,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
         Dim ResCode As IJobParams.CloseOutType
         Dim DSNamePath As String
 
-		Dim UseAllScans As Boolean = True
+        Dim UseAllScans As Boolean
 
         Dim OutFileNamePath As String
         Dim ParamFilePath As String
@@ -50,13 +50,13 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 		' Determine whether or not we should be processing MS2 spectra
 		Dim SkipMS2 = Not m_jobParams.GetJobParameter("ProcessMS2", False)
 
-		If (MinScan = 0 AndAlso MaxScan = 0) OrElse _
-		   MinScan > MaxScan OrElse _
-		   MaxScan > 500000 Then
-			UseAllScans = True
-		Else
-			UseAllScans = False
-		End If
+        If (MinScan = 0 AndAlso MaxScan = 0) OrElse
+           MinScan > MaxScan OrElse
+           MaxScan > 500000 Then
+            UseAllScans = True
+        Else
+            UseAllScans = False
+        End If
 
 		'Assemble the data file name and path
 		DSNamePath = Path.Combine(m_WorkDir, m_Dataset & ".raw")
@@ -88,7 +88,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
                 PerfPostAnalysisTasks(False)
 
                 ' Try to save whatever files were moved into the results folder
-                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+                Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
             Else
@@ -118,7 +118,7 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 
 		'Delete the .raw file
 		Try
-			System.Threading.Thread.Sleep(5000)			 'Allow extra time for ICR2LS to release file locks
+            Threading.Thread.Sleep(5000)             'Allow extra time for ICR2LS to release file locks
 			FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw")
 			For Each MyFile In FoundFiles
 				' Add the file to .FilesToDelete just in case the deletion fails
@@ -126,9 +126,9 @@ Public Class clsAnalysisToolRunnerLTQ_FTPek
 				DeleteFileWithRetries(MyFile)
 			Next
 			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		Catch Err As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .raw file, job " & m_JobNum & Err.Message)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .raw file, job " & m_JobNum & ex.Message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 	End Function

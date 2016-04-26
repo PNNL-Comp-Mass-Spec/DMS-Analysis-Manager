@@ -44,7 +44,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Public ErrorMessage As String
 
         Public Sub Initialize()
-            StatusDate = System.DateTime.Now
+            StatusDate = DateTime.Now
             ScansProcessed = 0
             PercentComplete = 0
             ProcessingState = ICR2LS_STATE_UNKNOWN
@@ -90,7 +90,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         If Not MyBase.RunTool() = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'Start the job timer
-        m_StartTime = System.DateTime.UtcNow
+        m_StartTime = DateTime.UtcNow
 
         ResetStatusLogTimes()
         mICR2LSStatus.Initialize()
@@ -100,7 +100,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     End Function
 
-    Private Function ConvertPekToCsv(ByVal pekFilePath As String) As Boolean
+    Private Function ConvertPekToCsv(pekFilePath As String) As Boolean
         Try
 
             Dim scansFilePath As String = Path.Combine(m_WorkDir, m_Dataset & "_scans.csv")
@@ -171,7 +171,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     Protected MustOverride Function DeleteDataFile() As IJobParams.CloseOutType
 
-    Private Function GetLastScanInPEKFile(ByVal pekTempFilePath As String) As Integer
+    Private Function GetLastScanInPEKFile(pekTempFilePath As String) As Integer
 
         Dim currentScan = 0
         Dim lastValidScan = 0
@@ -218,8 +218,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     End Function
 
     ' Reads the ICR2LS Status file and updates mICR2LSStatus
-    Protected Function ParseICR2LSStatusFile(ByVal strStatusFilePath As String, ByVal blnForceParse As Boolean) As Boolean
-        Const MINIMUM_PARSING_INTERVAL_SECONDS As Integer = 4
+    Protected Function ParseICR2LSStatusFile(strStatusFilePath As String, blnForceParse As Boolean) As Boolean
+        Const MINIMUM_PARSING_INTERVAL_SECONDS = 4
 
         Dim srInFile As StreamReader
         Dim strLineIn As String
@@ -230,11 +230,11 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Dim intResult As Integer
         Dim sngResult As Single
         Dim strProcessingState As String = mICR2LSStatus.ProcessingState
-        Dim strProcessingStatus As String = ""
+        Dim strProcessingStatus = String.Empty
         Dim intScansProcessed As Integer
 
-        Dim strStatusDate As String = ""
-        Dim strStatusTime As String = ""
+        Dim strStatusDate = String.Empty
+        Dim strStatusTime = String.Empty
 
         Dim blnSuccess As Boolean
 
@@ -245,14 +245,13 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 Exit Try
             End If
 
-            If Not blnForceParse AndAlso _
-               System.DateTime.UtcNow.Subtract(mLastStatusParseTime).TotalSeconds < MINIMUM_PARSING_INTERVAL_SECONDS Then
+            If Not blnForceParse AndAlso DateTime.UtcNow.Subtract(mLastStatusParseTime).TotalSeconds < MINIMUM_PARSING_INTERVAL_SECONDS Then
                 ' Not enough time has elapsed, exit the procedure (returning True)
                 blnSuccess = True
                 Exit Try
             End If
 
-            mLastStatusParseTime = System.DateTime.UtcNow
+            mLastStatusParseTime = DateTime.UtcNow
 
             If File.Exists(strStatusFilePath) Then
                 ' Read the file
@@ -313,7 +312,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 If strStatusDate.Length > 0 AndAlso strStatusTime.Length > 0 Then
                     strStatusDate &= " " & strStatusTime
                     If Not DateTime.TryParse(strStatusDate, mICR2LSStatus.StatusDate) Then
-                        mICR2LSStatus.StatusDate = System.DateTime.Now()
+                        mICR2LSStatus.StatusDate = DateTime.Now()
                     End If
                 End If
 
@@ -327,8 +326,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                     mICR2LSStatus.ProcessingState = strProcessingState
 
                     If Not ValidateICR2LSStatus(strProcessingState) Then
-                        If System.DateTime.UtcNow.Subtract(mLastInvalidStatusFiletime).TotalMinutes >= 15 Then
-                            mLastInvalidStatusFiletime = System.DateTime.UtcNow
+                        If DateTime.UtcNow.Subtract(mLastInvalidStatusFiletime).TotalMinutes >= 15 Then
+                            mLastInvalidStatusFiletime = DateTime.UtcNow
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Invalid processing state reported by ICR2LS: " & strProcessingState)
                         End If
                     End If
@@ -348,8 +347,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 ' Status.log file not found; if the job just started, this will be the case
                 ' For this reason, ResetStatusLogTimes will set mLastMissingStatusFiletime to the time the job starts, meaning
                 '  we won't log an error about a missing Status.log file until 60 minutes into a job
-                If System.DateTime.UtcNow.Subtract(mLastMissingStatusFiletime).TotalMinutes >= 60 Then
-                    mLastMissingStatusFiletime = System.DateTime.UtcNow
+                If DateTime.UtcNow.Subtract(mLastMissingStatusFiletime).TotalMinutes >= 60 Then
+                    mLastMissingStatusFiletime = DateTime.UtcNow
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ICR2LS Status.Log file not found: " & strStatusFilePath)
                 End If
 
@@ -358,8 +357,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Catch ex As Exception
             ' Limit logging of errors to once every 60 minutes
 
-            If System.DateTime.UtcNow.Subtract(mLastErrorPostingTime).TotalMinutes >= 60 Then
-                mLastErrorPostingTime = System.DateTime.UtcNow
+            If DateTime.UtcNow.Subtract(mLastErrorPostingTime).TotalMinutes >= 60 Then
+                mLastErrorPostingTime = DateTime.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error reading the ICR2LS Status.Log file (" & strStatusFilePath & "): " & ex.Message)
             End If
         End Try
@@ -368,7 +367,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     End Function
 
-    Protected Sub InitializeStatusLogFileWatcher(ByVal strWorkDir As String, ByVal strFilenameToWatch As String)
+    Protected Sub InitializeStatusLogFileWatcher(strWorkDir As String, strFilenameToWatch As String)
 
         mStatusFileWatcher = New FileSystemWatcher()
         With mStatusFileWatcher
@@ -382,12 +381,12 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End With
     End Sub
 
-    Protected Overridable Function PerfPostAnalysisTasks(ByVal blnCopyResultsToServer As Boolean) As IJobParams.CloseOutType
+    Protected Overridable Function PerfPostAnalysisTasks(blnCopyResultsToServer As Boolean) As IJobParams.CloseOutType
 
         Dim result As IJobParams.CloseOutType
 
         'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+        m_StopTime = DateTime.UtcNow
 
         If Not UpdateSummaryFile() Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum)
@@ -445,12 +444,12 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     Private Sub ResetStatusLogTimes()
         ' Initialize the last error posting time to 2 hours before the present
-        mLastErrorPostingTime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
+        mLastErrorPostingTime = DateTime.UtcNow.Subtract(New TimeSpan(2, 0, 0))
 
         ' Initialize the last MissingStatusFileTime to the time the job starts
-        mLastMissingStatusFiletime = System.DateTime.UtcNow
+        mLastMissingStatusFiletime = DateTime.UtcNow
 
-        mLastInvalidStatusFiletime = System.DateTime.UtcNow.Subtract(New System.TimeSpan(2, 0, 0))
+        mLastInvalidStatusFiletime = DateTime.UtcNow.Subtract(New TimeSpan(2, 0, 0))
     End Sub
 
     ''' <summary>
@@ -462,10 +461,10 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     ''' <param name="eICR2LSMode"></param>
     ''' <returns>True if successfully started; otherwise false</returns>
     ''' <remarks></remarks>
-    Protected Function StartICR2LS(ByVal DSNamePath As String, _
-                                   ByVal ParamFilePath As String, _
-                                   ByVal ResultsFileNamePath As String, _
-                                   ByVal eICR2LSMode As ICR2LSProcessingModeConstants) As Boolean
+    Protected Function StartICR2LS(DSNamePath As String,
+                                   ParamFilePath As String,
+                                   ResultsFileNamePath As String,
+                                   eICR2LSMode As ICR2LSProcessingModeConstants) As Boolean
         Return StartICR2LS(DSNamePath, ParamFilePath, ResultsFileNamePath, eICR2LSMode, True, False, 0, 0)
     End Function
 
@@ -482,16 +481,16 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     ''' <returns></returns>
     ''' <remarks></remarks>
     Protected Function StartICR2LS(
-      ByVal instrumentFilePath As String,
-      ByVal paramFilePath As String,
-      ByVal resultsFileNamePath As String,
-      ByVal eICR2LSMode As ICR2LSProcessingModeConstants,
-      ByVal useAllScans As Boolean,
-      ByVal skipMS2 As Boolean,
-      ByVal minScan As Integer,
-      ByVal maxScan As Integer) As Boolean
+      instrumentFilePath As String,
+      paramFilePath As String,
+      resultsFileNamePath As String,
+      eICR2LSMode As ICR2LSProcessingModeConstants,
+      useAllScans As Boolean,
+      skipMS2 As Boolean,
+      minScan As Integer,
+      maxScan As Integer) As Boolean
 
-        Const MONITOR_INTERVAL_SECONDS As Integer = 4
+        Const MONITOR_INTERVAL_SECONDS = 4
 
         Dim strExeFilePath As String
         Dim strArguments As String
@@ -519,7 +518,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End If
 
         ' Look for an existing .pek.tmp file
-        Dim scanToResumeAfter As Integer = 0
+        Dim scanToResumeAfter = 0
 
         mPEKResultsFile = New FileInfo(resultsFileNamePath)
         Dim pekTempFilePath = Path.Combine(mPEKResultsFile.Directory.FullName, Path.GetFileNameWithoutExtension(mPEKResultsFile.Name) & PEK_TEMP_FILE)
@@ -531,7 +530,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
             If scanToResumeAfter > 0 Then
                 useAllScans = False
-                System.Threading.Thread.Sleep(200)
+                Threading.Thread.Sleep(200)
                 fiTempResultsFile.MoveTo(resultsFileNamePath)
             End If
         End If
@@ -642,7 +641,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         blnSuccess = mCmdRunner.RunProgram(strExeFilePath, strArguments, "ICR2LS.exe", True)
 
         ' Pause for another 500 msec to make sure ICR-2LS closes
-        System.Threading.Thread.Sleep(500)
+        Threading.Thread.Sleep(500)
 
         ' Make sure the status file is parsed one final time
         ParseICR2LSStatusFile(mStatusFilePath, True)
@@ -653,7 +652,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End If
 
         'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+        m_StopTime = DateTime.UtcNow
 
         If Not blnSuccess Then
             ' ProgRunner returned false, check the Exit Code
@@ -665,15 +664,15 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Most recent ICR-2LS State: " & mICR2LSStatus.ProcessingState & " with " & mICR2LSStatus.ScansProcessed & " scans processed (" & mICR2LSStatus.PercentComplete.ToString("0.0") & "% done); Status = " & mICR2LSStatus.ProcessingStatus)
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS.exe : " & m_JobNum)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS.exe: " & m_JobNum)
         Else
 
             'Verify ICR-2LS exited due to job completion
 
             If mICR2LSStatus.ProcessingState.ToLower <> ICR2LS_STATE_FINISHED.ToLower Then
 
-                If mICR2LSStatus.ProcessingState.ToLower = ICR2LS_STATE_ERROR.ToLower Or _
-                   mICR2LSStatus.ProcessingState.ToLower = ICR2LS_STATE_KILLED.ToLower Or _
+                If mICR2LSStatus.ProcessingState.ToLower = ICR2LS_STATE_ERROR.ToLower Or
+                   mICR2LSStatus.ProcessingState.ToLower = ICR2LS_STATE_KILLED.ToLower Or
                    m_progress < 100 Then
                     eLogLevel = clsLogTools.LogLevels.ERROR
                 Else
@@ -721,7 +720,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End If
 
         ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of FileInfo)
+        Dim ioToolFiles As New List(Of FileInfo)
         ioToolFiles.Add(New FileInfo(progLoc))
 
         Try
@@ -733,9 +732,8 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     End Function
 
-    Protected Function ValidateICR2LSStatus(ByVal strProcessingState As String) As Boolean
+    Protected Function ValidateICR2LSStatus(strProcessingState As String) As Boolean
         Dim blnValid As Boolean
-        blnValid = True
 
         Select Case strProcessingState.ToLower
             Case ICR2LS_STATE_UNKNOWN.ToLower()
@@ -769,7 +767,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         Return blnValid
     End Function
 
-    Protected Function VerifyPEKFileExists(ByVal strFolderPath As String, ByVal strDatasetName As String) As Boolean
+    Protected Function VerifyPEKFileExists(strFolderPath As String, strDatasetName As String) As Boolean
 
         Dim fiFolder As DirectoryInfo
         Dim blnMatchFound As Boolean
@@ -795,10 +793,10 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     End Function
 
     Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
-        Const NORMAL_LOG_INTERVAL_MINUTES As Integer = 30
-        Const DEBUG_LOG_INTERVAL_MINUTES As Integer = 5
+        Const NORMAL_LOG_INTERVAL_MINUTES = 30
+        Const DEBUG_LOG_INTERVAL_MINUTES = 5
 
-        Const CHECKPOINT_SAVE_INTERVAL_MINUTES As Integer = 1
+        Const CHECKPOINT_SAVE_INTERVAL_MINUTES = 1
 
         Dim dblMinutesElapsed As Double
         Dim blnLogStatus As Boolean
@@ -814,9 +812,9 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             If blnLogStatus Then
                 mLastStatusLogTime = DateTime.UtcNow
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " & _
-                                                           "Processing Time = " & DateTime.UtcNow.Subtract(m_StartTime).TotalMinutes.ToString("0.0") & " minutes; " & _
-                                                           "Progress = " & m_progress.ToString("0.00") & "; " & _
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " &
+                                                           "Processing Time = " & DateTime.UtcNow.Subtract(m_StartTime).TotalMinutes.ToString("0.0") & " minutes; " &
+                                                           "Progress = " & m_progress.ToString("0.00") & "; " &
                                                            "Scans Processed = " & mICR2LSStatus.ScansProcessed.ToString)
             End If
         End If
@@ -827,9 +825,9 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End If
     End Sub
 
-	Private Sub mStatusFileWatcher_Changed(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mStatusFileWatcher.Changed
-		ParseICR2LSStatusFile(mStatusFilePath, False)
-	End Sub
+    Private Sub mStatusFileWatcher_Changed(sender As Object, e As FileSystemEventArgs) Handles mStatusFileWatcher.Changed
+        ParseICR2LSStatusFile(mStatusFilePath, False)
+    End Sub
 
     Private Sub mPEKtoCSVConverter_ErrorEvent(sender As Object, e As PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs) Handles mPEKtoCSVConverter.ErrorEvent
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PEKtoCSVConverter error: " & e.Message)
