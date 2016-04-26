@@ -12,7 +12,7 @@ namespace GlyQResultsSummarizer
     /// </summary>
     class Program
     {
-        public const string PROGRAM_DATE = "March 26, 2015";
+        public const string PROGRAM_DATE = "April 25, 2016";
         private const int AUTO_JOB_FLAG = -5000;
 
         public const string DMS_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
