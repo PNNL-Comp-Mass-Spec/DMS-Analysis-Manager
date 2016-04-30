@@ -25,6 +25,14 @@ Public Class clsMSGFDBUtils
         Complete = 3
     End Enum
 
+    Private Enum eModDefinitionParts
+        EmpiricalFormulaOrMass = 0
+        Residues = 1
+        ModType = 2
+        Position = 3            ' For CustomAA definitions this field is essentially ignored
+        Name = 4
+    End Enum
+
     Private Const THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA As Single = 0
     Private Const THREAD_PROGRESS_PCT_DATABASE_SEARCH As Single = 5
     Private Const THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES As Single = 50
@@ -879,6 +887,7 @@ Public Class clsMSGFDBUtils
         '   NumMods
         '   StaticMod
         '   DynamicMod
+        '   CustomAA
 
         Return dctParamNames
     End Function
@@ -1242,6 +1251,43 @@ Public Class clsMSGFDBUtils
 
     End Function
 
+    Private Function MisleadingModDef(
+      definitionData As String,
+      definitionDataClean As String,
+      definitionType As String,
+      expectedTag As String,
+      invalidTag As String) As Boolean
+
+        If definitionDataClean.Contains("," & invalidTag & ",") Then
+            ' One of the following is true:
+            '  Static (fixed) mod is listed as dynamic or custom
+            '  Dynamic (optional) mod is listed as static or custom
+            '  Custom amino acid def is listed as a dynamic or static
+
+            Dim verboseTag = "??"
+            Select Case invalidTag
+                Case "opt"
+                    verboseTag = "DynamicMod"
+                Case "fix"
+                    verboseTag = "StaticMod"
+                Case "custom"
+                    verboseTag = "CustomAA"
+            End Select
+
+            ' Abort the analysis since the parameter file is misleading and needs to be fixed
+            ' Example messages:
+            '  Dynamic mod definition contains ,fix, -- update the param file to have ,opt, or change to StaticMod="
+            '  Static mod definition contains ,opt, -- update the param file to have ,fix, or change to DynamicMod="
+            mErrorMessage = definitionType & " definition contains ," & invalidTag & ", -- update the param file to have ," & expectedTag & ", or change to " & verboseTag & "="
+            ReportError(mErrorMessage, mErrorMessage & "; " & definitionData)
+
+            Return True
+        End If
+
+        Return False
+
+    End Function
+
     ''' <summary>
     ''' Parse the MSGFPlus console output file to determine the MSGF+ version and to track the search progress
     ''' </summary>
@@ -1530,20 +1576,22 @@ Public Class clsMSGFDBUtils
     End Function
 
     ''' <summary>
-    ''' Parses the static and dynamic modification information to create the MSGFDB Mods file
+    ''' Parses the static modifications, dynamic modifications, and custom amino acid information to create the MSGFDB Mods file
     ''' </summary>
     ''' <param name="strParameterFilePath">Full path to the MSGF parameter file; will create file MSGFDB_Mods.txt in the same folder</param>
     ''' <param name="sbOptions">String builder of command line arguments to pass to MSGFDB</param>
     ''' <param name="intNumMods">Max Number of Modifications per peptide</param>
     ''' <param name="lstStaticMods">List of Static Mods</param>
     ''' <param name="lstDynamicMods">List of Dynamic Mods</param>
+    ''' <param name="lstCustomAminoAcids">List of Custom Amino Acids</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Private Function ParseMSGFDBModifications(strParameterFilePath As String,
-     sbOptions As Text.StringBuilder,
+      sbOptions As Text.StringBuilder,
       intNumMods As Integer,
-      lstStaticMods As List(Of String),
-      lstDynamicMods As List(Of String)) As Boolean
+      lstStaticMods As IReadOnlyCollection(Of String),
+      lstDynamicMods As IReadOnlyCollection(Of String),
+      lstCustomAminoAcids As IReadOnlyCollection(Of String)) As Boolean
 
         Dim blnSuccess As Boolean
         Dim strModFilePath As String
@@ -1562,12 +1610,12 @@ Public Class clsMSGFDBUtils
             Using swModFile = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 swModFile.WriteLine("# This file is used to specify modifications for MSGFDB")
-                swModFile.WriteLine("")
+                swModFile.WriteLine()
                 swModFile.WriteLine("# Max Number of Modifications per peptide")
                 swModFile.WriteLine("# If this value is large, the search will be slow")
                 swModFile.WriteLine("NumMods=" & intNumMods)
 
-                swModFile.WriteLine("")
+                swModFile.WriteLine()
                 swModFile.WriteLine("# Static mods")
                 If lstStaticMods.Count = 0 Then
                     swModFile.WriteLine("# None")
@@ -1576,13 +1624,8 @@ Public Class clsMSGFDBUtils
                         Dim strModClean As String = String.Empty
 
                         If ParseMSGFDbValidateMod(strStaticMod, strModClean) Then
-                            If strModClean.Contains(",opt,") Then
-                                ' Static (fixed) mod is listed as dynamic
-                                ' Abort the analysis since the parameter file is misleading and needs to be fixed							
-                                mErrorMessage = "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='"
-                                ReportError(mErrorMessage, mErrorMessage & "; " & strStaticMod)
-                                Return False
-                            End If
+                            If MisleadingModDef(strStaticMod, strModClean, "Static mod", "fix", "opt") Then Return False
+                            If MisleadingModDef(strStaticMod, strModClean, "Static mod", "fix", "custom") Then Return False
                             swModFile.WriteLine(strModClean)
                         Else
                             Return False
@@ -1590,7 +1633,7 @@ Public Class clsMSGFDBUtils
                     Next
                 End If
 
-                swModFile.WriteLine("")
+                swModFile.WriteLine()
                 swModFile.WriteLine("# Dynamic mods")
                 If lstDynamicMods.Count = 0 Then
                     swModFile.WriteLine("# None")
@@ -1599,14 +1642,26 @@ Public Class clsMSGFDBUtils
                         Dim strModClean As String = String.Empty
 
                         If ParseMSGFDbValidateMod(strDynamicMod, strModClean) Then
-                            If strModClean.Contains(",fix,") Then
-                                ' Dynamic (optional) mod is listed as static
-                                ' Abort the analysis since the parameter file is misleading and needs to be fixed							
-                                mErrorMessage = "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='"
-                                ReportError(mErrorMessage, mErrorMessage & "; " & strDynamicMod)
-                                Return False
-                            End If
+                            If MisleadingModDef(strDynamicMod, strModClean, "Dynamic mod", "opt", "fix") Then Return False
+                            If MisleadingModDef(strDynamicMod, strModClean, "Dynamic mod", "opt", "custom") Then Return False
                             swModFile.WriteLine(strModClean)
+                        Else
+                            Return False
+                        End If
+                    Next
+                End If
+
+                If lstCustomAminoAcids.Count > 0 Then
+                    swModFile.WriteLine()
+                    swModFile.WriteLine("# Custom Amino Acids")
+
+                    For Each strCustomAADef As String In lstCustomAminoAcids
+                        Dim strCustomAADefClean As String = String.Empty
+
+                        If ParseMSGFDbValidateMod(strCustomAADef, strCustomAADefClean) Then
+                            If MisleadingModDef(strCustomAADef, strCustomAADefClean, "Custom AA", "custom", "opt") Then Return False
+                            If MisleadingModDef(strCustomAADef, strCustomAADefClean, "Custom AA", "custom", "fix") Then Return False
+                            swModFile.WriteLine(strCustomAADefClean)
                         Else
                             Return False
                         End If
@@ -1723,6 +1778,7 @@ Public Class clsMSGFDBUtils
         Dim intNumMods = 0
         Dim lstStaticMods = New List(Of String)
         Dim lstDynamicMods = New List(Of String)
+        Dim lstCustomAminoAcids = New List(Of String)
 
         Dim blnShowDecoyParamPresent = False
         Dim blnShowDecoy = False
@@ -1923,6 +1979,10 @@ Public Class clsMSGFDBUtils
                             If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
                                 lstDynamicMods.Add(strValue)
                             End If
+                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "CustomAA") Then
+                            If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
+                                lstCustomAminoAcids.Add(strValue)
+                            End If
                         End If
 
                         'If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
@@ -2029,7 +2089,7 @@ Public Class clsMSGFDBUtils
 
         ' Create the modification file and append the -mod switch
         ' We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation 
-        If Not ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods) Then
+        If Not ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods, lstCustomAminoAcids) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -2265,6 +2325,7 @@ Public Class clsMSGFDBUtils
     ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
     Private Function ParseMSGFDbValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
 
+
         Dim intPoundIndex As Integer
         Dim strSplitMod() As String
 
@@ -2275,36 +2336,51 @@ Public Class clsMSGFDBUtils
         intPoundIndex = strMod.IndexOf("#"c)
         If intPoundIndex > 0 Then
             strComment = strMod.Substring(intPoundIndex)
-            strMod = strMod.Substring(0, intPoundIndex - 1).Trim
+            strMod = strMod.Substring(0, intPoundIndex - 1).Trim()
         End If
 
         strSplitMod = strMod.Split(","c)
 
+        ' Check whether this is a custom AA definition
+        Dim query = (From item In strSplitMod Where item.ToLower() = "custom" Select item).ToList()
+        Dim customAminoAcidDef = query.Count > 0
+
         If strSplitMod.Length < 5 Then
-            ' Invalid mod definition; must have 5 sections
-            mErrorMessage = "Invalid modification string; must have 5 sections: " & strMod
+            ' Invalid definition
+
+            If customAminoAcidDef Then
+                ' Invalid custom AA definition; must have 5 sections, for example:
+                ' C5H7N1O2S0,J,custom,P,Hydroxylation     # Hydroxyproline
+                mErrorMessage = "Invalid custom AA string; must have 5 sections: " & strMod
+            Else
+                ' Invalid dynamic or static mod definition; must have 5 sections, for example:
+                ' O1, M, opt, any, Oxidation
+                mErrorMessage = "Invalid modification string; must have 5 sections: " & strMod
+            End If
+
             ReportError(mErrorMessage)
             Return False
         End If
 
-        ' Reconstruct the mod definition, making sure there is no whitespace
+        ' Reconstruct the mod (or custom AA) definition, making sure there is no whitespace
         strModClean = strSplitMod(0).Trim()
         For intIndex = 1 To strSplitMod.Length - 1
             strModClean &= "," & strSplitMod(intIndex).Trim()
         Next
 
+        ' Possibly append the comment (which will start with a # sign)
         If Not String.IsNullOrWhiteSpace(strComment) Then
-            ' As of August 12, 2011, the comment cannot contain a comma
-            ' Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
-            strComment = strComment.Replace(",", ";")
             strModClean &= "     " & strComment
         End If
 
         ' Check whether this is a phosphorylation mod
-        If strSplitMod(4).Trim().ToUpper().StartsWith("PHOSPH") OrElse strSplitMod(0).ToUpper() = "HO3P" Then
-            If strSplitMod(1).ToUpper().IndexOfAny(New Char() {"S"c, "T"c, "Y"c}) >= 0 Then
-                mPhosphorylationSearch = True
-            End If
+        If customAminoAcidDef Then
+            If strSplitMod(eModDefinitionParts.Name).Trim().ToUpper().StartsWith("PHOSPH") OrElse
+               strSplitMod(eModDefinitionParts.EmpiricalFormulaOrMass).ToUpper() = "HO3P" Then
+                If strSplitMod(eModDefinitionParts.Residues).ToUpper().IndexOfAny(New Char() {"S"c, "T"c, "Y"c}) >= 0 Then
+                    mPhosphorylationSearch = True
+                End If
+            End If            
         End If
 
         Return True
