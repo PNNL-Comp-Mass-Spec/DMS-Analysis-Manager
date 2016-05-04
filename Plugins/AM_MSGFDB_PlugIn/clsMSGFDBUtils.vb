@@ -2325,7 +2325,6 @@ Public Class clsMSGFDBUtils
     ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
     Private Function ParseMSGFDbValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
 
-
         Dim intPoundIndex As Integer
         Dim strSplitMod() As String
 
@@ -2339,7 +2338,11 @@ Public Class clsMSGFDBUtils
             strMod = strMod.Substring(0, intPoundIndex - 1).Trim()
         End If
 
+        ' Split on commas and remove whitespace
         strSplitMod = strMod.Split(","c)
+        For i = 0 To strSplitMod.Length - 1
+            strSplitMod(i) = strSplitMod(i).Trim()
+        Next
 
         ' Check whether this is a custom AA definition
         Dim query = (From item In strSplitMod Where item.ToLower() = "custom" Select item).ToList()
@@ -2363,9 +2366,9 @@ Public Class clsMSGFDBUtils
         End If
 
         ' Reconstruct the mod (or custom AA) definition, making sure there is no whitespace
-        strModClean = strSplitMod(0).Trim()
+        strModClean = String.Copy(strSplitMod(0))
         For intIndex = 1 To strSplitMod.Length - 1
-            strModClean &= "," & strSplitMod(intIndex).Trim()
+            strModClean &= "," & strSplitMod(intIndex)
         Next
 
         ' Possibly append the comment (which will start with a # sign)
@@ -2374,13 +2377,13 @@ Public Class clsMSGFDBUtils
         End If
 
         ' Check whether this is a phosphorylation mod
-        If customAminoAcidDef Then
-            If strSplitMod(eModDefinitionParts.Name).Trim().ToUpper().StartsWith("PHOSPH") OrElse
+        If Not customAminoAcidDef Then
+            If strSplitMod(eModDefinitionParts.Name).ToUpper().StartsWith("PHOSPH") OrElse
                strSplitMod(eModDefinitionParts.EmpiricalFormulaOrMass).ToUpper() = "HO3P" Then
                 If strSplitMod(eModDefinitionParts.Residues).ToUpper().IndexOfAny(New Char() {"S"c, "T"c, "Y"c}) >= 0 Then
                     mPhosphorylationSearch = True
                 End If
-            End If            
+            End If
         End If
 
         Return True
