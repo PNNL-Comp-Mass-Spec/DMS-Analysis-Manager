@@ -8,7 +8,6 @@
 
 Option Strict On
 
-Imports System.Diagnostics.Eventing.Reader
 Imports System.IO
 Imports System.Threading
 Imports System.Runtime.InteropServices
@@ -694,8 +693,8 @@ Public Class clsAnalysisToolRunnerBase
     Private Function CopyResultsFolderRecursive(
       RootSourceFolderPath As String, SourceFolderPath As String, TargetFolderPath As String,
       objAnalysisResults As clsAnalysisResults,
-      <Out()> ByRef blnErrorEncountered As Boolean,
-      <Out()> ByRef intFailedFileCount As Integer,
+      ByRef blnErrorEncountered As Boolean,
+      ByRef intFailedFileCount As Integer,
       intRetryCount As Integer,
       intRetryHoldoffSeconds As Integer,
       blnIncreaseHoldoffOnEachRetry As Boolean) As IJobParams.CloseOutType
@@ -787,8 +786,7 @@ Public Class clsAnalysisToolRunnerBase
 
         ' Recursively call this function for each subfolder
         ' If any of the subfolders have an error, we'll continue copying, but will set blnErrorEncountered to True
-        Dim eResult As IJobParams.CloseOutType
-        eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Dim eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
         Dim diSourceFolder As DirectoryInfo
         Dim strTargetFolderPathCurrent As String
