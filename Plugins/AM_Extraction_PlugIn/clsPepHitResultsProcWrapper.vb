@@ -194,8 +194,8 @@ Public Class clsPepHitResultsProcWrapper
                 ' Parse the console output file for any lines that contain "Error"
                 ' Append them to m_ErrMsg
 
-                Dim ioConsoleOutputFile As FileInfo = New FileInfo(m_PHRPConsoleOutputFilePath)
-                Dim blnErrorMessageFound As Boolean = False
+                Dim ioConsoleOutputFile = New FileInfo(m_PHRPConsoleOutputFilePath)
+                Dim blnErrorMessageFound = False
 
                 If ioConsoleOutputFile.Exists Then
                     Dim srInFile As StreamReader
@@ -266,9 +266,8 @@ Public Class clsPepHitResultsProcWrapper
             End Try
 
         Catch ex As Exception
-            Dim Msg As String
-            Msg = "Exception while running the peptide hit results processor: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            Dim logMessage = "Exception while running the peptide hit results processor: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, logMessage)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -282,10 +281,10 @@ Public Class clsPepHitResultsProcWrapper
 
     Private Sub ParsePHRPConsoleOutputFile()
 
-        Const CREATING_FHT As Integer = 0
-        Const CREATING_SYN As Integer = 10
-        Const CREATING_PHRP_FILES As Integer = 20
-        Const PHRP_COMPLETE As Integer = 100
+        Const CREATING_FHT = 0
+        Const CREATING_SYN = 10
+        Const CREATING_PHRP_FILES = 20
+        Const PHRP_COMPLETE = 100
 
         Static reProcessing As Regex = New Regex("Processing: (\d+)")
         Static reProcessingPHRP As Regex = New Regex("^([0-9.]+)\% complete")
@@ -361,7 +360,7 @@ Public Class clsPepHitResultsProcWrapper
         If Not mCmdRunnerErrors Is Nothing Then
             ' Split NewText on newline characters
             Dim strSplitLine() As String
-            Dim chNewLineChars() As Char = New Char() {ControlChars.Cr, ControlChars.Lf}
+            Dim chNewLineChars = New Char() {ControlChars.Cr, ControlChars.Lf}
 
             strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries)
 

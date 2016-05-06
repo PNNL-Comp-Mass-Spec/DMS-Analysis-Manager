@@ -6,6 +6,7 @@
 '
 '*********************************************************************************************************
 Imports System.IO
+Imports System.Text.RegularExpressions
 Imports AnalysisManagerBase
 Imports PeptideFileExtractor
 
@@ -30,7 +31,7 @@ Public Class clsPeptideExtractWrapper
         Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
         Static dtLastLogTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, MIN_LOG_INTERVAL_SECONDS * 2))
 
-        Dim blnUpdateLog As Boolean = False
+        Dim blnUpdateLog = False
 
         ' We divide the progress by 3 since creation of the FHT and SYN files takes ~33% of the time, while the remainder is spent running PHRP and PeptideProphet
         m_Progress = CSng(100.0 * fractionDone / 3.0)
@@ -164,30 +165,33 @@ Public Class clsPeptideExtractWrapper
 	Private Function TestOutputSynFile() As IJobParams.CloseOutType
 
 		'Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
-        Dim WorkFile As String = String.Empty
-        Dim FoundFile = False
 
-		'Test for presence of _syn.txt file
-        Dim WorkFiles() As String = Directory.GetFiles(m_MgrParams.GetParam("workdir"))
-        For Each WorkFile In WorkFiles
-            If Text.RegularExpressions.Regex.IsMatch(WorkFile, "_syn.txt$", Text.RegularExpressions.RegexOptions.IgnoreCase) Then
-                FoundFile = True
+        'Test for presence of _syn.txt file
+        Dim workFiles() As String = Directory.GetFiles(m_MgrParams.GetParam("workdir"))
+        Dim workFileMatch As String = String.Empty
+
+        Dim reCheckSuffix = New Regex("_syn.txt$", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+
+        For Each workFile In workFiles
+            If reCheckSuffix.IsMatch(workFile) Then
+                workFileMatch = workFile
                 Exit For
             End If
         Next
-        If Not FoundFile Then
+
+        If String.IsNullOrWhiteSpace(workFileMatch) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsPeptideExtractor.TestOutputSynFile: No _syn.txt file found")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Get the _syn.txt file size and verify it's > 0 bytes
-        Dim Fi As FileInfo = New FileInfo(WorkFile)
-		If Fi.Length > 0 Then
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-		Else
+        Dim fiWorkFile = New FileInfo(workFileMatch)
+        If fiWorkFile.Length > 0 Then
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPeptideExtractor.TestOutputSynFile: No data in _syn.txt file")
             Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
-		End If
+        End If
 
 	End Function
 #End Region

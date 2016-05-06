@@ -556,6 +556,7 @@ Public Class clsExtractToolRunner
 
             Using swMergedFile = New StreamWriter(New FileStream(mergedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
+                ' ReSharper disable once UseImplicitlyTypedVariableEvident
                 For iteration As Integer = 1 To numberOfClonedSteps
 
                     Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & ".tsv")
@@ -714,6 +715,7 @@ Public Class clsExtractToolRunner
 
             Using swTempFile = New StreamWriter(New FileStream(fiTempFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
+                ' ReSharper disable once UseImplicitlyTypedVariableEvident
                 For iteration As Integer = 1 To numberOfClonedSteps
 
                     Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & "_PepToProtMap.txt")
@@ -1213,6 +1215,7 @@ Public Class clsExtractToolRunner
                         numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0)
                     End If
 
+                    ' ReSharper disable once UseImplicitlyTypedVariableEvident
                     For iteration As Integer = 1 To numberOfClonedSteps
                         currentStep = "Verifying that .tsv files exist; iteration " & iteration
 
@@ -1566,8 +1569,8 @@ Public Class clsExtractToolRunner
     End Function
 
     Protected Function RunPeptideProphet() As IJobParams.CloseOutType
-        Const SYN_FILE_MAX_SIZE_MB As Integer = 200
-        Const PEPPROPHET_RESULT_FILE_SUFFIX As String = "_PepProphet.txt"
+        Const SYN_FILE_MAX_SIZE_MB = 200
+        Const PEPPROPHET_RESULT_FILE_SUFFIX = "_PepProphet.txt"
 
         Dim msg As String
         Dim fiSynFile As FileInfo
@@ -2059,7 +2062,7 @@ Public Class clsExtractToolRunner
         Try
 
             Dim progLoc As String = m_mgrParams.GetParam("PHRPProgLoc")
-            Dim diPHRP As DirectoryInfo = New DirectoryInfo(progLoc)
+            Dim diPHRP = New DirectoryInfo(progLoc)
 
             ' verify that program file exists
             If diPHRP.Exists Then
@@ -2086,7 +2089,7 @@ Public Class clsExtractToolRunner
             ' Lookup the version of the PeptideProphetRunner
 
             Dim strPeptideProphetRunnerLoc As String = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc")
-            Dim ioPeptideProphetRunner As FileInfo = New FileInfo(strPeptideProphetRunnerLoc)
+            Dim ioPeptideProphetRunner = New FileInfo(strPeptideProphetRunnerLoc)
 
             If ioPeptideProphetRunner.Exists() Then
                 ' Lookup the version of the PeptideProphetRunner
@@ -2114,9 +2117,7 @@ Public Class clsExtractToolRunner
         Dim blnSuccess As Boolean
 
         Try
-            Dim oValidator As clsPHRPMassErrorValidator
-
-            oValidator = New clsPHRPMassErrorValidator(m_DebugLevel)
+            Dim oValidator = New clsPHRPMassErrorValidator(m_DebugLevel)
 
             blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, strSearchEngineParamFileName)
             If Not blnSuccess Then
@@ -2151,7 +2152,7 @@ Public Class clsExtractToolRunner
 
 #Region "Event handlers"
     Private Sub m_PeptideProphet_PeptideProphetRunning(ByVal PepProphetStatus As String, ByVal PercentComplete As Single) Handles m_PeptideProphet.PeptideProphetRunning
-        Const PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS As Integer = 60
+        Const PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS = 60
         Static dtLastPepProphetStatusLog As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
         m_progress = SEQUEST_PROGRESS_PHRP_DONE + CSng(PercentComplete / 3.0)
@@ -2166,8 +2167,8 @@ Public Class clsExtractToolRunner
     End Sub
 
     Private Sub m_PHRP_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_PHRP.ProgressChanged
-        Const PHRP_LOG_INTERVAL_SECONDS As Integer = 180
-        Const PHRP_DETAILED_LOG_INTERVAL_SECONDS As Integer = 20
+        Const PHRP_LOG_INTERVAL_SECONDS = 180
+        Const PHRP_DETAILED_LOG_INTERVAL_SECONDS = 20
 
         Static dtLastPHRPStatusLog As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, PHRP_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
