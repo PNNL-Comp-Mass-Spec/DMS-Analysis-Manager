@@ -2367,6 +2367,59 @@ Public Class clsMSGFDBUtils
 
         ' Reconstruct the mod (or custom AA) definition, making sure there is no whitespace
         strModClean = String.Copy(strSplitMod(0))
+
+        If customAminoAcidDef Then
+
+            ' Make sure that the custom amino acid definition does not have any invalid characters
+            Dim reInvalidCharacters = New Regex("[^CHNOS0-9]", RegexOptions.IgnoreCase Or RegexOptions.Compiled)
+            Dim lstInvalidCharacters = reInvalidCharacters.Matches(strModClean)
+
+            If lstInvalidCharacters.Count > 0 Then
+                mErrorMessage = "Custom amino acid empirical formula " & strModClean & " has invalid characters. " &
+                                "It must only contain C, H, N, O, and S, and optionally an integer after each element, for example: C6H7N3O"
+                ReportError(mErrorMessage)
+                Return False
+            End If
+
+            ' Make sure that all of the elements in strModClean have a number after them
+            ' For example, auto-change C6H7N3O to C6H7N3O1
+
+            Dim reElementSplitter = New Regex("(?<Atom>[A-Z])(?<Count>\d*)", RegexOptions.IgnoreCase Or RegexOptions.Compiled)
+
+            Dim lstElements = reElementSplitter.Matches(strModClean)
+            Dim reconstructedFormula = String.Empty
+
+            For Each subPart As Match In lstElements
+                Dim elementSymbol = subPart.Groups("Atom").ToString()
+                Dim elementCount = subPart.Groups("Count").ToString()
+
+                If elementSymbol <> "C" AndAlso
+                   elementSymbol <> "H" AndAlso
+                   elementSymbol <> "N" AndAlso
+                   elementSymbol <> "O" AndAlso
+                   elementSymbol <> "S" Then
+
+                    mErrorMessage = "Invalid element " & elementSymbol & " in the custom amino acid empirical formula " & strModClean & "; " &
+                                    "MSGF+ only supports C, H, N, O, and S"
+                    ReportError(mErrorMessage)
+                    Return False
+                End If
+
+                If String.IsNullOrWhiteSpace(elementCount) Then
+                    reconstructedFormula &= elementSymbol & "1"
+                Else
+                    reconstructedFormula &= elementSymbol & elementCount
+                End If
+            Next
+
+            If Not String.Equals(strModClean, reconstructedFormula) Then
+                ReportMessage("Auto updated the custom amino acid empirical formula to include a 1 " &
+                              "after elements that did not have an element count listed: " & strModClean & " --> " & reconstructedFormula)
+                strModClean = reconstructedFormula
+            End If
+
+        End If
+
         For intIndex = 1 To strSplitMod.Length - 1
             strModClean &= "," & strSplitMod(intIndex)
         Next
