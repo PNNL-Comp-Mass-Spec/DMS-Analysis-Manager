@@ -54,7 +54,7 @@ Public Class clsPepHitResultsProcWrapper
 #End Region
 
 #Region "Events"
-    Public Event ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single)
+    Public Event ProgressChanged(taskDescription As String, percentComplete As Single)
 #End Region
 
 #Region "Methods"
@@ -64,7 +64,7 @@ Public Class clsPepHitResultsProcWrapper
     ''' <param name="MgrParams">IMgrParams object containing manager settings</param>
     ''' <param name="JobParams">IJobParams object containing job parameters</param>
     ''' <remarks></remarks>
-    Public Sub New(ByVal MgrParams As IMgrParams, ByVal JobParams As IJobParams)
+    Public Sub New(MgrParams As IMgrParams, JobParams As IJobParams)
 
         m_MgrParams = MgrParams
         m_JobParams = JobParams
@@ -78,7 +78,7 @@ Public Class clsPepHitResultsProcWrapper
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, ByVal FastaFilePath As String, ResultType As String) As IJobParams.CloseOutType
+    Public Function ExtractDataFromResults(PeptideSearchResultsFileName As String, FastaFilePath As String, ResultType As String) As IJobParams.CloseOutType
         '  Let the DLL auto-determines the input filename, based on the dataset name
         Return ExtractDataFromResults(PeptideSearchResultsFileName, True, True, FastaFilePath, ResultType)
     End Function
@@ -88,11 +88,11 @@ Public Class clsPepHitResultsProcWrapper
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ExtractDataFromResults(ByVal PeptideSearchResultsFileName As String, _
-      ByVal CreateFirstHitsFile As Boolean, _
-      ByVal CreateSynopsisFile As Boolean, _
-      ByVal FastaFilePath As String, _
-      ByVal ResultType As String) As IJobParams.CloseOutType
+    Public Function ExtractDataFromResults(PeptideSearchResultsFileName As String, _
+      CreateFirstHitsFile As Boolean, _
+      CreateSynopsisFile As Boolean, _
+      FastaFilePath As String, _
+      ResultType As String) As IJobParams.CloseOutType
 
         Dim ModDefsFileName As String
         Dim ParamFileName As String = m_JobParams.GetParam("ParmFileName")

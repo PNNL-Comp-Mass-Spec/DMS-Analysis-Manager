@@ -98,7 +98,7 @@ Public Class clsAnalysisResourcesExtraction
     ''' <param name="strResultType">String specifying type of analysis results input to extraction process</param>
     ''' <returns>IJobParams.CloseOutType specifying results</returns>
     ''' <remarks></remarks>
-    Private Function GetInputFiles(ByVal strResultType As String, <Out()> ByRef createPepToProtMapFile As Boolean) As IJobParams.CloseOutType
+    Private Function GetInputFiles(strResultType As String, <Out()> ByRef createPepToProtMapFile As Boolean) As IJobParams.CloseOutType
 
         Dim eResult As IJobParams.CloseOutType
         createPepToProtMapFile = False
@@ -365,6 +365,7 @@ Public Class clsAnalysisResourcesExtraction
                 mzidSuffix = ".mzid.gz"
             End If
 
+            ' ReSharper disable once UseImplicitlyTypedVariableEvident
             For iteration As Integer = 1 To numberOfClonedSteps
 
                 Dim blnSkipMSGFResultsZipFileCopy = False
@@ -585,7 +586,7 @@ Public Class clsAnalysisResourcesExtraction
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType specifying results</returns>
     ''' <remarks></remarks>
-    Protected Friend Function RetrieveMiscFiles(ByVal ResultType As String) As IJobParams.CloseOutType
+    Protected Friend Function RetrieveMiscFiles(ResultType As String) As IJobParams.CloseOutType
 
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
         Dim ModDefsFilename As String = Path.GetFileNameWithoutExtension(strParamFileName) & MOD_DEFS_FILE_SUFFIX
@@ -662,7 +663,7 @@ Public Class clsAnalysisResourcesExtraction
 
     End Function
 
-    Protected Function RetrieveToolVersionFile(ByVal strResultType As String) As Boolean
+    Protected Function RetrieveToolVersionFile(strResultType As String) As Boolean
 
         Dim eResultType As PHRPReader.clsPHRPReader.ePeptideHitResultType
         Dim blnSuccess As Boolean

@@ -32,7 +32,7 @@ Public Class clsPeptideProphetWrapper
 
 #End Region
 
-    Public Event PeptideProphetRunning(ByVal PepProphetStatus As String, ByVal PercentComplete As Single)
+    Public Event PeptideProphetRunning(PepProphetStatus As String, PercentComplete As Single)
 
 #Region "Properties"
     Public Property DebugLevel() As Short
@@ -59,7 +59,7 @@ Public Class clsPeptideProphetWrapper
         Get
             Return m_InputFile
         End Get
-        Set(ByVal Value As String)
+        Set(Value As String)
             m_InputFile = Value
         End Set
     End Property
@@ -72,7 +72,7 @@ Public Class clsPeptideProphetWrapper
 
 #Region "Methods"
 
-    Public Sub New(ByVal strPeptideProphetRunnerLocation As String)
+    Public Sub New(strPeptideProphetRunnerLocation As String)
         m_PeptideProphetRunnerLocation = strPeptideProphetRunnerLocation
     End Sub
 

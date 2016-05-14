@@ -23,7 +23,7 @@ Public Class clsPeptideExtractWrapper
 
 	End Sub
 
-	Private Sub m_ExtractTools_CurrentProgress(ByVal fractionDone As Double) Handles m_ExtractTools.CurrentProgress
+    Private Sub m_ExtractTools_CurrentProgress(fractionDone As Double) Handles m_ExtractTools.CurrentProgress
         Const MIN_STATUS_INTERVAL_SECONDS = 3
         Const MIN_LOG_INTERVAL_SECONDS = 5
         Const MAX_LOG_INTERVAL_SECONDS = 300
@@ -56,17 +56,17 @@ Public Class clsPeptideExtractWrapper
 
     End Sub
 
-	Private Sub m_ExtractTools_CurrentStatus(ByVal taskString As String) Handles m_ExtractTools.CurrentStatus
-		'Future use?
-	End Sub
+    Private Sub m_ExtractTools_CurrentStatus(taskString As String) Handles m_ExtractTools.CurrentStatus
+        'Future use?
+    End Sub
 #End Region
 
 #Region "Module variables"
     Private ReadOnly m_DebugLevel As Integer
     Private ReadOnly m_MgrParams As IMgrParams
     Private ReadOnly m_JobParams As IJobParams
-	Private m_ExtractInProgress As Boolean = False
-	Private WithEvents m_ExtractTools As IPeptideFileExtractor
+    Private m_ExtractInProgress As Boolean = False
+    Private WithEvents m_ExtractTools As IPeptideFileExtractor
     Private m_Progress As Single = 0.0   'Percent complete, 0-100
     Private ReadOnly m_StatusTools As IStatusFile
 #End Region
@@ -78,93 +78,93 @@ Public Class clsPeptideExtractWrapper
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Constructor
-	''' </summary>
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
     ''' <param name="MgrParams">IMgrParams object containing manager settings</param>
-	''' <param name="JobParams">IJobParams object containing job parameters</param>
-	''' <remarks></remarks>
-	Public Sub New(ByVal MgrParams As IMgrParams, ByVal JobParams As IJobParams, ByRef StatusTools As IStatusFile)
+    ''' <param name="JobParams">IJobParams object containing job parameters</param>
+    ''' <remarks></remarks>
+    Public Sub New(MgrParams As IMgrParams, JobParams As IJobParams, ByRef StatusTools As IStatusFile)
 
-		m_JobParams = JobParams
-		m_MgrParams = MgrParams
-		m_DebugLevel = CInt(m_MgrParams.GetParam("debuglevel"))
-		m_StatusTools = StatusTools
+        m_JobParams = JobParams
+        m_MgrParams = MgrParams
+        m_DebugLevel = CInt(m_MgrParams.GetParam("debuglevel"))
+        m_StatusTools = StatusTools
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Performs peptide extraction by calling extractor DLL
-	''' </summary>
-	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Function PerformExtraction() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Performs peptide extraction by calling extractor DLL
+    ''' </summary>
+    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Function PerformExtraction() As IJobParams.CloseOutType
 
-		Dim StartParams As New clsPeptideFileExtractor.StartupArguments( _
-		  m_MgrParams.GetParam("workdir"), m_JobParams.GetParam("DatasetNum"))
+        Dim StartParams As New clsPeptideFileExtractor.StartupArguments( _
+          m_MgrParams.GetParam("workdir"), m_JobParams.GetParam("DatasetNum"))
 
-		With StartParams
-			.ExpandMultiORF = True
-			.FilterEFS = False
-			.FHTFilterScoreThreshold = 0.1
-			.FHTXCorrThreshold = 0.0
-			.SynXCorrThreshold = 1.5
-			.SynFilterScoreThreshold = 0.1
-			.MakeIRRFile = False
-			.MakeNLIFile = False			' Not actually used by the extractor, since class PeptideHitEntry has COMPUTE_DISCRIMINANT_SCORE = False in the PeptideFileExtractor project
-		End With
+        With StartParams
+            .ExpandMultiORF = True
+            .FilterEFS = False
+            .FHTFilterScoreThreshold = 0.1
+            .FHTXCorrThreshold = 0.0
+            .SynXCorrThreshold = 1.5
+            .SynFilterScoreThreshold = 0.1
+            .MakeIRRFile = False
+            .MakeNLIFile = False            ' Not actually used by the extractor, since class PeptideHitEntry has COMPUTE_DISCRIMINANT_SCORE = False in the PeptideFileExtractor project
+        End With
 
-		'Verify the concatenated _out.txt file exists
-		If Not StartParams.CatOutFileExists Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Concatenated Out file not found")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Verify the concatenated _out.txt file exists
+        If Not StartParams.CatOutFileExists Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Concatenated Out file not found")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		'Setup the extractor and start extraction process
-		m_ExtractTools = New clsPeptideFileExtractor(StartParams)
+        'Setup the extractor and start extraction process
+        m_ExtractTools = New clsPeptideFileExtractor(StartParams)
 
-		m_ExtractInProgress = True
+        m_ExtractInProgress = True
 
-		Try
-			'Call the dll
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Beginning peptide extraction")
-			End If
+        Try
+            'Call the dll
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Beginning peptide extraction")
+            End If
 
-			m_ExtractTools.ProcessInputFile()
+            m_ExtractTools.ProcessInputFile()
 
-			'Loop until the extraction finishes
-			While m_ExtractInProgress
+            'Loop until the extraction finishes
+            While m_ExtractInProgress
                 Threading.Thread.Sleep(2000)
-			End While
+            End While
 
-			Dim Result As IJobParams.CloseOutType
-			Result = TestOutputSynFile()
-			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'Error messages were generated by TestOutputSynFile, so just exit
-				Return Result
-			End If
+            Dim Result As IJobParams.CloseOutType
+            Result = TestOutputSynFile()
+            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'Error messages were generated by TestOutputSynFile, so just exit
+                Return Result
+            End If
 
-			'extraction must have finished successfully, so exit
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Extraction complete")
-			End If
-			Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            'extraction must have finished successfully, so exit
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Extraction complete")
+            End If
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception while extracting files: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		Finally
-			'Make sure no stray objects are hanging around
-			m_ExtractTools = Nothing
+        Finally
+            'Make sure no stray objects are hanging around
+            m_ExtractTools = Nothing
             Threading.Thread.Sleep(1000)    'Delay 1 second, then clean up processes
-			PRISM.Processes.clsProgRunner.GarbageCollectNow()
-		End Try
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+        End Try
 
-	End Function
+    End Function
 
-	Private Function TestOutputSynFile() As IJobParams.CloseOutType
+    Private Function TestOutputSynFile() As IJobParams.CloseOutType
 
-		'Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
+        'Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
 
         'Test for presence of _syn.txt file
         Dim workFiles() As String = Directory.GetFiles(m_MgrParams.GetParam("workdir"))
@@ -193,7 +193,7 @@ Public Class clsPeptideExtractWrapper
             Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
         End If
 
-	End Function
+    End Function
 #End Region
 
 End Class

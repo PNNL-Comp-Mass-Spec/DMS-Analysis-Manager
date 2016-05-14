@@ -439,8 +439,7 @@ Public Class clsMainProcess
 
                 ' Get an analysis job, if any are available
 
-                Dim TaskReturn As clsAnalysisJob.RequestTaskResult
-                TaskReturn = m_AnalysisTask.RequestTask()
+                Dim TaskReturn = m_AnalysisTask.RequestTask()
 
                 Select Case TaskReturn
                     Case clsDBTask.RequestTaskResult.NoTaskFound

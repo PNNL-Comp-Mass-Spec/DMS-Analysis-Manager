@@ -36,34 +36,34 @@ Public Class clsPHRPMassErrorValidator
 		End Get
 	End Property
 
-    Public Sub New(ByVal intDebugLevel As Integer)
+    Public Sub New(intDebugLevel As Integer)
         mDebugLevel = intDebugLevel
     End Sub
 
-	Protected Sub InformLargeErrorExample(ByVal massErrorEntry As KeyValuePair(Of Double, String))
-		ShowErrorMessage("  ... large error example: " & massErrorEntry.Key & " Da for " & massErrorEntry.Value)
-	End Sub
+    Protected Sub InformLargeErrorExample(massErrorEntry As KeyValuePair(Of Double, String))
+        ShowErrorMessage("  ... large error example: " & massErrorEntry.Key & " Da for " & massErrorEntry.Value)
+    End Sub
 
     Protected Function LoadSearchEngineParameters(
        ByRef objPHRPReader As clsPHRPReader,
-       ByVal strSearchEngineParamFileName As String,
-       ByVal eResultType As clsPHRPReader.ePeptideHitResultType) As clsSearchEngineParameters
+       strSearchEngineParamFilePath As String,
+       eResultType As clsPHRPReader.ePeptideHitResultType) As clsSearchEngineParameters
 
         Dim objSearchEngineParams As clsSearchEngineParameters = Nothing
         Dim blnSuccess As Boolean
 
         Try
 
-            If String.IsNullOrEmpty(strSearchEngineParamFileName) Then
+            If String.IsNullOrEmpty(strSearchEngineParamFilePath) Then
                 ShowWarningMessage("Search engine parameter file not defined; will assume a maximum tolerance of 10 Da")
                 objSearchEngineParams = New clsSearchEngineParameters(eResultType.ToString())
                 objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10")
             Else
 
-                blnSuccess = objPHRPReader.PHRPParser.LoadSearchEngineParameters(strSearchEngineParamFileName, objSearchEngineParams)
+                blnSuccess = objPHRPReader.PHRPParser.LoadSearchEngineParameters(strSearchEngineParamFilePath, objSearchEngineParams)
 
                 If Not blnSuccess Then
-                    ShowWarningMessage("Error loading search engine parameter file " & strSearchEngineParamFileName & "; will assume a maximum tolerance of 10 Da")
+                    ShowWarningMessage("Error loading search engine parameter file " & IO.Path.GetFileName(strSearchEngineParamFilePath) & "; will assume a maximum tolerance of 10 Da")
                     objSearchEngineParams = New clsSearchEngineParameters(eResultType.ToString())
                     objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10")
                 End If
@@ -77,31 +77,31 @@ Public Class clsPHRPMassErrorValidator
 
     End Function
 
-	Protected Sub ShowErrorMessage(ByVal strMessage As String)
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
-	End Sub
+    Protected Sub ShowErrorMessage(strMessage As String)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+    End Sub
 
-    Protected Sub ShowErrorMessage(ByVal strMessage As String, ByVal ex As Exception)
+    Protected Sub ShowErrorMessage(strMessage As String, ex As Exception)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage, ex)
     End Sub
 
-	Protected Sub ShowMessage(strMessage As String)
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
-	End Sub
+    Protected Sub ShowMessage(strMessage As String)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
+    End Sub
 
-	Protected Sub ShowWarningMessage(strWarningMessage As String)
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage)
-	End Sub
+    Protected Sub ShowWarningMessage(strWarningMessage As String)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage)
+    End Sub
 
-	''' <summary>
-	''' Parses strInputFilePath to count the number of entries where the difference in mass between the precursor neutral mass value and the computed monoisotopic mass value is more than 6 Da away (more for higher charge states)
-	''' </summary>
-	''' <param name="strInputFilePath"></param>
-	''' <param name="eResultType"></param>
-	''' <param name="strSearchEngineParamFileName"></param>
-	''' <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
-	''' <remarks></remarks>
-    Public Function ValidatePHRPResultMassErrors(ByVal strInputFilePath As String, ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strSearchEngineParamFileName As String) As Boolean
+    ''' <summary>
+    ''' Parses strInputFilePath to count the number of entries where the difference in mass between the precursor neutral mass value and the computed monoisotopic mass value is more than 6 Da away (more for higher charge states)
+    ''' </summary>
+    ''' <param name="strInputFilePath"></param>
+    ''' <param name="eResultType"></param>
+    ''' <param name="strSearchEngineParamFilePath"></param>
+    ''' <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
+    ''' <remarks></remarks>
+    Public Function ValidatePHRPResultMassErrors(strInputFilePath As String, eResultType As clsPHRPReader.ePeptideHitResultType, strSearchEngineParamFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
         Dim objSearchEngineParams As clsSearchEngineParameters
@@ -143,7 +143,7 @@ Public Class clsPHRPMassErrorValidator
             mPHRPReader.SkipDuplicatePSMs = True
 
             ' Load the search engine parameters
-            objSearchEngineParams = LoadSearchEngineParameters(mPHRPReader, strSearchEngineParamFileName, eResultType)
+            objSearchEngineParams = LoadSearchEngineParameters(mPHRPReader, strSearchEngineParamFilePath, eResultType)
 
             ' Define the precursor mass tolerance threshold
             ' At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
@@ -245,8 +245,7 @@ Public Class clsPHRPMassErrorValidator
                 Return True
             End If
 
-            Dim dblPercentInvalid As Double
-            dblPercentInvalid = intErrorCount / intPsmCount * 100
+            Dim dblPercentInvalid = intErrorCount / intPsmCount * 100
 
             If intErrorCount > 0 Then
 
@@ -264,7 +263,7 @@ Public Class clsPHRPMassErrorValidator
                         InformLargeErrorExample(lstLargestMassErrors.Last)
 
                         If lstLargestMassErrors.Count > 2 Then
-                            Dim iterator As Integer = 0
+                            Dim iterator = 0
                             For Each massError In lstLargestMassErrors
                                 iterator += 1
                                 If iterator >= lstLargestMassErrors.Count / 2 Then
