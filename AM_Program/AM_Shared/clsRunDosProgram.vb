@@ -418,7 +418,7 @@ Public Class clsRunDosProgram
             m_ProgRunner.StartAndMonitorProgram()
 
             ' Loop until program is complete, or until m_MaxRuntimeSeconds seconds elapses
-            While (m_ProgRunner.State <> PRISM.Processes.clsProgRunner.States.NotMonitoring)  ' And (ProgRunner.State <> 10)
+            While (m_ProgRunner.State <> PRISM.Processes.clsProgRunner.States.NotMonitoring)
                 If cachedProcessID = 0 Then cachedProcessID = m_ProgRunner.PID
 
                 RaiseEvent LoopWaiting()

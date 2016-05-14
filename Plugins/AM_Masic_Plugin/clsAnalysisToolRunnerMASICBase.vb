@@ -484,7 +484,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             End While
             dtLastUpdate = DateTime.UtcNow
 
-            If objMasicProgRunner.State = PRISM.Processes.clsProgRunner.States.NotMonitoring Or objMasicProgRunner.State = 10 Then
+            If objMasicProgRunner.State = PRISM.Processes.clsProgRunner.States.NotMonitoring Then
                 m_JobRunning = False
             Else
                 ' Update the status
