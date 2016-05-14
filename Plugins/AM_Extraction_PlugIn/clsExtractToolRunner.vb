@@ -276,7 +276,7 @@ Public Class clsExtractToolRunner
     ''' <param name="strFilteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
     ''' <returns>The path to the .txt file if successful; empty string if an error</returns>
     ''' <remarks></remarks>
-    Protected Function ConvertMODaResultsToTxt(<Out()> ByRef strFilteredMODaResultsFilePath As String, ByVal keepAllResults As Boolean) As IJobParams.CloseOutType
+    Protected Function ConvertMODaResultsToTxt(<Out()> ByRef strFilteredMODaResultsFilePath As String, keepAllResults As Boolean) As IJobParams.CloseOutType
 
         Dim fdrThreshold = m_jobParams.GetJobParameter("MODaFDRThreshold", 0.05)
         Dim decoyPrefix = m_jobParams.GetJobParameter("MODaDecoyPrefix", "Reversed_")
@@ -286,7 +286,7 @@ Public Class clsExtractToolRunner
         Return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, strFilteredMODaResultsFilePath, keepAllResults)
     End Function
 
-    Protected Function ConvertMODPlusResultsToTxt(<Out()> ByRef strFilteredMODPlusResultsFilePath As String, ByVal keepAllResults As Boolean) As IJobParams.CloseOutType
+    Protected Function ConvertMODPlusResultsToTxt(<Out()> ByRef strFilteredMODPlusResultsFilePath As String, keepAllResults As Boolean) As IJobParams.CloseOutType
 
         Dim fdrThreshold = m_jobParams.GetJobParameter("MODPlusDecoyFilterFDR", 0.05)
         Dim decoyPrefix = m_jobParams.GetJobParameter("MODPlusDecoyPrefix", "Reversed_")
@@ -301,7 +301,7 @@ Public Class clsExtractToolRunner
       decoyPrefixJobParam As String,
       isModPlus As Boolean,
       <Out()> ByRef strFilteredResultsFilePath As String,
-      ByVal keepAllResults As Boolean) As IJobParams.CloseOutType
+      keepAllResults As Boolean) As IJobParams.CloseOutType
 
         strFilteredResultsFilePath = String.Empty
 
@@ -462,7 +462,7 @@ Public Class clsExtractToolRunner
     ''' <param name="suffixToAdd">Suffix to add when parsing files created by Parallel MSGF+</param>
     ''' <returns>The path to the .tsv file if successful; empty string if an error</returns>
     ''' <remarks></remarks>
-    Protected Function ConvertMZIDToTSV(ByVal suffixToAdd As String) As String
+    Protected Function ConvertMZIDToTSV(suffixToAdd As String) As String
 
         Try
 
@@ -529,8 +529,8 @@ Public Class clsExtractToolRunner
     End Function
 
     Private Function ParallelMSGFPlusMergeTSVFiles(
-     ByVal numberOfClonedSteps As Integer,
-     ByVal numberOfHitsPerScanToKeep As Integer,
+     numberOfClonedSteps As Integer,
+     numberOfHitsPerScanToKeep As Integer,
      <Out()> ByRef lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
 
         lstFilterPassingPeptides = New SortedSet(Of String)
@@ -696,8 +696,8 @@ Public Class clsExtractToolRunner
     End Function
 
     Private Function ParallelMSGFPlusMergePepToProtMapFiles(
-      ByVal numberOfClonedSteps As Integer,
-      ByVal lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
+      numberOfClonedSteps As Integer,
+      lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
 
         Try
             Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_PepToProtMap.txt")
@@ -805,7 +805,7 @@ Public Class clsExtractToolRunner
     ''' <remarks></remarks>
     Private Function PerformPeptideExtraction() As IJobParams.CloseOutType
 
-        Dim msg As String        
+        Dim msg As String
         Dim pepExtractTool As New clsPeptideExtractWrapper(m_mgrParams, m_jobParams, m_StatusTools)
 
         'Run the extractor
@@ -1021,7 +1021,7 @@ Public Class clsExtractToolRunner
 
     End Function
 
-    Private Function RunPhrpForMODa(ByVal strFilteredMODaResultsFilePath As String) As IJobParams.CloseOutType
+    Private Function RunPhrpForMODa(strFilteredMODaResultsFilePath As String) As IJobParams.CloseOutType
 
         Dim currentStep = "Initializing"
 
@@ -1099,7 +1099,7 @@ Public Class clsExtractToolRunner
 
     End Function
 
-    Private Function RunPhrpForMODPlus(ByVal filteredMODPlusResultsFilePath As String) As IJobParams.CloseOutType
+    Private Function RunPhrpForMODPlus(filteredMODPlusResultsFilePath As String) As IJobParams.CloseOutType
 
         Dim currentStep = "Initializing"
 
@@ -1775,7 +1775,7 @@ Public Class clsExtractToolRunner
     ''' </summary>
     ''' <param name="strFileList">Full paths to files to delete</param>
     ''' <remarks></remarks>
-    Private Sub DeleteTemporaryFiles(ByVal strFileList() As String)
+    Private Sub DeleteTemporaryFiles(strFileList() As String)
         Dim intFileIndex As Integer
 
         Threading.Thread.Sleep(1000)                       'Delay for 1 second
@@ -1806,8 +1806,8 @@ Public Class clsExtractToolRunner
     ''' <returns>True if success; false if failure</returns>
     ''' <remarks></remarks>
     Protected Function InterleaveFiles(ByRef strFileList() As String, _
-      ByVal strCombinedFilePath As String, _
-      ByVal blnLookForHeaderLine As Boolean) As Boolean
+      strCombinedFilePath As String, _
+      blnLookForHeaderLine As Boolean) As Boolean
 
         Dim msg As String
         Dim intIndex As Integer
@@ -1931,9 +1931,9 @@ Public Class clsExtractToolRunner
     ''' <param name="strSplitFileList">Output array listing the full paths to the split files that were created</param>
     ''' <returns>True if success, false if failure</returns>
     ''' <remarks></remarks>
-    Private Function SplitFileRoundRobin(ByVal strSrcFilePath As String, _
-     ByVal lngMaxSizeBytes As Int64, _
-     ByVal blnLookForHeaderLine As Boolean, _
+    Private Function SplitFileRoundRobin(strSrcFilePath As String, _
+     lngMaxSizeBytes As Int64, _
+     blnLookForHeaderLine As Boolean, _
      ByRef strSplitFileList() As String) As Boolean
 
         Dim fiFileInfo As FileInfo
@@ -2112,14 +2112,15 @@ Public Class clsExtractToolRunner
 
     End Function
 
-    Protected Function ValidatePHRPResultMassErrors(ByVal strInputFilePath As String, ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strSearchEngineParamFileName As String) As Boolean
+    Protected Function ValidatePHRPResultMassErrors(strInputFilePath As String, eResultType As clsPHRPReader.ePeptideHitResultType, strSearchEngineParamFileName As String) As Boolean
 
         Dim blnSuccess As Boolean
 
         Try
             Dim oValidator = New clsPHRPMassErrorValidator(m_DebugLevel)
+            Dim paramFilePath = Path.Combine(m_WorkDir, strSearchEngineParamFileName)
 
-            blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, strSearchEngineParamFileName)
+            blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, paramFilePath)
             If Not blnSuccess Then
                 Dim toolName As String = m_jobParams.GetJobParameter("ToolName", "")
 
@@ -2151,7 +2152,7 @@ Public Class clsExtractToolRunner
 #End Region
 
 #Region "Event handlers"
-    Private Sub m_PeptideProphet_PeptideProphetRunning(ByVal PepProphetStatus As String, ByVal PercentComplete As Single) Handles m_PeptideProphet.PeptideProphetRunning
+    Private Sub m_PeptideProphet_PeptideProphetRunning(PepProphetStatus As String, PercentComplete As Single) Handles m_PeptideProphet.PeptideProphetRunning
         Const PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS = 60
         Static dtLastPepProphetStatusLog As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
@@ -2166,7 +2167,7 @@ Public Class clsExtractToolRunner
         End If
     End Sub
 
-    Private Sub m_PHRP_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_PHRP.ProgressChanged
+    Private Sub m_PHRP_ProgressChanged(taskDescription As String, percentComplete As Single) Handles m_PHRP.ProgressChanged
         Const PHRP_LOG_INTERVAL_SECONDS = 180
         Const PHRP_DETAILED_LOG_INTERVAL_SECONDS = 20
 
