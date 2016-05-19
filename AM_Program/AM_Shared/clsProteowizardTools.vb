@@ -4,9 +4,9 @@ Public Class clsProteowizardTools
 
 	Protected mDebugLevel As Integer
 
-	Public Sub New(ByVal DebugLvl As Integer)
-		mDebugLevel = DebugLvl
-	End Sub
+    Public Sub New(DebugLvl As Integer)
+        mDebugLevel = DebugLvl
+    End Sub
 
 	Public Function RegisterProteoWizard() As Boolean
 

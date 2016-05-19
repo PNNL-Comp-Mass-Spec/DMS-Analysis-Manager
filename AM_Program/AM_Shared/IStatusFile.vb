@@ -128,10 +128,10 @@ Public Interface IStatusFile
     ''' <param name="JobInfo"></param>
     ''' <param name="ForceLogToBrokerDB"></param>
     ''' <remarks></remarks>
-    Sub UpdateClose(ByVal ManagerIdleMessage As String,
+    Sub UpdateClose(ManagerIdleMessage As String,
       ByRef RecentErrorMessages() As String,
-      ByVal JobInfo As String,
-      ByVal ForceLogToBrokerDB As Boolean)
+      JobInfo As String,
+      ForceLogToBrokerDB As Boolean)
 
 
     ''' <summary>
@@ -139,7 +139,7 @@ Public Interface IStatusFile
     ''' </summary>
     ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
     ''' <remarks></remarks>
-    Sub UpdateAndWrite(ByVal PercentComplete As Single)
+    Sub UpdateAndWrite(PercentComplete As Single)
 
     ''' <summary>
     ''' Update the current status
@@ -149,10 +149,10 @@ Public Interface IStatusFile
     ''' <param name="eTaskStatusDetail">Detailed task status</param>
     ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
     ''' <remarks></remarks>
-    Sub UpdateAndWrite(ByVal eMgrStatus As EnumMgrStatus,
-                       ByVal eTaskStatus As EnumTaskStatus,
-                       ByVal eTaskStatusDetail As EnumTaskStatusDetail,
-                       ByVal PercentComplete As Single)
+    Sub UpdateAndWrite(eMgrStatus As EnumMgrStatus,
+                       eTaskStatus As EnumTaskStatus,
+                       eTaskStatusDetail As EnumTaskStatusDetail,
+                       PercentComplete As Single)
 
     ''' <summary>
     ''' Update the current status
@@ -161,9 +161,9 @@ Public Interface IStatusFile
     ''' <param name="PercentComplete">VJob completion percentage (value between 0 and 100)</param>
     ''' <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
     ''' <remarks></remarks>
-    Sub UpdateAndWrite(ByVal Status As EnumTaskStatus,
-                       ByVal PercentComplete As Single,
-                       ByVal SpectrumCountTotal As Integer)
+    Sub UpdateAndWrite(Status As EnumTaskStatus,
+                       PercentComplete As Single,
+                       SpectrumCountTotal As Integer)
 
     ''' <summary>
     ''' Updates status file
@@ -179,10 +179,10 @@ Public Interface IStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Sub UpdateAndWrite(
-      ByVal eMgrStatus As EnumMgrStatus, ByVal eTaskStatus As EnumTaskStatus, ByVal eTaskStatusDetail As EnumTaskStatusDetail,
-      ByVal PercentComplete As Single, ByVal DTACount As Integer,
-      ByVal MostRecentLogMessage As String, ByVal MostRecentErrorMessage As String,
-      ByVal RecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
+      eMgrStatus As EnumMgrStatus, eTaskStatus As EnumTaskStatus, eTaskStatusDetail As EnumTaskStatusDetail,
+      PercentComplete As Single, DTACount As Integer,
+      MostRecentLogMessage As String, MostRecentErrorMessage As String,
+      RecentJobInfo As String, ForceLogToBrokerDB As Boolean)
 
     ''' <summary>
     ''' Logs to the status file that the manager is idle
@@ -196,7 +196,7 @@ Public Interface IStatusFile
     ''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
-    Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal ForceLogToBrokerDB As Boolean)
+    Sub UpdateIdle(ManagerIdleMessage As String, ForceLogToBrokerDB As Boolean)
 
     ''' <summary>
     ''' Logs to the status file that the manager is idle
@@ -206,7 +206,7 @@ Public Interface IStatusFile
     ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
-    Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal IdleErrorMessage As String, ByVal RecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
+    Sub UpdateIdle(ManagerIdleMessage As String, IdleErrorMessage As String, RecentJobInfo As String, ForceLogToBrokerDB As Boolean)
 
     ''' <summary>
     ''' Logs to the status file that the manager is idle
@@ -216,21 +216,21 @@ Public Interface IStatusFile
     ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
-    Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String, ByVal ForceLogToBrokerDB As Boolean)
+    Sub UpdateIdle(ManagerIdleMessage As String, ByRef RecentErrorMessages() As String, RecentJobInfo As String, ForceLogToBrokerDB As Boolean)
 
 
     ''' <summary>
     ''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
     ''' </summary>
     ''' <remarks></remarks>
-    Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus)
+    Sub UpdateDisabled(ManagerStatus As EnumMgrStatus)
 
     ''' <summary>
     ''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
     ''' </summary>
     ''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
     ''' <remarks></remarks>
-    Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus, ByVal ManagerDisableMessage As String)
+    Sub UpdateDisabled(ManagerStatus As EnumMgrStatus, ManagerDisableMessage As String)
 
     ''' <summary>
     ''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
@@ -240,7 +240,7 @@ Public Interface IStatusFile
     ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
     ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
     ''' <remarks></remarks>
-    Sub UpdateDisabled(ByVal ManagerStatus As EnumMgrStatus, ByVal ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String)
+    Sub UpdateDisabled(ManagerStatus As EnumMgrStatus, ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, RecentJobInfo As String)
 
     ''' <summary>
     ''' Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
@@ -254,7 +254,7 @@ Public Interface IStatusFile
     ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
     ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
     ''' <remarks></remarks>
-    Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String)
+    Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, RecentJobInfo As String)
 
     ''' <summary>
     ''' Writes out a new status file, indicating that the manager is still alive
@@ -267,7 +267,7 @@ Public Interface IStatusFile
     ''' </summary>
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
-    Sub WriteStatusFile(ByVal ForceLogToBrokerDB As Boolean)
+    Sub WriteStatusFile(ForceLogToBrokerDB As Boolean)
 
 #End Region
 

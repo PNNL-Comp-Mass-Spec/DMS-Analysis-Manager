@@ -36,32 +36,32 @@ Public Class clsSummaryFile
 	''' <param name="AnalysisSummaryFilePath">Full path of summary file to create</param>
 	''' <returns>TRUE for success; FALSE for failure</returns>
 	''' <remarks></remarks>
-	Public Function SaveSummaryFile(ByVal AnalysisSummaryFilePath As String) As Boolean
+    Public Function SaveSummaryFile(AnalysisSummaryFilePath As String) As Boolean
 
-		Try
-			Using swSummaryFile = New StreamWriter(New FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+        Try
+            Using swSummaryFile = New StreamWriter(New FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-				For Each DumString As String In m_lines
-					swSummaryFile.WriteLine(DumString)
-				Next
+                For Each DumString As String In m_lines
+                    swSummaryFile.WriteLine(DumString)
+                Next
 
-			End Using
+            End Using
 
-			Return True
-		Catch Err As Exception
-			Return False
-		End Try
+            Return True
+        Catch Err As Exception
+            Return False
+        End Try
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Adds a line of data to summary file
-	''' </summary>
-	''' <param name="line">Data to be added</param>
-	''' <remarks></remarks>
-	Public Sub Add(ByVal line As String)
-		m_lines.Add(line)
-	End Sub
+    ''' <summary>
+    ''' Adds a line of data to summary file
+    ''' </summary>
+    ''' <param name="line">Data to be added</param>
+    ''' <remarks></remarks>
+    Public Sub Add(line As String)
+        m_lines.Add(line)
+    End Sub
 #End Region
 
 End Class

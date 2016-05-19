@@ -13,82 +13,82 @@ Imports System.Threading
 
 Public Class clsAnalysisResults
 
-	'*********************************************************************************************************
-	'Analysis job results handling class
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Analysis job results handling class
+    '*********************************************************************************************************
 
 #Region "Module variables"
-	Private Const FAILED_RESULTS_FOLDER_INFO_TEXT As String = "FailedResultsFolderInfo_"
-	Private Const FAILED_RESULTS_FOLDER_RETAIN_DAYS As Integer = 31
+    Private Const FAILED_RESULTS_FOLDER_INFO_TEXT As String = "FailedResultsFolderInfo_"
+    Private Const FAILED_RESULTS_FOLDER_RETAIN_DAYS As Integer = 31
 
-	Private Const DEFAULT_RETRY_COUNT As Integer = 3
-	Private Const DEFAULT_RETRY_HOLDOFF_SEC As Integer = 15
+    Private Const DEFAULT_RETRY_COUNT As Integer = 3
+    Private Const DEFAULT_RETRY_HOLDOFF_SEC As Integer = 15
 
-	' access to the job parameters
-	Private ReadOnly m_jobParams As IJobParams
+    ' access to the job parameters
+    Private ReadOnly m_jobParams As IJobParams
 
-	' access to mgr parameters
-	Private ReadOnly m_mgrParams As IMgrParams
-	Private ReadOnly m_DebugLevel As Integer
-	Private ReadOnly m_MgrName As String
+    ' access to mgr parameters
+    Private ReadOnly m_mgrParams As IMgrParams
+    Private ReadOnly m_DebugLevel As Integer
+    Private ReadOnly m_MgrName As String
 
-	' for posting a general explanation for external consumption
-	Protected m_message As String
+    ' for posting a general explanation for external consumption
+    Protected m_message As String
 
-	Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
-	Protected m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
-	Protected m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
+    Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
+    Protected m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
+    Protected m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
 #End Region
 
 #Region "Properties"
-	' explanation of what happened to last operation this class performed
-	Public ReadOnly Property Message() As String
-		Get
-			Return m_message
-		End Get
-	End Property
+    ' explanation of what happened to last operation this class performed
+    Public ReadOnly Property Message() As String
+        Get
+            Return m_message
+        End Get
+    End Property
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="mgrParams">Manager parameter object</param>
-	''' <param name="jobParams">Job parameter object</param>
-	''' <remarks></remarks>
-	Public Sub New(ByVal mgrParams As IMgrParams, ByVal jobParams As IJobParams)
-		m_mgrParams = mgrParams
-		m_jobParams = jobParams
-		m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
-		m_DebugLevel = m_mgrParams.GetParam("debuglevel", 1)
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="mgrParams">Manager parameter object</param>
+    ''' <param name="jobParams">Job parameter object</param>
+    ''' <remarks></remarks>
+    Public Sub New(mgrParams As IMgrParams, jobParams As IJobParams)
+        m_mgrParams = mgrParams
+        m_jobParams = jobParams
+        m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
+        m_DebugLevel = m_mgrParams.GetParam("debuglevel", 1)
 
-		m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
-	End Sub
+        m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
+    End Sub
 
-	''' <summary>
-	''' Copies a source directory to the destination directory. Allows overwriting.
-	''' </summary>
-	''' <param name="SourcePath">The source directory path.</param>
-	''' <param name="DestPath">The destination directory path.</param>
-	''' <param name="Overwrite">True if the destination file can be overwritten; otherwise, false.</param>
-	''' <remarks></remarks>
-	Public Sub CopyDirectory(ByVal SourcePath As String, ByVal DestPath As String, ByVal Overwrite As Boolean)
-		CopyDirectory(SourcePath, DestPath, Overwrite, MaxRetryCount:=DEFAULT_RETRY_COUNT, ContinueOnError:=True)
-	End Sub
+    ''' <summary>
+    ''' Copies a source directory to the destination directory. Allows overwriting.
+    ''' </summary>
+    ''' <param name="SourcePath">The source directory path.</param>
+    ''' <param name="DestPath">The destination directory path.</param>
+    ''' <param name="Overwrite">True if the destination file can be overwritten; otherwise, false.</param>
+    ''' <remarks></remarks>
+    Public Sub CopyDirectory(SourcePath As String, DestPath As String, Overwrite As Boolean)
+        CopyDirectory(SourcePath, DestPath, Overwrite, MaxRetryCount:=DEFAULT_RETRY_COUNT, ContinueOnError:=True)
+    End Sub
 
-	''' <summary>
-	''' Copies a source directory to the destination directory. Allows overwriting.
-	''' </summary>
-	''' <param name="SourcePath">The source directory path.</param>
-	''' <param name="DestPath">The destination directory path.</param>
-	''' <param name="Overwrite">True if the destination file can be overwritten; otherwise, false.</param>
-	''' <param name="MaxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
-	''' <param name="ContinueOnError">When true, then will continue copying even if an error occurs</param>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Copies a source directory to the destination directory. Allows overwriting.
+    ''' </summary>
+    ''' <param name="SourcePath">The source directory path.</param>
+    ''' <param name="DestPath">The destination directory path.</param>
+    ''' <param name="Overwrite">True if the destination file can be overwritten; otherwise, false.</param>
+    ''' <param name="MaxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
+    ''' <param name="ContinueOnError">When true, then will continue copying even if an error occurs</param>
+    ''' <remarks></remarks>
     Public Sub CopyDirectory(
-      ByVal SourcePath As String, ByVal DestPath As String,
-      ByVal Overwrite As Boolean, ByVal MaxRetryCount As Integer,
-      ByVal ContinueOnError As Boolean)
+      SourcePath As String, DestPath As String,
+      Overwrite As Boolean, MaxRetryCount As Integer,
+      ContinueOnError As Boolean)
 
         Dim diSourceDir As DirectoryInfo = New DirectoryInfo(SourcePath)
         Dim diDestDir As DirectoryInfo = New DirectoryInfo(DestPath)
@@ -155,28 +155,28 @@ Public Class clsAnalysisResults
 
     End Sub
 
-	Public Sub CopyFileWithRetry(ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean)
-		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
-		CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
-	End Sub
-
-    Public Sub CopyFileWithRetry(
-      ByVal SrcFilePath As String, ByVal DestFilePath As String,
-      ByVal Overwrite As Boolean, ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+    Public Sub CopyFileWithRetry(SrcFilePath As String, DestFilePath As String, Overwrite As Boolean)
+        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
         CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
     End Sub
 
     Public Sub CopyFileWithRetry(
-      ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean,
-      ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer)
+      SrcFilePath As String, DestFilePath As String,
+      Overwrite As Boolean, blnIncreaseHoldoffOnEachRetry As Boolean)
+        CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
+    End Sub
+
+    Public Sub CopyFileWithRetry(
+      SrcFilePath As String, DestFilePath As String, Overwrite As Boolean,
+      MaxRetryCount As Integer, RetryHoldoffSeconds As Integer)
         Const blnIncreaseHoldoffOnEachRetry As Boolean = False
         CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
     End Sub
 
     Public Sub CopyFileWithRetry(
-      ByVal SrcFilePath As String, ByVal DestFilePath As String, ByVal Overwrite As Boolean,
-      ByVal MaxRetryCount As Integer, ByVal RetryHoldoffSeconds As Integer,
-      ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+      SrcFilePath As String, DestFilePath As String, Overwrite As Boolean,
+      MaxRetryCount As Integer, RetryHoldoffSeconds As Integer,
+      blnIncreaseHoldoffOnEachRetry As Boolean)
 
         Dim AttemptCount As Integer = 0
         Dim blnSuccess As Boolean = False
@@ -225,113 +225,113 @@ Public Class clsAnalysisResults
 
     End Sub
 
-	Public Sub CopyFailedResultsToArchiveFolder(ByVal ResultsFolderPath As String)
+    Public Sub CopyFailedResultsToArchiveFolder(ResultsFolderPath As String)
 
-		Dim diSourceFolder As DirectoryInfo
-		Dim diTargetFolder As DirectoryInfo
+        Dim diSourceFolder As DirectoryInfo
+        Dim diTargetFolder As DirectoryInfo
 
-		Dim strFailedResultsFolderPath As String = String.Empty
+        Dim strFailedResultsFolderPath As String = String.Empty
 
-		Dim strFolderInfoFilePath As String = String.Empty
+        Dim strFolderInfoFilePath As String = String.Empty
 
-		Try
-			strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
+        Try
+            strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
 
-			If String.IsNullOrEmpty(strFailedResultsFolderPath) Then
-				' Failed results folder path is not defined; don't try to copy the results anywhere
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "FailedResultsFolderPath is not defined for this manager; cannot copy results")
-				Exit Sub
-			End If
+            If String.IsNullOrEmpty(strFailedResultsFolderPath) Then
+                ' Failed results folder path is not defined; don't try to copy the results anywhere
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "FailedResultsFolderPath is not defined for this manager; cannot copy results")
+                Exit Sub
+            End If
 
-			' Make sure the target folder exists
-			CreateFolderWithRetry(strFailedResultsFolderPath, 2, 5)
+            ' Make sure the target folder exists
+            CreateFolderWithRetry(strFailedResultsFolderPath, 2, 5)
 
-			diSourceFolder = New DirectoryInfo(ResultsFolderPath)
-			diTargetFolder = New DirectoryInfo(strFailedResultsFolderPath)
+            diSourceFolder = New DirectoryInfo(ResultsFolderPath)
+            diTargetFolder = New DirectoryInfo(strFailedResultsFolderPath)
 
-			' Create an info file that describes the saved results
-			Try
-				strFolderInfoFilePath = Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT & diSourceFolder.Name & ".txt")
-				CopyFailedResultsCreateInfoFile(strFolderInfoFilePath, diSourceFolder.Name)
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating the results folder info file '" & strFolderInfoFilePath, ex)
-			End Try
+            ' Create an info file that describes the saved results
+            Try
+                strFolderInfoFilePath = Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT & diSourceFolder.Name & ".txt")
+                CopyFailedResultsCreateInfoFile(strFolderInfoFilePath, diSourceFolder.Name)
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating the results folder info file '" & strFolderInfoFilePath, ex)
+            End Try
 
-			' Make sure the source folder exists
-			If Not diSourceFolder.Exists Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Results folder not found; cannot copy results: " & ResultsFolderPath)
-			Else
-				' Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
-				DeleteOldFailedResultsFolders(diTargetFolder)
+            ' Make sure the source folder exists
+            If Not diSourceFolder.Exists Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Results folder not found; cannot copy results: " & ResultsFolderPath)
+            Else
+                ' Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
+                DeleteOldFailedResultsFolders(diTargetFolder)
 
-				Dim strTargetFolderPath As String
-				strTargetFolderPath = Path.Combine(diTargetFolder.FullName, diSourceFolder.Name)
+                Dim strTargetFolderPath As String
+                strTargetFolderPath = Path.Combine(diTargetFolder.FullName, diSourceFolder.Name)
 
-				' Actually copy the results folder
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying results folder to failed results archive: " & strTargetFolderPath)
+                ' Actually copy the results folder
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying results folder to failed results archive: " & strTargetFolderPath)
 
-				CopyDirectory(diSourceFolder.FullName, strTargetFolderPath, True, 2, True)
+                CopyDirectory(diSourceFolder.FullName, strTargetFolderPath, True, 2, True)
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copy complete")
-			End If
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copy complete")
+            End If
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results from " & ResultsFolderPath & " to " & strFailedResultsFolderPath, ex)
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results from " & ResultsFolderPath & " to " & strFailedResultsFolderPath, ex)
+        End Try
 
-	End Sub
+    End Sub
 
-	Private Sub CopyFailedResultsCreateInfoFile(ByVal strFolderInfoFilePath As String, ByVal strResultsFolderName As String)
+    Private Sub CopyFailedResultsCreateInfoFile(strFolderInfoFilePath As String, strResultsFolderName As String)
 
-		Dim swArchivedFolderInfoFile As StreamWriter
-		swArchivedFolderInfoFile = New StreamWriter(New FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+        Dim swArchivedFolderInfoFile As StreamWriter
+        swArchivedFolderInfoFile = New StreamWriter(New FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-		With swArchivedFolderInfoFile
-			.WriteLine("Date" & ControlChars.Tab & DateTime.Now())
-			.WriteLine("ResultsFolderName" & ControlChars.Tab & strResultsFolderName)
-			.WriteLine("Manager" & ControlChars.Tab & m_mgrParams.GetParam("MgrName"))
-			If Not m_jobParams Is Nothing Then
-				.WriteLine("JobToolDescription" & ControlChars.Tab & m_jobParams.GetCurrentJobToolDescription())
-				.WriteLine("Job" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Job"))
-				.WriteLine("Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
-			End If
-			.WriteLine("Date" & ControlChars.Tab & DateTime.Now().ToString)
-			If Not m_jobParams Is Nothing Then
-				.WriteLine("Tool" & ControlChars.Tab & m_jobParams.GetParam("toolname"))
-				.WriteLine("StepTool" & ControlChars.Tab & m_jobParams.GetParam("StepTool"))
-				.WriteLine("Dataset" & ControlChars.Tab & m_jobParams.GetParam("JobParameters", "DatasetNum"))
-				.WriteLine("XferFolder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
-				.WriteLine("ParamFileName" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
-				.WriteLine("SettingsFileName" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))
-				.WriteLine("LegacyOrganismDBName" & ControlChars.Tab & m_jobParams.GetParam("LegacyFastaFileName"))
-				.WriteLine("ProteinCollectionList" & ControlChars.Tab & m_jobParams.GetParam("ProteinCollectionList"))
-				.WriteLine("ProteinOptionsList" & ControlChars.Tab & m_jobParams.GetParam("ProteinOptions"))
-				.WriteLine("FastaFileName" & ControlChars.Tab & m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-			End If
-		End With
+        With swArchivedFolderInfoFile
+            .WriteLine("Date" & ControlChars.Tab & DateTime.Now())
+            .WriteLine("ResultsFolderName" & ControlChars.Tab & strResultsFolderName)
+            .WriteLine("Manager" & ControlChars.Tab & m_mgrParams.GetParam("MgrName"))
+            If Not m_jobParams Is Nothing Then
+                .WriteLine("JobToolDescription" & ControlChars.Tab & m_jobParams.GetCurrentJobToolDescription())
+                .WriteLine("Job" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Job"))
+                .WriteLine("Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
+            End If
+            .WriteLine("Date" & ControlChars.Tab & DateTime.Now().ToString)
+            If Not m_jobParams Is Nothing Then
+                .WriteLine("Tool" & ControlChars.Tab & m_jobParams.GetParam("toolname"))
+                .WriteLine("StepTool" & ControlChars.Tab & m_jobParams.GetParam("StepTool"))
+                .WriteLine("Dataset" & ControlChars.Tab & m_jobParams.GetParam("JobParameters", "DatasetNum"))
+                .WriteLine("XferFolder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
+                .WriteLine("ParamFileName" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
+                .WriteLine("SettingsFileName" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))
+                .WriteLine("LegacyOrganismDBName" & ControlChars.Tab & m_jobParams.GetParam("LegacyFastaFileName"))
+                .WriteLine("ProteinCollectionList" & ControlChars.Tab & m_jobParams.GetParam("ProteinCollectionList"))
+                .WriteLine("ProteinOptionsList" & ControlChars.Tab & m_jobParams.GetParam("ProteinOptions"))
+                .WriteLine("FastaFileName" & ControlChars.Tab & m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            End If
+        End With
 
-		swArchivedFolderInfoFile.Close()
+        swArchivedFolderInfoFile.Close()
 
-	End Sub
+    End Sub
 
-	Public Sub CreateFolderWithRetry(ByVal FolderPath As String)
-		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
-		CreateFolderWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
-	End Sub
+    Public Sub CreateFolderWithRetry(FolderPath As String)
+        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        CreateFolderWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
+    End Sub
 
     Public Sub CreateFolderWithRetry(
-      ByVal FolderPath As String,
-      ByVal MaxRetryCount As Integer,
-      ByVal RetryHoldoffSeconds As Integer)
+      FolderPath As String,
+      MaxRetryCount As Integer,
+      RetryHoldoffSeconds As Integer)
         Const blnIncreaseHoldoffOnEachRetry As Boolean = False
         CreateFolderWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
     End Sub
 
     Public Sub CreateFolderWithRetry(
-      ByVal FolderPath As String,
-      ByVal MaxRetryCount As Integer,
-      ByVal RetryHoldoffSeconds As Integer,
-      ByVal blnIncreaseHoldoffOnEachRetry As Boolean)
+      FolderPath As String,
+      MaxRetryCount As Integer,
+      RetryHoldoffSeconds As Integer,
+      blnIncreaseHoldoffOnEachRetry As Boolean)
 
         Dim AttemptCount As Integer = 0
         Dim blnSuccess As Boolean = False
@@ -378,65 +378,65 @@ Public Class clsAnalysisResults
 
     End Sub
 
-	Private Sub DeleteOldFailedResultsFolders(ByVal diTargetFolder As DirectoryInfo)
+    Private Sub DeleteOldFailedResultsFolders(diTargetFolder As DirectoryInfo)
 
-		Dim fiFileInfo As FileInfo
-		Dim diOldResultsFolder As DirectoryInfo
+        Dim fiFileInfo As FileInfo
+        Dim diOldResultsFolder As DirectoryInfo
 
-		Dim strOldResultsFolderName As String
-		Dim strTargetFilePath As String = ""
+        Dim strOldResultsFolderName As String
+        Dim strTargetFilePath As String = ""
 
-		' Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
-		For Each fiFileInfo In diTargetFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT & "*")
-			If DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS Then
-				' File was modified before the threshold; delete the results folder, then rename this file
+        ' Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
+        For Each fiFileInfo In diTargetFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT & "*")
+            If DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS Then
+                ' File was modified before the threshold; delete the results folder, then rename this file
 
-				Try
-					strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length)
-					diOldResultsFolder = New DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName))
+                Try
+                    strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length)
+                    diOldResultsFolder = New DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName))
 
-					If diOldResultsFolder.Exists Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleting old failed results folder: " & diOldResultsFolder.FullName)
+                    If diOldResultsFolder.Exists Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleting old failed results folder: " & diOldResultsFolder.FullName)
 
-						diOldResultsFolder.Delete(True)
-					End If
+                        diOldResultsFolder.Delete(True)
+                    End If
 
-					Try
-						strTargetFilePath = Path.Combine(fiFileInfo.DirectoryName, "x_" & fiFileInfo.Name)
-						fiFileInfo.CopyTo(strTargetFilePath, True)
-						fiFileInfo.Delete()
-					Catch ex As Exception
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming failed results info file to " & strTargetFilePath, ex)
-					End Try
+                    Try
+                        strTargetFilePath = Path.Combine(fiFileInfo.DirectoryName, "x_" & fiFileInfo.Name)
+                        fiFileInfo.CopyTo(strTargetFilePath, True)
+                        fiFileInfo.Delete()
+                    Catch ex As Exception
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming failed results info file to " & strTargetFilePath, ex)
+                    End Try
 
-				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting old failed results folder", ex)
+                Catch ex As Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting old failed results folder", ex)
 
-				End Try
+                End Try
 
-			End If
-		Next
+            End If
+        Next
 
-	End Sub
+    End Sub
 
-	Public Function FolderExistsWithRetry(ByVal FolderPath As String) As Boolean
-		Const blnIncreaseHoldoffOnEachRetry As Boolean = False
-		Return FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
-	End Function
+    Public Function FolderExistsWithRetry(FolderPath As String) As Boolean
+        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        Return FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
+    End Function
 
     Public Function FolderExistsWithRetry(
-      ByVal FolderPath As String,
-      ByVal MaxRetryCount As Integer,
-      ByVal RetryHoldoffSeconds As Integer) As Boolean
+      FolderPath As String,
+      MaxRetryCount As Integer,
+      RetryHoldoffSeconds As Integer) As Boolean
         Const blnIncreaseHoldoffOnEachRetry As Boolean = False
         Return FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
     End Function
 
     Public Function FolderExistsWithRetry(
-      ByVal FolderPath As String,
-      ByVal MaxRetryCount As Integer,
-      ByVal RetryHoldoffSeconds As Integer,
-      ByVal blnIncreaseHoldoffOnEachRetry As Boolean) As Boolean
+      FolderPath As String,
+      MaxRetryCount As Integer,
+      RetryHoldoffSeconds As Integer,
+      blnIncreaseHoldoffOnEachRetry As Boolean) As Boolean
 
         Dim AttemptCount As Integer = 0
         Dim blnSuccess As Boolean = False
@@ -478,10 +478,10 @@ Public Class clsAnalysisResults
 
     End Function
 
-	Protected Sub ResetTimestampForQueueWaitTimeLogging()
-		m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-		m_LockQueueWaitTimeStart = DateTime.UtcNow
-	End Sub
+    Protected Sub ResetTimestampForQueueWaitTimeLogging()
+        m_LastLockQueueWaitTimeLog = DateTime.UtcNow
+        m_LockQueueWaitTimeStart = DateTime.UtcNow
+    End Sub
 
 #End Region
 

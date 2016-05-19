@@ -13,7 +13,7 @@ Imports System.Xml
 
 Public Class clsStatusFile
     Implements IStatusFile
-    
+
     '*********************************************************************************************************
     'Provides tools for creating and updating an analysis status file
     ' Additional functionality:
@@ -165,7 +165,7 @@ Public Class clsStatusFile
     ''' </summary>
     ''' <param name="FileLocation">Full path to status file</param>
     ''' <remarks></remarks>
-    Public Sub New(ByVal FileLocation As String, ByVal debugLevel As Integer)
+    Public Sub New(FileLocation As String, debugLevel As Integer)
         FileNamePath = FileLocation
         MgrName = String.Empty
         MgrStatus = IStatusFile.EnumMgrStatus.STOPPED
@@ -192,7 +192,7 @@ Public Class clsStatusFile
     ''' <param name="minimumMemoryUsageLogIntervalMinutes"></param>
     ''' <param name="memoryUsageLogFolderPath"></param>
     ''' <remarks></remarks>
-    Public Sub ConfigureMemoryLogging(ByVal logMemoryUsage As Boolean, ByVal minimumMemoryUsageLogIntervalMinutes As Single, ByVal memoryUsageLogFolderPath As String)
+    Public Sub ConfigureMemoryLogging(logMemoryUsage As Boolean, minimumMemoryUsageLogIntervalMinutes As Single, memoryUsageLogFolderPath As String)
         If logMemoryUsage Then
             If m_MemoryUsageLogger Is Nothing Then
                 m_MemoryUsageLogger = New clsMemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes)
@@ -214,7 +214,7 @@ Public Class clsStatusFile
     ''' <param name="BrokerDBConnectionString"></param>
     ''' <param name="BrokerDBStatusUpdateIntervalMinutes"></param>
     ''' <remarks></remarks>
-    Public Sub ConfigureBrokerDBLogging(ByVal LogStatusToBrokerDB As Boolean, ByVal BrokerDBConnectionString As String, ByVal BrokerDBStatusUpdateIntervalMinutes As Single)
+    Public Sub ConfigureBrokerDBLogging(LogStatusToBrokerDB As Boolean, BrokerDBConnectionString As String, BrokerDBStatusUpdateIntervalMinutes As Single)
         If LogStatusToBrokerDB Then
             If m_BrokerDBLogger Is Nothing Then
                 m_BrokerDBLogger = New clsDBStatusLogger(BrokerDBConnectionString, BrokerDBStatusUpdateIntervalMinutes)
@@ -238,10 +238,10 @@ Public Class clsStatusFile
     ''' <param name="ClientName"></param>
     ''' <remarks></remarks>
     Public Sub ConfigureMessageQueueLogging(
-      ByVal LogStatusToMessageQueue As Boolean,
-      ByVal MsgQueueURI As String,
-      ByVal MessageQueueTopicMgrStatus As String,
-      ByVal ClientName As String)
+      LogStatusToMessageQueue As Boolean,
+      MsgQueueURI As String,
+      MessageQueueTopicMgrStatus As String,
+      ClientName As String)
 
         LogToMsgQueue = LogStatusToMessageQueue
         MessageQueueURI = MsgQueueURI
@@ -313,7 +313,7 @@ Public Class clsStatusFile
     ''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
     ''' <returns>String representation of input object</returns>
     ''' <remarks></remarks>
-    Private Function ConvertTaskStatusToString(ByVal StatusEnum As IStatusFile.EnumTaskStatus) As String
+    Private Function ConvertTaskStatusToString(StatusEnum As IStatusFile.EnumTaskStatus) As String
 
         'Converts a status enum to a string
         Select Case StatusEnum
@@ -342,7 +342,7 @@ Public Class clsStatusFile
     ''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
     ''' <returns>String representation of input object</returns>
     ''' <remarks></remarks>
-    Private Function ConvertMgrStatusToString(ByVal StatusEnum As IStatusFile.EnumMgrStatus) As String
+    Private Function ConvertMgrStatusToString(StatusEnum As IStatusFile.EnumMgrStatus) As String
 
         'Converts a status enum to a string
         Select Case StatusEnum
@@ -369,7 +369,7 @@ Public Class clsStatusFile
     ''' <param name="StatusEnum">An IStatusFile.JobStatus object</param>
     ''' <returns>String representation of input object</returns>
     ''' <remarks></remarks>
-    Private Function ConvertTaskStatusDetailToString(ByVal StatusEnum As IStatusFile.EnumTaskStatusDetail) As String
+    Private Function ConvertTaskStatusDetailToString(StatusEnum As IStatusFile.EnumTaskStatusDetail) As String
 
         'Converts a status enum to a string
         Select Case StatusEnum
@@ -488,7 +488,7 @@ Public Class clsStatusFile
         Return processID
     End Function
 
-    Protected Sub LogStatusToMessageQueue(ByVal strStatusXML As String)
+    Protected Sub LogStatusToMessageQueue(strStatusXML As String)
 
         Const MINIMUM_LOG_FAILURE_INTERVAL_MINUTES As Single = 10
         Static dtLastFailureTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
@@ -532,7 +532,7 @@ Public Class clsStatusFile
     ''' Send status information to the database
     ''' </summary>
     ''' <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-    Protected Sub LogStatusToBrokerDatabase(ByVal ForceLogToBrokerDB As Boolean)
+    Protected Sub LogStatusToBrokerDatabase(ForceLogToBrokerDB As Boolean)
 
         Dim intIndex As Integer
 
@@ -585,13 +585,13 @@ Public Class clsStatusFile
         m_ProgRunnerCoreUsageHistory = coreUsageHistory
     End Sub
 
-    Protected Sub StoreRecentJobInfo(ByVal JobInfo As String)
+    Protected Sub StoreRecentJobInfo(JobInfo As String)
         If Not JobInfo Is Nothing AndAlso JobInfo.Length > 0 Then
             MostRecentJobInfo = JobInfo
         End If
     End Sub
 
-    Protected Sub StoreNewErrorMessage(ByVal strErrorMessage As String, ByVal blnClearExistingMessages As Boolean)
+    Protected Sub StoreNewErrorMessage(strErrorMessage As String, blnClearExistingMessages As Boolean)
         Dim intIndex As Integer
 
         If blnClearExistingMessages Then
@@ -660,7 +660,7 @@ Public Class clsStatusFile
     ''' </summary>
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
-    Public Sub WriteStatusFile(ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.WriteStatusFile
+    Public Sub WriteStatusFile(ForceLogToBrokerDB As Boolean) Implements IStatusFile.WriteStatusFile
 
         'Writes a status file for external monitor to read
         Dim objMemoryStream As MemoryStream
@@ -850,7 +850,7 @@ Public Class clsStatusFile
 
     End Function
 
-    Protected Function WriteStatusFileToDisk(ByVal strFilePath As String, ByVal strXMLText As String, ByVal logWarning As Boolean) As Boolean
+    Protected Function WriteStatusFileToDisk(strFilePath As String, strXMLText As String, logWarning As Boolean) As Boolean
         Const WRITE_FAILURE_LOG_THRESHOLD As Integer = 5
 
         Static intWritingErrorCountSaved As Integer = 0
@@ -894,10 +894,10 @@ Public Class clsStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Public Sub UpdateClose(
-      ByVal ManagerIdleMessage As String,
+      ManagerIdleMessage As String,
       ByRef RecentErrorMessages() As String,
-      ByVal JobInfo As String,
-      ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateClose
+      JobInfo As String,
+      ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateClose
 
         ClearCachedInfo()
 
@@ -918,7 +918,7 @@ Public Class clsStatusFile
     ''' </summary>
     ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
     ''' <remarks></remarks>
-    Public Sub UpdateAndWrite(ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
+    Public Sub UpdateAndWrite(PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
 
         Progress = PercentComplete
         WriteStatusFile()
@@ -934,10 +934,10 @@ Public Class clsStatusFile
     ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
     ''' <remarks></remarks>
     Public Sub UpdateAndWrite(
-      ByVal eMgrStatus As IStatusFile.EnumMgrStatus,
-      ByVal eTaskStatus As IStatusFile.EnumTaskStatus,
-      ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail,
-      ByVal PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
+      eMgrStatus As IStatusFile.EnumMgrStatus,
+      eTaskStatus As IStatusFile.EnumTaskStatus,
+      eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail,
+      PercentComplete As Single) Implements IStatusFile.UpdateAndWrite
 
         MgrStatus = eMgrStatus
         TaskStatus = eTaskStatus
@@ -955,9 +955,9 @@ Public Class clsStatusFile
     ''' <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
     ''' <remarks></remarks>
     Public Sub UpdateAndWrite(
-      ByVal Status As IStatusFile.EnumTaskStatus,
-      ByVal PercentComplete As Single,
-      ByVal SpectrumCountTotal As Integer) Implements IStatusFile.UpdateAndWrite
+      Status As IStatusFile.EnumTaskStatus,
+      PercentComplete As Single,
+      SpectrumCountTotal As Integer) Implements IStatusFile.UpdateAndWrite
 
         TaskStatus = Status
         Progress = PercentComplete
@@ -981,15 +981,15 @@ Public Class clsStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Public Sub UpdateAndWrite(
-      ByVal eMgrStatus As IStatusFile.EnumMgrStatus,
-      ByVal eTaskStatus As IStatusFile.EnumTaskStatus,
-      ByVal eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail,
-      ByVal PercentComplete As Single,
-      ByVal DTACount As Integer,
-      ByVal MostRecentLogMessage As String,
-      ByVal MostRecentErrorMessage As String,
-      ByVal RecentJobInfo As String,
-      ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateAndWrite
+      eMgrStatus As IStatusFile.EnumMgrStatus,
+      eTaskStatus As IStatusFile.EnumTaskStatus,
+      eTaskStatusDetail As IStatusFile.EnumTaskStatusDetail,
+      PercentComplete As Single,
+      DTACount As Integer,
+      MostRecentLogMessage As String,
+      MostRecentErrorMessage As String,
+      RecentJobInfo As String,
+      ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateAndWrite
 
         MgrStatus = eMgrStatus
         TaskStatus = eTaskStatus
@@ -1019,7 +1019,7 @@ Public Class clsStatusFile
     ''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
-    Public Sub UpdateIdle(ByVal ManagerIdleMessage As String, ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
+    Public Sub UpdateIdle(ManagerIdleMessage As String, ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
         ClearCachedInfo()
         TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
         m_MostRecentLogMessage = ManagerIdleMessage
@@ -1036,10 +1036,10 @@ Public Class clsStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Public Sub UpdateIdle(
-      ByVal ManagerIdleMessage As String,
-      ByVal IdleErrorMessage As String,
-      ByVal RecentJobInfo As String,
-      ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
+      ManagerIdleMessage As String,
+      IdleErrorMessage As String,
+      RecentJobInfo As String,
+      ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
         ClearCachedInfo()
         TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
         m_MostRecentLogMessage = ManagerIdleMessage
@@ -1060,10 +1060,10 @@ Public Class clsStatusFile
     ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
     ''' <remarks></remarks>
     Public Sub UpdateIdle(
-      ByVal ManagerIdleMessage As String,
+      ManagerIdleMessage As String,
       ByRef RecentErrorMessages() As String,
-      ByVal RecentJobInfo As String,
-      ByVal ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
+      RecentJobInfo As String,
+      ForceLogToBrokerDB As Boolean) Implements IStatusFile.UpdateIdle
 
         ClearCachedInfo()
         MgrStatus = IStatusFile.EnumMgrStatus.RUNNING
@@ -1081,7 +1081,7 @@ Public Class clsStatusFile
     ''' Updates status file to show manager disabled
     ''' </summary>
     ''' <remarks></remarks>
-    Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus) Implements IStatusFile.UpdateDisabled
+    Public Sub UpdateDisabled(ManagerStatus As IStatusFile.EnumMgrStatus) Implements IStatusFile.UpdateDisabled
         UpdateDisabled(ManagerStatus, "Manager Disabled")
     End Sub
 
@@ -1090,7 +1090,7 @@ Public Class clsStatusFile
     ''' </summary>
     ''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
     ''' <remarks></remarks>
-    Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String) Implements IStatusFile.UpdateDisabled
+    Public Sub UpdateDisabled(ManagerStatus As IStatusFile.EnumMgrStatus, ManagerDisableMessage As String) Implements IStatusFile.UpdateDisabled
         Dim strRecentErrorMessages() As String
         ReDim strRecentErrorMessages(-1)
 
@@ -1104,7 +1104,7 @@ Public Class clsStatusFile
     ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
     ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
     ''' <remarks></remarks>
-    Public Sub UpdateDisabled(ByVal ManagerStatus As IStatusFile.EnumMgrStatus, ByVal ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String) Implements IStatusFile.UpdateDisabled
+    Public Sub UpdateDisabled(ManagerStatus As IStatusFile.EnumMgrStatus, ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, RecentJobInfo As String) Implements IStatusFile.UpdateDisabled
         ClearCachedInfo()
 
         If Not (ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_LOCAL OrElse ManagerStatus = IStatusFile.EnumMgrStatus.DISABLED_MC) Then
@@ -1138,7 +1138,7 @@ Public Class clsStatusFile
     ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
     ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
     ''' <remarks></remarks>
-    Public Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, ByVal RecentJobInfo As String) Implements IStatusFile.UpdateFlagFileExists
+    Public Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, RecentJobInfo As String) Implements IStatusFile.UpdateFlagFileExists
         ClearCachedInfo()
 
         MgrStatus = IStatusFile.EnumMgrStatus.STOPPED_ERROR

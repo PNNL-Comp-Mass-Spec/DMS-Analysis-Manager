@@ -58,7 +58,7 @@ Public Interface ISpectraFilter
 #End Region
 
 #Region "Methods"
-	Sub Setup(ByVal InitParams As InitializationParams)	 'Initializes parameters. Must be called before executing Start()
+    Sub Setup(InitParams As InitializationParams)    'Initializes parameters. Must be called before executing Start()
 
 	Function Start() As ISpectraFilter.ProcessStatus  'Starts the spectra filter operation
 

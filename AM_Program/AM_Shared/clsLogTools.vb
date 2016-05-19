@@ -100,7 +100,7 @@ Public Class clsLogTools
     ''' <param name="logLevel">Level of log reporting</param>
     ''' <param name="message">Message to be logged</param>
     ''' <remarks></remarks>
-    Public Shared Sub WriteLog(ByVal loggerType As LoggerTypes, ByVal logLevel As LogLevels, ByVal message As String)
+    Public Shared Sub WriteLog(loggerType As LoggerTypes, logLevel As LogLevels, message As String)
         WriteLogWork(loggerType, logLevel, message, Nothing)
     End Sub
 
@@ -112,7 +112,7 @@ Public Class clsLogTools
     ''' <param name="message">Message to be logged</param>
     ''' <param name="ex">Exception to be logged</param>
     ''' <remarks></remarks>
-    Public Shared Sub WriteLog(ByVal loggerType As LoggerTypes, ByVal logLevel As LogLevels, ByVal message As String, ByVal ex As Exception)
+    Public Shared Sub WriteLog(loggerType As LoggerTypes, logLevel As LogLevels, message As String, ex As Exception)
         WriteLogWork(loggerType, logLevel, message, ex)
     End Sub
 
@@ -124,7 +124,7 @@ Public Class clsLogTools
     ''' <param name="message">Message to be logged</param>
     ''' <param name="ex">Exception to be logged; nothing if no exception</param>
     ''' <remarks></remarks>
-    Private Shared Sub WriteLogWork(ByVal loggerType As LoggerTypes, ByVal logLevel As LogLevels, ByVal message As String, ByVal ex As Exception)
+    Private Shared Sub WriteLogWork(loggerType As LoggerTypes, logLevel As LogLevels, message As String, ex As Exception)
         Dim myLogger As ILog
 
         ' Establish which logger will be used
@@ -210,7 +210,7 @@ Public Class clsLogTools
     ''' </summary>
     ''' <param name="fileName">Log file base name and path (relative to program folder)</param>
     ''' <remarks>This method is called by the Mage, Ascore, and Multialign plugins</remarks>
-    Public Shared Sub ChangeLogFileName(ByVal fileName As String)
+    Public Shared Sub ChangeLogFileName(fileName As String)
 
         ' Get a list of appenders
         Dim appendList As IEnumerable(Of IAppender) = FindAppenders(LOG_FILE_APPENDER)
@@ -239,7 +239,7 @@ Public Class clsLogTools
     ''' <param name="appenderName">Name of appender to find</param>
     ''' <returns>List(IAppender) objects if found; NOTHING otherwise</returns>
     ''' <remarks></remarks>
-    Private Shared Function FindAppenders(ByVal appenderName As String) As IEnumerable(Of IAppender)
+    Private Shared Function FindAppenders(appenderName As String) As IEnumerable(Of IAppender)
 
         'Get a list of the current loggers
         Dim LoggerList() As ILog = LogManager.GetCurrentLoggers()
@@ -266,7 +266,7 @@ Public Class clsLogTools
     ''' </summary>
     ''' <param name="logLevel">Integer corresponding to level (1-5, 5 being most verbose)</param>
     ''' <remarks></remarks>
-    Public Shared Sub SetFileLogLevel(ByVal logLevel As Integer)
+    Public Shared Sub SetFileLogLevel(logLevel As Integer)
 
         Dim logLevelEnumType As Type = GetType(LogLevels)
 
@@ -287,7 +287,7 @@ Public Class clsLogTools
     ''' </summary>
     ''' <param name="logLevel">LogLevels value defining level (Debug is most verbose)</param>
     ''' <remarks></remarks>
-    Public Shared Sub SetFileLogLevel(ByVal logLevel As LogLevels)
+    Public Shared Sub SetFileLogLevel(logLevel As LogLevels)
 
         Dim logger = DirectCast(m_FileLogger.Logger, Repository.Hierarchy.Logger)
 

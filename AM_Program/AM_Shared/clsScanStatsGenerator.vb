@@ -39,7 +39,7 @@ Public Class clsScanStatsGenerator
     ''' <param name="msFileInfoScannerDLLPath"></param>
     ''' <param name="debugLevel"></param>
     ''' <remarks></remarks>
-    Public Sub New(ByVal msFileInfoScannerDLLPath As String, debugLevel As Integer)
+    Public Sub New(msFileInfoScannerDLLPath As String, debugLevel As Integer)
         mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath
         mDebugLevel = debugLevel
 
@@ -48,44 +48,44 @@ Public Class clsScanStatsGenerator
         ScanEnd = 0
     End Sub
 
-	''' <summary>
-	''' Create the ScanStats file for the given dataset file
-	''' </summary>
-	''' <param name="strInputFilePath">Dataset file</param>
-	''' <param name="strOutputFolderPath">Output folder</param>
-	''' <returns></returns>
-	''' <remarks>Will list DatasetID as 0 in the output file</remarks>
-	Public Function GenerateScanStatsFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String) As Boolean
-		Return GenerateScanStatsFile(strInputFilePath, strOutputFolderPath, 0)
-	End Function
+    ''' <summary>
+    ''' Create the ScanStats file for the given dataset file
+    ''' </summary>
+    ''' <param name="strInputFilePath">Dataset file</param>
+    ''' <param name="strOutputFolderPath">Output folder</param>
+    ''' <returns></returns>
+    ''' <remarks>Will list DatasetID as 0 in the output file</remarks>
+    Public Function GenerateScanStatsFile(strInputFilePath As String, strOutputFolderPath As String) As Boolean
+        Return GenerateScanStatsFile(strInputFilePath, strOutputFolderPath, 0)
+    End Function
 
-	''' <summary>
-	''' Create the ScanStats file for the given dataset file
-	''' </summary>
-	''' <param name="strInputFilePath">Dataset file</param>
-	''' <param name="strOutputFolderPath">Output folder</param>
-	''' <param name="intDatasetID">Dataset ID</param>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public Function GenerateScanStatsFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal intDatasetID As Integer) As Boolean
+    ''' <summary>
+    ''' Create the ScanStats file for the given dataset file
+    ''' </summary>
+    ''' <param name="strInputFilePath">Dataset file</param>
+    ''' <param name="strOutputFolderPath">Output folder</param>
+    ''' <param name="intDatasetID">Dataset ID</param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function GenerateScanStatsFile(strInputFilePath As String, strOutputFolderPath As String, intDatasetID As Integer) As Boolean
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		Try
+        Try
 
-			mMSFileInfoScannerErrorCount = 0
+            mMSFileInfoScannerErrorCount = 0
 
-			' Initialize the MSFileScanner class					
-			mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath)
+            ' Initialize the MSFileScanner class					
+            mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath)
 
-			mMSFileInfoScanner.CheckFileIntegrity = False
-			mMSFileInfoScanner.CreateDatasetInfoFile = False
-			mMSFileInfoScanner.CreateScanStatsFile = True
-			mMSFileInfoScanner.SaveLCMS2DPlots = False
-			mMSFileInfoScanner.SaveTICAndBPIPlots = False
-			mMSFileInfoScanner.CheckCentroidingStatus = False
+            mMSFileInfoScanner.CheckFileIntegrity = False
+            mMSFileInfoScanner.CreateDatasetInfoFile = False
+            mMSFileInfoScanner.CreateScanStatsFile = True
+            mMSFileInfoScanner.SaveLCMS2DPlots = False
+            mMSFileInfoScanner.SaveTICAndBPIPlots = False
+            mMSFileInfoScanner.CheckCentroidingStatus = False
 
-			mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
+            mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
             mMSFileInfoScanner.DatasetIDOverride = intDatasetID
 
             If Me.ScanStart > 0 Or Me.ScanEnd > 0 Then
@@ -105,13 +105,13 @@ Public Class clsScanStatsGenerator
             End If
 
         Catch ex As Exception
-			mErrorMessage = "Exception in GenerateScanStatsFile: " & ex.Message
-			Return False
-		End Try
+            mErrorMessage = "Exception in GenerateScanStatsFile: " & ex.Message
+            Return False
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 	Protected Function LoadMSFileInfoScanner(strMSFileInfoScannerDLLPath As String) As MSFileInfoScannerInterfaces.iMSFileInfoScanner
 		Const MsDataFileReaderClass As String = "MSFileInfoScanner.clsMSFileInfoScanner"

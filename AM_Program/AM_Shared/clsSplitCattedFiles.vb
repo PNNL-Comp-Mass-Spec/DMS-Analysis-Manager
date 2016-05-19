@@ -53,138 +53,138 @@ Public Class clsSplitCattedFiles
 
 	End Sub
 
-	Public Function SplitCattedDTAsAndOuts(ByVal datasetName As String, ByVal resultsFolderPath As String) As Boolean
-		Dim blnSuccess1 As Boolean
-		Dim blnSuccess2 As Boolean
-		blnSuccess1 = Me.SplitCattedDTAsOnly(datasetName, resultsFolderPath)
-		blnSuccess2 = Me.SplitCattedOutsOnly(datasetName, resultsFolderPath)
+    Public Function SplitCattedDTAsAndOuts(datasetName As String, resultsFolderPath As String) As Boolean
+        Dim blnSuccess1 As Boolean
+        Dim blnSuccess2 As Boolean
+        blnSuccess1 = Me.SplitCattedDTAsOnly(datasetName, resultsFolderPath)
+        blnSuccess2 = Me.SplitCattedOutsOnly(datasetName, resultsFolderPath)
 
-		Return blnSuccess1 And blnSuccess2
-	End Function
+        Return blnSuccess1 And blnSuccess2
+    End Function
 
-	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String) As Boolean
-		Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, New SortedSet(Of String))
-	End Function
+    Public Function SplitCattedDTAsOnly(datasetName As String, resultsFolderPath As String) As Boolean
+        Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, New SortedSet(Of String))
+    End Function
 
-	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As List(Of String)) As Boolean
+    Public Function SplitCattedDTAsOnly(datasetName As String, resultsFolderPath As String, lstFilesToSkip As List(Of String)) As Boolean
 
-		Dim lstFilesToSkipSortedSet As SortedSet(Of String) = New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+        Dim lstFilesToSkipSortedSet As SortedSet(Of String) = New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
 
-		For Each strEntry As String In lstFilesToSkip
-			lstFilesToSkipSortedSet.Add(strEntry)
-		Next
+        For Each strEntry As String In lstFilesToSkip
+            lstFilesToSkipSortedSet.Add(strEntry)
+        Next
 
-		Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet)
-	End Function
+        Return SplitCattedDTAsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet)
+    End Function
 
-	Public Function SplitCattedDTAsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As SortedSet(Of String)) As Boolean
-		Dim fullPath As String = Path.Combine(resultsFolderPath, datasetName + "_dta.txt")
-		Dim fi As FileInfo = New FileInfo(fullPath)
-		If fi.Exists Then
-			If Me.m_ResultsFileCount <= 0 Then
-				CountOutFiles(fullPath)
-			End If
-			Return Me.SplitCattedFile(fullPath, lstFilesToSkip)
-		Else
-			Return False
-		End If
-	End Function
+    Public Function SplitCattedDTAsOnly(datasetName As String, resultsFolderPath As String, lstFilesToSkip As SortedSet(Of String)) As Boolean
+        Dim fullPath As String = Path.Combine(resultsFolderPath, datasetName + "_dta.txt")
+        Dim fi As FileInfo = New FileInfo(fullPath)
+        If fi.Exists Then
+            If Me.m_ResultsFileCount <= 0 Then
+                CountOutFiles(fullPath)
+            End If
+            Return Me.SplitCattedFile(fullPath, lstFilesToSkip)
+        Else
+            Return False
+        End If
+    End Function
 
-	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String) As Boolean
-		Return SplitCattedOutsOnly(datasetName, resultsFolderPath, New SortedSet(Of String))
-	End Function
+    Public Function SplitCattedOutsOnly(datasetName As String, resultsFolderPath As String) As Boolean
+        Return SplitCattedOutsOnly(datasetName, resultsFolderPath, New SortedSet(Of String))
+    End Function
 
-	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As List(Of String)) As Boolean
+    Public Function SplitCattedOutsOnly(datasetName As String, resultsFolderPath As String, lstFilesToSkip As List(Of String)) As Boolean
 
-		Dim lstFilesToSkipSortedSet As SortedSet(Of String) = New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+        Dim lstFilesToSkipSortedSet As SortedSet(Of String) = New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
 
-		For Each strEntry As String In lstFilesToSkip
-			lstFilesToSkipSortedSet.Add(strEntry)
-		Next
+        For Each strEntry As String In lstFilesToSkip
+            lstFilesToSkipSortedSet.Add(strEntry)
+        Next
 
-		Return SplitCattedOutsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet)
-	End Function
+        Return SplitCattedOutsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet)
+    End Function
 
-	Public Function SplitCattedOutsOnly(ByVal datasetName As String, ByVal resultsFolderPath As String, ByVal lstFilesToSkip As SortedSet(Of String)) As Boolean
-		Dim fullPath As String = Path.Combine(resultsFolderPath, datasetName + "_out.txt")
-		Dim fi As FileInfo = New FileInfo(fullPath)
-		If fi.Exists Then
-			If Me.m_ResultsFileCount <= 0 Then
-				CountOutFiles(fullPath)
-			End If
-			Return Me.SplitCattedFile(fullPath, lstFilesToSkip)
-		Else
-			Return False
-		End If
-	End Function
+    Public Function SplitCattedOutsOnly(datasetName As String, resultsFolderPath As String, lstFilesToSkip As SortedSet(Of String)) As Boolean
+        Dim fullPath As String = Path.Combine(resultsFolderPath, datasetName + "_out.txt")
+        Dim fi As FileInfo = New FileInfo(fullPath)
+        If fi.Exists Then
+            If Me.m_ResultsFileCount <= 0 Then
+                CountOutFiles(fullPath)
+            End If
+            Return Me.SplitCattedFile(fullPath, lstFilesToSkip)
+        Else
+            Return False
+        End If
+    End Function
 
-	''' <summary>
-	''' Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
-	''' </summary>
-	''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
-	''' <remarks></remarks>
-	Private Function SplitCattedFile(ByVal filePath As String) As Boolean
-		Return SplitCattedFile(filePath, New SortedSet(Of String))
-	End Function
+    ''' <summary>
+    ''' Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
+    ''' </summary>
+    ''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
+    ''' <remarks></remarks>
+    Private Function SplitCattedFile(filePath As String) As Boolean
+        Return SplitCattedFile(filePath, New SortedSet(Of String))
+    End Function
 
-	''' <summary>
-	''' Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
-	''' </summary>
-	''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
-	''' <param name="lstFilesToSkip">Files to skip (full .dta or .out file name)</param>
-	''' <remarks></remarks>
-	Private Function SplitCattedFile(ByVal filePath As String, ByVal lstFilesToSkip As SortedSet(Of String)) As Boolean
-		Dim s As String
-		Dim fileText As Queue(Of String) = New Queue(Of String)
-		Dim objFileSepMatch As Match
-		Dim objFileNameParts As Match
+    ''' <summary>
+    ''' Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
+    ''' </summary>
+    ''' <param name="filePath">Source _DTA.txt or _Out.txt file</param>
+    ''' <param name="lstFilesToSkip">Files to skip (full .dta or .out file name)</param>
+    ''' <remarks></remarks>
+    Private Function SplitCattedFile(filePath As String, lstFilesToSkip As SortedSet(Of String)) As Boolean
+        Dim s As String
+        Dim fileText As Queue(Of String) = New Queue(Of String)
+        Dim objFileSepMatch As Match
+        Dim objFileNameParts As Match
 
-		Dim fileCounter As Integer = 0
-		Dim fileName As String = String.Empty
+        Dim fileCounter As Integer = 0
+        Dim fileName As String = String.Empty
 
-		Dim resultsFolder As String = Path.GetDirectoryName(filePath)
+        Dim resultsFolder As String = Path.GetDirectoryName(filePath)
 
-		Dim fiSourceFile As FileInfo
-		fiSourceFile = New FileInfo(filePath)
+        Dim fiSourceFile As FileInfo
+        fiSourceFile = New FileInfo(filePath)
 
-		If Not fiSourceFile.Exists Then
-			Throw New FileNotFoundException("Error in SplitCattedFile, File not found: " & filePath)
-		ElseIf fiSourceFile.Length = 0 Then
-			Throw New FileNotFoundException("Error in SplitCattedFile, file is empty (zero-bytes): " & filePath)
-		End If
+        If Not fiSourceFile.Exists Then
+            Throw New FileNotFoundException("Error in SplitCattedFile, File not found: " & filePath)
+        ElseIf fiSourceFile.Length = 0 Then
+            Throw New FileNotFoundException("Error in SplitCattedFile, file is empty (zero-bytes): " & filePath)
+        End If
 
-		Try
+        Try
 
-			Using srInFile As StreamReader = New StreamReader(New FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile As StreamReader = New StreamReader(New FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-				While Not srInfile.EndOfStream
-					s = srInFile.ReadLine()
+                While Not srInfile.EndOfStream
+                    s = srInFile.ReadLine()
 
-					objFileSepMatch = Me.r_FileSeparator.Match(s)
+                    objFileSepMatch = Me.r_FileSeparator.Match(s)
 
-					If objFileSepMatch.Success Then
-						objFileNameParts = r_FileNameParts.Match(objFileSepMatch.Groups("filename").Value)
+                    If objFileSepMatch.Success Then
+                        objFileNameParts = r_FileNameParts.Match(objFileSepMatch.Groups("filename").Value)
 
-						If fileCounter > 0 Then
-							' Process the data stored in queue fileText, saving to file fileName
-							ProcessSplitFile(fileText, fileName, resultsFolder, lstFilesToSkip)
-						End If
+                        If fileCounter > 0 Then
+                            ' Process the data stored in queue fileText, saving to file fileName
+                            ProcessSplitFile(fileText, fileName, resultsFolder, lstFilesToSkip)
+                        End If
 
-						If objFileNameParts.Success Then
-							With objFileNameParts
+                        If objFileNameParts.Success Then
+                            With objFileNameParts
                                 fileName =
                                   .Groups("rootname").Value + "." +
                                   .Groups("startscan").Value.ToString + "." +
                                   .Groups("endscan").Value.ToString + "." +
                                   .Groups("chargestate").Value + "." +
                                   .Groups("filetype").Value
-							End With
-						Else
-							fileName = objFileSepMatch.Groups("filename").Value
-						End If
+                            End With
+                        Else
+                            fileName = objFileSepMatch.Groups("filename").Value
+                        End If
 
-						fileCounter += 1
-						fileText.Clear()
+                        fileCounter += 1
+                        fileText.Clear()
 
                         If Not srInFile.EndOfStream Then
                             s = srInFile.ReadLine()
@@ -192,35 +192,35 @@ Public Class clsSplitCattedFiles
                             s = String.Empty
                         End If
 
-					End If
+                    End If
 
-					If fileCounter > 0 Then
-						fileText.Enqueue(s)
-					End If
+                    If fileCounter > 0 Then
+                        fileText.Enqueue(s)
+                    End If
 
-				End While
+                End While
 
-			End Using
+            End Using
 
-			' Process the data stored in queue fileText, saving to file fileName
-			ProcessSplitFile(fileText, fileName, resultsFolder, lstFilesToSkip)
+            ' Process the data stored in queue fileText, saving to file fileName
+            ProcessSplitFile(fileText, fileName, resultsFolder, lstFilesToSkip)
 
-		Catch ex As Exception
-			Throw New Exception("Error splitting " & filePath & " in SplitCattedFile: " & ex.Message, ex)
-		End Try
+        Catch ex As Exception
+            Throw New Exception("Error splitting " & filePath & " in SplitCattedFile: " & ex.Message, ex)
+        End Try
 
-		If fileCounter > 0 Then
-			Return True
-		Else
-			Return False
-		End If
+        If fileCounter > 0 Then
+            Return True
+        Else
+            Return False
+        End If
 
-	End Function
+    End Function
 
     Private Sub ProcessSplitFile(
      ByRef fileText As Queue(Of String),
-     ByVal exportFileName As String,
-     ByVal resultsFolder As String,
+     exportFileName As String,
+     resultsFolder As String,
      ByRef lstFilesToSkip As SortedSet(Of String))
 
         If lstFilesToSkip.Contains(exportFileName) Then
@@ -260,62 +260,62 @@ Public Class clsSplitCattedFiles
 
     End Sub
 
-	Private Sub CountOutFiles(ByVal filePath As String)
+    Private Sub CountOutFiles(filePath As String)
 
-		Dim fi As FileInfo = New FileInfo(filePath)
-		Dim s As String
-		Dim outFileCount As Integer = 0
+        Dim fi As FileInfo = New FileInfo(filePath)
+        Dim s As String
+        Dim outFileCount As Integer = 0
 
-		Dim r As New Regex("^===*", RegexOptions.Compiled)
-		If fi.Exists Then
+        Dim r As New Regex("^===*", RegexOptions.Compiled)
+        If fi.Exists Then
 
-			Using srInFile As StreamReader = New StreamReader(New FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-				While Not srInfile.EndOfStream
-					s = srInFile.ReadLine()
-					If r.IsMatch(s) Then outFileCount += 1
-				End While
-			End Using
+            Using srInFile As StreamReader = New StreamReader(New FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                While Not srInfile.EndOfStream
+                    s = srInFile.ReadLine()
+                    If r.IsMatch(s) Then outFileCount += 1
+                End While
+            End Using
 
-			m_ResultsFileCount = outFileCount
-		End If
+            m_ResultsFileCount = outFileCount
+        End If
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' This function reads the input file one byte at a time, looking for the first occurence of Chr(10) or Chr(13) (aka vbCR or VBLF)
-	''' When found, the next byte is examined
-	''' If the next byte is also Chr(10) or Chr(13), then the line terminator is assumed to be 2 bytes; if not found, then it is assumed to be one byte
-	''' </summary>
-	''' <param name="fi"></param>
-	''' <returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
-	''' <remarks></remarks>
-	Private Function LineEndCharacterCount(ByVal fi As FileInfo) As Integer
-		Dim tr As TextReader
-		Dim testcode As Integer
-		Dim testcode2 As Integer
-		Dim endCount As Integer = 1			' Initially assume a one-byte line terminator
+    ''' <summary>
+    ''' This function reads the input file one byte at a time, looking for the first occurence of Chr(10) or Chr(13) (aka vbCR or VBLF)
+    ''' When found, the next byte is examined
+    ''' If the next byte is also Chr(10) or Chr(13), then the line terminator is assumed to be 2 bytes; if not found, then it is assumed to be one byte
+    ''' </summary>
+    ''' <param name="fi"></param>
+    ''' <returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
+    ''' <remarks></remarks>
+    Private Function LineEndCharacterCount(fi As FileInfo) As Integer
+        Dim tr As TextReader
+        Dim testcode As Integer
+        Dim testcode2 As Integer
+        Dim endCount As Integer = 1         ' Initially assume a one-byte line terminator
 
-		If (fi.Exists) Then
-			tr = fi.OpenText
-			For counter = 1 To fi.Length
-				testcode = tr.Read()
-				If testcode = 10 Or testcode = 13 Then
-					testcode2 = tr.Read()
-					If testcode2 = 10 Or testcode2 = 13 Then
-						endCount = 2
-						Exit For
-					Else
-						endCount = 1
-						Exit For
-					End If
-				End If
-			Next
+        If (fi.Exists) Then
+            tr = fi.OpenText
+            For counter = 1 To fi.Length
+                testcode = tr.Read()
+                If testcode = 10 Or testcode = 13 Then
+                    testcode2 = tr.Read()
+                    If testcode2 = 10 Or testcode2 = 13 Then
+                        endCount = 2
+                        Exit For
+                    Else
+                        endCount = 1
+                        Exit For
+                    End If
+                End If
+            Next
 
-			tr.Close()
-		End If
+            tr.Close()
+        End If
 
-		Return endCount
+        Return endCount
 
-	End Function
+    End Function
 
 End Class

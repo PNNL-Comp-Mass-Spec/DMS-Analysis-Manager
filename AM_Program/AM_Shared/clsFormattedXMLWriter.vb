@@ -31,55 +31,55 @@ Public Class clsFormattedXMLWriter
 #End Region
 
 #Region "Methods"
-	Public Function WriteXMLToFile(ByVal strXMLText As String, ByVal strOutputFilePath As String) As Boolean
+    Public Function WriteXMLToFile(strXMLText As String, strOutputFilePath As String) As Boolean
 
-		Dim objXMLDoc As XmlDocument
-		Dim swOutfile As XmlTextWriter
+        Dim objXMLDoc As XmlDocument
+        Dim swOutfile As XmlTextWriter
 
-		Dim blnSuccess As Boolean = False
+        Dim blnSuccess As Boolean = False
 
-		m_ErrMsg = ""
+        m_ErrMsg = ""
 
-		Try
-			' Instantiate objXMLDoc
-			objXMLDoc = New XmlDocument()
-			objXMLDoc.LoadXml(strXMLText)
+        Try
+            ' Instantiate objXMLDoc
+            objXMLDoc = New XmlDocument()
+            objXMLDoc.LoadXml(strXMLText)
 
-		Catch ex As Exception
-			m_ErrMsg = "Error parsing the source XML text: " & ex.Message
-			Return False
-		End Try
+        Catch ex As Exception
+            m_ErrMsg = "Error parsing the source XML text: " & ex.Message
+            Return False
+        End Try
 
-		Try
-			' Initialize the XML writer
-			swOutfile = New XmlTextWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Text.Encoding.UTF8)
+        Try
+            ' Initialize the XML writer
+            swOutfile = New XmlTextWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Text.Encoding.UTF8)
 
-			' Define the indenting
-			swOutfile.Formatting = Formatting.Indented
-			swOutfile.Indentation = 2
-			swOutfile.IndentChar = " "c
+            ' Define the indenting
+            swOutfile.Formatting = Formatting.Indented
+            swOutfile.Indentation = 2
+            swOutfile.IndentChar = " "c
 
-		Catch ex As Exception
-			m_ErrMsg = "Error opening the output file (" & strOutputFilePath & ") in WriteXMLToFile: " & ex.Message
-			Return False
-		End Try
+        Catch ex As Exception
+            m_ErrMsg = "Error opening the output file (" & strOutputFilePath & ") in WriteXMLToFile: " & ex.Message
+            Return False
+        End Try
 
-		Try
-			' Write out the XML
-			objXMLDoc.WriteTo(swOutfile)
-			swOutfile.Close()
+        Try
+            ' Write out the XML
+            objXMLDoc.WriteTo(swOutfile)
+            swOutfile.Close()
 
-			blnSuccess = True
+            blnSuccess = True
 
-		Catch ex As Exception
-			m_ErrMsg = "Error in WritePepXMLFile: " & ex.Message
-		Finally
-			If Not swOutfile Is Nothing Then swOutfile.Close()
-		End Try
+        Catch ex As Exception
+            m_ErrMsg = "Error in WritePepXMLFile: " & ex.Message
+        Finally
+            If Not swOutfile Is Nothing Then swOutfile.Close()
+        End Try
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 #End Region
 
 End Class

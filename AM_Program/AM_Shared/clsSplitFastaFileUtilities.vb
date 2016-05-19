@@ -52,7 +52,7 @@ Public Class clsSplitFastaFileUtilities
     ''' <param name="proteinSeqsDBConnectionString"></param>
     ''' <param name="numSplitParts"></param>
     ''' <remarks></remarks>
-    Public Sub New(ByVal dmsConnectionString As String, ByVal proteinSeqsDBConnectionString As String, ByVal numSplitParts As Integer, ByVal managerName As String)
+    Public Sub New(dmsConnectionString As String, proteinSeqsDBConnectionString As String, numSplitParts As Integer, managerName As String)
 
         mDMSConnectionString = dmsConnectionString
         mProteinSeqsDBConnectionString = proteinSeqsDBConnectionString
@@ -73,7 +73,7 @@ Public Class clsSplitFastaFileUtilities
     ''' <param name="lockFilePath">Output parameter: path to the newly created lock file</param>
     ''' <returns>Lock file handle</returns>
     ''' <remarks></remarks>
-    Private Function CreateLockStream(ByVal fiBaseFastaFile As FileInfo, <Out()> ByRef lockFilePath As String) As StreamWriter
+    Private Function CreateLockStream(fiBaseFastaFile As FileInfo, <Out()> ByRef lockFilePath As String) As StreamWriter
 
         Dim startTime = DateTime.UtcNow
         Dim intAttemptCount = 0
@@ -153,7 +153,7 @@ Public Class clsSplitFastaFileUtilities
 
     End Function
 
-    Private Sub DeleteLockStream(ByVal lockFilePath As String, ByVal lockStream As StreamWriter)
+    Private Sub DeleteLockStream(lockFilePath As String, lockStream As StreamWriter)
 
         Try
             If Not lockStream Is Nothing Then
@@ -192,7 +192,7 @@ Public Class clsSplitFastaFileUtilities
     ''' <param name="organismName">Output parameter: the organism name for this fasta file</param>
     ''' <returns>The path to the file if found; empty string if no match</returns>
     ''' <remarks></remarks>
-    Private Function GetLegacyFastaFilePath(ByVal legacyFASTAFileName As String, <Out()> ByRef organismName As String) As String
+    Private Function GetLegacyFastaFilePath(legacyFASTAFileName As String, <Out()> ByRef organismName As String) As String
 
         Const retryCount As Short = 3
 
@@ -227,7 +227,7 @@ Public Class clsSplitFastaFileUtilities
 
     End Function
 
-    Private Function StoreSplitFastaFileNames(ByVal organismName As String, ByVal lstSplitFastaInfo As List(Of clsFastaFileSplitter.udtFastaFileInfoType)) As Boolean
+    Private Function StoreSplitFastaFileNames(organismName As String, lstSplitFastaInfo As List(Of clsFastaFileSplitter.udtFastaFileInfoType)) As Boolean
 
         Dim splitFastaName As String = "??"
 
@@ -376,7 +376,7 @@ Public Class clsSplitFastaFileUtilities
         End Try
 
     End Sub
-    
+
     ''' <summary>
     ''' Validate that the split fasta file exists
     ''' </summary>
@@ -384,7 +384,7 @@ Public Class clsSplitFastaFileUtilities
     ''' <param name="splitFastaName">Split fasta filename, e.g. RefSoil_2013-11-07_10x_05.fasta</param>
     ''' <returns>True if the split fasta file is defined in DMS</returns>
     ''' <remarks>If the split file is not found, then will automatically split the original file and update DMS with the split file information</remarks>
-    Public Function ValidateSplitFastaFile(ByVal baseFastaName As String, ByVal splitFastaName As String) As Boolean
+    Public Function ValidateSplitFastaFile(baseFastaName As String, splitFastaName As String) As Boolean
 
         Dim strCurrentTask = "Initializing"
 
@@ -543,9 +543,9 @@ Public Class clsSplitFastaFileUtilities
 
 #Region "Events and Event Handlers"
 
-    Public Event SplittingBaseFastafile(ByVal strBaseFastaFileName As String, ByVal numSplitParts As Integer)
+    Public Event SplittingBaseFastafile(strBaseFastaFileName As String, numSplitParts As Integer)
 
-    Private Sub OnSplittingBaseFastafile(ByVal strBaseFastaFileName As String, ByVal numSplitParts As Integer)
+    Private Sub OnSplittingBaseFastafile(strBaseFastaFileName As String, numSplitParts As Integer)
         RaiseEvent SplittingBaseFastafile(strBaseFastaFileName, numSplitParts)
     End Sub
 

@@ -51,27 +51,27 @@ Public Class clsConcatToolWrapper
 		Get
 			Return m_DataPath
 		End Get
-		Set(ByVal Value As String)
-			m_DataPath = Value
-		End Set
-	End Property
+        Set(Value As String)
+            m_DataPath = Value
+        End Set
+    End Property
 #End Region
 
 #Region "Public Methods"
-	Public Sub New(ByVal DataPath As String)
+    Public Sub New(DataPath As String)
 
-		m_DataPath = DataPath
+        m_DataPath = DataPath
 
-	End Sub
+    End Sub
 
-    Public Function ConcatenateFiles(ByVal FileType As ConcatFileTypes, ByVal RootFileName As String) As Boolean
+    Public Function ConcatenateFiles(FileType As ConcatFileTypes, RootFileName As String) As Boolean
         Return ConcatenateFiles(FileType, RootFileName, False)
     End Function
 
     Public Function ConcatenateFiles(
-      ByVal FileType As ConcatFileTypes,
-      ByVal RootFileName As String,
-      ByVal blnDeleteSourceFilesWhenConcatenating As Boolean) As Boolean
+      FileType As ConcatFileTypes,
+      RootFileName As String,
+      blnDeleteSourceFilesWhenConcatenating As Boolean) As Boolean
 
         Try
             'Perform the concatenation
@@ -110,22 +110,22 @@ Public Class clsConcatToolWrapper
 #End Region
 
 #Region "Private methods"
-	Private Sub m_CatTools_ErrorNotification(ByVal errorMessage As String) Handles m_CatTools.ErrorNotification
-		m_CatInProgress = False
-		m_ErrMsg = errorMessage
-	End Sub
+    Private Sub m_CatTools_ErrorNotification(errorMessage As String) Handles m_CatTools.ErrorNotification
+        m_CatInProgress = False
+        m_ErrMsg = errorMessage
+    End Sub
 
-	'Private Sub m_CatTools_StartingTask(ByVal taskIdentString As String) Handles m_CatTools.StartingTask
-	'	m_CatInProgress = True
-	'End Sub
+    'Private Sub m_CatTools_StartingTask(ByVal taskIdentString As String) Handles m_CatTools.StartingTask
+    '	m_CatInProgress = True
+    'End Sub
 
-	Private Sub m_CatTools_EndingTask() Handles m_CatTools.EndTask
-		m_CatInProgress = False
-	End Sub
+    Private Sub m_CatTools_EndingTask() Handles m_CatTools.EndTask
+        m_CatInProgress = False
+    End Sub
 
-	Private Sub m_CatTools_Progress(ByVal fractionDone As Double) Handles m_CatTools.Progress
-		m_Progress = CSng(100.0 * fractionDone)
-	End Sub
+    Private Sub m_CatTools_Progress(fractionDone As Double) Handles m_CatTools.Progress
+        m_Progress = CSng(100.0 * fractionDone)
+    End Sub
 #End Region
 
 End Class

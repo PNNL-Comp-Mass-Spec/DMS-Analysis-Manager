@@ -54,14 +54,14 @@ Public Class clsRunDosProgram
     ''' </summary>
     ''' <param name="NewText"></param>
     ''' <remarks></remarks>
-    Public Event ConsoleOutputEvent(ByVal NewText As String)
+    Public Event ConsoleOutputEvent(NewText As String)
 
     ''' <summary>
     ''' Error message was written to the console
     ''' </summary>
     ''' <param name="NewText"></param>
     ''' <remarks></remarks>
-    Public Event ConsoleErrorEvent(ByVal NewText As String)
+    Public Event ConsoleErrorEvent(NewText As String)
 
     ''' <summary>
     ''' Program execution exceeded MaxRuntimeSeconds
@@ -122,7 +122,7 @@ Public Class clsRunDosProgram
         Get
             Return m_CacheStandardOutput
         End Get
-        Set(ByVal value As Boolean)
+        Set(value As Boolean)
             m_CacheStandardOutput = value
         End Set
     End Property
@@ -138,7 +138,7 @@ Public Class clsRunDosProgram
         Get
             Return m_ConsoleOutputFilePath
         End Get
-        Set(ByVal value As String)
+        Set(value As String)
             If value Is Nothing Then value = String.Empty
             m_ConsoleOutputFilePath = value
         End Set
@@ -152,7 +152,7 @@ Public Class clsRunDosProgram
         Get
             Return m_CreateNoWindow
         End Get
-        Set(ByVal Value As Boolean)
+        Set(Value As Boolean)
             m_CreateNoWindow = Value
         End Set
     End Property
@@ -164,7 +164,7 @@ Public Class clsRunDosProgram
         Get
             Return m_DebugLevel
         End Get
-        Set(ByVal Value As Integer)
+        Set(Value As Integer)
             m_DebugLevel = Value
         End Set
     End Property
@@ -177,7 +177,7 @@ Public Class clsRunDosProgram
         Get
             Return m_EchoOutputToConsole
         End Get
-        Set(ByVal value As Boolean)
+        Set(value As Boolean)
             m_EchoOutputToConsole = value
         End Set
     End Property
@@ -209,7 +209,7 @@ Public Class clsRunDosProgram
         Get
             Return m_MonitorInterval
         End Get
-        Set(ByVal Value As Integer)
+        Set(Value As Integer)
             If Value < 250 Then Value = 250
             m_MonitorInterval = Value
         End Set
@@ -259,7 +259,7 @@ Public Class clsRunDosProgram
         Get
             Return m_WorkDir
         End Get
-        Set(ByVal Value As String)
+        Set(Value As String)
             m_WorkDir = Value
         End Set
     End Property
@@ -275,7 +275,7 @@ Public Class clsRunDosProgram
         Get
             Return m_WriteConsoleOutputToFile
         End Get
-        Set(ByVal value As Boolean)
+        Set(value As Boolean)
             m_WriteConsoleOutputToFile = value
         End Set
     End Property
@@ -287,7 +287,7 @@ Public Class clsRunDosProgram
     ''' </summary>
     ''' <param name="WorkDir">Workdirectory for input/output files, if any</param>
     ''' <remarks></remarks>
-    Sub New(ByVal WorkDir As String)
+    Sub New(WorkDir As String)
 
         m_WorkDir = WorkDir
 
@@ -306,7 +306,7 @@ Public Class clsRunDosProgram
     ''' </summary>
     ''' <param name="blnPostLogEntry">True if an entry should be posted to the log</param>
     ''' <remarks></remarks>
-    Public Sub AbortProgramNow(ByVal blnPostLogEntry As Boolean)
+    Public Sub AbortProgramNow(blnPostLogEntry As Boolean)
         m_AbortProgramNow = True
         m_AbortProgramPostLogEntry = blnPostLogEntry
     End Sub
@@ -336,7 +336,7 @@ Public Class clsRunDosProgram
         End If
 
     End Function
-   
+
     ''' <summary>
     ''' Runs a program and waits for it to exit
     ''' </summary>
@@ -345,12 +345,12 @@ Public Class clsRunDosProgram
     ''' <param name="ProgName">The name of the program to use for the Window title</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>Ignores the result code reported by the program</remarks>
-    Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String) As Boolean
+    Public Function RunProgram(ProgNameLoc As String, CmdLine As String, ProgName As String) As Boolean
         Const useResCode As Boolean = False
         Return RunProgram(ProgNameLoc, CmdLine, ProgName, useResCode)
     End Function
 
-    Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean) As Boolean
+    Public Function RunProgram(ProgNameLoc As String, CmdLine As String, ProgName As String, UseResCode As Boolean) As Boolean
         Const maxRuntime As Integer = 0
         Return RunProgram(ProgNameLoc, CmdLine, ProgName, UseResCode, maxRuntime)
     End Function
@@ -365,7 +365,7 @@ Public Class clsRunDosProgram
     ''' <param name="MaxSeconds">If a positive number, then program execution will be aborted if the runtime exceeds MaxSeconds</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>MaxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
-    Public Function RunProgram(ByVal ProgNameLoc As String, ByVal CmdLine As String, ByVal ProgName As String, ByVal UseResCode As Boolean, ByVal MaxSeconds As Integer) As Boolean
+    Public Function RunProgram(ProgNameLoc As String, CmdLine As String, ProgName As String, UseResCode As Boolean, MaxSeconds As Integer) As Boolean
 
         Dim dtStartTime As DateTime
         Dim blnRuntimeExceeded As Boolean
@@ -479,7 +479,7 @@ Public Class clsRunDosProgram
     End Function
 #End Region
 
-    Private Sub ProgRunner_ConsoleErrorEvent(ByVal NewText As String) Handles m_ProgRunner.ConsoleErrorEvent
+    Private Sub ProgRunner_ConsoleErrorEvent(NewText As String) Handles m_ProgRunner.ConsoleErrorEvent
         RaiseEvent ConsoleErrorEvent(NewText)
         If String.IsNullOrWhiteSpace(m_CachedConsoleErrors) Then
             m_CachedConsoleErrors = NewText
@@ -489,11 +489,11 @@ Public Class clsRunDosProgram
         Console.WriteLine("Console error: " & Environment.NewLine & NewText)
     End Sub
 
-    Private Sub ProgRunner_ConsoleOutputEvent(ByVal NewText As String) Handles m_ProgRunner.ConsoleOutputEvent
+    Private Sub ProgRunner_ConsoleOutputEvent(NewText As String) Handles m_ProgRunner.ConsoleOutputEvent
         RaiseEvent ConsoleOutputEvent(NewText)
     End Sub
 
-    Private Sub ProgRunner_ProgChanged(ByVal obj As PRISM.Processes.clsProgRunner) Handles m_ProgRunner.ProgChanged
+    Private Sub ProgRunner_ProgChanged(obj As PRISM.Processes.clsProgRunner) Handles m_ProgRunner.ProgChanged
         ' This event is ignored by this class
     End Sub
 

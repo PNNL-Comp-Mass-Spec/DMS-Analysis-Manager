@@ -87,7 +87,7 @@ Public MustInherit Class clsDBTask
         Get
             Return m_DebugLevel
         End Get
-        Set(ByVal value As Integer)
+        Set(value As Integer)
             m_DebugLevel = value
         End Set
     End Property
@@ -99,7 +99,7 @@ Public MustInherit Class clsDBTask
     ''' </summary>
     ''' <param name="MgrParams">An IMgrParams object containing manager parameters</param>
     ''' <remarks></remarks>
-    Protected Sub New(ByVal MgrParams As IMgrParams, ByVal DebugLvl As Integer)
+    Protected Sub New(MgrParams As IMgrParams, DebugLvl As Integer)
 
         m_MgrParams = MgrParams
         m_ConnStr = m_MgrParams.GetParam("ConnectionString")               ' Gigasax.DMS5
@@ -130,7 +130,7 @@ Public MustInherit Class clsDBTask
     ''' <param name="CloseOut"></param>
     ''' <param name="CompMsg"></param>
     ''' <remarks></remarks>
-    Public MustOverride Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String)
+    Public MustOverride Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String)
 
     ''' <summary>
     ''' Closes out a task (includes EvalCode and EvalMessgae)
@@ -140,9 +140,9 @@ Public MustInherit Class clsDBTask
     ''' <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
     ''' <param name="EvalMessage">Evaluation message ("" if no special message)</param>
     ''' <remarks></remarks>
-    Public MustOverride Sub CloseTask(ByVal CloseOut As IJobParams.CloseOutType, ByVal CompMsg As String, ByVal EvalCode As Integer, ByVal EvalMessage As String)
+    Public MustOverride Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String, EvalCode As Integer, EvalMessage As String)
 
-    Protected Function FillParamDictXml(ByVal InpXml As String) As IEnumerable(Of udtParameterInfoType)
+    Protected Function FillParamDictXml(InpXml As String) As IEnumerable(Of udtParameterInfoType)
 
         Dim ErrMsg As String
 
@@ -188,7 +188,7 @@ Public MustInherit Class clsDBTask
     ''' </summary>
     ''' <param name="InpCmd">SQL command object containing params</param>
     ''' <remarks></remarks>
-    Protected Sub PrintCommandParams(ByVal InpCmd As SqlCommand)
+    Protected Sub PrintCommandParams(InpCmd As SqlCommand)
 
         'Verify there really are command paramters
         If InpCmd Is Nothing Then Exit Sub

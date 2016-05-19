@@ -101,26 +101,26 @@ Public Class clsDBStatusLogger
 		Get
 			Return m_DBStatusUpdateIntervalMinutes
 		End Get
-		Set(ByVal value As Single)
-			If value < 0 Then value = 0
-			m_DBStatusUpdateIntervalMinutes = value
-		End Set
-	End Property
+        Set(value As Single)
+            If value < 0 Then value = 0
+            m_DBStatusUpdateIntervalMinutes = value
+        End Set
+    End Property
 #End Region
 
 #Region "Methods"
 
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="strDBConnectionString">Database connection string</param>
-	''' <param name="sngDBStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
-	''' <remarks></remarks>
-	Public Sub New(ByVal strDBConnectionString As String, ByVal sngDBStatusUpdateIntervalMinutes As Single)
-		If strDBConnectionString Is Nothing Then strDBConnectionString = String.Empty
-		m_DBConnectionString = strDBConnectionString
-		m_DBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes
-	End Sub
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="strDBConnectionString">Database connection string</param>
+    ''' <param name="sngDBStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
+    ''' <remarks></remarks>
+    Public Sub New(strDBConnectionString As String, sngDBStatusUpdateIntervalMinutes As Single)
+        If strDBConnectionString Is Nothing Then strDBConnectionString = String.Empty
+        m_DBConnectionString = strDBConnectionString
+        m_DBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes
+    End Sub
 
     ''' <summary>
     ''' Send status information to the database
@@ -128,7 +128,7 @@ Public Class clsDBStatusLogger
     ''' <param name="udtStatusInfo"></param>
     ''' <param name="blnForceLogToDB"></param>
     ''' <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-    Public Sub LogStatus(ByVal udtStatusInfo As udtStatusInfoType, ByVal blnForceLogToDB As Boolean)
+    Public Sub LogStatus(udtStatusInfo As udtStatusInfoType, blnForceLogToDB As Boolean)
 
         Static dtLastWriteTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
@@ -206,60 +206,60 @@ Public Class clsDBStatusLogger
 
     End Sub
 
-	Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, ByVal strParamName As String, ByVal strValue As String, ByVal intVarCharLength As Integer)
-		' Make sure the parameter starts with an @ sign
-		If Not strParamName.StartsWith("@") Then
-			strParamName = "@" & strParamName
-		End If
+    Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, strValue As String, intVarCharLength As Integer)
+        ' Make sure the parameter starts with an @ sign
+        If Not strParamName.StartsWith("@") Then
+            strParamName = "@" & strParamName
+        End If
 
-		objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength))
-		objParameters.Item(strParamName).Direction = ParameterDirection.Input
-		objParameters.Item(strParamName).Value = strValue
-	End Sub
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength))
+        objParameters.Item(strParamName).Direction = ParameterDirection.Input
+        objParameters.Item(strParamName).Value = strValue
+    End Sub
 
-	Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, ByVal strParamName As String, ByVal intValue As Integer)
-		' Make sure the parameter starts with an @ sign
-		If Not strParamName.StartsWith("@") Then
-			strParamName = "@" & strParamName
-		End If
+    Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, intValue As Integer)
+        ' Make sure the parameter starts with an @ sign
+        If Not strParamName.StartsWith("@") Then
+            strParamName = "@" & strParamName
+        End If
 
-		objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Int))
-		objParameters.Item(strParamName).Direction = ParameterDirection.Input
-		objParameters.Item(strParamName).Value = intValue
-	End Sub
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Int))
+        objParameters.Item(strParamName).Direction = ParameterDirection.Input
+        objParameters.Item(strParamName).Value = intValue
+    End Sub
 
-	Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, ByVal strParamName As String, ByVal dtValue As DateTime)
-		' Make sure the parameter starts with an @ sign
-		If Not strParamName.StartsWith("@") Then
-			strParamName = "@" & strParamName
-		End If
+    Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, dtValue As DateTime)
+        ' Make sure the parameter starts with an @ sign
+        If Not strParamName.StartsWith("@") Then
+            strParamName = "@" & strParamName
+        End If
 
-		objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.DateTime))
-		objParameters.Item(strParamName).Direction = ParameterDirection.Input
-		objParameters.Item(strParamName).Value = dtValue
-	End Sub
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.DateTime))
+        objParameters.Item(strParamName).Direction = ParameterDirection.Input
+        objParameters.Item(strParamName).Value = dtValue
+    End Sub
 
-	Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, ByVal strParamName As String, ByVal sngValue As Single)
-		' Make sure the parameter starts with an @ sign
-		If Not strParamName.StartsWith("@") Then
-			strParamName = "@" & strParamName
-		End If
+    Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, sngValue As Single)
+        ' Make sure the parameter starts with an @ sign
+        If Not strParamName.StartsWith("@") Then
+            strParamName = "@" & strParamName
+        End If
 
-		objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Real))
-		objParameters.Item(strParamName).Direction = ParameterDirection.Input
-		objParameters.Item(strParamName).Value = sngValue
-	End Sub
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Real))
+        objParameters.Item(strParamName).Direction = ParameterDirection.Input
+        objParameters.Item(strParamName).Value = sngValue
+    End Sub
 
-	Private Sub AddSPParameterOutput(ByRef objParameters As SqlClient.SqlParameterCollection, ByVal strParamName As String, ByVal strValue As String, ByVal intVarCharLength As Integer)
-		' Make sure the parameter starts with an @ sign
-		If Not strParamName.StartsWith("@") Then
-			strParamName = "@" & strParamName
-		End If
+    Private Sub AddSPParameterOutput(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, strValue As String, intVarCharLength As Integer)
+        ' Make sure the parameter starts with an @ sign
+        If Not strParamName.StartsWith("@") Then
+            strParamName = "@" & strParamName
+        End If
 
-		objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength))
-		objParameters.Item(strParamName).Direction = ParameterDirection.Output
-		objParameters.Item(strParamName).Value = strValue
-	End Sub
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength))
+        objParameters.Item(strParamName).Direction = ParameterDirection.Output
+        objParameters.Item(strParamName).Value = strValue
+    End Sub
 
 #End Region
 

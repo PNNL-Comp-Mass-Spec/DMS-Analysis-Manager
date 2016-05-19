@@ -19,7 +19,7 @@ Class clsMessageSender
     Private isDisposed As Boolean = False
     Private hasConnection As Boolean = False
 
-    Public Sub New(ByVal brokerUri As String, ByVal topicName As String, ByVal processorName As String)
+    Public Sub New(brokerUri As String, topicName As String, processorName As String)
         Me.topicName = topicName
         Me.brokerUri = brokerUri
         Me.processorName = processorName
@@ -33,7 +33,7 @@ Class clsMessageSender
     ''' If connection does not exist, make it
     ''' If connection objects don't work, erase them and make another set
     ''' </remarks>
-    Public Sub SendMessage(ByVal message As String)
+    Public Sub SendMessage(message As String)
         If Me.isDisposed Then
             Exit Sub
         End If
