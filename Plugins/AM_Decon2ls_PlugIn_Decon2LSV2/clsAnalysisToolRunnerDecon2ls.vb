@@ -1146,10 +1146,13 @@ Public Class clsAnalysisToolRunnerDecon2ls
         ' blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDLLPath)
         ' If Not blnSuccess Then Return False
 
-        ' Lookup the version of DeconEngineV2 (in the DeconTools folder)
-        strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
-        blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strDLLPath)
-        If Not blnSuccess Then Return False
+        ' Old: Lookup the version of DeconEngineV2 (in the DeconTools folder)
+        ' Disabled May 20, 2016 because the C++ code that was in DeconEngineV2.dll has been ported to C# and is now part of DeconTools.Backend
+        ' See DeconTools.Backend\ProcessingTasks\Deconvoluters\HornDeconvolutor\ThrashV1\ThrashV1_Readme.txt    
+        '
+        ' strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
+        ' blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, strDLLPath)
+        ' If Not blnSuccess Then Return False
 
         ' Store paths to key DLLs in ioToolFiles
         Dim ioToolFiles As New List(Of FileInfo)
