@@ -5,9 +5,9 @@ Imports System.IO
 
 Public Class clsDeconToolsQCPlotsGenerator
 
-    Private mDebugLevel As Integer
+    Private ReadOnly mDebugLevel As Integer
     Private mErrorMessage As String
-    Private mMSFileInfoScannerDLLPath As String
+    Private ReadOnly mMSFileInfoScannerDLLPath As String
 
     Private WithEvents mMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner
     Private mMSFileInfoScannerErrorCount As Integer

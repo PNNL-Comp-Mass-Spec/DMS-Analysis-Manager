@@ -213,22 +213,26 @@ Public Class clsAnalysisResourcesDecon2ls
         countMSn = 0
 
         Try
-            Dim reader = New ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO()
-            If Not reader.OpenRawFile(datasetFilePath) Then
-                LogError("Error opening Thermo raw file " & Path.GetFileName(datasetFilePath))
-                Return False
-            End If
-
-            For scanNumber = reader.FileInfo.ScanStart To reader.FileInfo.ScanEnd
-                Dim scanInfo As ThermoRawFileReaderDLL.clsScanInfo = Nothing
-                If reader.GetScanInfo(scanNumber, scanInfo) Then
-                    If scanInfo.MSLevel = 1 Then
-                        countMs1 += 1
-                    Else
-                        countMSn += 1
-                    End If
+            Using rawFileReader = New ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO()
+                If Not rawFileReader.OpenRawFile(datasetFilePath) Then
+                    LogError("Error opening Thermo raw file " & Path.GetFileName(datasetFilePath))
+                    Return False
                 End If
-            Next
+
+                For scanNumber = rawFileReader.FileInfo.ScanStart To rawFileReader.FileInfo.ScanEnd
+                    Dim scanInfo As ThermoRawFileReaderDLL.clsScanInfo = Nothing
+                    If rawFileReader.GetScanInfo(scanNumber, scanInfo) Then
+                        If scanInfo.MSLevel = 1 Then
+                            countMs1 += 1
+                        Else
+                            countMSn += 1
+                        End If
+                    End If
+                Next
+
+                rawFileReader.CloseRawFile()
+
+            End Using           
 
             Return True
         Catch ex As Exception

@@ -2,6 +2,7 @@
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerMSAlignQuant
     Inherits clsAnalysisToolRunnerBase
@@ -44,10 +45,8 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
-        Dim CmdStr As String
-
         Dim result As IJobParams.CloseOutType
-        Dim blnProcessingError As Boolean = False
+        Dim blnProcessingError = False
 
         Dim blnSuccess As Boolean
 
@@ -97,13 +96,14 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
             ' Set up and execute a program runner to run TargetedWorkflowsConsole
             Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
+            Dim cmdStr As String
 
             Select Case strRawDataType.ToLower
                 Case clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES
-                    CmdStr = " " & PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION))
+                    cmdStr = " " & PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION))
                 Case clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, clsAnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS
                     ' Bruker_FT folders are actually .D folders
-                    CmdStr = " " & PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION)
+                    cmdStr = " " & PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset) & clsAnalysisResources.DOT_D_EXTENSION)
                 Case Else
                     m_message = "Dataset type " & strRawDataType & " is not supported"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message)
@@ -111,10 +111,10 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
             End Select
 
 
-            CmdStr &= " " & PossiblyQuotePath(strTargetedQuantParamFilePath)
+            cmdStr &= " " & PossiblyQuotePath(strTargetedQuantParamFilePath)
 
             If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mTargetedWorkflowsProgLoc & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mTargetedWorkflowsProgLoc & cmdStr)
             End If
 
             CmdRunner = New clsRunDosProgram(m_WorkDir)
@@ -129,7 +129,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
             m_progress = PROGRESS_TARGETED_WORKFLOWS_STARTING
 
-            blnSuccess = CmdRunner.RunProgram(mTargetedWorkflowsProgLoc, CmdStr, "TargetedWorkflowsConsole", True)
+            blnSuccess = CmdRunner.RunProgram(mTargetedWorkflowsProgLoc, cmdStr, "TargetedWorkflowsConsole", True)
 
             If Not CmdRunner.WriteConsoleOutputToFile Then
                 ' Write the console output to a text file
@@ -162,19 +162,18 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
             End If
 
             If Not blnSuccess Then
-                Dim Msg As String
-                Msg = "Error running TargetedWorkflowsConsole"
+                Dim msg = "Error running TargetedWorkflowsConsole"
 
                 If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                    m_message = clsGlobal.AppendToComment(m_message, Msg & "; " & mConsoleOutputErrorMsg)
+                    m_message = clsGlobal.AppendToComment(m_message, msg & "; " & mConsoleOutputErrorMsg)
                 Else
-                    m_message = clsGlobal.AppendToComment(m_message, Msg)
+                    m_message = clsGlobal.AppendToComment(m_message, msg)
                 End If
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
 
                 If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "TargetedWorkflowsConsole returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "TargetedWorkflowsConsole returned a non-zero exit code: " & CmdRunner.ExitCode.ToString())
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to TargetedWorkflowsConsole failed (but exit code is 0)")
                 End If
@@ -282,7 +281,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -302,11 +301,11 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
             Dim strWorkflowParamFileName = m_jobParams.GetParam("MSAlignQuantParamFile")
             If String.IsNullOrEmpty(strWorkflowParamFileName) Then
-                m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "MSAlignQuantParamFile")
+                m_message = NotifyMissingParameter(m_jobParams, "MSAlignQuantParamFile")
                 Return String.Empty
             End If
 
-            Using swTargetedQuantXMLFile As System.Xml.XmlTextWriter = New System.Xml.XmlTextWriter(strTargetedQuantParamFilePath, System.Text.Encoding.UTF8)
+            Using swTargetedQuantXMLFile = New Xml.XmlTextWriter(strTargetedQuantParamFilePath, Text.Encoding.UTF8)
                 swTargetedQuantXMLFile.Formatting = Xml.Formatting.Indented
                 swTargetedQuantXMLFile.Indentation = 4
 
@@ -345,7 +344,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Protected Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Protected Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output:
         '   8/13/2012 2:29:48 PM    Started Processing....
@@ -370,7 +369,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
         '   ...
         '   8/13/2012 1:56:55 PM    ---- PROCESSING COMPLETE ---------------
 
-        Static reSubProgress As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("Percent complete = ([0-9.]+)", Text.RegularExpressions.RegexOptions.Compiled)
+        Static reSubProgress As Regex = New Regex("Percent complete = ([0-9.]+)", RegexOptions.Compiled)
 
         Try
 
@@ -399,10 +398,8 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
             Dim strLineIn As String
             Dim strLineInLCase As String
 
-            Dim intLinesRead As Integer
             Dim intCharIndex As Integer
 
-            Dim oMatch As System.Text.RegularExpressions.Match
             Dim dblSubProgressAddon As Double
 
             Dim intEffectiveProgress As Integer
@@ -410,12 +407,10 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
             mConsoleOutputErrorMsg = String.Empty
 
-            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                intLinesRead = 0
                 Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
-                    intLinesRead += 1
 
                     If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
@@ -431,7 +426,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
                         Next
 
                         If intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED Then
-                            oMatch = reSubProgress.Match(strLineIn)
+                            Dim oMatch = reSubProgress.Match(strLineIn)
                             If oMatch.Success Then
                                 If Double.TryParse(oMatch.Groups(1).Value, dblSubProgressAddon) Then
                                     dblSubProgressAddon /= 100
@@ -439,9 +434,9 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
                             End If
                         End If
 
-                        intCharIndex = strLineInLCase.IndexOf("exception of type")
+                        intCharIndex = strLineInLCase.IndexOf("exception of type", StringComparison.Ordinal)
                         If intCharIndex < 0 Then
-                            intCharIndex = strLineInLCase.IndexOf(ControlChars.Tab & "error")
+                            intCharIndex = strLineInLCase.IndexOf(ControlChars.Tab & "error", StringComparison.Ordinal)
 
                             If intCharIndex > 0 Then
                                 intCharIndex += 1
@@ -490,7 +485,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strTargetedWorkflowsConsoleProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strTargetedWorkflowsConsoleProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioTargetedWorkflowsConsole As FileInfo
@@ -510,7 +505,6 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
                 Return False
             End Try
 
-            Return False
         End If
 
         ' Lookup the version of the TargetedWorkflowsConsole application
@@ -533,7 +527,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
     End Function
 
-    Public Sub WriteXMLSetting(swOutFile As System.Xml.XmlTextWriter, strSettingName As String, strSettingValue As String)
+    Public Sub WriteXMLSetting(swOutFile As Xml.XmlTextWriter, strSettingName As String, strSettingValue As String)
         swOutFile.WriteStartElement(strSettingName)
         swOutFile.WriteValue(strSettingValue)
         swOutFile.WriteEndElement()
@@ -549,12 +543,12 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
     ''' <remarks></remarks>
     Protected Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
-        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
+        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         UpdateStatusFile()
 
-        If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = DateTime.UtcNow
 
             ParseConsoleOutputFile(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT))
 
