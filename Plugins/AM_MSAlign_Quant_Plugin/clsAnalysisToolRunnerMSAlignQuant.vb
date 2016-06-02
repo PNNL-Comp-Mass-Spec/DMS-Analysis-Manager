@@ -23,7 +23,6 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
     Protected Const PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED As Integer = 15
     Protected Const PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE As Integer = 95
 
-
     Protected Const PROGRESS_TARGETED_WORKFLOWS_COMPLETE As Integer = 98
     Protected Const PROGRESS_PCT_COMPLETE As Integer = 99
 
@@ -249,7 +248,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -298,6 +297,28 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
         Try
             strTargetedQuantParamFilePath = Path.Combine(m_WorkDir, TARGETED_QUANT_XML_FILE_NAME)
             Dim strMSAlignResultTableName = m_Dataset & clsAnalysisResourcesMSAlignQuant.MSALIGN_RESULT_TABLE_SUFFIX
+
+            '' Optionally make a trimmed version of the ResultTable file for testing purposes
+
+            'Dim strFullResultsPath = Path.Combine(m_WorkDir, strMSAlignResultTableName)
+            'Dim strTrimmedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_TrimmedResults.tmp")
+
+            'Using srFullResults As New StreamReader(New FileStream(strFullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)),
+            '    swTrimmedResults As New StreamWriter(New FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+
+            '    Dim linesRead = 0
+            '    While Not srFullResults.EndOfStream AndAlso linesRead < 30
+            '        swTrimmedResults.WriteLine(srFullResults.ReadLine())
+            '        linesRead += 1
+            '    End While
+            'End Using
+
+            '' Replace the original file with the trimmed one
+            'Threading.Thread.Sleep(100)
+            'File.Delete(strFullResultsPath)
+            'Threading.Thread.Sleep(100)
+
+            'File.Move(strTrimmedFilePath, strFullResultsPath)
 
             Dim strWorkflowParamFileName = m_jobParams.GetParam("MSAlignQuantParamFile")
             If String.IsNullOrEmpty(strWorkflowParamFileName) Then
