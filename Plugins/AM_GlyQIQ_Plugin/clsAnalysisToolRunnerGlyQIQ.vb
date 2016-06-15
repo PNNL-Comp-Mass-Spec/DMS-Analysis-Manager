@@ -11,6 +11,7 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Data.SqlClient
+Imports ThermoRawFileReader
 
 
 Public Class clsAnalysisToolRunnerGlyQIQ
@@ -58,7 +59,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     ''' <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
     Protected mGlyQRunners As Dictionary(Of Integer, clsGlyQIqRunner)
 
-    Private WithEvents mThermoFileReader As ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO
+    Private WithEvents mThermoFileReader As XRawFileIO
     Private WithEvents mStoredProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
 
 #End Region
@@ -254,7 +255,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Counting the number of MS/MS spectra in " + Path.GetFileName(rawFilePath))
             End If
 
-            mThermoFileReader = New ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO()
+            mThermoFileReader = New XRawFileIO()
 
             If Not mThermoFileReader.OpenRawFile(rawFilePath) Then
                 m_message = "Error opening the Thermo Raw file to count the MS/MS spectra"
@@ -267,7 +268,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             Dim ms2ScanCount = 0
 
             For scan = 1 To scanCount
-                Dim scanInfo As ThermoRawFileReaderDLL.clsScanInfo = Nothing
+                Dim scanInfo As clsScanInfo = Nothing
 
                 If mThermoFileReader.GetScanInfo(scan, scanInfo) Then
                     If scanInfo.MSLevel > 1 Then

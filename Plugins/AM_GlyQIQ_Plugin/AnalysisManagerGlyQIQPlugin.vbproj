@@ -91,9 +91,9 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="ThermoRawFileReaderDLL, Version=1.1.5532.25654, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="ThermoRawFileReader">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
+      <HintPath>..\..\AM_Common\ThermoRawFileReader.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

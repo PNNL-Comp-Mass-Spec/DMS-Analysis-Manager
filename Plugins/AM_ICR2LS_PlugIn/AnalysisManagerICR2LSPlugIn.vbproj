@@ -132,9 +132,9 @@
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
-    <Reference Include="ThermoRawFileReaderDLL, Version=1.1.5415.32440, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="ThermoRawFileReader">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
+      <HintPath>..\..\AM_Common\ThermoRawFileReader.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

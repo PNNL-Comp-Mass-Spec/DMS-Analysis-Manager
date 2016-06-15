@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -100,9 +100,9 @@
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
-    <Reference Include="ThermoRawFileReaderDLL, Version=1.1.5764.21451, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="ThermoRawFileReader">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\ThermoRawFileReaderDLL.dll</HintPath>
+      <HintPath>..\..\AM_Common\ThermoRawFileReader.dll</HintPath>
     </Reference>
     <Reference Include="UIMFLibrary">
       <HintPath>..\..\AM_Common\UIMFLibrary.dll</HintPath>

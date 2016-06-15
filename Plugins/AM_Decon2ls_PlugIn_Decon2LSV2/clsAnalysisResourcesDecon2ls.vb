@@ -4,6 +4,7 @@ Imports System.IO
 Imports System.Linq
 Imports System.Runtime.InteropServices
 Imports AnalysisManagerBase
+Imports ThermoRawFileReader
 Imports UIMFLibrary
 
 Public Class clsAnalysisResourcesDecon2ls
@@ -213,14 +214,14 @@ Public Class clsAnalysisResourcesDecon2ls
         countMSn = 0
 
         Try
-            Using rawFileReader = New ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO()
+            Using rawFileReader = New XRawFileIO()
                 If Not rawFileReader.OpenRawFile(datasetFilePath) Then
                     LogError("Error opening Thermo raw file " & Path.GetFileName(datasetFilePath))
                     Return False
                 End If
 
                 For scanNumber = rawFileReader.FileInfo.ScanStart To rawFileReader.FileInfo.ScanEnd
-                    Dim scanInfo As ThermoRawFileReaderDLL.clsScanInfo = Nothing
+                    Dim scanInfo As clsScanInfo = Nothing
                     If rawFileReader.GetScanInfo(scanNumber, scanInfo) Then
                         If scanInfo.MSLevel = 1 Then
                             countMs1 += 1
@@ -232,7 +233,7 @@ Public Class clsAnalysisResourcesDecon2ls
 
                 rawFileReader.CloseRawFile()
 
-            End Using           
+            End Using
 
             Return True
         Catch ex As Exception

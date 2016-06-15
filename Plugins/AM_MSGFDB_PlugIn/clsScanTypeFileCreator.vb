@@ -3,6 +3,7 @@
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
+Imports ThermoRawFileReader
 
 Public Class clsScanTypeFileCreator
 
@@ -137,7 +138,7 @@ Public Class clsScanTypeFileCreator
                                         strFilterText = strSplitLine(intScanFilterColIndex)
 
                                         ' Parse the filter text to determine scan type
-                                        strCollisionMode = ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(strFilterText)
+                                        strCollisionMode = XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(strFilterText)
 
                                         blnStoreData = True
                                     End If
