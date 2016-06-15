@@ -127,7 +127,24 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "Unknown error running MSGF+"
                 End If
-                Return result
+
+                ' If the MSGFDB_ConsoleOutput.txt file or the .mzid file exist, we want to move them to the failed results folder
+                fiMSGFPlusResults.Refresh()
+
+                Dim diWorkingDirectory As DirectoryInfo
+
+                If String.IsNullOrEmpty(mWorkingDirectoryInUse) Then
+                    diWorkingDirectory = New DirectoryInfo(m_WorkDir)
+                Else
+                    diWorkingDirectory = New DirectoryInfo(mWorkingDirectoryInUse)
+                End If
+
+                Dim fiConsoleOutputFile = diWorkingDirectory.GetFiles(clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
+
+                If Not fiMSGFPlusResults.Exists And fiConsoleOutputFile.Count = 0 Then
+                    Return result
+                End If
+
             End If
 
             ' Look for the .mzid file
