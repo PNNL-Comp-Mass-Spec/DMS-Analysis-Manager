@@ -344,7 +344,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="msgfDbProgLoc">Folder with MSGFDB.jar</param>
     ''' <param name="strDatasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
     ''' <param name="strMZIDFileName">.mzid file name (assumed to be in the work directory)</param>
-    ''' <returns></returns>
+    ''' <returns>TSV file path, or an empty string if an error</returns>
     ''' <remarks></remarks>
     Public Function ConvertMZIDToTSV(
       javaProgLoc As String,
@@ -364,6 +364,22 @@ Public Class clsMSGFDBUtils
             Dim fiMzidFile = New FileInfo(Path.Combine(m_WorkDir, strMZIDFileName))
             If Not fiMzidFile.Exists Then
                 ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV (file not found)", "Error in MSGFDbPlugin->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
+                Return String.Empty
+            End If
+
+            ' Make sure the mzid file ends with XML tag </MzIdentML>
+            Dim lastLine = String.Empty
+            Using reader = New StreamReader(New FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine()
+                    If Not String.IsNullOrWhiteSpace(dataLine) Then
+                        lastLine = dataLine
+                    End If
+                End While
+            End Using
+
+            If Not String.Equals(lastLine.Trim(), "</MzIdentML>", StringComparison.InvariantCulture) Then
+                ReportError("The .mzid file created by MSGF+ does not end with XML tag MzIdentML")
                 Return String.Empty
             End If
 
