@@ -271,9 +271,9 @@ Public Class clsMainProcess
     Public Sub DoAnalysis()
         If Me.TraceMode Then ShowTraceMessage("Entering clsMainProcess.DoAnalysis")
 
-        Dim LoopCount As Integer = 0
+        Dim LoopCount = 0
         Dim MaxLoopCount As Integer
-        Dim TasksStartedCount As Integer = 0
+        Dim TasksStartedCount = 0
         Dim blnErrorDeletingFilesFlagFile As Boolean
 
         Dim strMessage As String
@@ -284,8 +284,8 @@ Public Class clsMainProcess
         Dim blnOneTaskPerformed As Boolean
 
         ' Used to track critical manager errors (not necessarily failed analysis jobs when the plugin reports "no results" or similar)
-        Dim intCriticalMgrErrorCount As Integer = 0
-        Dim intSuccessiveDeadLockCount As Integer = 0
+        Dim intCriticalMgrErrorCount = 0
+        Dim intSuccessiveDeadLockCount = 0
 
         Try
             If Me.TraceMode Then ShowTraceMessage("Entering clsMainProcess.DoAnalysis Try/Catch block")
@@ -526,7 +526,7 @@ Public Class clsMainProcess
 
                     Case Else
                         'Shouldn't ever get here
-                        Dim errMsg As String = "clsMainProcess.DoAnalysis; Invalid request result: "
+                        Dim errMsg = "clsMainProcess.DoAnalysis; Invalid request result: "
                         errMsg &= CInt(TaskReturn).ToString
                         If Me.TraceMode Then ShowTraceMessage(errMsg)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
@@ -837,7 +837,7 @@ Public Class clsMainProcess
             If m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile() Then
                 'If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                 ' However, wait another 5 seconds before continuing
-                PRISM.Processes.clsProgRunner.GarbageCollectNow()
+                Processes.clsProgRunner.GarbageCollectNow()
                 Thread.Sleep(5000)
 
                 Return True
@@ -887,7 +887,7 @@ Public Class clsMainProcess
     ''' <param name="ToolName">Tool name (or step tool name)</param>
     ''' <returns>Info string, similar to: Job 375797; DataExtractor (XTandem), Step 4; QC_Shew_09_01_b_pt5_25Mar09_Griffin_09-02-03; 3/26/2009 3:17:57 AM</returns>
     ''' <remarks></remarks>
-    Protected Function ConstructMostRecentJobInfoText(JobStartTimeStamp As String, Job As Integer, Dataset As String, ToolName As String) As String
+    Private Function ConstructMostRecentJobInfoText(JobStartTimeStamp As String, Job As Integer, Dataset As String, ToolName As String) As String
 
         Try
             If JobStartTimeStamp Is Nothing Then JobStartTimeStamp = String.Empty
@@ -913,7 +913,7 @@ Public Class clsMainProcess
         End If
     End Sub
 
-    Protected Shared Function CreateAnalysisManagerEventLog(SourceName As String, LogName As String) As Boolean
+    Private Shared Function CreateAnalysisManagerEventLog(SourceName As String, LogName As String) As Boolean
 
         Try
             If String.IsNullOrEmpty(SourceName) Then
@@ -928,7 +928,7 @@ Public Class clsMainProcess
 
             If Not EventLog.SourceExists(SourceName) Then
                 Console.WriteLine("Creating Windows Event Log " & LogName & " for source " & SourceName)
-                Dim SourceData As EventSourceCreationData = New EventSourceCreationData(SourceName, LogName)
+                Dim SourceData = New EventSourceCreationData(SourceName, LogName)
                 EventLog.CreateEventSource(SourceData)
             End If
 
@@ -958,13 +958,46 @@ Public Class clsMainProcess
 
     End Function
 
+    Private Function DataPackageIdMissing() As Boolean
+
+        Dim stepToolName = m_AnalysisTask.GetParam("JobParameters", "StepTool")
+
+        Dim multiJobStepTools = New SortedSet(Of String) From {
+                    "APE",
+                    "AScore",
+                    "Cyclops",
+                    "IDM",
+                    "Mage",
+                    "MultiAlign_Aggregator",
+                    "mzXML_Aggregator",
+                    "Phospho_FDR_Aggregator",
+                    "PRIDE_Converter",
+                    "RepoPkgr"}
+
+        Dim dataPkgRequired As Boolean
+        If multiJobStepTools.Any(Function(multiJobTool) String.Equals(stepToolName, multiJobTool, StringComparison.InvariantCultureIgnoreCase)) Then
+            dataPkgRequired = True
+        End If
+
+        If dataPkgRequired Then
+            Dim dataPkgID = m_AnalysisTask.GetJobParameter("JobParameters", "DataPackageID", 0)
+            If dataPkgID <= 0 Then
+                ' The data package ID is 0 or missing
+                Return True
+            End If
+        End If
+
+        Return False
+
+    End Function
+
     ''' <summary>
     ''' Given a log file with a name like AnalysisMgr_03-25-2009.txt, returns the log file name for the previous day
     ''' </summary>
     ''' <param name="strLogFilePath"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function DecrementLogFilePath(strLogFilePath As String) As String
+    Private Function DecrementLogFilePath(strLogFilePath As String) As String
 
         Dim reLogFileName As Regex
         Dim objMatch As Match
@@ -1014,18 +1047,18 @@ Public Class clsMainProcess
     Public Function DetermineRecentErrorMessages(intErrorMessageCountToReturn As Integer, <Out()> ByRef strMostRecentJobInfo As String) As String()
 
         ' This regex will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
-        Const ERROR_MATCH_REGEX As String = "^([^,]+),(.+), Error, *$"
+        Const ERROR_MATCH_REGEX = "^([^,]+),(.+), Error, *$"
 
         ' This regex looks for information on a job starting
         ' Note: do not try to match "Step \d+" with this regex due to variations on how the log message appears
-        Const JOB_START_REGEX As String = "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool ([^,]+)"
+        Const JOB_START_REGEX = "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool ([^,]+)"
 
         ' Examples matching log entries
         ' 5/04/2015 12:34:46, Pub-88-3: Started analysis job 1193079, Dataset Lp_PDEC_N-sidG_PD1_1May15_Lynx_15-01-24, Tool Decon2LS_V2, Step 1, INFO,
         ' 5/04/2015 10:54:49, Proto-6_Analysis-1: Started analysis job 1192426, Dataset LewyHNDCGlobFractestrecheck_SRM_HNDC_Frac46_smeagol_05Apr15_w6326a, Tool Results_Transfer (MASIC_Finnigan), Step 2, INFO,
 
         ' The following effectively defines the number of days in the past to search when finding recent errors
-        Const MAX_LOG_FILES_TO_SEARCH As Integer = 5
+        Const MAX_LOG_FILES_TO_SEARCH = 5
 
         Dim blnLoggerReportsError As Boolean
         Dim strLogFilePath As String
@@ -1043,7 +1076,7 @@ Public Class clsMainProcess
 
         ' Note that strRecentErrorMessages() and dtRecentErrorMessageDates() are parallel arrays
         Dim intRecentErrorMessageCount As Integer
-        Dim strRecentErrorMessages() As String = New String() {}
+        Dim strRecentErrorMessages = New String() {}
         Dim dtRecentErrorMessageDates() As DateTime
 
         Dim strLineIn As String
@@ -1233,7 +1266,7 @@ Public Class clsMainProcess
 
     End Function
 
-    Protected Sub DetermineRecentErrorCacheError(
+    Private Sub DetermineRecentErrorCacheError(
      objMatch As Match,
      strErrorMessage As String,
      htUniqueErrorMessages As Hashtable,
@@ -1335,7 +1368,7 @@ Public Class clsMainProcess
 
     End Sub
 
-    Protected Function GetRecentLogFilename() As String
+    Private Function GetRecentLogFilename() As String
         Dim lastFilename As String
         Dim x As Integer
         Dim Files() As String
@@ -1362,7 +1395,7 @@ Public Class clsMainProcess
         Return lastFilename
     End Function
 
-    Protected Function GetManagerErrorCleanupMode() As clsCleanupMgrErrors.eCleanupModeConstants
+    Private Function GetManagerErrorCleanupMode() As clsCleanupMgrErrors.eCleanupModeConstants
         Dim strManagerErrorCleanupMode As String
         Dim eManagerErrorCleanupMode As clsCleanupMgrErrors.eCleanupModeConstants
 
@@ -1540,7 +1573,7 @@ Public Class clsMainProcess
 
     Private Sub RemoveTempFiles()
 
-        Dim diMgrFolder As DirectoryInfo = New DirectoryInfo(m_MgrFolderPath)
+        Dim diMgrFolder = New DirectoryInfo(m_MgrFolderPath)
         Dim msg As String
 
         ' Files starting with the name IgnoreMe are created by log4NET when it is first instantiated 
@@ -1582,10 +1615,10 @@ Public Class clsMainProcess
     Private Function SetResourceObject() As Boolean
 
         Dim strMessage As String
-        Dim StepToolName As String = m_AnalysisTask.GetParam("StepTool")
+        Dim stepToolName As String = m_AnalysisTask.GetParam("StepTool")
 
         m_PluginLoader.ClearMessageList()
-        m_Resource = m_PluginLoader.GetAnalysisResources(StepToolName.ToLower)
+        m_Resource = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower)
         If m_Resource Is Nothing Then
             Dim Msg As String = m_PluginLoader.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to load resource object, " & Msg)
@@ -1593,7 +1626,7 @@ Public Class clsMainProcess
         End If
 
         If m_DebugLevel > 0 Then
-            strMessage = "Loaded resourcer for StepTool " & StepToolName
+            strMessage = "Loaded resourcer for StepTool " & stepToolName
             If m_PluginLoader.Message.Length > 0 Then strMessage &= ": " & m_PluginLoader.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
         End If
@@ -1638,12 +1671,12 @@ Public Class clsMainProcess
 
     Private Function SetToolRunnerObject() As Boolean
         Dim strMessage As String
-        Dim StepToolName As String = m_AnalysisTask.GetParam("StepTool")
+        Dim stepToolName As String = m_AnalysisTask.GetParam("StepTool")
 
         m_PluginLoader.ClearMessageList()
-        m_ToolRunner = m_PluginLoader.GetToolRunner(StepToolName.ToLower)
+        m_ToolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower())
         If m_ToolRunner Is Nothing Then
-            strMessage = "Unable to load tool runner for StepTool " & StepToolName & ": " & m_PluginLoader.Message
+            strMessage = "Unable to load tool runner for StepTool " & stepToolName & ": " & m_PluginLoader.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
             Return False
         End If
@@ -1671,7 +1704,7 @@ Public Class clsMainProcess
         Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
     End Sub
 
-    Protected Sub UpdateClose(ManagerCloseMessage As String)
+    Private Sub UpdateClose(ManagerCloseMessage As String)
         Dim strErrorMessages() As String
         strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
 
@@ -1686,9 +1719,9 @@ Public Class clsMainProcess
     ''' <param name="MinutesBetweenUpdates"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function UpdateManagerSettings(ByRef dtLastConfigDBUpdate As DateTime, MinutesBetweenUpdates As Double) As Boolean
+    Private Function UpdateManagerSettings(ByRef dtLastConfigDBUpdate As DateTime, MinutesBetweenUpdates As Double) As Boolean
 
-        Dim blnSuccess As Boolean = True
+        Dim blnSuccess = True
 
         If (DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates) Then
 
@@ -1720,21 +1753,21 @@ Public Class clsMainProcess
 
     End Function
 
-    Protected Sub UpdateStatusDisabled(managerStatus As IStatusFile.EnumMgrStatus, managerDisableMessage As String)
+    Private Sub UpdateStatusDisabled(managerStatus As IStatusFile.EnumMgrStatus, managerDisableMessage As String)
         Dim strErrorMessages() As String
         strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
         m_StatusTools.UpdateDisabled(managerStatus, managerDisableMessage, strErrorMessages, m_MostRecentJobInfo)
         Console.WriteLine(managerDisableMessage)
     End Sub
 
-    Protected Sub UpdateStatusFlagFileExists()
+    Private Sub UpdateStatusFlagFileExists()
         Dim strErrorMessages() As String
         strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
         m_StatusTools.UpdateFlagFileExists(strErrorMessages, m_MostRecentJobInfo)
         Console.WriteLine("Flag file exists")
     End Sub
 
-    Protected Sub UpdateStatusIdle(ManagerIdleMessage As String)
+    Private Sub UpdateStatusIdle(ManagerIdleMessage As String)
         Dim strErrorMessages() As String
         strErrorMessages = DetermineRecentErrorMessages(5, m_MostRecentJobInfo)
 
@@ -1777,7 +1810,7 @@ Public Class clsMainProcess
     ''' <param name="ErrorMessage"></param>
     ''' <returns></returns>
     ''' <remarks>Disables the manager if the working directory drive does not have enough space</remarks>
-    Private Function ValidateFreeDiskSpace(<Out> ByRef ErrorMessage As String) As Boolean
+    Private Function ValidateFreeDiskSpace(<Out> ByRef errorMessage As String) As Boolean
 
         Const DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB = 10
         Const DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB = 10
@@ -1785,71 +1818,69 @@ Public Class clsMainProcess
         Const DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB = 750
         Const DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750
 
-        Dim DatasetStoragePath As String
-        Dim DatasetStorageMinFreeSpaceGB As Integer
-        Dim ioDatasetStoragePath As DirectoryInfo
-
-        Dim WorkingDirMinFreeSpaceMB As Integer
-
-        Dim TransferDir As String
-        Dim TransferDirMinFreeSpaceGB As Integer
-
-        Dim strStepToolNameLCase As String
-        Dim OrgDbDir As String
-        Dim OrgDbDirMinFreeSpaceMB As Integer
-
-        ErrorMessage = String.Empty
+        errorMessage = String.Empty
 
         Try
-            strStepToolNameLCase = m_AnalysisTask.GetParam("JobParameters", "StepTool").ToLower()
+            Dim stepToolNameLCase = m_AnalysisTask.GetParam("JobParameters", "StepTool").ToLower()
 
-            If strStepToolNameLCase = "results_transfer" Then
+            If stepToolNameLCase = "results_transfer" Then
                 ' We only need to evaluate the dataset storage folder for free space
 
-                DatasetStoragePath = m_AnalysisTask.GetParam("DatasetStoragePath")
-                DatasetStorageMinFreeSpaceGB = m_MgrSettings.GetParam("DatasetStorageMinFreeSpaceGB", DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
+                Dim datasetStoragePath = m_AnalysisTask.GetParam("DatasetStoragePath")
+                Dim datasetStorageMinFreeSpaceGB = m_MgrSettings.GetParam("DatasetStorageMinFreeSpaceGB", DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
 
-                If String.IsNullOrEmpty(DatasetStoragePath) Then
-                    ErrorMessage = "DatasetStoragePath job parameter is empty"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage)
+                If String.IsNullOrEmpty(datasetStoragePath) Then
+                    errorMessage = "DatasetStoragePath job parameter is empty"
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
                     Return False
                 End If
 
-                ioDatasetStoragePath = New DirectoryInfo(DatasetStoragePath)
-                If Not ioDatasetStoragePath.Exists Then
+                Dim diDatasetStoragePath = New DirectoryInfo(datasetStoragePath)
+                If Not diDatasetStoragePath.Exists Then
                     ' Dataset folder not found; that's OK, since the Results Transfer plugin will auto-create it
                     ' Try to use the parent folder (or the parent of the parent)
-                    Do While Not ioDatasetStoragePath.Exists AndAlso Not ioDatasetStoragePath.Parent Is Nothing
-                        ioDatasetStoragePath = ioDatasetStoragePath.Parent
+                    Do While Not diDatasetStoragePath.Exists AndAlso Not diDatasetStoragePath.Parent Is Nothing
+                        diDatasetStoragePath = diDatasetStoragePath.Parent
                     Loop
 
-                    DatasetStoragePath = ioDatasetStoragePath.FullName
+                    datasetStoragePath = diDatasetStoragePath.FullName
                 End If
 
-                If Not ValidateFreeDiskSpaceWork("Dataset directory", DatasetStoragePath, DatasetStorageMinFreeSpaceGB * 1024, ErrorMessage, clsLogTools.LoggerTypes.LogFile) Then
+                If Not ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, errorMessage, clsLogTools.LoggerTypes.LogFile) Then
                     Return False
                 Else
                     Return True
                 End If
             End If
 
-            WorkingDirMinFreeSpaceMB = m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB)
+            Dim workingDirMinFreeSpaceMB = m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB)
 
-            TransferDir = m_AnalysisTask.GetParam("JobParameters", "transferFolderPath")
-            TransferDirMinFreeSpaceGB = m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB)
+            Dim transferDir = m_AnalysisTask.GetParam("JobParameters", "transferFolderPath")
+            Dim transferDirMinFreeSpaceGB = m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB)
 
-            OrgDbDir = m_MgrSettings.GetParam("orgdbdir")
-            OrgDbDirMinFreeSpaceMB = m_MgrSettings.GetParam("OrgDBDirMinFreeSpaceMB", DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
+            Dim orgDbDir = m_MgrSettings.GetParam("orgdbdir")
+            Dim orgDbDirMinFreeSpaceMB = m_MgrSettings.GetParam("OrgDBDirMinFreeSpaceMB", DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB)
 
             ' Verify that the working directory exists and that its drive has sufficient free space
-            If Not ValidateFreeDiskSpaceWork("Working directory", m_WorkDirPath, WorkingDirMinFreeSpaceMB, ErrorMessage, clsLogTools.LoggerTypes.LogDb) Then
+            If Not ValidateFreeDiskSpaceWork("Working directory", m_WorkDirPath, workingDirMinFreeSpaceMB, errorMessage, clsLogTools.LoggerTypes.LogDb) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Disabling manager since working directory problem")
                 DisableManagerLocally()
                 Return False
             End If
 
+            If String.IsNullOrEmpty(transferDir) Then
+                errorMessage = "Transfer directory for the job is empty; cannot continue"
+                
+                If DataPackageIdMissing() Then
+                    errorMessage &= ". Data package ID cannot be 0 for this job type"
+                End If
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+                Return False
+            End If
+
             ' Verify that the remote transfer directory exists and that its drive has sufficient free space
-            If Not ValidateFreeDiskSpaceWork("Transfer directory", TransferDir, TransferDirMinFreeSpaceGB * 1024, ErrorMessage, clsLogTools.LoggerTypes.LogFile) Then
+            If Not ValidateFreeDiskSpaceWork("Transfer directory", transferDir, transferDirMinFreeSpaceGB * 1024, errorMessage, clsLogTools.LoggerTypes.LogFile) Then
                 Return False
             End If
 
@@ -1858,7 +1889,7 @@ Public Class clsMainProcess
             If orgDbRequired Then
                 ' Verify that the local fasta file cache directory has sufficient free space
 
-                If Not ValidateFreeDiskSpaceWork("Organism DB directory", OrgDbDir, OrgDbDirMinFreeSpaceMB, ErrorMessage, clsLogTools.LoggerTypes.LogFile) Then
+                If Not ValidateFreeDiskSpaceWork("Organism DB directory", orgDbDir, orgDbDirMinFreeSpaceMB, errorMessage, clsLogTools.LoggerTypes.LogFile) Then
                     DisableManagerLocally()
                     Return False
                 End If
@@ -1866,7 +1897,7 @@ Public Class clsMainProcess
             End If
 
         Catch ex As Exception
-            ErrorMessage = "Exception validating free space"
+            errorMessage = "Exception validating free space"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception validating free space", ex)
             Return False
         End Try
