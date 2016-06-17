@@ -84,15 +84,15 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
             ' Determine the path to the Ascore program
             ' AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"          
-            Dim progLoc As String = m_mgrParams.GetParam("AScoreprogloc")
-            If Not File.Exists(progLoc) Then
-                If String.IsNullOrWhiteSpace(progLoc) Then progLoc = "Parameter 'AScoreprogloc' not defined for this manager"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find AScore program file: " & progLoc)
+            Dim progLocAScore As String = m_mgrParams.GetParam("AScoreprogloc")
+            If Not File.Exists(progLocAScore) Then
+                If String.IsNullOrWhiteSpace(progLocAScore) Then progLocAScore = "Parameter 'AScoreprogloc' not defined for this manager"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find AScore program file: " & progLocAScore)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Store the AScore version info in the database
-            If Not StoreToolVersionInfo(progLoc) Then
+            If Not StoreToolVersionInfo(progLocAScore) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining AScore version"
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -102,7 +102,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             Dim fileSuffixesToCombine As List(Of String) = Nothing
             Dim processingRuntimes As Dictionary(Of String, Double) = Nothing
 
-            Dim success = ProcessSynopsisFiles(progLoc, fileSuffixesToCombine, processingRuntimes)
+            Dim success = ProcessSynopsisFiles(progLocAScore, fileSuffixesToCombine, processingRuntimes)
 
             If Not fileSuffixesToCombine Is Nothing Then
                 ' Concatenate the results
@@ -180,7 +180,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Function
 
-    Protected Function AddMSGFSpecProbValues(ByVal jobNumber As Integer, ByVal synFilePath As String, ByVal fileTypeTag As String) As Boolean
+    Protected Function AddMSGFSpecProbValues(jobNumber As Integer, synFilePath As String, fileTypeTag As String) As Boolean
 
         Try
             Dim fiSynFile = New FileInfo(synFilePath)
@@ -267,8 +267,8 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         End Try
 
     End Function
-    
-    Protected Sub CacheFileSuffix(ByVal fileSuffixesToCombine As List(Of String), ByVal datasetName As String, ByVal fileName As String)
+
+    Protected Sub CacheFileSuffix(fileSuffixesToCombine As List(Of String), datasetName As String, fileName As String)
 
         Dim baseName = Path.GetFileNameWithoutExtension(fileName)
         baseName = baseName.Substring(datasetName.Length)
@@ -278,7 +278,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         End If
     End Sub
 
-    Protected Function ConcatenateLogFiles(ByVal processingRuntimes As Dictionary(Of String, Double)) As Boolean
+    Protected Function ConcatenateLogFiles(processingRuntimes As Dictionary(Of String, Double)) As Boolean
 
         Try
 
@@ -340,7 +340,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Function
 
-    Protected Function ConcatenateResultFiles(ByVal fileSuffix As String) As Boolean
+    Protected Function ConcatenateResultFiles(fileSuffix As String) As Boolean
 
         Dim currentFile As String = String.Empty
         Dim firstfileProcessed As Boolean = False
@@ -447,7 +447,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Sub
 
-    Protected Sub CreateJobToDatasetMapFile(ByVal jobsProcessed As List(Of udtJobMetadataForAScore))
+    Protected Sub CreateJobToDatasetMapFile(jobsProcessed As List(Of udtJobMetadataForAScore))
 
         Dim outputFilePath = Path.Combine(m_WorkDir, "Job_to_Dataset_Map.txt")
 
@@ -462,7 +462,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Sub
 
-    Protected Function DetermineAScoreParamFilePath(ByVal settingsFileName As String) As String
+    Protected Function DetermineAScoreParamFilePath(settingsFileName As String) As String
         Dim bestAScoreParamFileName As String
 
         Dim datasetType = DatasetTypeConstants.Unknown
@@ -502,9 +502,9 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     End Function
 
     Protected Function DetermineInputFilePaths(
-      ByVal jobFolder As DirectoryInfo,
+      jobFolder As DirectoryInfo,
       ByRef udtJobMetadata As udtJobMetadataForAScore,
-      ByVal fileSuffixesToCombine As List(Of String)) As Boolean
+      fileSuffixesToCombine As List(Of String)) As Boolean
 
         Dim fhtfile = String.Empty
         Dim synFile = String.Empty
@@ -568,7 +568,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Function
 
-    Private Function DetermineSpectrumFilePath(ByVal diJobFolder As DirectoryInfo) As String
+    Private Function DetermineSpectrumFilePath(diJobFolder As DirectoryInfo) As String
 
         Dim dtaFiles = diJobFolder.GetFiles("*_dta.zip")
         If dtaFiles.Count > 0 Then
@@ -597,7 +597,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
     End Function
 
-    Private Function GetBestAScoreParamFile(ByVal parameterNames As IEnumerable(Of String)) As String
+    Private Function GetBestAScoreParamFile(parameterNames As IEnumerable(Of String)) As String
 
         For Each paramName In parameterNames
             Dim paramFileName = m_jobParams.GetJobParameter(paramName, String.Empty)
@@ -644,7 +644,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output
         '
@@ -683,7 +683,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             ' Value between 0 and 100
             Dim ascoreProgress = 0
             mConsoleOutputErrorMsg = String.Empty
-			
+
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 Do While Not srInFile.EndOfStream
@@ -742,7 +742,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Protected Function ProcessSynopsisFiles(
-      ByVal progLoc As String,
+      progLoc As String,
       <Out> ByRef fileSuffixesToCombine As List(Of String),
       <Out> ByRef processingRuntimes As Dictionary(Of String, Double)) As Boolean
 
@@ -881,12 +881,12 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Protected Function RunAscore(
-      ByVal progLoc As String,
-      ByVal udtJobMetadata As udtJobMetadataForAScore,
-      ByVal inputFilePath As String,
-      ByVal ascoreParamFilePath As String,
-      ByVal fileTypeTag As String,
-      ByVal processingRuntimes As Dictionary(Of String, Double)) As Boolean
+      progLoc As String,
+      udtJobMetadata As udtJobMetadataForAScore,
+      inputFilePath As String,
+      ascoreParamFilePath As String,
+      fileTypeTag As String,
+      processingRuntimes As Dictionary(Of String, Double)) As Boolean
 
         ' Set up and execute a program runner to run AScore
 
@@ -993,7 +993,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim blnSuccess As Boolean

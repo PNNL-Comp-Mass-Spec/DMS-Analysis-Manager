@@ -409,7 +409,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' </summary>
     ''' <param name="strCacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
     ''' <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
-    ''' <param name="strSourceFilePath">Path to the data file</param>
+    ''' <param name="strsourceFilePath">Path to the data file</param>
     ''' <param name="strDatasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
     ''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
     ''' <returns>True if success, false if an error</returns>
@@ -420,11 +420,11 @@ Public Class clsAnalysisToolRunnerBase
     Protected Function CopyFileToServerCache(
       strCacheFolderPath As String,
       strSubfolderInTarget As String,
-      strSourceFilePath As String,
+      strsourceFilePath As String,
       strDatasetYearQuarter As String,
       blnPurgeOldFilesIfNeeded As Boolean) As Boolean
 
-        Return CopyFileToServerCache(strCacheFolderPath, strSubfolderInTarget, strSourceFilePath, strDatasetYearQuarter, blnPurgeOldFilesIfNeeded, String.Empty)
+        Return CopyFileToServerCache(strCacheFolderPath, strSubfolderInTarget, strsourceFilePath, strDatasetYearQuarter, blnPurgeOldFilesIfNeeded, String.Empty)
 
     End Function
 
@@ -463,14 +463,14 @@ Public Class clsAnalysisToolRunnerBase
                 Return False
             End If
 
-            Dim diTargetFolder As DirectoryInfo
+            Dim ditargetDirectory As DirectoryInfo
 
             ' Define the target folder
             If String.IsNullOrEmpty(subfolderInTarget) Then
-                diTargetFolder = diCacheFolder
+                ditargetDirectory = diCacheFolder
             Else
-                diTargetFolder = New DirectoryInfo(Path.Combine(diCacheFolder.FullName, subfolderInTarget))
-                If Not diTargetFolder.Exists Then diTargetFolder.Create()
+                ditargetDirectory = New DirectoryInfo(Path.Combine(diCacheFolder.FullName, subfolderInTarget))
+                If Not ditargetDirectory.Exists Then ditargetDirectory.Create()
             End If
 
             If String.IsNullOrEmpty(datasetYearQuarter) Then
@@ -482,8 +482,8 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
             If Not String.IsNullOrEmpty(datasetYearQuarter) Then
-                diTargetFolder = New DirectoryInfo(Path.Combine(diTargetFolder.FullName, datasetYearQuarter))
-                If Not diTargetFolder.Exists Then diTargetFolder.Create()
+                ditargetDirectory = New DirectoryInfo(Path.Combine(ditargetDirectory.FullName, datasetYearQuarter))
+                If Not ditargetDirectory.Exists Then ditargetDirectory.Create()
             End If
 
             m_jobParams.AddResultFileExtensionToSkip(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX)
@@ -498,7 +498,7 @@ Public Class clsAnalysisToolRunnerBase
                 Return False
             End If
 
-            Dim fiTargetFile = New FileInfo(Path.Combine(diTargetFolder.FullName, Path.GetFileName(sourceFilePath)))
+            Dim fiTargetFile = New FileInfo(Path.Combine(ditargetDirectory.FullName, Path.GetFileName(sourceFilePath)))
 
             ResetTimestampForQueueWaitTimeLogging()
             blnSuccess = m_FileTools.CopyFileUsingLocks(sourceFilePath, fiTargetFile.FullName, m_MachName, True)
@@ -529,7 +529,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <summary>
     ''' Copies the .mzXML file to the generic MSXML_Cache folder, e.g. \\proto-6\MSXML_Cache\MSConvert
     ''' </summary>
-    ''' <param name="strSourceFilePath"></param>
+    ''' <param name="strsourceFilePath"></param>
     ''' <param name="strDatasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
     ''' <param name="strMSXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
     ''' <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
@@ -539,7 +539,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
     ''' </remarks>
     Protected Function CopyMzXMLFileToServerCache(
-      strSourceFilePath As String,
+      strsourceFilePath As String,
       strDatasetYearQuarter As String,
       strMSXmlGeneratorName As String,
       blnPurgeOldFilesIfNeeded As Boolean) As Boolean
@@ -558,7 +558,7 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             End If
 
-            blnSuccess = CopyFileToServerCache(strMSXMLCacheFolderPath, strMSXmlGeneratorName, strSourceFilePath, strDatasetYearQuarter, blnPurgeOldFilesIfNeeded)
+            blnSuccess = CopyFileToServerCache(strMSXMLCacheFolderPath, strMSXmlGeneratorName, strsourceFilePath, strDatasetYearQuarter, blnPurgeOldFilesIfNeeded)
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyMzXMLFileToServerCache: " & ex.Message)
@@ -597,7 +597,7 @@ Public Class clsAnalysisToolRunnerBase
     Protected Function CopyResultsFolderToServer(transferFolderPath As String) As IJobParams.CloseOutType
 
         Dim sourceFolderPath As String = String.Empty
-        Dim targetFolderPath As String
+        Dim targetDirectoryPath As String
 
         Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
@@ -632,8 +632,8 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
             ' Determine the remote transfer folder path (create it if missing)
-            targetFolderPath = CreateRemoteTransferFolder(objAnalysisResults, transferFolderPath)
-            If String.IsNullOrEmpty(targetFolderPath) Then
+            targetDirectoryPath = CreateRemoteTransferFolder(objAnalysisResults, transferFolderPath)
+            If String.IsNullOrEmpty(targetDirectoryPath) Then
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -656,15 +656,15 @@ Public Class clsAnalysisToolRunnerBase
             Dim eResult As IJobParams.CloseOutType
 
             ' Copy the files and subfolders
-            eResult = CopyResultsFolderRecursive(sourceFolderPath, sourceFolderPath, targetFolderPath,
+            eResult = CopyResultsFolderRecursive(sourceFolderPath, sourceFolderPath, targetDirectoryPath,
               objAnalysisResults, blnErrorEncountered, intFailedFileCount,
               intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
             If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & Path.GetPathRoot(targetFolderPath) & " : " & ex.Message)
-            m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & Path.GetPathRoot(targetFolderPath))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & Path.GetPathRoot(targetDirectoryPath) & " : " & ex.Message)
+            m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & Path.GetPathRoot(targetDirectoryPath))
             blnErrorEncountered = True
         End Try
 
@@ -688,10 +688,10 @@ Public Class clsAnalysisToolRunnerBase
     ''' Uses CopyFileWithRetry to retry the copy up to intRetryCount times
     ''' </summary>
     ''' <param name="SourceFolderPath"></param>
-    ''' <param name="TargetFolderPath"></param>
+    ''' <param name="targetDirectoryPath"></param>
     ''' <remarks></remarks>
     Private Function CopyResultsFolderRecursive(
-      RootSourceFolderPath As String, SourceFolderPath As String, TargetFolderPath As String,
+      RootSourceFolderPath As String, SourceFolderPath As String, targetDirectoryPath As String,
       objAnalysisResults As clsAnalysisResults,
       ByRef blnErrorEncountered As Boolean,
       ByRef intFailedFileCount As Integer,
@@ -715,7 +715,7 @@ Public Class clsAnalysisToolRunnerBase
             htFilesToOverwrite = New Hashtable
             htFilesToOverwrite.Clear()
 
-            If objAnalysisResults.FolderExistsWithRetry(TargetFolderPath) Then
+            If objAnalysisResults.FolderExistsWithRetry(targetDirectoryPath) Then
                 ' The target folder already exists
 
                 ' Examine the files in the results folder to see if any of the files already exist in the transfer folder
@@ -724,8 +724,8 @@ Public Class clsAnalysisToolRunnerBase
 
                 objSourceFolderInfo = New DirectoryInfo(SourceFolderPath)
                 For Each objSourceFile In objSourceFolderInfo.GetFiles()
-                    If File.Exists(Path.Combine(TargetFolderPath, objSourceFile.Name)) Then
-                        objTargetFile = New FileInfo(Path.Combine(TargetFolderPath, objSourceFile.Name))
+                    If File.Exists(Path.Combine(targetDirectoryPath, objSourceFile.Name)) Then
+                        objTargetFile = New FileInfo(Path.Combine(targetDirectoryPath, objSourceFile.Name))
 
                         If objSourceFile.Length <> objTargetFile.Length OrElse objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
                             strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
@@ -741,17 +741,17 @@ Public Class clsAnalysisToolRunnerBase
             Else
                 ' Need to create the target folder
                 Try
-                    objAnalysisResults.CreateFolderWithRetry(TargetFolderPath)
+                    objAnalysisResults.CreateFolderWithRetry(targetDirectoryPath)
                 Catch ex As Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & Path.GetPathRoot(TargetFolderPath) & ": " & ex.Message)
-                    m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder in transfer directory, " & Path.GetPathRoot(TargetFolderPath))
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & Path.GetPathRoot(targetDirectoryPath) & ": " & ex.Message)
+                    m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder in transfer directory, " & Path.GetPathRoot(targetDirectoryPath))
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End Try
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error comparing files in source folder to " & TargetFolderPath & ": " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error comparing files in source folder to " & targetDirectoryPath & ": " & ex.Message)
             m_message = clsGlobal.AppendToComment(m_message, "Error comparing files in source folder to transfer directory")
             objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -762,7 +762,7 @@ Public Class clsAnalysisToolRunnerBase
 
         For Each FileToCopy As String In ResultFiles
             strSourceFileName = Path.GetFileName(FileToCopy)
-            strTargetPath = Path.Combine(TargetFolderPath, strSourceFileName)
+            strTargetPath = Path.Combine(targetDirectoryPath, strSourceFileName)
 
             Try
                 If htFilesToOverwrite.Count > 0 AndAlso htFilesToOverwrite.Contains(strSourceFileName.ToLower) Then
@@ -789,13 +789,13 @@ Public Class clsAnalysisToolRunnerBase
         Dim eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
         Dim diSourceFolder As DirectoryInfo
-        Dim strTargetFolderPathCurrent As String
+        Dim strtargetDirectoryPathCurrent As String
         diSourceFolder = New DirectoryInfo(SourceFolderPath)
 
         For Each objSubFolder As DirectoryInfo In diSourceFolder.GetDirectories()
-            strTargetFolderPathCurrent = Path.Combine(TargetFolderPath, objSubFolder.Name)
+            strtargetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, objSubFolder.Name)
 
-            eResult = CopyResultsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strTargetFolderPathCurrent,
+            eResult = CopyResultsFolderRecursive(RootSourceFolderPath, objSubFolder.FullName, strtargetDirectoryPathCurrent,
              objAnalysisResults, blnErrorEncountered, intFailedFileCount,
              intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
 
@@ -1604,37 +1604,37 @@ Public Class clsAnalysisToolRunnerBase
     ''' Decompresses the specified gzipped file
     ''' Output folder is m_WorkDir
     ''' </summary>
-    ''' <param name="GZipFilePath">File to decompress</param>
+    ''' <param name="gzipFilePath">File to decompress</param>
     ''' <returns></returns>
-    Public Function GUnzipFile(GZipFilePath As String) As Boolean
-        Return GUnzipFile(GZipFilePath, m_WorkDir)
+    Public Function GUnzipFile(gzipFilePath As String) As Boolean
+        Return GUnzipFile(gzipFilePath, m_WorkDir)
     End Function
 
     ''' <summary>
     ''' Decompresses the specified gzipped file
     ''' </summary>
-    ''' <param name="GZipFilePath">File to unzip</param>
-    ''' <param name="TargetDirectory">Target directory for the extracted files</param>
+    ''' <param name="gzipFilePath">File to unzip</param>
+    ''' <param name="targetDirectory">Target directory for the extracted files</param>
     ''' <returns></returns>
-    Public Function GUnzipFile(GZipFilePath As String, TargetDirectory As String) As Boolean
+    Public Function GUnzipFile(gzipFilePath As String, targetDirectory As String) As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
         ' Note that m_IonicZipTools logs error messages using clsLogTools
-        Return m_IonicZipTools.GUnzipFile(GZipFilePath, TargetDirectory)
+        Return m_IonicZipTools.GUnzipFile(gzipFilePath, targetDirectory)
     End Function
 
     ''' <summary>
-    ''' Gzips SourceFilePath, creating a new file in the same folder, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
+    ''' Gzips sourceFilePath, creating a new file in the same folder, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
     ''' </summary>
-    ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
-    ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+    ''' <param name="sourceFilePath">Full path to the file to be zipped</param>
+    ''' <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
     ''' <returns>True if success; false if an error</returns>
-    Public Function GZipFile(SourceFilePath As String, DeleteSourceAfterZip As Boolean) As Boolean
+    Public Function GZipFile(sourceFilePath As String, deleteSourceAfterZip As Boolean) As Boolean
         Dim blnSuccess As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
         ' Note that m_IonicZipTools logs error messages using clsLogTools
-        blnSuccess = m_IonicZipTools.GZipFile(SourceFilePath, DeleteSourceAfterZip)
+        blnSuccess = m_IonicZipTools.GZipFile(sourceFilePath, deleteSourceAfterZip)
 
         If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
             m_NeedToAbortProcessing = True
@@ -1645,18 +1645,18 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Gzips SourceFilePath, creating a new file in TargetDirectoryPath; the file extension will be the original extension plus .gz
+    ''' Gzips sourceFilePath, creating a new file in targetDirectoryPath; the file extension will be the original extension plus .gz
     ''' </summary>
-    ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
-    ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+    ''' <param name="sourceFilePath">Full path to the file to be zipped</param>
+    ''' <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
     ''' <returns>True if success; false if an error</returns>
-    Public Function GZipFile(SourceFilePath As String, TargetDirectoryPath As String, DeleteSourceAfterZip As Boolean) As Boolean
+    Public Function GZipFile(sourceFilePath As String, targetDirectoryPath As String, deleteSourceAfterZip As Boolean) As Boolean
 
         Dim blnSuccess As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
         ' Note that m_IonicZipTools logs error messages using clsLogTools
-        blnSuccess = m_IonicZipTools.GZipFile(SourceFilePath, TargetDirectoryPath, DeleteSourceAfterZip)
+        blnSuccess = m_IonicZipTools.GZipFile(sourceFilePath, targetDirectoryPath, deleteSourceAfterZip)
 
         If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
             m_NeedToAbortProcessing = True
@@ -1666,7 +1666,23 @@ Public Class clsAnalysisToolRunnerBase
 
     End Function
 
+    ''' <summary>
+    ''' GZip the given file
+    ''' </summary>
+    ''' <param name="fiResultFile"></param>
+    ''' <returns>Fileinfo object of the new .gz file or null if an error</returns>
+    ''' <remarks>Deletes the original file after creating the .gz file</remarks>
     Public Function GZipFile(fiResultFile As FileInfo) As FileInfo
+        Return GZipFile(fiResultFile, True)
+    End Function
+
+    ''' <summary>
+    ''' GZip the given file
+    ''' </summary>
+    ''' <param name="fiResultFile"></param>
+    ''' <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+    ''' <returns>Fileinfo object of the new .gz file or null if an error</returns>
+    Public Function GZipFile(fiResultFile As FileInfo, deleteSourceAfterZip As Boolean) As FileInfo
 
         Try
             Dim success = GZipFile(fiResultFile.FullName, True)
@@ -1680,7 +1696,7 @@ Public Class clsAnalysisToolRunnerBase
 
             Dim fiGZippedFile = New FileInfo(fiResultFile.FullName & clsAnalysisResources.DOT_GZ_EXTENSION)
             If Not fiGZippedFile.Exists Then
-                LogError("GZip file not found: " & fiGZippedFile.Name)
+                LogError("GZip file was not created: " & fiGZippedFile.Name)
                 Return Nothing
             End If
 
@@ -1775,7 +1791,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
         Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
-        If DataPackageID < 0 Then
+        If dataPackageID < 0 Then
             dctDataPackageJobs = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
             Return False
         Else
@@ -3041,41 +3057,41 @@ Public Class clsAnalysisToolRunnerBase
     ''' Copies new/changed files from the source folder to the target folder
     ''' </summary>
     ''' <param name="sourceFolderPath"></param>
-    ''' <param name="targetFolderPath"></param>
+    ''' <param name="targetDirectoryPath"></param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function SynchronizeFolders(sourceFolderPath As String, targetFolderPath As String) As Boolean
-        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, "*")
+    Protected Function SynchronizeFolders(sourceFolderPath As String, targetDirectoryPath As String) As Boolean
+        Return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, "*")
     End Function
 
     ''' <summary>
     ''' Copies new/changed files from the source folder to the target folder
     ''' </summary>
     ''' <param name="sourceFolderPath"></param>
-    ''' <param name="targetFolderPath"></param>
+    ''' <param name="targetDirectoryPath"></param>
     ''' <param name="copySubfolders">If true, then recursively copies subfolders</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function SynchronizeFolders(sourceFolderPath As String, targetFolderPath As String, copySubfolders As Boolean) As Boolean
+    Protected Function SynchronizeFolders(sourceFolderPath As String, targetDirectoryPath As String, copySubfolders As Boolean) As Boolean
 
         Dim lstFileNameFilterSpec = New List(Of String) From {"*"}
         Dim lstFileNameExclusionSpec = New List(Of String)
         Const maxRetryCount = 3
 
-        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+        Return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
     End Function
 
     ''' <summary>
     ''' Copies new/changed files from the source folder to the target folder
     ''' </summary>
     ''' <param name="sourceFolderPath"></param>
-    ''' <param name="targetFolderPath"></param>
+    ''' <param name="targetDirectoryPath"></param>
     ''' <param name="fileNameFilterSpec">Filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>Will retry failed copies up to 3 times</remarks>
     Protected Function SynchronizeFolders(
       sourceFolderPath As String,
-      targetFolderPath As String,
+      targetDirectoryPath As String,
       fileNameFilterSpec As String) As Boolean
 
         Dim lstFileNameFilterSpec = New List(Of String) From {fileNameFilterSpec}
@@ -3083,55 +3099,55 @@ Public Class clsAnalysisToolRunnerBase
         Const maxRetryCount = 3
         Const copySubfolders = False
 
-        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+        Return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
     End Function
 
     ''' <summary>
     ''' Copies new/changed files from the source folder to the target folder
     ''' </summary>
     ''' <param name="sourceFolderPath"></param>
-    ''' <param name="targetFolderPath"></param>
+    ''' <param name="targetDirectoryPath"></param>
     ''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>Will retry failed copies up to 3 times</remarks>
     Protected Function SynchronizeFolders(
       sourceFolderPath As String,
-      targetFolderPath As String,
+      targetDirectoryPath As String,
       lstFileNameFilterSpec As List(Of String)) As Boolean
 
         Dim lstFileNameExclusionSpec = New List(Of String)
         Const maxRetryCount = 3
         Const copySubfolders = False
 
-        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+        Return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
     End Function
 
     ''' <summary>
     ''' Copies new/changed files from the source folder to the target folder
     ''' </summary>
     ''' <param name="sourceFolderPath"></param>
-    ''' <param name="targetFolderPath"></param>
+    ''' <param name="targetDirectoryPath"></param>
     ''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
     ''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>Will retry failed copies up to 3 times</remarks>
     Protected Function SynchronizeFolders(
       sourceFolderPath As String,
-      targetFolderPath As String,
+      targetDirectoryPath As String,
       lstFileNameFilterSpec As List(Of String),
       lstFileNameExclusionSpec As List(Of String)) As Boolean
 
         Const maxRetryCount = 3
         Const copySubfolders = False
 
-        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+        Return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
     End Function
 
     ''' <summary>
     ''' Copies new/changed files from the source folder to the target folder
     ''' </summary>
     ''' <param name="sourceFolderPath"></param>
-    ''' <param name="targetFolderPath"></param>
+    ''' <param name="targetDirectoryPath"></param>
     ''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
     ''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
     ''' <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
@@ -3139,13 +3155,13 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks></remarks>
     Protected Function SynchronizeFolders(
       sourceFolderPath As String,
-      targetFolderPath As String,
+      targetDirectoryPath As String,
       lstFileNameFilterSpec As List(Of String),
       lstFileNameExclusionSpec As List(Of String),
       maxRetryCount As Integer) As Boolean
 
         Const copySubfolders = False
-        Return SynchronizeFolders(sourceFolderPath, targetFolderPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
+        Return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
 
     End Function
 
@@ -3153,7 +3169,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' Copies new/changed files from the source folder to the target folder
     ''' </summary>
     ''' <param name="sourceFolderPath"></param>
-    ''' <param name="targetFolderPath"></param>
+    ''' <param name="targetDirectoryPath"></param>
     ''' <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
     ''' <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
     ''' <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
@@ -3162,7 +3178,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks></remarks>
     Protected Function SynchronizeFolders(
       sourceFolderPath As String,
-      targetFolderPath As String,
+      targetDirectoryPath As String,
       lstFileNameFilterSpec As List(Of String),
       lstFileNameExclusionSpec As List(Of String),
       maxRetryCount As Integer,
@@ -3170,10 +3186,10 @@ Public Class clsAnalysisToolRunnerBase
 
         Try
             Dim diSourceFolder = New DirectoryInfo(sourceFolderPath)
-            Dim diTargetFolder = New DirectoryInfo(targetFolderPath)
+            Dim ditargetDirectory = New DirectoryInfo(targetDirectoryPath)
 
-            If Not diTargetFolder.Exists Then
-                diTargetFolder.Create()
+            If Not ditargetDirectory.Exists Then
+                ditargetDirectory.Create()
             End If
 
             If lstFileNameFilterSpec Is Nothing Then
@@ -3212,7 +3228,7 @@ Public Class clsAnalysisToolRunnerBase
 
             For Each fileName In lstFilesToCopy
                 Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, fileName))
-                Dim fiTargetFile = New FileInfo(Path.Combine(diTargetFolder.FullName, fileName))
+                Dim fiTargetFile = New FileInfo(Path.Combine(ditargetDirectory.FullName, fileName))
                 Dim copyFile = False
 
                 If Not fiTargetFile.Exists Then
@@ -3250,11 +3266,11 @@ Public Class clsAnalysisToolRunnerBase
                 Dim lstSubFolders = diSourceFolder.GetDirectories()
 
                 For Each diSubFolder In lstSubFolders
-                    Dim subfolderTargetPath = Path.Combine(targetFolderPath, diSubFolder.Name)
+                    Dim subfolderTargetPath = Path.Combine(targetDirectoryPath, diSubFolder.Name)
                     Dim success = SynchronizeFolders(diSubFolder.FullName, subfolderTargetPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
 
                     If Not success Then
-                        m_message = "Error copying subfolder " & diSubFolder.FullName & " to " & targetFolderPath
+                        m_message = "Error copying subfolder " & diSubFolder.FullName & " to " & targetDirectoryPath
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                         Exit For
                     End If
@@ -3344,30 +3360,30 @@ Public Class clsAnalysisToolRunnerBase
 
     ''' <summary>
     ''' Unzips all files in the specified Zip file
-    ''' Output folder is TargetDirectory
+    ''' Output folder is targetDirectory
     ''' </summary>
     ''' <param name="ZipFilePath">File to unzip</param>
-    ''' <param name="TargetDirectory">Target directory for the extracted files</param>
+    ''' <param name="targetDirectory">Target directory for the extracted files</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function UnzipFile(ZipFilePath As String, TargetDirectory As String) As Boolean
-        Return UnzipFile(ZipFilePath, TargetDirectory, String.Empty)
+    Public Function UnzipFile(ZipFilePath As String, targetDirectory As String) As Boolean
+        Return UnzipFile(ZipFilePath, targetDirectory, String.Empty)
     End Function
 
     ''' <summary>
     ''' Unzips files in the specified Zip file that match the FileFilter spec
-    ''' Output folder is TargetDirectory
+    ''' Output folder is targetDirectory
     ''' </summary>
     ''' <param name="ZipFilePath">File to unzip</param>
-    ''' <param name="TargetDirectory">Target directory for the extracted files</param>
+    ''' <param name="targetDirectory">Target directory for the extracted files</param>
     ''' <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function UnzipFile(ZipFilePath As String, TargetDirectory As String, FileFilter As String) As Boolean
+    Public Function UnzipFile(ZipFilePath As String, targetDirectory As String, FileFilter As String) As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
         ' Note that m_IonicZipTools logs error messages using clsLogTools
-        Return m_IonicZipTools.UnzipFile(ZipFilePath, TargetDirectory, FileFilter)
+        Return m_IonicZipTools.UnzipFile(ZipFilePath, targetDirectory, FileFilter)
 
     End Function
 
@@ -3594,18 +3610,18 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Stores SourceFilePath in a zip file with the same name, but extension .zip
+    ''' Stores sourceFilePath in a zip file with the same name, but extension .zip
     ''' </summary>
-    ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
-    ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+    ''' <param name="sourceFilePath">Full path to the file to be zipped</param>
+    ''' <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
     ''' <returns>True if success; false if an error</returns>
-    Public Function ZipFile(SourceFilePath As String, DeleteSourceAfterZip As Boolean) As Boolean
+    Public Function ZipFile(sourceFilePath As String, deleteSourceAfterZip As Boolean) As Boolean
 
         Dim blnSuccess As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
         ' Note that m_IonicZipTools logs error messages using clsLogTools
-        blnSuccess = m_IonicZipTools.ZipFile(SourceFilePath, DeleteSourceAfterZip)
+        blnSuccess = m_IonicZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip)
 
         If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
             m_NeedToAbortProcessing = True
@@ -3616,10 +3632,10 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Stores SourceFilePath in a zip file named ZipfilePath
+    ''' Stores sourceFilePath in a zip file named ZipfilePath
     ''' </summary>
-    ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
-    ''' <param name="DeleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+    ''' <param name="sourceFilePath">Full path to the file to be zipped</param>
+    ''' <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
     ''' <param name="ZipfilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
     ''' <returns>True if success; false if an error</returns>
     Public Function ZipFile(sourceFilePath As String, deleteSourceAfterZip As Boolean, zipFilePath As String) As Boolean
@@ -3677,11 +3693,11 @@ Public Class clsAnalysisToolRunnerBase
         End If
     End Sub
 
-    Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
+    Private Sub m_FileTools_WaitingForLockQueue(sourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
         If DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
             m_LastLockQueueWaitTimeLog = DateTime.UtcNow
             If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisToolRunnerBase); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisToolRunnerBase); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & sourceFilePath & ", Target=" & TargetFilePath)
             End If
         End If
     End Sub

@@ -1569,7 +1569,6 @@ Public Class clsGlobal
             freeSpaceMB = diDrive.TotalFreeSpace / 1024.0 / 1024.0
         End If
 
-
         If freeSpaceMB < minFreeSpaceMB Then
             ' Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
             errorMessage = directoryDescription & " drive has less than " & minFreeSpaceMB.ToString & " MB free: " & CInt(freeSpaceMB).ToString() & " MB"

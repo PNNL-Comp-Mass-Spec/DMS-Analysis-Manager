@@ -109,7 +109,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
     ''' <param name="paramFilesCopied">Incremented if the parameter file is found and copied</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function RetrieveAScoreParamfile(ByVal parameterName As String, ByRef paramFilesCopied As Integer) As Boolean
+    Private Function RetrieveAScoreParamfile(parameterName As String, ByRef paramFilesCopied As Integer) As Boolean
 
         Dim paramFileName = m_jobParams.GetJobParameter(parameterName, String.Empty)
         If String.IsNullOrWhiteSpace(paramFileName) Then
@@ -142,7 +142,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
     End Function
 
     <Obsolete>
-    Protected Function GetDatasetID(ByVal DatasetName As String) As String
+    Protected Function GetDatasetID(DatasetName As String) As String
         Dim DatasetID As Integer = 0
 
         If m_jobParams.DatasetInfoList.TryGetValue(DatasetName, DatasetID) Then
