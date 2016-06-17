@@ -100,7 +100,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ' Values are CvParam data for the modification
     Protected mModificationsUsed As Dictionary(Of String, udtCvParamInfoType)
 
-    ' Keys in this dictionary are mzid file names
+    ' Keys in this dictionary are mzid.gz file names
     ' Values are the sample info for the file
     Protected mMzIdSampleInfo As Dictionary(Of String, udtSampleMetadataType)
 
@@ -154,7 +154,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     Protected Structure udtResultFileContainerType
         Public MGFFilePath As String
-        Public MzIDFilePath As String
+        Public MzIDFilePath As String       ' Extension .mzid.gz
         Public PrideXmlFilePath As String
     End Structure
 
@@ -608,7 +608,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             If intPrideXMLFileID = 0 Then
                 ' Pride XML file was not created
                 If rawFileID > 0 AndAlso String.IsNullOrEmpty(udtResultFiles.MzIDFilePath) Then
-                    ' Only associate Peak files with .Raw files if we do not have a .MzId file
+                    ' Only associate Peak files with .Raw files if we do not have a .MzId.gz file
                     If Not DefinePxFileMapping(intPeakfileID, rawFileID) Then
                         Return False
                     End If
@@ -2001,9 +2001,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     objXmlWriter.WriteElementString("End", "0")
                     objXmlWriter.WriteElementString("SpectrumReference", udtPeptide.ScanNumber.ToString())
 
-                    ' Possible ToDo: Write out details of dynamic mods
-                    '                Would need to update DMS to include the PSI-Compatible mod names, descriptions, and masses.
-                    '                However, since we're now submitting .mzID files to PRIDE and not .msgf-report.xml files, this update is not necessary
+                    ' Could write out details of dynamic mods
+                    '    Would need to update DMS to include the PSI-Compatible mod names, descriptions, and masses.
+                    '    However, since we're now submitting .mzid.gz files to PRIDE and not .msgf-report.xml files, this update is not necessary
                     '
                     ' XML format:
                     ' <ModificationItem>
@@ -2280,7 +2280,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " Result stats: " & intPrideXmlFilesCreated & " Result (.msgf-pride.xml) files")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " Result stats: " & intRawFilesStored & " Raw files")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " Result stats: " & intPeakFilesStored & " Peak (.mgf) files")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " Result stats: " & intMzIDFilesStored & " Search (.mzid) files")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " Result stats: " & intMzIDFilesStored & " Search (.mzid.gz) files")
             End If
 
             If intMzIDFilesStored = 0 AndAlso intPrideXmlFilesCreated = 0 Then
@@ -2289,7 +2289,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             ElseIf intPrideXmlFilesCreated > 0 AndAlso intMzIDFilesStored > intPrideXmlFilesCreated Then
                 strSubmissionType = PARTIAL_SUBMISSION
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Stored more Search (.mzid) files than Pride XML result files; submission type is " & strSubmissionType)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Stored more Search (.mzid.gz) files than Pride XML result files; submission type is " & strSubmissionType)
 
             ElseIf intPrideXmlFilesCreated > 0 AndAlso intRawFilesStored > intPrideXmlFilesCreated Then
                 strSubmissionType = PARTIAL_SUBMISSION
@@ -2297,7 +2297,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             ElseIf intMzIDFilesStored = 0 Then
                 strSubmissionType = PARTIAL_SUBMISSION
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Did not have any .mzid files and did not create any Pride XML result files; submission type is " & strSubmissionType)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Did not have any .mzid.gz files and did not create any Pride XML result files; submission type is " & strSubmissionType)
 
             Else
                 strSubmissionType = COMPLETE_SUBMISSION
@@ -3108,17 +3108,35 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         End If
 
         ' Update the .mzID file for this job
+        ' Gzip after updating
         udtResultFiles.MzIDFilePath = String.Empty
         If mProcessMzIdFiles AndAlso kvJobInfo.Value.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
 
             m_message = String.Empty
-            blnSuccess = UpdateMzIdFile(intJob, strDataset, kvJobInfo.Value, mCreateMGFFiles, udtResultFiles.MzIDFilePath, dctTemplateParameters)
-            If Not blnSuccess Then
-                If Not String.IsNullOrEmpty(m_message) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+
+            Dim mzidFilePath As String = String.Empty
+            blnSuccess = UpdateMzIdFile(intJob, strDataset, kvJobInfo.Value, mCreateMGFFiles, mzidFilePath, dctTemplateParameters)
+
+            If Not blnSuccess OrElse String.IsNullOrEmpty(mzidFilePath) Then
+                If String.IsNullOrEmpty(m_message) Then
+                    LogError("UpdateMzIdFile returned false for job " & intJob & ", dataset" & strDataset)
                 End If
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
+
+            Dim mzidFile = New FileInfo(mzidFilePath)
+
+            ' Note that the original file will be auto-deleted after the .gz file is created
+            Dim gzippedMZidFile = GZipFile(mzidFile)
+
+            If gzippedMZidFile Is Nothing Then
+                If String.IsNullOrEmpty(m_message) Then
+                    LogError("GZipFile returned false for " & mzidFilePath)
+                End If
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            udtResultFiles.MzIDFilePath = gzippedMZidFile.FullName
 
         End If
 
@@ -3725,12 +3743,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     ''' <summary>
     ''' Update the .mzid file for the given job and dataset to have the correct Accession value for FileFormat
-    ''' Will also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
+    ''' Also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
     ''' </summary>
     ''' <param name="intJob">Job number</param>
     ''' <param name="strDataset">Dataset name</param>
     ''' <param name="blnCreatedMGFFiles">Set to true if we converted _dta.txt files to .mgf files</param>
-    ''' <param name="strMzIDFilePath">Output parameter: path to the .mzID file for this job</param>
+    ''' <param name="strMzIDFilePath">Output parameter: path to the .mzid file for this job</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Private Function UpdateMzIdFile(
@@ -3803,12 +3821,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 strMzIDFilePath = Path.Combine(m_WorkDir, strSourceFileName)
 
                 If Not File.Exists(strMzIDFilePath) Then
-                    m_message = "MzID file not found for job " & intJob & ": " & strSourceFileName
+                    LogError("MzID file not found for job " & intJob & ": " & strSourceFileName)
                     Return False
                 End If
             End If
 
             AddToListIfNew(mPreviousDatasetFilesToDelete, strMzIDFilePath)
+            AddToListIfNew(mPreviousDatasetFilesToDelete, strMzIDFilePath & ".gz")
 
             strUpdatedFilePathTemp = strMzIDFilePath & ".tmp"
 
@@ -4018,13 +4037,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 objXmlWriter.WriteEndDocument()
             End Using
 
-            StoreMzIdSampleInfo(strMzIDFilePath, udtSampleMetadata)
+            ' Must append .gz to the .mzid file name to allow for successful lookups in function CreatePXSubmissionFile
+            StoreMzIdSampleInfo(strMzIDFilePath & ".gz", udtSampleMetadata)
 
             Threading.Thread.Sleep(250)
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             Try
-                ' Replace the original .mzID file with the updated one
+                ' Replace the original .mzid file with the updated one
                 File.Delete(strMzIDFilePath)
 
                 If JobFileRenameRequired(intJob) Then
@@ -4036,14 +4056,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 File.Move(strUpdatedFilePathTemp, strMzIDFilePath)
 
             Catch ex As Exception
-                m_message = "Exception replacing the original .mzID file with the updated one for job " & intJob & ", dataset " & strDataset
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+                LogError("Exception replacing the original .mzID file with the updated one for job " & intJob & ", dataset " & strDataset, ex)
                 Return False
             End Try
 
         Catch ex As Exception
-            m_message = "Exception in UpdateMzIdFile for job " & intJob & ", dataset " & strDataset
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in UpdateMzIdFile for job " & intJob & ", dataset " & strDataset, ex)
 
             Dim strRecentElements As String = String.Empty
             For Each strItem In lstRecentElements

@@ -62,7 +62,8 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 		' Obtain the PHRP-related files for the Peptide_Hit jobs defined for the data package associated with this data aggregation job
 		' Possibly also obtain the .mzXML file or .Raw file for each dataset
-        ' The .mzXML file is required if we are creating Pride XML files (which were required for a "complete" submission prior to May 2013; we now submit .mzid files and instrument binary files)
+        ' The .mzXML file is required if we are creating Pride XML files (which were required for a "complete" submission 
+        '   prior to May 2013; we now submit .mzid.gz files and instrument binary files and thus don't need the .mzXML file)
 		If Not MyBase.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, lstDataPackagePeptideHitJobs, 0, clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING) Then
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If

@@ -11,7 +11,7 @@ Public Class clsPXFileInfoBase
     Public Enum ePXFileType
         Undefined = 0
         Result = 1              ' .msgf-pride.xml files
-        ResultMzId = 2          ' .mzid files from MSGF+  (listed as "result" files in the .px file)
+        ResultMzId = 2          ' .mzid.gz files from MSGF+  (listed as "result" files in the .px file)
         Raw = 3                 ' Instrument data files (typically .raw files)
         Search = 4              ' Search engine output files, such as Mascot DAT or other output files (from analysis pipelines, such as pep.xml or prot.xml).
         Peak = 5                ' _dta.txt or .mgf files
