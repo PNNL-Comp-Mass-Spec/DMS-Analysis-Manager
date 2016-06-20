@@ -341,7 +341,7 @@ Public Class clsAnalysisToolRunnerIDPicker
         If Not blnSuccess Then
             blnProcessingError = True
             Return False
-        End If        
+        End If
 
         ' Organizes the search results into a hierarchy
         blnSuccess = RunAssemble()
@@ -525,8 +525,8 @@ Public Class clsAnalysisToolRunnerIDPicker
         Dim CmdStr As String
 
         ' PepXML file creation should generally be done in less than 10 minutes
-        ' However, for huge fasta files, conversion could take an hour
-        Const intMaxRuntimeMinutes = 60
+        ' However, for huge fasta files, conversion could take several hours
+        Const intMaxRuntimeMinutes = 480
 
         Dim blnSuccess As Boolean
 
@@ -920,7 +920,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         Dim strAssembleFilePath As String
         Dim progLoc As String
-        Const intMaxRuntimeMinutes = 30
+        Const intMaxRuntimeMinutes = 90
 
         Dim blnSuccess As Boolean
 
@@ -988,7 +988,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         Dim progLoc As String
         Dim CmdStr As String
-        Const intMaxRuntimeMinutes = 30
+        Const intMaxRuntimeMinutes = 90
 
         Dim blnSuccess As Boolean
 
@@ -1050,7 +1050,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     Protected Function RunReport() As Boolean
         Dim strOutputFolderName As String
         Dim progLoc As String
-        Const intMaxRuntimeMinutes = 20
+        Const intMaxRuntimeMinutes = 60
 
         Dim blnSuccess As Boolean
 
@@ -1243,7 +1243,7 @@ Public Class clsAnalysisToolRunnerIDPicker
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " & strError)
                 End If
             Next
-            
+
         End If
 
         If Not blnSuccess Then
