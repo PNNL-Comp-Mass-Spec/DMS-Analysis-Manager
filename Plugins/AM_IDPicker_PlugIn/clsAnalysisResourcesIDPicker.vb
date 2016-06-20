@@ -149,7 +149,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <param name="eReturnCode">Return code</param>
     ''' <returns>True if success, otherwise false</returns>
     ''' <remarks></remarks>
-    Protected Function GetInputFiles(ByVal strDatasetName As String, ByVal strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
+    Protected Function GetInputFiles(strDatasetName As String, strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
 
         ' This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
         Dim lstFileNamesToGet As SortedList(Of String, Boolean)
@@ -338,7 +338,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <param name="strDatasetName"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RetrieveMASICFiles(ByVal strDatasetName As String) As Boolean
+    Protected Function RetrieveMASICFiles(strDatasetName As String) As Boolean
 
         If Not RetrieveScanStatsFiles(False) Then
             ' _ScanStats.txt file not found
@@ -366,7 +366,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <param name="strDatasetName">Dataset name</param>
     ''' <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
     ''' <remarks></remarks>
-    Protected Function GetPHRPFileNames(ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByVal strDatasetName As String) As SortedList(Of String, Boolean)
+    Protected Function GetPHRPFileNames(eResultType As clsPHRPReader.ePeptideHitResultType, strDatasetName As String) As SortedList(Of String, Boolean)
 
         Dim lstFileNamesToGet As SortedList(Of String, Boolean)
         lstFileNamesToGet = New SortedList(Of String, Boolean)

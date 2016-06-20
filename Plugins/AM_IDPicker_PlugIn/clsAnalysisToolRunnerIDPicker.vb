@@ -285,9 +285,9 @@ Public Class clsAnalysisToolRunnerIDPicker
     End Function
 
     Protected Function RunIDPickerWrapper(
-        ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType,
-        ByVal strSynFilePath As String,
-        ByVal fastaFilePath As String,
+        ePHRPResultType As clsPHRPReader.ePeptideHitResultType,
+        strSynFilePath As String,
+        fastaFilePath As String,
         <Out> ByRef blnProcessingError As Boolean,
         <Out> ByRef blnCriticalError As Boolean) As Boolean
 
@@ -402,7 +402,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
     ''' <returns>The new argument list</returns>
     ''' <remarks></remarks>
-    Protected Function AppendArgument(ByVal CmdArgs As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String) As String
+    Protected Function AppendArgument(CmdArgs As String, ArgumentName As String, ValueIfMissing As String) As String
         Const AppendIfMissing = True
         Return AppendArgument(CmdArgs, ArgumentName, ArgumentName, ValueIfMissing, AppendIfMissing)
     End Function
@@ -417,7 +417,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
     ''' <returns>The new argument list</returns>
     ''' <remarks></remarks>
-    Protected Function AppendArgument(ByVal CmdArgs As String, ByVal OptionName As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String) As String
+    Protected Function AppendArgument(CmdArgs As String, OptionName As String, ArgumentName As String, ValueIfMissing As String) As String
         Const AppendIfMissing = True
         Return AppendArgument(CmdArgs, OptionName, ArgumentName, ValueIfMissing, AppendIfMissing)
     End Function
@@ -432,7 +432,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="AppendIfMissing">If True, then append the argument using ValueIfMissing if not found in mIDPickerOptions; if false, and not found, then does not append the argument</param>
     ''' <returns>The new argument list</returns>
     ''' <remarks></remarks>
-    Protected Function AppendArgument(ByVal CmdArgs As String, ByVal OptionName As String, ByVal ArgumentName As String, ByVal ValueIfMissing As String, ByVal AppendIfMissing As Boolean) As String
+    Protected Function AppendArgument(CmdArgs As String, OptionName As String, ArgumentName As String, ValueIfMissing As String, AppendIfMissing As Boolean) As String
         Dim strValue As String = String.Empty
         Dim blnIsMissing As Boolean
         Dim blnAppendParam As Boolean
@@ -462,7 +462,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function CreateAssembleFile(ByVal strAssembleFilePath As String) As Boolean
+    Protected Function CreateAssembleFile(strAssembleFilePath As String) As Boolean
 
         Dim strDatasetLabel As String
 
@@ -499,7 +499,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="strFileName"></param>
     ''' <param name="strReportFolderPath"></param>
     ''' <remarks></remarks>
-    Protected Sub CopyFileIntoReportFolder(ByVal strFileName As String, strReportFolderPath As String)
+    Protected Sub CopyFileIntoReportFolder(strFileName As String, strReportFolderPath As String)
         Dim ioSourceFile As FileInfo
 
         Try
@@ -516,7 +516,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Sub
 
-    Protected Function CreatePepXMLFile(ByVal strFastaFilePath As String, ByVal strSynFilePath As String, ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+    Protected Function CreatePepXMLFile(strFastaFilePath As String, strSynFilePath As String, ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
         Dim strParamFileName As String
 
@@ -586,7 +586,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="strDecoyPrefix"></param>
     ''' <returns>True if success; false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function DetermineDecoyProteinPrefix(ByVal strFastaFilePath As String, ByRef strDecoyPrefix As String) As Boolean
+    Protected Function DetermineDecoyProteinPrefix(strFastaFilePath As String, ByRef strDecoyPrefix As String) As Boolean
 
         Dim lstReversedProteinPrefixes As SortedSet(Of String)
         Dim lstPrefixStats As Dictionary(Of String, Integer)
@@ -668,7 +668,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function IgnoreError(ByVal strErrorMessage As String) As Boolean
+    Protected Function IgnoreError(strErrorMessage As String) As Boolean
         Dim blnIgnore = False
 
         For Each strIgnoreText As String In mCmdRunnerErrorsToIgnore
@@ -751,7 +751,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function LookForDecoyProteinsInMSGFDBResults(ByVal strSynFilePath As String, ByVal eResultType As clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
+    Protected Function LookForDecoyProteinsInMSGFDBResults(strSynFilePath As String, eResultType As clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
 
         Dim lstPrefixesToCheck As List(Of String)
 
@@ -822,9 +822,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             End If
 
             For Each strFileSpec As String In lstFileSpecs
-                For Each fiFile As FileInfo In diSourceFolder.GetFiles(strFileSpec)
-                    fiFilesToMove.Add(fiFile)
-                Next
+                fiFilesToMove.AddRange(diSourceFolder.GetFiles(strFileSpec))
             Next
 
             For Each fiFile As FileInfo In fiFilesToMove
@@ -867,7 +865,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Sub ParseConsoleOutputFileForErrors(ByVal strConsoleOutputFilePath As String)
+    Protected Sub ParseConsoleOutputFileForErrors(strConsoleOutputFilePath As String)
 
         Dim strLineIn As String
         Dim blnUnhandledException As Boolean
@@ -984,7 +982,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="strDecoyPrefix"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RunQonvert(ByVal strFASTAFilePath As String, ByVal strDecoyPrefix As String, ByVal ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+    Protected Function RunQonvert(strFASTAFilePath As String, strDecoyPrefix As String, ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
         Dim progLoc As String
         Dim CmdStr As String
@@ -1165,7 +1163,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="strConsoleOutputFileName">If empty, then does not create a console output file</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RunProgramWork(ByVal strProgramDescription As String, ByVal strExePath As String, ByVal CmdStr As String, ByVal strConsoleOutputFileName As String, ByVal blnCaptureConsoleOutputViaDosRedirection As Boolean, ByVal intMaxRuntimeMinutes As Integer) As Boolean
+    Protected Function RunProgramWork(strProgramDescription As String, strExePath As String, CmdStr As String, strConsoleOutputFileName As String, blnCaptureConsoleOutputViaDosRedirection As Boolean, intMaxRuntimeMinutes As Integer) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -1277,7 +1275,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strIDPickerProgLoc As String, ByVal blnSkipIDPicker As Boolean) As Boolean
+    Protected Function StoreToolVersionInfo(strIDPickerProgLoc As String, blnSkipIDPicker As Boolean) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim strExePath As String
