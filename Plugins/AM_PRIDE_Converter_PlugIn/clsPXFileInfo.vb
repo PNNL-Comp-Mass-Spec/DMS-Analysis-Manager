@@ -1,4 +1,5 @@
-﻿Imports AnalysisManagerBase.clsAnalysisResources
+﻿Imports AnalysisManagerBase
+Imports AnalysisManagerBase.clsAnalysisResources
 
 Public Class clsPXFileInfo
     Inherits clsPXFileInfoBase
@@ -19,8 +20,8 @@ Public Class clsPXFileInfo
     End Property
 #End Region
 
-    Public Sub New(fileName As String, udtJobInfo As udtDataPackageJobInfoType)
-        MyBase.New(fileName, udtJobInfo)
+    Public Sub New(fileName As String, dataPkgJob As clsDataPackageJobInfo)
+        MyBase.New(fileName, dataPkgJob)
         mFileMappings = New List(Of Integer)
     End Sub
 

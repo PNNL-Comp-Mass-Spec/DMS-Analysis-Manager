@@ -28,7 +28,7 @@ Public Class clsAnalysisResourcesPRIDEMzXML
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
 
-        Dim dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType) = Nothing
+        Dim dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo) = Nothing
 
         If Not RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, dctDataPackageJobs) Then
             'Errors were reported in function call, so just return

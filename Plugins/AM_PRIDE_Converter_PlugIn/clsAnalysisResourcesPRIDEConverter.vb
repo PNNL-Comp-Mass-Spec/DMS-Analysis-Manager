@@ -20,99 +20,107 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
 	Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim lstDataPackagePeptideHitJobs = New List(Of udtDataPackageJobInfoType)
+        Dim lstDataPackagePeptideHitJobs = New List(Of clsDataPackageJobInfo)
 
-		Dim blnCreatePrideXMLFiles As Boolean = m_jobParams.GetJobParameter("CreatePrideXMLFiles", False)
+        Dim blnCreatePrideXMLFiles As Boolean = m_jobParams.GetJobParameter("CreatePrideXMLFiles", False)
 
-		' Check whether we are only creating the .msgf files
-		Dim blnCreateMSGFReportFilesOnly As Boolean = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", False)
-		Dim udtOptions As udtDataPackageRetrievalOptionsType
+        ' Check whether we are only creating the .msgf files
+        Dim blnCreateMSGFReportFilesOnly As Boolean = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", False)
+        Dim udtOptions As udtDataPackageRetrievalOptionsType
 
-		udtOptions.CreateJobPathFiles = True
+        udtOptions.CreateJobPathFiles = True
 
-		If blnCreatePrideXMLFiles And Not blnCreateMSGFReportFilesOnly Then
-			udtOptions.RetrieveMzXMLFile = True
-		Else
-			udtOptions.RetrieveMzXMLFile = False
-		End If
+        If blnCreatePrideXMLFiles And Not blnCreateMSGFReportFilesOnly Then
+            udtOptions.RetrieveMzXMLFile = True
+        Else
+            udtOptions.RetrieveMzXMLFile = False
+        End If
 
-		If blnCreatePrideXMLFiles Then
-			udtOptions.RetrievePHRPFiles = True
-		Else
-			udtOptions.retrievePHRPFiles = False
-		End If
+        If blnCreatePrideXMLFiles Then
+            udtOptions.RetrievePHRPFiles = True
+        Else
+            udtOptions.retrievePHRPFiles = False
+        End If
 
-		udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", True)
-		udtOptions.RetrieveMZidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", True)
+        udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", True)
+        udtOptions.RetrieveMZidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", True)
+        udtOptions.RetrievePepXMLFiles = m_jobParams.GetJobParameter("IncludePepXMLFiles", False)
 
-		If blnCreateMSGFReportFilesOnly Then
-			udtOptions.RetrieveDTAFiles = False
-			udtOptions.RetrieveMZidFiles = False
-		Else
-			If blnCreatePrideXMLFiles Then
-				If Not RetrieveMSGFReportTemplateFile() Then
-					Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-				End If
-			End If
+        Dim disableMyEMSL = m_jobParams.GetJobParameter("DisableMyEMSL", False)
+        If disableMyEMSL Then
+            DisableMyEMSLSearch()
+        End If
 
-			If Not RetrievePXSubmissionTemplateFile() Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-			End If
-		End If
+        udtOptions.AssumeInstrumentDataUnpurged = m_jobParams.GetJobParameter("AssumeInstrumentDataUnpurged", True)
 
-		' Obtain the PHRP-related files for the Peptide_Hit jobs defined for the data package associated with this data aggregation job
-		' Possibly also obtain the .mzXML file or .Raw file for each dataset
+        If blnCreateMSGFReportFilesOnly Then
+            udtOptions.RetrieveDTAFiles = False
+            udtOptions.RetrieveMZidFiles = False
+        Else
+            If blnCreatePrideXMLFiles Then
+                If Not RetrieveMSGFReportTemplateFile() Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                End If
+            End If
+
+            If Not RetrievePXSubmissionTemplateFile() Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            End If
+        End If
+
+        ' Obtain the PHRP-related files for the Peptide_Hit jobs defined for the data package associated with this data aggregation job
+        ' Possibly also obtain the .mzXML file or .Raw file for each dataset
         ' The .mzXML file is required if we are creating Pride XML files (which were required for a "complete" submission 
         '   prior to May 2013; we now submit .mzid.gz files and instrument binary files and thus don't need the .mzXML file)
-		If Not MyBase.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, lstDataPackagePeptideHitJobs, 0, clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
+        If Not MyBase.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, lstDataPackagePeptideHitJobs, 0, clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
 
-		' Obtain the FASTA files (typically generated from protein collections) used for the jobs in lstDataPackagePeptideHitJobs
-		If Not RetrieveFastaFiles(lstDataPackagePeptideHitJobs) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES
-		End If
+        ' Obtain the FASTA files (typically generated from protein collections) used for the jobs in lstDataPackagePeptideHitJobs
+        If Not RetrieveFastaFiles(lstDataPackagePeptideHitJobs) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES
+        End If
 
-		If udtOptions.RetrieveMzXMLFile Then
-			' Use lstDataPackagePeptideHitJobs to look for any datasets for which we will need to create a .mzXML file
-			FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs)
-		End If
+        If udtOptions.RetrieveMzXMLFile Then
+            ' Use lstDataPackagePeptideHitJobs to look for any datasets for which we will need to create a .mzXML file
+            FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs)
+        End If
 
         If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-		StoreDataPackageJobs(lstDataPackagePeptideHitJobs)
+        StoreDataPackageJobs(lstDataPackagePeptideHitJobs)
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Find datasets that do not have a .mzXML file
-	''' Datasets that need to have .mzXML files created will be added to the packed job parameters, storing the dataset names in "PackedParam_DatasetsMissingMzXMLFiles"
-	''' and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
-	''' </summary>
-	''' <param name="lstDataPackagePeptideHitJobs"></param>
-	''' <remarks></remarks>
-    Protected Sub FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
+    ''' <summary>
+    ''' Find datasets that do not have a .mzXML file
+    ''' Datasets that need to have .mzXML files created will be added to the packed job parameters, storing the dataset names in "PackedParam_DatasetsMissingMzXMLFiles"
+    ''' and the dataset Year_Quarter values in "PackedParam_DatasetStorage_YearQuarter"
+    ''' </summary>
+    ''' <param name="lstDataPackagePeptideHitJobs"></param>
+    ''' <remarks></remarks>
+    Protected Sub FindMissingMzXmlFiles(lstDataPackagePeptideHitJobs As IEnumerable(Of clsDataPackageJobInfo))
 
         Dim lstDatasets = New SortedSet(Of String)
         Dim lstDatasetYearQuarter = New SortedSet(Of String)
 
         Try
-            For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
+            For Each dataPkgJob As clsDataPackageJobInfo In lstDataPackagePeptideHitJobs
                 Dim strMzXmlFilePath As String
-                strMzXmlFilePath = IO.Path.Combine(m_WorkingDir, udtJob.Dataset & DOT_MZXML_EXTENSION)
+                strMzXmlFilePath = IO.Path.Combine(m_WorkingDir, dataPkgJob.Dataset & DOT_MZXML_EXTENSION)
 
                 If Not IO.File.Exists(strMzXmlFilePath) Then
 
                     ' Look for a StoragePathInfo file
                     strMzXmlFilePath &= STORAGE_PATH_INFO_FILE_SUFFIX
                     If Not IO.File.Exists(strMzXmlFilePath) Then
-                        If Not lstDatasets.Contains(udtJob.Dataset) Then
-                            lstDatasets.Add(udtJob.Dataset)
-                            lstDatasetYearQuarter.Add(udtJob.Dataset & "=" & GetDatasetYearQuarter(udtJob.ServerStoragePath))
+                        If Not lstDatasets.Contains(dataPkgJob.Dataset) Then
+                            lstDatasets.Add(dataPkgJob.Dataset)
+                            lstDatasetYearQuarter.Add(dataPkgJob.Dataset & "=" & GetDatasetYearQuarter(dataPkgJob.ServerStoragePath))
                         End If
                     End If
 
@@ -165,9 +173,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
     End Function
 
-    Protected Function RetrieveFastaFiles(lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType)) As Boolean
-
-        Dim udtCurrentDatasetAndJobInfo As udtDataPackageJobInfoType
+    Protected Function RetrieveFastaFiles(lstDataPackagePeptideHitJobs As IEnumerable(Of clsDataPackageJobInfo)) As Boolean
 
         Dim strLocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
@@ -184,16 +190,16 @@ Public Class clsAnalysisResourcesPRIDEConverter
             dctOrgDBParamsToGeneratedFileNameMap = New Dictionary(Of String, String)
 
             ' Cache the current dataset and job info
-            udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
+            Dim currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
 
-            For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
+            For Each dataPkgJob As clsDataPackageJobInfo In lstDataPackagePeptideHitJobs
 
-                strDictionaryKey = udtJob.LegacyFastaFileName & "_" & udtJob.ProteinCollectionList & "_" & udtJob.ProteinOptions
+                strDictionaryKey = dataPkgJob.LegacyFastaFileName & "_" & dataPkgJob.ProteinCollectionList & "_" & dataPkgJob.ProteinOptions
 
                 If dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, strOrgDBNameGenerated) Then
                     ' Organism DB was already generated
                 Else
-                    OverrideCurrentDatasetAndJobInfo(udtJob)
+                    OverrideCurrentDatasetAndJobInfo(dataPkgJob)
 
                     m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", String.Empty)
                     If Not RetrieveOrgDB(strLocalOrgDBFolder) Then
@@ -209,11 +215,11 @@ Public Class clsAnalysisResourcesPRIDEConverter
                         Return False
                     End If
 
-                    If strOrgDBNameGenerated <> udtJob.OrganismDBName Then
+                    If strOrgDBNameGenerated <> dataPkgJob.OrganismDBName Then
                         If strOrgDBNameGenerated Is Nothing Then strOrgDBNameGenerated = "??"
-                        If udtJob.OrganismDBName Is Nothing Then udtJob.OrganismDBName = "??"
+                        If dataPkgJob.OrganismDBName Is Nothing Then dataPkgJob.OrganismDBName = "??"
 
-                        m_message = "Generated FASTA file name (" & strOrgDBNameGenerated & ") does not match expected fasta file name (" & udtJob.OrganismDBName & "); aborting"
+                        m_message = "Generated FASTA file name (" & strOrgDBNameGenerated & ") does not match expected fasta file name (" & dataPkgJob.OrganismDBName & "); aborting"
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (class clsAnalysisResourcesPRIDEConverter)")
                         Return False
                     End If
@@ -223,11 +229,11 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
                 ' Add a new job parameter that associates strOrgDBNameGenerated with this job
 
-                m_jobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job), strOrgDBNameGenerated)
+                m_jobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(dataPkgJob.Job), strOrgDBNameGenerated)
             Next
 
             ' Restore the dataset and job info for this aggregation job
-            OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo)
+            OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo)
 
         Catch ex As Exception
             m_message = "Exception in RetrieveFastaFiles"
@@ -397,11 +403,11 @@ Public Class clsAnalysisResourcesPRIDEConverter
     ''' </summary>
     ''' <param name="lstDataPackagePeptideHitJobs"></param>
     ''' <remarks></remarks>
-    Protected Sub StoreDataPackageJobs(lstDataPackagePeptideHitJobs As IEnumerable(Of udtDataPackageJobInfoType))
+    Protected Sub StoreDataPackageJobs(lstDataPackagePeptideHitJobs As IEnumerable(Of clsDataPackageJobInfo))
         Dim lstDataPackageJobs = New List(Of String)
 
-        For Each udtJob As udtDataPackageJobInfoType In lstDataPackagePeptideHitJobs
-            lstDataPackageJobs.Add(udtJob.Job.ToString())
+        For Each dataPkgJob As clsDataPackageJobInfo In lstDataPackagePeptideHitJobs
+            lstDataPackageJobs.Add(dataPkgJob.Job.ToString())
         Next
 
         If lstDataPackageJobs.Count > 0 Then

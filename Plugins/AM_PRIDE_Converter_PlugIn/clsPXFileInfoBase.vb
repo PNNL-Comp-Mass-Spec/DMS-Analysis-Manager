@@ -1,10 +1,10 @@
-﻿Imports AnalysisManagerBase.clsAnalysisResources
+﻿Imports AnalysisManagerBase
 
 Public Class clsPXFileInfoBase
 
 #Region "Module Variables"
     Protected mFileName As String
-    Protected mJobInfo As udtDataPackageJobInfoType
+    Protected mJobInfo As clsDataPackageJobInfo
 #End Region
 
 #Region "Structures and Enums"
@@ -31,16 +31,16 @@ Public Class clsPXFileInfoBase
         End Get
     End Property
 
-    Public ReadOnly Property JobInfo() As udtDataPackageJobInfoType
+    Public ReadOnly Property JobInfo() As clsDataPackageJobInfo
         Get
             Return mJobInfo
         End Get
     End Property
 #End Region
 
-    Public Sub New(fileName As String, udtJobInfo As udtDataPackageJobInfoType)
+    Public Sub New(fileName As String, dataPkgJob As clsDataPackageJobInfo)
         mFileName = fileName
-        mJobInfo = udtJobInfo
+        mJobInfo = dataPkgJob
     End Sub
 
     Public Sub Update(oSource As clsPXFileInfoBase)
