@@ -1766,13 +1766,13 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="dctDataPackageDatasets"></param>
     ''' <returns>True if a data package is defined and it has datasets associated with it</returns>
     ''' <remarks></remarks>
-    Protected Function LoadDataPackageDatasetInfo(<Out()> ByRef dctDataPackageDatasets As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageDatasetInfoType)) As Boolean
+    Protected Function LoadDataPackageDatasetInfo(<Out()> ByRef dctDataPackageDatasets As Dictionary(Of Integer, clsDataPackageDatasetInfo)) As Boolean
 
         Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
         Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
         If dataPackageID < 0 Then
-            dctDataPackageDatasets = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageDatasetInfoType)
+            dctDataPackageDatasets = New Dictionary(Of Integer, clsDataPackageDatasetInfo)
             Return False
         Else
             Return clsAnalysisResources.LoadDataPackageDatasetInfo(connectionString, dataPackageID, dctDataPackageDatasets)
@@ -1786,13 +1786,13 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="dctDataPackageJobs"></param>
     ''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
     ''' <remarks></remarks>
-    Protected Function LoadDataPackageJobInfo(<Out()> ByRef dctDataPackageJobs As Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)) As Boolean
+    Protected Function LoadDataPackageJobInfo(<Out()> ByRef dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo)) As Boolean
 
         Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
         Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
         If dataPackageID < 0 Then
-            dctDataPackageJobs = New Dictionary(Of Integer, clsAnalysisResources.udtDataPackageJobInfoType)
+            dctDataPackageJobs = New Dictionary(Of Integer, clsDataPackageJobInfo)
             Return False
         Else
             Return clsAnalysisResources.LoadDataPackageJobInfo(connectionString, dataPackageID, dctDataPackageJobs)

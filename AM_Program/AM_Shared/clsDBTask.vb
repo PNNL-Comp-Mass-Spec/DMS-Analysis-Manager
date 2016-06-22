@@ -99,12 +99,12 @@ Public MustInherit Class clsDBTask
     ''' </summary>
     ''' <param name="MgrParams">An IMgrParams object containing manager parameters</param>
     ''' <remarks></remarks>
-    Protected Sub New(MgrParams As IMgrParams, DebugLvl As Integer)
+    Protected Sub New(mgrParams As IMgrParams, debugLvl As Integer)
 
-        m_MgrParams = MgrParams
+        m_MgrParams = mgrParams
         m_ConnStr = m_MgrParams.GetParam("ConnectionString")               ' Gigasax.DMS5
         m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
-        m_DebugLevel = DebugLvl
+        m_DebugLevel = debugLvl
 
         DMSProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr)
         PipelineDBProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(m_BrokerConnStr)
@@ -207,15 +207,15 @@ Public MustInherit Class clsDBTask
 
 #Region "Event Handlers"
 
-    Private Sub m_ExecuteSP_DebugEvent(Message As String) Handles DMSProcedureExecutor.DebugEvent, PipelineDBProcedureExecutor.DebugEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Message)
+    Private Sub m_ExecuteSP_DebugEvent(message As String) Handles DMSProcedureExecutor.DebugEvent, PipelineDBProcedureExecutor.DebugEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, message)
     End Sub
 
-    Private Sub m_ExecuteSP_DBErrorEvent(Message As String) Handles DMSProcedureExecutor.DBErrorEvent, PipelineDBProcedureExecutor.DBErrorEvent
+    Private Sub m_ExecuteSP_DBErrorEvent(message As String) Handles DMSProcedureExecutor.DBErrorEvent, PipelineDBProcedureExecutor.DBErrorEvent
         If Message.Contains("permission was denied") Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message)
         Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, message)
         End If
     End Sub
 

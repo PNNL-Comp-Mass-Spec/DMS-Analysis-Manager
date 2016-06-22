@@ -84,7 +84,15 @@ Public Class clsDtaGenResources
 				Dim fileToFind = m_DatasetName & "_dta.zip"
 				Dim validFolderFound As Boolean
 
-				Dim existingDtaFolder = FindValidFolder(m_DatasetName, fileToFind, folderNameToFind, MaxRetryCount:=1, LogFolderNotFound:=False, RetrievingInstrumentDataFolder:=False, validFolderFound:=validFolderFound)
+                Dim existingDtaFolder = FindValidFolder(
+                    m_DatasetName,
+                    fileToFind,
+                    folderNameToFind,
+                    maxAttempts:=1,
+                    logFolderNotFound:=False,
+                    retrievingInstrumentDataFolder:=False,
+                    validFolderFound:=validFolderFound,
+                    assumeUnpurged:=False)
 
 				If validFolderFound Then
 					' Copy the file locally (or queue it for download from MyEMSL)

@@ -90,8 +90,8 @@ Public Class clsAnalysisResults
       Overwrite As Boolean, MaxRetryCount As Integer,
       ContinueOnError As Boolean)
 
-        Dim diSourceDir As DirectoryInfo = New DirectoryInfo(SourcePath)
-        Dim diDestDir As DirectoryInfo = New DirectoryInfo(DestPath)
+        Dim diSourceDir = New DirectoryInfo(SourcePath)
+        Dim diDestDir = New DirectoryInfo(DestPath)
 
         Dim strTargetPath As String
         Dim strMessage As String
@@ -156,7 +156,7 @@ Public Class clsAnalysisResults
     End Sub
 
     Public Sub CopyFileWithRetry(SrcFilePath As String, DestFilePath As String, Overwrite As Boolean)
-        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        Const blnIncreaseHoldoffOnEachRetry = False
         CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
     End Sub
 
@@ -169,7 +169,7 @@ Public Class clsAnalysisResults
     Public Sub CopyFileWithRetry(
       SrcFilePath As String, DestFilePath As String, Overwrite As Boolean,
       MaxRetryCount As Integer, RetryHoldoffSeconds As Integer)
-        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        Const blnIncreaseHoldoffOnEachRetry = False
         CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
     End Sub
 
@@ -178,8 +178,8 @@ Public Class clsAnalysisResults
       MaxRetryCount As Integer, RetryHoldoffSeconds As Integer,
       blnIncreaseHoldoffOnEachRetry As Boolean)
 
-        Dim AttemptCount As Integer = 0
-        Dim blnSuccess As Boolean = False
+        Dim AttemptCount = 0
+        Dim blnSuccess = False
         Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
 
         If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
@@ -315,7 +315,7 @@ Public Class clsAnalysisResults
     End Sub
 
     Public Sub CreateFolderWithRetry(FolderPath As String)
-        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        Const blnIncreaseHoldoffOnEachRetry = False
         CreateFolderWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
     End Sub
 
@@ -323,7 +323,7 @@ Public Class clsAnalysisResults
       FolderPath As String,
       MaxRetryCount As Integer,
       RetryHoldoffSeconds As Integer)
-        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        Const blnIncreaseHoldoffOnEachRetry = False
         CreateFolderWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
     End Sub
 
@@ -333,8 +333,8 @@ Public Class clsAnalysisResults
       RetryHoldoffSeconds As Integer,
       blnIncreaseHoldoffOnEachRetry As Boolean)
 
-        Dim AttemptCount As Integer = 0
-        Dim blnSuccess As Boolean = False
+        Dim AttemptCount = 0
+        Dim blnSuccess = False
         Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
 
         If sngRetryHoldoffSeconds < 1 Then sngRetryHoldoffSeconds = 1
@@ -384,7 +384,7 @@ Public Class clsAnalysisResults
         Dim diOldResultsFolder As DirectoryInfo
 
         Dim strOldResultsFolderName As String
-        Dim strTargetFilePath As String = ""
+        Dim strTargetFilePath = ""
 
         ' Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
         For Each fiFileInfo In diTargetFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT & "*")
@@ -420,7 +420,7 @@ Public Class clsAnalysisResults
     End Sub
 
     Public Function FolderExistsWithRetry(FolderPath As String) As Boolean
-        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        Const blnIncreaseHoldoffOnEachRetry = False
         Return FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry)
     End Function
 
@@ -428,7 +428,7 @@ Public Class clsAnalysisResults
       FolderPath As String,
       MaxRetryCount As Integer,
       RetryHoldoffSeconds As Integer) As Boolean
-        Const blnIncreaseHoldoffOnEachRetry As Boolean = False
+        Const blnIncreaseHoldoffOnEachRetry = False
         Return FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry)
     End Function
 
@@ -438,9 +438,9 @@ Public Class clsAnalysisResults
       RetryHoldoffSeconds As Integer,
       blnIncreaseHoldoffOnEachRetry As Boolean) As Boolean
 
-        Dim AttemptCount As Integer = 0
-        Dim blnSuccess As Boolean = False
-        Dim blnFolderExists As Boolean = False
+        Dim AttemptCount = 0
+        Dim blnSuccess = False
+        Dim blnFolderExists = False
 
         Dim sngRetryHoldoffSeconds As Single = RetryHoldoffSeconds
 

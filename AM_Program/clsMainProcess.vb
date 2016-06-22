@@ -1620,8 +1620,7 @@ Public Class clsMainProcess
         m_PluginLoader.ClearMessageList()
         m_Resource = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower)
         If m_Resource Is Nothing Then
-            Dim Msg As String = m_PluginLoader.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to load resource object, " & Msg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to load resource object, " & m_PluginLoader.Message)
             Return False
         End If
 
@@ -1631,7 +1630,13 @@ Public Class clsMainProcess
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
         End If
 
-        m_Resource.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_MyEMSLUtilities)
+        Try
+            m_Resource.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_MyEMSLUtilities)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to load resource object, " & ex.Message)
+            Return False
+        End Try
+
         Return True
 
     End Function
