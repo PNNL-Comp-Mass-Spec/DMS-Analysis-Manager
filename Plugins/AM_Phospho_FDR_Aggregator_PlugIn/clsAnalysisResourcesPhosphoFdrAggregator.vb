@@ -50,7 +50,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
 
-        Dim dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType) = Nothing
+        Dim dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo) = Nothing
 
         ' Retrieve the files for the jobs in the data package associated with this job
         If Not RetrieveAggregateFiles(fileSpecList, clsAnalysisResources.DataPackageFileRetrievalModeConstants.Ascore, dctDataPackageJobs) Then
@@ -67,7 +67,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
     End Function
 
-    Protected Function CacheDataPackageInfo(dctDataPackageJobs As Dictionary(Of Integer, udtDataPackageJobInfoType)) As Boolean
+    Protected Function CacheDataPackageInfo(dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo)) As Boolean
 
         Try
 

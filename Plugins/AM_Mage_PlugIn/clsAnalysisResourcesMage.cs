@@ -46,8 +46,16 @@ namespace AnalysisManager_Mage_PlugIn
 
             var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
 
-            List<udtDataPackageJobInfoType> lstAdditionalJobs;
-            var peptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out lstAdditionalJobs);
+            List<clsDataPackageJobInfo> lstAdditionalJobs;
+            string errorMsg;
+
+            var peptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out lstAdditionalJobs, out errorMsg);
+
+            if (!string.IsNullOrEmpty(errorMsg))
+            {
+                LogError(errorMsg);
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
             if (peptideHitJobs.Count == 0)
             {
@@ -76,19 +84,19 @@ namespace AnalysisManager_Mage_PlugIn
             return IJobParams.CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private bool ValidateDeconJobs(int dataPackageID, List<udtDataPackageJobInfoType> peptideHitJobs, List<udtDataPackageJobInfoType> lstAdditionalJobs)
+        private bool ValidateDeconJobs(int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs, List<clsDataPackageJobInfo> lstAdditionalJobs)
         {
             return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "HMMA_Peak", "DeconTools");
         }
 
-        private bool ValidateMasicJobs(int dataPackageID, List<udtDataPackageJobInfoType> peptideHitJobs, List<udtDataPackageJobInfoType> lstAdditionalJobs)
+        private bool ValidateMasicJobs(int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs, List<clsDataPackageJobInfo> lstAdditionalJobs)
          {
              return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "SIC", "MASIC");
          }
 
         private bool ValidateMatchingJobs(
-            int dataPackageID, List<udtDataPackageJobInfoType> peptideHitJobs, 
-            List<udtDataPackageJobInfoType> lstAdditionalJobs, 
+            int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs, 
+            List<clsDataPackageJobInfo> lstAdditionalJobs, 
             string resultType, 
             string toolName)
         {

@@ -144,11 +144,11 @@ namespace AnalysisManagerQCARTPlugin
                
 
                 // Cache the current dataset and job info
-                var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
+                var currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
                 currentTask = "Retrieve " + REPORTER_IONS_FILE_SUFFIX + " file for " + m_DatasetName;
 
-                success = RetrieveReporterIonsFile(udtCurrentDatasetAndJobInfo);
+                success = RetrieveReporterIonsFile(currentDatasetAndJobInfo);
                 if (!success)
                 {
                     return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -163,7 +163,7 @@ namespace AnalysisManagerQCARTPlugin
                         return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
                     // Restore the dataset and job info using udtCurrentDatasetAndJobInfo
-                    OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);
+                    OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
 
                     success = CreateBaselineDatasetInfoFile(baselineDatasets);
                     if (!success)
@@ -657,9 +657,9 @@ namespace AnalysisManagerQCARTPlugin
             {
                 var baselineDatasetName = datasetJobInfo.Key;
                 var baselineDatasetJob = datasetJobInfo.Value;
-                udtDataPackageJobInfoType udtJobInfo;
+                clsDataPackageJobInfo dataPkgJob;
 
-                if (!LookupJobInfo(baselineDatasetJob, out udtJobInfo))
+                if (!LookupJobInfo(baselineDatasetJob, out dataPkgJob))
                 {
                     if (string.IsNullOrWhiteSpace(m_message))
                     {
@@ -669,19 +669,19 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                if (!clsGlobal.IsMatch(udtJobInfo.Dataset, baselineDatasetName))
+                if (!clsGlobal.IsMatch(dataPkgJob.Dataset, baselineDatasetName))
                 {
                     var logMessage = "Mismatch in the QC-ART parameter file (" + paramFileName + "); " +
                                      "baseline job " + baselineDatasetJob + " is not dataset " + baselineDatasetName;
 
-                    LogError(logMessage, logMessage + "; it is actually dataset " + udtJobInfo.Dataset);
+                    LogError(logMessage, logMessage + "; it is actually dataset " + dataPkgJob.Dataset);
 
                     return false;
                 }
 
-                OverrideCurrentDatasetAndJobInfo(udtJobInfo);
+                OverrideCurrentDatasetAndJobInfo(dataPkgJob);
 
-                RetrieveReporterIonsFile(udtJobInfo);
+                RetrieveReporterIonsFile(dataPkgJob);
             }
 
             return true;
@@ -944,11 +944,11 @@ namespace AnalysisManagerQCARTPlugin
 
         /// <summary>
         /// Retrieve the MASIC _ReporterIons.txt file
-        /// for the dataset and job in udtJobInfo
+        /// for the dataset and job in dataPkgJob
         /// </summary>
-        /// <param name="udtJobInfo"></param>
+        /// <param name="dataPkgJob"></param>
         /// <returns></returns>
-        private bool RetrieveReporterIonsFile(udtDataPackageJobInfoType udtJobInfo)
+        private bool RetrieveReporterIonsFile(clsDataPackageJobInfo dataPkgJob)
         {
             try
             {
@@ -971,7 +971,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 var inputFolderNameCached = m_jobParams.GetJobParameter("JobParameters", "inputFolderName", string.Empty);
 
-                if (clsGlobal.IsMatch(udtJobInfo.Dataset, targetDatasetName) && m_JobNum == udtJobInfo.Job)
+                if (clsGlobal.IsMatch(dataPkgJob.Dataset, targetDatasetName) && m_JobNum == dataPkgJob.Job)
                 {
                     // Retrieving the _ReporterIons.txt file for the dataset associated with this QC-ART job
                     var masicFolderPath = m_jobParams.GetJobParameter("SourceJob2FolderPath", string.Empty);
@@ -989,7 +989,7 @@ namespace AnalysisManagerQCARTPlugin
                 else
                 {
                     // Baseline dataset
-                    m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", udtJobInfo.ResultsFolderName);
+                    m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", dataPkgJob.ResultsFolderName);
                 }
 
                 var reporterIonsFileName = m_DatasetName + REPORTER_IONS_FILE_SUFFIX;
@@ -997,7 +997,7 @@ namespace AnalysisManagerQCARTPlugin
                 var success = FindAndRetrieveMiscFiles(reporterIonsFileName, false);
                 if (!success)
                 {
-                    LogError(REPORTER_IONS_FILE_SUFFIX + " file not found for dataset " + udtJobInfo.Dataset + ", job " + udtJobInfo.Job);
+                    LogError(REPORTER_IONS_FILE_SUFFIX + " file not found for dataset " + dataPkgJob.Dataset + ", job " + dataPkgJob.Job);
                     return false;
                 }
 

@@ -30,7 +30,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 			int dataPkgId;
 
 			// This list will track non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
-			List<udtDataPackageJobInfoType> lstAdditionalJobs;
+            List<clsDataPackageJobInfo> lstAdditionalJobs;
 
 			var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out dataPkgId, out lstAdditionalJobs);
 			var success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
@@ -46,7 +46,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 			if (includeMzXmlFiles)
 			{
-				var lstAllJobs = new List<udtDataPackageJobInfoType>();
+                var lstAllJobs = new List<clsDataPackageJobInfo>();
 				lstAllJobs.AddRange(lstDataPackagePeptideHitJobs);
 
 				if (lstAdditionalJobs != null)
@@ -65,14 +65,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
 		#region Code_Adapted_From_Pride_Plugin
 
 		private bool FindInstrumentDataFiles(
-			IEnumerable<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs,
-			IEnumerable<udtDataPackageJobInfoType> lstAdditionalJobs,
+			IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs,
+            IEnumerable<clsDataPackageJobInfo> lstAdditionalJobs,
 			bool includeMzXmlFiles)
 		{
 
 			// The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML or .mzML file and path to the .hashcheck file (if any)
 			// The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
-			var dctInstrumentDataToRetrieve = new Dictionary<udtDataPackageJobInfoType, KeyValuePair<string, string>>();
+            var dctInstrumentDataToRetrieve = new Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>>();
 
 			// Keys in this dictionary are dataset name, values are the full path to the instrument data file for the dataset
 			var dctDatasetRawFilePaths = new Dictionary<String, String>();
@@ -257,7 +257,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 		/// </summary>
 		/// <param name="lstDataPackagePeptideHitJobs"></param>
 		/// <remarks></remarks>
-		protected void FindMissingMzXmlFiles(IEnumerable<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs)
+        protected void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
 		{
 			var lstDatasets = new SortedSet<string>();
 			var lstDatasetYearQuarter = new SortedSet<string>();
@@ -317,7 +317,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
 		}
 
-		private bool RetrieveFastaFiles(string localOrgDBFolder, IEnumerable<udtDataPackageJobInfoType> lstDataPackagePeptideHitJobs)
+        private bool RetrieveFastaFiles(string localOrgDBFolder, IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
 		{
 			try
 			{
