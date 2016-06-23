@@ -281,7 +281,13 @@ Public Class clsResultXferToolRunner
             ' Delete this folder if it is empty
             diSourceFolder.Refresh()
             If diSourceFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Count = 0 Then
-                diSourceFolder.Delete()
+                Try
+                    diSourceFolder.Delete()
+                Catch ex As Exception
+                    ' Log a warning, but ignore this error
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete folder " & diSourceFolder.FullName, ex)
+                End Try
+
             End If
 
         Catch ex As Exception
