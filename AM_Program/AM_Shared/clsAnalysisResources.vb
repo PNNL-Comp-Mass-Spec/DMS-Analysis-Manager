@@ -281,6 +281,12 @@ Public MustInherit Class clsAnalysisResources
 
 #Region "Properties"
 
+    Public ReadOnly Property MyEMSLAvailable() As Boolean
+        Get
+            Return m_MyEmslAvailable AndAlso Not MyEMSLSearchDisabled
+        End Get
+    End Property
+
     Public Property MyEMSLSearchDisabled() As Boolean
 
     ' Explanation of what happened to last operation this class performed
@@ -350,6 +356,7 @@ Public MustInherit Class clsAnalysisResources
         m_StatusTools = statusTools
 
         m_AuroraAvailable = m_mgrParams.GetParam("AuroraAvailable", True)
+
         m_MyEmslAvailable = m_mgrParams.GetParam("MyEmslAvailable", True)
 
     End Sub
@@ -1414,7 +1421,7 @@ Public MustInherit Class clsAnalysisResources
     ''' Finds the server or archive folder where specified file is located
     ''' </summary>
     ''' <param name="FileToFind">Name of the file to search for</param>
-    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched (m_AuroraAvailable and m_MyEmslAvailable take precedent)</param>
+    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched (m_AuroraAvailable and MyEMSLAvailable take precedence)</param>
     ''' <param name="LogFileNotFound">True if an error should be logged when a file is not found</param>
     ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
     ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
@@ -1441,7 +1448,7 @@ Public MustInherit Class clsAnalysisResources
             strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"))
 
             If searchArchivedDatasetFolder Then
-                If m_MyEmslAvailable Then
+                If MyEMSLAvailable Then
                     strParentFolderPaths.Add(MYEMSL_PATH_FLAG)
                 End If
                 If m_AuroraAvailable Then
@@ -1517,7 +1524,7 @@ Public MustInherit Class clsAnalysisResources
             ' Log this as a warning if SearchArchivedDatasetFolder=False
 
             If logFileNotFound Then
-                If searchArchivedDatasetFolder OrElse (Not m_AuroraAvailable And Not m_MyEmslAvailable) Then
+                If searchArchivedDatasetFolder OrElse (Not m_AuroraAvailable And Not MyEMSLAvailable) Then
                     LogError("Data file not found: " + fileToFind)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Data file not found (did not check archive): " + fileToFind)
@@ -2039,7 +2046,7 @@ Public MustInherit Class clsAnalysisResources
 
         ' Determine the YearQuarter code for this dataset
         Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
-        If String.IsNullOrEmpty(strDatasetStoragePath) AndAlso (m_AuroraAvailable OrElse m_MyEmslAvailable) Then
+        If String.IsNullOrEmpty(strDatasetStoragePath) AndAlso (m_AuroraAvailable OrElse MyEMSLAvailable) Then
             strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
         End If
 
@@ -2298,7 +2305,7 @@ Public MustInherit Class clsAnalysisResources
                 lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName))
             End If
 
-            If Not MyEMSLSearchDisabled AndAlso Not assumeUnpurged Then
+            If Not MyEMSLAvailable AndAlso Not assumeUnpurged Then
                 lstPathsToCheck.Add(MYEMSL_PATH_FLAG)      ' \\MyEMSL
             End If
 
@@ -2308,7 +2315,7 @@ Public MustInherit Class clsAnalysisResources
 				lstPathsToCheck.Remove(MYEMSL_PATH_FLAG)
 			End If
 #End If
-            If (m_AuroraAvailable OrElse m_MyEmslAvailable) AndAlso Not assumeUnpurged Then
+            If (m_AuroraAvailable OrElse MyEMSLAvailable) AndAlso Not assumeUnpurged Then
                 lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName))
             End If
 
