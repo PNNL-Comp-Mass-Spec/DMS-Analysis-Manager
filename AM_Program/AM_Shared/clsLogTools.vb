@@ -161,7 +161,7 @@ Public Class clsLogTools
                     If ex Is Nothing Then
                         myLogger.Error(message)
                     Else
-                        myLogger.Debug(message, ex)
+                        myLogger.Error(message, ex)
                     End If
                 End If
             Case LogLevels.FATAL
@@ -169,7 +169,7 @@ Public Class clsLogTools
                     If ex Is Nothing Then
                         myLogger.Fatal(message)
                     Else
-                        myLogger.Debug(message, ex)
+                        myLogger.Fatal(message, ex)
                     End If
                 End If
             Case LogLevels.INFO
@@ -177,7 +177,7 @@ Public Class clsLogTools
                     If ex Is Nothing Then
                         myLogger.Info(message)
                     Else
-                        myLogger.Debug(message, ex)
+                        myLogger.Info(message, ex)
                     End If
                 End If
             Case LogLevels.WARN
@@ -185,7 +185,7 @@ Public Class clsLogTools
                     If ex Is Nothing Then
                         myLogger.Warn(message)
                     Else
-                        myLogger.Debug(message, ex)
+                        myLogger.Warn(message, ex)
                     End If
                 End If
             Case Else
