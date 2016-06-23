@@ -414,6 +414,17 @@ Public MustInherit Class clsAnalysisResources
     End Sub
 
     ''' <summary>
+    ''' Add a folder or file path to a list of paths to examine
+    ''' </summary>
+    ''' <param name="lstPathsToCheck">List of Tuples where the string is a folder or file path, and the boolean is logIfMissing</param>
+    ''' <param name="folderOrFilePath">Path to add</param>
+    ''' <param name="logIfMissing">True to log a message if the path is not found</param>
+    ''' <remarks></remarks>
+    Private Sub AddPathToCheck(lstPathsToCheck As ICollection(Of Tuple(Of String, Boolean)), folderOrFilePath As String, logIfMissing As Boolean)
+        lstPathsToCheck.Add(New Tuple(Of String, Boolean)(folderOrFilePath, logIfMissing))
+    End Sub
+
+    ''' <summary>
     ''' Appends file specified file path to the JobInfo file for the given Job
     ''' </summary>
     ''' <param name="intJob"></param>
@@ -489,15 +500,7 @@ Public MustInherit Class clsAnalysisResources
                     blnWaitingForLockFile = False
                 Else
                     If DateTime.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes Then
-                        Dim debugMessage = "Waiting for lock file " & fiLockFile.Name
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, debugMessage)
-                        Console.WriteLine(debugMessage)
-
-                        If Not statusTools Is Nothing Then
-                            statusTools.CurrentOperation = debugMessage
-                            statusTools.UpdateAndWrite(0)
-                        End If
-
+                        LogDebugMessage("Waiting for lock file " & fiLockFile.Name, statusTools)
                         dtLastProgressTime = DateTime.UtcNow
                     End If
                 End If
@@ -1313,7 +1316,12 @@ Public MustInherit Class clsAnalysisResources
 
         ' If we got to here, there were too many failures
         If retryCount < 1 Then
-            m_message = "File " + FileName + " could not be found after multiple retries"
+            If maxAttempts = 1 Then
+                m_message = "File not found: " & FileName
+            Else
+                m_message = "File not be found after " & maxAttempts & " tries: " & FileName
+            End If
+
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
             Return False
         End If
@@ -2283,7 +2291,9 @@ Public MustInherit Class clsAnalysisResources
       assumeUnpurged As Boolean) As String
 
         Dim strBestPath As String = String.Empty
-        Dim lstPathsToCheck = New List(Of String)
+
+        ' The tuples in this list are the path to check, and True if we should warn that the folder was not found
+        Dim lstPathsToCheck = New List(Of Tuple(Of String, Boolean))
 
         Dim blnValidFolder As Boolean
         Dim blnFileNotFoundEncountered As Boolean
@@ -2294,7 +2304,10 @@ Public MustInherit Class clsAnalysisResources
             If fileNameToFind Is Nothing Then fileNameToFind = String.Empty
             If folderNameToFind Is Nothing Then folderNameToFind = String.Empty
 
-            If assumeUnpurged Then maxAttempts = 1
+            If assumeUnpurged Then
+                maxAttempts = 1
+                logFolderNotFound = False
+            End If
 
             Dim instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0)
 
@@ -2302,11 +2315,12 @@ Public MustInherit Class clsAnalysisResources
                 ' The instrument data is purged and we're retrieving instrument data
                 ' Skip the primary dataset folder since the primary data files were most likely purged
             Else
-                lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName))
+                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName), True)
             End If
 
             If Not MyEMSLAvailable AndAlso Not assumeUnpurged Then
-                lstPathsToCheck.Add(MYEMSL_PATH_FLAG)      ' \\MyEMSL
+                ' \\MyEMSL
+                AddPathToCheck(lstPathsToCheck, MYEMSL_PATH_FLAG, False)
             End If
 
             ' Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
@@ -2316,43 +2330,43 @@ Public MustInherit Class clsAnalysisResources
 			End If
 #End If
             If (m_AuroraAvailable OrElse MyEMSLAvailable) AndAlso Not assumeUnpurged Then
-                lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName))
+                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), True)
             End If
 
-            lstPathsToCheck.Add(Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName))
+            AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName), False)
 
             blnFileNotFoundEncountered = False
 
-            strBestPath = lstPathsToCheck.First()
+            strBestPath = lstPathsToCheck.First().Item1
             For Each pathToCheck In lstPathsToCheck
                 Try
                     If m_DebugLevel > 3 Then
-                        Dim Msg As String = "FindValidDatasetFolder, Looking for folder " + pathToCheck
+                        Dim Msg As String = "FindValidDatasetFolder, Looking for folder " + pathToCheck.Item1
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
                     End If
 
-                    If pathToCheck = MYEMSL_PATH_FLAG Then
+                    If pathToCheck.Item1 = MYEMSL_PATH_FLAG Then
 
                         Const recurseMyEMSL = False
                         blnValidFolder = FindValidFolderMyEMSL(dsName, fileNameToFind, folderNameToFind, False, recurseMyEMSL)
 
                     Else
 
-                        blnValidFolder = FindValidFolderUNC(pathToCheck, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound)
+                        blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound And pathToCheck.Item2)
                         If Not blnValidFolder AndAlso Not String.IsNullOrEmpty(fileNameToFind) AndAlso Not String.IsNullOrEmpty(folderNameToFind) Then
                             ' Look for a subfolder named folderNameToFind that contains file fileNameToFind
-                            Dim pathToCheckAlt = Path.Combine(pathToCheck, folderNameToFind)
-                            blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, String.Empty, maxAttempts, logFolderNotFound)
+                            Dim pathToCheckAlt = Path.Combine(pathToCheck.Item1, folderNameToFind)
+                            blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, String.Empty, maxAttempts, logFolderNotFound And pathToCheck.Item2)
 
                             If blnValidFolder Then
-                                pathToCheck = pathToCheckAlt
+                                pathToCheck = New Tuple(Of String, Boolean)(pathToCheckAlt, pathToCheck.Item2)
                             End If
                         End If
 
                     End If
 
                     If blnValidFolder Then
-                        strBestPath = String.Copy(pathToCheck)
+                        strBestPath = String.Copy(pathToCheck.Item1)
                     Else
                         blnFileNotFoundEncountered = True
                     End If
@@ -2360,7 +2374,7 @@ Public MustInherit Class clsAnalysisResources
                     If blnValidFolder Then Exit For
 
                 Catch ex As Exception
-                    LogError("Exception looking for folder: " + pathToCheck, ex)
+                    LogError("Exception looking for folder: " + pathToCheck.Item1, ex)
                 End Try
             Next
 
@@ -2382,6 +2396,7 @@ Public MustInherit Class clsAnalysisResources
             Else
                 Dim folderNotFoundMessage = "Could not find a valid dataset folder"
                 If fileNameToFind.Length > 0 Then
+                    ' Could not find a valid dataset folder containing file
                     folderNotFoundMessage &= " containing file " + fileNameToFind
                 End If
 
@@ -3920,6 +3935,20 @@ Public MustInherit Class clsAnalysisResources
         End If
     End Sub
 
+    Private Sub LogDebugMessage(debugMessage As String)
+        LogDebugMessage(debugMessage, m_StatusTools)
+    End Sub
+
+    Private Shared Sub LogDebugMessage(debugMessage As String, statusTools As IStatusFile)
+        Console.WriteLine(debugMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, debugMessage)
+
+        If Not statusTools Is Nothing Then
+            statusTools.CurrentOperation = debugMessage
+            statusTools.UpdateAndWrite(0)
+        End If
+    End Sub
+
     ''' <summary>
     ''' Retrieve the information for the specified analysis job
     ''' </summary>
@@ -3994,7 +4023,7 @@ Public MustInherit Class clsAnalysisResources
         errorMsg = String.Empty
 
         ' Throttle the calls to this function to avoid overloading the database for data packages with hundreds of jobs
-        While DateTime.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 100
+        While DateTime.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50
             Thread.Sleep(25)
         End While
 
@@ -5170,24 +5199,40 @@ Public MustInherit Class clsAnalysisResources
 
             If splitFastaJobs.Count > 0 Then
 
+                Dim lastStatusTime = DateTime.UtcNow
+                Dim statusIntervalSeconds = 4
+                Dim jobsProcessed = 0
+
                 Using brokerConnection = New SqlConnection(connectionString)
                     brokerConnection.Open()
 
-                    For Each dataPkgJob In lstDataPackagePeptideHitJobs
-                        If dataPkgJob.Tool.ToLower().Contains("splitfasta") Then
-                            Dim dataPkgJobParameters As Dictionary(Of String, String) = Nothing
+                    For Each dataPkgJob In splitFastaJobs
 
-                            Dim success = LookupJobParametersFromHistory(brokerConnection, dataPkgJob.Job, dataPkgJobParameters, errorMsg)
+                        Dim dataPkgJobParameters As Dictionary(Of String, String) = Nothing
 
-                            If Not success Then
-                                Return New List(Of clsDataPackageJobInfo)
-                            End If
+                        Dim success = LookupJobParametersFromHistory(brokerConnection, dataPkgJob.Job, dataPkgJobParameters, errorMsg)
 
-                            Dim numberOfClonedSteps As String = Nothing
-                            If dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", numberOfClonedSteps) Then
-                                Dim clonedStepCount = CInt(numberOfClonedSteps)
-                                dataPkgJob.NumberOfClonedSteps = clonedStepCount
-                            End If
+                        If Not success Then
+                            Return New List(Of clsDataPackageJobInfo)
+                        End If
+
+                        Dim numberOfClonedSteps As String = Nothing
+                        If dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", numberOfClonedSteps) Then
+                            Dim clonedStepCount = CInt(numberOfClonedSteps)
+                            dataPkgJob.NumberOfClonedSteps = clonedStepCount
+                        End If
+
+                        jobsProcessed += 1
+
+                        If DateTime.UtcNow.Subtract(lastStatusTime).TotalSeconds >= statusIntervalSeconds Then
+                            Dim pctComplete = jobsProcessed / splitFastaJobs.Count * 100
+                            LogDebugMessage("Retrieving job parameters from history for SplitFasta jobs; " & pctComplete.ToString("0") & "% complete", Nothing)
+
+                            lastStatusTime = DateTime.UtcNow
+
+                            ' Double the status interval, allowing for a maximum of 30 seconds
+                            statusIntervalSeconds = Math.Min(30, statusIntervalSeconds * 2)
+
                         End If
                     Next
                 End Using

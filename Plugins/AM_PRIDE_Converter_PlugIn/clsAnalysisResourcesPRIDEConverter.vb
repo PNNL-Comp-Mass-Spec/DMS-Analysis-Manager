@@ -373,7 +373,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
                 End If
                 strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PX Submission template file not found in the data package folder; retrieving " & strTemplateFileName & "from " & strParamFileStoragePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PX Submission template file not found in the data package folder; retrieving " & strTemplateFileName & " from " & strParamFileStoragePath)
 
                 If Not RetrieveFile(strTemplateFileName, strParamFileStoragePath, 1) Then
                     If String.IsNullOrEmpty(m_message) Then
