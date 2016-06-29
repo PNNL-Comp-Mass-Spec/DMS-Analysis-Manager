@@ -3089,11 +3089,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             m_message = String.Empty
 
             Dim mzIdFilePaths As List(Of String) = Nothing
-            blnSuccess = UpdateMzIdFiles(kvJobInfo.Value, mCreateMGFFiles, mzIdFilePaths, dctTemplateParameters)
+            blnSuccess = UpdateMzIdFiles(kvJobInfo.Value, mzIdFilePaths, dctTemplateParameters)
 
             If Not blnSuccess OrElse mzIdFilePaths Is Nothing OrElse mzIdFilePaths.Count = 0 Then
                 If String.IsNullOrEmpty(m_message) Then
-                    LogError("UpdateMzIdFiles returned false for job " & intJob & ", dataset" & strDataset)
+                    LogError("UpdateMzIdFiles returned false for job " & intJob & ", dataset " & strDataset)
                 End If
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -3760,14 +3760,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' Also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
     ''' </summary>
     ''' <param name="dataPkgJob">Data package job info</param>
-    ''' <param name="blnCreatedMGFFiles">Set to true if we converted _dta.txt files to .mgf files</param>
     ''' <param name="mzIdFilePaths">Output parameter: path to the .mzid file for this job (will be multiple files if a SplitFasta search was performed)</param>
     ''' <param name="dctTemplateParameters"></param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Private Function UpdateMzIdFiles(
       dataPkgJob As clsDataPackageJobInfo,
-      blnCreatedMGFFiles As Boolean,
       <Out()> ByRef mzIdFilePaths As List(Of String),
       dctTemplateParameters As Dictionary(Of String, String)) As Boolean
 
@@ -3810,16 +3808,23 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             ' For split FASTA files each job step should have a custom .FASTA file, but we're ignoring that fact for now
 
             Dim success As Boolean
+            Dim strMzIDFilePath As String = Nothing
 
             If dataPkgJob.NumberOfClonedSteps > 0 Then
                 For splitFastaResultID = 1 To dataPkgJob.NumberOfClonedSteps
-                    success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, splitFastaResultID, sampleMetadata, blnCreatedMGFFiles)
-                    If Not success Then
+                    success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, splitFastaResultID, sampleMetadata, strMzIDFilePath)
+                    If success Then
+                        mzIdFilePaths.add(strMzIDFilePath)
+                    Else
                         Exit For
                     End If
+
                 Next
             Else
-                success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, 0, sampleMetadata, blnCreatedMGFFiles)
+                success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, 0, sampleMetadata, strMzIDFilePath)
+                If success Then
+                    mzIdFilePaths.add(strMzIDFilePath)
+                End If
             End If
 
             If Not success Then
@@ -3839,13 +3844,23 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
+    ''' <summary>
+    ''' Update a single .mzid file to have the correct Accession value for FileFormat
+    ''' Also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
+    ''' </summary>
+    ''' <param name="dataPkgJob">Data package job</param>
+    ''' <param name="dataPkgDataset">Data package dataset</param>
+    ''' <param name="splitFastaResultID">For SplitFasta jobs, the part number being processed; 0 for non-SplitFasta jobs</param>
+    ''' <param name="sampleMetadata">Sample Metadata</param>
+    ''' <param name="strMzIDFilePath">Output parameter: path to the .mzid file being processed</param>
+    ''' <returns>True if success, false if an error</returns>
+    ''' <remarks></remarks>
     Private Function UpdateMzIdFile(
-      job As Integer,
-      dataset As String,
+      dataPkgJob As Integer,
+      dataPkgDataset As String,
       splitFastaResultID As Integer,
       sampleMetadata As clsSampleMetadata,
-      ByRef createdMGFFiles As Boolean) As Boolean
-
+      <Out()> ByRef strMzIDFilePath As String) As Boolean
 
         Dim nodeWritten As Boolean
         Dim skipNode As Boolean
@@ -3870,17 +3885,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End If
 
             ' First look for a job-specific version of the .mzid file
-            strSourceFileName = "Job" & job.ToString() & "_" & dataset & "_msgfplus" & filePartText & ".mzid"
-            Dim strMzIDFilePath = Path.Combine(m_WorkDir, strSourceFileName)
+            strSourceFileName = "Job" & dataPkgJob.ToString() & "_" & dataPkgDataset & "_msgfplus" & filePartText & ".mzid"
+            strMzIDFilePath = Path.Combine(m_WorkDir, strSourceFileName)
 
             If Not File.Exists(strMzIDFilePath) Then
                 ' Job-specific version not found
                 ' Look for one that simply starts with the dataset name
-                strSourceFileName = dataset & "_msgfplus" & filePartText & ".mzid"
+                strSourceFileName = dataPkgDataset & "_msgfplus" & filePartText & ".mzid"
                 strMzIDFilePath = Path.Combine(m_WorkDir, strSourceFileName)
 
                 If Not File.Exists(strMzIDFilePath) Then
-                    LogError("MzID file not found for job " & job & ": " & strSourceFileName)
+                    LogError("MzID file not found for job " & dataPkgJob & ": " & strSourceFileName)
                     Return False
                 End If
             End If
@@ -3944,10 +3959,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                                             Dim strSpectraDataFilename As String
 
-                                            If createdMGFFiles Then
-                                                strSpectraDataFilename = dataset & ".mgf"
+                                            If mCreateMGFFiles Then
+                                                strSpectraDataFilename = dataPkgDataset & ".mgf"
                                             Else
-                                                strSpectraDataFilename = dataset & "_dta.txt"
+                                                strSpectraDataFilename = dataPkgDataset & "_dta.txt"
                                             End If
 
                                             lstAttributeOverride.Add("location", "C:\DMS_WorkDir\" & strSpectraDataFilename)
@@ -3963,7 +3978,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                                 Dim strAccession As String
                                                 Dim strFormatName As String
 
-                                                If createdMGFFiles Then
+                                                If mCreateMGFFiles Then
                                                     strAccession = "MS:1001062"
                                                     strFormatName = "Mascot MGF file"
                                                 Else
@@ -4106,23 +4121,23 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 ' Replace the original .mzid file with the updated one
                 File.Delete(strMzIDFilePath)
 
-                If JobFileRenameRequired(job) Then
-                    strMzIDFilePath = Path.Combine(m_WorkDir, dataset & "_Job" & job.ToString() & "_msgfplus.mzid")
+                If JobFileRenameRequired(dataPkgJob) Then
+                    strMzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset & "_Job" & dataPkgJob.ToString() & "_msgfplus.mzid")
                 Else
-                    strMzIDFilePath = Path.Combine(m_WorkDir, dataset & "_msgfplus.mzid")
+                    strMzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset & "_msgfplus.mzid")
                 End If
 
                 File.Move(strUpdatedFilePathTemp, strMzIDFilePath)
 
             Catch ex As Exception
-                LogError("Exception replacing the original .mzID file with the updated one for job " & job & ", dataset " & dataset, ex)
+                LogError("Exception replacing the original .mzID file with the updated one for job " & dataPkgJob & ", dataset " & dataPkgDataset, ex)
                 Return False
             End Try
 
             Return True
 
         Catch ex As Exception
-            LogError("Exception in UpdateMzIdFile for job " & job & ", dataset " & dataset, ex)
+            LogError("Exception in UpdateMzIdFile for job " & dataPkgJob & ", dataset " & dataPkgDataset, ex)
 
             Dim strRecentElements As String = String.Empty
             For Each strItem In lstRecentElements
@@ -4135,6 +4150,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strRecentElements)
 
+            strMzIDFilePath = String.Empty
             Return False
         End Try
 
