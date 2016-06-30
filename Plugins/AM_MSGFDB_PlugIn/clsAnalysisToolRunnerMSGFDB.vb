@@ -152,13 +152,24 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             fiMSGFPlusResults.Refresh()
             If fiMSGFPlusResults.Exists Then
-                result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name, javaProgLoc, udtHPCOptions)
-                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                    If String.IsNullOrEmpty(m_message) Then
-                        m_message = "Unknown error post-processing the MSGF+ results"
-                    End If
+
+                ' Look for a "dirty" mzid file
+                Dim dirtyResultsFilename = Path.GetFileNameWithoutExtension(fiMSGFPlusResults.Name) & "_dirty.gz"
+                Dim fiMSGFPlusDirtyResults = New FileInfo(Path.Combine(fiMSGFPlusResults.Directory.FullName, dirtyResultsFilename))
+
+                If fiMSGFPlusDirtyResults.Exists Then
+                    m_message = "MSGF+ _dirty.gz file found; this indicates a processing error"
                     blnProcessingError = True
+                Else
+                    result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name, javaProgLoc, udtHPCOptions)
+                    If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                        If String.IsNullOrEmpty(m_message) Then
+                            m_message = "Unknown error post-processing the MSGF+ results"
+                        End If
+                        blnProcessingError = True
+                    End If
                 End If
+
             Else
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "MSGF+ results file not found: " & fiMSGFPlusResults.Name
