@@ -29,6 +29,11 @@
         ProteinCollectionList = jobParams.GetParam("ProteinCollectionList")
         UsingSplitFasta = jobParams.GetJobParameter("SplitFasta", False)
 
+        ' When running DTA_Refinery, we override UsingSplitFasta to false
+        If String.Equals(jobParams.GetParam("StepTool"), "DTA_Refinery") Then
+            UsingSplitFasta = False
+        End If
+
         ' Update mOrgDBDescription and UsingLegacyFasta
         UpdateDescription()
 
