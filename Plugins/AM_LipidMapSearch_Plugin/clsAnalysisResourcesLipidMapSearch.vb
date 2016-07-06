@@ -52,12 +52,12 @@ Public Class clsAnalysisResourcesLipidMapSearch
 		' SourceJob                     = 852150
 		' InputFolderName               = "DLS201206180954_Auto852150"
 		' DatasetStoragePath            = \\proto-3\LTQ_Orb_3\2011_1\
-		' DatasetArchivePath            = \\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1
+		' DatasetArchivePath            = \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2011_1
 
 		' SourceJob2                    = 852151
 		' SourceJob2Dataset             = "XG_lipid_pt5aNeg"
 		' SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
-		' SourceJob2FolderPathArchive   = "\\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
+		' SourceJob2FolderPathArchive   = "\\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
 		Dim strDeconToolsFolderName As String
 		strDeconToolsFolderName = m_jobParams.GetParam("StepParameters", "InputFolderName")
@@ -111,12 +111,12 @@ Public Class clsAnalysisResourcesLipidMapSearch
 		' SourceJob                     = 852150
 		' InputFolderName               = "DLS201206180954_Auto852150"
 		' DatasetStoragePath            = \\proto-3\LTQ_Orb_3\2011_1\
-		' DatasetArchivePath            = \\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1
+		' DatasetArchivePath            = \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2011_1
 
 		' SourceJob2                    = 852151
 		' SourceJob2Dataset             = "XG_lipid_pt5aNeg"
 		' SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
-		' SourceJob2FolderPathArchive   = "\\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
+		' SourceJob2FolderPathArchive   = "\\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
 		Dim strSourceJob2 As String = m_jobParams.GetParam("JobParameters", "SourceJob2")
 		Dim intSourceJob2 As Integer

@@ -1011,7 +1011,7 @@ Public Class clsCodeTest
         objJobParams.SetParam("JobParameters", "DatasetNum", "ratjoint071110_INCAS_MS")
 
         objJobParams.SetParam("JobParameters", "DatasetStoragePath", "\\Proto-10\9T_FTICR_Imaging\2010_4\")
-        objJobParams.SetParam("JobParameters", "DatasetArchivePath", "\\a2.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1")
+        objJobParams.SetParam("JobParameters", "DatasetArchivePath", "\\aurora.emsl.pnl.gov\archive\dmsarch\9T_FTICR_Imaging_1")
         objJobParams.SetParam("JobParameters", "transferFolderPath", "\\proto-10\DMS3_Xfer")
 
         objResources.Setup(m_mgrParams, objJobParams, objStatusTools, myEMSLUtilities)
