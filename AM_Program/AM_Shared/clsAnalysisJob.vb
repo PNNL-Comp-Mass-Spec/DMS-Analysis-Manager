@@ -709,7 +709,7 @@ Public Class clsAnalysisJob
                         Outcome = RequestTaskResult.TaskFound
                     Else
                         'There was an error
-                        Const Msg As String = "clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data"
+                        Const Msg = "clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data"
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                         Outcome = RequestTaskResult.ResultError
                     End If
