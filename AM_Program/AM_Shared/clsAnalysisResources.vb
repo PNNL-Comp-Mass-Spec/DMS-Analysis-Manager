@@ -753,8 +753,8 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
     ''' <param name="targetFolderPath">Destination directory for file copy</param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
-    ''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+    ''' <param name="createStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
+    ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
     Protected Function CopyFileToWorkDir(
@@ -1498,7 +1498,7 @@ Public MustInherit Class clsAnalysisResources
                             matchFound = True
 
                             ' Include the MyEMSL FileID in TempDir so that it is available for downloading
-                            matchingDirectory = MyEMSLReader.DatasetInfo.AppendMyEMSLFileID(folderPath, matchingMyEMSLFiles.First().FileID)
+                            matchingDirectory = DatasetInfoBase.AppendMyEMSLFileID(folderPath, matchingMyEMSLFiles.First().FileID)
                             Exit For
                         End If
 
@@ -1991,7 +1991,7 @@ Public MustInherit Class clsAnalysisResources
                 Next
 
                 If myEmslFileID > 0 Then
-                    Return Path.Combine(ServerPath, MSXmlFoldername, MyEMSLReader.DatasetInfo.AppendMyEMSLFileID(MzXMLFilename, myEmslFileID))
+                    Return Path.Combine(ServerPath, MSXmlFoldername, DatasetInfoBase.AppendMyEMSLFileID(MzXMLFilename, myEmslFileID))
                 End If
             Else
 
@@ -3564,9 +3564,9 @@ Public MustInherit Class clsAnalysisResources
 
             ' Split on commas and populate sharedResultFolderNames
             For Each strItem As String In strSharedResultFolders.Split(","c)
-                strItem = strItem.Trim
-                If strItem.Length > 0 Then
-                    sharedResultFolderNames.Add(strItem)
+                Dim strItemTrimmed = strItem.Trim()
+                If strItemTrimmed.Length > 0 Then
+                    sharedResultFolderNames.Add(strItemTrimmed)
                 End If
             Next
 
@@ -4704,8 +4704,8 @@ Public MustInherit Class clsAnalysisResources
                 Dim fileSpecListCurrent = New List(Of String)
 
                 For Each fileSpec As String In fileSpecList
-                    Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
-                    If dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms(0).ToLower()) Then
+                    Dim fileSpecTerms = fileSpec.Trim().Split(":"c).ToList()
+                    If dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms(0).Trim().ToLower()) Then
                         fileSpecListCurrent = fileSpecList
                         Exit For
                     End If
@@ -4753,18 +4753,18 @@ Public MustInherit Class clsAnalysisResources
                 Dim spectraFileKey = "Job" & dataPkgJob.Key & DATA_PACKAGE_SPECTRA_FILE_SUFFIX
 
                 For Each fileSpec As String In fileSpecListCurrent
-                    Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
-                    Dim sourceFileName = dataPkgJob.Value.Dataset & fileSpecTerms(1)
+                    Dim fileSpecTerms = fileSpec.Trim().Split(":"c).ToList()
+                    Dim sourceFileName = dataPkgJob.Value.Dataset & fileSpecTerms(1).Trim()
                     Dim sourceFolderPath = "??"
 
                     Dim saveMode = "nocopy"
                     If fileSpecTerms.Count > 2 Then
-                        saveMode = fileSpecTerms(2)
+                        saveMode = fileSpecTerms(2).Trim()
                     End If
 
                     Try
 
-                        If Not dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms(0).ToLower()) Then
+                        If Not dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms(0).Trim().ToLower()) Then
                             Continue For
                         End If
 
@@ -4957,7 +4957,7 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         For Each sharedResultFolder In GetSharedResultFolderList()
-            If sharedResultFolder.Trim.Length = 0 Then Continue For
+            If sharedResultFolder.Trim().Length = 0 Then Continue For
             If Not foldersToSearch.Contains(sharedResultFolder) Then
                 foldersToSearch.Add(sharedResultFolder)
             End If
@@ -7292,13 +7292,13 @@ Public MustInherit Class clsAnalysisResources
     ''' <summary>
     ''' This is just a generic function to copy files to the working directory
     ''' </summary>
-    ''' <param name="FileName">Name of file to be copied</param>
-    ''' <param name="SourceFolderPath">Source folder that has the file</param>
+    ''' <param name="fileName">Name of file to be copied</param>
+    ''' <param name="sourceFolderPath">Source folder that has the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
-    Protected Function RetrieveFile(FileName As String, SourceFolderPath As String) As Boolean
+    Protected Function RetrieveFile(fileName As String, sourceFolderPath As String) As Boolean
 
         'Copy the file
-        If Not CopyFileToWorkDir(FileName, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+        If Not CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
             Return False
         End If
 
@@ -7308,23 +7308,27 @@ Public MustInherit Class clsAnalysisResources
 
     ''' <summary>
     ''' This is just a generic function to copy files to the working directory
-    '''	
     ''' </summary>
-    ''' <param name="FileName">Name of file to be copied</param>
-    ''' <param name="SourceFolderPath">Source folder that has the file</param>
+    ''' <param name="fileName">Name of file to be copied</param>
+    ''' <param name="sourceFolderPath">Source folder that has the file</param>
+    ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
-    Protected Function RetrieveFile(FileName As String, SourceFolderPath As String, MaxCopyAttempts As Integer) As Boolean
+    Protected Function RetrieveFile(
+      fileName As String, 
+      sourceFolderPath As String, 
+      maxCopyAttempts As Integer, 
+      optional eLogMsgTypeIfNotFound As clsLogTools.LogLevels = clsLogTools.LogLevels.ERROR) As Boolean
 
         'Copy the file
         If MaxCopyAttempts < 1 Then MaxCopyAttempts = 1
-        If Not CopyFileToWorkDir(FileName, SourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, maxCopyAttempts:=MaxCopyAttempts) Then
+        If Not CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, maxCopyAttempts:=maxCopyAttempts) Then
             Return False
         End If
 
         Return True
 
-    End Function
-
+    End Function    
 
     ''' <summary>
     ''' Finds the _DTA.txt file for this dataset
@@ -7798,10 +7802,14 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
     ''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
     ''' <returns>True if success; false if an error</returns>
-    Protected Function ValidateCDTAFileScanAndCSTags(strSourceFilePath As String, blnReplaceSourceFile As Boolean, blnDeleteSourceFileIfUpdated As Boolean, <Out()> ByRef strOutputFilePath As String) As Boolean
+    Protected Function ValidateCDTAFileScanAndCSTags(
+       strSourceFilePath As String, 
+       blnReplaceSourceFile As Boolean, 
+       blnDeleteSourceFileIfUpdated As Boolean, 
+       strOutputFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
-
+        
         blnSuccess = m_CDTAUtilities.ValidateCDTAFileScanAndCSTags(strSourceFilePath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, strOutputFilePath)
         If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
             m_message = "m_CDTAUtilities.ValidateCDTAFileScanAndCSTags returned False"
