@@ -21,7 +21,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
         For Each fileSpec As String In fileSpecList.ToList()
             Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
-            If fileSpecTerms.Count <= 2 OrElse Not fileSpecTerms(2).ToLower() = "copy" Then
+            If fileSpecTerms.Count <= 2 OrElse Not fileSpecTerms(2).ToLower().Trim() = "copy" Then
                 m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms(1))
             End If
         Next
@@ -123,14 +123,14 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
             Return True
         End If
 
-        Dim success = RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"))
+        Dim success = RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, clsLogTools.LogLevels.DEBUG)
 
         If Not success Then
             ' File not found in the transfer folder
             ' Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
 
             Dim paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", "\\gigasax\DMS_Parameter_Files\AScore")
-            success = RetrieveFile(paramFileName, paramFileFolder)
+            success = RetrieveFile(paramFileName, paramFileFolder, 2, clsLogTools.LogLevels.ERROR)
         End If
 
         If success Then
@@ -143,7 +143,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
     <Obsolete>
     Protected Function GetDatasetID(DatasetName As String) As String
-        Dim DatasetID As Integer = 0
+        Dim DatasetID = 0
 
         If m_jobParams.DatasetInfoList.TryGetValue(DatasetName, DatasetID) Then
             Return DatasetID.ToString()

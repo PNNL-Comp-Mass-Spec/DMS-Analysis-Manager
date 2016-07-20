@@ -87,7 +87,8 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             Dim progLocAScore As String = m_mgrParams.GetParam("AScoreprogloc")
             If Not File.Exists(progLocAScore) Then
                 If String.IsNullOrWhiteSpace(progLocAScore) Then progLocAScore = "Parameter 'AScoreprogloc' not defined for this manager"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find AScore program file: " & progLocAScore)
+                m_message = "Cannot find AScore program file"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLocAScore)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -283,7 +284,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         Try
 
             Dim targetFile = Path.Combine(m_WorkDir, ASCORE_CONSOLE_OUTPUT_PREFIX & ".txt")
-            Using swConcatenatedFile As StreamWriter = New StreamWriter(New FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swConcatenatedFile = New StreamWriter(New FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 Dim jobFolderlist = GetJobFolderList()
                 For Each jobFolder In jobFolderlist
@@ -307,7 +308,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                         Dim runtimeMinutes As Double
                         processingRuntimes.TryGetValue(jobNumber & fileTypeTag, runtimeMinutes)
 
-                        Using srInputFile As StreamReader = New StreamReader(New FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        Using srInputFile = New StreamReader(New FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                             Do While Not srInputFile.EndOfStream
                                 Dim dataLine = srInputFile.ReadLine()
@@ -343,12 +344,12 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     Protected Function ConcatenateResultFiles(fileSuffix As String) As Boolean
 
         Dim currentFile As String = String.Empty
-        Dim firstfileProcessed As Boolean = False
+        Dim firstfileProcessed = False
 
         Try
 
             Dim targetFile = Path.Combine(m_WorkDir, "Concatenated" & fileSuffix)
-            Using swConcatenatedFile As StreamWriter = New StreamWriter(New FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swConcatenatedFile = New StreamWriter(New FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 Dim jobFolderlist = GetJobFolderList()
                 For Each jobFolder In jobFolderlist
@@ -360,7 +361,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                     For Each fiResultFile In filesToCombine
                         currentFile = Path.GetFileName(fiResultFile.FullName)
 
-                        Using srInputFile As StreamReader = New StreamReader(New FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        Using srInputFile = New StreamReader(New FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                             If srInputFile.EndOfStream Then Continue For
 
@@ -400,17 +401,18 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
                         End Using
 
-                    Next
-                Next
+                    Next    ' For Each fiResultFile
+                Next    ' For Each jobFolder
 
             End Using
 
+            Return True
+
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ConcatenateResultFiles, The file could not be concatenated: " & currentFile & ex.Message)
+            m_message = "File could not be concatenated: " & currentFile
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ConcatenateResultFiles, " & m_message & ": " & ex.Message)
             Return False
         End Try
-
-        Return True
 
     End Function
 
@@ -442,7 +444,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -451,7 +453,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
         Dim outputFilePath = Path.Combine(m_WorkDir, "Job_to_Dataset_Map.txt")
 
-        Using swMapFile As StreamWriter = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+        Using swMapFile = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             swMapFile.WriteLine("Job" & ControlChars.Tab & "Tool" & ControlChars.Tab & "Dataset")
 
             For Each job In jobsProcessed
@@ -663,7 +665,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         ' Percent Completion 2%
         ' Percent Completion 2%
 
-        Const REGEX_AScore_PROGRESS As String = "Percent Completion (\d+)\%"
+        Const REGEX_AScore_PROGRESS = "Percent Completion (\d+)\%"
 
         Static reCheckProgress As New Regex(REGEX_AScore_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
@@ -861,6 +863,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
 
         Catch ex As Exception
+            If String.IsNullOrEmpty(m_message) Then m_message = "Error in ProcessSynopsisFiles"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ProcessSynopsisFiles: " & ex.Message)
             Return False
         End Try
