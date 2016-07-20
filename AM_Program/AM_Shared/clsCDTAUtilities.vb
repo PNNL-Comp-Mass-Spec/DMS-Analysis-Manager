@@ -1,7 +1,6 @@
 ﻿Option Strict On
 
 Imports System.IO
-Imports System.Runtime.InteropServices
 Imports System.Threading
 
 Public Class clsCDTAUtilities
@@ -16,7 +15,7 @@ Public Class clsCDTAUtilities
     ''' <returns>True if success; false if an error</returns>
     Public Function RemoveSparseSpectra(strWorkDir As String, strInputFileName As String) As Boolean
 
-        Const MINIMUM_ION_COUNT As Integer = 3
+        Const MINIMUM_ION_COUNT = 3
 
         Dim strSourceFilePath As String
         Dim fiOriginalFile As FileInfo
@@ -26,11 +25,11 @@ Public Class clsCDTAUtilities
 
         Dim blnParentIonLineIsNext As Boolean
 
-        Dim intIonCount As Integer = 0
-        Dim intSpectraParsed As Integer = 0
-        Dim intSpectraRemoved As Integer = 0
+        Dim intIonCount = 0
+        Dim intSpectraParsed = 0
+        Dim intSpectraRemoved = 0
 
-        Dim sbCurrentSpectrum As Text.StringBuilder = New Text.StringBuilder
+        Dim sbCurrentSpectrum = New Text.StringBuilder
 
         Try
 
@@ -55,10 +54,10 @@ Public Class clsCDTAUtilities
             fiUpdatedFile = New FileInfo(strSourceFilePath + ".tmp")
 
             ' Open the input file
-            Using srInFile As StreamReader = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 ' Create the output file
-                Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                Using swOutFile = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                     Do While Not srInFile.EndOfStream
                         strLineIn = srInFile.ReadLine()
@@ -112,9 +111,9 @@ Public Class clsCDTAUtilities
                 End Using
             End Using
 
-            Dim blnSpectraRemoved As Boolean = False
-            Const blnReplaceSourceFile As Boolean = True
-            Const blnDeleteSourceFileIfUpdated As Boolean = True
+            Dim blnSpectraRemoved = False
+            Const blnReplaceSourceFile = True
+            Const blnDeleteSourceFileIfUpdated = True
 
             If intSpectraRemoved > 0 Then
                 ReportInfo("Removed " & intSpectraRemoved & " spectra from " & strInputFileName & " since fewer than " & MINIMUM_ION_COUNT & " ions", 1)
@@ -150,7 +149,7 @@ Public Class clsCDTAUtilities
             If blnReplaceSourceFile Then
                 ' Replace the original file with the new one
                 Dim strOldFilePath As String
-                Dim intAddon As Integer = 0
+                Dim intAddon = 0
 
                 Do
                     strOldFilePath = fiOriginalFile.FullName + ".old"
@@ -197,7 +196,11 @@ Public Class clsCDTAUtilities
     ''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
     ''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
     ''' <returns>True if success; false if an error</returns>
-    Public Function ValidateCDTAFileScanAndCSTags(strSourceFilePath As String, blnReplaceSourceFile As Boolean, blnDeleteSourceFileIfUpdated As Boolean, strOutputFilePath As String) As Boolean
+    Public Function ValidateCDTAFileScanAndCSTags(
+      strSourceFilePath As String, 
+      blnReplaceSourceFile As Boolean, 
+      blnDeleteSourceFileIfUpdated As Boolean, 
+      strOutputFilePath As String) As Boolean
 
         Dim strOutputFilePathTemp As String
         Dim strLineIn As String
@@ -208,8 +211,8 @@ Public Class clsCDTAUtilities
         Dim intScanCount As Integer
         Dim intCharge As Integer
 
-        Dim blnParentIonLineIsNext As Boolean = False
-        Dim blnParentIonLineUpdated As Boolean = False
+        Dim blnParentIonLineIsNext = False
+        Dim blnParentIonLineUpdated = False
 
         Dim blnSuccess As Boolean
 
@@ -248,10 +251,10 @@ Public Class clsCDTAUtilities
             objReader = New MSDataFileReader.clsDtaTextFileReader(False)
 
             ' Open the input file
-            Using srInFile As StreamReader = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 ' Create the output file
-                Using swOutFile As StreamWriter = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                Using swOutFile = New StreamWriter(New FileStream(fiUpdatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                     Do While Not srInFile.EndOfStream
                         strLineIn = srInFile.ReadLine()

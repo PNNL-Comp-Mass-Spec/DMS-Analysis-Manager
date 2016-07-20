@@ -2040,7 +2040,7 @@ Public MustInherit Class clsAnalysisResources
                 ' All MzML files should be gzipped
                 MsXMLFilename &= DOT_MZML_EXTENSION & DOT_GZ_EXTENSION
             Case Else
-                Throw New Exception("Unsupported enum value for MSXMLOutputTypeConstants: " & msXmlType)
+                Throw New ArgumentOutOfRangeException(NameOf(msXmlType), "Unsupported enum value for MSXMLOutputTypeConstants: " & msXmlType)
         End Select
 
         ' Lookup the MSXML cache path (typically \\Proto-11\MSXML_Cache )

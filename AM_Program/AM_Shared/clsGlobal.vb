@@ -292,8 +292,8 @@ Public Class clsGlobal
 
         Dim strMsg As String
 
-        If cmd Is Nothing Then Throw New ArgumentException("cmd is undefined")
-        If String.IsNullOrEmpty(connectionString) Then Throw New ArgumentException("ConnectionString argument cannot be empty")
+        If cmd Is Nothing Then Throw New ArgumentException("command is undefined", NameOf(cmd))
+        If String.IsNullOrEmpty(connectionString) Then Throw New ArgumentException("ConnectionString cannot be empty", NameOf(connectionString))
         If String.IsNullOrEmpty(callingFunction) Then callingFunction = "UnknownCaller"
         If retryCount < 1 Then retryCount = 1
         If timeoutSeconds < 5 Then timeoutSeconds = 5

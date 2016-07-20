@@ -1308,8 +1308,9 @@ Public Class clsCodeTest
         Dim intSettingIndex As Integer
         Dim intMatchIndex As Integer
 
+        blnEtdMode = False
+
         Try
-            blnEtdMode = False
 
             ' Open the parameter file
             ' Look for either of these lines:

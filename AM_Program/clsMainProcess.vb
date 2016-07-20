@@ -1044,7 +1044,7 @@ Public Class clsMainProcess
     ''' <param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function DetermineRecentErrorMessages(intErrorMessageCountToReturn As Integer, <Out()> ByRef strMostRecentJobInfo As String) As String()
+    Public Function DetermineRecentErrorMessages(intErrorMessageCountToReturn As Integer, ByRef strMostRecentJobInfo As String) As String()
 
         ' This regex will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
         Const ERROR_MATCH_REGEX = "^([^,]+),(.+), Error, *$"

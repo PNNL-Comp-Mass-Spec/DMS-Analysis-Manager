@@ -38,7 +38,7 @@ Public Class clsPluginLoader
 
     Public ReadOnly Property Message() As String
         Get
-            Dim s As String = ""
+            Dim s = ""
 
             For Each DumStr As String In m_msgList
                 If s <> "" Then s &= Environment.NewLine
@@ -347,15 +347,17 @@ Public Class clsPluginLoader
     ''' <returns>TRUE for success, FALSE for failure</returns>
     ''' <remarks></remarks>
     Private Function GetPluginInfo(XPath As String, <Out()> ByRef className As String, <Out()> ByRef assyName As String) As Boolean
-        Dim doc As XmlDocument = New XmlDocument
+        Dim doc = New XmlDocument
         Dim nodeList As XmlNodeList
-        Dim n As XmlElement
-        Dim strPluginInfo As String = String.Empty
+        dim strPluginInfo = String.empty
+
+        className = String.Empty
+        assyName = String.Empty
 
         Try
-            If XPath Is Nothing Then XPath = String.Empty
-            If className Is Nothing Then className = String.Empty
-            If assyName Is Nothing Then assyName = String.Empty
+            If String.IsNullOrEmpty(XPath) Then
+                Throw New ArgumentException("XPath must be defined", NameOf(XPath))
+            End If
 
             strPluginInfo = "XPath=""" & XPath & """; className=""" & className & """; assyName=" & assyName & """"
 
@@ -371,14 +373,15 @@ Public Class clsPluginLoader
             If nodeList.Count <> 1 Then
                 Throw New Exception("Could not resolve tool name; " & strPluginInfo)
             End If
-            For Each n In nodeList
+
+            For Each n as XmlElement In nodeList
                 className = n.GetAttribute("Class")
                 assyName = n.GetAttribute("AssemblyFile")
             Next
-            GetPluginInfo = True
+            Return True
         Catch ex As Exception
             m_msgList.Add("Error in GetPluginInfo:" & ex.Message & "; " & strPluginInfo)
-            GetPluginInfo = False
+            Return False
         End Try
     End Function
 
@@ -416,8 +419,8 @@ Public Class clsPluginLoader
 
         Dim xpath As String = "//ToolRunners/ToolRunner[@Tool='" & ToolName.ToLower() & "']"
 
-        Dim className As String = ""
-        Dim assyName As String = ""
+        Dim className = String.Empty
+        Dim assyName = String.Empty
         Dim myToolRunner As IToolRunner = Nothing
 
         If GetPluginInfo(xpath, className, assyName) Then
@@ -452,8 +455,8 @@ Public Class clsPluginLoader
     Public Function GetAnalysisResources(ToolName As String) As IAnalysisResources
 
         Dim xpath As String = "//Resourcers/Resourcer[@Tool='" & ToolName & "']"
-        Dim className As String = ""
-        Dim assyName As String = ""
+        Dim className = String.Empty
+        Dim assyName = String.Empty
         Dim myModule As IAnalysisResources = Nothing
 
         If GetPluginInfo(xpath, className, assyName) Then

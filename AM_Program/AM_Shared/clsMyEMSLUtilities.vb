@@ -9,11 +9,11 @@ Public Class clsMyEMSLUtilities
 
     Private ReadOnly m_IonicZipTools As clsIonicZipTools
 
-    Private WithEvents m_MyEMSLDatasetListInfo As MyEMSLReader.DatasetListInfo
+    Private WithEvents m_MyEMSLDatasetListInfo As DatasetListInfo
 
-    Private ReadOnly m_AllFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
+    Private ReadOnly m_AllFoundMyEMSLFiles As List(Of DatasetFolderOrFileInfo)
 
-    Private m_RecentlyFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
+    Private m_RecentlyFoundMyEMSLFiles As List(Of DatasetFolderOrFileInfo)
     
     Private m_LastMyEMSLProgressWriteTime As DateTime = DateTime.UtcNow
 
@@ -22,7 +22,7 @@ Public Class clsMyEMSLUtilities
     Private ReadOnly m_MostRecentUnzippedFiles As List(Of KeyValuePair(Of String, String))
 
 #Region "Events"
-    Public Event FileDownloaded As MyEMSLReader.FileDownloadedEventHandler
+    Public Event FileDownloaded As FileDownloadedEventHandler
 
 #End Region
 
@@ -46,7 +46,7 @@ Public Class clsMyEMSLUtilities
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public ReadOnly Property FilesToDownload As Dictionary(Of Int64, MyEMSLReader.DownloadQueue.udtFileToDownload)
+    Public ReadOnly Property FilesToDownload As Dictionary(Of Int64, DownloadQueue.udtFileToDownload)
         Get
             Return m_MyEMSLDatasetListInfo.FilesToDownload
         End Get
@@ -58,7 +58,7 @@ Public Class clsMyEMSLUtilities
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public ReadOnly Property AllFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
+    Public ReadOnly Property AllFoundMyEMSLFiles As List(Of DatasetFolderOrFileInfo)
         Get
             Return m_AllFoundMyEMSLFiles
         End Get
@@ -83,7 +83,7 @@ Public Class clsMyEMSLUtilities
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public ReadOnly Property RecentlyFoundMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
+    Public ReadOnly Property RecentlyFoundMyEMSLFiles As List(Of DatasetFolderOrFileInfo)
         Get
             Return m_RecentlyFoundMyEMSLFiles
         End Get
@@ -119,14 +119,14 @@ Public Class clsMyEMSLUtilities
     Public Shared Function AddFileToMyEMSLFolderPath(myEmslFolderPath As String, fileName As String) As String
 
         Dim folderPathClean As String = Nothing
-        Dim myEMSLFileID As Int64 = DatasetInfo.ExtractMyEMSLFileID(myEmslFolderPath, folderPathClean)
+        Dim myEMSLFileID As Int64 = DatasetInfoBase.ExtractMyEMSLFileID(myEmslFolderPath, folderPathClean)
 
         Dim filePath = Path.Combine(folderPathClean, fileName)
 
         If myEMSLFileID = 0 Then
             Return filePath
         Else
-            Return DatasetInfo.AppendMyEMSLFileID(filePath, myEMSLFileID)
+            Return DatasetInfoBase.AppendMyEMSLFileID(filePath, myEMSLFileID)
         End If
 
     End Function
@@ -158,7 +158,7 @@ Public Class clsMyEMSLUtilities
     ''' <remarks></remarks>
     Public Function AddFileToDownloadQueue(encodedFilePath As String, Optional unzipRequired As Boolean = False) As Boolean
 
-        Dim myEMSLFileID As Int64 = DatasetInfo.ExtractMyEMSLFileID(encodedFilePath)
+        Dim myEMSLFileID As Int64 = DatasetInfoBase.ExtractMyEMSLFileID(encodedFilePath)
 
         If myEMSLFileID > 0 Then
 
@@ -232,7 +232,7 @@ Public Class clsMyEMSLUtilities
 
     End Function
 
-    Private Function GetCachedArchivedFileInfo(myEMSLFileID As Int64, <Out()> ByRef matchingFileInfo As MyEMSLReader.ArchivedFileInfo) As Boolean
+    Private Function GetCachedArchivedFileInfo(myEMSLFileID As Int64, <Out()> ByRef matchingFileInfo As ArchivedFileInfo) As Boolean
 
         matchingFileInfo = Nothing
 

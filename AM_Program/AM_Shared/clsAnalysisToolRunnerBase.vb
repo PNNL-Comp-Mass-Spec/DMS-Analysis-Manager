@@ -2223,7 +2223,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim dctErrorSummary = New Dictionary(Of String, Integer)
 
         If String.IsNullOrWhiteSpace(strCacheFolderPath) Then
-            Throw New ArgumentOutOfRangeException(strCacheFolderPath, "Cache folder path cannot be empty")
+            Throw New ArgumentOutOfRangeException(NameOf(strCacheFolderPath), "Cache folder path cannot be empty")
         End If
 
         If strCacheFolderPath.ToLower().StartsWith("\\proto-") Then
