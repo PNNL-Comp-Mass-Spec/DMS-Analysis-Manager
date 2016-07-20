@@ -881,8 +881,16 @@ Public Class clsMSGFDBUtils
         dctParamNames.Add("PMTolerance", "t")
         dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
         dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, "showDecoy")
-        dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")      ' This setting is always set to 0 since we create a _ScanType.txt file that specifies the type of each scan (thus, the value in the parameter file is ignored)
-        dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")          ' This setting is auto-updated based on the instrument class for this dataset, plus also the scan types listed in the _ScanType.txt file (thus, the value in the parameter file is typically ignored)
+
+        ' This setting is nearly always set to 0 since we create a _ScanType.txt file that specifies the type of each scan 
+        ' (thus, the value in the parameter file is ignored); the exception, when it is UVPD (mode 4)
+        dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")
+
+        ' This setting is auto-updated based on the instrument class for this dataset, 
+        ' plus also the scan types listed In the _ScanType.txt file 
+        ' (thus, the value in the parameter file Is typically ignored)
+        dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")
+
         dctParamNames.Add("EnzymeID", "e")
         dctParamNames.Add("C13", "c13")                 ' Used by MS-GFDB
         dctParamNames.Add("IsotopeError", "ti")         ' Used by MSGF+
@@ -1848,7 +1856,7 @@ Public Class clsMSGFDBUtils
 
                             If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 
-                                If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
+                                If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) AndAlso strAssumedScanType.ToUpper() <> "UVPD" Then
                                     ' Override FragmentationMethodID to always be 0
                                     strValue = "0"
 
@@ -1861,9 +1869,11 @@ Public Class clsMSGFDBUtils
                                             strValue = "2"
                                         Case "HCD"
                                             strValue = "3"
+                                        Case "UVPD"
+                                            strValue = "4"
                                         Case Else
                                             ' Invalid string
-                                            mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
+                                            mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, HCD, or UVPD"
                                             ReportError(mErrorMessage)
                                             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                                     End Select
