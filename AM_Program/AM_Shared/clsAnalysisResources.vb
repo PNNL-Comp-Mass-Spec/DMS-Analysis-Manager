@@ -7224,9 +7224,9 @@ Public MustInherit Class clsAnalysisResources
         Dim blnSuccess As Boolean
 
         Try
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving parameter file")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving parameter file " & paramFileName)
 
-            ParFileGen = New ParamFileGenerator.MakeParams.clsMakeParameterFile
+            ParFileGen = New ParamFileGenerator.MakeParams.clsMakeParameterFile()
             ParFileGen.TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
 
             ' Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
