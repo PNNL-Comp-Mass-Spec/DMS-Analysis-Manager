@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
+using System.Reflection.Emit;
 using AnalysisManager_MAC;
 
 namespace AnalysisManager_Mage_PlugIn
@@ -83,13 +84,14 @@ namespace AnalysisManager_Mage_PlugIn
 		}
 
 
-		protected bool ValidateFactors(FileInfo fiResultsDB, out string errorMessage)
+		protected bool ValidateFactors(FileInfo fiResultsDB, out string errorMessage, out string exceptionDetail)
 		{
 			const string FACTOR_URL = "http://dms2.pnl.gov/requested_run_factors/param";
 
 			errorMessage = string.Empty;
+		    exceptionDetail = string.Empty;
 
-			try
+            try
 			{
 				// Verify that table t_factors exists and has columns Dataset_ID and Sample
 				var lstColumns = new List<string>()
@@ -98,7 +100,7 @@ namespace AnalysisManager_Mage_PlugIn
 					"Sample"
 				};
 
-				if (!TableContainsDataAndColumns(fiResultsDB, "t_factors", lstColumns, out errorMessage))
+				if (!TableContainsDataAndColumns(fiResultsDB, "t_factors", lstColumns, out errorMessage, out exceptionDetail))
 				{
 					errorMessage = "table t_factors in Results.db3 " + errorMessage +
 								"; use " + FACTOR_URL + " to define factors named Sample for the datasets in this data package";
@@ -282,7 +284,7 @@ namespace AnalysisManager_Mage_PlugIn
 
 					if (lstIonColumns.Count > 0)
 					{
-						if (!TableContainsDataAndColumns(fiResultsDB, "T_Reporter_Ions", lstIonColumns, out errorMessage))
+						if (!TableContainsDataAndColumns(fiResultsDB, "T_Reporter_Ions", lstIonColumns, out errorMessage, out exceptionDetail))
 						{
 							errorMessage = "table T_Reporter_Ions in Results.db3 " + errorMessage +
 										"; you need to specify " + labelingScheme + " in the ApeWorkflowStepList parameter of the Ape step";
@@ -296,7 +298,8 @@ namespace AnalysisManager_Mage_PlugIn
 			}
 			catch (Exception ex)
 			{
-				errorMessage = "threw an exception while querying (" + ex.Message + ")";
+				errorMessage = "threw an exception while querying";
+				exceptionDetail = ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateFactors: " + ex.Message);
 				return false;
 			}
@@ -342,19 +345,21 @@ namespace AnalysisManager_Mage_PlugIn
 					"Sample",
 					"Ion"
 				};
-				string errorMessage;
 
-				if (!TableContainsDataAndColumns(fiResultsDB, "T_alias", lstColumns, out errorMessage))
+				string errorMessage;
+			    string exceptionDetail;
+
+                if (!TableContainsDataAndColumns(fiResultsDB, "T_alias", lstColumns, out errorMessage, out exceptionDetail))
 				{
 					m_message = "Table T_alias in Results.db3 " + errorMessage +
-								"; place a valid T_alias.txt file in the the data package's ImportFiles folder";
+								"; place a valid T_alias.txt file in the the data package's ImportFiles folder; " + exceptionDetail;
 					return false;
 				}
 
 
-				if (!ValidateFactors(fiResultsDB, out errorMessage))
+				if (!ValidateFactors(fiResultsDB, out errorMessage, out exceptionDetail))
 				{
-					m_message = "Error validating factors: " + errorMessage;
+					m_message = "Error validating factors: " + errorMessage + "; " + exceptionDetail;
 					return false;
 				}
 

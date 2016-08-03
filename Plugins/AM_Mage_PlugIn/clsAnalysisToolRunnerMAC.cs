@@ -186,19 +186,26 @@ namespace AnalysisManager_MAC {
 
         }
 
-		/// <summary>
-		/// Confirms that the table has 1 or more rows and has the specified columns
-		/// </summary>
-		/// <param name="fiSqlLiteDatabase"></param>
-		/// <param name="tableName"></param>
-		/// <param name="lstColumns"></param>
-		/// <param name="errorMessage">Error message</param>
-		/// <returns></returns>
-		protected bool TableContainsDataAndColumns(FileInfo fiSqlLiteDatabase, string tableName, List<string> lstColumns, out string errorMessage)
+        /// <summary>
+        /// Confirms that the table has 1 or more rows and has the specified columns
+        /// </summary>
+        /// <param name="fiSqlLiteDatabase"></param>
+        /// <param name="tableName"></param>
+        /// <param name="lstColumns"></param>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="exceptionDetail">Exception details (empty if errorMessage is empty)</param>
+        /// <returns></returns>
+        protected bool TableContainsDataAndColumns(
+          FileInfo fiSqlLiteDatabase, 
+          string tableName, 
+          IEnumerable<string> lstColumns, 
+          out string errorMessage,
+          out string exceptionDetail)
 		{
 			errorMessage = string.Empty;
-
-			try
+            exceptionDetail = string.Empty;
+            
+            try
 			{
 				string connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
 				using (var conn = new SQLiteConnection(connectionString))
@@ -236,7 +243,8 @@ namespace AnalysisManager_MAC {
 			}
 			catch (Exception ex)
 			{
-				errorMessage = "threw an exception while querying (" + ex.Message + ")";
+				errorMessage = "threw an exception while querying";
+			    exceptionDetail = ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception confirming table's columns in SqLite file: " + ex.Message);
 				return false;
 			}
