@@ -4,13 +4,15 @@ using System.IO;
 using Mage;
 using AnalysisManagerBase;
 
-namespace AnalysisManager_Mage_PlugIn {
+namespace AnalysisManager_Mage_PlugIn
+{
 
     /// <summary>
     /// Class that defines basic Mage pipelines and functions that 
     /// provide sub-operations that make up operations that Mac Mage plug-in can execute
     /// </summary>
-    public class MageAMFileProcessingPipelines : MageAMPipelineBase {
+    public class MageAMFileProcessingPipelines : MageAMPipelineBase
+    {
 
         #region Constructors
 
@@ -20,7 +22,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
         public MageAMFileProcessingPipelines(IJobParams jobParms, IMgrParams mgrParms)
-            : base(jobParms, mgrParms) {
+            : base(jobParms, mgrParms)
+        {
         }
 
         #endregion
@@ -33,7 +36,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="fileNameSelector">File name selector to select result files from list of jobs</param>
         /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
         /// <param name="fileProcessName">Process to apply to file content extraction</param>
-        public void ImportJobResults(String jobListQuery, string fileNameSelector, string tableName, string fileProcessName) {
+        public void ImportJobResults(String jobListQuery, string fileNameSelector, string tableName, string fileProcessName)
+        {
 
             // get list of jobs from data package that have ReporterIon results 
             BaseModule jobList = GetListOfDMSItems(jobListQuery);
@@ -56,7 +60,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="jobListQuery">Query to run to get list of jobs</param>
         /// <param name="fileNameSelector">File name selector to select result files from list of jobs</param>
         /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
-        public void ImportFileList(String jobListQuery, string fileNameSelector, string tableName) {
+        public void ImportFileList(String jobListQuery, string fileNameSelector, string tableName)
+        {
 
             // get list of datasets from jobs from data package (Note: NOT the data package dataset list)
             var jobList = GetListOfDMSItems(jobListQuery);
@@ -78,7 +83,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="inputFolderPath">Path to folder containing files to be imported</param>
         /// <param name="fileNameList">List of specific file names that will be imported (ignored if blank)</param>
 		/// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>
-        public void ImportFilesInFolderToSQLite(string inputFolderPath, string fileNameList, string importMode) {
+        public void ImportFilesInFolderToSQLite(string inputFolderPath, string fileNameList, string importMode)
+        {
 
             var reader = new FileListFilter();
             reader.AddFolderPath(inputFolderPath);
@@ -93,7 +99,8 @@ namespace AnalysisManager_Mage_PlugIn {
             ConnectPipelineToStatusHandlers(fileListPipeline);
             fileListPipeline.RunRoot(null);
 
-            var contentProc = new MageAMFileContentProcessor(this) {
+            var contentProc = new MageAMFileContentProcessor(this)
+            {
                 SourceFolderColumnName = reader.SourceFolderColumnName,
                 SourceFileColumnName = reader.FileColumnName,
                 Operation = importMode,
@@ -111,7 +118,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="inputFilePath">Full path to file whose contents are will be imported</param>
         /// <param name="dbFilePath">Full path to SQLite DB file into which file contents will be imported</param>
         /// <param name="dbTableName">Name of table in SQLite DB that will receive imported results</param>
-        public void ImportFileToSQLite(string inputFilePath, string dbFilePath, string dbTableName) {
+        public void ImportFileToSQLite(string inputFilePath, string dbFilePath, string dbTableName)
+        {
             var reader = new DelimitedFileReader { FilePath = inputFilePath };
 
             var writer = new SQLiteWriter();
@@ -133,7 +141,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="dbTableName">Name of table in SQLite DB that will receive imported results</param>
         /// <param name="outputColumnList">Mage output column spec</param>
         /// <param name="context">Mage context (dictionary to supply lookup values for new output columns)</param>
-        public void ImportFileToSQLiteWithColumnMods(string inputFilePath, string dbFilePath, string dbTableName, string outputColumnList, Dictionary<string, string> context) {
+        public void ImportFileToSQLiteWithColumnMods(string inputFilePath, string dbFilePath, string dbTableName, string outputColumnList, Dictionary<string, string> context)
+        {
             var reader = new DelimitedFileReader { FilePath = inputFilePath };
 
             BaseModule filter = new NullFilter();
@@ -154,7 +163,7 @@ namespace AnalysisManager_Mage_PlugIn {
         {
             var reader = new DelimitedFileReader { FilePath = inputFilePath };
 
-            var filter = new MissingValueFilter {FillColumnName = "Group_Num"};
+            var filter = new MissingValueFilter { FillColumnName = "Group_Num" };
 
             var writer = new SQLiteWriter();
             var tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
@@ -173,11 +182,13 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="fileNameSelector">File name selector to select files to be included in output list</param>
         /// <param name="passThroughColumns">List of columns from source object to pass through to output list object</param>
         /// <returns>Mage object containing list of files</returns>
-        public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns) {
+        public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns)
+        {
             var sinkObject = new SimpleSink();
 
             // create file filter module and initialize it
-            var fileFilter = new FileListFilter {
+            var fileFilter = new FileListFilter
+            {
                 FileNameSelector = fileNameSelector,
                 SourceFolderColumnName = "Folder",
                 FileColumnName = "Name",
@@ -199,12 +210,14 @@ namespace AnalysisManager_Mage_PlugIn {
         /// to create and populate a factors table in a SQLite database (in crosstab format)
         /// </summary>
         /// <param name="sql">Query to use a source of factors</param>
-        public void GetDatasetFactors(string sql) {
+        public void GetDatasetFactors(string sql)
+        {
 
             // first pipeline - get factors crosstab to sink object
             var reader = MakeDBReaderModule(sql);
 
-            var crosstab = new CrosstabFilter {
+            var crosstab = new CrosstabFilter
+            {
                 EntityNameCol = "Dataset",
                 EntityIDCol = "Dataset_ID",
                 FactorNameCol = "Factor",
@@ -218,18 +231,22 @@ namespace AnalysisManager_Mage_PlugIn {
             readPipeline.RunRoot(null);
 
             // if there are factors, add them to results database
-            if (sink.Rows.Count > 0) {
+            if (sink.Rows.Count > 0)
+            {
                 // second pipeline - write factors to SQLite DB
                 // (and add "Alias" factor if not already present in factors)
                 ProcessingPipeline writePipeline;
 
                 var writer = new SQLiteWriter { DbPath = Path.Combine(WorkingDirPath, ResultsDBFileName), TableName = "t_factors" };
 
-                if (!sink.ColumnIndex.ContainsKey("Alias")) {
+                if (!sink.ColumnIndex.ContainsKey("Alias"))
+                {
                     var filter = new ModuleAddAlias();
                     filter.SetupAliasLookup(sink);
                     writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, filter, writer);
-                } else {
+                }
+                else
+                {
                     writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, writer);
                 }
 
@@ -244,7 +261,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="sql"></param>
         /// <param name="tableName"> </param>
-        public void ImportJobList(string sql, string tableName) {
+        public void ImportJobList(string sql, string tableName)
+        {
             var jobList = GetListOfDMSItems(sql);
             var writer = new SQLiteWriter { DbPath = GetResultsDBFilePath(), TableName = tableName };
             ProcessingPipeline.Assemble("JobListPipeline", jobList, writer).RunRoot(null);

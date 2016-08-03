@@ -8,208 +8,208 @@ using System.Text.RegularExpressions;
 namespace AnalysisManager_Mage_PlugIn
 {
 
-	public class MageAMPipelineBase
-	{
+    public class MageAMPipelineBase
+    {
 
-		#region Member Variables
+        #region Member Variables
 
-		protected readonly string ResultsDBFileName;
+        protected readonly string ResultsDBFileName;
 
-		protected readonly string WorkingDirPath;
+        protected readonly string WorkingDirPath;
 
-		protected readonly IJobParams JobParms;
+        protected readonly IJobParams JobParms;
 
-		protected readonly IMgrParams MgrParams;
+        protected readonly IMgrParams MgrParams;
 
-		/// <summary>
-		/// Pipeline queue for running the multiple pipelines that make up the workflows for this module
-		/// </summary>
-		protected PipelineQueue BasePipelineQueue = new PipelineQueue();
-
-
-		/// <summary>
-		/// Where extracted results will be delivered
-		/// </summary>
-		protected DestinationType ResultsDestination;
-
-		protected readonly Regex mProcessingResults = new Regex(@"Extracting results for job (\d+)", RegexOptions.Compiled);
-		
-		protected int mLastProgressJob;
-		protected DateTime mLastProgressTime = DateTime.UtcNow;
-
-		#endregion
-
-		#region Properties
-
-		public string WorkingDir
-		{
-			get
-			{
-				return WorkingDirPath;
-			}
-		}
-
-		#endregion
-
-		#region Constructors
-
-		public MageAMPipelineBase(IJobParams jobParms, IMgrParams mgrParms)
-		{
-			JobParms = jobParms;
-			MgrParams = mgrParms;
-			ResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
-			WorkingDirPath = RequireMgrParam("workdir");
-		}
-
-		#endregion
-
-		#region Utility Methods
-
-		public string GetResultsDBFilePath()
-		{
-			var dbFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
-			return dbFilePath;
-		}
-
-		public string RequireMgrParam(string paramName)
-		{
-			var val = MgrParams.GetParam(paramName);
-			if (string.IsNullOrWhiteSpace(val))
-			{
-				throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));
-			}
-			return val;
-		}
-
-		public string RequireJobParam(string paramName)
-		{
-			var val = JobParms.GetParam(paramName);
-			if (string.IsNullOrWhiteSpace(val))
-			{
-				throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
-			}
-			return val;
-		}
-
-		public string GetJobParam(string paramName)
-		{
-			return JobParms.GetParam(paramName);
-		}
-
-		public string GetJobParam(string paramName, string defaultValue)
-		{
-			var val = JobParms.GetParam(paramName);
-			if (string.IsNullOrWhiteSpace(val))
-				val = defaultValue;
-			return val;
-		}
-
-		/// <summary>
-		/// Create a new MSSQLReader module to do a specific query
-		/// </summary>
-		/// <param name="sql">Query to use</param>
-		/// <returns></returns>
-		protected MSSQLReader MakeDBReaderModule(String sql)
-		{
-			var reader = new MSSQLReader { ConnectionString = RequireMgrParam("ConnectionString"), SQLText = sql };
-			return reader;
-		}
-
-		/// <summary>
-		/// Get a list of items from DMS
-		/// </summary>
-		/// <param name="sql">Query to use a source of jobs</param>
-		/// <returns>A Mage module containing list of jobs</returns>
-		public SimpleSink GetListOfDMSItems(string sql)
-		{
-			var itemList = new SimpleSink();
-
-			var reader = MakeDBReaderModule(sql);
-
-			var pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
-			ConnectPipelineToStatusHandlers(pipeline);
-			pipeline.RunRoot(null);
-
-			return itemList;
-		}
-
-		/// <summary>
-		/// Copy the results SQLite database file produced by the previous job step (if it exists)
-		/// to the working directory
-		/// </summary>
-		public void GetPriorResultsToWorkDir()
-		{
-			var dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
-
-			var stepInputFolderName = GetJobParam("StepInputFolderName");
-			if (stepInputFolderName != "")
-			{
-				var priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, ResultsDBFileName);
-				if (File.Exists(priorResultsDBFilePath))
-				{
-					var workingFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
-					File.Copy(priorResultsDBFilePath, workingFilePath, true);
-				}
-			}
-		}
-
-		#endregion
-
-		#region Pipeline Event Handler Utilities
-
-		protected void ConnectPipelineToStatusHandlers(ProcessingPipeline pipeline)
-		{
-			pipeline.OnStatusMessageUpdated += HandlePipelineUpdate;
-			pipeline.OnRunCompleted += HandlePipelineCompletion;
-		}
-
-		protected void ConnectPipelineQueueToStatusHandlers(PipelineQueue pipelineQueue)
-		{
-			pipelineQueue.OnRunCompleted += HandlePipelineUpdate;
-			pipelineQueue.OnPipelineStarted += HandlePipelineCompletion;
-		}
-
-		#endregion
-
-		#region Pipeline Update Message Handlers
-
-		private void HandlePipelineUpdate(object sender, MageStatusEventArgs args)
-		{
-			if (args.Message.StartsWith("preparing to insert tablular data") ||
-				args.Message.StartsWith("Starting to insert block of rows") ||
-				args.Message.StartsWith("finished inserting block of rows"))
-				return;
-
-			var reMatch = mProcessingResults.Match(args.Message);
-			if (reMatch.Success)
-			{
-				int job;
-				if (int.TryParse(reMatch.Groups[1].Value, out job))
-				{
-					// ReSharper disable once RedundantCheckBeforeAssignment
-					if (mLastProgressJob != job)
-					{
-						mLastProgressJob = job;						
-					}
-					else
-					{
-						 if (DateTime.UtcNow.Subtract(mLastProgressTime).TotalSeconds < 5)
-							 return;
-					}
-					mLastProgressTime = DateTime.UtcNow;
-				}
-			}
-
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, args.Message);
-		}
-
-		private void HandlePipelineCompletion(object sender, MageStatusEventArgs args)
-		{
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, args.Message);
-		}
+        /// <summary>
+        /// Pipeline queue for running the multiple pipelines that make up the workflows for this module
+        /// </summary>
+        protected PipelineQueue BasePipelineQueue = new PipelineQueue();
 
 
-		#endregion
+        /// <summary>
+        /// Where extracted results will be delivered
+        /// </summary>
+        protected DestinationType ResultsDestination;
 
-	}
+        protected readonly Regex mProcessingResults = new Regex(@"Extracting results for job (\d+)", RegexOptions.Compiled);
+
+        protected int mLastProgressJob;
+        protected DateTime mLastProgressTime = DateTime.UtcNow;
+
+        #endregion
+
+        #region Properties
+
+        public string WorkingDir
+        {
+            get
+            {
+                return WorkingDirPath;
+            }
+        }
+
+        #endregion
+
+        #region Constructors
+
+        public MageAMPipelineBase(IJobParams jobParms, IMgrParams mgrParms)
+        {
+            JobParms = jobParms;
+            MgrParams = mgrParms;
+            ResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
+            WorkingDirPath = RequireMgrParam("workdir");
+        }
+
+        #endregion
+
+        #region Utility Methods
+
+        public string GetResultsDBFilePath()
+        {
+            var dbFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
+            return dbFilePath;
+        }
+
+        public string RequireMgrParam(string paramName)
+        {
+            var val = MgrParams.GetParam(paramName);
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));
+            }
+            return val;
+        }
+
+        public string RequireJobParam(string paramName)
+        {
+            var val = JobParms.GetParam(paramName);
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
+            }
+            return val;
+        }
+
+        public string GetJobParam(string paramName)
+        {
+            return JobParms.GetParam(paramName);
+        }
+
+        public string GetJobParam(string paramName, string defaultValue)
+        {
+            var val = JobParms.GetParam(paramName);
+            if (string.IsNullOrWhiteSpace(val))
+                val = defaultValue;
+            return val;
+        }
+
+        /// <summary>
+        /// Create a new MSSQLReader module to do a specific query
+        /// </summary>
+        /// <param name="sql">Query to use</param>
+        /// <returns></returns>
+        protected MSSQLReader MakeDBReaderModule(String sql)
+        {
+            var reader = new MSSQLReader { ConnectionString = RequireMgrParam("ConnectionString"), SQLText = sql };
+            return reader;
+        }
+
+        /// <summary>
+        /// Get a list of items from DMS
+        /// </summary>
+        /// <param name="sql">Query to use a source of jobs</param>
+        /// <returns>A Mage module containing list of jobs</returns>
+        public SimpleSink GetListOfDMSItems(string sql)
+        {
+            var itemList = new SimpleSink();
+
+            var reader = MakeDBReaderModule(sql);
+
+            var pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
+            ConnectPipelineToStatusHandlers(pipeline);
+            pipeline.RunRoot(null);
+
+            return itemList;
+        }
+
+        /// <summary>
+        /// Copy the results SQLite database file produced by the previous job step (if it exists)
+        /// to the working directory
+        /// </summary>
+        public void GetPriorResultsToWorkDir()
+        {
+            var dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
+
+            var stepInputFolderName = GetJobParam("StepInputFolderName");
+            if (stepInputFolderName != "")
+            {
+                var priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, ResultsDBFileName);
+                if (File.Exists(priorResultsDBFilePath))
+                {
+                    var workingFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
+                    File.Copy(priorResultsDBFilePath, workingFilePath, true);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Pipeline Event Handler Utilities
+
+        protected void ConnectPipelineToStatusHandlers(ProcessingPipeline pipeline)
+        {
+            pipeline.OnStatusMessageUpdated += HandlePipelineUpdate;
+            pipeline.OnRunCompleted += HandlePipelineCompletion;
+        }
+
+        protected void ConnectPipelineQueueToStatusHandlers(PipelineQueue pipelineQueue)
+        {
+            pipelineQueue.OnRunCompleted += HandlePipelineUpdate;
+            pipelineQueue.OnPipelineStarted += HandlePipelineCompletion;
+        }
+
+        #endregion
+
+        #region Pipeline Update Message Handlers
+
+        private void HandlePipelineUpdate(object sender, MageStatusEventArgs args)
+        {
+            if (args.Message.StartsWith("preparing to insert tablular data") ||
+                args.Message.StartsWith("Starting to insert block of rows") ||
+                args.Message.StartsWith("finished inserting block of rows"))
+                return;
+
+            var reMatch = mProcessingResults.Match(args.Message);
+            if (reMatch.Success)
+            {
+                int job;
+                if (int.TryParse(reMatch.Groups[1].Value, out job))
+                {
+                    // ReSharper disable once RedundantCheckBeforeAssignment
+                    if (mLastProgressJob != job)
+                    {
+                        mLastProgressJob = job;
+                    }
+                    else
+                    {
+                        if (DateTime.UtcNow.Subtract(mLastProgressTime).TotalSeconds < 5)
+                            return;
+                    }
+                    mLastProgressTime = DateTime.UtcNow;
+                }
+            }
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, args.Message);
+        }
+
+        private void HandlePipelineCompletion(object sender, MageStatusEventArgs args)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, args.Message);
+        }
+
+
+        #endregion
+
+    }
 }

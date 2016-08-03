@@ -9,259 +9,259 @@ namespace AnalysisManager_Mage_PlugIn
 {
 
     // ReSharper disable once UnusedMember.Global
-	public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerMAC
-	{
+    public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerMAC
+    {
 
-		/// <summary>
-		/// Sequentially run the Mage operations listed in "MageOperations" parameter
-		/// </summary>
-		protected override bool RunMACTool()
-		{
-			//Change the name of the log file for the local log file to the plug in log filename
-			var logFileName = Path.Combine(m_WorkDir, "Mage_Log");
-			log4net.GlobalContext.Properties["LogName"] = logFileName;
-			clsLogTools.ChangeLogFileName(logFileName);
+        /// <summary>
+        /// Sequentially run the Mage operations listed in "MageOperations" parameter
+        /// </summary>
+        protected override bool RunMACTool()
+        {
+            //Change the name of the log file for the local log file to the plug in log filename
+            var logFileName = Path.Combine(m_WorkDir, "Mage_Log");
+            log4net.GlobalContext.Properties["LogName"] = logFileName;
+            clsLogTools.ChangeLogFileName(logFileName);
 
-			// run the appropriate Mage pipeline(s) according to operations list parameter
-			var mageOperations = m_jobParams.GetParam("MageOperations");
-			var ops = new MageAMOperations(m_jobParams, m_mgrParams);
-			var success = ops.RunMageOperations(mageOperations);
+            // run the appropriate Mage pipeline(s) according to operations list parameter
+            var mageOperations = m_jobParams.GetParam("MageOperations");
+            var ops = new MageAMOperations(m_jobParams, m_mgrParams);
+            var success = ops.RunMageOperations(mageOperations);
 
-			// Change the name of the log file back to the analysis manager log file
-			logFileName = m_mgrParams.GetParam("logfilename");
-			log4net.GlobalContext.Properties["LogName"] = logFileName;
-			clsLogTools.ChangeLogFileName(logFileName);
+            // Change the name of the log file back to the analysis manager log file
+            logFileName = m_mgrParams.GetParam("logfilename");
+            log4net.GlobalContext.Properties["LogName"] = logFileName;
+            clsLogTools.ChangeLogFileName(logFileName);
 
-			if (!string.IsNullOrEmpty(ops.WarningMsg))
-			{
-				m_EvalMessage = ops.WarningMsg;
-			}
+            if (!string.IsNullOrEmpty(ops.WarningMsg))
+            {
+                m_EvalMessage = ops.WarningMsg;
+            }
 
-			if (!success)
-				return false;
+            if (!success)
+                return false;
 
-			// Make sure the Results.db3 file was created
-			var fiResultsDB = new FileInfo(Path.Combine(m_WorkDir, "Results.db3"));
-			if (!fiResultsDB.Exists)
-			{
-				m_message = "Results.db3 file was not created";
-				return false;
-			}
+            // Make sure the Results.db3 file was created
+            var fiResultsDB = new FileInfo(Path.Combine(m_WorkDir, "Results.db3"));
+            if (!fiResultsDB.Exists)
+            {
+                m_message = "Results.db3 file was not created";
+                return false;
+            }
 
-			success = ValidateSqliteDB(mageOperations, fiResultsDB);
+            success = ValidateSqliteDB(mageOperations, fiResultsDB);
 
-			return success;
-		}
+            return success;
+        }
 
 
-		/// <summary>
-		/// Get name and version info for primary Mage MAC tool assembly
-		/// </summary>
-		/// <returns></returns>
-		protected override string GetToolNameAndVersion()
-		{
-			var strToolVersionInfo = string.Empty;
-			var oAssemblyName = System.Reflection.Assembly.Load("Mage").GetName();
-			var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
-			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
-			return strToolVersionInfo;
-		}
+        /// <summary>
+        /// Get name and version info for primary Mage MAC tool assembly
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetToolNameAndVersion()
+        {
+            var strToolVersionInfo = string.Empty;
+            var oAssemblyName = System.Reflection.Assembly.Load("Mage").GetName();
+            var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
+            strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+            return strToolVersionInfo;
+        }
 
-		/// <summary>
-		/// Get file version info for supplemental Mage assemblies
-		/// </summary>
-		/// <returns>List of file info for supplemental DLLs</returns>
-		protected override List<FileInfo> GetToolSupplementalVersionInfo()
-		{
-			var ioToolFiles = new List<FileInfo>
+        /// <summary>
+        /// Get file version info for supplemental Mage assemblies
+        /// </summary>
+        /// <returns>List of file info for supplemental DLLs</returns>
+        protected override List<FileInfo> GetToolSupplementalVersionInfo()
+        {
+            var ioToolFiles = new List<FileInfo>
                                   {
                                       new FileInfo("Mage.dll"),
                                       new FileInfo("MageExtContentFilters.dll"),
                                       new FileInfo("MageExtExtractionFilters.dll")
                                   };
-			return ioToolFiles;
-		}
+            return ioToolFiles;
+        }
 
 
-		protected bool ValidateFactors(FileInfo fiResultsDB, out string errorMessage, out string exceptionDetail)
-		{
-			const string FACTOR_URL = "http://dms2.pnl.gov/requested_run_factors/param";
+        protected bool ValidateFactors(FileInfo fiResultsDB, out string errorMessage, out string exceptionDetail)
+        {
+            const string FACTOR_URL = "http://dms2.pnl.gov/requested_run_factors/param";
 
             try
-			{
-				// Verify that table t_factors exists and has columns Dataset_ID and Sample
-				var lstColumns = new List<string>()
-				{
-					"Dataset_ID",
-					"Sample"
-				};
+            {
+                // Verify that table t_factors exists and has columns Dataset_ID and Sample
+                var lstColumns = new List<string>()
+                {
+                    "Dataset_ID",
+                    "Sample"
+                };
 
-				if (!TableContainsDataAndColumns(fiResultsDB, "t_factors", lstColumns, out errorMessage, out exceptionDetail))
-				{
-					errorMessage = "table t_factors in Results.db3 " + errorMessage +
-								"; use " + FACTOR_URL + " to define factors named Sample for the datasets in this data package";
-					return false;
-				}
+                if (!TableContainsDataAndColumns(fiResultsDB, "t_factors", lstColumns, out errorMessage, out exceptionDetail))
+                {
+                    errorMessage = "table t_factors in Results.db3 " + errorMessage +
+                                "; use " + FACTOR_URL + " to define factors named Sample for the datasets in this data package";
+                    return false;
+                }
 
-				// Lookup the Dataset_ID values defined in t_results
-				var datasetIDs = new List<int>();
+                // Lookup the Dataset_ID values defined in t_results
+                var datasetIDs = new List<int>();
 
-				var connectionString = "Data Source = " + fiResultsDB.FullName + "; Version=3;";
-				using (var conn = new SQLiteConnection(connectionString))
-				{
-					conn.Open();
+                var connectionString = "Data Source = " + fiResultsDB.FullName + "; Version=3;";
+                using (var conn = new SQLiteConnection(connectionString))
+                {
+                    conn.Open();
 
-					var query = "SELECT Distinct DPJ.dataset_id " +
-								   "FROM t_results R " +
-										 " INNER JOIN t_data_package_analysis_jobs DPJ " +
-										   " ON R.job = DPJ.job";
+                    var query = "SELECT Distinct DPJ.dataset_id " +
+                                   "FROM t_results R " +
+                                         " INNER JOIN t_data_package_analysis_jobs DPJ " +
+                                           " ON R.job = DPJ.job";
 
-					using (var cmd = new SQLiteCommand(query, conn))
-					{
-						var drReader = cmd.ExecuteReader();
+                    using (var cmd = new SQLiteCommand(query, conn))
+                    {
+                        var drReader = cmd.ExecuteReader();
 
-						if (!drReader.HasRows)
-						{
-							errorMessage = "no results joining t_results and t_data_package_analysis_jobs on Job";
-							return false;
-						}
+                        if (!drReader.HasRows)
+                        {
+                            errorMessage = "no results joining t_results and t_data_package_analysis_jobs on Job";
+                            return false;
+                        }
 
-						while (drReader.Read())
-						{
-							datasetIDs.Add(drReader.GetInt32(0));
-						}
-					}					
+                        while (drReader.Read())
+                        {
+                            datasetIDs.Add(drReader.GetInt32(0));
+                        }
+                    }
 
-					// Lookup the Sample Names defined in t_factors
-					var sampleNames = new List<string>();
+                    // Lookup the Sample Names defined in t_factors
+                    var sampleNames = new List<string>();
 
-					query = "SELECT Dataset_ID, Sample " +
-							"FROM t_factors " +
-							"WHERE Dataset_ID IN (" + string.Join(",", datasetIDs) + ")";
+                    query = "SELECT Dataset_ID, Sample " +
+                            "FROM t_factors " +
+                            "WHERE Dataset_ID IN (" + string.Join(",", datasetIDs) + ")";
 
-					using (var cmd = new SQLiteCommand(query, conn))
-					{
-						var drReader = cmd.ExecuteReader();
+                    using (var cmd = new SQLiteCommand(query, conn))
+                    {
+                        var drReader = cmd.ExecuteReader();
 
-						if (!drReader.HasRows)
-						{
-							errorMessage = "no results querying t_factors with the DatasetIDs in t_results";
-							return false;
-						}
+                        if (!drReader.HasRows)
+                        {
+                            errorMessage = "no results querying t_factors with the DatasetIDs in t_results";
+                            return false;
+                        }
 
-						var validDatasetIDs = 0;
+                        var validDatasetIDs = 0;
 
-						while (drReader.Read())
-						{
-							
-							var sampleName = drReader.GetString(1);
-							if (!sampleNames.Contains(sampleName, StringComparer.CurrentCultureIgnoreCase))
-								sampleNames.Add(sampleName);
+                        while (drReader.Read())
+                        {
 
-							validDatasetIDs++;
-						}
+                            var sampleName = drReader.GetString(1);
+                            if (!sampleNames.Contains(sampleName, StringComparer.CurrentCultureIgnoreCase))
+                                sampleNames.Add(sampleName);
 
-						if (validDatasetIDs < datasetIDs.Count)
-						{
-							errorMessage = "Of the " + datasetIDs.Count + " datasets in t_results, " + (datasetIDs.Count - validDatasetIDs) +
-							               " do not have a factor named Sample defined in DMS; go to " + FACTOR_URL + " to make changes";
-							return false;
-						}
-					}
+                            validDatasetIDs++;
+                        }
 
-					// Make sure the sample names in sampleNames correspond to the names defined in t_alias
-					// At the same time, count the number of ions defined for each sample
-					var sampleToIonMapping = new Dictionary<string, byte>(StringComparer.CurrentCultureIgnoreCase);
+                        if (validDatasetIDs < datasetIDs.Count)
+                        {
+                            errorMessage = "Of the " + datasetIDs.Count + " datasets in t_results, " + (datasetIDs.Count - validDatasetIDs) +
+                                           " do not have a factor named Sample defined in DMS; go to " + FACTOR_URL + " to make changes";
+                            return false;
+                        }
+                    }
 
-					query = "SELECT Sample, Count(Ion) as Ions " +
-					        "FROM T_alias " +
-					        "GROUP BY Sample ";
+                    // Make sure the sample names in sampleNames correspond to the names defined in t_alias
+                    // At the same time, count the number of ions defined for each sample
+                    var sampleToIonMapping = new Dictionary<string, byte>(StringComparer.CurrentCultureIgnoreCase);
 
-					using (var cmd = new SQLiteCommand(query, conn))
-					{
-						var drReader = cmd.ExecuteReader();
+                    query = "SELECT Sample, Count(Ion) as Ions " +
+                            "FROM T_alias " +
+                            "GROUP BY Sample ";
 
-						if (!drReader.HasRows)
-						{
-							errorMessage = "no results querying t_factors with the DatasetIDs in t_results";
-							return false;
-						}
+                    using (var cmd = new SQLiteCommand(query, conn))
+                    {
+                        var drReader = cmd.ExecuteReader();
 
-						while (drReader.Read())
-						{
+                        if (!drReader.HasRows)
+                        {
+                            errorMessage = "no results querying t_factors with the DatasetIDs in t_results";
+                            return false;
+                        }
 
-							var sampleName = drReader.GetString(0);
-							var ionCount = drReader.GetByte(1);
+                        while (drReader.Read())
+                        {
 
-							sampleToIonMapping.Add(sampleName, ionCount);
+                            var sampleName = drReader.GetString(0);
+                            var ionCount = drReader.GetByte(1);
 
-						}
-					}
+                            sampleToIonMapping.Add(sampleName, ionCount);
 
-					var lstIonCounts = new List<byte>();
+                        }
+                    }
 
-					foreach (var sampleName in sampleNames)
-					{
-						byte ionCount;
-						if (!sampleToIonMapping.TryGetValue(sampleName, out ionCount))
-						{
-							errorMessage = "t_alias table does not have an entry for Sample '" + sampleName + "'; " +
-							               "this Sample name is a dataset factor and must be defined in the t_alias.txt file";
-							return false;
-						}
+                    var lstIonCounts = new List<byte>();
 
-						lstIonCounts.Add(ionCount);
-					}
+                    foreach (var sampleName in sampleNames)
+                    {
+                        byte ionCount;
+                        if (!sampleToIonMapping.TryGetValue(sampleName, out ionCount))
+                        {
+                            errorMessage = "t_alias table does not have an entry for Sample '" + sampleName + "'; " +
+                                           "this Sample name is a dataset factor and must be defined in the t_alias.txt file";
+                            return false;
+                        }
 
-					// Make sure all of the ion counts are the same
-					var ionCountFirst = lstIonCounts.First();
-					var lookupQ = (from item in lstIonCounts where item != ionCountFirst select item).ToList();
-					if (lookupQ.Count > 0)
-					{
-						errorMessage = "not all entries in the t_alias table have " + ionCountFirst + " ions; edit the t_alias.txt file";
-						return false;
-					}
+                        lstIonCounts.Add(ionCount);
+                    }
 
-					var lstIonColumns = new List<string>();
-					var labelingScheme = string.Empty;
+                    // Make sure all of the ion counts are the same
+                    var ionCountFirst = lstIonCounts.First();
+                    var lookupQ = (from item in lstIonCounts where item != ionCountFirst select item).ToList();
+                    if (lookupQ.Count > 0)
+                    {
+                        errorMessage = "not all entries in the t_alias table have " + ionCountFirst + " ions; edit the t_alias.txt file";
+                        return false;
+                    }
 
-					var workFlowSteps = m_jobParams.GetParam("ApeWorkflowStepList", string.Empty);
-					if (workFlowSteps.Contains("4plex"))
-					{
-						// 4-plex iTraq
-						labelingScheme = "4plex";
-						lstIonColumns.Add("Ion_114");
-						lstIonColumns.Add("Ion_115");
-						lstIonColumns.Add("Ion_116");
-						lstIonColumns.Add("Ion_117");
-					}
+                    var lstIonColumns = new List<string>();
+                    var labelingScheme = string.Empty;
 
-					if (workFlowSteps.Contains("6plex"))
-					{
-						// 6-plex TMT
-						labelingScheme = "6plex";
-						lstIonColumns.Add("Ion_126");
-						lstIonColumns.Add("Ion_127");
-						lstIonColumns.Add("Ion_128");
-						lstIonColumns.Add("Ion_129");
-						lstIonColumns.Add("Ion_130");
-						lstIonColumns.Add("Ion_131");
+                    var workFlowSteps = m_jobParams.GetParam("ApeWorkflowStepList", string.Empty);
+                    if (workFlowSteps.Contains("4plex"))
+                    {
+                        // 4-plex iTraq
+                        labelingScheme = "4plex";
+                        lstIonColumns.Add("Ion_114");
+                        lstIonColumns.Add("Ion_115");
+                        lstIonColumns.Add("Ion_116");
+                        lstIonColumns.Add("Ion_117");
+                    }
 
-					}
+                    if (workFlowSteps.Contains("6plex"))
+                    {
+                        // 6-plex TMT
+                        labelingScheme = "6plex";
+                        lstIonColumns.Add("Ion_126");
+                        lstIonColumns.Add("Ion_127");
+                        lstIonColumns.Add("Ion_128");
+                        lstIonColumns.Add("Ion_129");
+                        lstIonColumns.Add("Ion_130");
+                        lstIonColumns.Add("Ion_131");
 
-					if (workFlowSteps.Contains("8plex"))
-					{
-						// 8-plex iTraq
-						labelingScheme = "8plex";
-						lstIonColumns.Add("Ion_113");
-						lstIonColumns.Add("Ion_114");
-						lstIonColumns.Add("Ion_115");
-						lstIonColumns.Add("Ion_116");
-						lstIonColumns.Add("Ion_117");
-						lstIonColumns.Add("Ion_118");
-						lstIonColumns.Add("Ion_119");
-						lstIonColumns.Add("Ion_121");
-					}
+                    }
+
+                    if (workFlowSteps.Contains("8plex"))
+                    {
+                        // 8-plex iTraq
+                        labelingScheme = "8plex";
+                        lstIonColumns.Add("Ion_113");
+                        lstIonColumns.Add("Ion_114");
+                        lstIonColumns.Add("Ion_115");
+                        lstIonColumns.Add("Ion_116");
+                        lstIonColumns.Add("Ion_117");
+                        lstIonColumns.Add("Ion_118");
+                        lstIonColumns.Add("Ion_119");
+                        lstIonColumns.Add("Ion_121");
+                    }
 
                     if (workFlowSteps.Contains("TMT10Plex"))
                     {
@@ -278,91 +278,91 @@ namespace AnalysisManager_Mage_PlugIn
                         lstIonColumns.Add("Ion_130.141");
                     }
 
-					if (lstIonColumns.Count > 0)
-					{
-						if (!TableContainsDataAndColumns(fiResultsDB, "T_Reporter_Ions", lstIonColumns, out errorMessage, out exceptionDetail))
-						{
-							errorMessage = "table T_Reporter_Ions in Results.db3 " + errorMessage +
-										"; you need to specify " + labelingScheme + " in the ApeWorkflowStepList parameter of the Ape step";
-							return false;
-						}
+                    if (lstIonColumns.Count > 0)
+                    {
+                        if (!TableContainsDataAndColumns(fiResultsDB, "T_Reporter_Ions", lstIonColumns, out errorMessage, out exceptionDetail))
+                        {
+                            errorMessage = "table T_Reporter_Ions in Results.db3 " + errorMessage +
+                                        "; you need to specify " + labelingScheme + " in the ApeWorkflowStepList parameter of the Ape step";
+                            return false;
+                        }
 
-					}
+                    }
 
-				}
+                }
 
-			}
-			catch (Exception ex)
-			{
-				errorMessage = "threw an exception while querying";
-				exceptionDetail = ex.Message;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateFactors: " + ex.Message);
-				return false;
-			}
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "threw an exception while querying";
+                exceptionDetail = ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateFactors: " + ex.Message);
+                return false;
+            }
 
-			return true;
-		}
+            return true;
+        }
 
 
-		protected bool ValidateSqliteDB(string mageOperations, FileInfo fiResultsDB)
-		{
+        protected bool ValidateSqliteDB(string mageOperations, FileInfo fiResultsDB)
+        {
 
-			// If the Mage Operations list contains "ExtractFromJobs", then make sure that table "t_results" was created 
-			// If it wasn't, then no matching jobs were found and we should fail out this job step
-			if (mageOperations.Contains("ExtractFromJobs"))
-			{
-				if (!TableExists(fiResultsDB, "t_results"))
-				{
-					m_message = "Results.db3 file does not have table T_Results; Mage did not extract results from any jobs";
-					return false;
-				}
-			}
+            // If the Mage Operations list contains "ExtractFromJobs", then make sure that table "t_results" was created 
+            // If it wasn't, then no matching jobs were found and we should fail out this job step
+            if (mageOperations.Contains("ExtractFromJobs"))
+            {
+                if (!TableExists(fiResultsDB, "t_results"))
+                {
+                    m_message = "Results.db3 file does not have table T_Results; Mage did not extract results from any jobs";
+                    return false;
+                }
+            }
 
-			var itraqMode = false;
-			var analysisType = m_jobParams.GetJobParameter("AnalysisType", string.Empty);
-			if (analysisType.Contains("iTRAQ"))
-				itraqMode = true;
+            var itraqMode = false;
+            var analysisType = m_jobParams.GetJobParameter("AnalysisType", string.Empty);
+            if (analysisType.Contains("iTRAQ"))
+                itraqMode = true;
 
-			// If the Mage Operations list contains "ImportDataPackageFiles", then make sure that table "T_alias" was created 
-			// If it wasn't, then we should fail out this job step
-			if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
-			{
-				if (!TableExists(fiResultsDB, "T_alias"))
-				{
-					m_message =
-						"Results.db3 file does not have table T_alias; place a valid T_alias.txt file in the the data package's ImportFiles folder";
-					return false;
-				}
+            // If the Mage Operations list contains "ImportDataPackageFiles", then make sure that table "T_alias" was created 
+            // If it wasn't, then we should fail out this job step
+            if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
+            {
+                if (!TableExists(fiResultsDB, "T_alias"))
+                {
+                    m_message =
+                        "Results.db3 file does not have table T_alias; place a valid T_alias.txt file in the the data package's ImportFiles folder";
+                    return false;
+                }
 
-				// Confirm that the T_alias table contains columns Sample and Ion
+                // Confirm that the T_alias table contains columns Sample and Ion
 
-				var lstColumns = new List<string>()
-				{
-					"Sample",
-					"Ion"
-				};
+                var lstColumns = new List<string>()
+                {
+                    "Sample",
+                    "Ion"
+                };
 
-				string errorMessage;
-			    string exceptionDetail;
+                string errorMessage;
+                string exceptionDetail;
 
                 if (!TableContainsDataAndColumns(fiResultsDB, "T_alias", lstColumns, out errorMessage, out exceptionDetail))
-				{
-					m_message = "Table T_alias in Results.db3 " + errorMessage +
-								"; place a valid T_alias.txt file in the the data package's ImportFiles folder; " + exceptionDetail;
-					return false;
-				}
+                {
+                    m_message = "Table T_alias in Results.db3 " + errorMessage +
+                                "; place a valid T_alias.txt file in the the data package's ImportFiles folder; " + exceptionDetail;
+                    return false;
+                }
 
 
-				if (!ValidateFactors(fiResultsDB, out errorMessage, out exceptionDetail))
-				{
-					m_message = "Error validating factors: " + errorMessage + "; " + exceptionDetail;
-					return false;
-				}
+                if (!ValidateFactors(fiResultsDB, out errorMessage, out exceptionDetail))
+                {
+                    m_message = "Error validating factors: " + errorMessage + "; " + exceptionDetail;
+                    return false;
+                }
 
-			}
+            }
 
-			return true;
+            return true;
 
-		}
-	}
+        }
+    }
 }

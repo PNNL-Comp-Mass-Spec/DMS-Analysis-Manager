@@ -1,6 +1,8 @@
-﻿namespace AnalysisManager_Mage_PlugIn {
+﻿namespace AnalysisManager_Mage_PlugIn
+{
 
-    interface IPipelineMonitor {
+    interface IPipelineMonitor
+    {
         void ConnectPipelineQueueToStatusHandlers(Mage.PipelineQueue pipelineQueue);
         void ConnectPipelineToStatusHandlers(Mage.ProcessingPipeline pipeline);
     }

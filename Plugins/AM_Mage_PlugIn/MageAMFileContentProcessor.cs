@@ -2,13 +2,15 @@
 using Mage;
 using System.IO;
 
-namespace AnalysisManager_Mage_PlugIn {
+namespace AnalysisManager_Mage_PlugIn
+{
 
     /// <summary>
     /// Subclass of the Mage FileConentProcessor class 
     /// that performs processes specific to the MAC Mage plug-in
     /// </summary>
-    public class MageAMFileContentProcessor : FileContentProcessor {
+    public class MageAMFileContentProcessor : FileContentProcessor
+    {
 
         #region Member Variables
 
@@ -38,7 +40,8 @@ namespace AnalysisManager_Mage_PlugIn {
 
         #region Constructors
 
-        public MageAMFileContentProcessor() {
+        public MageAMFileContentProcessor()
+        {
             SourceFolderColumnName = "Folder";
             SourceFileColumnName = "Name";
             OutputFolderPath = "ignore";
@@ -46,7 +49,8 @@ namespace AnalysisManager_Mage_PlugIn {
             Operation = "SimpleImport";
         }
 
-        public MageAMFileContentProcessor(MageAMFileProcessingPipelines filePipeline) {
+        public MageAMFileContentProcessor(MageAMFileProcessingPipelines filePipeline)
+        {
             SourceFolderColumnName = "Folder";
             SourceFileColumnName = "Name";
             OutputFolderPath = "ignore";
@@ -63,7 +67,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// Do necessary setup before pipeline runs
         /// </summary>
-        public override void Prepare() {
+        public override void Prepare()
+        {
             base.Prepare();
             InitializeFileNameSet();
         }
@@ -75,11 +80,14 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="sourcePath">Full path to folder that contains the file to be processed</param>
         /// <param name="destPath"></param>
         /// <param name="context">Additional metadata about file to be processed</param>
-        protected override void ProcessFile(string sourceFile, string sourcePath, string destPath, Dictionary<string, string> context) {
-            if (_fileNameSet != null && !_fileNameSet.Contains(sourceFile)) return;
+        protected override void ProcessFile(string sourceFile, string sourcePath, string destPath, Dictionary<string, string> context)
+        {
+            if (_fileNameSet != null && !_fileNameSet.Contains(sourceFile))
+                return;
             string dbFilePath;
             string workingFilePath;
-            switch (Operation) {
+            switch (Operation)
+            {
                 case "CopyAndImport":
                     workingFilePath = Path.Combine(FilePipeline.WorkingDir, sourceFile);
                     File.Copy(sourcePath, workingFilePath, true);
@@ -113,10 +121,12 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="delimitedList"></param>
         /// <returns></returns>
-        protected HashSet<string> ConvertListToSet(string delimitedList) {
+        protected HashSet<string> ConvertListToSet(string delimitedList)
+        {
             var set = new HashSet<string>();
             var items = delimitedList.Split(',');
-            foreach (var item in items) {
+            foreach (var item in items)
+            {
                 set.Add(item.Trim());
             }
             return set;
@@ -125,7 +135,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// Populate (or clear) set of permissable file names
         /// </summary>
-        private void InitializeFileNameSet() {
+        private void InitializeFileNameSet()
+        {
             _fileNameSet = string.IsNullOrEmpty(FileNameList) ? null : ConvertListToSet(FileNameList);
         }
 

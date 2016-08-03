@@ -2,12 +2,14 @@
 using System.Linq;
 using Mage;
 
-namespace AnalysisManager_Mage_PlugIn {
+namespace AnalysisManager_Mage_PlugIn
+{
 
     /// <summary>
     /// Mage filter module that adds and "Alias" column to data stream
     /// </summary>
-    public class ModuleAddAlias : ContentFilter {
+    public class ModuleAddAlias : ContentFilter
+    {
 
         // Column indexes
         private int _aliasColIdx;
@@ -16,22 +18,25 @@ namespace AnalysisManager_Mage_PlugIn {
         // lookup table for dataset aliases
         private Dictionary<string, string> _datasetAliases = new Dictionary<string, string>();
 
-        public override void Prepare() {
+        public override void Prepare()
+        {
             base.Prepare();
             // make sure alias column is in output (in case it isn't in input)
             OutputColumnList = "Dataset, Dataset_ID, Alias|+|text, *";
-         }
+        }
 
-        protected override void ColumnDefsFinished() {
+        protected override void ColumnDefsFinished()
+        {
             _aliasColIdx = OutputColumnPos["Alias"];
             _datasetIdx = OutputColumnPos["Dataset"];
         }
 
         // handle a data row - make sure alias field has an appropriate value
-		protected override bool CheckFilter(ref string[] vals)
-		{
-            if (OutputColumnDefs != null) {
-				var outRow = MapDataRow(vals);
+        protected override bool CheckFilter(ref string[] vals)
+        {
+            if (OutputColumnDefs != null)
+            {
+                var outRow = MapDataRow(vals);
                 var dataset = outRow[_datasetIdx];
                 outRow[_aliasColIdx] = LookupAlias(dataset);
                 vals = outRow;
@@ -46,7 +51,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="dataset">Dataset Name</param>
         /// <returns>Alias for dataset name</returns>
-        private string LookupAlias(string dataset) {
+        private string LookupAlias(string dataset)
+        {
             return _datasetAliases.ContainsKey(dataset) ? _datasetAliases[dataset] : MakeAlias(dataset);
         }
 
@@ -55,14 +61,18 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="dataset"></param>
         /// <returns></returns>
-        private string MakeAlias(string dataset) {
+        private string MakeAlias(string dataset)
+        {
             var alias = dataset;
-            for (var width = 8; width < dataset.Length; width++) {
+            for (var width = 8; width < dataset.Length; width++)
+            {
                 var candidateAlias = dataset.Substring(0, width);
-                if (candidateAlias.Last() == '_') {
+                if (candidateAlias.Last() == '_')
+                {
                     continue;
                 }
-                if (!_datasetAliases.ContainsValue(candidateAlias)) {
+                if (!_datasetAliases.ContainsValue(candidateAlias))
+                {
                     alias = candidateAlias;
                     _datasetAliases.Add(dataset, alias);
                     break;
@@ -78,11 +88,13 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="factorsObj">Mage simple sink object holding </param>
         /// <param name="padAliases"> </param>
         /// <param name="stripPrefix"> </param>
-        public void SetupAliasLookup(SimpleSink factorsObj, bool padAliases = true, bool stripPrefix = false) {
+        public void SetupAliasLookup(SimpleSink factorsObj, bool padAliases = true, bool stripPrefix = false)
+        {
             // get non-duplicate set of dataset names
             var uniqueNameSet = new HashSet<string>();
             var dIdx = factorsObj.ColumnIndex["Dataset"];
-            foreach (var row in factorsObj.Rows) {
+            foreach (var row in factorsObj.Rows)
+            {
                 uniqueNameSet.Add(row[dIdx]);
             }
 
@@ -90,8 +102,10 @@ namespace AnalysisManager_Mage_PlugIn {
             var nameLookup = BuildAliasLookupTable(uniqueNameSet, padAliases);
 
             // set up to use the lookup table
-            if (nameLookup.Count > 0) {
-                if (stripPrefix) StripOffCommonPrefix(nameLookup);
+            if (nameLookup.Count > 0)
+            {
+                if (stripPrefix)
+                    StripOffCommonPrefix(nameLookup);
                 _datasetAliases = nameLookup;
             }
         }
@@ -102,7 +116,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="uniqueNameSet">unique set of names to build alias lookup from</param>
         /// <param name="padAliasWidth"> </param>
         /// <returns>Lookup table of aliases for names, indexed by name</returns>
-        public static Dictionary<string, string> BuildAliasLookupTable(HashSet<string> uniqueNameSet, bool padAliasWidth = true) {
+        public static Dictionary<string, string> BuildAliasLookupTable(HashSet<string> uniqueNameSet, bool padAliasWidth = true)
+        {
 
             // get sorted list of unique dataset names
             var nameList = new List<string>(uniqueNameSet);
@@ -111,14 +126,16 @@ namespace AnalysisManager_Mage_PlugIn {
             // create lookup tables for alias widths and alaises
             var nameLookup = new Dictionary<string, string>();
             var aliasWidths = new Dictionary<string, int>();
-            foreach (var name in nameList) {
+            foreach (var name in nameList)
+            {
                 nameLookup.Add(name, "");
                 aliasWidths.Add(name, 0);
             }
 
             // first, build lookup of aiias widths
             var maxWidth = 0;
-            for (var currentNameIdx = 0; currentNameIdx < uniqueNameSet.Count - 1; currentNameIdx++) {
+            for (var currentNameIdx = 0; currentNameIdx < uniqueNameSet.Count - 1; currentNameIdx++)
+            {
                 // we examine current name and adjacent name in sorted list
                 var adjacentNameIdx = currentNameIdx + 1;
                 var currentName = nameList[currentNameIdx];
@@ -129,20 +146,26 @@ namespace AnalysisManager_Mage_PlugIn {
                 maxWidth = (width > maxWidth) ? width : maxWidth;
 
                 // set width for alias for current name
-                if (aliasWidths[currentName] < width + 1) {
+                if (aliasWidths[currentName] < width + 1)
+                {
                     aliasWidths[currentName] = width + 1;
                 }
                 // set width for alias for adjacent name
-                if (aliasWidths[adjacentName] < width + 1) {
+                if (aliasWidths[adjacentName] < width + 1)
+                {
                     aliasWidths[adjacentName] = width + 1;
                 }
             }
 
             // next set aliases using previously calculated widths
-            foreach (var name in nameList) {
-                if (padAliasWidth) {
+            foreach (var name in nameList)
+            {
+                if (padAliasWidth)
+                {
                     nameLookup[name] = name.Substring(0, maxWidth + 1);
-                } else {
+                }
+                else
+                {
                     nameLookup[name] = name.Substring(0, aliasWidths[name]);
                 }
             }
@@ -150,11 +173,14 @@ namespace AnalysisManager_Mage_PlugIn {
         }
 
         // get the minimum number of initial characters necessary to distinquish s1 from s2
-        private static int GetUniqueWidth(string s1, string s2) {
+        private static int GetUniqueWidth(string s1, string s2)
+        {
             var width = 0;
             var len = (s1.Length > s2.Length) ? s2.Length : s1.Length;
-            for (var i = 0; i < len; i++) {
-                if (s1.ElementAt(i) != s2.ElementAt(i)) {
+            for (var i = 0; i < len; i++)
+            {
+                if (s1.ElementAt(i) != s2.ElementAt(i))
+                {
                     width = i;
                     break;
                 }
@@ -166,34 +192,45 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Go through alias lookup table and strip off 
         /// any prefix characters that are shared by all the aliases
         /// </summary>
-        public static void StripOffCommonPrefix(Dictionary<string, string> nameLookup) {
+        public static void StripOffCommonPrefix(Dictionary<string, string> nameLookup)
+        {
             // find width of common prefix for all alias values
             var width = 1;
-            
-            while (true) {
+
+            while (true)
+            {
                 var candidatePrefix = "";
                 var matched = true;
-                foreach (var alias in nameLookup.Values) {
-                    if (string.IsNullOrEmpty(candidatePrefix)) {
+                foreach (var alias in nameLookup.Values)
+                {
+                    if (string.IsNullOrEmpty(candidatePrefix))
+                    {
                         candidatePrefix = alias.Substring(0, width);
-                    } else {
-                        if (candidatePrefix != alias.Substring(0, width)) {
+                    }
+                    else
+                    {
+                        if (candidatePrefix != alias.Substring(0, width))
+                        {
                             matched = false;
                             break;
                         }
                     }
                 }
-                if (matched) {
+                if (matched)
+                {
                     width++;
-                } else {
+                }
+                else
+                {
                     break;
                 }
             }
             // strip off common prefix (if there was one)
-            if (width > 1) {
+            if (width > 1)
+            {
                 var start = width - 1;
-				foreach (var dataset in nameLookup.Keys)
-				{
+                foreach (var dataset in nameLookup.Keys)
+                {
                     var alias = nameLookup[dataset];
                     var strippedAlias = alias.Substring(start);
                     nameLookup[dataset] = strippedAlias;

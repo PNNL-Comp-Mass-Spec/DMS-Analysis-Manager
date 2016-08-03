@@ -78,7 +78,7 @@ namespace AnalysisManager_Mage_PlugIn
                 deconJobsAreValid = ValidateDeconJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs);
             }
 
-            if (masicJobsAreValid && deconJobsAreValid)            
+            if (masicJobsAreValid && deconJobsAreValid)
                 return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
             return IJobParams.CloseOutType.CLOSEOUT_FAILED;
@@ -90,14 +90,14 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         private bool ValidateMasicJobs(int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs, List<clsDataPackageJobInfo> lstAdditionalJobs)
-         {
-             return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "SIC", "MASIC");
-         }
+        {
+            return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "SIC", "MASIC");
+        }
 
         private bool ValidateMatchingJobs(
-            int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs, 
-            List<clsDataPackageJobInfo> lstAdditionalJobs, 
-            string resultType, 
+            int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs,
+            List<clsDataPackageJobInfo> lstAdditionalJobs,
+            string resultType,
             string toolName)
         {
             var missingMasicCount = 0;

@@ -3,7 +3,8 @@ using Mage;
 using MageExtExtractionFilters;
 using AnalysisManagerBase;
 
-namespace AnalysisManager_Mage_PlugIn {
+namespace AnalysisManager_Mage_PlugIn
+{
 
     /// <summary>
     /// Class that defines basic Mage pipelines and functions that 
@@ -13,10 +14,11 @@ namespace AnalysisManager_Mage_PlugIn {
     /// These extraction operations are essentially identical to the operations
     /// permormed by the MageFileExtractor tool.
     /// </summary>
-    public class MageAMExtractionPipelines : MageAMPipelineBase {
+    public class MageAMExtractionPipelines : MageAMPipelineBase
+    {
 
         #region Member Variables
-   
+
         /// <summary>
         /// The parameters for the slated extraction
         /// </summary>
@@ -31,7 +33,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
-        public MageAMExtractionPipelines(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms,  mgrParms) {           
+        public MageAMExtractionPipelines(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
+        {
         }
 
         #endregion
@@ -39,7 +42,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// Setup and run Mage Extractor pipleline according to job parameters
         /// </summary>
-        public void ExtractFromJobs(String sql) {
+        public void ExtractFromJobs(String sql)
+        {
             GetExtractionParametersFromJobParameters();
             BaseModule jobList = GetListOfDMSItems(sql);
             ExtractFromJobsList(jobList);
@@ -48,21 +52,22 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <summary>
         /// Get the parameters for the extraction pipeline modules from the job parameters
         /// </summary>
-        protected void GetExtractionParametersFromJobParameters() {
+        protected void GetExtractionParametersFromJobParameters()
+        {
             ExtractionParms = new ExtractionType();
             ResultsDestination = new DestinationType();
 
             // extraction and filtering parameters
-			var extractionType = RequireJobParam("ExtractionType"); // "MSGF+ Synopsis All Proteins" or "Sequest First Hits"
+            var extractionType = RequireJobParam("ExtractionType"); // "MSGF+ Synopsis All Proteins" or "Sequest First Hits"
 
-			try
-			{
-				ExtractionParms.RType = ResultType.TypeList[extractionType];
-			}
-			catch
-			{
-				throw new Exception("Unrecognized value for ExtractionType: " + extractionType);
-			}
+            try
+            {
+                ExtractionParms.RType = ResultType.TypeList[extractionType];
+            }
+            catch
+            {
+                throw new Exception("Unrecognized value for ExtractionType: " + extractionType);
+            }
 
             ExtractionParms.KeepAllResults = GetJobParam("KeepAllResults", "Yes");
             ExtractionParms.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");
@@ -78,9 +83,11 @@ namespace AnalysisManager_Mage_PlugIn {
         /// Build pipeline to perform extraction operation against jobs in jobList
         /// </summary>
         /// <param name="jobList">List of jobs to perform extraction from</param>
-        protected void ExtractFromJobsList(BaseModule jobList) {
+        protected void ExtractFromJobsList(BaseModule jobList)
+        {
             BasePipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, ExtractionParms, ResultsDestination);
-            foreach (var p in BasePipelineQueue.Pipelines.ToArray()) {
+            foreach (var p in BasePipelineQueue.Pipelines.ToArray())
+            {
                 ConnectPipelineToStatusHandlers(p);
             }
             ConnectPipelineQueueToStatusHandlers(BasePipelineQueue);
