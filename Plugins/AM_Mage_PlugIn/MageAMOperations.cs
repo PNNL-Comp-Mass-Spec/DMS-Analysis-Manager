@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using AnalysisManagerBase;
 using System.IO;
-using System.Collections.Generic;
 
 namespace AnalysisManager_Mage_PlugIn
 {
@@ -57,8 +56,8 @@ namespace AnalysisManager_Mage_PlugIn
 		/// <returns></returns>
 		public bool RunMageOperations(string mageOperations)
 		{
-			bool ok = false;
-			foreach (string mageOperation in mageOperations.Split(','))
+			var ok = false;
+			foreach (var mageOperation in mageOperations.Split(','))
 			{
 				ok = RunMageOperation(mageOperation.Trim());
 				if (!ok) break;
@@ -73,7 +72,7 @@ namespace AnalysisManager_Mage_PlugIn
 		/// <returns></returns>
 		public bool RunMageOperation(string mageOperation)
 		{
-			bool blnSuccess = false;
+			var blnSuccess = false;
 
 			// Note: case statements must be lowercase
 			switch (mageOperation.ToLower())
@@ -140,7 +139,7 @@ namespace AnalysisManager_Mage_PlugIn
 		private bool GetFactors()
 		{
 			var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
-			string sql = GetSQLFromParameter("FactorsSource", mageObj);
+			var sql = GetSQLFromParameter("FactorsSource", mageObj);
 			GetPriorStepResults();
 			mageObj.GetDatasetFactors(sql);
 			return true;
@@ -153,7 +152,7 @@ namespace AnalysisManager_Mage_PlugIn
 		private bool ExtractFromJobs()
 		{
 			var mageObj = new MageAMExtractionPipelines(_jobParams, _mgrParams);
-			string sql = GetSQLFromParameter("ExtractionSource", mageObj);
+			var sql = GetSQLFromParameter("ExtractionSource", mageObj);
 			GetPriorStepResults();
 			mageObj.ExtractFromJobs(sql);
 			return true;
@@ -168,7 +167,7 @@ namespace AnalysisManager_Mage_PlugIn
 		{
 			var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
 			const string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
-			string inputfileList = mageObj.GetJobParam("MageFDRFiles");
+			var inputfileList = mageObj.GetJobParam("MageFDRFiles");
 			GetPriorStepResults();
 			mageObj.ImportFilesInFolderToSQLite(inputFolderPath, inputfileList, "CopyAndImport");
 			return true;
@@ -194,32 +193,32 @@ namespace AnalysisManager_Mage_PlugIn
 		private bool ImportDataPackageFiles(string importMode)
 		{
 			var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
-			string dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
-			string inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
+			var dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
+			var inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
 
-			var diInputFolder = new System.IO.DirectoryInfo(inputFolderPath);
+			var diInputFolder = new DirectoryInfo(inputFolderPath);
 			if (!diInputFolder.Exists)
-				throw new System.IO.DirectoryNotFoundException("Folder specified by job parameter DataPackageSourceFolderName does not exist: " + inputFolderPath);
+				throw new DirectoryNotFoundException("Folder specified by job parameter DataPackageSourceFolderName does not exist: " + inputFolderPath);
 
-			List<System.IO.FileInfo> lstInputFolderFiles = diInputFolder.GetFiles().ToList();
+			var lstInputFolderFiles = diInputFolder.GetFiles().ToList();
 			if (lstInputFolderFiles.Count == 0)
-				throw new System.IO.DirectoryNotFoundException("DataPackageSourceFolderName is empty (should typically be ImportFiles and it should have a file named T_alias.txt): " + inputFolderPath);
+				throw new DirectoryNotFoundException("DataPackageSourceFolderName is empty (should typically be ImportFiles and it should have a file named T_alias.txt): " + inputFolderPath);
 			else
 			{
-				List<System.IO.FileInfo> lstMatchingFiles = (from item in lstInputFolderFiles
+				var lstMatchingFiles = (from item in lstInputFolderFiles
 															 where item.Name.ToLower() == "t_alias.txt"
 															 select item).ToList();
 
 				if (lstMatchingFiles.Count == 0)
 				{
-					string analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
+					var analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
 					if (analysisType.IndexOf("iTRAQ", System.StringComparison.CurrentCultureIgnoreCase) >= 0)
 					{
 						throw new System.Exception("File T_alias.txt was not found in " + inputFolderPath + "; this file is required because this is an iTRAQ analysis");
 					}
 
 					const string msg = "File T_alias.txt was not found in the DataPackageSourceFolderName folder; this may result in a failure during Ape processing";
-					string msgVerbose = msg + ": " + inputFolderPath;
+					var msgVerbose = msg + ": " + inputFolderPath;
 					AppendToWarningMessage(msg, msgVerbose);
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msgVerbose);
 				}
@@ -251,7 +250,7 @@ namespace AnalysisManager_Mage_PlugIn
 		{
 			_jobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
 			var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
-			string sql = GetSQLFromParameter("ReporterIonSource", mageObj);
+			var sql = GetSQLFromParameter("ReporterIonSource", mageObj);
 			GetPriorStepResults();
 			mageObj.ImportJobResults(sql, "_ReporterIons.txt", "t_reporter_ions", "SimpleImport");
 			return true;
@@ -266,7 +265,7 @@ namespace AnalysisManager_Mage_PlugIn
 		{
 			_jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
 			var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
-			string sql = GetSQLFromParameter("FirstHitsSource", mageObj);
+			var sql = GetSQLFromParameter("FirstHitsSource", mageObj);
 			GetPriorStepResults();
 			mageObj.ImportJobResults(sql, "_fht.txt", "first_hits", "AddDatasetIDToImport");
 			return true;
@@ -281,7 +280,7 @@ namespace AnalysisManager_Mage_PlugIn
 		{
 			_jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
 			var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
-			string sql = GetSQLForTemplate("JobDatasetsFromDataPackageIDForTool", mageObj);
+			var sql = GetSQLForTemplate("JobDatasetsFromDataPackageIDForTool", mageObj);
 			GetPriorStepResults();
 			mageObj.ImportFileList(sql, ".raw", "t_msms_raw_files");
 			return true;
@@ -294,7 +293,7 @@ namespace AnalysisManager_Mage_PlugIn
 		private bool ImportJobList()
 		{
 			var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
-			string sql = GetSQLForTemplate("JobsFromDataPackageID", mageObj);
+			var sql = GetSQLForTemplate("JobsFromDataPackageID", mageObj);
 			GetPriorStepResults();
 			mageObj.ImportJobList(sql, "t_data_package_analysis_jobs");
 			return true;
@@ -329,7 +328,7 @@ namespace AnalysisManager_Mage_PlugIn
 		/// <returns>Executable SQL statement</returns>
 		private string GetSQLFromParameter(string sourceName, MageAMPipelineBase mageObject)
 		{
-			string sqlTemplateName = mageObject.GetJobParam(sourceName);
+			var sqlTemplateName = mageObject.GetJobParam(sourceName);
 			return GetSQLForTemplate(sqlTemplateName, mageObject);
 		}
 
@@ -342,8 +341,8 @@ namespace AnalysisManager_Mage_PlugIn
 		/// <returns></returns>
 		private static string GetSQLForTemplate(string sqlTemplateName, MageAMPipelineBase mageObject)
 		{
-			SQL.QueryTemplate qt = SQL.GetQueryTemplate(sqlTemplateName);
-			string[] ps = GetParamValues(mageObject, qt.ParamNameList);
+			var qt = SQL.GetQueryTemplate(sqlTemplateName);
+			var ps = GetParamValues(mageObject, qt.ParamNameList);
 			return SQL.GetSQL(qt, ps);
 		}
 

@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using AnalysisManagerBase;
-using System.IO;
 using System.Data.SQLite;
+using System.IO;
+using AnalysisManagerBase;
 
-namespace AnalysisManager_MAC {
+namespace AnalysisManager_Mage_PlugIn {
 
     /// <summary>
     /// This class provides a generic base for MAC tool run operations common to all MAC tool plug-ins.
@@ -46,7 +45,7 @@ namespace AnalysisManager_MAC {
                     }
                 } catch (Exception ex) {
                     // Change the name of the log file back to the analysis manager log file
-                    string logFileName = m_mgrParams.GetParam("logfilename");
+                    var logFileName = m_mgrParams.GetParam("logfilename");
                     log4net.GlobalContext.Properties["LogName"] = logFileName;
                     clsLogTools.ChangeLogFileName(logFileName);
 
@@ -54,7 +53,7 @@ namespace AnalysisManager_MAC {
                     blnSuccess = false;
 
 					m_message = "Error running MAC: " + ex.Message;
-					string sDataPackageSourceFolderName = m_jobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
+					var sDataPackageSourceFolderName = m_jobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
                     if (ex.Message.Contains(sDataPackageSourceFolderName + "\\--No Files Found")) {
 						m_message += "; " + sDataPackageSourceFolderName + " folder in the data package is empty or does not exist";
                     }
@@ -87,7 +86,7 @@ namespace AnalysisManager_MAC {
 				if (!string.IsNullOrEmpty(m_ResFolderName))
 					m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                IJobParams.CloseOutType result = MakeResultsFolder();
+                var result = MakeResultsFolder();
                 if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
@@ -125,7 +124,7 @@ namespace AnalysisManager_MAC {
         /// 
         /// </summary>
         protected void CopyFailedResultsToArchiveFolder() {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
@@ -136,16 +135,16 @@ namespace AnalysisManager_MAC {
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = string.Copy(m_WorkDir);
+            var strFolderPathToArchive = string.Copy(m_WorkDir);
 
             // Make the results folder
-            IJobParams.CloseOutType result = MakeResultsFolder();
+            var result = MakeResultsFolder();
             if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
                 if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
                     // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
                 }
             }
 
@@ -175,7 +174,7 @@ namespace AnalysisManager_MAC {
             }
 
             // Store paths to key DLLs
-            List<System.IO.FileInfo> ioToolFiles = GetToolSupplementalVersionInfo();
+            var ioToolFiles = GetToolSupplementalVersionInfo();
 
             try {
                 return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
@@ -207,12 +206,12 @@ namespace AnalysisManager_MAC {
             
             try
 			{
-				string connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
+				var connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
 				using (var conn = new SQLiteConnection(connectionString))
 				{
 					conn.Open();
 
-					string query = "select * From " + tableName;
+					var query = "select * From " + tableName;
 					using (var cmd = new SQLiteCommand(query, conn))
 					{
 						var drReader = cmd.ExecuteReader();
@@ -228,7 +227,7 @@ namespace AnalysisManager_MAC {
 						{
 							try
 							{
-								object result = drReader[columnName];
+								var result = drReader[columnName];
 							}
 							catch (Exception)
 							{
@@ -254,19 +253,19 @@ namespace AnalysisManager_MAC {
 
 	    protected bool TableExists(FileInfo fiSqlLiteDatabase, string tableName)
 		{
-			bool tableFound = false;
+			var tableFound = false;
 
 			try
 			{
-				string connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
+				var connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
 				 using (var conn = new SQLiteConnection(connectionString))
 				 {
 					 conn.Open();
 
-					 string query = "select count(*) as Items From sqlite_master where type = 'table' and name = '" + tableName + "' COLLATE NOCASE";
+					 var query = "select count(*) as Items From sqlite_master where type = 'table' and name = '" + tableName + "' COLLATE NOCASE";
 					 using (var cmd = new SQLiteCommand(query, conn))
 					 {
-						 object result = cmd.ExecuteScalar();
+						 var result = cmd.ExecuteScalar();
 						 if (Convert.ToInt32(result) > 0)
 							 tableFound = true;
 						
@@ -293,7 +292,7 @@ namespace AnalysisManager_MAC {
         /// Subclass must override this to provide version info for any supplemental MAC tool assemblies
         /// </summary>
         /// <returns></returns>
-        protected abstract List<System.IO.FileInfo> GetToolSupplementalVersionInfo();
+        protected abstract List<FileInfo> GetToolSupplementalVersionInfo();
 
  
     }

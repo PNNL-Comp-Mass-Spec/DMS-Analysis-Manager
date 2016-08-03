@@ -40,11 +40,11 @@ namespace AnalysisManager_Mage_PlugIn {
 
             // get selected list reporter ion files from list of jobs
             const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
-            SimpleSink fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
+            var fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
 
             // import contents of each file in list
             var contentProc = new MageAMFileContentProcessor(this) { DBTableName = tableName, Operation = fileProcessName };
-            ProcessingPipeline p = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
+            var p = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
             ConnectPipelineToStatusHandlers(p);
             p.RunRoot(null);
         }
@@ -59,14 +59,14 @@ namespace AnalysisManager_Mage_PlugIn {
         public void ImportFileList(String jobListQuery, string fileNameSelector, string tableName) {
 
             // get list of datasets from jobs from data package (Note: NOT the data package dataset list)
-            SimpleSink jobList = GetListOfDMSItems(jobListQuery);
+            var jobList = GetListOfDMSItems(jobListQuery);
 
             // get selected list files from list of datasets
             const string columnsToIncludeInOutput = "Dataset_ID, Dataset, Experiment, Campaign, State, Instrument, Created, Type";
-            SimpleSink fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
+            var fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
 
             // import file list to SQLite
-            string dbFilePath = GetResultsDBFilePath();
+            var dbFilePath = GetResultsDBFilePath();
             var writer = new SQLiteWriter { DbPath = dbFilePath, TableName = tableName };
             ProcessingPipeline.Assemble("Pipeline", fileList, writer).RunRoot(null);
         }
@@ -89,7 +89,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
             var fileList = new SimpleSink();
 
-            ProcessingPipeline fileListPipeline = ProcessingPipeline.Assemble("GetFileListPipeline", reader, fileList);
+            var fileListPipeline = ProcessingPipeline.Assemble("GetFileListPipeline", reader, fileList);
             ConnectPipelineToStatusHandlers(fileListPipeline);
             fileListPipeline.RunRoot(null);
 
@@ -100,7 +100,7 @@ namespace AnalysisManager_Mage_PlugIn {
                 DBTableName = "",
                 FileNameList = fileNameList
             };
-            ProcessingPipeline fileImportPipeline = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
+            var fileImportPipeline = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
             ConnectPipelineToStatusHandlers(fileImportPipeline);
             fileImportPipeline.RunRoot(null);
         }
@@ -115,11 +115,11 @@ namespace AnalysisManager_Mage_PlugIn {
             var reader = new DelimitedFileReader { FilePath = inputFilePath };
 
             var writer = new SQLiteWriter();
-            string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
+            var tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
 
-            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, writer);
+            var pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, writer);
             ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
         }
@@ -141,11 +141,11 @@ namespace AnalysisManager_Mage_PlugIn {
             filter.SetContext(context);
 
             var writer = new SQLiteWriter();
-            string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
+            var tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
 
-            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
+            var pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
             ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
         }
@@ -157,11 +157,11 @@ namespace AnalysisManager_Mage_PlugIn {
             var filter = new MissingValueFilter {FillColumnName = "Group_Num"};
 
             var writer = new SQLiteWriter();
-            string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
+            var tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
 
-            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
+            var pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
             ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
         }
@@ -202,7 +202,7 @@ namespace AnalysisManager_Mage_PlugIn {
         public void GetDatasetFactors(string sql) {
 
             // first pipeline - get factors crosstab to sink object
-            MSSQLReader reader = MakeDBReaderModule(sql);
+            var reader = MakeDBReaderModule(sql);
 
             var crosstab = new CrosstabFilter {
                 EntityNameCol = "Dataset",
@@ -213,7 +213,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
             var sink = new SimpleSink();
 
-            ProcessingPipeline readPipeline = ProcessingPipeline.Assemble("ReadFactors", reader, crosstab, sink);
+            var readPipeline = ProcessingPipeline.Assemble("ReadFactors", reader, crosstab, sink);
             ConnectPipelineToStatusHandlers(readPipeline);
             readPipeline.RunRoot(null);
 
@@ -245,7 +245,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="sql"></param>
         /// <param name="tableName"> </param>
         public void ImportJobList(string sql, string tableName) {
-            SimpleSink jobList = GetListOfDMSItems(sql);
+            var jobList = GetListOfDMSItems(sql);
             var writer = new SQLiteWriter { DbPath = GetResultsDBFilePath(), TableName = tableName };
             ProcessingPipeline.Assemble("JobListPipeline", jobList, writer).RunRoot(null);
         }

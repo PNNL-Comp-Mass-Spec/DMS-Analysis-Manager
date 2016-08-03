@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using Mage;
 using MageExtExtractionFilters;
-using MageDisplayLib;
 using AnalysisManagerBase;
 
 namespace AnalysisManager_Mage_PlugIn {
@@ -33,7 +31,6 @@ namespace AnalysisManager_Mage_PlugIn {
         /// </summary>
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
-        /// <param name="monitor"></param>
         public MageAMExtractionPipelines(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms,  mgrParms) {           
         }
 
@@ -56,7 +53,7 @@ namespace AnalysisManager_Mage_PlugIn {
             ResultsDestination = new DestinationType();
 
             // extraction and filtering parameters
-			String extractionType = RequireJobParam("ExtractionType"); // "MSGF+ Synopsis All Proteins" or "Sequest First Hits"
+			var extractionType = RequireJobParam("ExtractionType"); // "MSGF+ Synopsis All Proteins" or "Sequest First Hits"
 
 			try
 			{
@@ -83,7 +80,7 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <param name="jobList">List of jobs to perform extraction from</param>
         protected void ExtractFromJobsList(BaseModule jobList) {
             BasePipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, ExtractionParms, ResultsDestination);
-            foreach (ProcessingPipeline p in BasePipelineQueue.Pipelines.ToArray()) {
+            foreach (var p in BasePipelineQueue.Pipelines.ToArray()) {
                 ConnectPipelineToStatusHandlers(p);
             }
             ConnectPipelineQueueToStatusHandlers(BasePipelineQueue);

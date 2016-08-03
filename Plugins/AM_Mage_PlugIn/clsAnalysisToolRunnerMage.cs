@@ -4,12 +4,11 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
-using System.Reflection.Emit;
-using AnalysisManager_MAC;
 
 namespace AnalysisManager_Mage_PlugIn
 {
 
+    // ReSharper disable once UnusedMember.Global
 	public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerMAC
 	{
 
@@ -19,14 +18,14 @@ namespace AnalysisManager_Mage_PlugIn
 		protected override bool RunMACTool()
 		{
 			//Change the name of the log file for the local log file to the plug in log filename
-			String logFileName = Path.Combine(m_WorkDir, "Mage_Log");
+			var logFileName = Path.Combine(m_WorkDir, "Mage_Log");
 			log4net.GlobalContext.Properties["LogName"] = logFileName;
 			clsLogTools.ChangeLogFileName(logFileName);
 
 			// run the appropriate Mage pipeline(s) according to operations list parameter
-			string mageOperations = m_jobParams.GetParam("MageOperations");
+			var mageOperations = m_jobParams.GetParam("MageOperations");
 			var ops = new MageAMOperations(m_jobParams, m_mgrParams);
-			bool success = ops.RunMageOperations(mageOperations);
+			var success = ops.RunMageOperations(mageOperations);
 
 			// Change the name of the log file back to the analysis manager log file
 			logFileName = m_mgrParams.GetParam("logfilename");
@@ -42,7 +41,7 @@ namespace AnalysisManager_Mage_PlugIn
 				return false;
 
 			// Make sure the Results.db3 file was created
-			var fiResultsDB = new FileInfo(System.IO.Path.Combine(m_WorkDir, "Results.db3"));
+			var fiResultsDB = new FileInfo(Path.Combine(m_WorkDir, "Results.db3"));
 			if (!fiResultsDB.Exists)
 			{
 				m_message = "Results.db3 file was not created";
@@ -61,9 +60,9 @@ namespace AnalysisManager_Mage_PlugIn
 		/// <returns></returns>
 		protected override string GetToolNameAndVersion()
 		{
-			string strToolVersionInfo = string.Empty;
-			System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Mage").GetName();
-			string strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
+			var strToolVersionInfo = string.Empty;
+			var oAssemblyName = System.Reflection.Assembly.Load("Mage").GetName();
+			var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
 			strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
 			return strToolVersionInfo;
 		}
@@ -88,9 +87,6 @@ namespace AnalysisManager_Mage_PlugIn
 		{
 			const string FACTOR_URL = "http://dms2.pnl.gov/requested_run_factors/param";
 
-			errorMessage = string.Empty;
-		    exceptionDetail = string.Empty;
-
             try
 			{
 				// Verify that table t_factors exists and has columns Dataset_ID and Sample
@@ -110,12 +106,12 @@ namespace AnalysisManager_Mage_PlugIn
 				// Lookup the Dataset_ID values defined in t_results
 				var datasetIDs = new List<int>();
 
-				string connectionString = "Data Source = " + fiResultsDB.FullName + "; Version=3;";
+				var connectionString = "Data Source = " + fiResultsDB.FullName + "; Version=3;";
 				using (var conn = new SQLiteConnection(connectionString))
 				{
 					conn.Open();
 
-					string query = "SELECT Distinct DPJ.dataset_id " +
+					var query = "SELECT Distinct DPJ.dataset_id " +
 								   "FROM t_results R " +
 										 " INNER JOIN t_data_package_analysis_jobs DPJ " +
 										   " ON R.job = DPJ.job";
@@ -153,7 +149,7 @@ namespace AnalysisManager_Mage_PlugIn
 							return false;
 						}
 
-						int validDatasetIDs = 0;
+						var validDatasetIDs = 0;
 
 						while (drReader.Read())
 						{
@@ -218,7 +214,7 @@ namespace AnalysisManager_Mage_PlugIn
 					}
 
 					// Make sure all of the ion counts are the same
-					byte ionCountFirst = lstIonCounts.First();
+					var ionCountFirst = lstIonCounts.First();
 					var lookupQ = (from item in lstIonCounts where item != ionCountFirst select item).ToList();
 					if (lookupQ.Count > 0)
 					{
@@ -322,8 +318,8 @@ namespace AnalysisManager_Mage_PlugIn
 				}
 			}
 
-			bool itraqMode = false;
-			string analysisType = m_jobParams.GetJobParameter("AnalysisType", string.Empty);
+			var itraqMode = false;
+			var analysisType = m_jobParams.GetJobParameter("AnalysisType", string.Empty);
 			if (analysisType.Contains("iTRAQ"))
 				itraqMode = true;
 

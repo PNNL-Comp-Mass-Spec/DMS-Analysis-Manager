@@ -9,8 +9,8 @@ namespace AnalysisManager_Mage_PlugIn {
 
         // holds a single query definition template
         public class QueryTemplate {
-            public string TemplateSQL { get; set; }
-            public string ParamNameList { get; set; }
+            public string TemplateSQL { get; private set; }
+            public string ParamNameList { get; private set; }
             public QueryTemplate(string sql, string list) {
                 TemplateSQL = sql;
                 ParamNameList = list;

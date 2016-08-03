@@ -1,21 +1,21 @@
 ﻿using AnalysisManagerBase;
-using AnalysisManager_MAC;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace AnalysisManager_Mage_PlugIn
 {
 
+    // ReSharper disable once UnusedMember.Global
     public class clsAnalysisResourcesMage : clsAnalysisResourcesMAC
     {
-        public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
+        public override IJobParams.CloseOutType GetResources()
         {
             var mageOperations = m_jobParams.GetParam("MageOperations", string.Empty);
 
             var jobAnalysistype = m_jobParams.GetParam("AnalysisType", string.Empty);
-            bool requireDeconJobs = jobAnalysistype == "iTRAQ";
+            var requireDeconJobs = jobAnalysistype == "iTRAQ";
 
-            bool requireMasicJobs = mageOperations.Contains("ImportReporterIons");
+            var requireMasicJobs = mageOperations.Contains("ImportReporterIons");
 
             var workFlowSteps = m_jobParams.GetParam("ApeWorkflowStepList", string.Empty);
             if (workFlowSteps.Contains("4plex") |
@@ -63,8 +63,8 @@ namespace AnalysisManager_Mage_PlugIn
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
 
-            bool masicJobsAreValid = true;
-            bool deconJobsAreValid = true;
+            var masicJobsAreValid = true;
+            var deconJobsAreValid = true;
             m_message = string.Empty;
 
             // Confirm that every Peptide_Hit job has a corresponding MASIC job (required to populate table T_Reporter_Ions)
@@ -100,7 +100,7 @@ namespace AnalysisManager_Mage_PlugIn
             string resultType, 
             string toolName)
         {
-            int missingMasicCount = 0;
+            var missingMasicCount = 0;
 
             foreach (var job in peptideHitJobs)
             {
@@ -120,7 +120,7 @@ namespace AnalysisManager_Mage_PlugIn
                 return true;
             }
 
-            string msg = "Data package " + dataPackageID;
+            var msg = "Data package " + dataPackageID;
 
             if (missingMasicCount == peptideHitJobs.Count)
                 msg += " does not have any " + toolName + " jobs";

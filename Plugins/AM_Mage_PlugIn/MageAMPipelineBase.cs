@@ -13,9 +13,9 @@ namespace AnalysisManager_Mage_PlugIn
 
 		#region Member Variables
 
-		protected string ResultsDBFileName = "";
+		protected readonly string ResultsDBFileName;
 
-		protected string WorkingDirPath;
+		protected readonly string WorkingDirPath;
 
 		protected readonly IJobParams JobParms;
 
@@ -32,9 +32,9 @@ namespace AnalysisManager_Mage_PlugIn
 		/// </summary>
 		protected DestinationType ResultsDestination;
 
-		protected Regex mProcessingResults = new Regex(@"Extracting results for job (\d+)", RegexOptions.Compiled);
+		protected readonly Regex mProcessingResults = new Regex(@"Extracting results for job (\d+)", RegexOptions.Compiled);
 		
-		protected int mLastProgressJob = 0;
+		protected int mLastProgressJob;
 		protected DateTime mLastProgressTime = DateTime.UtcNow;
 
 		#endregion
@@ -67,13 +67,13 @@ namespace AnalysisManager_Mage_PlugIn
 
 		public string GetResultsDBFilePath()
 		{
-			string dbFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
+			var dbFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
 			return dbFilePath;
 		}
 
 		public string RequireMgrParam(string paramName)
 		{
-			string val = MgrParams.GetParam(paramName);
+			var val = MgrParams.GetParam(paramName);
 			if (string.IsNullOrWhiteSpace(val))
 			{
 				throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));
@@ -83,7 +83,7 @@ namespace AnalysisManager_Mage_PlugIn
 
 		public string RequireJobParam(string paramName)
 		{
-			string val = JobParms.GetParam(paramName);
+			var val = JobParms.GetParam(paramName);
 			if (string.IsNullOrWhiteSpace(val))
 			{
 				throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
@@ -98,7 +98,7 @@ namespace AnalysisManager_Mage_PlugIn
 
 		public string GetJobParam(string paramName, string defaultValue)
 		{
-			string val = JobParms.GetParam(paramName);
+			var val = JobParms.GetParam(paramName);
 			if (string.IsNullOrWhiteSpace(val))
 				val = defaultValue;
 			return val;
@@ -124,9 +124,9 @@ namespace AnalysisManager_Mage_PlugIn
 		{
 			var itemList = new SimpleSink();
 
-			MSSQLReader reader = MakeDBReaderModule(sql);
+			var reader = MakeDBReaderModule(sql);
 
-			ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
+			var pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
 			ConnectPipelineToStatusHandlers(pipeline);
 			pipeline.RunRoot(null);
 
@@ -139,15 +139,15 @@ namespace AnalysisManager_Mage_PlugIn
 		/// </summary>
 		public void GetPriorResultsToWorkDir()
 		{
-			string dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
+			var dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
 
-			string stepInputFolderName = GetJobParam("StepInputFolderName");
+			var stepInputFolderName = GetJobParam("StepInputFolderName");
 			if (stepInputFolderName != "")
 			{
-				string priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, ResultsDBFileName);
+				var priorResultsDBFilePath = Path.Combine(dataPackageFolderPath, stepInputFolderName, ResultsDBFileName);
 				if (File.Exists(priorResultsDBFilePath))
 				{
-					string workingFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
+					var workingFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
 					File.Copy(priorResultsDBFilePath, workingFilePath, true);
 				}
 			}

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Mage;
 using System.IO;
 
@@ -22,7 +21,7 @@ namespace AnalysisManager_Mage_PlugIn {
 
         #region Properties
 
-        public MageAMFileProcessingPipelines FilePipeline { get; set; }
+        public MageAMFileProcessingPipelines FilePipeline { get; }
 
         // Name of the table in SQLite database that receives the results
         // (if blank, table name will be constructed from source file name)
@@ -116,8 +115,8 @@ namespace AnalysisManager_Mage_PlugIn {
         /// <returns></returns>
         protected HashSet<string> ConvertListToSet(string delimitedList) {
             var set = new HashSet<string>();
-            String[] items = delimitedList.Split(',');
-            foreach (string item in items) {
+            var items = delimitedList.Split(',');
+            foreach (var item in items) {
                 set.Add(item.Trim());
             }
             return set;

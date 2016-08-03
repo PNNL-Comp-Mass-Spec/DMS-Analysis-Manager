@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Mage;
+﻿using Mage;
 
 namespace AnalysisManager_Mage_PlugIn {
 
@@ -29,7 +25,7 @@ namespace AnalysisManager_Mage_PlugIn {
             }
 
             if (OutputColumnDefs != null) {
-				string[] outRow = MapDataRow(vals);
+				var outRow = MapDataRow(vals);
                 vals = outRow;
             }
             return true;
