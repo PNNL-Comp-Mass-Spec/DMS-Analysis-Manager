@@ -748,6 +748,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
             End If
 
+            Dim consoleOutputFilePath As String = String.Empty
+
             If udtHPCOptions.UsingHPC Then
 
 #If EnableHPC = "True" Then
@@ -821,6 +823,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Else
 
                 Dim objBuildSA = New clsRunDosProgram(fiFastaFile.DirectoryName)
+                consoleOutputFilePath = Path.Combine(strLogFileDir, "MSGFDB_BuildSA_ConsoleOutput.txt")
 
                 With objBuildSA
                     .CreateNoWindow = True
@@ -828,7 +831,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                     .EchoOutputToConsole = True
 
                     .WriteConsoleOutputToFile = True
-                    .ConsoleOutputFilePath = Path.Combine(strLogFileDir, "MSGFDB_BuildSA_ConsoleOutput.txt")
+                    .ConsoleOutputFilePath = consoleOutputFilePath
                 End With
 
 
@@ -845,6 +848,15 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 If udtHPCOptions.UsingHPC Then
                     mErrorMessage &= " using HPC"
                 End If
+
+                If Not String.IsNullOrWhiteSpace(consoleOutputFilePath) Then
+                    ' Look for known errors in the console output file
+                    Dim consoleOutputError = ParseConsoleOutputFile(consoleOutputFilePath)
+                    If Not String.IsNullOrWhiteSpace(consoleOutputError) Then
+                        mErrorMessage &= ". " & consoleOutputError
+                    End If
+                End If
+
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mErrorMessage & ": job " & JobNum)
                 DeleteLockFile(fiLockFile)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -1114,6 +1126,41 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             ' Using MSGF+
             Return True
         End If
+
+    End Function
+
+    ''' <summary>
+    ''' Look for errors in the console output file created by the call to BuildSA
+    ''' </summary>
+    ''' <param name="consoleOutputFilePath"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private Function ParseConsoleOutputFile(consoleOutputFilePath As String) As String
+        Try
+            If Not File.Exists(consoleOutputFilePath) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "BuildSA console output file not found: " & consoleOutputFilePath)
+                Return String.Empty
+            End If
+
+            Using srReader = New StreamReader(New FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                While Not srReader.EndOfStream
+                    Dim dataLine = srReader.ReadLine()
+                    If dataLine.StartsWith("Error") Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "BuildSA reports: " & dataLine)
+                        If dataLine.Contains("too many redundant proteins") Then
+                            Return "Error while indexing, too many redundant proteins"
+                        End If
+                        Return dataLine
+                    End If
+                End While
+            End Using
+
+            Return String.Empty
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing the BuildSA console output file: " & ex.Message)
+            Return String.Empty
+        End Try
 
     End Function
 
