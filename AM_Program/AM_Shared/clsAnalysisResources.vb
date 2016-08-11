@@ -17,6 +17,7 @@ Imports MyEMSLReader
 Imports ParamFileGenerator.MakeParams
 
 Public MustInherit Class clsAnalysisResources
+    Inherits clsAnalysisMgrBase
     Implements IAnalysisResources
 
     '*********************************************************************************************************
@@ -175,7 +176,7 @@ Public MustInherit Class clsAnalysisResources
 
 #End Region
 
-#Region "Structures"  
+#Region "Structures"
 
     Public Structure udtDataPackageRetrievalOptionsType
         ''' <summary>
@@ -243,7 +244,6 @@ Public MustInherit Class clsAnalysisResources
     Protected m_JobNum As Integer
     Protected m_DatasetName As String
     Protected m_message As String
-    Protected m_DebugLevel As Short
     Protected m_MgrName As String
 
     Protected m_StatusTools As IStatusFile      ' Might be nothing
@@ -254,8 +254,6 @@ Public MustInherit Class clsAnalysisResources
     Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
     Protected m_IonicZipTools As clsIonicZipTools
 
-    Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
-
     Protected WithEvents m_CDTAUtilities As clsCDTAUtilities
 
     Protected WithEvents m_SplitFastaFileUtility As clsSplitFastaFileUtilities
@@ -264,9 +262,6 @@ Public MustInherit Class clsAnalysisResources
     Protected m_SplitFastaLastPercentComplete As Integer
 
     Protected m_MyEMSLUtilities As clsMyEMSLUtilities
-
-    Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
-    Private m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
 
     Private Shared mLastJobParameterFromHistoryLookup As DateTime = DateTime.UtcNow
 
@@ -296,13 +291,14 @@ Public MustInherit Class clsAnalysisResources
         End Get
     End Property
 #End Region
-    
+
 #Region "Methods"
     ''' <summary>
     ''' Constructor
     ''' </summary>
     ''' <remarks></remarks>
     Public Sub New()
+        MyBase.New("clsAnalysisResources")
         m_CDTAUtilities = New clsCDTAUtilities
     End Sub
 
@@ -338,8 +334,7 @@ Public MustInherit Class clsAnalysisResources
 
         m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
 
-        ResetTimestampForQueueWaitTimeLogging()
-        m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
+        MyBase.InitFileTools(m_MgrName, m_DebugLevel)
 
         If myEMSLUtilities Is Nothing Then
             m_MyEMSLUtilities = New clsMyEMSLUtilities(m_DebugLevel, m_WorkingDir)
@@ -3675,31 +3670,6 @@ Public MustInherit Class clsAnalysisResources
 
     End Function
 
-    Public Shared Function IsLockQueueLogMessageNeeded(ByRef dtLockQueueWaitTimeStart As DateTime, ByRef dtLastLockQueueWaitTimeLog As DateTime) As Boolean
-
-        Dim intWaitTimeLogIntervalSeconds As Integer
-
-        If dtLockQueueWaitTimeStart = DateTime.MinValue Then dtLockQueueWaitTimeStart = DateTime.UtcNow()
-
-        Select Case DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes
-            Case Is >= 30
-                intWaitTimeLogIntervalSeconds = 240
-            Case Is >= 15
-                intWaitTimeLogIntervalSeconds = 120
-            Case Is >= 5
-                intWaitTimeLogIntervalSeconds = 60
-            Case Else
-                intWaitTimeLogIntervalSeconds = 30
-        End Select
-
-        If DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
-            Return True
-        Else
-            Return False
-        End If
-
-    End Function
-
     ''' <summary>
     ''' Looks up dataset information for a data package
     ''' </summary>
@@ -4545,11 +4515,6 @@ Public MustInherit Class clsAnalysisResources
         Return True
 
     End Function
-
-    Protected Sub ResetTimestampForQueueWaitTimeLogging()
-        m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-        m_LockQueueWaitTimeStart = DateTime.UtcNow
-    End Sub
 
     ''' <summary>
     ''' Looks for the specified file in the given folder
@@ -6558,7 +6523,7 @@ Public MustInherit Class clsAnalysisResources
         Select Case eRawDataType
             Case eRawDataTypeConstants.AgilentDFolder           'Agilent ion trap data
 
-                If StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) OrElse _
+                If StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) OrElse
                    StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()) Then
                     ' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
                     '  we would pre-process the data beforehand to create MGF files
@@ -7315,20 +7280,20 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     Protected Function RetrieveFile(
-      fileName As String, 
-      sourceFolderPath As String, 
-      maxCopyAttempts As Integer, 
-      optional eLogMsgTypeIfNotFound As clsLogTools.LogLevels = clsLogTools.LogLevels.ERROR) As Boolean
+      fileName As String,
+      sourceFolderPath As String,
+      maxCopyAttempts As Integer,
+      Optional eLogMsgTypeIfNotFound As clsLogTools.LogLevels = clsLogTools.LogLevels.ERROR) As Boolean
 
         'Copy the file
-        If MaxCopyAttempts < 1 Then MaxCopyAttempts = 1
+        If maxCopyAttempts < 1 Then maxCopyAttempts = 1
         If Not CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, maxCopyAttempts:=maxCopyAttempts) Then
             Return False
         End If
 
         Return True
 
-    End Function    
+    End Function
 
     ''' <summary>
     ''' Finds the _DTA.txt file for this dataset
@@ -7803,13 +7768,13 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
     ''' <returns>True if success; false if an error</returns>
     Protected Function ValidateCDTAFileScanAndCSTags(
-       strSourceFilePath As String, 
-       blnReplaceSourceFile As Boolean, 
-       blnDeleteSourceFileIfUpdated As Boolean, 
+       strSourceFilePath As String,
+       blnReplaceSourceFile As Boolean,
+       blnDeleteSourceFileIfUpdated As Boolean,
        strOutputFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
-        
+
         blnSuccess = m_CDTAUtilities.ValidateCDTAFileScanAndCSTags(strSourceFilePath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, strOutputFilePath)
         If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
             m_message = "m_CDTAUtilities.ValidateCDTAFileScanAndCSTags returned False"
@@ -8058,7 +8023,7 @@ Public MustInherit Class clsAnalysisResources
         Static dtLastUpdateTime As DateTime
 
         If m_DebugLevel >= 1 Then
-            If m_DebugLevel = 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse _
+            If m_DebugLevel = 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse
                m_DebugLevel > 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
                 dtLastUpdateTime = DateTime.UtcNow
 
@@ -8094,29 +8059,6 @@ Public MustInherit Class clsAnalysisResources
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Generating Fasta file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg)
             End If
         End If
-    End Sub
-
-    Private Sub m_FileTools_LockQueueTimedOut(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueTimedOut
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Locked queue timed out after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisResources); Source=" & sourceFilePath & ", Target=" & targetFilePath)
-        End If
-    End Sub
-
-    Private Sub m_FileTools_LockQueueWaitComplete(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueWaitComplete
-        If m_DebugLevel >= 1 AndAlso waitTimeMinutes >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exited lockfile queue after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisResources); will now copy file")
-        End If
-    End Sub
-
-    Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
-
-        If IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
-            m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResources); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
-            End If
-        End If
-
     End Sub
 
     Private Sub m_SplitFastaFileUtility_ErrorEvent(strMessage As String) Handles m_SplitFastaFileUtility.ErrorEvent
@@ -8171,7 +8113,6 @@ Public MustInherit Class clsAnalysisResources
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & spectraProcessed & " spectra parsed in the _dta.txt file")
     End Sub
 #End Region
-
 End Class
 
 

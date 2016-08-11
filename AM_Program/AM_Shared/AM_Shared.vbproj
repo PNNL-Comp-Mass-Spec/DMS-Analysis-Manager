@@ -134,6 +134,7 @@
     <Compile Include="clsDataPackageJobInfo.vb" />
     <Compile Include="clsDBStatusLogger.vb" />
     <Compile Include="clsDBTask.vb" />
+    <Compile Include="clsAnalysisMgrBase.vb" />
     <Compile Include="clsFormattedXMLWriter.vb" />
     <Compile Include="clsGlobal.vb" />
     <Compile Include="clsEventNotifier.vb" />

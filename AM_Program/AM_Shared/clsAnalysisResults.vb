@@ -12,6 +12,7 @@ Imports System.IO
 Imports System.Threading
 
 Public Class clsAnalysisResults
+    Inherits clsAnalysisMgrBase
 
     '*********************************************************************************************************
     'Analysis job results handling class
@@ -29,15 +30,11 @@ Public Class clsAnalysisResults
 
     ' access to mgr parameters
     Private ReadOnly m_mgrParams As IMgrParams
-    Private ReadOnly m_DebugLevel As Integer
     Private ReadOnly m_MgrName As String
 
     ' for posting a general explanation for external consumption
     Protected m_message As String
 
-    Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
-    Protected m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
-    Protected m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
 #End Region
 
 #Region "Properties"
@@ -57,12 +54,16 @@ Public Class clsAnalysisResults
     ''' <param name="jobParams">Job parameter object</param>
     ''' <remarks></remarks>
     Public Sub New(mgrParams As IMgrParams, jobParams As IJobParams)
+
+        MyBase.New("clsAnalysisResults")
+
         m_mgrParams = mgrParams
         m_jobParams = jobParams
         m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
-        m_DebugLevel = m_mgrParams.GetParam("debuglevel", 1)
+        m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
 
-        m_FileTools = New PRISM.Files.clsFileTools(m_MgrName, m_DebugLevel)
+        MyBase.InitFileTools(m_MgrName, m_DebugLevel)
+
     End Sub
 
     ''' <summary>
@@ -478,37 +479,6 @@ Public Class clsAnalysisResults
 
     End Function
 
-    Protected Sub ResetTimestampForQueueWaitTimeLogging()
-        m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-        m_LockQueueWaitTimeStart = DateTime.UtcNow
-    End Sub
-
-#End Region
-
-#Region "Event Handlers"
-
-    Private Sub m_FileTools_LockQueueTimedOut(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueTimedOut
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Locked queue timed out after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisResults); Source=" & sourceFilePath & ", Target=" & targetFilePath)
-        End If
-    End Sub
-
-    Private Sub m_FileTools_LockQueueWaitComplete(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueWaitComplete
-        If m_DebugLevel >= 1 AndAlso waitTimeMinutes >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exited lockfile queue after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisResults); will now copy file")
-        End If
-    End Sub
-
-    Private Sub m_FileTools_WaitingForLockQueue(SourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
-
-        If clsAnalysisResources.IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
-            m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisResults); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & SourceFilePath & ", Target=" & TargetFilePath)
-            End If
-        End If
-
-    End Sub
 #End Region
 
 End Class

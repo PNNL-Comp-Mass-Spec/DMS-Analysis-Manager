@@ -18,6 +18,7 @@ Imports System.Text.RegularExpressions
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerBase
+    Inherits clsAnalysisMgrBase
     Implements IToolRunner
 
 #Region "Constants"
@@ -55,9 +56,6 @@ Public Class clsAnalysisToolRunnerBase
     Protected m_EvalCode As Integer = 0                         ' Can be used to pass codes regarding the results of this analysis back to the DMS_Pipeline DB
     Protected m_EvalMessage As String = String.Empty            ' Can be used to pass information regarding the results of this analysis back to the DMS_Pipeline DB        
 
-    'Debug level
-    Protected m_DebugLevel As Short
-
     'Working directory, machine name (aka manager name), & job number (used frequently by subclasses)
     Protected m_WorkDir As String
     Protected m_MachName As String
@@ -76,15 +74,12 @@ Public Class clsAnalysisToolRunnerBase
     Protected m_FileDate As String
 
     Protected m_IonicZipTools As clsIonicZipTools
-    Protected WithEvents m_FileTools As PRISM.Files.clsFileTools
 
     Protected m_NeedToAbortProcessing As Boolean
 
     Protected m_SummaryFile As clsSummaryFile
 
     Protected m_MyEMSLUtilities As clsMyEMSLUtilities
-
-    Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
 
     Private m_LastProgressWriteTime As DateTime = DateTime.UtcNow
     Private m_LastProgressConsoleTime As DateTime = DateTime.UtcNow
@@ -175,6 +170,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' </summary>
     ''' <remarks></remarks>
     Public Sub New()
+        MyBase.New("clsAnalysisToolRunnerBase")
         mProgRunnerStartTime = DateTime.UtcNow
         mCoreUsageHistory = New Queue(Of KeyValuePair(Of DateTime, Single))
     End Sub
@@ -225,8 +221,7 @@ Public Class clsAnalysisToolRunnerBase
 
         m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkDir)
 
-        ResetTimestampForQueueWaitTimeLogging()
-        m_FileTools = New PRISM.Files.clsFileTools(m_MachName, m_DebugLevel)
+        MyBase.InitFileTools(m_MachName, m_DebugLevel)
 
         m_NeedToAbortProcessing = False
 
@@ -2539,10 +2534,6 @@ Public Class clsAnalysisToolRunnerBase
 
     End Function
 
-    Protected Sub ResetTimestampForQueueWaitTimeLogging()
-        m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-    End Sub
-
     ''' <summary>
     ''' Runs the analysis tool
     ''' Major work is performed by overrides
@@ -3680,27 +3671,6 @@ Public Class clsAnalysisToolRunnerBase
 #End Region
 
 #Region "Event Handlers"
-
-    Private Sub m_FileTools_LockQueueTimedOut(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueTimedOut
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Locked queue timed out after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisToolRunnerBase); Source=" & sourceFilePath & ", Target=" & targetFilePath)
-        End If
-    End Sub
-
-    Private Sub m_FileTools_LockQueueWaitComplete(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double) Handles m_FileTools.LockQueueWaitComplete
-        If m_DebugLevel >= 1 AndAlso waitTimeMinutes >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exited lockfile queue after " & waitTimeMinutes.ToString("0") & " minutes (clsAnalysisToolRunnerBase); will now copy file")
-        End If
-    End Sub
-
-    Private Sub m_FileTools_WaitingForLockQueue(sourceFilePath As String, TargetFilePath As String, MBBacklogSource As Integer, MBBacklogTarget As Integer) Handles m_FileTools.WaitingForLockQueue
-        If DateTime.UtcNow.Subtract(m_LastLockQueueWaitTimeLog).TotalSeconds >= 30 Then
-            m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for lockfile queue to fall below threshold (clsAnalysisToolRunnerBase); SourceBacklog=" & MBBacklogSource & " MB, TargetBacklog=" & MBBacklogTarget & " MB, Source=" & sourceFilePath & ", Target=" & TargetFilePath)
-            End If
-        End If
-    End Sub
 
     Private Sub mSortUtility_ErrorEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
         mSortUtilityErrorMessage = e.Message
