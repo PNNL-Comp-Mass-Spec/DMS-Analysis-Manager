@@ -38,7 +38,7 @@ Public Class clsAnalysisResourcesIcr2ls
 
     End Function
 
-    Protected Function GetBrukerSerFile() As Boolean
+    Private Function GetBrukerSerFile() As Boolean
 
         Dim strLocalDatasetFolderPath As String
 
@@ -171,7 +171,7 @@ Public Class clsAnalysisResourcesIcr2ls
     ''' will use a different one; this is OK and allows us to adjust the settings mid-job.
     ''' To prevent this behavior, delete the .pek.tmp file from the transfer folder
     ''' </remarks>
-    Protected Function RetrieveExistingTempPEKFile() As IJobParams.CloseOutType
+    Private Function RetrieveExistingTempPEKFile() As IJobParams.CloseOutType
 
         Try
 

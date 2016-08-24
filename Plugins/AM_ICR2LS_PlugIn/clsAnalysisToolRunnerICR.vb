@@ -255,14 +255,14 @@ Public Class clsAnalysisToolRunnerICR
 
     End Function
 
-	''' <summary>
-	''' Look for the .PEK and .PAR files in the specified folder
-	''' Make sure they are named Dataset_m_dd_yyyy.PAR and Dataset_m_dd_yyyy.Pek
-	''' </summary>
-	''' <param name="strFolderPath">Folder to examine</param>
-	''' <param name="strDatasetName">Dataset name</param>
-	''' <remarks></remarks>
-    Protected Sub FixICR2LSResultFileNames(strFolderPath As String, strDatasetName As String)
+    ''' <summary>
+    ''' Look for the .PEK and .PAR files in the specified folder
+    ''' Make sure they are named Dataset_m_dd_yyyy.PAR and Dataset_m_dd_yyyy.Pek
+    ''' </summary>
+    ''' <param name="strFolderPath">Folder to examine</param>
+    ''' <param name="strDatasetName">Dataset name</param>
+    ''' <remarks></remarks>
+    Private Sub FixICR2LSResultFileNames(strFolderPath As String, strDatasetName As String)
 
         Dim objExtensionsToCheck As New Generic.List(Of String)
 
