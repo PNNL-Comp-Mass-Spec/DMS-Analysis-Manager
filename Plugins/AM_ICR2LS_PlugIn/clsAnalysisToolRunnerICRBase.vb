@@ -22,7 +22,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     Public Const PEK_TEMP_FILE As String = ".pek.tmp"
 
-    Protected Const APEX_ACQUISITION_METHOD_FILE As String = "apexAcquisition.method"
+    Private Const APEX_ACQUISITION_METHOD_FILE As String = "apexAcquisition.method"
 
     Public Enum ICR2LSProcessingModeConstants
         LTQFTPEK = 0
@@ -35,7 +35,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         SerFileTIC = 7
     End Enum
 
-    Protected Structure udtICR2LSStatusType
+    Private Structure udtICR2LSStatusType
         Public StatusDate As DateTime
         Public ScansProcessed As Integer
         Public PercentComplete As Single
@@ -54,28 +54,29 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     End Structure
 
     'Job running status variable
-    Protected m_JobRunning As Boolean
-    Protected mStatusFilePath As String = String.Empty
+    Private m_JobRunning As Boolean
+    Private mStatusFilePath As String = String.Empty
 
     ' Obsolete
-    ' Protected mMinScanOffset As Integer = 0
+    ' Private mMinScanOffset As Integer = 0
 
-    Protected mLastErrorPostingTime As DateTime
-    Protected mLastMissingStatusFiletime As DateTime
-    Protected mLastInvalidStatusFiletime As DateTime
+    Private mLastErrorPostingTime As DateTime
+    Private mLastMissingStatusFiletime As DateTime
+    Private mLastInvalidStatusFiletime As DateTime
 
-    Protected mLastStatusParseTime As DateTime = DateTime.UtcNow
-    Protected mLastStatusLogTime As DateTime = DateTime.UtcNow
+    Private mLastStatusParseTime As DateTime = DateTime.UtcNow
+    Private mLastStatusLogTime As DateTime = DateTime.UtcNow
 
-    Protected mPEKResultsFile As FileInfo
-    Protected mLastCheckpointTime As DateTime = DateTime.UtcNow
+    Private mPEKResultsFile As FileInfo
+    Private mLastCheckpointTime As DateTime = DateTime.UtcNow
 
-    Protected mICR2LSStatus As udtICR2LSStatusType
+    Private mICR2LSStatus As udtICR2LSStatusType
 
-    Protected WithEvents mCmdRunner As clsRunDosProgram
-    Protected WithEvents mStatusFileWatcher As FileSystemWatcher
+    Private WithEvents mCmdRunner As clsRunDosProgram
+    Private WithEvents mStatusFileWatcher As FileSystemWatcher
 
-    Protected WithEvents mPEKtoCSVConverter As PEKtoCSVConverter.PEKtoCSVConverter
+    Private WithEvents mPEKtoCSVConverter As PEKtoCSVConverter.PEKtoCSVConverter
+    Private mLastPekToCsvPercentCompleteTime As DateTime
 
     Public Sub New()
 
@@ -113,6 +114,9 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
             mPEKtoCSVConverter = New PEKtoCSVConverter.PEKtoCSVConverter(pekFilePath, scansFilePath, isosFilePath, rawFilePath)
 
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating _isos.csv and _scans.csv files using the PEK file")
+            mLastPekToCsvPercentCompleteTime = DateTime.UtcNow
+
             Dim success = mPEKtoCSVConverter.Convert()
 
             mPEKtoCSVConverter = Nothing
@@ -128,7 +132,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     End Function
 
-    Protected Sub CopyCheckpointFile()
+    Private Sub CopyCheckpointFile()
 
         Try
             If mPEKResultsFile Is Nothing Then Exit Sub
@@ -218,7 +222,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     End Function
 
     ' Reads the ICR2LS Status file and updates mICR2LSStatus
-    Protected Function ParseICR2LSStatusFile(strStatusFilePath As String, blnForceParse As Boolean) As Boolean
+    Private Function ParseICR2LSStatusFile(strStatusFilePath As String, blnForceParse As Boolean) As Boolean
         Const MINIMUM_PARSING_INTERVAL_SECONDS = 4
 
         Dim srInFile As StreamReader
@@ -367,7 +371,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     End Function
 
-    Protected Sub InitializeStatusLogFileWatcher(strWorkDir As String, strFilenameToWatch As String)
+    Private Sub InitializeStatusLogFileWatcher(strWorkDir As String, strFilenameToWatch As String)
 
         mStatusFileWatcher = New FileSystemWatcher()
         With mStatusFileWatcher
@@ -631,7 +635,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
             If m_DebugLevel >= 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Command line is over 250 characters long; will use /R instead")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  " & strExeFilePath & strArguments)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  " & strExeFilePath & " " & strArguments)
             End If
 
         End If
@@ -732,7 +736,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     End Function
 
-    Protected Function ValidateICR2LSStatus(strProcessingState As String) As Boolean
+    Private Function ValidateICR2LSStatus(strProcessingState As String) As Boolean
         Dim blnValid As Boolean
 
         Select Case strProcessingState.ToLower
@@ -835,6 +839,15 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
     End Sub
 
     Private Sub mPEKtoCSVConverter_MessageEvent(sender As Object, e As PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs) Handles mPEKtoCSVConverter.MessageEvent
+        If e.Message.Contains("% complete; scan") Then
+            ' Message is of the form: 35% complete; scan 2602
+            ' Only log this message every 15 seconds
+            If DateTime.UtcNow.Subtract(mLastPekToCsvPercentCompleteTime).TotalSeconds < 15 Then
+                Return
+            End If
+            mLastPekToCsvPercentCompleteTime = DateTime.UtcNow
+        End If
+
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message)
     End Sub
 End Class
