@@ -25,17 +25,17 @@ Public Class clsCompassXportRunner
 #End Region
 
 #Region "Module Variables"
-    Private mWorkDir As String
-    Private mCompassXportProgramPath As String
-    Private mDatasetName As String
+    Private ReadOnly mWorkDir As String
+    Private ReadOnly mCompassXportProgramPath As String
+    Private ReadOnly mDatasetName As String
     Private mOutputType As MSXMLOutputTypeConstants
-    Private mCentroidMSXML As Boolean
+    Private ReadOnly mCentroidMSXML As Boolean
 
     Private mErrorMessage As String = String.Empty
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
-    Public Event ProgRunnerStarting(ByVal CommandLine As String)
+    Public Event ProgRunnerStarting(CommandLine As String)
     Public Event LoopWaiting()
 
 #End Region
@@ -57,11 +57,11 @@ Public Class clsCompassXportRunner
     ''' Constructor
     ''' </summary>
     ''' <remarks>Presently not used</remarks>
-    Public Sub New(ByVal WorkDir As String, _
-                   ByVal CompassXportProgramPath As String, _
-                   ByVal DatasetName As String, _
-                   ByVal eOutputType As MSXMLOutputTypeConstants, _
-                   ByVal CentroidMSXML As Boolean)
+    Public Sub New(WorkDir As String,
+                   CompassXportProgramPath As String,
+                   DatasetName As String,
+                   eOutputType As MSXMLOutputTypeConstants,
+                   CentroidMSXML As Boolean)
 
         mWorkDir = WorkDir
         mCompassXportProgramPath = CompassXportProgramPath
@@ -80,28 +80,27 @@ Public Class clsCompassXportRunner
     Public Function CreateMSXMLFile() As Boolean
         Dim CmdStr As String
 
-        Dim strMSXmlFormatName As String = "mzXML"
         Dim intFormatMode As Integer
 
-		Dim strSourceFolderPath As String
-		Dim strInputFilePath As String
-		Dim strOutputFilePath As String
+        Dim strSourceFolderPath As String
+        Dim strInputFilePath As String
+        Dim strOutputFilePath As String
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		mErrorMessage = String.Empty
+        mErrorMessage = String.Empty
 
-		' Resolve the output file format
-		If mOutputType = MSXMLOutputTypeConstants.Invalid Then
-			mOutputType = MSXMLOutputTypeConstants.mzXML
-			intFormatMode = 0
-		Else
-			intFormatMode = CInt(mOutputType)
-		End If
+        ' Resolve the output file format
+        If mOutputType = MSXMLOutputTypeConstants.Invalid Then
+            mOutputType = MSXMLOutputTypeConstants.mzXML
+            intFormatMode = 0
+        Else
+            intFormatMode = CInt(mOutputType)
+        End If
 
-		strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType)
+        Dim strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType)
 
-		' Define the input file path
+        ' Define the input file path
         strSourceFolderPath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
         strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.baf")
 
@@ -128,8 +127,8 @@ Public Class clsCompassXportRunner
 
         'Set up and execute a program runner to run CompassXport executable
 
-        CmdStr = " -mode " & intFormatMode.ToString() & _
-                 " -a " & strInputFilePath & _
+        CmdStr = " -mode " & intFormatMode.ToString() &
+                 " -a " & strInputFilePath &
                  " -o " & strOutputFilePath
 
         If mCentroidMSXML Then
@@ -166,7 +165,7 @@ Public Class clsCompassXportRunner
 
     End Function
 
-    Public Shared Function GetMsXmlOutputTypeByID(ByVal eType As MSXMLOutputTypeConstants) As String
+    Public Shared Function GetMsXmlOutputTypeByID(eType As MSXMLOutputTypeConstants) As String
         Select Case eType
             Case MSXMLOutputTypeConstants.mzXML
                 Return "mzXML"
@@ -176,15 +175,15 @@ Public Class clsCompassXportRunner
                 Return "mzML"
             Case MSXMLOutputTypeConstants.JCAMP
                 Return "JCAMP"
-			Case MSXMLOutputTypeConstants.CSV
-				Return "CSV"
+            Case MSXMLOutputTypeConstants.CSV
+                Return "CSV"
             Case Else
                 ' Includes MSXMLOutputTypeConstants.Invalid
                 Return ""
         End Select
     End Function
 
-    Public Shared Function GetMsXmlOutputTypeByName(ByVal strName As String) As MSXMLOutputTypeConstants
+    Public Shared Function GetMsXmlOutputTypeByName(strName As String) As MSXMLOutputTypeConstants
         Select Case strName.ToLower()
             Case "mzxml"
                 Return MSXMLOutputTypeConstants.mzXML
@@ -194,8 +193,8 @@ Public Class clsCompassXportRunner
                 Return MSXMLOutputTypeConstants.mzML
             Case "jcamp"
                 Return MSXMLOutputTypeConstants.JCAMP
-			Case "csv"
-				Return MSXMLOutputTypeConstants.CSV
+            Case "csv"
+                Return MSXMLOutputTypeConstants.CSV
             Case Else
                 Return MSXMLOutputTypeConstants.Invalid
         End Select

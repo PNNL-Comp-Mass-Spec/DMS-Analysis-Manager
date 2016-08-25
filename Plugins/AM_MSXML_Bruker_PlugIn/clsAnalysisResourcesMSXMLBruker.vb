@@ -23,10 +23,9 @@ Public Class clsAnalysisResourcesMSXMLBruker
 
         'Get input data file
         Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
-		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
-		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
+        Dim eRawDataType = GetRawDataType(strRawDataType)
 
-		Select Case eRawDataType
+        Select Case eRawDataType
 			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
 				' This dataset type is acceptable
 			Case Else

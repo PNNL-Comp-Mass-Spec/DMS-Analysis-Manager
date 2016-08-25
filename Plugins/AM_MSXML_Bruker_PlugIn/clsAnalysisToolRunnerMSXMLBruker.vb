@@ -141,7 +141,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 
         If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
             ' Try to save whatever files were moved into the results folder
-            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
             objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -171,7 +171,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Typically CompassXport.exe
 
         Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")             ' Typically mzXML or mzML
-        Dim CentroidMSXML As Boolean = CBool(m_jobParams.GetParam("CentroidMSXML"))
+        Dim CentroidMSXML = CBool(m_jobParams.GetParam("CentroidMSXML"))
 
         Dim CompassXportProgramPath As String
         Dim eOutputType As clsCompassXportRunner.MSXMLOutputTypeConstants
@@ -181,7 +181,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         ' Initialize the Results File output parameter to a dummy name for now
         fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, "NonExistent_Placeholder_File.tmp"))
 
-        If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
+        If String.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.CurrentCultureIgnoreCase) Then
             CompassXportProgramPath = m_mgrParams.GetParam("CompassXportLoc")
 
             If String.IsNullOrEmpty(CompassXportProgramPath) Then
@@ -258,8 +258,8 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
     End Function
-    
-    Private Function PostProcessMsXmlFile(ByVal fiResultsFile As FileInfo) As IJobParams.CloseOutType
+
+    Private Function PostProcessMsXmlFile(fiResultsFile As FileInfo) As IJobParams.CloseOutType
 
         ' Compress the file using GZip
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "GZipping " & fiResultsFile.Name)
@@ -286,7 +286,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         End Using
 
         m_jobParams.AddResultFileToSkip(fiResultsFile.Name)
-        
+
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
@@ -307,8 +307,22 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
         Dim ioToolFiles As New List(Of FileInfo)
 
         Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Typically CompassXport.exe
-        If msXmlGenerator.ToLower = COMPASS_XPORT.ToLower() Then
-            ioToolFiles.Add(New FileInfo(m_mgrParams.GetParam("CompassXportLoc")))
+        If String.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.CurrentCultureIgnoreCase) Then
+            Dim compassXportPath = m_mgrParams.GetParam("CompassXportLoc")
+            If String.IsNullOrEmpty(compassXportPath) Then
+                m_message = "Path defined by manager param CompassXportLoc is empty"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
+
+            Try
+                ioToolFiles.Add(New FileInfo(compassXportPath))
+            Catch ex As Exception
+                m_message = "Path defined by manager param CompassXportLoc is invalid: " + compassXportPath
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; " + ex.Message)
+                Return False
+            End Try
+
         Else
             If String.IsNullOrEmpty(msXmlGenerator) Then
                 m_message = "Job Parameter MSXMLGenerator is not defined"
@@ -349,7 +363,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
     ''' </summary>
     ''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
     ''' <remarks></remarks>
-    Private Sub mCompassXportRunner_ProgRunnerStarting(ByVal CommandLine As String) Handles mCompassXportRunner.ProgRunnerStarting
+    Private Sub mCompassXportRunner_ProgRunnerStarting(CommandLine As String) Handles mCompassXportRunner.ProgRunnerStarting
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
     End Sub
 #End Region
