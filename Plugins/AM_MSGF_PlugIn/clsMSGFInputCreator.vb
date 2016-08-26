@@ -439,9 +439,10 @@ Public MustInherit Class clsMSGFInputCreator
             ' Create the MSGF Input file that we will write data to
             Using swMSGFInputFile = New StreamWriter(New FileStream(mMSGFInputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                ' Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source
+                ' Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
                 ' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
-                swMSGFInputFile.WriteLine(clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile & ControlChars.Tab &
+                swMSGFInputFile.WriteLine(
+                  clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile & ControlChars.Tab &
                   clsMSGFRunner.MSGF_RESULT_COLUMN_Title & ControlChars.Tab &
                   clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber & ControlChars.Tab &
                   clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation & ControlChars.Tab &
@@ -723,6 +724,7 @@ Public MustInherit Class clsMSGFInputCreator
                 ' The title column holds the original peptide sequence
                 ' If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
 
+                ' Columns are: #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
                 swMSGFInputFile.WriteLine(
                    strSpectrumFileName & ControlChars.Tab &
                    objPSM.Peptide & ControlChars.Tab &
