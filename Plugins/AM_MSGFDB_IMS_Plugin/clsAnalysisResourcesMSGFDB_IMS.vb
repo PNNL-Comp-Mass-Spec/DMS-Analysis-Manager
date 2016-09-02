@@ -84,7 +84,7 @@ Public Class clsAnalysisResourcesMSGFDB_IMS
 		' SourceJob                     = 852150
 		' InputFolderName               = "DLS201206180954_Auto852150"
 		' DatasetStoragePath            = \\proto-3\LTQ_Orb_3\2011_1\
-		' DatasetArchivePath            = \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2011_1
+		' DatasetArchivePath            = \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1
 
 		Dim strDeconToolsFolderName As String
 		strDeconToolsFolderName = m_jobParams.GetParam("StepParameters", "InputFolderName")
