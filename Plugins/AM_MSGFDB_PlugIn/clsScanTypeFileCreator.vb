@@ -68,21 +68,6 @@ Public Class clsScanTypeFileCreator
 
     Private Function CacheScanTypeUsingScanStatsEx(ByVal strScanStatsExFilePath As String) As Boolean
 
-        Dim intLinesRead As Integer
-        Dim strLineIn As String
-        Dim strSplitLine() As String
-
-        Dim intScanNumberColIndex As Integer
-        Dim intCollisionModeColIndex As Integer
-        Dim intScanFilterColIndex As Integer
-
-        Dim intValue As Integer
-        Dim intScanNumber As Integer
-        Dim strCollisionMode As String
-        Dim strFilterText As String
-
-        Dim blnStoreData As Boolean
-
         Try
             If mScanTypeMap Is Nothing Then
                 mScanTypeMap = New Dictionary(Of Integer, String)
@@ -98,65 +83,68 @@ Public Class clsScanTypeFileCreator
             Using srScanStatsExFile = New StreamReader(New FileStream(strScanStatsExFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 ' Define the default column mapping
-                intScanNumberColIndex = 1
-                intCollisionModeColIndex = 7
-                intScanFilterColIndex = 8
+                Dim scanNumberColIndex = 1
+                Dim collisionModeColIndex = 7
+                Dim scanFilterColIndex = 8
 
-                intLinesRead = 0
+                Dim linesRead = 0
                 Do While srScanStatsExFile.Peek > -1
-                    strLineIn = srScanStatsExFile.ReadLine()
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-                        intLinesRead += 1
-                        strSplitLine = strLineIn.Split(ControlChars.Tab)
+                    Dim dataLine = srScanStatsExFile.ReadLine()
+                    If Not String.IsNullOrWhiteSpace(dataLine) Then
+                        linesRead += 1
+                        Dim dataColumns = dataLine.Split(ControlChars.Tab)
 
-                        If intLinesRead = 1 AndAlso strSplitLine.Length > 1 AndAlso Not Integer.TryParse(strSplitLine(0), intValue) Then
+                        Dim firstColumnIsNumber = FirstColumnIsInteger(dataColumns)
+
+                        If linesRead = 1 AndAlso dataColumns.Length > 0 AndAlso Not firstColumnIsNumber Then
                             ' This is a header line; define the column mapping
 
                             Const IS_CASE_SENSITIVE = False
                             Dim lstHeaderNames = New List(Of String) From {"ScanNumber", "Collision Mode", "Scan Filter Text"}
 
                             ' Keys in this dictionary are column names, values are the 0-based column index
-                            Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE)
+                            Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, lstHeaderNames, IS_CASE_SENSITIVE)
 
-                            intScanNumberColIndex = dctHeaderMapping("ScanNumber")
-                            intCollisionModeColIndex = dctHeaderMapping("Collision Mode")
-                            intScanFilterColIndex = dctHeaderMapping("Scan Filter Text")
+                            scanNumberColIndex = dctHeaderMapping("ScanNumber")
+                            collisionModeColIndex = dctHeaderMapping("Collision Mode")
+                            scanFilterColIndex = dctHeaderMapping("Scan Filter Text")
+                            Continue Do
+                        End If
 
-                        Else
-                            ' Parse out the values
+                        ' Parse out the values
 
-                            If TryGetValueInt(strSplitLine, intScanNumberColIndex, intScanNumber) Then
-                                strCollisionMode = String.Empty
-                                blnStoreData = False
+                        Dim scanNumber As Integer
+                        If TryGetValueInt(dataColumns, scanNumberColIndex, scanNumber) Then
+                            Dim strCollisionMode = String.Empty
+                            Dim storeData = False
 
-                                If TryGetValueStr(strSplitLine, intCollisionModeColIndex, strCollisionMode) Then
-                                    blnStoreData = True
-                                Else
-                                    strFilterText = String.Empty
-                                    If TryGetValueStr(strSplitLine, intScanFilterColIndex, strFilterText) Then
+                            If TryGetValueStr(dataColumns, collisionModeColIndex, strCollisionMode) Then
+                                storeData = True
+                            Else
+                                Dim filterText = String.Empty
+                                If TryGetValueStr(dataColumns, scanFilterColIndex, filterText) Then
 
-                                        strFilterText = strSplitLine(intScanFilterColIndex)
+                                    filterText = dataColumns(scanFilterColIndex)
 
-                                        ' Parse the filter text to determine scan type
-                                        strCollisionMode = XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(strFilterText)
+                                    ' Parse the filter text to determine scan type
+                                    strCollisionMode = XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(filterText)
 
-                                        blnStoreData = True
-                                    End If
+                                    storeData = True
                                 End If
-
-                                If blnStoreData Then
-                                    If String.IsNullOrEmpty(strCollisionMode) Then
-                                        strCollisionMode = "MS"
-                                    ElseIf strCollisionMode = "0" Then
-                                        strCollisionMode = "MS"
-                                    End If
-
-                                    If Not mScanTypeMap.ContainsKey(intScanNumber) Then
-                                        mScanTypeMap.Add(intScanNumber, strCollisionMode)
-                                    End If
-                                End If
-
                             End If
+
+                            If storeData Then
+                                If String.IsNullOrEmpty(strCollisionMode) Then
+                                    strCollisionMode = "MS"
+                                ElseIf strCollisionMode = "0" Then
+                                    strCollisionMode = "MS"
+                                End If
+
+                                If Not mScanTypeMap.ContainsKey(scanNumber) Then
+                                    mScanTypeMap.Add(scanNumber, strCollisionMode)
+                                End If
+                            End If
+
                         End If
                     End If
                 Loop
@@ -176,32 +164,14 @@ Public Class clsScanTypeFileCreator
 
     Public Function CreateScanTypeFile() As Boolean
 
-        Dim strScanStatsFilePath As String
-        Dim strScanStatsExFilePath As String
-
-        Dim intLinesRead As Integer
-        Dim strLineIn As String
-        Dim strSplitLine() As String
-
-        Dim intScanNumberColIndex As Integer
-        Dim intScanTypeColIndex As Integer
-        Dim intScanTypeNameColIndex As Integer
-
-        Dim intValue As Integer
-        Dim intScanNumber As Integer
-        Dim intScanType As Integer
-        Dim strScanTypeName As String
-
-        Dim blnScanStatsExLoaded As Boolean
-
         Try
             mErrorMessage = String.Empty
             mExceptionDetails = String.Empty
 
             mValidScanTypeLineCount = 0
 
-            strScanStatsFilePath = Path.Combine(mWorkDir, mDatasetName & "_ScanStats.txt")
-            strScanStatsExFilePath = Path.Combine(mWorkDir, mDatasetName & "_ScanStatsEx.txt")
+            Dim strScanStatsFilePath = Path.Combine(mWorkDir, mDatasetName & "_ScanStats.txt")
+            Dim strScanStatsExFilePath = Path.Combine(mWorkDir, mDatasetName & "_ScanStatsEx.txt")
 
             If Not File.Exists(strScanStatsFilePath) Then
                 mErrorMessage = "_ScanStats.txt file not found: " & strScanStatsFilePath
@@ -218,81 +188,89 @@ Public Class clsScanTypeFileCreator
                 ' Create the scan type output file
                 Using swOutFile = New StreamWriter(New FileStream(mScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                    swOutFile.WriteLine("ScanNumber" & ControlChars.Tab & "ScanTypeName" & ControlChars.Tab & "ScanType")
+                    swOutFile.WriteLine("ScanNumber" & ControlChars.Tab & "ScanTypeName" & ControlChars.Tab & "ScanType" & ControlChars.Tab & "ScanTime")
 
                     ' Define the default column mapping
-                    intScanNumberColIndex = 1
-                    intScanTypeColIndex = 3
-                    intScanTypeNameColIndex = -1
+                    Dim scanNumberColIndex = 1
+                    Dim scanTimeColIndex = 2
+                    Dim scanTypeColIndex = 3
+                    Dim scanTypeNameColIndex = -1
+                    Dim scanStatsExLoaded = False
 
-                    intLinesRead = 0
+                    Dim linesRead = 0
                     Do While srScanStatsFile.Peek > -1
-                        strLineIn = srScanStatsFile.ReadLine()
-                        If Not String.IsNullOrEmpty(strLineIn) Then
-                            intLinesRead += 1
-                            strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-                            Dim blnFirstColumnIsNumeric = Integer.TryParse(strSplitLine(0), intValue)
-
-                            If intLinesRead = 1 AndAlso strSplitLine.Length > 0 AndAlso Not blnFirstColumnIsNumeric Then
-                                ' This is a header line; define the column mapping
-
-                                Const IS_CASE_SENSITIVE = False
-                                Dim lstHeaderNames = New List(Of String) From {"ScanNumber", "ScanType", "ScanTypeName"}
-
-                                ' Keys in this dictionary are column names, values are the 0-based column index
-                                Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE)
-
-
-                                intScanNumberColIndex = dctHeaderMapping("ScanNumber")
-                                intScanTypeColIndex = dctHeaderMapping("ScanType")
-                                intScanTypeNameColIndex = dctHeaderMapping("ScanTypeName")
-
-                            ElseIf intLinesRead = 1 AndAlso blnFirstColumnIsNumeric AndAlso strSplitLine.Length >= 11 AndAlso blnDetailedScanTypesDefined Then
-                                ' ScanStats file that does not have a header line
-                                ' Assume the column indices are 1, 3, and 10
-
-                                intScanNumberColIndex = 1
-                                intScanTypeColIndex = 3
-                                intScanTypeNameColIndex = 10
-
-                            Else
-                                If intScanTypeNameColIndex < 0 And Not blnScanStatsExLoaded Then
-                                    ' Need to read the ScanStatsEx file
-
-                                    If Not CacheScanTypeUsingScanStatsEx(strScanStatsExFilePath) Then
-                                        srScanStatsFile.Close()
-                                        swOutFile.Close()
-                                        Return False
-                                    End If
-
-                                    blnScanStatsExLoaded = True
-
-                                End If
-
-                                intScanNumber = 0
-                                If TryGetValueInt(strSplitLine, intScanNumberColIndex, intScanNumber) Then
-                                    If TryGetValueInt(strSplitLine, intScanTypeColIndex, intScanType) Then
-
-                                        strScanTypeName = String.Empty
-                                        If blnScanStatsExLoaded Then
-                                            mScanTypeMap.TryGetValue(intScanNumber, strScanTypeName)
-                                        ElseIf intScanTypeNameColIndex >= 0 Then
-                                            TryGetValueStr(strSplitLine, intScanTypeNameColIndex, strScanTypeName)
-                                        End If
-
-                                        If String.IsNullOrEmpty(strScanTypeName) Then
-                                            strScanTypeName = "CID_Assumed"
-                                        End If
-
-                                        swOutFile.WriteLine(intScanNumber & ControlChars.Tab & strScanTypeName & ControlChars.Tab & intScanType)
-                                        mValidScanTypeLineCount += 1
-                                    End If
-
-                                End If
-
-                            End If
+                        Dim dataLine = srScanStatsFile.ReadLine()
+                        If String.IsNullOrWhiteSpace(dataLine) Then
+                            Continue Do
                         End If
+
+                        linesRead += 1
+                        Dim dataColumns = dataLine.Split(ControlChars.Tab)
+
+                        Dim firstColumnIsNumber = FirstColumnIsInteger(dataColumns)
+
+                        If linesRead = 1 AndAlso dataColumns.Length > 0 AndAlso Not firstColumnIsNumber Then
+                            ' This is a header line; define the column mapping
+
+                            Const IS_CASE_SENSITIVE = False
+                            Dim lstHeaderNames = New List(Of String) From {"ScanNumber", "ScanTime", "ScanType", "ScanTypeName"}
+
+                            ' Keys in this dictionary are column names, values are the 0-based column index
+                            Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, lstHeaderNames, IS_CASE_SENSITIVE)
+
+                            scanNumberColIndex = dctHeaderMapping("ScanNumber")
+                            scanTimeColIndex = dctHeaderMapping("ScanTime")
+                            scanTypeColIndex = dctHeaderMapping("ScanType")
+                            scanTypeNameColIndex = dctHeaderMapping("ScanTypeName")
+                            Continue Do
+                        End If
+
+                        If linesRead = 1 AndAlso firstColumnIsNumber AndAlso dataColumns.Length >= 11 AndAlso blnDetailedScanTypesDefined Then
+                            ' This is a ScanStats file that does not have a header line
+                            ' Assume the column indices are 1, 2, 3, and 10
+
+                            scanNumberColIndex = 1
+                            scanTimeColIndex = 2
+                            scanTypeColIndex = 3
+                            scanTypeNameColIndex = 10
+                        End If
+
+                        If scanTypeNameColIndex < 0 And Not scanStatsExLoaded Then
+                            ' Need to read the ScanStatsEx file
+
+                            If Not CacheScanTypeUsingScanStatsEx(strScanStatsExFilePath) Then
+                                srScanStatsFile.Close()
+                                swOutFile.Close()
+                                Return False
+                            End If
+
+                            scanStatsExLoaded = True
+
+                        End If
+
+                        Dim scanNumber = 0
+                        Dim scanType = 0
+                        If Not TryGetValueInt(dataColumns, scanNumberColIndex, scanNumber) Then Continue Do
+
+                        If Not TryGetValueInt(dataColumns, scanTypeColIndex, scanType) Then Continue Do
+
+                        Dim scanTypeName = String.Empty
+                        If scanStatsExLoaded Then
+                            mScanTypeMap.TryGetValue(scanNumber, scanTypeName)
+                        ElseIf scanTypeNameColIndex >= 0 Then
+                            TryGetValueStr(dataColumns, scanTypeNameColIndex, scanTypeName)
+                        End If
+
+                        Dim scanTime As Single
+                        TryGetValueSng(dataColumns, scanTimeColIndex, scanTime)
+
+                        swOutFile.WriteLine(scanNumber & ControlChars.Tab &
+                                            scanTypeName & ControlChars.Tab &
+                                            scanType & ControlChars.Tab &
+                                            scanTime.ToString("0.0000"))
+
+                        mValidScanTypeLineCount += 1
+
                     Loop
 
 
@@ -311,16 +289,26 @@ Public Class clsScanTypeFileCreator
     End Function
 
     ''' <summary>
-    ''' Tries to convert the text at index intColIndex of strData to an integer
+    ''' Return true if the value in the first index of dataColumns is an Integer
     ''' </summary>
-    ''' <param name="strData"></param>
-    ''' <param name="intColIndex"></param>
+    ''' <param name="dataColumns"></param>
+    ''' <returns></returns>
+    Private Function FirstColumnIsInteger(dataColumns As String()) As Boolean
+        Dim dataValue As Integer
+        Return Integer.TryParse(dataColumns(0), dataValue)
+    End Function
+
+    ''' <summary>
+    ''' Tries to convert the text at index colIndex of strData to an integer
+    ''' </summary>
+    ''' <param name="dataColumns"></param>
+    ''' <param name="colIndex"></param>
     ''' <param name="intValue"></param>
-    ''' <returns>True if success; false if intColIndex is less than 0, intColIndex is out of range for strData(), or the text cannot be converted to an integer</returns>
+    ''' <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to an integer</returns>
     ''' <remarks></remarks>
-    Private Function TryGetValueInt(strData() As String, intColIndex As Integer, <Out()> ByRef intValue As Integer) As Boolean
-        If intColIndex >= 0 AndAlso intColIndex < strData.Length Then
-            If Integer.TryParse(strData(intColIndex), intValue) Then
+    Private Function TryGetValueInt(dataColumns() As String, colIndex As Integer, <Out()> ByRef intValue As Integer) As Boolean
+        If colIndex >= 0 AndAlso colIndex < dataColumns.Length Then
+            If Integer.TryParse(dataColumns(colIndex), intValue) Then
                 Return True
             End If
         End If
@@ -330,16 +318,35 @@ Public Class clsScanTypeFileCreator
     End Function
 
     ''' <summary>
-    ''' Tries to retrieve the string value at index intColIndex in strData()
+    ''' Tries to convert the text at index colIndex of strData to a float
     ''' </summary>
-    ''' <param name="strData"></param>
-    ''' <param name="intColIndex"></param>
-    ''' <param name="strValue"></param>
-    ''' <returns>True if success; false if intColIndex is less than 0 or intColIndex is out of range for strData()</returns>
+    ''' <param name="dataColumns"></param>
+    ''' <param name="colIndex"></param>
+    ''' <param name="sngValue"></param>
+    ''' <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to an integer</returns>
     ''' <remarks></remarks>
-    Private Function TryGetValueStr(strData() As String, intColIndex As Integer, <Out()> ByRef strValue As String) As Boolean
-        If intColIndex >= 0 AndAlso intColIndex < strData.Length Then
-            strValue = strData(intColIndex)
+    Private Function TryGetValueSng(dataColumns() As String, colIndex As Integer, <Out()> ByRef sngValue As Single) As Boolean
+        If colIndex >= 0 AndAlso colIndex < dataColumns.Length Then
+            If Single.TryParse(dataColumns(colIndex), sngValue) Then
+                Return True
+            End If
+        End If
+
+        sngValue = 0
+        Return False
+    End Function
+
+    ''' <summary>
+    ''' Tries to retrieve the string value at index colIndex in dataColumns()
+    ''' </summary>
+    ''' <param name="dataColumns"></param>
+    ''' <param name="colIndex"></param>
+    ''' <param name="strValue"></param>
+    ''' <returns>True if success; false if colIndex is less than 0 or colIndex is out of range for dataColumns()</returns>
+    ''' <remarks></remarks>
+    Private Function TryGetValueStr(dataColumns() As String, colIndex As Integer, <Out()> ByRef strValue As String) As Boolean
+        If colIndex >= 0 AndAlso colIndex < dataColumns.Length Then
+            strValue = dataColumns(colIndex)
             If String.IsNullOrEmpty(strValue) Then strValue = String.Empty
             Return True
         End If
