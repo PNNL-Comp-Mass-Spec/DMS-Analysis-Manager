@@ -2313,7 +2313,7 @@ Public MustInherit Class clsAnalysisResources
                 AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName), True)
             End If
 
-            If Not MyEMSLAvailable AndAlso Not assumeUnpurged Then
+            If MyEMSLAvailable AndAlso Not assumeUnpurged Then
                 ' \\MyEMSL
                 AddPathToCheck(lstPathsToCheck, MYEMSL_PATH_FLAG, False)
             End If
@@ -2324,7 +2324,7 @@ Public MustInherit Class clsAnalysisResources
 				lstPathsToCheck.Remove(MYEMSL_PATH_FLAG)
 			End If
 #End If
-            If (m_AuroraAvailable OrElse MyEMSLAvailable) AndAlso Not assumeUnpurged Then
+            If (m_AuroraAvailable OrElse Not MyEMSLAvailable) AndAlso Not assumeUnpurged Then
                 AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), True)
             End If
 
@@ -5913,7 +5913,7 @@ Public MustInherit Class clsAnalysisResources
 
         Dim fiDatasetFile = New FileInfo(DatasetFilePath)
         If Not fiDatasetFile.Exists Then
-            m_message = "Source dataset file file not found"
+            m_message = "Source dataset file not found"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiDatasetFile.FullName)
             Return False
         End If
