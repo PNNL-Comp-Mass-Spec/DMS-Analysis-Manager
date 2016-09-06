@@ -1856,12 +1856,17 @@ Public Class clsMSGFDBUtils
 
                             If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
 
-                                If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) AndAlso strAssumedScanType.ToUpper() <> "UVPD" Then
-                                    ' Override FragmentationMethodID to always be 0
+                                If String.IsNullOrWhiteSpace(strValue) AndAlso Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
+                                    ' No setting for FragmentationMethodID, and a ScanType file was created
+                                    ' Use FragmentationMethodID 0 (as written in the spectrum, or CID)
                                     strValue = "0"
+
+                                    ReportMessage("Using Fragmentation method -m " & strValue & " because a ScanType file was created")
 
                                 ElseIf Not String.IsNullOrWhiteSpace(strAssumedScanType) Then
                                     ' Override FragmentationMethodID using strAssumedScanType
+                                    ' AssumedScanType is an optional job setting; see for example:
+                                    '  IonTrapDefSettings_AssumeHCD.xml with <item key="AssumedScanType" value="HCD"/>
                                     Select Case strAssumedScanType.ToUpper()
                                         Case "CID"
                                             strValue = "1"
@@ -1870,7 +1875,8 @@ Public Class clsMSGFDBUtils
                                         Case "HCD"
                                             strValue = "3"
                                         Case "UVPD"
-                                            strValue = "4"
+                                            ' Note that FragmentationType 4 means Merge CID and HCD; UVPD is type 5
+                                            strValue = "5"
                                         Case Else
                                             ' Invalid string
                                             mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, HCD, or UVPD"
@@ -1878,6 +1884,9 @@ Public Class clsMSGFDBUtils
                                             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                                     End Select
 
+                                    ReportMessage("Using Fragmentation method -m " & strValue & " because of Assumed scan type " & strAssumedScanType)
+                                Else
+                                    ReportMessage("Using Fragmentation method -m " & strValue)
                                 End If
 
                             ElseIf clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
