@@ -1875,8 +1875,9 @@ Public Class clsMSGFDBUtils
                                         Case "HCD"
                                             strValue = "3"
                                         Case "UVPD"
-                                            ' Note that FragmentationType 4 means Merge CID and HCD; UVPD is type 5
-                                            strValue = "5"
+                                            ' Previously, with MS-GFDB, fragmentationType 4 meant Merge ETD and CID
+                                            ' Now with MSGF+, fragmentationType 4 means UVPD
+                                            strValue = "4"
                                         Case Else
                                             ' Invalid string
                                             mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, HCD, or UVPD"
