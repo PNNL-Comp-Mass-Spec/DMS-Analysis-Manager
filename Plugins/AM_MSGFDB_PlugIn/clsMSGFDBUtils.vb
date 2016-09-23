@@ -875,8 +875,10 @@ Public Class clsMSGFDBUtils
     End Function
 
     Private Function GetMSFGDBParameterNames() As Dictionary(Of String, String)
-        Dim dctParamNames As Dictionary(Of String, String)
-        dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
+
+        ' Keys are the parameter name in the MSGF+ parameter file
+        ' Values are the command line switch name
+        Dim dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
         dctParamNames.Add("PMTolerance", "t")
         dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
@@ -903,9 +905,10 @@ Public Class clsMSGFDBUtils
         dctParamNames.Add("NumMatchesPerSpec", "n")
         dctParamNames.Add("minNumPeaks", "minNumPeaks") ' Auto-added by this code if not defined
         dctParamNames.Add("Protocol", "protocol")
+        dctParamNames.Add("ChargeCarrierMass", "ccm")
 
         ' The following are special cases; 
-        ' do not add to dctParamNames
+        ' Do not add them to dctParamNames
         '   uniformAAProb
         '   NumThreads
         '   NumMods
