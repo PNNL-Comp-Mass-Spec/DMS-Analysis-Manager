@@ -14,38 +14,36 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     '*********************************************************************************************************
 
 #Region "Module Variables"
-    Protected Const LIPID_MAPS_DB_FILENAME_PREFIX As String = "LipidMapsDB_"
-    Protected Const LIPID_MAPS_STALE_DB_AGE_DAYS As Integer = 5
+    Private Const LIPID_MAPS_DB_FILENAME_PREFIX As String = "LipidMapsDB_"
+    Private Const LIPID_MAPS_STALE_DB_AGE_DAYS As Integer = 5
 
-    Protected Const LIPID_TOOLS_RESULT_FILE_PREFIX As String = "LipidMap_"
-    Protected Const LIPID_TOOLS_CONSOLE_OUTPUT As String = "LipidTools_ConsoleOutput.txt"
+    Private Const LIPID_TOOLS_RESULT_FILE_PREFIX As String = "LipidMap_"
+    Private Const LIPID_TOOLS_CONSOLE_OUTPUT As String = "LipidTools_ConsoleOutput.txt"
 
-    Protected Const PROGRESS_PCT_UPDATING_LIPID_MAPS_DATABASE As Integer = 5
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_STARTING As Integer = 10
+    Private Const PROGRESS_PCT_UPDATING_LIPID_MAPS_DATABASE As Integer = 5
+    Private Const PROGRESS_PCT_LIPID_TOOLS_STARTING As Integer = 10
 
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_READING_DATABASE As Integer = 11
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_READING_POSITIVE_DATA As Integer = 12
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_READING_NEGATIVE_DATA As Integer = 13
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES As Integer = 15
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES As Integer = 50
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_ALIGNING_FEATURES As Integer = 90
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_MATCHING_TO_DB As Integer = 92
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_WRITING_RESULTS As Integer = 94
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_WRITING_QC_DATA As Integer = 96
+    Private Const PROGRESS_PCT_LIPID_TOOLS_READING_DATABASE As Integer = 11
+    Private Const PROGRESS_PCT_LIPID_TOOLS_READING_POSITIVE_DATA As Integer = 12
+    Private Const PROGRESS_PCT_LIPID_TOOLS_READING_NEGATIVE_DATA As Integer = 13
+    Private Const PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES As Integer = 15
+    Private Const PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES As Integer = 50
+    Private Const PROGRESS_PCT_LIPID_TOOLS_ALIGNING_FEATURES As Integer = 90
+    Private Const PROGRESS_PCT_LIPID_TOOLS_MATCHING_TO_DB As Integer = 92
+    Private Const PROGRESS_PCT_LIPID_TOOLS_WRITING_RESULTS As Integer = 94
+    Private Const PROGRESS_PCT_LIPID_TOOLS_WRITING_QC_DATA As Integer = 96
 
-    Protected Const PROGRESS_PCT_LIPID_TOOLS_COMPLETE As Integer = 98
-    Protected Const PROGRESS_PCT_COMPLETE As Integer = 99
+    Private Const PROGRESS_PCT_LIPID_TOOLS_COMPLETE As Integer = 98
+    Private Const PROGRESS_PCT_COMPLETE As Integer = 99
 
-    Protected mConsoleOutputErrorMsg As String
-    Protected mDatasetID As Integer = 0
+    Private mConsoleOutputErrorMsg As String
 
-    Protected mLipidToolsProgLoc As String
-    Protected mConsoleOutputProgressMap As Dictionary(Of String, Integer)
+    Private mLipidToolsProgLoc As String
+    Private mConsoleOutputProgressMap As Dictionary(Of String, Integer)
 
-    Protected mDownloadingLipidMapsDatabase As Boolean
-    Protected mLipidMapsDBFilename As String = String.Empty
+    Private mLipidMapsDBFilename As String = String.Empty
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Private WithEvents CmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Structures"
@@ -58,7 +56,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
-    
+
         Try
             'Call base class for initial setup
             If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -130,7 +128,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
             cmdStr &= " -o " & PossiblyQuotePath(Path.Combine(m_WorkDir, LIPID_TOOLS_RESULT_FILE_PREFIX))            ' Folder and prefix text for output files
 
             If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mLipidToolsProgLoc & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mLipidToolsProgLoc & cmdStr)
             End If
 
             CmdRunner = New clsRunDosProgram(m_WorkDir)
@@ -177,9 +175,9 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
             If Not success Then
                 Dim msg = "Error running LipidTools"
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
+                m_message = clsGlobal.AppendToComment(m_message, msg)
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
 
                 If CmdRunner.ExitCode <> 0 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "LipidTools returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
@@ -255,7 +253,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
     End Function
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
+    Private Sub CopyFailedResultsToArchiveFolder()
 
         Dim result As IJobParams.CloseOutType
 
@@ -295,7 +293,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     ''' <param name="strNewestLipidMapsDBFileName">The name of the newest Lipid Maps DB in the Lipid Maps DB folder</param>
     ''' <returns>The filename of the latest version of the database</returns>
     ''' <remarks>If the newly downloaded LipidMaps.txt file has a hash that matches the computed hash for strNewestLipidMapsDBFileName, then we update the time stamp on the HashCheckFile instead of copying the downloaded data back to the server</remarks>
-    Protected Function DownloadNewLipidMapsDB(ByVal diLipidMapsDBFolder As DirectoryInfo, ByVal strNewestLipidMapsDBFileName As String) As String
+    Private Function DownloadNewLipidMapsDB(diLipidMapsDBFolder As DirectoryInfo, strNewestLipidMapsDBFileName As String) As String
 
         Dim lockFileFound = False
         Dim strLockFilePath As String = String.Empty
@@ -365,7 +363,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
         cmdStr = " -UpdateDBOnly -db " & PossiblyQuotePath(strLipidMapsDBFileLocal)
 
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mLipidToolsProgLoc & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mLipidToolsProgLoc & cmdStr)
         End If
 
         CmdRunner = New clsRunDosProgram(m_WorkDir)
@@ -449,7 +447,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
     End Function
 
-    Protected Function FindNewestLipidMapsDB(ByVal diLipidMapsDBFolder As DirectoryInfo, ByRef dtLipidMapsDBFileTime As DateTime) As String
+    Private Function FindNewestLipidMapsDB(diLipidMapsDBFolder As DirectoryInfo, ByRef dtLipidMapsDBFileTime As DateTime) As String
 
         Dim strNewestLipidMapsDBFileName As String
         strNewestLipidMapsDBFileName = String.Empty
@@ -481,11 +479,11 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
     End Function
 
-    Protected Function GetHashCheckFilePath(ByVal strLipidMapsDBFolderPath As String, ByVal strNewestLipidMapsDBFileName As String) As String
+    Private Function GetHashCheckFilePath(strLipidMapsDBFolderPath As String, strNewestLipidMapsDBFileName As String) As String
         Return Path.Combine(strLipidMapsDBFolderPath, Path.GetFileNameWithoutExtension(strNewestLipidMapsDBFileName) & ".hashcheck")
     End Function
 
-    Protected Function GetLipidMapsDatabase() As Boolean
+    Private Function GetLipidMapsDatabase() As Boolean
 
         Dim strParamFileFolderPath As String
         Dim diLipidMapsDBFolder As DirectoryInfo
@@ -496,7 +494,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
         Dim strSourceFilePath As String
         Dim strTargetFilePath As String
 
-        Dim blnUpdateDB As Boolean = False
+        Dim blnUpdateDB = False
 
         Try
 
@@ -526,9 +524,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
             End If
 
             If blnUpdateDB Then
-                Dim intDownloadAttempts As Integer = 0
-
-                mDownloadingLipidMapsDatabase = True
+                Dim intDownloadAttempts = 0
 
                 Do While intDownloadAttempts <= 2
 
@@ -543,8 +539,6 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
                     End Try
 
                 Loop
-
-                mDownloadingLipidMapsDatabase = False
 
             End If
 
@@ -576,7 +570,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
     End Function
 
-    Protected Function GetLipidMapsParameterNames() As Dictionary(Of String, String)
+    Private Function GetLipidMapsParameterNames() As Dictionary(Of String, String)
         Dim dctParamNames As Dictionary(Of String, String)
         dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
@@ -594,7 +588,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output:
         '   Reading local Lipid Maps database...Done.
@@ -616,7 +610,8 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
         '   Writing QC data...Done.
         '   Saving QC images...Done.
 
-        Static reSubProgress As Regex = New Regex("^(\d+) / (\d+)", RegexOptions.Compiled)
+        ' ReSharper disable once UseImplicitlyTypedVariableEvident
+        Static reSubProgress as Regex = New Regex("^(\d+) / (\d+)", RegexOptions.Compiled)
 
         Try
 
@@ -647,9 +642,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
             End If
 
 
-            Dim srInFile As StreamReader
             Dim strLineIn As String
-            Dim intLinesRead As Integer
             Dim oMatch As Match
             Dim dblSubProgressAddon As Double
 
@@ -659,39 +652,38 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
             Dim intEffectiveProgress As Integer
             intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_STARTING
 
-            srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-            intLinesRead = 0
-            Do While srInFile.Peek() >= 0
-                strLineIn = srInFile.ReadLine()
-                intLinesRead += 1
+                Do While Not srInFile.EndOfStream()
+                    strLineIn = srInFile.ReadLine()
 
-                If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
-                    ' Update progress if the line starts with one of the expected phrases
-                    For Each oItem As KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
-                        If strLineIn.StartsWith(oItem.Key) Then
-                            If intEffectiveProgress < oItem.Value Then
-                                intEffectiveProgress = oItem.Value
+                        ' Update progress if the line starts with one of the expected phrases
+                        For Each oItem As KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
+                            If strLineIn.StartsWith(oItem.Key) Then
+                                If intEffectiveProgress < oItem.Value Then
+                                    intEffectiveProgress = oItem.Value
+                                End If
                             End If
-                        End If
-                    Next
+                        Next
 
-                    If intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES OrElse intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES Then
-                        oMatch = reSubProgress.Match(strLineIn)
-                        If oMatch.Success Then
-                            If Integer.TryParse(oMatch.Groups(1).Value, intSubProgressCount) Then
-                                If Integer.TryParse(oMatch.Groups(2).Value, intSubProgressCountTotal) Then
-                                    dblSubProgressAddon = intSubProgressCount / CDbl(intSubProgressCountTotal)
+                        If intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES OrElse intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES Then
+                            oMatch = reSubProgress.Match(strLineIn)
+                            If oMatch.Success Then
+                                If Integer.TryParse(oMatch.Groups(1).Value, intSubProgressCount) Then
+                                    If Integer.TryParse(oMatch.Groups(2).Value, intSubProgressCountTotal) Then
+                                        dblSubProgressAddon = intSubProgressCount / CDbl(intSubProgressCountTotal)
+                                    End If
                                 End If
                             End If
                         End If
+
                     End If
+                Loop
 
-                End If
-            Loop
+            End Using
 
-            srInFile.Close()
 
             Dim sngEffectiveProgress As Single = intEffectiveProgress
 
@@ -721,7 +713,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     ''' <param name="strParameterFilePath">Path to the LipidMapSearch Parameter File</param>
     ''' <returns>Options string if success; empty string if an error</returns>
     ''' <remarks></remarks>
-    Private Function ParseLipidMapSearchParameterFile(ByVal strParameterFilePath As String) As String
+    Private Function ParseLipidMapSearchParameterFile(strParameterFilePath As String) As String
 
         Dim sbOptions As StringBuilder
         Dim strLineIn As String
@@ -752,7 +744,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
                         If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
 
                             Dim intCharIndex As Integer
-                            intCharIndex = strLineIn.IndexOf("=")
+                            intCharIndex = strLineIn.IndexOf("="c)
                             If intCharIndex > 0 Then
                                 strKey = strLineIn.Substring(0, intCharIndex).Trim()
                                 If intCharIndex < strLineIn.Length - 1 Then
@@ -803,7 +795,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     End Function
 
 
-    Protected Function PostProcessLipidToolsResults() As Boolean
+    Private Function PostProcessLipidToolsResults() As Boolean
 
         Dim strFolderToZip As String
 
@@ -873,7 +865,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strLipidToolsProgLoc As String) As Boolean
+    Private Function StoreToolVersionInfo(strLipidToolsProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioLipidTools As FileInfo
@@ -893,7 +885,6 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
                 Return False
             End Try
 
-            Return False
         End If
 
         ' Lookup the version of the LipidTools application

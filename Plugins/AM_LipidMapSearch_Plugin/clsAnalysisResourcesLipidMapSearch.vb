@@ -1,6 +1,8 @@
 ﻿Option Strict On
 
+Imports System.IO
 Imports AnalysisManagerBase
+Imports MyEMSLReader
 
 Public Class clsAnalysisResourcesLipidMapSearch
 	Inherits clsAnalysisResources
@@ -31,7 +33,7 @@ Public Class clsAnalysisResourcesLipidMapSearch
 			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 		End If
 
-        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -39,7 +41,7 @@ Public Class clsAnalysisResourcesLipidMapSearch
 
 	End Function
 
-	Protected Function RetrieveFirstDatasetFiles() As Boolean
+	Private Function RetrieveFirstDatasetFiles() As Boolean
 
 		m_jobParams.AddResultFileExtensionToSkip(DECONTOOLS_PEAKS_FILE_SUFFIX)
 		m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
@@ -90,18 +92,18 @@ Public Class clsAnalysisResourcesLipidMapSearch
 			Return False
 		End If
 
-		strDatasetFolder = System.IO.Path.Combine(strDatasetFolder, m_DatasetName)
-		strDatasetFolderArchive = System.IO.Path.Combine(strDatasetFolderArchive, m_DatasetName)
+		strDatasetFolder = Path.Combine(strDatasetFolder, m_DatasetName)
+		strDatasetFolderArchive = Path.Combine(strDatasetFolderArchive, m_DatasetName)
 
 		If m_DebugLevel >= 2 Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the dataset's .Raw file and DeconTools _peaks.txt file")
 		End If
 
-		Return RetrieveDatasetAndPeaksFile(m_DatasetName, strDatasetFolder, strDatasetFolderArchive, strDeconToolsFolderName)
+		Return RetrieveDatasetAndPeaksFile(m_DatasetName, strDatasetFolder, strDatasetFolderArchive)
 
 	End Function
 
-	Protected Function RetrieveSecondDatasetFiles() As Boolean
+	Private Function RetrieveSecondDatasetFiles() As Boolean
 
 		' The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
 		' For example, for dataset XG_lipid_pt5a using Special_Processing of
@@ -148,8 +150,8 @@ Public Class clsAnalysisResourcesLipidMapSearch
 		Dim strInputFolder As String
 		Dim strInputFolderArchive As String
 
-		Dim diInputFolder As System.IO.DirectoryInfo
-		Dim diInputFolderArchive As System.IO.DirectoryInfo
+		Dim diInputFolder As DirectoryInfo
+		Dim diInputFolderArchive As DirectoryInfo
 
 		strInputFolder = m_jobParams.GetParam("JobParameters", "SourceJob2FolderPath")
 		strInputFolderArchive = m_jobParams.GetParam("JobParameters", "SourceJob2FolderPathArchive")
@@ -164,8 +166,8 @@ Public Class clsAnalysisResourcesLipidMapSearch
 			Return False
 		End If
 
-		diInputFolder = New System.IO.DirectoryInfo(strInputFolder)
-		diInputFolderArchive = New System.IO.DirectoryInfo(strInputFolderArchive)
+		diInputFolder = New DirectoryInfo(strInputFolder)
+		diInputFolderArchive = New DirectoryInfo(strInputFolderArchive)
 
 		If Not diInputFolder.Name.ToUpper().StartsWith("DLS") Then
 			m_message = "SourceJob2FolderPath is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text"
@@ -181,11 +183,11 @@ Public Class clsAnalysisResourcesLipidMapSearch
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the second dataset's .Raw file and DeconTools _peaks.txt file")
 		End If
 
-		Return RetrieveDatasetAndPeaksFile(strDataset2, diInputFolder.Parent.FullName, diInputFolderArchive.Parent.FullName, diInputFolder.Name)
+		Return RetrieveDatasetAndPeaksFile(strDataset2, diInputFolder.Parent.FullName, diInputFolderArchive.Parent.FullName)
 	
 	End Function
 
-	Protected Function RetrieveDatasetAndPeaksFile(ByVal strDatasetName As String, ByVal strDatasetFolderPath As String, ByVal strDatasetFolderPathArchive As String, ByVal strDeconToolsFolderName As String) As Boolean
+	Private Function RetrieveDatasetAndPeaksFile(strDatasetName As String, strDatasetFolderPath As String, strDatasetFolderPathArchive As String) As Boolean
 
 		Dim strFileToFind As String
 
