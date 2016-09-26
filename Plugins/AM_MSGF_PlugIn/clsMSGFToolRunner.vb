@@ -393,7 +393,7 @@ Public Class clsMSGFRunner
             ' Read the data from the MSGF-DB Param file
             Using srParamFile = New StreamReader(New FileStream(strSearchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srParamFile.Peek >= 0
+                Do While Not srParamFile.EndOfStream
                     strLineIn = srParamFile.ReadLine
 
                     If Not String.IsNullOrEmpty(strLineIn) AndAlso strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG) Then
@@ -484,7 +484,7 @@ Public Class clsMSGFRunner
             ' Read the data from the Sequest Param file
             Using srParamFile = New StreamReader(New FileStream(strSearchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srParamFile.Peek >= 0
+                Do While Not srParamFile.EndOfStream
                     strLineIn = srParamFile.ReadLine
 
                     If Not String.IsNullOrEmpty(strLineIn) AndAlso strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG) Then
@@ -1216,15 +1216,11 @@ Public Class clsMSGFRunner
                 blnFirstHitsDataPresent = False
                 blnTooManyErrors = False
 
-                intLinesRead = 0
-                intSpecProbErrorCount = 0
-                intPrecursorMassErrorCount = 0
-                intMGFLookupErrorCount = 0
+            Do While Not srMSGFResults.EndOfStream
+                strLineIn = srMSGFResults.ReadLine
+                intLinesRead += 1
+                blnSkipLine = False
 
-                Do While srMSGFResults.Peek >= 0
-                    strLineIn = srMSGFResults.ReadLine
-                    intLinesRead += 1
-                    blnSkipLine = False
 
                     If Not String.IsNullOrEmpty(strLineIn) Then
                         strSplitLine = strLineIn.Split(ControlChars.Tab)
@@ -1603,7 +1599,7 @@ Public Class clsMSGFRunner
             Using srSourceFile = New StreamReader(New FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
-                Do While srSourceFile.Peek > - 1
+                Do While Not srSourceFile.EndOfStream
                     strLineIn = srSourceFile.ReadLine()
 
                     If Not String.IsNullOrEmpty(strLineIn) Then
@@ -1736,10 +1732,10 @@ Public Class clsMSGFRunner
                         ' Read and skip the first line of srTempResults (it's a header)
                         srTempResults.ReadLine()
 
-                        ' Append the remaining lines to swFinalResults
-                        While srTempResults.Peek > - 1
-                            swFinalResults.WriteLine(srTempResults.ReadLine)
-                        End While
+                    ' Append the remaining lines to swFinalResults
+                    While Not srTempResults.EndOfStream
+                        swFinalResults.WriteLine(srTempResults.ReadLine)
+                    End While
 
                     End Using
                 End Using
@@ -2027,7 +2023,7 @@ Public Class clsMSGFRunner
                 For Each strResultFile As String In lstResultFiles
                     Using srInFile = New StreamReader(New FileStream(strResultFile, FileMode.Open, FileAccess.Read, FileShare.Read))
                         intLinesRead = 0
-                        Do While srInFile.Peek >= 0
+                        Do While Not srInFile.EndOfStream
                             strLineIn = srInFile.ReadLine()
                             intLinesRead += 1
 
@@ -2073,7 +2069,7 @@ Public Class clsMSGFRunner
             intMSGFSpecProbColIndex = - 1
             Using srInFile = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srInFile.Peek > - 1
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
 
                     If Not String.IsNullOrEmpty(strLineIn) Then
@@ -2157,7 +2153,7 @@ Public Class clsMSGFRunner
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
-                Do While srInFile.Peek() > - 1
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
@@ -2221,7 +2217,7 @@ Public Class clsMSGFRunner
                 udtThisSegment.Entries = 0
                 udtThisSegment.Segment = 0
 
-                Do While srInFile.Peek > - 1
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
@@ -2424,7 +2420,7 @@ Public Class clsMSGFRunner
             Using srMSGFResultsFile = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 intLineCount = 0
 
-                Do While srMSGFResultsFile.Peek > - 1
+                Do While Not srMSGFResultsFile.EndOfStream
                     srMSGFResultsFile.ReadLine()
                     intLineCount += 1
                 Loop
