@@ -391,7 +391,6 @@ Public MustInherit Class clsMSGFInputCreator
 
                 Loop
 
-
             End Using    ' First Hits MSGF writer
 
             mPHRPReader.Dispose()
@@ -520,7 +519,6 @@ Public MustInherit Class clsMSGFInputCreator
 
                     blnSuccess = True
                 End If
-
 
             End Using
 
@@ -669,7 +667,7 @@ Public MustInherit Class clsMSGFInputCreator
                     ' This happens in Sequest _syn.txt files where the line is repeated for all protein matches
 
 
-                    If intScanNumberPrevious = objPSM.ScanNumber AndAlso 
+                    If intScanNumberPrevious = objPSM.ScanNumber AndAlso
                        intChargePrevious = objPSM.Charge AndAlso
                        strPeptidePrevious = objPSM.Peptide Then
 

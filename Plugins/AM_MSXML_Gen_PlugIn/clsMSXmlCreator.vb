@@ -175,7 +175,7 @@ Public Class clsMSXMLCreator
         End If
 
         Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType)
+        Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
 
         If strMSXmlGeneratorExe.ToLower().Contains("readw") Then
             ' ReAdW

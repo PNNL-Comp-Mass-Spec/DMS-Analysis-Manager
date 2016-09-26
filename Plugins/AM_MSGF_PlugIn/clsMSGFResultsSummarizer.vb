@@ -1218,7 +1218,6 @@ Public Class clsMSGFResultsSummarizer
                         End If
 
                     End If
-
                 Loop
 
             End Using

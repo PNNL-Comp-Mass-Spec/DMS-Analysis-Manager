@@ -124,8 +124,6 @@ Public Class clsMSGFInputCreatorMSGFDB
     ''' <remarks></remarks>
     Public Function CreateMSGFFileUsingMSGFDBSpecProb(strSourceFilePath As String, strSourceFileDescription As String) As Boolean
 
-        Dim strMSGFFilePath As String
-
         Try
 
             If String.IsNullOrEmpty(strSourceFilePath) Then
@@ -142,9 +140,9 @@ Public Class clsMSGFInputCreatorMSGFDB
                 objReader.SkipDuplicatePSMs = False
 
                 ' Define the path to write the first-hits MSGF results to
-                strMSGFFilePath = Path.Combine(mWorkDir,
-                                               Path.GetFileNameWithoutExtension(strSourceFilePath) &
-                                               MSGF_RESULT_FILENAME_SUFFIX)
+                Dim strMSGFFilePath = Path.Combine(mWorkDir,
+                                                   Path.GetFileNameWithoutExtension(strSourceFilePath) &
+                                                   MSGF_RESULT_FILENAME_SUFFIX)
 
                 ' Create the output file
                 Using swMSGFFile = New StreamWriter(New FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))

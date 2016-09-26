@@ -437,16 +437,13 @@ Public Class clsMSGFRunner
 
                 Loop
 
-
             End Using
-
 
         Catch ex As Exception
             Dim Msg As String
             Msg = "Error reading the MSGFDB param file: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file")
-
             Return False
         End Try
 
@@ -548,7 +545,6 @@ Public Class clsMSGFRunner
                 Loop
 
             End Using
-
 
         Catch ex As Exception
             Dim Msg As String
@@ -1203,166 +1199,167 @@ Public Class clsMSGFRunner
         objColumnHeaders.Add(MSGF_RESULT_COLUMN_Collision_Mode, 8)
         objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 9)
 
-        ' Read the data from the MSGF Result file
-        Using srMSGFResults = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+        ' Read the data from the MSGF Result file and
+        ' write the Synopsis MSGF Results to a new file
+        Using srMSGFResults = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)),
+              swMSGFSynFile = New StreamWriter(New FileStream(strMSGFSynopsisResults, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-            ' Create a new file for writing the Synopsis MSGF Results
-            Using swMSGFSynFile = New StreamWriter(New FileStream(strMSGFSynopsisResults, FileMode.Create, FileAccess.Write, FileShare.Read))
+            ' Write out the headers to swMSGFSynFile
+            mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile)
 
-                ' Write out the headers to swMSGFSynFile
-                mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile)
+            blnHeaderLineParsed = False
+            blnFirstHitsDataPresent = False
+            blnTooManyErrors = False
 
-                blnHeaderLineParsed = False
-                blnFirstHitsDataPresent = False
-                blnTooManyErrors = False
+            intLinesRead = 0
+            intSpecProbErrorCount = 0
+            intPrecursorMassErrorCount = 0
+            intMGFLookupErrorCount = 0
 
             Do While Not srMSGFResults.EndOfStream
                 strLineIn = srMSGFResults.ReadLine
                 intLinesRead += 1
                 blnSkipLine = False
 
+                If Not String.IsNullOrEmpty(strLineIn) Then
+                    strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-                        strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-                        If Not blnHeaderLineParsed Then
-                            If strSplitLine(0).ToLower() = MSGF_RESULT_COLUMN_SpectrumFile.ToLower() Then
-                                ' Parse the header line to confirm the column ordering
-                                clsPHRPReader.ParseColumnHeaders(strSplitLine, objColumnHeaders)
-                                blnSkipLine = True
-                            End If
-
-                            blnHeaderLineParsed = True
+                    If Not blnHeaderLineParsed Then
+                        If strSplitLine(0).ToLower() = MSGF_RESULT_COLUMN_SpectrumFile.ToLower() Then
+                            ' Parse the header line to confirm the column ordering
+                            clsPHRPReader.ParseColumnHeaders(strSplitLine, objColumnHeaders)
+                            blnSkipLine = True
                         End If
 
-                        If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
-
-                            strOriginalPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders)
-                            strScan = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders)
-                            strCharge = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders)
-                            strProtein = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders)
-                            strPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders)
-                            strResultID = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders)
-                            strSpecProb = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders)
-                            strDataSource = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders)
-                            strNotes = String.Empty
-
-                            If blnMGFInstrumentData Then
-                                ' Update the scan number
-                                Dim intMGFScanIndex As Integer
-                                Dim intActualScanNumber = 0
-                                If Integer.TryParse(strScan, intMGFScanIndex) Then
-                                    intActualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(intMGFScanIndex)
-                                End If
-
-                                If intActualScanNumber = 0 Then
-                                    intMGFLookupErrorCount += 1
-
-                                    ' Log the first 5 instances to the log file as warnings
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                         "Unable to determine the scan number for MGF spectrum index " &
-                                                         strScan & " on line  " & intLinesRead & " in the result file")
-                                End If
-                                strScan = intActualScanNumber.ToString()
-                            End If
-
-                            If Double.TryParse(strSpecProb, dblSpecProb) Then
-                                If strOriginalPeptide <> strPeptide Then
-                                    strNotes = String.Copy(strPeptide)
-                                End If
-
-                                ' Update strSpecProb to reduce the number of significant figures
-                                strSpecProb = dblSpecProb.ToString("0.000000E+00")
-                            Else
-                                ' The specProb column does not contain a number
-                                intSpecProbErrorCount += 1
-
-                                If intSpecProbErrorCount <= MAX_ERRORS_TO_LOG Then
-                                    ' Log the first 5 instances to the log file as warnings
-
-                                    If strOriginalPeptide <> strPeptide Then
-                                        strOriginalPeptideInfo = ", original peptide sequence " & strOriginalPeptide
-                                    Else
-                                        strOriginalPeptideInfo = String.Empty
-                                    End If
-
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                         "MSGF SpecProb is not numeric on line " & intLinesRead &
-                                                         " in the result file: " & strSpecProb & " (parent peptide " &
-                                                         strPeptide & ", Scan " & strScan & ", Result_ID " & strResultID &
-                                                         strOriginalPeptideInfo & ")")
-                                End If
-
-                                If strSpecProb.Contains("precursor mass") Then
-                                    intPrecursorMassErrorCount += 1
-                                End If
-
-                                If strOriginalPeptide <> strPeptide Then
-                                    strNotes = strPeptide & "; " & strSpecProb
-                                Else
-                                    strNotes = String.Copy(strSpecProb)
-                                End If
-
-                                ' Change the spectrum probability to 1
-                                strSpecProb = "1"
-                            End If
-
-                            strMSGFResultData = strScan & ControlChars.Tab &
-                              strCharge & ControlChars.Tab &
-                              strProtein & ControlChars.Tab &
-                              strOriginalPeptide & ControlChars.Tab &
-                              strSpecProb & ControlChars.Tab &
-                              strNotes
-
-                            ' Add this result to the cached string dictionary
-                            mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide,
-                                                                  strMSGFResultData)
-
-
-                            If strDataSource = MSGF_PHRP_DATA_SOURCE_FHT Then
-                                ' First-hits file
-                                blnFirstHitsDataPresent = True
-
-                            Else
-                                ' Synopsis file
-
-                                ' Add this entry to the MSGF synopsis results
-                                ' Note that strOriginalPeptide has the original peptide sequence
-                                swMSGFSynFile.WriteLine(strResultID & ControlChars.Tab & strMSGFResultData)
-
-                                ' See if any entries were skipped when reading the synopsis file used to create the MSGF input file
-                                ' If they were, add them to the validated MSGF file (to aid in linking up files later)
-
-                                If Integer.TryParse(strResultID, intResultID) Then
-                                    objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID)
-
-                                    For intIndex = 0 To objSkipList.Count - 1
-
-                                        ' Split the entry on the tab character
-                                        ' The item left of the tab is the skipped result id
-                                        ' the item right of the tab is the protein corresponding to the skipped result id
-
-                                        strSkipInfo = objSkipList(intIndex).Split(chSepChars, 2)
-
-                                        swMSGFSynFile.WriteLine(
-                                          strSkipInfo(0) & ControlChars.Tab &
-                                          strScan & ControlChars.Tab &
-                                          strCharge & ControlChars.Tab &
-                                          strSkipInfo(1) & ControlChars.Tab &
-                                          strOriginalPeptide & ControlChars.Tab &
-                                          strSpecProb & ControlChars.Tab &
-                                          strNotes)
-
-                                    Next
-                                End If
-                            End If
-
-                        End If
+                        blnHeaderLineParsed = True
                     End If
 
-                Loop
+                    If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
 
-            End Using
+                        strOriginalPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders)
+                        strScan = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders)
+                        strCharge = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders)
+                        strProtein = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders)
+                        strPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders)
+                        strResultID = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders)
+                        strSpecProb = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders)
+                        strDataSource = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders)
+                        strNotes = String.Empty
+
+                        If blnMGFInstrumentData Then
+                            ' Update the scan number
+                            Dim intMGFScanIndex As Integer
+                            Dim intActualScanNumber = 0
+                            If Integer.TryParse(strScan, intMGFScanIndex) Then
+                                intActualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(intMGFScanIndex)
+                            End If
+
+                            If intActualScanNumber = 0 Then
+                                intMGFLookupErrorCount += 1
+
+                                ' Log the first 5 instances to the log file as warnings
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                     "Unable to determine the scan number for MGF spectrum index " &
+                                                     strScan & " on line  " & intLinesRead & " in the result file")
+                            End If
+                            strScan = intActualScanNumber.ToString()
+                        End If
+
+                        If Double.TryParse(strSpecProb, dblSpecProb) Then
+                            If strOriginalPeptide <> strPeptide Then
+                                strNotes = String.Copy(strPeptide)
+                            End If
+
+                            ' Update strSpecProb to reduce the number of significant figures
+                            strSpecProb = dblSpecProb.ToString("0.000000E+00")
+                        Else
+                            ' The specProb column does not contain a number
+                            intSpecProbErrorCount += 1
+
+                            If intSpecProbErrorCount <= MAX_ERRORS_TO_LOG Then
+                                ' Log the first 5 instances to the log file as warnings
+
+                                If strOriginalPeptide <> strPeptide Then
+                                    strOriginalPeptideInfo = ", original peptide sequence " & strOriginalPeptide
+                                Else
+                                    strOriginalPeptideInfo = String.Empty
+                                End If
+
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                     "MSGF SpecProb is not numeric on line " & intLinesRead &
+                                                     " in the result file: " & strSpecProb & " (parent peptide " &
+                                                     strPeptide & ", Scan " & strScan & ", Result_ID " & strResultID &
+                                                     strOriginalPeptideInfo & ")")
+                            End If
+
+                            If strSpecProb.Contains("precursor mass") Then
+                                intPrecursorMassErrorCount += 1
+                            End If
+
+                            If strOriginalPeptide <> strPeptide Then
+                                strNotes = strPeptide & "; " & strSpecProb
+                            Else
+                                strNotes = String.Copy(strSpecProb)
+                            End If
+
+                            ' Change the spectrum probability to 1
+                            strSpecProb = "1"
+                        End If
+
+                        strMSGFResultData = strScan & ControlChars.Tab &
+                          strCharge & ControlChars.Tab &
+                          strProtein & ControlChars.Tab &
+                          strOriginalPeptide & ControlChars.Tab &
+                          strSpecProb & ControlChars.Tab &
+                          strNotes
+
+                        ' Add this result to the cached string dictionary
+                        mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide,
+                                                              strMSGFResultData)
+
+
+                        If strDataSource = MSGF_PHRP_DATA_SOURCE_FHT Then
+                            ' First-hits file
+                            blnFirstHitsDataPresent = True
+
+                        Else
+                            ' Synopsis file
+
+                            ' Add this entry to the MSGF synopsis results
+                            ' Note that strOriginalPeptide has the original peptide sequence
+                            swMSGFSynFile.WriteLine(strResultID & ControlChars.Tab & strMSGFResultData)
+
+                            ' See if any entries were skipped when reading the synopsis file used to create the MSGF input file
+                            ' If they were, add them to the validated MSGF file (to aid in linking up files later)
+
+                            If Integer.TryParse(strResultID, intResultID) Then
+                                objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID)
+
+                                For intIndex = 0 To objSkipList.Count - 1
+
+                                    ' Split the entry on the tab character
+                                    ' The item left of the tab is the skipped result id
+                                    ' the item right of the tab is the protein corresponding to the skipped result id
+
+                                    strSkipInfo = objSkipList(intIndex).Split(chSepChars, 2)
+
+                                    swMSGFSynFile.WriteLine(
+                                      strSkipInfo(0) & ControlChars.Tab &
+                                      strScan & ControlChars.Tab &
+                                      strCharge & ControlChars.Tab &
+                                      strSkipInfo(1) & ControlChars.Tab &
+                                      strOriginalPeptide & ControlChars.Tab &
+                                      strSpecProb & ControlChars.Tab &
+                                      strNotes)
+
+                                Next
+                            End If
+                        End If
+
+                    End If
+                End If
+
+            Loop
 
         End Using
 
@@ -1610,7 +1607,7 @@ Public Class clsMSGFRunner
                             ' Cache the header line
                             lstCIDData.Add(strLineIn)
                             lstETDData.Add(strLineIn)
-                            
+
                             ' Confirm the column index of the Collision_Mode column
                             For intIndex As Integer = 0 To strSplitLine.Length - 1
                                 If String.Equals(strSplitLine(intIndex), MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.CurrentCultureIgnoreCase) Then
@@ -1726,18 +1723,17 @@ Public Class clsMSGFRunner
             If Not File.Exists(strMSGFResultsFilePathFinal) Then
                 File.Move(strResultFileTempPath, strMSGFResultsFilePathFinal)
             Else
-                Using srTempResults = New StreamReader(New FileStream(strResultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    Using swFinalResults = New StreamWriter(New FileStream(strMSGFResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read))
+                Using srTempResults = New StreamReader(New FileStream(strResultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)),
+                      swFinalResults = New StreamWriter(New FileStream(strMSGFResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read))
 
-                        ' Read and skip the first line of srTempResults (it's a header)
-                        srTempResults.ReadLine()
+                    ' Read and skip the first line of srTempResults (it's a header)
+                    srTempResults.ReadLine()
 
                     ' Append the remaining lines to swFinalResults
                     While Not srTempResults.EndOfStream
                         swFinalResults.WriteLine(srTempResults.ReadLine)
                     End While
 
-                    End Using
                 End Using
 
             End If
@@ -2268,7 +2264,6 @@ Public Class clsMSGFRunner
 
             End Using
 
-
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                  "Exception splitting MSGF input file", ex)
@@ -2493,54 +2488,54 @@ Public Class clsMSGFRunner
                 intMSGFSpecProbColIndex = - 1
                 blnSuccess = True
 
-                Using srSource = New StreamReader(New FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    Using swTarget = New StreamWriter(New FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-                        Do While srSource.Peek > - 1
-                            strLineIn = srSource.ReadLine()
+                Using srSource = New StreamReader(New FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)),
+                    swTarget = New StreamWriter(New FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                    Do While Not srSource.EndOfStream
+                        strLineIn = srSource.ReadLine()
 
-                            If String.IsNullOrEmpty(strLineIn) Then
+                        If String.IsNullOrEmpty(strLineIn) Then
+                            swTarget.WriteLine()
+                        Else
+                            strSplitLine = strLineIn.Split()
+
+                            If strSplitLine.Length <= 0 Then
                                 swTarget.WriteLine()
                             Else
-                                strSplitLine = strLineIn.Split()
 
-                                If strSplitLine.Length <= 0 Then
-                                    swTarget.WriteLine()
-                                Else
+                                If intMSGFSpecProbColIndex < 0 Then
+                                    ' Assume this is the header line, look for MSGF_SpecProb
+                                    For intIndex As Integer = 0 To strSplitLine.Length - 1
+                                        If String.Equals(strSplitLine(intIndex), "MSGF_SpecProb", StringComparison.CurrentCultureIgnoreCase) Then
+                                            intMSGFSpecProbColIndex = intIndex
+                                            Exit For
+                                        End If
+                                    Next
 
                                     If intMSGFSpecProbColIndex < 0 Then
-                                        ' Assume this is the header line, look for MSGF_SpecProb
-                                        For intIndex As Integer = 0 To strSplitLine.Length - 1
-                                            If String.Equals(strSplitLine(intIndex), "MSGF_SpecProb", StringComparison.CurrentCultureIgnoreCase) Then
-                                                intMSGFSpecProbColIndex = intIndex
-                                                Exit For
-                                            End If
-                                        Next
+                                        ' Match not found; abort
+                                        blnSuccess = False
+                                        Exit Do
+                                    End If
+                                Else
+                                    ' Data line; determine the ResultID
+                                    If Integer.TryParse(strSplitLine(0), intResultID) Then
 
-                                        If intMSGFSpecProbColIndex < 0 Then
-                                            ' Match not found; abort
-                                            blnSuccess = False
-                                            Exit Do
-                                        End If
-                                    Else
-                                        ' Data line; determine the ResultID
-                                        If Integer.TryParse(strSplitLine(0), intResultID) Then
-
-                                            ' Lookup the MSGFSpecProb value for this ResultID
-                                            If lstMSGFResults.TryGetValue(intResultID, strMSGFSpecProb) Then
-                                                ' Only update the value if strMSGFSpecProb is a number
-                                                If Double.TryParse(strMSGFSpecProb, dblValue) Then
-                                                    strSplitLine(intMSGFSpecProbColIndex) = strMSGFSpecProb
-                                                End If
+                                        ' Lookup the MSGFSpecProb value for this ResultID
+                                        If lstMSGFResults.TryGetValue(intResultID, strMSGFSpecProb) Then
+                                            ' Only update the value if strMSGFSpecProb is a number
+                                            If Double.TryParse(strMSGFSpecProb, dblValue) Then
+                                                strSplitLine(intMSGFSpecProbColIndex) = strMSGFSpecProb
                                             End If
                                         End If
                                     End If
-
-                                    swTarget.WriteLine(clsGlobal.CollapseLine(strSplitLine))
                                 End If
-                            End If
 
-                        Loop
-                    End Using
+                                swTarget.WriteLine(clsGlobal.CollapseLine(strSplitLine))
+                            End If
+                        End If
+
+                    Loop
+
                 End Using
 
                 If blnSuccess Then
