@@ -15,16 +15,15 @@ Imports PHRPReader
 Public Class clsMSGFInputCreatorSequest
     Inherits clsMSGFInputCreator
 
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="strDatasetName">Dataset name</param>
-	''' <param name="strWorkDir">Working directory</param>
-	''' <remarks></remarks>
-	Public Sub New(strDatasetName As String, strWorkDir As String)
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="strDatasetName">Dataset name</param>
+    ''' <param name="strWorkDir">Working directory</param>
+    ''' <remarks></remarks>
+    Public Sub New(strDatasetName As String, strWorkDir As String)
 
         MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Sequest)
-
     End Sub
 
     Protected Overrides Sub InitializeFilePaths()
@@ -32,7 +31,6 @@ Public Class clsMSGFInputCreatorSequest
         ' Customize mPHRPResultFilePath for Sequest synopsis files
         mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPFirstHitsFileName(mDatasetName))
         mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPSynopsisFileName(mDatasetName))
-
     End Sub
 
     Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
@@ -97,8 +95,5 @@ Public Class clsMSGFInputCreatorSequest
 
 
         Return blnPassesFilters
-
-
     End Function
-
 End Class

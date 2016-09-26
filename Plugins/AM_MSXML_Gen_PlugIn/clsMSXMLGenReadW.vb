@@ -11,7 +11,7 @@ Option Strict On
 Imports AnalysisManagerBase
 
 Public Class clsMSXMLGenReadW
-	Inherits clsMSXmlGen
+    Inherits clsMSXmlGen
 
     Public Overrides ReadOnly Property ProgramName As String
         Get
@@ -36,7 +36,6 @@ Public Class clsMSXMLGenReadW
         End If
 
         mUseProgRunnerResultCode = True
-
     End Sub
 
     Protected Overrides Function CreateArguments(msXmlFormat As String, RawFilePath As String) As String
@@ -71,13 +70,11 @@ Public Class clsMSXMLGenReadW
         Return CmdStr
     End Function
 
-	Protected Overrides Function SetupTool() As Boolean
+    Protected Overrides Function SetupTool() As Boolean
 
         ' No special setup is required for ReAdW
-		Return True
-
+        Return True
     End Function
 
 #End Region
-
 End Class

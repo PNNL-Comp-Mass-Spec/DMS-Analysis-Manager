@@ -16,16 +16,15 @@ Imports PHRPReader
 Public Class clsMSGFInputCreatorInspect
     Inherits clsMSGFInputCreator
 
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="strDatasetName">Dataset name</param>
-	''' <param name="strWorkDir">Working directory</param>
-	''' <remarks></remarks>
-	Public Sub New(strDatasetName As String, strWorkDir As String)
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="strDatasetName">Dataset name</param>
+    ''' <param name="strWorkDir">Working directory</param>
+    ''' <remarks></remarks>
+    Public Sub New(strDatasetName As String, strWorkDir As String)
 
         MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Inspect)
-
     End Sub
 
     Protected Overrides Sub InitializeFilePaths()
@@ -33,7 +32,6 @@ Public Class clsMSGFInputCreatorInspect
         ' Customize mPHRPResultFilePath for Inspect synopsis files
         mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPFirstHitsFileName(mDatasetName))
         mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPSynopsisFileName(mDatasetName))
-
     End Sub
 
     Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
@@ -62,7 +60,5 @@ Public Class clsMSGFInputCreatorInspect
         End If
 
         Return blnPassesFilters
-
     End Function
-
 End Class

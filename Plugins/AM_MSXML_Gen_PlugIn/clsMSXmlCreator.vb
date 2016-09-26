@@ -15,15 +15,16 @@ Imports System.IO
 Public Class clsMSXMLCreator
 
 #Region "Classwide variables"
-	Protected ReadOnly mMSXmlGeneratorAppPath As String
-	Protected ReadOnly m_jobParams As IJobParams
-	Protected ReadOnly m_WorkDir As String
-	Protected m_Dataset As String
-	Protected ReadOnly m_DebugLevel As Short
 
-	Protected m_ErrorMessage As String
+    Protected ReadOnly mMSXmlGeneratorAppPath As String
+    Protected ReadOnly m_jobParams As IJobParams
+    Protected ReadOnly m_WorkDir As String
+    Protected m_Dataset As String
+    Protected ReadOnly m_DebugLevel As Short
 
-	Protected WithEvents mMSXmlGen As clsMSXmlGen
+    Protected m_ErrorMessage As String
+
+    Protected WithEvents mMSXmlGen As clsMSXmlGen
 
     Public Event DebugEvent(msg As String)
     Public Event ErrorEvent(msg As String)
@@ -48,7 +49,6 @@ Public Class clsMSXMLCreator
         m_jobParams = JobParams
 
         m_ErrorMessage = String.Empty
-
     End Sub
 
     Public Function ConvertMzMLToMzXML() As Boolean
@@ -64,7 +64,8 @@ Public Class clsMSXMLCreator
         Dim strMzXmlFilePath As String
         strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-        If File.Exists(strMzXmlFilePath) OrElse File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
+        If File.Exists(strMzXmlFilePath) OrElse
+           File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
             ' File already exists; nothing to do
             Return True
         End If
@@ -106,7 +107,8 @@ Public Class clsMSXMLCreator
 
         If Not oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", True) Then
             ' .RunProgram returned False
-            m_ErrorMessage = "Error running " & Path.GetFileNameWithoutExtension(ProgLoc) & " to convert the .mzML file to a .mzXML file"
+            m_ErrorMessage = "Error running " & Path.GetFileNameWithoutExtension(ProgLoc) &
+                             " to convert the .mzML file to a .mzXML file"
             ReportError(m_ErrorMessage)
             Return False
         End If
@@ -127,7 +129,6 @@ Public Class clsMSXMLCreator
         End If
 
         Return True
-
     End Function
 
     ''' <summary>
@@ -150,7 +151,8 @@ Public Class clsMSXMLCreator
         Dim strMzXmlFilePath As String
         strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-        If File.Exists(strMzXmlFilePath) OrElse File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
+        If File.Exists(strMzXmlFilePath) OrElse
+           File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
             ' File already exists; nothing to do
             Return True
         End If
@@ -199,16 +201,20 @@ Public Class clsMSXMLCreator
 
             If CentroidPeakCountToRetain = 0 Then
                 ' Look for parameter CentroidPeakCountToRetain in any section
-                CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain", clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
+                CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain",
+                                                                        clsMSXmlGenMSConvert.
+                                                                           DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
             End If
 
             ' Look for custom processing arguments
             Dim CustomMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "")
 
             If String.IsNullOrWhiteSpace(CustomMSConvertArguments) Then
-                mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
+                mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
+                                                     eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
             Else
-                mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CustomMSConvertArguments)
+                mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
+                                                     eOutputType, CustomMSConvertArguments)
             End If
 
         Else
@@ -243,7 +249,6 @@ Public Class clsMSXMLCreator
         End If
 
         Return True
-
     End Function
 
     Protected Sub ReportDebugInfo(msg As String)
@@ -271,7 +276,6 @@ Public Class clsMSXMLCreator
     Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGen.LoopWaiting
 
         RaiseEvent LoopWaiting()
-
     End Sub
 
     ''' <summary>
@@ -286,5 +290,4 @@ Public Class clsMSXMLCreator
     End Sub
 
 #End Region
-
 End Class

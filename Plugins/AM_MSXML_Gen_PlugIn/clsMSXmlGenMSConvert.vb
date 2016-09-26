@@ -12,21 +12,21 @@ Option Strict On
 Imports AnalysisManagerBase
 
 Public Class clsMSXmlGenMSConvert
-	Inherits clsMSXmlGen
+    Inherits clsMSXmlGen
 
-	Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 500
+    Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 500
 
-	''' <summary>
-	''' Number of data points to keep when centroiding
-	''' </summary>
-	''' <remarks>0 to keep default (500); -1 to keep all</remarks>
-	Protected mCentroidPeakCountToRetain As Integer
+    ''' <summary>
+    ''' Number of data points to keep when centroiding
+    ''' </summary>
+    ''' <remarks>0 to keep default (500); -1 to keep all</remarks>
+    Protected mCentroidPeakCountToRetain As Integer
 
-	''' <summary>
-	''' Custom arguments that will override the auto-defined arguments
-	''' </summary>
-	''' <remarks></remarks>
-	Protected mCustomMSConvertArguments As String
+    ''' <summary>
+    ''' Custom arguments that will override the auto-defined arguments
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected mCustomMSConvertArguments As String
 
     Public Overrides ReadOnly Property ProgramName As String
         Get
@@ -43,12 +43,11 @@ Public Class clsMSXmlGenMSConvert
       eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
       CustomMSConvertArguments As String)
 
-        MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, CentroidMSXML:=False)
+        MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, CentroidMSXML := False)
 
         mCustomMSConvertArguments = CustomMSConvertArguments
 
         mUseProgRunnerResultCode = False
-
     End Sub
 
     Public Sub New(WorkDir As String,
@@ -64,7 +63,6 @@ Public Class clsMSXmlGenMSConvert
         mCentroidPeakCountToRetain = CentroidPeakCountToRetain
 
         mUseProgRunnerResultCode = False
-
     End Sub
 
     Public Sub New(WorkDir As String,
@@ -81,7 +79,6 @@ Public Class clsMSXmlGenMSConvert
         mCentroidPeakCountToRetain = CentroidPeakCountToRetain
 
         mUseProgRunnerResultCode = False
-
     End Sub
 
     Protected Overrides Function CreateArguments(msXmlFormat As String, RawFilePath As String) As String
@@ -131,22 +128,19 @@ Public Class clsMSXmlGenMSConvert
         CmdStr &= "  -o " & mWorkDir
 
         Return CmdStr
-
     End Function
 
-	Protected Overrides Function SetupTool() As Boolean
+    Protected Overrides Function SetupTool() As Boolean
 
-		' Tool setup for MSConvert involves creating a
-		'  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
-		'  to indicate that we agree to the Thermo license
+        ' Tool setup for MSConvert involves creating a
+        '  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
+        '  to indicate that we agree to the Thermo license
 
-		Dim objProteowizardTools As clsProteowizardTools
-		objProteowizardTools = New clsProteowizardTools(mDebugLevel)
+        Dim objProteowizardTools As clsProteowizardTools
+        objProteowizardTools = New clsProteowizardTools(mDebugLevel)
 
-		Return objProteowizardTools.RegisterProteoWizard()
-
-	End Function
+        Return objProteowizardTools.RegisterProteoWizard()
+    End Function
 
 #End Region
-
 End Class

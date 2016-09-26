@@ -24,7 +24,6 @@ Public Class clsMSGFInputCreatorXTandem
     Public Sub New(strDatasetName As String, strWorkDir As String)
 
         MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.XTandem)
-
     End Sub
 
     Protected Overrides Sub InitializeFilePaths()
@@ -44,12 +43,10 @@ Public Class clsMSGFInputCreatorXTandem
         ' This will typically keep all data in the _xt.txt file
 
         dblLogEValue = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0)
-        If dblLogEValue <= -0.3 Then
+        If dblLogEValue <= - 0.3 Then
             blnPassesFilters = True
         End If
 
         Return blnPassesFilters
-
     End Function
-
 End Class

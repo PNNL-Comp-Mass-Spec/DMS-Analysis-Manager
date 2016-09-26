@@ -23,6 +23,7 @@ Imports AnalysisManagerBase
 Public Class clsMSGFResultsSummarizer
 
 #Region "Constants and Enums"
+
     Public Const DEFAULT_MSGF_THRESHOLD As Double = 0.0000000001        ' 1E-10
     Public Const DEFAULT_EVALUE_THRESHOLD As Double = 0.0001            ' 1E-4   (only used when MSGF Scores are not available)
     Public Const DEFAULT_FDR_THRESHOLD As Double = 0.01                 ' 1% FDR
@@ -68,6 +69,7 @@ Public Class clsMSGFResultsSummarizer
 #End Region
 
 #Region "Member variables"
+
     Private mErrorMessage As String = String.Empty
 
     Private mFDRThreshold As Double = DEFAULT_FDR_THRESHOLD
@@ -108,6 +110,7 @@ Public Class clsMSGFResultsSummarizer
 
     ' The following is auto-determined in ProcessMSGFResults
     Private mMSGFSynopsisFileName As String = String.Empty
+
 #End Region
 
 #Region "Properties"
@@ -287,7 +290,8 @@ Public Class clsMSGFResultsSummarizer
     ''' <param name="intJob">Job number</param>
     ''' <param name="strSourceFolderPath">Source folder path</param>
     ''' <remarks></remarks>
-    Public Sub New(eResultType As clsPHRPReader.ePeptideHitResultType, strDatasetName As String, intJob As Integer, strSourceFolderPath As String)
+    Public Sub New(eResultType As clsPHRPReader.ePeptideHitResultType, strDatasetName As String, intJob As Integer,
+                   strSourceFolderPath As String)
         Me.New(eResultType, strDatasetName, intJob, strSourceFolderPath, DEFAULT_CONNECTION_STRING)
     End Sub
 
@@ -300,7 +304,8 @@ Public Class clsMSGFResultsSummarizer
     ''' <param name="strSourceFolderPath">Source folder path</param>
     ''' <param name="strConnectionString">DMS connection string</param>
     ''' <remarks></remarks>
-    Public Sub New(eResultType As clsPHRPReader.ePeptideHitResultType, strDatasetName As String, intJob As Integer, strSourceFolderPath As String, strConnectionString As String)
+    Public Sub New(eResultType As clsPHRPReader.ePeptideHitResultType, strDatasetName As String, intJob As Integer,
+                   strSourceFolderPath As String, strConnectionString As String)
         mResultType = eResultType
         mDatasetName = strDatasetName
         mJob = intJob
@@ -309,7 +314,6 @@ Public Class clsMSGFResultsSummarizer
 
         mStoredProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(mConnectionString)
         ContactDatabase = True
-
     End Sub
 
     Private Sub ExamineFirstHitsFile(strFirstHitsFilePath As String)
@@ -352,14 +356,13 @@ Public Class clsMSGFResultsSummarizer
             Dim scanList = (From item In lstUniqueSpectra.Values.Distinct()).ToList()
 
             CheckForScanGaps(scanList)
-            
+
             Return
 
         Catch ex As Exception
             SetErrorMessage(ex.Message)
             Return
         End Try
-
     End Sub
 
     Private Sub CheckForScanGaps(scanList As List(Of Integer))
@@ -435,7 +438,8 @@ Public Class clsMSGFResultsSummarizer
                 " GROUP BY Scan_Count_Total"
 
             Dim lstResults As List(Of List(Of String)) = Nothing
-            Dim success = clsGlobal.GetQueryResults(queryScanStats, mConnectionString, lstResults, "LookupScanStats_V_Dataset_Scans_Export")
+            Dim success = clsGlobal.GetQueryResults(queryScanStats, mConnectionString, lstResults,
+                                                    "LookupScanStats_V_Dataset_Scans_Export")
 
             If success AndAlso lstResults.Count > 0 Then
 
@@ -460,7 +464,8 @@ Public Class clsMSGFResultsSummarizer
                 " WHERE Dataset = '" & DatasetName & "'"
 
             lstResults.Clear()
-            success = clsGlobal.GetQueryResults(queryScanTotal, mConnectionString, lstResults, "LookupScanStats_V_Dataset_Export")
+            success = clsGlobal.GetQueryResults(queryScanTotal, mConnectionString, lstResults,
+                                                "LookupScanStats_V_Dataset_Export")
 
             If success AndAlso lstResults.Count > 0 Then
 
@@ -480,7 +485,6 @@ Public Class clsMSGFResultsSummarizer
             SetErrorMessage("Exception retrieving scan stats from the database: " & ex.Message)
             Return False
         End Try
-
     End Function
 
     ''' <summary>
@@ -559,7 +563,6 @@ Public Class clsMSGFResultsSummarizer
         End If
 
         Return blnSuccess
-
     End Function
 
     ''' <summary>
@@ -680,13 +683,12 @@ Public Class clsMSGFResultsSummarizer
         Next
 
         Return True
-
     End Function
 
     Private Function FilterPSMsByEValue(
       dblEValueThreshold As Double,
       lstPSMs As Dictionary(Of Integer, clsPSMInfo),
-      lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
+                                        lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
 
         lstFilteredPSMs.Clear()
 
@@ -700,13 +702,12 @@ Public Class clsMSGFResultsSummarizer
         Next
 
         Return True
-
     End Function
 
     Private Function FilterPSMsByMSGF(
       dblMSGFThreshold As Double,
       lstPSMs As Dictionary(Of Integer, clsPSMInfo),
-      lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
+                                      lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
 
         lstFilteredPSMs.Clear()
 
@@ -720,7 +721,6 @@ Public Class clsMSGFResultsSummarizer
         Next
 
         Return True
-
     End Function
 
     Private Function GetNormalizedPeptide(peptideCleanSequence As String, modifications As String) As String
@@ -828,7 +828,6 @@ Public Class clsMSGFResultsSummarizer
         End Try
 
         Return blnSuccess
-
     End Function
 
     ''' <summary>
@@ -875,7 +874,8 @@ Public Class clsMSGFResultsSummarizer
                 strPHRPFirstHitsFileName = strPHRPSynopsisFileName
             End If
 
-            mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(strPHRPSynopsisFileName) & clsMSGFInputCreator.MSGF_RESULT_FILENAME_SUFFIX
+            mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(strPHRPSynopsisFileName) &
+                                    clsMSGFInputCreator.MSGF_RESULT_FILENAME_SUFFIX
 
             strPHRPFirstHitsFilePath = Path.Combine(mWorkDir, strPHRPFirstHitsFileName)
             strPHRPSynopsisFilePath = Path.Combine(mWorkDir, strPHRPSynopsisFileName)
@@ -910,7 +910,8 @@ Public Class clsMSGFResultsSummarizer
 
             Dim lstSeqInfo = New SortedList(Of Integer, clsSeqInfo)
 
-            blnSuccess = LoadPSMs(strPHRPSynopsisFilePath, lstNormalizedPSMs, lstResultToSeqMap, lstSeqToProteinMap, lstSeqInfo)
+            blnSuccess = LoadPSMs(strPHRPSynopsisFilePath, lstNormalizedPSMs, lstResultToSeqMap, lstSeqToProteinMap,
+                                  lstSeqInfo)
             If Not blnSuccess Then
                 Return False
             End If
@@ -919,13 +920,15 @@ Public Class clsMSGFResultsSummarizer
             ' Filter on MSGF or EValue and compute the stats
             '
             blnUsingMSGFOrEValueFilter = True
-            blnSuccess = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo)
+            blnSuccess = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap,
+                                               lstSeqInfo)
 
             ''''''''''''''''''''
             ' Filter on FDR and compute the stats
             '
             blnUsingMSGFOrEValueFilter = False
-            blnSuccessViaFDR = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo)
+            blnSuccessViaFDR = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap,
+                                                     lstSeqInfo)
 
             If blnSuccess OrElse blnSuccessViaFDR Then
                 If mSaveResultsToTextFile Then
@@ -952,7 +955,6 @@ Public Class clsMSGFResultsSummarizer
             SetErrorMessage(ex.Message)
             Return False
         End Try
-
     End Function
 
     ''' <summary>
@@ -1002,7 +1004,8 @@ Public Class clsMSGFResultsSummarizer
 
             If Not String.IsNullOrEmpty(objSeqMapReader.ResultToSeqMapFilename) Then
 
-                Dim fiResultToSeqMapFile = New FileInfo(Path.Combine(objSeqMapReader.InputFolderPath, objSeqMapReader.ResultToSeqMapFilename))
+                Dim fiResultToSeqMapFile = New FileInfo(Path.Combine(objSeqMapReader.InputFolderPath,
+                                                                     objSeqMapReader.ResultToSeqMapFilename))
                 If fiResultToSeqMapFile.Exists Then
 
                     blnSuccess = objSeqMapReader.GetProteinMapping(lstResultToSeqMap, lstSeqToProteinMap, lstSeqInfo)
@@ -1094,6 +1097,7 @@ Public Class clsMSGFResultsSummarizer
 
                     If mResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Or
                        mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+
                         psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR)
                         If psmFDR < 0 Then
                             psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR)
@@ -1227,7 +1231,6 @@ Public Class clsMSGFResultsSummarizer
         End Try
 
         Return blnSuccess
-
     End Function
 
     Private Function NormalizeSequence(sequenceWithMods As String) As String
@@ -1239,7 +1242,8 @@ Public Class clsMSGFResultsSummarizer
         Dim strSuffix = String.Empty
         Dim strPrimarySequence = String.Empty
 
-        clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(sequenceWithMods, strPrimarySequence, strPrefix, strSuffix)
+        clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(sequenceWithMods, strPrimarySequence,
+                                                                           strPrefix, strSuffix)
 
         For index = 0 To strPrimarySequence.Length - 1
             If clsPHRPReader.IsLetterAtoZ(strPrimarySequence(index)) Then
@@ -1250,7 +1254,6 @@ Public Class clsMSGFResultsSummarizer
         Next
 
         Return GetNormalizedPeptide(sbAminoAcids.ToString(), sbModifications.ToString())
-
     End Function
 
     Private Function NormalizeSequence(peptideCleanSequence As String, oSeqInfo As clsSeqInfo) As String
@@ -1268,7 +1271,6 @@ Public Class clsMSGFResultsSummarizer
         Next
 
         Return GetNormalizedPeptide(peptideCleanSequence, sbModifications.ToString())
-
     End Function
 
     Private Sub SaveResultsToFile()
@@ -1425,7 +1427,6 @@ Public Class clsMSGFResultsSummarizer
         End Try
 
         Return True
-
     End Function
 
 #Region "Event Handlers"
@@ -1438,7 +1439,8 @@ Public Class clsMSGFResultsSummarizer
         SetErrorMessage(Message)
 
         If Message.Contains("permission was denied") Then
-            AnalysisManagerBase.clsLogTools.WriteLog(AnalysisManagerBase.clsLogTools.LoggerTypes.LogDb, AnalysisManagerBase.clsLogTools.LogLevels.ERROR, Message)
+            AnalysisManagerBase.clsLogTools.WriteLog(AnalysisManagerBase.clsLogTools.LoggerTypes.LogDb,
+                                                     AnalysisManagerBase.clsLogTools.LogLevels.ERROR, Message)
         End If
     End Sub
 
@@ -1449,13 +1451,12 @@ Public Class clsMSGFResultsSummarizer
 
         Public Function Compare(x As KeyValuePair(Of Double, Integer), y As KeyValuePair(Of Double, Integer)) As Integer Implements IComparer(Of KeyValuePair(Of Double, Integer)).Compare
             If x.Key < y.Key Then
-                Return -1
+                Return - 1
             ElseIf x.Key > y.Key Then
                 Return 1
             Else
                 Return 0
             End If
-
         End Function
     End Class
 End Class

@@ -14,18 +14,17 @@ Imports System.IO
 Imports PHRPReader
 
 Public Class clsMSGFInputCreatorMSGFDB
-	Inherits clsMSGFInputCreator
+    Inherits clsMSGFInputCreator
 
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="strDatasetName">Dataset name</param>
-	''' <param name="strWorkDir">Working directory</param>
-	''' <remarks></remarks>
-	Public Sub New(strDatasetName As String, strWorkDir As String)
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="strDatasetName">Dataset name</param>
+    ''' <param name="strWorkDir">Working directory</param>
+    ''' <remarks></remarks>
+    Public Sub New(strDatasetName As String, strWorkDir As String)
 
         MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MSGFDB)
-
     End Sub
 
     Protected Overrides Sub InitializeFilePaths()
@@ -74,7 +73,9 @@ Public Class clsMSGFInputCreatorMSGFDB
                 objReader.SkipDuplicatePSMs = False
 
                 ' Define the path to write the first-hits MSGF results to
-                strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
+                strMSGFFilePath = Path.Combine(mWorkDir,
+                                               Path.GetFileNameWithoutExtension(strSourceFilePath) &
+                                               MSGF_RESULT_FILENAME_SUFFIX)
 
                 ' Create the output file
                 Using swMSGFFile = New StreamWriter(New FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -111,7 +112,6 @@ Public Class clsMSGFInputCreatorMSGFDB
         End Try
 
         Return True
-
     End Function
 
     ''' <summary>
@@ -142,7 +142,9 @@ Public Class clsMSGFInputCreatorMSGFDB
                 objReader.SkipDuplicatePSMs = False
 
                 ' Define the path to write the first-hits MSGF results to
-                strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
+                strMSGFFilePath = Path.Combine(mWorkDir,
+                                               Path.GetFileNameWithoutExtension(strSourceFilePath) &
+                                               MSGF_RESULT_FILENAME_SUFFIX)
 
                 ' Create the output file
                 Using swMSGFFile = New StreamWriter(New FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -176,7 +178,6 @@ Public Class clsMSGFInputCreatorMSGFDB
         End Try
 
         Return True
-
     End Function
 
     Protected Overrides Function PassesFilters(objPSM As PHRPReader.clsPSM) As Boolean
@@ -186,7 +187,5 @@ Public Class clsMSGFInputCreatorMSGFDB
         blnPassesFilters = True
 
         Return blnPassesFilters
-
     End Function
-
 End Class

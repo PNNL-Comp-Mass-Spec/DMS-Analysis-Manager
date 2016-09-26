@@ -24,7 +24,6 @@ Public Class clsMSGFInputCreatorMODPlus
     Public Sub New(strDatasetName As String, strWorkDir As String)
 
         MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MODPlus)
-
     End Sub
 
     Protected Overrides Sub InitializeFilePaths()
@@ -49,7 +48,5 @@ Public Class clsMSGFInputCreatorMODPlus
         End If
 
         Return blnPassesFilters
-
     End Function
-
 End Class

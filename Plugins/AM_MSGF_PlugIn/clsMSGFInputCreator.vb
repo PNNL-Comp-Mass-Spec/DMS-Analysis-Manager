@@ -19,11 +19,14 @@ Imports PHRPReader
 Public MustInherit Class clsMSGFInputCreator
 
 #Region "Constants"
+
     Private Const MSGF_INPUT_FILENAME_SUFFIX As String = "_MSGF_input.txt"
     Public Const MSGF_RESULT_FILENAME_SUFFIX As String = "_MSGF.txt"
+
 #End Region
 
 #Region "Module variables"
+
     Protected mDatasetName As String
     Protected mWorkDir As String
     Private ReadOnly mPeptideHitResultType As clsPHRPReader.ePeptideHitResultType
@@ -69,8 +72,10 @@ Public MustInherit Class clsMSGFInputCreator
 #End Region
 
 #Region "Events"
+
     Public Event ErrorEvent(strErrorMessage As String)
     Public Event WarningEvent(strWarningMessage As String)
+
 #End Region
 
 #Region "Properties"
@@ -157,8 +162,10 @@ Public MustInherit Class clsMSGFInputCreator
     End Sub
 
 #Region "Functions to be defined in derived classes"
+
     Protected MustOverride Sub InitializeFilePaths()
     Protected MustOverride Function PassesFilters(objPSM As clsPSM) As Boolean
+
 #End Region
 
     Public Sub AddUpdateMSGFResult(
@@ -173,7 +180,6 @@ Public MustInherit Class clsMSGFInputCreator
             ' Entry not found; this is unexpected; we will only report the error at the console
             LogError("Entry not found in mMSGFCachedResults for " & ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide))
         End Try
-
     End Sub
 
     Private Function AppendText(strText As String, strAddnl As String) As String
@@ -216,7 +222,6 @@ Public MustInherit Class clsMSGFInputCreator
      strPeptide As String) As String
 
         Return intScanNumber.ToString & "_" & intCharge.ToString & "_" & strPeptide
-
     End Function
 
     Private Function ConstructMSGFResultCode(
@@ -225,7 +230,6 @@ Public MustInherit Class clsMSGFInputCreator
      strPeptide As String) As String
 
         Return strScanNumber & "_" & strCharge & "_" & strPeptide
-
     End Function
 
     Private Function CreateMGFScanToIndexMap(strMGFFilePath As String) As Boolean
@@ -255,7 +259,8 @@ Public MustInherit Class clsMSGFInputCreator
             intSpectrumIndex = 0
             Do
                 ' Read the next available spectrum
-                blnSpectrumFound = objMGFReader.ReadNextSpectrum(strMSMSDataList, intMsMsDataCount, udtSpectrumHeaderInfo)
+                blnSpectrumFound = objMGFReader.ReadNextSpectrum(strMSMSDataList, intMsMsDataCount,
+                                                                 udtSpectrumHeaderInfo)
                 If blnSpectrumFound Then
                     intSpectrumIndex += 1
 
@@ -264,7 +269,9 @@ Public MustInherit Class clsMSGFInputCreator
                         mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
                     Else
                         For intChargeIndex = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
-                            strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ParentIonCharges(intChargeIndex))
+                            strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart,
+                                                                       udtSpectrumHeaderInfo.ParentIonCharges(
+                                                                           intChargeIndex))
                             mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
                         Next
                     End If
@@ -285,7 +292,6 @@ Public MustInherit Class clsMSGFInputCreator
             ReportError("No spectra were found in the MGF file")
             Return False
         End If
-
     End Function
 
     ''' <summary>
@@ -325,7 +331,8 @@ Public MustInherit Class clsMSGFInputCreator
             End If
 
             ' Define the path to write the first-hits MSGF results to
-            strMSGFFirstHitsResults = Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) & MSGF_RESULT_FILENAME_SUFFIX
+            strMSGFFirstHitsResults = Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) &
+                                      MSGF_RESULT_FILENAME_SUFFIX
             strMSGFFirstHitsResults = Path.Combine(mWorkDir, strMSGFFirstHitsResults)
 
             ' Create the output file
@@ -347,7 +354,8 @@ Public MustInherit Class clsMSGFInputCreator
                             ' Match text is empty
                             ' We should not write thie out to disk since it would result in empty columns
 
-                            strWarningMessage = "MSGF Results are empty for result code '" & strPeptideResultCode & "'; this is unexpected"
+                            strWarningMessage = "MSGF Results are empty for result code '" & strPeptideResultCode &
+                                                "'; this is unexpected"
                             intMissingValueCount += 1
                             If intMissingValueCount <= MAX_WARNINGS_TO_REPORT Then
                                 If intMissingValueCount = MAX_WARNINGS_TO_REPORT Then
@@ -365,7 +373,8 @@ Public MustInherit Class clsMSGFInputCreator
                     Else
                         ' Match not found; this is unexpected
 
-                        strWarningMessage = "Match not found for first-hits entry with result code '" & strPeptideResultCode & "'; this is unexpected"
+                        strWarningMessage = "Match not found for first-hits entry with result code '" &
+                                            strPeptideResultCode & "'; this is unexpected"
 
                         ' Report the first 10 times this happens
                         intMissingValueCount += 1
@@ -393,7 +402,6 @@ Public MustInherit Class clsMSGFInputCreator
         End Try
 
         Return True
-
     End Function
 
     ''' <summary>
@@ -442,15 +450,15 @@ Public MustInherit Class clsMSGFInputCreator
                 ' Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
                 ' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
                 swMSGFInputFile.WriteLine(
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile & ControlChars.Tab &
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Title & ControlChars.Tab &
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber & ControlChars.Tab &
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation & ControlChars.Tab &
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Charge & ControlChars.Tab &
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Protein_First & ControlChars.Tab &
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Result_ID & ControlChars.Tab &
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Data_Source & ControlChars.Tab &
-                  clsMSGFRunner.MSGF_RESULT_COLUMN_Collision_Mode)
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile & ControlChars.Tab &
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_Title & ControlChars.Tab &
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber & ControlChars.Tab &
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation & ControlChars.Tab &
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_Charge & ControlChars.Tab &
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_Protein_First & ControlChars.Tab &
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_Result_ID & ControlChars.Tab &
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_Data_Source & ControlChars.Tab &
+                    clsMSGFRunner.MSGF_RESULT_COLUMN_Collision_Mode)
 
                 ' Initialize some tracking variables
                 mMSGFInputFileLineCount = 1
@@ -526,7 +534,6 @@ Public MustInherit Class clsMSGFInputCreator
         End Try
 
         Return blnSuccess
-
     End Function
 
     Public Shared Function GetMinimalMemoryPHRPStartupOptions() As clsPHRPStartupOptions
@@ -539,7 +546,6 @@ Public MustInherit Class clsMSGFInputCreator
             .MaxProteinsPerPSM = 1
         End With
         Return startupOptions
-
     End Function
 
     Public Function GetSkippedInfoByResultId(intResultID As Integer) As List(Of String)
@@ -551,7 +557,6 @@ Public MustInherit Class clsMSGFInputCreator
         Else
             Return New List(Of String)()
         End If
-
     End Function
 
     ''' <summary>
@@ -568,7 +573,6 @@ Public MustInherit Class clsMSGFInputCreator
         Else
             Return 0
         End If
-
     End Function
 
     Private Sub LogError(strErrorMessage As String)
@@ -597,7 +601,6 @@ Public MustInherit Class clsMSGFInputCreator
         Catch ex As Exception
             RaiseEvent ErrorEvent("Error writing to MSGFInputCreator log file: " & ex.Message)
         End Try
-
     End Sub
 
     ''' <summary>
@@ -666,7 +669,7 @@ Public MustInherit Class clsMSGFInputCreator
                     ' This happens in Sequest _syn.txt files where the line is repeated for all protein matches
 
 
-                    If intScanNumberPrevious = objPSM.ScanNumber AndAlso
+                    If intScanNumberPrevious = objPSM.ScanNumber AndAlso 
                        intChargePrevious = objPSM.Charge AndAlso
                        strPeptidePrevious = objPSM.Peptide Then
 
@@ -772,8 +775,12 @@ Public MustInherit Class clsMSGFInputCreator
     ''' </summary>
     ''' <remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
     Private Sub UpdateMSGFInputOutputFilePaths()
-        mMSGFInputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_INPUT_FILENAME_SUFFIX)
-        mMSGFResultsFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) & MSGF_RESULT_FILENAME_SUFFIX)
+        mMSGFInputFilePath = Path.Combine(mWorkDir,
+                                          Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) &
+                                          MSGF_INPUT_FILENAME_SUFFIX)
+        mMSGFResultsFilePath = Path.Combine(mWorkDir,
+                                            Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) &
+                                            MSGF_RESULT_FILENAME_SUFFIX)
     End Sub
 
     Public Sub WriteMSGFResultsHeaders(swOutFile As StreamWriter)

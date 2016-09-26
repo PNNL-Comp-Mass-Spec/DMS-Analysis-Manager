@@ -3,12 +3,11 @@
 Imports System.Linq
 
 Public Class clsPSMInfo
-
     Public Const UNKNOWN_MSGF_SPECPROB As Double = 10
     Public Const UNKNOWN_EVALUE As Double = Double.MaxValue
-    Public Const UNKNOWN_FDR As Integer = -1
-    Public Const UNKNOWN_SEQID As Integer = -1
-    
+    Public Const UNKNOWN_FDR As Integer = - 1
+    Public Const UNKNOWN_SEQID As Integer = - 1
+
     ''' <summary>
     ''' Protein name (from the _fht.txt or _syn.txt file)
     ''' </summary>
@@ -24,7 +23,7 @@ Public Class clsPSMInfo
     ''' </summary>
     Public Property Observations As List(Of PSMObservation)
 
-  Public ReadOnly Property BestMSGF As Double
+    Public ReadOnly Property BestMSGF As Double
         Get
             If Observations.Count = 0 Then
                 Return UNKNOWN_MSGF_SPECPROB
@@ -74,12 +73,11 @@ Public Class clsPSMInfo
             Return "SeqID " & SeqIdFirst & ", " & Protein & ", Scan " & Observations(0).Scan
         End If
 
-        Return "SeqID " & SeqIdFirst & ", " & Protein & ", Scans " & Observations(0).Scan.ToString() & "-" & Observations(Observations.Count - 1).Scan.ToString()
-
+        Return "SeqID " & SeqIdFirst & ", " & Protein & ", Scans " & Observations(0).Scan.ToString() & "-" &
+               Observations(Observations.Count - 1).Scan.ToString()
     End Function
 
     Public Class PSMObservation
-
         Public Property Scan As Integer
 
         ''' <summary>
@@ -111,6 +109,5 @@ Public Class clsPSMInfo
             EValue = UNKNOWN_EVALUE
             PassesFilter = False
         End Sub
-
     End Class
 End Class

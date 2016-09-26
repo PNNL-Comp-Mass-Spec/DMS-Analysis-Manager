@@ -49,7 +49,9 @@ Public Class clsMSGFRunner
     Public Const MSGF_PHRP_DATA_SOURCE_FHT As String = "FHT"
 
     Public Const MSGF_SEGMENT_ENTRY_COUNT As Integer = 25000
-    Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05          ' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
+
+    ' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
+    Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05 
 
     Private Const MSGF_CONSOLE_OUTPUT As String = "MSGF_ConsoleOutput.txt"
     Private Const MSGF_JAR_NAME As String = "MSGF.jar"
@@ -66,6 +68,7 @@ Public Class clsMSGFRunner
 #End Region
 
 #Region "Module variables"
+
     Private mETDMode As Boolean = False
 
     Private mMSGFInputFilePath As String = String.Empty
@@ -103,9 +106,11 @@ Public Class clsMSGFRunner
 #End Region
 
 #Region "Properties"
+
 #End Region
 
 #Region "Methods"
+
     ''' <summary>
     ''' Runs MSGF
     ''' </summary>
@@ -134,7 +139,8 @@ Public Class clsMSGFRunner
             ' Result type is not supported
             Dim msg = "ResultType is not supported by MSGF: " & m_jobParams.GetParam("ResultType")
             m_message = clsGlobal.AppendToComment(m_message, msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " & msg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "clsMSGFToolRunner.RunTool(); " & msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -236,7 +242,9 @@ Public Class clsMSGFRunner
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                     "Error creating summary file, job " & m_JobNum & ", step " &
+                                     m_jobParams.GetParam("Step"))
             End If
 
             'Make sure objects are released
@@ -277,7 +285,8 @@ Public Class clsMSGFRunner
             End If
 
         Catch ex As Exception
-            Dim errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Dim errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & ex.Message & "; " &
+                         clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -285,7 +294,6 @@ Public Class clsMSGFRunner
 
         'If we get to here, everything worked so exit happily
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
     End Function
 
     Private Function AddFileNameSuffix(strFilePath As String, intSuffix As Integer) As String
@@ -297,10 +305,10 @@ Public Class clsMSGFRunner
         Dim strFilePathNew As String
 
         fiFile = New FileInfo(strFilePath)
-        strFilePathNew = Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) & "_" & strSuffix & fiFile.Extension)
+        strFilePathNew = Path.Combine(fiFile.DirectoryName,
+                                      Path.GetFileNameWithoutExtension(fiFile.Name) & "_" & strSuffix & fiFile.Extension)
 
         Return strFilePathNew
-
     End Function
 
     ''' <summary>
@@ -309,7 +317,8 @@ Public Class clsMSGFRunner
     ''' <param name="eResultType"></param>
     ''' <param name="strSearchToolParamFilePath"></param>
     ''' <returns>True if success; false if an error</returns>
-    Private Function CheckETDModeEnabled(eResultType As clsPHRPReader.ePeptideHitResultType, strSearchToolParamFilePath As String) As Boolean
+    Private Function CheckETDModeEnabled(eResultType As clsPHRPReader.ePeptideHitResultType,
+                                         strSearchToolParamFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -317,7 +326,8 @@ Public Class clsMSGFRunner
         blnSuccess = False
 
         If String.IsNullOrEmpty(strSearchToolParamFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PeptideHit param file path is empty; unable to continue")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "PeptideHit param file path is empty; unable to continue")
             Return False
         End If
 
@@ -331,18 +341,21 @@ Public Class clsMSGFRunner
                 blnSuccess = CheckETDModeEnabledXTandem(strSearchToolParamFilePath)
 
             Case clsPHRPReader.ePeptideHitResultType.Inspect
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inspect does not support ETD data processing; will set mETDMode to False")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Inspect does not support ETD data processing; will set mETDMode to False")
                 blnSuccess = True
 
             Case clsPHRPReader.ePeptideHitResultType.MSGFDB
                 blnSuccess = CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath)
 
             Case clsPHRPReader.ePeptideHitResultType.MODa
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODa does not support ETD data processing; will set mETDMode to False")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "MODa does not support ETD data processing; will set mETDMode to False")
                 blnSuccess = True
 
             Case clsPHRPReader.ePeptideHitResultType.MODPlus
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODPlus does not support ETD data processing; will set mETDMode to False")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "MODPlus does not support ETD data processing; will set mETDMode to False")
                 blnSuccess = True
 
             Case Else
@@ -350,11 +363,11 @@ Public Class clsMSGFRunner
         End Select
 
         If mETDMode Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ETD search mode has been enabled since c and z ions were used for the peptide search")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                 "ETD search mode has been enabled since c and z ions were used for the peptide search")
         End If
 
         Return blnSuccess
-
     End Function
 
     Private Function CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath As String) As Boolean
@@ -373,7 +386,8 @@ Public Class clsMSGFRunner
             mETDMode = False
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Reading the MSGF-DB parameter file: " & strSearchToolParamFilePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Reading the MSGF-DB parameter file: " & strSearchToolParamFilePath)
             End If
 
             ' Read the data from the MSGF-DB Param file
@@ -382,15 +396,15 @@ Public Class clsMSGFRunner
                 Do While srParamFile.Peek >= 0
                     strLineIn = srParamFile.ReadLine
 
-                    If Not String.IsNullOrEmpty(strLineIn) AndAlso
-                       strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG) Then
+                    If Not String.IsNullOrEmpty(strLineIn) AndAlso strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG) Then
 
                         ' Check whether this line is FragmentationMethodID=2
                         ' Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)  
                         ' This mode is not yet supported
 
                         If m_DebugLevel >= 3 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line found: " & strLineIn)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                 "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line found: " & strLineIn)
                         End If
 
                         ' Look for the equals sign
@@ -410,7 +424,10 @@ Public Class clsMSGFRunner
                             End If
 
                         Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line does not have an equals sign; will assume not using ETD ions: " & strLineIn)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                 "MSGFDB " & MSGFDB_FRAG_METHOD_TAG &
+                                                 " line does not have an equals sign; will assume not using ETD ions: " &
+                                                 strLineIn)
                         End If
 
                         ' No point in checking any further since we've parsed the ion_series line
@@ -434,8 +451,6 @@ Public Class clsMSGFRunner
         End Try
 
         Return True
-
-
     End Function
 
     ''' <summary>
@@ -462,7 +477,8 @@ Public Class clsMSGFRunner
             mETDMode = False
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Reading the Sequest parameter file: " & strSearchToolParamFilePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Reading the Sequest parameter file: " & strSearchToolParamFilePath)
             End If
 
             ' Read the data from the Sequest Param file
@@ -471,8 +487,7 @@ Public Class clsMSGFRunner
                 Do While srParamFile.Peek >= 0
                     strLineIn = srParamFile.ReadLine
 
-                    If Not String.IsNullOrEmpty(strLineIn) AndAlso
-                       strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG) Then
+                    If Not String.IsNullOrEmpty(strLineIn) AndAlso strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG) Then
 
                         ' This is the ion_series line
                         ' If ETD mode is enabled, then c and z ions will have a 1 in this series of numbers:
@@ -483,7 +498,8 @@ Public Class clsMSGFRunner
                         ' ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0 
 
                         If m_DebugLevel >= 3 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest " & SEQUEST_ION_SERIES_TAG & " line found: " & strLineIn)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                 "Sequest " & SEQUEST_ION_SERIES_TAG & " line found: " & strLineIn)
                         End If
 
                         ' Look for the equals sign
@@ -502,17 +518,26 @@ Public Class clsMSGFRunner
                                 Double.TryParse(strIonWeights(11), dblZWeight)
 
                                 If m_DebugLevel >= 3 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest " & SEQUEST_ION_SERIES_TAG & " line has c-ion weighting = " & dblCWeight & " and z-ion weighting = " & dblZWeight)
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                         "Sequest " & SEQUEST_ION_SERIES_TAG &
+                                                         " line has c-ion weighting = " & dblCWeight &
+                                                         " and z-ion weighting = " & dblZWeight)
                                 End If
 
                                 If dblCWeight > 0 OrElse dblZWeight > 0 Then
                                     mETDMode = True
                                 End If
                             Else
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest " & SEQUEST_ION_SERIES_TAG & " line does not have 11 numbers; will assume not using ETD ions: " & strLineIn)
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                     "Sequest " & SEQUEST_ION_SERIES_TAG &
+                                                     " line does not have 11 numbers; will assume not using ETD ions: " &
+                                                     strLineIn)
                             End If
                         Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest " & SEQUEST_ION_SERIES_TAG & " line does not have an equals sign; will assume not using ETD ions: " & strLineIn)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                 "Sequest " & SEQUEST_ION_SERIES_TAG &
+                                                 " line does not have an equals sign; will assume not using ETD ions: " &
+                                                 strLineIn)
                         End If
 
                         ' No point in checking any further since we've parsed the ion_series line
@@ -527,15 +552,13 @@ Public Class clsMSGFRunner
 
         Catch ex As Exception
             Dim Msg As String
-            Msg = "Error reading the Sequest param file: " &
-             ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Msg = "Error reading the Sequest param file: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file")
             Return False
         End Try
 
         Return True
-
     End Function
 
     ''' <summary>
@@ -558,7 +581,8 @@ Public Class clsMSGFRunner
             mETDMode = False
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Reading the X!Tandem parameter file: " & strSearchToolParamFilePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Reading the X!Tandem parameter file: " & strSearchToolParamFilePath)
             End If
 
             ' Open the parameter file
@@ -573,9 +597,11 @@ Public Class clsMSGFRunner
             For intSettingIndex = 0 To 1
                 Select Case intSettingIndex
                     Case 0
-                        objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']")
+                        objSelectedNodes =
+                            objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']")
                     Case 1
-                        objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']")
+                        objSelectedNodes =
+                            objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']")
                 End Select
 
                 If Not objSelectedNodes Is Nothing Then
@@ -604,8 +630,7 @@ Public Class clsMSGFRunner
         Catch ex As Exception
 
             Dim Msg As String
-            Msg = "Error reading the X!Tandem param file: " &
-             ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Msg = "Error reading the X!Tandem param file: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file")
 
@@ -635,7 +660,6 @@ Public Class clsMSGFRunner
         m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION)
 
         Return blnSuccess
-
     End Function
 
     ''' <summary>
@@ -695,7 +719,8 @@ Public Class clsMSGFRunner
                 ' Should never get here; invalid result type specified
                 Msg = "Invalid PeptideHit ResultType specified: " & eResultType
                 m_message = clsGlobal.AppendToComment(m_message, Msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.CreateMSGFInputFile(); " & Msg)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "clsMSGFToolRunner.CreateMSGFInputFile(); " & Msg)
 
                 blnSuccess = False
         End Select
@@ -711,7 +736,8 @@ Public Class clsMSGFRunner
             m_StatusTools.CurrentOperation = "Creating the MSGF Input file"
 
             If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the MSGF Input file")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Creating the MSGF Input file")
             End If
 
             blnSuccess = mMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles()
@@ -719,10 +745,13 @@ Public Class clsMSGFRunner
             intMSGFInputFileLineCount = mMSGFInputCreator.MSGFInputFileLineCount
 
             If Not blnSuccess Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mMSGFInputCreator.MSGFDataFileLineCount returned False")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "mMSGFInputCreator.MSGFDataFileLineCount returned False")
             Else
                 If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "CreateMSGFInputFileUsingPHRPResultFile complete; " & intMSGFInputFileLineCount & " lines of data")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         "CreateMSGFInputFileUsingPHRPResultFile complete; " & intMSGFInputFileLineCount &
+                                         " lines of data")
                 End If
             End If
 
@@ -730,7 +759,6 @@ Public Class clsMSGFRunner
 
 
         Return blnSuccess
-
     End Function
 
     Private Function SummarizeMODaResults() As Boolean
@@ -749,7 +777,6 @@ Public Class clsMSGFRunner
         End If
 
         Return blnSuccess
-
     End Function
 
     Private Function SummarizeMODPlusResults() As Boolean
@@ -768,7 +795,6 @@ Public Class clsMSGFRunner
         End If
 
         Return blnSuccess
-
     End Function
 
     Private Function SummarizeMSPathFinderResults() As Boolean
@@ -806,10 +832,10 @@ Public Class clsMSGFRunner
         blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFDB)
 
         Return blnSuccess
-
     End Function
 
-    Private Function CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator As clsMSGFInputCreatorMSGFDB, strSynOrFHT As String) As Boolean
+    Private Function CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator As clsMSGFInputCreatorMSGFDB,
+                                                        strSynOrFHT As String) As Boolean
 
         Dim strSourceFilePath As String
         Dim blnSuccess As Boolean
@@ -826,7 +852,6 @@ Public Class clsMSGFRunner
         Else
             Return True
         End If
-
     End Function
 
     Private Function CreateMzXMLFile() As Boolean
@@ -853,12 +878,13 @@ Public Class clsMSGFRunner
             End If
         End If
 
-        CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty, Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), blnPurgeOldFilesIfNeeded:=True)
+        CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty,
+                                   Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath),
+                                   blnPurgeOldFilesIfNeeded := True)
 
         m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
         Return blnSuccess
-
     End Function
 
     Private Function DefineProgramPaths() As Boolean
@@ -884,7 +910,6 @@ Public Class clsMSGFRunner
         mMSXmlGeneratorAppPath = MyBase.GetMSXmlGeneratorAppPath()
 
         Return True
-
     End Function
 
     Private Function DetermineMSGFProgramLocation() As String
@@ -928,7 +953,6 @@ Public Class clsMSGFRunner
         End If
 
         Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strMSGFStepToolVersion)
-
     End Function
 
     Public Shared Function IsLegacyMSGFVersion(strStepToolVersion As String) As Boolean
@@ -943,7 +967,6 @@ Public Class clsMSGFRunner
                 Return False
 
         End Select
-
     End Function
 
     ''' <summary>
@@ -953,7 +976,8 @@ Public Class clsMSGFRunner
     ''' <param name="intPrecursorMassErrorCount"></param>
     ''' <returns>True if more than 10% of the results have a precursor mass error</returns>
     ''' <remarks></remarks>
-    Private Function PostProcessMSGFCheckPrecursorMassErrorCount(intLinesRead As Integer, intPrecursorMassErrorCount As Integer) As Boolean
+    Private Function PostProcessMSGFCheckPrecursorMassErrorCount(intLinesRead As Integer,
+                                                                 intPrecursorMassErrorCount As Integer) As Boolean
 
         Const MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT = 10
 
@@ -970,14 +994,16 @@ Public Class clsMSGFRunner
             If intLinesRead >= 2 AndAlso intPrecursorMassErrorCount > 0 Then
                 sngPercentDataPrecursorMassError = CSng(intPrecursorMassErrorCount / intLinesRead * 100)
 
-                Msg = sngPercentDataPrecursorMassError.ToString("0.0") & "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass"
+                Msg = sngPercentDataPrecursorMassError.ToString("0.0") &
+                      "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass"
 
                 If sngPercentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT Then
                     Msg &= "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                     blnTooManyPrecursorMassMismatches = True
                 Else
-                    Msg &= "; this is below the error threshold of " & MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT & "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)"
+                    Msg &= "; this is below the error threshold of " & MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT &
+                           "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
                 End If
             End If
@@ -987,7 +1013,6 @@ Public Class clsMSGFRunner
         End Try
 
         Return blnTooManyPrecursorMassMismatches
-
     End Function
 
     ''' <summary>
@@ -1006,7 +1031,8 @@ Public Class clsMSGFRunner
     ''' <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
     ''' <returns>True if success; false if one or more errors</returns>
     ''' <remarks></remarks>
-    Private Function PostProcessMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType, strMSGFResultsFilePath As String, blnMGFInstrumentData As Boolean) As Boolean
+    Private Function PostProcessMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType,
+                                            strMSGFResultsFilePath As String, blnMGFInstrumentData As Boolean) As Boolean
 
         Dim fiInputFile As FileInfo
         Dim fiMSGFSynFile As FileInfo
@@ -1019,28 +1045,34 @@ Public Class clsMSGFRunner
 
         Try
             If String.IsNullOrEmpty(strMSGFResultsFilePath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSGF Results File path is empty; unable to continue")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "MSGF Results File path is empty; unable to continue")
                 Return False
             End If
 
             m_StatusTools.CurrentOperation = "MSGF complete; post-processing the results"
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF complete; post-processing the results")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "MSGF complete; post-processing the results")
             End If
 
             fiInputFile = New FileInfo(strMSGFResultsFilePath)
 
             ' Define the path to write the synopsis MSGF results to
-            strMSGFSynopsisResults = Path.Combine(fiInputFile.DirectoryName, Path.GetFileNameWithoutExtension(fiInputFile.Name) & "_PostProcess.txt")
+            strMSGFSynopsisResults = Path.Combine(fiInputFile.DirectoryName,
+                                                  Path.GetFileNameWithoutExtension(fiInputFile.Name) &
+                                                  "_PostProcess.txt")
 
             m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
             m_StatusTools.UpdateAndWrite(m_progress)
 
-            blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults, blnMGFInstrumentData, blnFirstHitsDataPresent, blnTooManyErrors)
+            blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults,
+                                                    blnMGFInstrumentData, blnFirstHitsDataPresent, blnTooManyErrors)
 
         Catch ex As Exception
-            Dim errMsg = "Error post-processing the MSGF Results file: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Dim errMsg = "Error post-processing the MSGF Results file: " & ex.Message & "; " &
+                         clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
 
@@ -1066,7 +1098,8 @@ Public Class clsMSGFRunner
             fiMSGFSynFile.MoveTo(strMSGFResultsFilePath)
 
         Catch ex As Exception
-            Dim errMsg = "Error replacing the original MSGF Results file with the post-processed one: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+            Dim errMsg = "Error replacing the original MSGF Results file with the post-processed one: " & ex.Message &
+                         "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
 
@@ -1093,7 +1126,6 @@ Public Class clsMSGFRunner
         Else
             Return blnSuccess
         End If
-
     End Function
 
     ''' <summary>
@@ -1107,13 +1139,11 @@ Public Class clsMSGFRunner
     ''' <param name="blnTooManyErrors">Will be set to True if too many errors occur</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function PostProcessMSGFResultsWork(
-      eResultType As clsPHRPReader.ePeptideHitResultType,
-      strMSGFResultsFilePath As String,
-      strMSGFSynopsisResults As String,
-      blnMGFInstrumentData As Boolean,
-      <Out()> ByRef blnFirstHitsDataPresent As Boolean,
-      <Out()> ByRef blnTooManyErrors As Boolean) As Boolean
+    Private Function PostProcessMSGFResultsWork(eResultType As clsPHRPReader.ePeptideHitResultType,
+                                                strMSGFResultsFilePath As String, strMSGFSynopsisResults As String,
+                                                blnMGFInstrumentData As Boolean,
+                                                <Out()> ByRef blnFirstHitsDataPresent As Boolean,
+                                                <Out()> ByRef blnTooManyErrors As Boolean) As Boolean
 
         Const MAX_ERRORS_TO_LOG = 5
 
@@ -1233,7 +1263,9 @@ Public Class clsMSGFRunner
                                     intMGFLookupErrorCount += 1
 
                                     ' Log the first 5 instances to the log file as warnings
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to determine the scan number for MGF spectrum index " & strScan & " on line  " & intLinesRead & " in the result file")
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                         "Unable to determine the scan number for MGF spectrum index " &
+                                                         strScan & " on line  " & intLinesRead & " in the result file")
                                 End If
                                 strScan = intActualScanNumber.ToString()
                             End If
@@ -1258,7 +1290,11 @@ Public Class clsMSGFRunner
                                         strOriginalPeptideInfo = String.Empty
                                     End If
 
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF SpecProb is not numeric on line " & intLinesRead & " in the result file: " & strSpecProb & " (parent peptide " & strPeptide & ", Scan " & strScan & ", Result_ID " & strResultID & strOriginalPeptideInfo & ")")
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                         "MSGF SpecProb is not numeric on line " & intLinesRead &
+                                                         " in the result file: " & strSpecProb & " (parent peptide " &
+                                                         strPeptide & ", Scan " & strScan & ", Result_ID " & strResultID &
+                                                         strOriginalPeptideInfo & ")")
                                 End If
 
                                 If strSpecProb.Contains("precursor mass") Then
@@ -1283,7 +1319,8 @@ Public Class clsMSGFRunner
                               strNotes
 
                             ' Add this result to the cached string dictionary
-                            mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide, strMSGFResultData)
+                            mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide,
+                                                                  strMSGFResultData)
 
 
                             If strDataSource = MSGF_PHRP_DATA_SOURCE_FHT Then
@@ -1334,11 +1371,15 @@ Public Class clsMSGFRunner
         End Using
 
         If intSpecProbErrorCount > 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF SpecProb was not numeric for " & intSpecProbErrorCount & " entries in the MSGF result file")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                 "MSGF SpecProb was not numeric for " & intSpecProbErrorCount &
+                                 " entries in the MSGF result file")
         End If
 
         If intMGFLookupErrorCount > 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MGF Index-to-scan lookup failed for " & intMGFLookupErrorCount & " entries in the MSGF result file")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "MGF Index-to-scan lookup failed for " & intMGFLookupErrorCount &
+                                 " entries in the MSGF result file")
             If intLinesRead > 0 AndAlso intMGFLookupErrorCount / CSng(intLinesRead) > 0.1 Then
                 blnTooManyErrors = True
             End If
@@ -1351,7 +1392,6 @@ Public Class clsMSGFRunner
 
         ' If we get here, return True
         Return True
-
     End Function
 
     Private Function ProcessFileWithMSGF(
@@ -1373,7 +1413,6 @@ Public Class clsMSGFRunner
         End If
 
         Return blnSuccess
-
     End Function
 
     Private Function ProcessFilesWrapper(
@@ -1395,7 +1434,8 @@ Public Class clsMSGFRunner
         If Not blnSuccess Then
             Msg = "Error examining param file to determine if ETD mode was enabled)"
             m_message = clsGlobal.AppendToComment(m_message, Msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " & Msg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "clsMSGFToolRunner.RunTool(); " & Msg)
             Return False
         Else
             m_progress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD
@@ -1403,7 +1443,8 @@ Public Class clsMSGFRunner
         End If
 
         ' Create the _MSGF_input.txt file
-        blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData, intMSGFInputFileLineCount)
+        blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData,
+                                         intMSGFInputFileLineCount)
 
         If Not blnSuccess Then
             Msg = "Error creating MSGF input file"
@@ -1446,21 +1487,25 @@ Public Class clsMSGFRunner
                 ' The assumption is that this file will have been created by manually running MSGF on another computer
 
                 If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder")
                 End If
 
                 If RetrievePreGeneratedDataFile(Path.GetFileName(mMSGFResultsFilePath)) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file successfully copied to the work directory")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         "Pre-generated MSGF results file successfully copied to the work directory")
                     blnSuccess = True
                 Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file not found")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         "Pre-generated MSGF results file not found")
                     blnSuccess = False
                 End If
 
             Else
                 ' Run MSGF
                 ' Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
-                blnSuccess = ProcessFileWithMSGF(eResultType, intMSGFInputFileLineCount, mMSGFInputFilePath, mMSGFResultsFilePath)
+                blnSuccess = ProcessFileWithMSGF(eResultType, intMSGFInputFileLineCount, mMSGFInputFilePath,
+                                                 mMSGFResultsFilePath)
             End If
 
             If Not blnSuccess Then
@@ -1482,7 +1527,6 @@ Public Class clsMSGFRunner
         mMSGFInputCreator.CloseLogFileNow()
 
         Return blnSuccess
-
     End Function
 
     ''' <summary>
@@ -1507,7 +1551,8 @@ Public Class clsMSGFRunner
             strFolderToCheck = Path.Combine(Path.Combine(strTransferFolderPath, m_Dataset), strInputFolderName)
 
             If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for folder " & strFolderToCheck)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Looking for folder " & strFolderToCheck)
             End If
 
             ' Look for strFileNameToFind in strFolderToCheck
@@ -1515,12 +1560,14 @@ Public Class clsMSGFRunner
                 strFilePathSource = Path.Combine(strFolderToCheck, strFileNameToFind)
 
                 If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for file " & strFilePathSource)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         "Looking for file " & strFilePathSource)
                 End If
 
                 If File.Exists(strFilePathSource) Then
                     strFilePathTarget = Path.Combine(m_WorkDir, strFileNameToFind)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file " & strFilePathSource & " to " & strFilePathTarget)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         "Copying file " & strFilePathSource & " to " & strFilePathTarget)
 
                     File.Copy(strFilePathSource, strFilePathTarget, True)
 
@@ -1529,16 +1576,17 @@ Public Class clsMSGFRunner
                 End If
             End If
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception finding file " & strFileNameToFind & " in folder " & strFolderToCheck, ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                 "Exception finding file " & strFileNameToFind & " in folder " & strFolderToCheck, ex)
             Return False
         End Try
 
         ' File not found
         Return False
-
     End Function
 
-    Private Function RunMSGFonMSGFDB(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String, strMSGFResultsFilePath As String) As Boolean
+    Private Function RunMSGFonMSGFDB(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String,
+                                     strMSGFResultsFilePath As String) As Boolean
 
         Dim strLineIn As String
         Dim intLinesRead As Integer
@@ -1546,7 +1594,7 @@ Public Class clsMSGFRunner
 
         Dim lstCIDData As List(Of String)
         Dim lstETDData As List(Of String)
-        Dim intCollisionModeColIndex As Integer = -1
+        Dim intCollisionModeColIndex As Integer = - 1
 
         Try
             lstCIDData = New List(Of String)
@@ -1555,7 +1603,7 @@ Public Class clsMSGFRunner
             Using srSourceFile = New StreamReader(New FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
-                Do While srSourceFile.Peek > -1
+                Do While srSourceFile.Peek > - 1
                     strLineIn = srSourceFile.ReadLine()
 
                     If Not String.IsNullOrEmpty(strLineIn) Then
@@ -1566,7 +1614,7 @@ Public Class clsMSGFRunner
                             ' Cache the header line
                             lstCIDData.Add(strLineIn)
                             lstETDData.Add(strLineIn)
-
+                            
                             ' Confirm the column index of the Collision_Mode column
                             For intIndex As Integer = 0 To strSplitLine.Length - 1
                                 If String.Equals(strSplitLine(intIndex), MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.CurrentCultureIgnoreCase) Then
@@ -1576,7 +1624,8 @@ Public Class clsMSGFRunner
 
                             If intCollisionModeColIndex < 0 Then
                                 ' Collision_Mode column not found; this is unexpected
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue")
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                     "Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue")
                                 srSourceFile.Close()
                                 Return False
                             End If
@@ -1641,10 +1690,10 @@ Public Class clsMSGFRunner
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RunMSGFonMSGFDB", ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Exception in RunMSGFonMSGFDB", ex)
             Return False
         End Try
-
     End Function
 
     Private Function RunMSGFonMSGFDBCachedData(
@@ -1688,7 +1737,7 @@ Public Class clsMSGFRunner
                         srTempResults.ReadLine()
 
                         ' Append the remaining lines to swFinalResults
-                        While srTempResults.Peek > -1
+                        While srTempResults.Peek > - 1
                             swFinalResults.WriteLine(srTempResults.ReadLine)
                         End While
 
@@ -1709,15 +1758,16 @@ Public Class clsMSGFRunner
 
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RunMSGFonMSGFDBCachedData", ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Exception in RunMSGFonMSGFDBCachedData", ex)
             Return False
         End Try
 
         Return True
-
     End Function
 
-    Private Function RunMSGF(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String, strMSGFResultsFilePath As String) As Boolean
+    Private Function RunMSGF(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String,
+                             strMSGFResultsFilePath As String) As Boolean
 
         Dim intMSGFEntriesPerSegment As Integer
         Dim blnSuccess As Boolean
@@ -1726,7 +1776,9 @@ Public Class clsMSGFRunner
 
         intMSGFEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT)
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGFInputFileLineCount = " & intMSGFInputFileLineCount & "; MSGFEntriesPerSegment = " & intMSGFEntriesPerSegment)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                 "MSGFInputFileLineCount = " & intMSGFInputFileLineCount & "; MSGFEntriesPerSegment = " &
+                                 intMSGFEntriesPerSegment)
         End If
 
         If intMSGFEntriesPerSegment <= 1 Then
@@ -1735,7 +1787,9 @@ Public Class clsMSGFRunner
 
         ElseIf intMSGFInputFileLineCount <= intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
             blnUseSegments = False
-            strSegmentUsageMessage = "Not using MSGF segments since MSGFInputFileLineCount is <= " & intMSGFEntriesPerSegment & " * " & CInt(MSGF_SEGMENT_OVERFLOW_MARGIN * 100).ToString() & "%"
+            strSegmentUsageMessage = "Not using MSGF segments since MSGFInputFileLineCount is <= " &
+                                     intMSGFEntriesPerSegment & " * " &
+                                     CInt(MSGF_SEGMENT_OVERFLOW_MARGIN * 100).ToString() & "%"
 
         Else
             blnUseSegments = True
@@ -1763,10 +1817,12 @@ Public Class clsMSGFRunner
             lstResultFiles = New List(Of String)
 
             ' Split strMSGFInputFilePath into chunks with intMSGFEntriesPerSegment each
-            blnSuccess = SplitMSGFInputFile(intMSGFInputFileLineCount, strMSGFInputFilePath, intMSGFEntriesPerSegment, lstSegmentFileInfo)
+            blnSuccess = SplitMSGFInputFile(intMSGFInputFileLineCount, strMSGFInputFilePath, intMSGFEntriesPerSegment,
+                                            lstSegmentFileInfo)
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strSegmentUsageMessage & "; segment count = " & lstSegmentFileInfo.Count)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                     strSegmentUsageMessage & "; segment count = " & lstSegmentFileInfo.Count)
             End If
 
             If blnSuccess Then
@@ -1793,7 +1849,8 @@ Public Class clsMSGFRunner
 
             If blnSuccess Then
                 If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting MSGF segment files")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         "Deleting MSGF segment files")
                 End If
 
                 ' Delete the segment files
@@ -1816,11 +1873,11 @@ Public Class clsMSGFRunner
                 fiConsoleOutputFile.Delete()
             End If
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete the " & MSGF_CONSOLE_OUTPUT & " file", ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                 "Unable to delete the " & MSGF_CONSOLE_OUTPUT & " file", ex)
         End Try
 
         Return blnSuccess
-
     End Function
 
     Private Function RunMSGFWork(strInputFilePath As String, strResultsFilePath As String) As Boolean
@@ -1829,12 +1886,14 @@ Public Class clsMSGFRunner
         Dim intJavaMemorySize As Integer
 
         If String.IsNullOrEmpty(strInputFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "strInputFilePath has not been defined; unable to continue")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "strInputFilePath has not been defined; unable to continue")
             Return False
         End If
 
         If String.IsNullOrEmpty(strResultsFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "strResultsFilePath has not been defined; unable to continue")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "strResultsFilePath has not been defined; unable to continue")
             Return False
         End If
 
@@ -1852,7 +1911,8 @@ Public Class clsMSGFRunner
         If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSGF on " & Path.GetFileName(strInputFilePath))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                 "Running MSGF on " & Path.GetFileName(strInputFilePath))
         End If
 
         mCurrentMSGFResultsFilePath = String.Copy(strResultsFilePath)
@@ -1942,11 +2002,11 @@ Public Class clsMSGFRunner
         End If
 
         If Not blnSuccess Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MSGF, job " & m_JobNum)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Error running MSGF, job " & m_JobNum)
         End If
 
         Return blnSuccess
-
     End Function
 
     Private Function CombineMSGFResultFiles(
@@ -1988,12 +2048,12 @@ Public Class clsMSGFRunner
             End Using
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception combining MSGF result files", ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Exception combining MSGF result files", ex)
             Return False
         End Try
 
         Return True
-
     End Function
 
     Private Function LoadMSGFResults(
@@ -2010,10 +2070,10 @@ Public Class clsMSGFRunner
         Try
             Dim blnSuccess = True
 
-            intMSGFSpecProbColIndex = -1
+            intMSGFSpecProbColIndex = - 1
             Using srInFile = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srInFile.Peek > -1
+                Do While srInFile.Peek > - 1
                     strLineIn = srInFile.ReadLine()
 
                     If Not String.IsNullOrEmpty(strLineIn) Then
@@ -2031,7 +2091,8 @@ Public Class clsMSGFRunner
 
                                 If intMSGFSpecProbColIndex < 0 Then
                                     ' Match not found; abort
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "SpecProb column not found in file " & strMSGFResultsFilePath)
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                         "SpecProb column not found in file " & strMSGFResultsFilePath)
                                     blnSuccess = False
                                     Exit Do
                                 End If
@@ -2060,10 +2121,10 @@ Public Class clsMSGFRunner
             Return blnSuccess
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in LoadMSGFResults: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Exception in LoadMSGFResults: " & ex.Message)
             Return False
         End Try
-
     End Function
 
     ''' <summary>
@@ -2077,24 +2138,26 @@ Public Class clsMSGFRunner
 
             If Not File.Exists(strConsoleOutputFilePath) Then
                 If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         "Console output file not found: " & strConsoleOutputFilePath)
                 End If
 
                 Exit Sub
             End If
 
             If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Parsing file " & strConsoleOutputFilePath)
             End If
 
             Dim strLineIn As String
             Dim intLinesRead As Integer
             mConsoleOutputErrorMsg = String.Empty
-
+            
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
-                Do While srInFile.Peek() > -1
+                Do While srInFile.Peek() > - 1
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
@@ -2103,7 +2166,8 @@ Public Class clsMSGFRunner
                             ' The first line is the MSGF version
 
                             If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFVersion) Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF version: " & strLineIn)
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                     "MSGF version: " & strLineIn)
                             End If
 
                             mMSGFVersion = String.Copy(strLineIn)
@@ -2124,10 +2188,11 @@ Public Class clsMSGFRunner
         Catch ex As Exception
             ' Ignore errors here
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "Error parsing console output file (" & strConsoleOutputFilePath & "): " &
+                                     ex.Message)
             End If
         End Try
-
     End Sub
 
 
@@ -2156,7 +2221,7 @@ Public Class clsMSGFRunner
                 udtThisSegment.Entries = 0
                 udtThisSegment.Segment = 0
 
-                Do While srInFile.Peek > -1
+                Do While srInFile.Peek > - 1
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
@@ -2172,7 +2237,8 @@ Public Class clsMSGFRunner
                         Dim intLineCountRemaining As Integer
                         intLineCountRemaining = intMSGFinputFileLineCount - intLineCountAllSegments
 
-                        If udtThisSegment.Segment = 0 OrElse intLineCountRemaining > intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
+                        If udtThisSegment.Segment = 0 OrElse
+                           intLineCountRemaining > intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
 
                             If udtThisSegment.Segment > 0 Then
                                 ' Close the current segment
@@ -2185,7 +2251,8 @@ Public Class clsMSGFRunner
                             udtThisSegment.Entries = 0
                             udtThisSegment.FilePath = AddFileNameSuffix(strMSGFInputFilePath, udtThisSegment.Segment)
 
-                            swOutFile = New StreamWriter(New FileStream(udtThisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                            swOutFile = New StreamWriter(New FileStream(udtThisSegment.FilePath, FileMode.Create,
+                                                                        FileAccess.Write, FileShare.Read))
 
                             ' Write the header line to the new segment
                             swOutFile.WriteLine(strHeaderLine)
@@ -2207,12 +2274,12 @@ Public Class clsMSGFRunner
 
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception splitting MSGF input file", ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Exception splitting MSGF input file", ex)
             Return False
         End Try
 
         Return True
-
     End Function
 
     ''' <summary>
@@ -2224,7 +2291,8 @@ Public Class clsMSGFRunner
         Dim strToolVersionInfo As String
 
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                 "Determining tool version info")
         End If
 
         strToolVersionInfo = String.Copy(mMSGFVersion)
@@ -2236,12 +2304,12 @@ Public Class clsMSGFRunner
         ioToolFiles.Add(New FileInfo(mMSXmlGeneratorAppPath))
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile := True)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Exception calling SetStepTaskToolVersion", ex)
             Return False
         End Try
-
     End Function
 
     ''' <summary>
@@ -2253,7 +2321,8 @@ Public Class clsMSGFRunner
         Dim strToolVersionInfo As String = String.Empty
 
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                 "Determining tool version info")
         End If
 
         ' Lookup the version of AnalysisManagerMSGFPlugin
@@ -2270,12 +2339,12 @@ Public Class clsMSGFRunner
         End If
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile := False)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False
         End Try
-
     End Function
 
     Private Function SummarizeMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
@@ -2295,11 +2364,13 @@ Public Class clsMSGFRunner
                 blnPostResultsToDB = True
             Else
                 blnPostResultsToDB = False
-                m_message = "Job number is not numeric: " & m_JobNum & "; will not be able to post PSM results to the database"
+                m_message = "Job number is not numeric: " & m_JobNum &
+                            "; will not be able to post PSM results to the database"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             End If
 
-            objSummarizer = New clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString)
+            objSummarizer = New clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir,
+                                                         strConnectionString)
             objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
 
             objSummarizer.ContactDatabase = True
@@ -2328,12 +2399,12 @@ Public Class clsMSGFRunner
         Catch ex As Exception
             Dim errMsg = "Exception summarizing the MSGF results"
             m_message = clsGlobal.AppendToComment(m_message, errMsg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg & ": " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 errMsg & ": " & ex.Message)
             Return False
         End Try
 
         Return blnSuccess
-
     End Function
 
     Private Sub UpdateMSGFProgress(strMSGFResultsFilePath As String)
@@ -2353,7 +2424,7 @@ Public Class clsMSGFRunner
             Using srMSGFResultsFile = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 intLineCount = 0
 
-                Do While srMSGFResultsFile.Peek > -1
+                Do While srMSGFResultsFile.Peek > - 1
                     srMSGFResultsFile.ReadLine()
                     intLineCount += 1
                 Loop
@@ -2373,19 +2444,23 @@ Public Class clsMSGFRunner
                 End If
             End If
 
-            m_progress = CSng(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * dblFraction)
+            m_progress =
+                CSng(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * dblFraction)
             m_StatusTools.UpdateAndWrite(m_progress)
 
         Catch ex As Exception
             ' Log errors the first 3 times they occur
             intErrorCount += 1
             If intErrorCount <= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error counting the number of lines in the MSGF results file, " & strMSGFResultsFilePath, ex)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "Error counting the number of lines in the MSGF results file, " &
+                                     strMSGFResultsFilePath, ex)
             End If
         End Try
     End Sub
 
-    Private Function UpdateProteinModsFile(eResultType As clsPHRPReader.ePeptideHitResultType, strMSGFResultsFilePath As String) As Boolean
+    Private Function UpdateProteinModsFile(eResultType As clsPHRPReader.ePeptideHitResultType,
+                                           strMSGFResultsFilePath As String) As Boolean
         Dim Msg As String
 
         Dim fiProteinModsFile As FileInfo
@@ -2403,11 +2478,14 @@ Public Class clsMSGFRunner
         Dim blnSuccess As Boolean
 
         Try
-            fiProteinModsFile = New FileInfo(Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_Dataset)))
+            fiProteinModsFile = New FileInfo(Path.Combine(m_WorkDir,
+                                                          clsPHRPReader.GetPHRPProteinModsFileName(eResultType,
+                                                                                                   m_Dataset)))
             fiProteinModsFileNew = New FileInfo(fiProteinModsFile.FullName & ".tmp")
 
             If Not fiProteinModsFile.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PHRP ProteinMods.txt file not found: " & fiProteinModsFile.Name)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                     "PHRP ProteinMods.txt file not found: " & fiProteinModsFile.Name)
                 blnSuccess = True
             Else
                 lstMSGFResults = New Dictionary(Of Integer, String)
@@ -2416,12 +2494,12 @@ Public Class clsMSGFRunner
                     Return False
                 End If
 
-                intMSGFSpecProbColIndex = -1
+                intMSGFSpecProbColIndex = - 1
                 blnSuccess = True
 
                 Using srSource = New StreamReader(New FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                     Using swTarget = New StreamWriter(New FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-                        Do While srSource.Peek > -1
+                        Do While srSource.Peek > - 1
                             strLineIn = srSource.ReadLine()
 
                             If String.IsNullOrEmpty(strLineIn) Then
@@ -2480,21 +2558,24 @@ Public Class clsMSGFRunner
                         Try
                             fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName)
                             If m_DebugLevel >= 2 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Updated MSGF_SpecProb values in the ProteinMods.txt file")
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                                     "Updated MSGF_SpecProb values in the ProteinMods.txt file")
                             End If
 
                             blnSuccess = True
                         Catch ex As Exception
                             Msg = "Error updating the ProteinMods.txt file; cannot rename new version"
                             m_message = clsGlobal.AppendToComment(m_message, Msg)
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ex.Message)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                 Msg & ": " & ex.Message)
                             Return False
                         End Try
 
                     Catch ex As Exception
                         Msg = "Error updating the ProteinMods.txt file; cannot delete old version"
                         m_message = clsGlobal.AppendToComment(m_message, Msg)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ex.Message)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                             Msg & ": " & ex.Message)
                         Return False
                     End Try
 
@@ -2509,7 +2590,6 @@ Public Class clsMSGFRunner
         End Try
 
         Return blnSuccess
-
     End Function
 
 #End Region
@@ -2533,7 +2613,6 @@ Public Class clsMSGFRunner
         UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING)
 
         LogProgress("MSGF")
-
     End Sub
 
     ''' <summary>
@@ -2544,7 +2623,9 @@ Public Class clsMSGFRunner
     Private Sub mMSGFInputCreator_ErrorEvent(strErrorMessage As String) Handles mMSGFInputCreator.ErrorEvent
         mMSGFInputCreatorErrorCount += 1
         If mMSGFInputCreatorErrorCount < 10 OrElse mMSGFInputCreatorErrorCount Mod 1000 = 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by MSGFInputCreator; " & strErrorMessage & " (ErrorCount=" & mMSGFInputCreatorErrorCount & ")")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Error reported by MSGFInputCreator; " & strErrorMessage & " (ErrorCount=" &
+                                 mMSGFInputCreatorErrorCount & ")")
         End If
     End Sub
 
@@ -2572,8 +2653,7 @@ Public Class clsMSGFRunner
             End If
 
         End If
-
     End Sub
-#End Region
 
+#End Region
 End Class

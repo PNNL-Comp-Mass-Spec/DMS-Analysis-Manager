@@ -8,25 +8,28 @@ Public MustInherit Class clsMSXmlGen
 #Region "Constants"
     ' Define a maximum runtime of 36 hours
     Const MAX_RUNTIME_SECONDS As Integer = 36 * 60 * 60
+
 #End Region
 
 #Region "Module Variables"
-	Protected ReadOnly mWorkDir As String
-	Protected ReadOnly mProgramPath As String
-	Protected ReadOnly mDatasetName As String
-	Protected ReadOnly mRawDataType As clsAnalysisResources.eRawDataTypeConstants
-	Protected mSourceFilePath As String = String.Empty
-	Protected ReadOnly mOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
 
-	Protected ReadOnly mCentroidMS1 As Boolean
-	Protected ReadOnly mCentroidMS2 As Boolean
+    Protected ReadOnly mWorkDir As String
+    Protected ReadOnly mProgramPath As String
+    Protected ReadOnly mDatasetName As String
+    Protected ReadOnly mRawDataType As clsAnalysisResources.eRawDataTypeConstants
+    Protected mSourceFilePath As String = String.Empty
+    Protected ReadOnly mOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
 
-	Protected mUseProgRunnerResultCode As Boolean		' When true, then return an error if the progrunner returns a non-zero exit code
+    Protected ReadOnly mCentroidMS1 As Boolean
+    Protected ReadOnly mCentroidMS2 As Boolean
 
-	Protected mErrorMessage As String = String.Empty
-	Protected mDebugLevel As Integer = 1
+    ' When true, then return an error if the progrunner returns a non-zero exit code
+    Protected mUseProgRunnerResultCode As Boolean
 
-	Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mErrorMessage As String = String.Empty
+    Protected mDebugLevel As Integer = 1
+
+    Protected WithEvents CmdRunner As clsRunDosProgram
 
     Public Event ProgRunnerStarting(CommandLine As String)
     Public Event LoopWaiting()
@@ -116,7 +119,9 @@ Public MustInherit Class clsMSXmlGen
         Select Case mRawDataType
             Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
                 mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
-            Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
+            Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder,
+                clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf,
+                clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
                 mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
             Case Else
                 Throw New ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString())
@@ -163,13 +168,15 @@ Public MustInherit Class clsMSXmlGen
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput.txt")
+            .ConsoleOutputFilePath = Path.Combine(mWorkDir,
+                                                  Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput.txt")
 
             .WorkDir = mWorkDir
         End With
 
         Dim dtStartTime = DateTime.UtcNow()
-        blnSuccess = CmdRunner.RunProgram(mProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode, MAX_RUNTIME_SECONDS)
+        blnSuccess = CmdRunner.RunProgram(mProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mProgramPath),
+                                          mUseProgRunnerResultCode, MAX_RUNTIME_SECONDS)
 
         If Not String.IsNullOrWhiteSpace(CmdRunner.CachedConsoleErrors) Then
             ' Append the console errors to the log file
@@ -186,14 +193,18 @@ Public MustInherit Class clsMSXmlGen
 
         If Not blnSuccess Then
             If DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds >= MAX_RUNTIME_SECONDS Then
-                mErrorMessage = ProgramName & " has run for over " & DateTime.UtcNow.Subtract(dtStartTime).TotalHours.ToString("0") & " hours and has thus been aborted"
+                mErrorMessage = ProgramName & " has run for over " &
+                                DateTime.UtcNow.Subtract(dtStartTime).TotalHours.ToString("0") &
+                                " hours and has thus been aborted"
                 Return False
             Else
                 If CmdRunner.ExitCode <> 0 Then
-                    mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString
+                    mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) & " returned a non-zero exit code: " &
+                                    CmdRunner.ExitCode.ToString
                     Return False
                 Else
-                    mErrorMessage = "Call to " & Path.GetFileNameWithoutExtension(mProgramPath) & " failed (but exit code is 0)"
+                    mErrorMessage = "Call to " & Path.GetFileNameWithoutExtension(mProgramPath) &
+                                    " failed (but exit code is 0)"
                     Return True
                 End If
             End If
@@ -215,19 +226,20 @@ Public MustInherit Class clsMSXmlGen
             Return True
 
         End If
-
     End Function
 
     Public Sub LogCreationStatsRawToMzXml(dtStartTimeUTC As DateTime, strWorkDirPath As String, strDatasetName As String)
 
-        Dim strSourceFilePath As String = Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
-        Dim strMsXmlFilePath As String = Path.Combine(strWorkDirPath, strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
+        Dim strSourceFilePath As String = Path.Combine(strWorkDirPath,
+                                                       strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
+        Dim strMsXmlFilePath As String = Path.Combine(strWorkDirPath,
+                                                      strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
 
         LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMsXmlFilePath)
-
     End Sub
 
-    Public Sub LogCreationStatsSourceToMsXml(dtStartTimeUTC As DateTime, strSourceFilePath As String, strMsXmlFilePath As String)
+    Public Sub LogCreationStatsSourceToMsXml(dtStartTimeUTC As DateTime, strSourceFilePath As String,
+                                             strMsXmlFilePath As String)
 
         Try
             ' Save some stats to the log
@@ -267,14 +279,15 @@ Public MustInherit Class clsMSXmlGen
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception saving msXML stats", ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                 "Exception saving msXML stats", ex)
         End Try
-
     End Sub
 
     Protected MustOverride Function SetupTool() As Boolean
 
-    Protected Function ValidateMsXmlFile(eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants, outputFilePath As String) As Boolean
+    Protected Function ValidateMsXmlFile(eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
+                                         outputFilePath As String) As Boolean
         ' Open the .mzXML or .mzML file and look for </mzXML> or </indexedmzML> at the end of the file
 
         Try
@@ -306,9 +319,11 @@ Public MustInherit Class clsMSXmlGen
                     If mostRecentLine <> "</mzXML>" Then
                         mErrorMessage = "File " & fiOutputFile.Name & " is corrupt; it does not end in </mzXML>"
                         If String.IsNullOrWhiteSpace(mostRecentLine) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzXML file is corrupt; file is empty or only contains whitespace")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                 "mzXML file is corrupt; file is empty or only contains whitespace")
                         Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzXML file is corrupt; final line is: " & mostRecentLine)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                 "mzXML file is corrupt; final line is: " & mostRecentLine)
                         End If
                         Return False
                     End If
@@ -317,9 +332,11 @@ Public MustInherit Class clsMSXmlGen
                     If mostRecentLine <> "</indexedmzML>" Then
                         mErrorMessage = "File " & fiOutputFile.Name & " is corrupt; it does not end in </indexedmzML>"
                         If String.IsNullOrWhiteSpace(mostRecentLine) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzML file is corrupt; file is empty or only contains whitespace")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                 "mzML file is corrupt; file is empty or only contains whitespace")
                         Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "mzML file is corrupt; final line is: " & mostRecentLine)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                 "mzML file is corrupt; final line is: " & mostRecentLine)
                         End If
                         Return False
                     End If
@@ -337,7 +354,6 @@ Public MustInherit Class clsMSXmlGen
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mErrorMessage, ex)
             Return False
         End Try
-
     End Function
 
 

@@ -6,6 +6,7 @@ Public Class clsAnalysisResourcesMSXMLGen
     Inherits clsAnalysisResources
 
 #Region "Methods"
+
     ''' <summary>
     ''' Retrieves files necessary for creating the .mzXML file
     ''' </summary>
@@ -46,21 +47,22 @@ Public Class clsAnalysisResourcesMSXMLGen
 
                 retrievalAttempts += 1
                 Select Case strRawDataType.ToLower
-                    Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_DOT_D_FOLDERS, RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER, RAW_DATA_TYPE_BRUKER_FT_FOLDER
+                    Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_DOT_D_FOLDERS, RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER,
+                        RAW_DATA_TYPE_BRUKER_FT_FOLDER
                         currentTask = "Retrieve spectra: " & strRawDataType
 
                         If RetrieveSpectra(strRawDataType) Then
                             m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)  'Raw file
                         Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                 "clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.")
                             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                         End If
                     Case Else
                         m_message = "Dataset type " & strRawDataType & " is not supported"
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                                              "clsAnalysisResourcesMSXMLGen.GetResources: " & m_message & "; must be " &
-                                             RAW_DATA_TYPE_DOT_RAW_FILES & ", " &
-                                             RAW_DATA_TYPE_DOT_D_FOLDERS & ", " &
+                                             RAW_DATA_TYPE_DOT_RAW_FILES & ", " & RAW_DATA_TYPE_DOT_D_FOLDERS & ", " &
                                              RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER & ", or " &
                                              RAW_DATA_TYPE_BRUKER_FT_FOLDER)
 
@@ -93,12 +95,16 @@ Public Class clsAnalysisResourcesMSXMLGen
 
                 currentTask = "Retrieve the MzML Refinery parameter file " & mzMLRefParamFile
 
-                Const paramFileStoragePathKeyName As String = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "MzML_Refinery"
+                Const paramFileStoragePathKeyName As String = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX &
+                                                              "MzML_Refinery"
 
                 Dim mzMLRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName)
                 If String.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath) Then
                     mzMLRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\MzMLRefinery"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & paramFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & mzMLRefineryParmFileStoragePath)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                         "Parameter '" & paramFileStoragePathKeyName &
+                                         "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " &
+                                         mzMLRefineryParmFileStoragePath)
 
                 End If
 
@@ -111,14 +117,14 @@ Public Class clsAnalysisResourcesMSXMLGen
 
         Catch ex As Exception
             m_message = "Exception in GetResources: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
     End Function
-#End Region
 
+#End Region
 End Class
