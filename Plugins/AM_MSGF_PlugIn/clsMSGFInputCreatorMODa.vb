@@ -30,11 +30,11 @@ Public Class clsMSGFInputCreatorMODa
 
         ' Customize mPHRPResultFilePath for MODa _syn.txt files
         mPHRPFirstHitsFilePath = String.Empty
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserMODa.GetPHRPSynopsisFileName(mDatasetName))
+        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMODa.GetPHRPSynopsisFileName(mDatasetName))
 
     End Sub
 
-    Protected Overrides Function PassesFilters(objPSM As PHRPReader.clsPSM) As Boolean
+    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
         Dim dblProbability As Double
 
         Dim blnPassesFilters As Boolean
@@ -42,7 +42,7 @@ Public Class clsMSGFInputCreatorMODa
         ' Keep MODa results with Probability >= 0.2  (higher probability values are better)
         ' This will typically keep all data in the _syn.txt file
 
-        dblProbability = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODa.DATA_COLUMN_Probability, 0)
+        dblProbability = objPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_Probability, 0)
         If dblProbability >= 0.2 Then
             blnPassesFilters = True
         End If

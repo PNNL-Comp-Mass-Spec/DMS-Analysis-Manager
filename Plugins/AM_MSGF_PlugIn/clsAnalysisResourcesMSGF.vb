@@ -12,6 +12,7 @@ Imports AnalysisManagerBase
 Imports PHRPReader
 Imports System.IO
 
+' ReSharper disable once UnusedMember.Global
 Public Class clsAnalysisResourcesMSGF
     Inherits clsAnalysisResources
 
@@ -83,7 +84,7 @@ Public Class clsAnalysisResourcesMSGF
         Dim strMzXMLFilePath As String = String.Empty
         Dim strSynFilePath As String = String.Empty
 
-        Dim blnSuccess = False
+        Dim blnSuccess As Boolean
         Dim blnOnlyCopyFHTandSYNfiles As Boolean
 
         ' Make sure the ResultType is valid
@@ -414,7 +415,7 @@ Public Class clsAnalysisResourcesMSGF
 
         Try
             strFilePath = Path.Combine(m_WorkingDir, FileName)
-            Using  swOutfile = New StreamWriter(New FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+            Using swOutfile = New StreamWriter(New FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
                 swOutfile.WriteLine(
                     "Unique_Seq_ID" & ControlChars.Tab & "Cleavage_State" & ControlChars.Tab & "Terminus_State" &
                     ControlChars.Tab & "Protein_Name" & ControlChars.Tab & "Protein_Expectation_Value_Log(e)" &

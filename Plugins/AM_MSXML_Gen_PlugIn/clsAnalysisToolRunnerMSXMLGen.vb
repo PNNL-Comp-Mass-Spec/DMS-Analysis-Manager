@@ -10,8 +10,8 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
-Imports System.Text.RegularExpressions
 
+' ReSharper disable once UnusedMember.Global
 Public Class clsAnalysisToolRunnerMSXMLGen
     Inherits clsAnalysisToolRunnerBase
 
@@ -110,7 +110,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
     End Function
 
     ''' <summary>
@@ -128,7 +128,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             End If
 
             Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReAdW.exe or MSConvert.exe
-            Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")				' Typically mzXML or mzML
+            Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")             ' Typically mzXML or mzML
 
             ' Determine the output type
             Select Case msXmlFormat.ToLower()
@@ -282,7 +282,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             If storeInCache Then
                 ' Copy the .mzXML or .mzML file to the MSXML cache
                 Dim remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiMSXmlFile.FullName,
-                                                                purgeOldFilesIfNeeded := True)
+                                                                purgeOldFilesIfNeeded:=True)
 
                 If String.IsNullOrEmpty(remoteCachefilePath) Then
                     If String.IsNullOrEmpty(m_message) Then
@@ -294,7 +294,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
                 ' Create the _CacheInfo.txt file
                 Dim cacheInfoFilePath = msXmlFilePath & "_CacheInfo.txt"
                 Using swOutFile = New StreamWriter(New FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                    swOutFile.WriteLine(remoteCacheFilePath)
+                    swOutFile.WriteLine(remoteCachefilePath)
                 End Using
 
             End If
@@ -337,7 +337,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         ElseIf msXmlGenerator.ToLower().Contains("msconvert") Then
             ' MSConvert
             ' MSConvert.exe is stored in the ProteoWizard folder
-            Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")            
+            Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")
             mMSXmlGeneratorAppPath = Path.Combine(ProteoWizardDir, msXmlGenerator)
 
         Else
@@ -354,7 +354,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         End If
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile := True)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                  "Exception calling SetStepTaskToolVersion: " & ex.Message)

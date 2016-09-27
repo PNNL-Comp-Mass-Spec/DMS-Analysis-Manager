@@ -39,17 +39,10 @@ Public Class clsMSGFInputCreatorInspect
         Dim dblTotalPRMScore As Double
         Dim dblFScore As Double
 
-        Dim blnIsProteinTerminus As Boolean
         Dim blnPassesFilters As Boolean
 
         ' Keep Inspect results with pValue <= 0.2 Or TotalPRMScore >= 50 or FScore >= 0
         ' PHRP has likely already filtered the _inspect_syn.txt file using these filters
-
-        If objPSM.Peptide.StartsWith("-"c) OrElse objPSM.Peptide.EndsWith("-") Then
-            blnIsProteinTerminus = True
-        Else
-            blnIsProteinTerminus = False
-        End If
 
         dblPValue = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue)
         dblTotalPRMScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore)

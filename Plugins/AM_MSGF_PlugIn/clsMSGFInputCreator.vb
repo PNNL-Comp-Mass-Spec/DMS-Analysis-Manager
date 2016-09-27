@@ -27,14 +27,11 @@ Public MustInherit Class clsMSGFInputCreator
 
 #Region "Module variables"
 
-    Protected mDatasetName As String
-    Protected mWorkDir As String
+    Protected ReadOnly mDatasetName As String
+    Protected ReadOnly mWorkDir As String
     Private ReadOnly mPeptideHitResultType As clsPHRPReader.ePeptideHitResultType
 
     Private ReadOnly mSkippedLineInfo As SortedDictionary(Of Integer, List(Of String))
-
-    Private mDoNotFilterPeptides As Boolean
-    Private mMGFInstrumentData As Boolean
 
     ' This dictionary is initially populated with a string constructed using
     ' Scan plus "_" plus charge plus "_" plus the original peptide sequence in the PHRP file
@@ -80,14 +77,7 @@ Public MustInherit Class clsMSGFInputCreator
 
 #Region "Properties"
 
-    Public Property DoNotFilterPeptides() As Boolean
-        Get
-            Return mDoNotFilterPeptides
-        End Get
-        Set(value As Boolean)
-            mDoNotFilterPeptides = value
-        End Set
-    End Property
+    Public Property DoNotFilterPeptides As Boolean
 
     Public ReadOnly Property ErrorMessage() As String
         Get
@@ -95,14 +85,7 @@ Public MustInherit Class clsMSGFInputCreator
         End Get
     End Property
 
-    Public Property MGFInstrumentData() As Boolean
-        Get
-            Return mMGFInstrumentData
-        End Get
-        Set(value As Boolean)
-            mMGFInstrumentData = value
-        End Set
-    End Property
+    Public Property MgfInstrumentData As Boolean
 
     Public ReadOnly Property MSGFInputFileLineCount() As Integer
         Get
@@ -427,7 +410,7 @@ Public MustInherit Class clsMSGFInputCreator
                 Return False
             End If
 
-            If mMGFInstrumentData Then
+            If MgfInstrumentData Then
                 strSpectrumFileName = mDatasetName & ".mgf"
 
                 ' Need to read the .mgf file and create a mapping between the actual scan number and the 1-based index of the data in the .mgf file
@@ -652,7 +635,7 @@ Public MustInherit Class clsMSGFInputCreator
             ' Compute the result code; we'll use it later to search/populate mMSGFCachedResults
             strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide)
 
-            If mDoNotFilterPeptides Then
+            If DoNotFilterPeptides Then
                 blnPassesFilters = True
             Else
                 blnPassesFilters = PassesFilters(objPSM)
@@ -704,7 +687,7 @@ Public MustInherit Class clsMSGFInputCreator
 
             If blnSuccess And blnPassesFilters Then
 
-                If mMGFInstrumentData Then
+                If MgfInstrumentData Then
                     strScanAndCharge = ConstructMGFMappingCode(objPSM.ScanNumber, objPSM.Charge)
                     If Not mScanAndChargeToMGFIndex.TryGetValue(strScanAndCharge, intScanNumberToWrite) Then
                         ' Match not found; try searching for scan and charge 0

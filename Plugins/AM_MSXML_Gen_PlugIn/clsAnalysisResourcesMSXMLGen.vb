@@ -2,6 +2,7 @@ Option Strict On
 
 Imports AnalysisManagerBase
 
+' ReSharper disable once UnusedMember.Global
 Public Class clsAnalysisResourcesMSXMLGen
     Inherits clsAnalysisResources
 

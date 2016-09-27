@@ -12,11 +12,13 @@ Imports AnalysisManagerBase
 Imports AnalysisManagerMsXmlGenPlugIn
 Imports PHRPReader
 Imports System.IO
+Imports System.Linq
 Imports System.Runtime.InteropServices
 Imports System.Threading
 Imports System.Xml
 Imports PRISM.Processes
 
+' ReSharper disable once ClassNeverInstantiated.Global
 Public Class clsMSGFRunner
     Inherits clsAnalysisToolRunnerBase
 
@@ -51,12 +53,16 @@ Public Class clsMSGFRunner
     Public Const MSGF_SEGMENT_ENTRY_COUNT As Integer = 25000
 
     ' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
-    Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05 
+    Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05
 
     Private Const MSGF_CONSOLE_OUTPUT As String = "MSGF_ConsoleOutput.txt"
     Private Const MSGF_JAR_NAME As String = "MSGF.jar"
     Private Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
+
+    <Obsolete("Old, unsupported tool")>
     Private Const MODa_JAR_NAME As String = "moda.jar"
+
+    <Obsolete("Old, unsupported tool")>
     Private Const MODPlus_JAR_NAME As String = "modp_pnnl.jar"
 
     Private Structure udtSegmentFileInfoType
@@ -102,6 +108,7 @@ Public Class clsMSGFRunner
     Private WithEvents mMSGFRunner As clsRunDosProgram
 
     Private mMSGFInputCreatorErrorCount As Integer
+    Private mMSGFInputCreatorWarningCount As Integer
 
 #End Region
 
@@ -677,6 +684,7 @@ Public Class clsMSGFRunner
 
         intMSGFInputFileLineCount = 0
         mMSGFInputCreatorErrorCount = 0
+        mMSGFInputCreatorWarningCount = 0
 
         ' Convert the peptide-hit result file (from PHRP) to a tab-delimited input file to be read by MSGF
         Select Case eResultType
@@ -876,7 +884,7 @@ Public Class clsMSGFRunner
 
         CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty,
                                    Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath),
-                                   blnPurgeOldFilesIfNeeded := True)
+                                   blnPurgeOldFilesIfNeeded:=True)
 
         m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
@@ -1063,7 +1071,7 @@ Public Class clsMSGFRunner
             m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
             m_StatusTools.UpdateAndWrite(m_progress)
 
-            blnSuccess = PostProcessMSGFResultsWork(eResultType, strMSGFResultsFilePath, strMSGFSynopsisResults,
+            blnSuccess = PostProcessMSGFResultsWork(strMSGFResultsFilePath, strMSGFSynopsisResults,
                                                     blnMGFInstrumentData, blnFirstHitsDataPresent, blnTooManyErrors)
 
         Catch ex As Exception
@@ -1127,7 +1135,6 @@ Public Class clsMSGFRunner
     ''' <summary>
     ''' Process the data in strMSGFResultsFilePath to create strMSGFSynopsisResults
     ''' </summary>
-    ''' <param name="eResultType">PHRP result type</param>
     ''' <param name="strMSGFResultsFilePath">MSGF Results file path</param>
     ''' <param name="strMSGFSynopsisResults">MSGF synopsis file path</param>
     ''' <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
@@ -1135,8 +1142,7 @@ Public Class clsMSGFRunner
     ''' <param name="blnTooManyErrors">Will be set to True if too many errors occur</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function PostProcessMSGFResultsWork(eResultType As clsPHRPReader.ePeptideHitResultType,
-                                                strMSGFResultsFilePath As String, strMSGFSynopsisResults As String,
+    Private Function PostProcessMSGFResultsWork(strMSGFResultsFilePath As String, strMSGFSynopsisResults As String,
                                                 blnMGFInstrumentData As Boolean,
                                                 <Out()> ByRef blnFirstHitsDataPresent As Boolean,
                                                 <Out()> ByRef blnTooManyErrors As Boolean) As Boolean
@@ -1583,15 +1589,12 @@ Public Class clsMSGFRunner
 
         Dim strLineIn As String
         Dim intLinesRead As Integer
-        Dim strSplitLine() As String
 
-        Dim lstCIDData As List(Of String)
-        Dim lstETDData As List(Of String)
-        Dim intCollisionModeColIndex As Integer = - 1
+        Dim intCollisionModeColIndex As Integer = -1
 
         Try
-            lstCIDData = New List(Of String)
-            lstETDData = New List(Of String)
+            Dim lstCIDData = New List(Of String)
+            Dim lstETDData = New List(Of String)
 
             Using srSourceFile = New StreamReader(New FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
@@ -1601,7 +1604,7 @@ Public Class clsMSGFRunner
 
                     If Not String.IsNullOrEmpty(strLineIn) Then
                         intLinesRead += 1
-                        strSplitLine = strLineIn.Split(ControlChars.Tab)
+                        Dim strSplitLine = strLineIn.Split(ControlChars.Tab).ToList()
 
                         If intLinesRead = 1 Then
                             ' Cache the header line
@@ -1609,7 +1612,7 @@ Public Class clsMSGFRunner
                             lstETDData.Add(strLineIn)
 
                             ' Confirm the column index of the Collision_Mode column
-                            For intIndex As Integer = 0 To strSplitLine.Length - 1
+                            For intIndex = 0 To strSplitLine.Count - 1
                                 If String.Equals(strSplitLine(intIndex), MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.CurrentCultureIgnoreCase) Then
                                     intCollisionModeColIndex = intIndex
                                 End If
@@ -1626,7 +1629,7 @@ Public Class clsMSGFRunner
                         Else
                             ' Read the collision mode
 
-                            If strSplitLine.Length > intCollisionModeColIndex Then
+                            If strSplitLine.Count > intCollisionModeColIndex Then
                                 If strSplitLine(intCollisionModeColIndex).ToUpper() = "ETD" Then
                                     lstETDData.Add(strLineIn)
                                 Else
@@ -2062,7 +2065,7 @@ Public Class clsMSGFRunner
         Try
             Dim blnSuccess = True
 
-            intMSGFSpecProbColIndex = - 1
+            intMSGFSpecProbColIndex = -1
             Using srInFile = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srInFile.EndOfStream
@@ -2145,7 +2148,7 @@ Public Class clsMSGFRunner
             Dim strLineIn As String
             Dim intLinesRead As Integer
             mConsoleOutputErrorMsg = String.Empty
-            
+
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
@@ -2295,7 +2298,7 @@ Public Class clsMSGFRunner
         ioToolFiles.Add(New FileInfo(mMSXmlGeneratorAppPath))
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile := True)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                  "Exception calling SetStepTaskToolVersion", ex)
@@ -2330,7 +2333,7 @@ Public Class clsMSGFRunner
         End If
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile := False)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                  "Exception calling SetStepTaskToolVersion: " & ex.Message)
@@ -2457,7 +2460,6 @@ Public Class clsMSGFRunner
         Dim fiProteinModsFile As FileInfo
         Dim fiProteinModsFileNew As FileInfo
         Dim strLineIn As String
-        Dim strSplitLine() As String
 
         Dim lstMSGFResults As Dictionary(Of Integer, String)
 
@@ -2485,26 +2487,26 @@ Public Class clsMSGFRunner
                     Return False
                 End If
 
-                intMSGFSpecProbColIndex = - 1
+                intMSGFSpecProbColIndex = -1
                 blnSuccess = True
 
                 Using srSource = New StreamReader(New FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)),
-                    swTarget = New StreamWriter(New FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                      swTarget = New StreamWriter(New FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
                     Do While Not srSource.EndOfStream
                         strLineIn = srSource.ReadLine()
 
                         If String.IsNullOrEmpty(strLineIn) Then
                             swTarget.WriteLine()
                         Else
-                            strSplitLine = strLineIn.Split()
+                            Dim strSplitLine = strLineIn.Split().ToList()
 
-                            If strSplitLine.Length <= 0 Then
+                            If strSplitLine.Count <= 0 Then
                                 swTarget.WriteLine()
                             Else
 
                                 If intMSGFSpecProbColIndex < 0 Then
                                     ' Assume this is the header line, look for MSGF_SpecProb
-                                    For intIndex As Integer = 0 To strSplitLine.Length - 1
+                                    For intIndex = 0 To strSplitLine.Count - 1
                                         If String.Equals(strSplitLine(intIndex), "MSGF_SpecProb", StringComparison.CurrentCultureIgnoreCase) Then
                                             intMSGFSpecProbColIndex = intIndex
                                             Exit For
@@ -2530,7 +2532,7 @@ Public Class clsMSGFRunner
                                     End If
                                 End If
 
-                                swTarget.WriteLine(clsGlobal.CollapseLine(strSplitLine))
+                                swTarget.WriteLine(clsGlobal.CollapseList(strSplitLine))
                             End If
                         End If
 
@@ -2615,8 +2617,22 @@ Public Class clsMSGFRunner
         mMSGFInputCreatorErrorCount += 1
         If mMSGFInputCreatorErrorCount < 10 OrElse mMSGFInputCreatorErrorCount Mod 1000 = 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Error reported by MSGFInputCreator; " & strErrorMessage & " (ErrorCount=" &
-                                 mMSGFInputCreatorErrorCount & ")")
+                                 "Error reported by MSGFInputCreator; " & strErrorMessage &
+                                 " (ErrorCount=" & mMSGFInputCreatorErrorCount & ")")
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Event handler for Warning Events reported by the MSGF Input Creator
+    ''' </summary>
+    ''' <param name="strWarningMessage"></param>
+    ''' <remarks></remarks>
+    Private Sub mMSGFInputCreator_WarningEvent(strWarningMessage As String) Handles mMSGFInputCreator.WarningEvent
+        mMSGFInputCreatorWarningCount += 1
+        If mMSGFInputCreatorWarningCount < 10 OrElse mMSGFInputCreatorWarningCount Mod 1000 = 0 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                 "Warning reported by MSGFInputCreator; " & strWarningMessage &
+                                 " (WarnCount=" & mMSGFInputCreatorWarningCount & ")")
         End If
     End Sub
 

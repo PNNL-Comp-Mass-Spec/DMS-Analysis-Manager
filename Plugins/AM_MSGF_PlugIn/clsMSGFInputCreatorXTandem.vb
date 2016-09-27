@@ -29,12 +29,12 @@ Public Class clsMSGFInputCreatorXTandem
     Protected Overrides Sub InitializeFilePaths()
 
         ' Customize mPHRPResultFilePath for X!Tandem _xt.txt files
-        mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserXTandem.GetPHRPFirstHitsFileName(mDatasetName))
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserXTandem.GetPHRPSynopsisFileName(mDatasetName))
+        mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPFirstHitsFileName(mDatasetName))
+        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPSynopsisFileName(mDatasetName))
 
     End Sub
 
-    Protected Overrides Function PassesFilters(objPSM As PHRPReader.clsPSM) As Boolean
+    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
         Dim dblLogEValue As Double
 
         Dim blnPassesFilters As Boolean
@@ -42,7 +42,7 @@ Public Class clsMSGFInputCreatorXTandem
         ' Keep X!Tandem results with Peptide_Expectation_Value_Log(e) <= -0.3
         ' This will typically keep all data in the _xt.txt file
 
-        dblLogEValue = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0)
+        dblLogEValue = objPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0)
         If dblLogEValue <= - 0.3 Then
             blnPassesFilters = True
         End If

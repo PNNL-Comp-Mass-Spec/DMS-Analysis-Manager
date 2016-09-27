@@ -383,7 +383,7 @@ Public Class clsMSGFResultsSummarizer
         Dim gapCount = 0
         mMaximumScanGapAdjacentMSn = 0
 
-        For i As Integer = 1 To scanList.Count - 1
+        For i = 1 To scanList.Count - 1
             Dim scanGap = scanList(i) - scanList(i - 1)
             If scanGap > 2 Then
                 gapCount += 1
@@ -1209,7 +1209,7 @@ Public Class clsMSGFResultsSummarizer
                         observation.MSGF = psmMSGF
                         observation.EValue = psmEValue
 
-                        psmInfo.Observations.Add(observation)
+                        psmInfo.AddObservation(observation)
 
                         If lstNormalizedPSMs.ContainsKey(intSeqID) Then
                             Console.WriteLine("Warning: Duplicate key, intSeqID=" & intSeqID & "; skipping PSM with ResultID=" & objPSM.ResultID)

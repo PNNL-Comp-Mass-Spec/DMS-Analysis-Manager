@@ -263,8 +263,14 @@ Public Class clsMSXMLCreator
         RaiseEvent WarningEvent(msg)
     End Sub
 
-    Public Sub UpdateDatasetName(DatasetName As String)
-        m_Dataset = DatasetName
+    ' ReSharper disable once UnusedMember.Global
+    ''' <summary>
+    ''' Update the current dataset name
+    ''' </summary>
+    ''' <param name="datasetName"></param>
+    ''' <remarks>Used by clsAnalysisToolRunnerPRIDEConverter.vb and clsAnalysisToolRunnerRepoPkgr.cs</remarks>
+    Public Sub UpdateDatasetName(datasetName As String)
+        m_Dataset = datasetName
     End Sub
 
 #Region "Event Handlers"

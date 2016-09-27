@@ -26,9 +26,9 @@ Public Class clsMSXmlGenMSConvert
     ''' Custom arguments that will override the auto-defined arguments
     ''' </summary>
     ''' <remarks></remarks>
-    Protected mCustomMSConvertArguments As String
+    Protected ReadOnly mCustomMSConvertArguments As String
 
-    Public Overrides ReadOnly Property ProgramName As String
+    Protected Overrides ReadOnly Property ProgramName As String
         Get
             Return "MSConvert"
         End Get
@@ -43,7 +43,7 @@ Public Class clsMSXmlGenMSConvert
       eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
       CustomMSConvertArguments As String)
 
-        MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, CentroidMSXML := False)
+        MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, centroidMSXML:=False)
 
         mCustomMSConvertArguments = CustomMSConvertArguments
 
@@ -137,7 +137,7 @@ Public Class clsMSXmlGenMSConvert
         '  to indicate that we agree to the Thermo license
 
         Dim objProteowizardTools As clsProteowizardTools
-        objProteowizardTools = New clsProteowizardTools(mDebugLevel)
+        objProteowizardTools = New clsProteowizardTools(DebugLevel)
 
         Return objProteowizardTools.RegisterProteoWizard()
     End Function

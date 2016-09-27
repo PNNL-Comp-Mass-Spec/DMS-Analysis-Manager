@@ -30,11 +30,11 @@ Public Class clsMSGFInputCreatorMODPlus
 
         ' Customize mPHRPResultFilePath for MODPlus _syn.txt files
         mPHRPFirstHitsFilePath = String.Empty
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserMODPlus.GetPHRPSynopsisFileName(mDatasetName))
+        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMODPlus.GetPHRPSynopsisFileName(mDatasetName))
 
     End Sub
 
-    Protected Overrides Function PassesFilters(objPSM As PHRPReader.clsPSM) As Boolean
+    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
         Dim dblProbability As Double
 
         Dim blnPassesFilters As Boolean
@@ -42,7 +42,7 @@ Public Class clsMSGFInputCreatorMODPlus
         ' Keep MODPlus results with Probability >= 0.05  (higher probability values are better)
         ' This will typically keep all data in the _syn.txt file
 
-        dblProbability = objPSM.GetScoreDbl(PHRPReader.clsPHRPParserMODPlus.DATA_COLUMN_Probability, 0)
+        dblProbability = objPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_Probability, 0)
         If dblProbability >= 0.05 Then
             blnPassesFilters = True
         End If

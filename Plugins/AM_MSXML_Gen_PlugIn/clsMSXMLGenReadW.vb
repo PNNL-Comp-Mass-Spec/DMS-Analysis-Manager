@@ -13,7 +13,7 @@ Imports AnalysisManagerBase
 Public Class clsMSXMLGenReadW
     Inherits clsMSXmlGen
 
-    Public Overrides ReadOnly Property ProgramName As String
+    Protected Overrides ReadOnly Property ProgramName As String
         Get
             Return "ReAdW"
         End Get

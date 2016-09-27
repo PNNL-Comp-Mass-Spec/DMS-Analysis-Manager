@@ -30,8 +30,8 @@ Public Class clsMSGFInputCreatorMSGFDB
     Protected Overrides Sub InitializeFilePaths()
 
         ' Customize mPHRPResultFilePath for MSGFDB synopsis files
-        mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserMSGFDB.GetPHRPFirstHitsFileName(mDatasetName))
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, PHRPReader.clsPHRPParserMSGFDB.GetPHRPSynopsisFileName(mDatasetName))
+        mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFDB.GetPHRPFirstHitsFileName(mDatasetName))
+        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFDB.GetPHRPSynopsisFileName(mDatasetName))
 
     End Sub
 
@@ -178,7 +178,7 @@ Public Class clsMSGFInputCreatorMSGFDB
         Return True
     End Function
 
-    Protected Overrides Function PassesFilters(objPSM As PHRPReader.clsPSM) As Boolean
+    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
         Dim blnPassesFilters As Boolean
 
         ' All MSGFDB data is considered to be "filter-passing"

@@ -27,25 +27,17 @@ Public MustInherit Class clsMSXmlGen
     Protected mUseProgRunnerResultCode As Boolean
 
     Protected mErrorMessage As String = String.Empty
-    Protected mDebugLevel As Integer = 1
 
     Protected WithEvents CmdRunner As clsRunDosProgram
 
-    Public Event ProgRunnerStarting(CommandLine As String)
+    Public Event ProgRunnerStarting(commandLine As String)
     Public Event LoopWaiting()
 
 #End Region
 
 #Region "Properties"
 
-    Public Property DebugLevel() As Integer
-        Get
-            Return mDebugLevel
-        End Get
-        Set(value As Integer)
-            mDebugLevel = value
-        End Set
-    End Property
+    Public Property DebugLevel As Integer = 1
 
     Public ReadOnly Property ErrorMessage() As String
         Get
@@ -57,7 +49,7 @@ Public MustInherit Class clsMSXmlGen
         End Get
     End Property
 
-    Public MustOverride ReadOnly Property ProgramName As String
+    Protected MustOverride ReadOnly Property ProgramName As String
 
     Public ReadOnly Property SourceFilePath As String
         Get
@@ -68,40 +60,40 @@ Public MustInherit Class clsMSXmlGen
 #End Region
 
     Public Sub New(
-      WorkDir As String,
-      ProgramPath As String,
-      DatasetName As String,
-      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+      workDir As String,
+      programPath As String,
+      datasetName As String,
+      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
       eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      CentroidMSXML As Boolean)
+      centroidMSXML As Boolean)
 
-        mWorkDir = WorkDir
-        mProgramPath = ProgramPath
-        mDatasetName = DatasetName
-        mRawDataType = RawDataType
+        mWorkDir = workDir
+        mProgramPath = programPath
+        mDatasetName = datasetName
+        mRawDataType = rawDataType
         mOutputType = eOutputType
-        mCentroidMS1 = CentroidMSXML
-        mCentroidMS2 = CentroidMSXML
+        mCentroidMS1 = centroidMSXML
+        mCentroidMS2 = centroidMSXML
 
         mErrorMessage = String.Empty
     End Sub
 
     Public Sub New(
-      WorkDir As String,
-      ProgramPath As String,
-      DatasetName As String,
-      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+      workDir As String,
+      programPath As String,
+      datasetName As String,
+      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
       eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      CentroidMS1 As Boolean,
-      CentroidMS2 As Boolean)
+      centroidMS1 As Boolean,
+      centroidMS2 As Boolean)
 
-        mWorkDir = WorkDir
-        mProgramPath = ProgramPath
-        mDatasetName = DatasetName
-        mRawDataType = RawDataType
+        mWorkDir = workDir
+        mProgramPath = programPath
+        mDatasetName = datasetName
+        mRawDataType = rawDataType
         mOutputType = eOutputType
-        mCentroidMS1 = CentroidMS1
-        mCentroidMS2 = CentroidMS2
+        mCentroidMS1 = centroidMS1
+        mCentroidMS2 = centroidMS2
 
         mErrorMessage = String.Empty
     End Sub
@@ -228,18 +220,7 @@ Public MustInherit Class clsMSXmlGen
         End If
     End Function
 
-    Public Sub LogCreationStatsRawToMzXml(dtStartTimeUTC As DateTime, strWorkDirPath As String, strDatasetName As String)
-
-        Dim strSourceFilePath As String = Path.Combine(strWorkDirPath,
-                                                       strDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
-        Dim strMsXmlFilePath As String = Path.Combine(strWorkDirPath,
-                                                      strDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
-
-        LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMsXmlFilePath)
-    End Sub
-
-    Public Sub LogCreationStatsSourceToMsXml(dtStartTimeUTC As DateTime, strSourceFilePath As String,
-                                             strMsXmlFilePath As String)
+    Public Sub LogCreationStatsSourceToMsXml(dtStartTimeUTC As DateTime, strSourceFilePath As String, strMsXmlFilePath As String)
 
         Try
             ' Save some stats to the log

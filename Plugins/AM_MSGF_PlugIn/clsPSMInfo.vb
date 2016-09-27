@@ -3,10 +3,13 @@
 Imports System.Linq
 
 Public Class clsPSMInfo
+
     Public Const UNKNOWN_MSGF_SPECPROB As Double = 10
     Public Const UNKNOWN_EVALUE As Double = Double.MaxValue
-    Public Const UNKNOWN_FDR As Integer = - 1
-    Public Const UNKNOWN_SEQID As Integer = - 1
+    Public Const UNKNOWN_FDR As Integer = -1
+    Public Const UNKNOWN_SEQID As Integer = -1
+
+    Private ReadOnly mObservations As List(Of PSMObservation)
 
     ''' <summary>
     ''' Protein name (from the _fht.txt or _syn.txt file)
@@ -21,7 +24,11 @@ Public Class clsPSMInfo
     ''' <summary>
     ''' Details for each PSM that maps to this class
     ''' </summary>
-    Public Property Observations As List(Of PSMObservation)
+    Public ReadOnly Property Observations As List(Of PSMObservation)
+        Get
+            Return mObservations
+        End Get
+    End Property
 
     Public ReadOnly Property BestMSGF As Double
         Get
@@ -53,15 +60,29 @@ Public Class clsPSMInfo
         End Get
     End Property
 
-
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
     Public Sub New()
+        mObservations = New List(Of PSMObservation)
         Clear()
     End Sub
 
+    ''' <summary>
+    ''' Reset the fields
+    ''' </summary>
     Public Sub Clear()
         Protein = String.Empty
         SeqIdFirst = UNKNOWN_SEQID
-        Observations = New List(Of PSMObservation)
+        mObservations.Clear()
+    End Sub
+
+    ''' <summary>
+    ''' Add a PSM Observation
+    ''' </summary>
+    ''' <param name="observation"></param>
+    Public Sub AddObservation(observation As PSMObservation)
+        mObservations.Add(observation)
     End Sub
 
     Public Overrides Function ToString() As String
