@@ -533,14 +533,10 @@ Public Class clsMSGFResultsSummarizer
             Return
         End If
 
-        Dim gapCount = 0
         mMaximumScanGapAdjacentMSn = 0
 
         For i = 1 To scanList.Count - 1
             Dim scanGap = scanList(i) - scanList(i - 1)
-            If scanGap > 2 Then
-                gapCount += 1
-            End If
 
             If scanGap > mMaximumScanGapAdjacentMSn Then
                 mMaximumScanGapAdjacentMSn = scanGap
@@ -662,9 +658,9 @@ Public Class clsMSGFResultsSummarizer
     ''' <remarks></remarks>
     Private Function FilterAndComputeStats(
       blnUsingMSGFOrEValueFilter As Boolean,
-      lstNormalizedPSMs As Dictionary(Of Integer, clsPSMInfo),
-      lstSeqToProteinMap As SortedList(Of Integer, List(Of clsProteinInfo)),
-      lstSeqInfo As SortedList(Of Integer, clsSeqInfo)) As Boolean
+      lstNormalizedPSMs As IDictionary(Of Integer, clsPSMInfo),
+      lstSeqToProteinMap As IDictionary(Of Integer, List(Of clsProteinInfo)),
+      lstSeqInfo As IDictionary(Of Integer, clsSeqInfo)) As Boolean
 
         Dim lstFilteredPSMs = New Dictionary(Of Integer, clsPSMInfo)
 
@@ -736,7 +732,7 @@ Public Class clsMSGFResultsSummarizer
     ''' <param name="lstPSMs">PSM results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
     ''' <returns>True if success; false if no reverse hits are present or if none of the data has MSGF values</returns>
     ''' <remarks></remarks>
-    Private Function FilterPSMsByFDR(lstPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
+    Private Function FilterPSMsByFDR(lstPSMs As IDictionary(Of Integer, clsPSMInfo)) As Boolean
 
         Dim lstResultIDtoFDRMap As Dictionary(Of Integer, Double)
 
@@ -852,8 +848,8 @@ Public Class clsMSGFResultsSummarizer
 
     Private Function FilterPSMsByEValue(
       dblEValueThreshold As Double,
-      lstPSMs As Dictionary(Of Integer, clsPSMInfo),
-                                        lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
+      lstPSMs As IDictionary(Of Integer, clsPSMInfo),
+      lstFilteredPSMs As IDictionary(Of Integer, clsPSMInfo)) As Boolean
 
         lstFilteredPSMs.Clear()
 
@@ -871,8 +867,8 @@ Public Class clsMSGFResultsSummarizer
 
     Private Function FilterPSMsByMSGF(
       dblMSGFThreshold As Double,
-      lstPSMs As Dictionary(Of Integer, clsPSMInfo),
-                                      lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo)) As Boolean
+      lstPSMs As IDictionary(Of Integer, clsPSMInfo),
+      lstFilteredPSMs As IDictionary(Of Integer, clsPSMInfo)) As Boolean
 
         lstFilteredPSMs.Clear()
 
@@ -1157,8 +1153,10 @@ Public Class clsMSGFResultsSummarizer
             '
 
             ' The keys in this dictionary are NormalizedSeqID values, which are custom-assigned 
-            '   by this class to keep track of peptide sequences on a basis where modifications are tracked but not mapped to specific residues
-            '   This is done so that peptides like PEPT*IDES and PEPTIDES* are counted as the same peptide
+            ' by this class to keep track of peptide sequences on a basis where modifications are tracked with some wiggle room
+            ' For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
+            ' But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
+            '
             ' The values contain mapped protein name, FDR, and MSGF SpecProb, and the scans that the normalized peptide was observed in
             ' We'll deal with multiple proteins for each peptide later when we parse the _ResultToSeqMap.txt and _SeqToProteinMap.txt files
             ' If those files are not found, then we'll simply use the protein information stored in lstPSMs
@@ -1170,8 +1168,7 @@ Public Class clsMSGFResultsSummarizer
 
             Dim lstSeqInfo = New SortedList(Of Integer, clsSeqInfo)
 
-            blnSuccess = LoadPSMs(strPHRPSynopsisFilePath, lstNormalizedPSMs, lstResultToSeqMap, lstSeqToProteinMap,
-                                  lstSeqInfo)
+            blnSuccess = LoadPSMs(strPHRPSynopsisFilePath, lstNormalizedPSMs, lstResultToSeqMap, lstSeqToProteinMap, lstSeqInfo)
             If Not blnSuccess Then
                 Return False
             End If
@@ -1180,15 +1177,13 @@ Public Class clsMSGFResultsSummarizer
             ' Filter on MSGF or EValue and compute the stats
             '
             blnUsingMSGFOrEValueFilter = True
-            blnSuccess = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap,
-                                               lstSeqInfo)
+            blnSuccess = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo)
 
             ''''''''''''''''''''
             ' Filter on FDR and compute the stats
             '
             blnUsingMSGFOrEValueFilter = False
-            blnSuccessViaFDR = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap,
-                                                     lstSeqInfo)
+            blnSuccessViaFDR = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo)
 
             If blnSuccess OrElse blnSuccessViaFDR Then
                 If mSaveResultsToTextFile Then
@@ -1230,7 +1225,7 @@ Public Class clsMSGFResultsSummarizer
     ''' <remarks></remarks>
     Private Function LoadPSMs(
       strPHRPSynopsisFilePath As String,
-      lstNormalizedPSMs As Dictionary(Of Integer, clsPSMInfo),
+      lstNormalizedPSMs As IDictionary(Of Integer, clsPSMInfo),
       <Out()> ByRef lstResultToSeqMap As SortedList(Of Integer, Integer),
       <Out()> ByRef lstSeqToProteinMap As SortedList(Of Integer, List(Of clsProteinInfo)),
       <Out()> ByRef lstSeqInfo As SortedList(Of Integer, clsSeqInfo)) As Boolean
@@ -1854,8 +1849,7 @@ Public Class clsMSGFResultsSummarizer
         SetErrorMessage(Message)
 
         If Message.Contains("permission was denied") Then
-            AnalysisManagerBase.clsLogTools.WriteLog(AnalysisManagerBase.clsLogTools.LoggerTypes.LogDb,
-                                                     AnalysisManagerBase.clsLogTools.LogLevels.ERROR, Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message)
         End If
     End Sub
 
@@ -1866,7 +1860,7 @@ Public Class clsMSGFResultsSummarizer
 
         Public Function Compare(x As KeyValuePair(Of Double, Integer), y As KeyValuePair(Of Double, Integer)) As Integer Implements IComparer(Of KeyValuePair(Of Double, Integer)).Compare
             If x.Key < y.Key Then
-                Return - 1
+                Return -1
             ElseIf x.Key > y.Key Then
                 Return 1
             Else
