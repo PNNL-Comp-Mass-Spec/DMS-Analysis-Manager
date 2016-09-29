@@ -1025,13 +1025,45 @@ Public Class clsMSGFResultsSummarizer
                     .Parameters.Item("@MSGFThresholdIsEValue").Value = 0
                 End If
 
-                .Parameters.Add(New SqlParameter("@PercentMSnScansNoPSM", SqlDbType.Float))
+                .Parameters.Add(New SqlParameter("@PercentMSnScansNoPSM", SqlDbType.Real))
                 .Parameters.Item("@PercentMSnScansNoPSM").Direction = ParameterDirection.Input
                 .Parameters.Item("@PercentMSnScansNoPSM").Value = mPercentMSnScansNoPSM
 
                 .Parameters.Add(New SqlParameter("@MaximumScanGapAdjacentMSn", SqlDbType.Int))
                 .Parameters.Item("@MaximumScanGapAdjacentMSn").Direction = ParameterDirection.Input
                 .Parameters.Item("@MaximumScanGapAdjacentMSn").Value = mMaximumScanGapAdjacentMSn
+
+                .Parameters.Add(New SqlParameter("@UniquePhosphopeptideCountFDR", SqlDbType.Int))
+                .Parameters.Item("@UniquePhosphopeptideCountFDR").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniquePhosphopeptideCountFDR").Value = mFDRBasedCounts.UniquePhosphopeptideCount
+
+                .Parameters.Add(New SqlParameter("@UniquePhosphopeptidesCTermK", SqlDbType.Int))
+                .Parameters.Item("@UniquePhosphopeptidesCTermK").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniquePhosphopeptidesCTermK").Value = mFDRBasedCounts.UniquePhosphopeptidesCTermK
+
+                .Parameters.Add(New SqlParameter("@UniquePhosphopeptidesCTermR", SqlDbType.Int))
+                .Parameters.Item("@UniquePhosphopeptidesCTermR").Direction = ParameterDirection.Input
+                .Parameters.Item("@UniquePhosphopeptidesCTermR").Value = mFDRBasedCounts.UniquePhosphopeptidesCTermR
+
+                .Parameters.Add(New SqlParameter("@MissedCleavageRatio", SqlDbType.Real))
+                .Parameters.Item("@MissedCleavageRatio").Direction = ParameterDirection.Input
+                .Parameters.Item("@MissedCleavageRatio").Value = mFDRBasedCounts.MissedCleavageRatio
+
+                .Parameters.Add(New SqlParameter("@MissedCleavageRatioPhospho", SqlDbType.Real))
+                .Parameters.Item("@MissedCleavageRatioPhospho").Direction = ParameterDirection.Input
+                .Parameters.Item("@MissedCleavageRatioPhospho").Value = mFDRBasedCounts.MissedCleavageRatioPhospho
+
+                .Parameters.Add(New SqlParameter("@TrypticPeptides", SqlDbType.Int))
+                .Parameters.Item("@TrypticPeptides").Direction = ParameterDirection.Input
+                .Parameters.Item("@TrypticPeptides").Value = mFDRBasedCounts.TrypticPeptides
+
+                .Parameters.Add(New SqlParameter("@KeratinPeptides", SqlDbType.Int))
+                .Parameters.Item("@KeratinPeptides").Direction = ParameterDirection.Input
+                .Parameters.Item("@KeratinPeptides").Value = mFDRBasedCounts.KeratinPeptides
+
+                .Parameters.Add(New SqlParameter("@TrypsinPeptides", SqlDbType.Int))
+                .Parameters.Item("@TrypsinPeptides").Direction = ParameterDirection.Input
+                .Parameters.Item("@TrypsinPeptides").Value = mFDRBasedCounts.TrypsinPeptides
 
             End With
 
