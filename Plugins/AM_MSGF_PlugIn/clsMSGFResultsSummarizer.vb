@@ -18,6 +18,7 @@ Imports System.Data.SqlClient
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text
+Imports System.Text.RegularExpressions
 Imports AnalysisManagerBase
 
 Public Class clsMSGFResultsSummarizer
@@ -47,9 +48,9 @@ Public Class clsMSGFResultsSummarizer
         ''' Number of distinct peptides
         ''' </summary>
         ''' <remarks>
-        ''' For modified peptides, collapses peptides with the same sequence and same number of modifications
-        ''' For example, peptides PEPT*IDES and PEPTIDES* are counted just once
-        ''' Also, peptides PEPS*SS*IK and PEPS*S*SIK are counted just once
+        ''' For modified peptides, collapses peptides with the same sequence and same modifications (+/- 1 residue)
+        ''' For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
+        ''' But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
         ''' </remarks>
         Public UniquePeptideCount As Integer
 
@@ -59,11 +60,52 @@ Public Class clsMSGFResultsSummarizer
         ''' <remarks></remarks>
         Public UniqueProteinCount As Integer
 
+        Public UniquePhosphopeptideCount As Integer
+
+        Public UniquePhosphopeptidesCTermK As Integer
+        Public UniquePhosphopeptidesCTermR As Integer
+
+        ''' <summary>
+        ''' Number of unique peptides that come from Keratin proteins
+        ''' </summary>
+        Public KeratinPeptides As Integer
+
+        ''' <summary>
+        ''' Number of unique peptides that come from Trypsin proteins
+        ''' </summary>
+        Public TrypsinPeptides As Integer
+
+        ''' <summary>
+        ''' Number of unique peptides that are partially or fully tryptic
+        ''' </summary>
+        Public TrypticPeptides As Integer
+
+        Public MissedCleavageRatio As Single
+        Public MissedCleavageRatioPhospho As Single
+
         Public Sub Clear()
             TotalPSMs = 0
             UniquePeptideCount = 0
             UniqueProteinCount = 0
+            UniquePhosphopeptideCount = 0
+            UniquePhosphopeptidesCTermK = 0
+            UniquePhosphopeptidesCTermR = 0
+            MissedCleavageRatio = 0
+            MissedCleavageRatioPhospho = 0
+            KeratinPeptides = 0
+            TrypsinPeptides = 0
+            TrypticPeptides = 0
         End Sub
+    End Structure
+
+    Private Structure udtUniqueSeqInfo
+        Public ObsCount As Integer
+        Public CTermK As Boolean
+        Public CTermR As Boolean
+        Public MissedCleavage As Boolean
+        Public KeratinPeptide As Boolean
+        Public TrypsinPeptide As Boolean
+        Public Tryptic As Boolean
     End Structure
 
 #End Region
@@ -280,6 +322,101 @@ Public Class clsMSGFResultsSummarizer
         End Get
     End Property
 
+    Public ReadOnly Property UniquePhosphopeptideCountFDR As Integer
+        Get
+            Return mFDRBasedCounts.UniquePhosphopeptideCount
+        End Get
+    End Property
+
+    Public ReadOnly Property UniquePhosphopeptideCountMSGF As Integer
+        Get
+            Return mMSGFBasedCounts.UniquePhosphopeptideCount
+        End Get
+    End Property
+
+    Public ReadOnly Property UniquePhosphopeptidesCTermK_FDR As Integer
+        Get
+            Return mFDRBasedCounts.UniquePhosphopeptidesCTermK
+        End Get
+    End Property
+
+    Public ReadOnly Property UniquePhosphopeptidesCTermK_MSGF As Integer
+        Get
+            Return mMSGFBasedCounts.UniquePhosphopeptidesCTermK
+        End Get
+    End Property
+
+    Public ReadOnly Property UniquePhosphopeptidesCTermR_FDR As Integer
+        Get
+            Return mFDRBasedCounts.UniquePhosphopeptidesCTermR
+        End Get
+    End Property
+
+    Public ReadOnly Property UniquePhosphopeptidesCTermR_MSGF As Integer
+        Get
+            Return mMSGFBasedCounts.UniquePhosphopeptidesCTermR
+        End Get
+    End Property
+
+    Public ReadOnly Property MissedCleavageRatioFDR As Single
+        Get
+            Return mFDRBasedCounts.MissedCleavageRatio
+        End Get
+    End Property
+
+    Public ReadOnly Property MissedCleavageRatioMSGF As Single
+        Get
+            Return mMSGFBasedCounts.MissedCleavageRatio
+        End Get
+    End Property
+
+    Public ReadOnly Property MissedCleavageRatioPhosphoFDR As Single
+        Get
+            Return mFDRBasedCounts.MissedCleavageRatioPhospho
+        End Get
+    End Property
+
+    Public ReadOnly Property MissedCleavageRatioPhosphoMSGF As Single
+        Get
+            Return mMSGFBasedCounts.MissedCleavageRatioPhospho
+        End Get
+    End Property
+
+    Public ReadOnly Property KeratinPeptidesFDR As Integer
+        Get
+            Return mFDRBasedCounts.KeratinPeptides
+        End Get
+    End Property
+
+    Public ReadOnly Property KeratinPeptidesMSGF As Integer
+        Get
+            Return mMSGFBasedCounts.KeratinPeptides
+        End Get
+    End Property
+
+    Public ReadOnly Property TrypsinPeptidesFDR As Integer
+        Get
+            Return mFDRBasedCounts.TrypsinPeptides
+        End Get
+    End Property
+
+    Public ReadOnly Property TrypsinPeptidesMSGF As Integer
+        Get
+            Return mMSGFBasedCounts.TrypsinPeptides
+        End Get
+    End Property
+
+    Public ReadOnly Property TrypticPeptidesMSGF As Integer
+        Get
+            Return mMSGFBasedCounts.TrypticPeptides
+        End Get
+    End Property
+
+    Public ReadOnly Property TrypticPeptidesFDR As Integer
+        Get
+            Return mFDRBasedCounts.TrypticPeptides
+        End Get
+    End Property
 #End Region
 
     ''' <summary>
@@ -314,6 +451,22 @@ Public Class clsMSGFResultsSummarizer
 
         mStoredProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(mConnectionString)
         ContactDatabase = True
+    End Sub
+
+    Private Sub AddUpdateUniqueSequence(
+      lstUniqueSeqs As IDictionary(Of Integer, udtUniqueSeqInfo),
+      intSeqId As Integer,
+      seqInfoToStore As udtUniqueSeqInfo)
+
+        Dim existingSeqInfo As udtUniqueSeqInfo
+
+        If lstUniqueSeqs.TryGetValue(intSeqId, existingSeqInfo) Then
+            seqInfoToStore.ObsCount += existingSeqInfo.ObsCount
+            lstUniqueSeqs(intSeqId) = seqInfoToStore
+        Else
+            lstUniqueSeqs.Add(intSeqId, seqInfoToStore)
+        End If
+
     End Sub
 
     Private Sub ExamineFirstHitsFile(strFirstHitsFilePath As String)
@@ -411,6 +564,17 @@ Public Class clsMSGFResultsSummarizer
 
         End If
     End Sub
+
+    Private Function ComputeMissedCleavageRatio(lstUniqueSequences As IDictionary(Of Integer, udtUniqueSeqInfo)) As Single
+        If lstUniqueSequences.Count = 0 Then
+            Return 0
+        End If
+
+        Dim missedCleavages = (From item In lstUniqueSequences Where item.Value.MissedCleavage Select item.Key).Count()
+        Dim missedCleavageRatio = missedCleavages / CSng(lstUniqueSequences.Count)
+
+        Return missedCleavageRatio
+    End Function
 
     ''' <summary>
     ''' Lookup the total scans and number of MS/MS scans for the dataset defined by property DatasetName
@@ -558,6 +722,7 @@ Public Class clsMSGFResultsSummarizer
         If blnSuccess Then
 
             ' Summarize the results, counting the number of peptides, unique peptides, and proteins
+            ' We also count phosphopeptides using several metrics
             blnSuccess = SummarizeResults(blnUsingMSGFOrEValueFilter, lstFilteredPSMs, lstSeqToProteinMap, lstSeqInfo)
 
         End If
@@ -723,8 +888,71 @@ Public Class clsMSGFResultsSummarizer
         Return True
     End Function
 
-    Private Function GetNormalizedPeptide(peptideCleanSequence As String, modifications As String) As String
-        Return peptideCleanSequence & "_" & modifications
+
+    ''' <summary>
+    ''' Search dictNormalizedPeptides for an entry that either exactly matches normalizedPeptide 
+    ''' or nearly matches normalizedPeptide
+    ''' </summary>
+    ''' <param name="dictNormalizedPeptides">Existing tracked normalized peptides; key is clean sequence, value is a list of normalized peptide info structs</param>
+    ''' <param name="newNormalizedPeptide">New normalized peptide</param>
+    ''' <returns>The Sequence ID of a matching normalized peptide, or -1 if no match</returns>
+    ''' <remarks>A near match is one where the position of each modified residue is the same or just one residue apart</remarks>
+    Private Function FindNormalizedSequence(
+      dictNormalizedPeptides As IReadOnlyDictionary(Of String, List(Of clsNormalizedPeptideInfo)),
+      newNormalizedPeptide As clsNormalizedPeptideInfo) As Integer
+
+        ' Find normalized peptides with the new normalized peptide's clean sequence
+        Dim normalizedPeptides As List(Of clsNormalizedPeptideInfo) = Nothing
+
+        If Not dictNormalizedPeptides.TryGetValue(newNormalizedPeptide.CleanSequence, normalizedPeptides) Then
+            Return clsPSMInfo.UNKNOWN_SEQID
+        End If
+
+        For Each candidate In normalizedPeptides
+            If newNormalizedPeptide.Modifications.Count = 0 AndAlso candidate.Modifications.Count = 0 Then
+                ' Match found
+                Return candidate.SeqID
+            End If
+
+            If newNormalizedPeptide.Modifications.Count <> candidate.Modifications.Count Then
+                ' Mod counts do not match
+                Continue For
+            End If
+
+            Dim residueMatchCount = 0
+            For modIndex = 0 To newNormalizedPeptide.Modifications.Count - 1
+                If newNormalizedPeptide.Modifications(modIndex).Key <> candidate.Modifications(modIndex).Key Then
+                    ' Mod names do not match
+                    Exit For
+                End If
+
+                If Math.Abs(newNormalizedPeptide.Modifications(modIndex).Value - candidate.Modifications(modIndex).Value) <= 1 Then
+                    residueMatchCount += 1
+                End If
+
+            Next
+
+            If residueMatchCount = candidate.Modifications.Count Then
+                ' Match found
+                Return candidate.SeqID
+            End If
+
+        Next
+
+        Return clsPSMInfo.UNKNOWN_SEQID
+
+    End Function
+
+    Private Function GetNormalizedPeptideInfo(
+      peptideCleanSequence As String,
+      modifications As IEnumerable(Of KeyValuePair(Of String, Integer)),
+      seqID As Integer) As clsNormalizedPeptideInfo
+
+        Dim normalizedPeptide = New clsNormalizedPeptideInfo(peptideCleanSequence)
+        normalizedPeptide.StoreModifications(modifications)
+        normalizedPeptide.SeqID = seqID
+
+        Return normalizedPeptide
     End Function
 
     Private Function PostJobPSMResults(intJob As Integer) As Boolean
@@ -982,6 +1210,25 @@ Public Class clsMSGFResultsSummarizer
 
         Dim blnLoadMSGFResults = True
 
+        ' Regex for determining that a peptide has a missed cleavage (i.e. an internal tryptic cleavage point)
+        Dim reMissedCleavage = New Regex("[KR][^P][A-Z]", RegexOptions.Compiled)
+
+        ' Regex to match keratin proteins, including 
+        '   K1C9_HUMAN, K1C10_HUMAN, K1CI_HUMAN
+        '   K2C1_HUMAN, K2C1B_HUMAN, K2C3_HUMAN, K2C6C_HUMAN, K2C71_HUMAN
+        '   K22E_HUMAN And K22O_HUMAN
+        '   Contaminant_K2C1_HUMAN
+        '   Contaminant_K22E_HUMAN
+        '   Contaminant_K1C9_HUMAN
+        '   Contaminant_K1C10_HUMAN
+        Dim reKeratinProtein = New Regex("(K[1-2]C\d+[A-K]*|K22[E,O]|K1CI)_HUMAN", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+
+        ' Regex to match trypsin proteins, including
+        '   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
+        '   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
+        '   Contaminant_Trypa
+        Dim reTrypsinProtein = New Regex("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+
         lstResultToSeqMap = New SortedList(Of Integer, Integer)
         lstSeqToProteinMap = New SortedList(Of Integer, List(Of clsProteinInfo))
         lstSeqInfo = New SortedList(Of Integer, clsSeqInfo)
@@ -994,10 +1241,15 @@ Public Class clsMSGFResultsSummarizer
                 blnLoadMSGFResults = False
             End If
 
+            ' Note that this will set .LoadModsAndSeqInfo to false
+            ' That is fine because we will have access to the modification info from the _SeqInfo.txt file
+            ' Since we're looking for trypsin and keratin proteins, we need to change MaxProteinsPerPSM back to a large number
             Dim startupOptions As clsPHRPStartupOptions = clsMSGFInputCreator.GetMinimalMemoryPHRPStartupOptions()
             startupOptions.LoadMSGFResults = blnLoadMSGFResults
+            startupOptions.MaxProteinsPerPSM = 1000
 
-            ' Load the result to sequence mapping, sequence IDs, and protein information 
+            ' Load the result to sequence mapping, sequence IDs, and protein information
+            ' This also loads the mod description, which we use to determine if a peptide is a phosphopeptide
             Dim objSeqMapReader = New clsPHRPSeqMapReader(mDatasetName, mWorkDir, mResultType)
 
             Dim sequenceInfoAvailable = False
@@ -1026,15 +1278,25 @@ Public Class clsMSGFResultsSummarizer
 
             End If
 
-
-            ' Keys in this dictionary are normalized peptide sequences (mod symbols have been moved to the end)
-            '   For example, PEPT*IDES and PEPTIDES* are each normalized to PEPTIDES_**
-            '   And ... P#EPT*IDES and PEP#T*IDES and P#EPTIDES* all become PEPTIDES_#*
-            '   If sequenceInfoAvailable is True, then instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
-            '   For example, VGVEASEETPQT_Phosph or AGEPNSPDAEEANSPDVTAGCDPAGVHPPR_PhosphIodoAcet
-            ' Values are the SeqID value of the first sequence to get normalized to the given peptide
-            '   If sequenceInfoAvailable is False, then values are the ResultID value of the first peptide to get normalized to the given peptide
-            Dim lstNormalizedPeptides = New Dictionary(Of String, Integer)
+            ' Keys in this dictionary are clean sequences (peptide sequence without any mod symbols)
+            ' Values are lists of modified residue combinations that correspond to the given clean sequence
+            ' Each combination of residues has a corresponding "best" SeqID associated with it
+            '
+            ' When comparing a new sequence to entries in this dictionary, if the mod locations are all within one residue of an existing normalized sequence,
+            '  the new sequence and mods is not added
+            ' For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent, and will be tracked as LSSPATLNSR with * at index 1
+            ' But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different, and are tracked with entries:
+            '  PEPTIDES with # at index 0 and * at index 3
+            '  PEPTIDES with # at index 2 and * at index 3
+            '  PEPTIDES with # at index 0 and * at index 7
+            '
+            ' If sequenceInfoAvailable is True, then instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
+            '   For example, VGVEASEETPQT with Phosph at index 5
+            '
+            ' The SeqID value tracked by udtNormalizedPeptideType is the SeqID of the first sequence to get normalized to the given entry
+            ' If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
+            '
+            Dim dictNormalizedPeptides = New Dictionary(Of String, List(Of clsNormalizedPeptideInfo))
 
             Using objReader As New clsPHRPReader(strPHRPSynopsisFilePath, startupOptions)
 
@@ -1091,6 +1353,7 @@ Public Class clsMSGFResultsSummarizer
                     psmInfo.Clear()
 
                     psmInfo.Protein = objPSM.ProteinFirst
+
                     Dim psmMSGF = dblSpecProb
                     Dim psmEValue = dblEValue
                     Dim psmFDR As Double
@@ -1116,7 +1379,8 @@ Public Class clsMSGFResultsSummarizer
                         psmFDR = clsPSMInfo.UNKNOWN_FDR
                     End If
 
-                    Dim normalizedSequence As String = String.Empty
+                    Dim normalizedPeptide = New clsNormalizedPeptideInfo(String.Empty)
+
                     Dim normalized = False
                     Dim intSeqID = clsPSMInfo.UNKNOWN_SEQID
 
@@ -1126,21 +1390,25 @@ Public Class clsMSGFResultsSummarizer
                             intSeqID = clsPSMInfo.UNKNOWN_SEQID
 
                             ' This result is not listed in the _ResultToSeqMap file, likely because it was already processed for this scan
-                            ' Look for a match in lstNormalizedPeptides that starts with this peptide's clean sesquence
-                            Dim comparisonSequence = GetNormalizedPeptide(objPSM.PeptideCleanSequence, String.Empty)
-                            Dim query = From item In lstNormalizedPeptides Where item.Key.StartsWith(comparisonSequence) Select item
+                            ' Look for a match in dictNormalizedPeptides that matches this peptide's clean sesquence
+                            Dim normalizedPeptides As List(Of clsNormalizedPeptideInfo) = Nothing
 
-                            For Each result In query
-                                ' Match found; use the given SeqID value
-                                intSeqID = result.Value
-                                Exit For
-                            Next
+                            If dictNormalizedPeptides.TryGetValue(objPSM.PeptideCleanSequence, normalizedPeptides) Then
+                                For Each udtNormalizedItem In normalizedPeptides
+                                    If udtNormalizedItem.SeqID >= 0 Then
+                                        ' Match found; use the given SeqID value
+                                        intSeqID = udtNormalizedItem.SeqID
+                                        Exit For
+                                    End If
+                                Next
+                            End If
+
                         End If
 
                         If intSeqID <> clsPSMInfo.UNKNOWN_SEQID Then
                             Dim oSeqInfo As clsSeqInfo = Nothing
                             If lstSeqInfo.TryGetValue(intSeqID, oSeqInfo) Then
-                                normalizedSequence = NormalizeSequence(objPSM.PeptideCleanSequence, oSeqInfo)
+                                normalizedPeptide = NormalizeSequence(objPSM.PeptideCleanSequence, oSeqInfo, intSeqID)
                                 normalized = True
                             End If
                         End If
@@ -1148,15 +1416,18 @@ Public Class clsMSGFResultsSummarizer
                     End If
 
                     If Not normalized Then
-                        normalizedSequence = NormalizeSequence(objPSM.Peptide)
+                        normalizedPeptide = NormalizeSequence(objPSM.Peptide, intSeqID)
                     End If
 
-                    Dim normalizedSeqID As Integer
-                    If lstNormalizedPeptides.TryGetValue(normalizedSequence, normalizedSeqID) Then
-                        Dim normalizedPSM = lstNormalizedPSMs(normalizedSeqID)
+                    Dim normalizedSeqID = FindNormalizedSequence(dictNormalizedPeptides, normalizedPeptide)
+
+                    If normalizedSeqID <> clsPSMInfo.UNKNOWN_SEQID Then
+                        ' We're already tracking this normalized peptide (or one very similar to it)
+
+                        Dim normalizedPSMInfo = lstNormalizedPSMs(normalizedSeqID)
                         Dim addObservation = True
 
-                        For Each observation In normalizedPSM.Observations
+                        For Each observation In normalizedPSMInfo.Observations
                             If observation.Scan = objPSM.ScanNumber Then
                                 ' Scan already stored
 
@@ -1189,18 +1460,78 @@ Public Class clsMSGFResultsSummarizer
                             observation.MSGF = psmMSGF
                             observation.EValue = psmEValue
 
-                            normalizedPSM.Observations.Add(observation)
+                            normalizedPSMInfo.Observations.Add(observation)
                         End If
 
                     Else
+                        ' New normalized sequence
+                        ' SeqID will typically come from the ResultToSeqMap file
+                        ' But, if that file is not available, we use the ResultID of the peptide
 
                         If intSeqID = clsPSMInfo.UNKNOWN_SEQID Then
                             intSeqID = objPSM.ResultID
                         End If
 
-                        lstNormalizedPeptides.Add(normalizedSequence, intSeqID)
+                        Dim normalizedPeptides As List(Of clsNormalizedPeptideInfo) = Nothing
+
+                        If Not dictNormalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, normalizedPeptides) Then
+                            normalizedPeptides = New List(Of clsNormalizedPeptideInfo)
+                            dictNormalizedPeptides.Add(normalizedPeptide.CleanSequence, normalizedPeptides)
+                        End If
+
+                        ' Make a new normalized peptide entry that does not have clean sequence 
+                        ' (to conserve memory, since tracked by dictNormalizedPeptides)
+                        Dim normalizedPeptideToStore = New clsNormalizedPeptideInfo(String.Empty)
+                        normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications)
+                        normalizedPeptideToStore.SeqID = intSeqID
+
+                        normalizedPeptides.Add(normalizedPeptideToStore)
 
                         psmInfo.SeqIdFirst = intSeqID
+
+                        Dim lastResidue = normalizedPeptide.CleanSequence(normalizedPeptide.CleanSequence.Length - 1)
+                        If lastResidue = "K"c Then
+                            psmInfo.CTermK = True
+                        ElseIf lastResidue = "R"c Then
+                            psmInfo.CTermR = True
+                        End If
+
+                        ' Check whether this peptide has a missed cleavage
+                        ' This only works for Trypsin
+                        If reMissedCleavage.IsMatch(normalizedPeptide.CleanSequence) Then
+                            psmInfo.MissedCleavage = True
+                        End If
+
+                        ' Check whether this peptide is from Keratin or a related protein
+                        For Each proteinName In objPSM.Proteins
+                            If reKeratinProtein.IsMatch(proteinName) Then
+                                psmInfo.KeratinPeptide = True
+                                Exit For
+                            End If
+                        Next
+
+                        ' Check whether this peptide is from Trypsin or a related protein
+                        For Each proteinName In objPSM.Proteins
+                            If reTrypsinProtein.IsMatch(proteinName) Then
+                                psmInfo.TrypsinPeptide = True
+                                Exit For
+                            End If
+                        Next
+
+                        ' Check whether this peptide is partially or fully tryptic
+                        If objPSM.CleavageState = clsPeptideCleavageStateCalculator.ePeptideCleavageStateConstants.Full OrElse
+                           objPSM.CleavageState = clsPeptideCleavageStateCalculator.ePeptideCleavageStateConstants.Partial Then
+                            psmInfo.Tryptic = True
+                        End If
+
+                        ' Check whether this is a phosphopeptide
+                        ' This check only works if the _ModSummary.txt file was loaded because it relies on the mod name being Phosph
+                        For Each modification In normalizedPeptide.Modifications
+                            If modification.Key.StartsWith("Phosph", StringComparison.InvariantCultureIgnoreCase) Then
+                                psmInfo.Phosphopeptide = True
+                                Exit For
+                            End If
+                        Next
 
                         Dim observation = New clsPSMInfo.PSMObservation()
 
@@ -1232,10 +1563,16 @@ Public Class clsMSGFResultsSummarizer
         Return blnSuccess
     End Function
 
-    Private Function NormalizeSequence(sequenceWithMods As String) As String
+    ''' <summary>
+    ''' Parse a sequence with mod symbols
+    ''' </summary>
+    ''' <param name="sequenceWithMods"></param>
+    ''' <param name="seqID"></param>
+    ''' <returns></returns>
+    Private Function NormalizeSequence(sequenceWithMods As String, seqID As Integer) As clsNormalizedPeptideInfo
 
         Dim sbAminoAcids = New StringBuilder(sequenceWithMods.Length)
-        Dim sbModifications = New StringBuilder()
+        Dim modList = New List(Of KeyValuePair(Of String, Integer))
 
         Dim strPrefix = String.Empty
         Dim strSuffix = String.Empty
@@ -1248,28 +1585,34 @@ Public Class clsMSGFResultsSummarizer
             If clsPHRPReader.IsLetterAtoZ(strPrimarySequence(index)) Then
                 sbAminoAcids.Append(strPrimarySequence(index))
             Else
-                sbModifications.Append(strPrimarySequence(index))
+                modList.Add(New KeyValuePair(Of String, Integer)(strPrimarySequence(index), index))
             End If
         Next
 
-        Return GetNormalizedPeptide(sbAminoAcids.ToString(), sbModifications.ToString())
+        Return GetNormalizedPeptideInfo(sbAminoAcids.ToString(), modList, seqID)
     End Function
 
-    Private Function NormalizeSequence(peptideCleanSequence As String, oSeqInfo As clsSeqInfo) As String
+    Private Function NormalizeSequence(peptideCleanSequence As String, oSeqInfo As clsSeqInfo, seqID As Integer) As clsNormalizedPeptideInfo
 
-        Dim sbModifications = New StringBuilder()
+        Dim modList = New List(Of KeyValuePair(Of String, Integer))
 
         Dim lstMods = oSeqInfo.ModDescription.Split(","c)
         For Each modDescriptor In lstMods
             Dim colonIndex = modDescriptor.IndexOf(":"c)
+            Dim modName As String
+            Dim modIndex = 0
+
             If colonIndex > 0 Then
-                sbModifications.Append(modDescriptor.Substring(0, colonIndex))
+                modName = modDescriptor.Substring(0, colonIndex)
+                Integer.TryParse(modDescriptor.Substring(colonIndex + 1), modIndex)
             Else
-                sbModifications.Append(modDescriptor)
+                modName = modDescriptor
             End If
+
+            modList.Add(New KeyValuePair(Of String, Integer)(modName, modIndex))
         Next
 
-        Return GetNormalizedPeptide(peptideCleanSequence, sbModifications.ToString())
+        Return GetNormalizedPeptideInfo(peptideCleanSequence, modList, seqID)
     End Function
 
     Private Sub SaveResultsToFile()
@@ -1340,13 +1683,16 @@ Public Class clsMSGFResultsSummarizer
     ''' <remarks></remarks>
     Private Function SummarizeResults(
       blnUsingMSGFOrEValueFilter As Boolean,
-      lstFilteredPSMs As Dictionary(Of Integer, clsPSMInfo),
-      lstSeqToProteinMap As SortedList(Of Integer, List(Of clsProteinInfo)),
-      lstSeqInfo As SortedList(Of Integer, clsSeqInfo)) As Boolean
+      lstFilteredPSMs As IDictionary(Of Integer, clsPSMInfo),
+      lstSeqToProteinMap As IDictionary(Of Integer, List(Of clsProteinInfo)),
+      lstSeqInfo As IDictionary(Of Integer, clsSeqInfo)) As Boolean
 
         Try
-            ' The Keys in this dictionary are SeqID values; the values are observation count
-            Dim lstUniqueSequences = New Dictionary(Of Integer, Integer)
+            ' The Keys in this dictionary are SeqID values; the values track observation count and whether the peptide ends in K or R
+            Dim lstUniqueSequences = New Dictionary(Of Integer, udtUniqueSeqInfo)
+
+            ' The Keys in this dictionary are SeqID values; the values track observation count and whether the peptide ends in K or R
+            Dim lstUniquePhosphopeptides = New Dictionary(Of Integer, udtUniqueSeqInfo)
 
             ' The Keys in this dictionary are protein names; the values are observation count
             Dim lstUniqueProteins = New Dictionary(Of String, Integer)
@@ -1364,11 +1710,22 @@ Public Class clsMSGFResultsSummarizer
                 ' Otherwise, the keys are ResultID values
                 Dim intSeqID As Integer = result.Key
 
-                Dim obsCountOverall As Integer
-                If lstUniqueSequences.TryGetValue(intSeqID, obsCountOverall) Then
-                    lstUniqueSequences(intSeqID) = obsCountOverall + obsCountForResult
-                Else
-                    lstUniqueSequences.Add(intSeqID, obsCountForResult)
+                Dim seqInfoToStore = New udtUniqueSeqInfo()
+                With seqInfoToStore
+                    .CTermK = result.Value.CTermK
+                    .CTermR = result.Value.CTermR
+                    .MissedCleavage = result.Value.MissedCleavage
+                    .KeratinPeptide = result.Value.KeratinPeptide
+                    .TrypsinPeptide = result.Value.TrypsinPeptide
+                    .Tryptic = result.Value.Tryptic
+                    .ObsCount = obsCountForResult
+                End With
+
+
+                AddUpdateUniqueSequence(lstUniqueSequences, intSeqID, seqInfoToStore)
+
+                If result.Value.Phosphopeptide Then
+                    AddUpdateUniqueSequence(lstUniquePhosphopeptides, intSeqID, seqInfoToStore)
                 End If
 
                 Dim addResultProtein = True
@@ -1383,6 +1740,7 @@ Public Class clsMSGFResultsSummarizer
 
                         For Each objProtein As clsProteinInfo In lstProteins
 
+                            Dim obsCountOverall As Integer
                             If lstUniqueProteins.TryGetValue(objProtein.ProteinName, obsCountOverall) Then
                                 lstUniqueProteins(objProtein.ProteinName) = obsCountOverall + obsCountForResult
                             Else
@@ -1400,6 +1758,7 @@ Public Class clsMSGFResultsSummarizer
                 If addResultProtein Then
                     Dim proteinName = result.Value.Protein
 
+                    Dim obsCountOverall As Integer
                     If lstUniqueProteins.TryGetValue(proteinName, obsCountOverall) Then
                         lstUniqueProteins(proteinName) = obsCountOverall + obsCountForResult
                     Else
@@ -1409,15 +1768,13 @@ Public Class clsMSGFResultsSummarizer
 
             Next
 
-            ' Store the stats
+            ' Obtain the stats to store
+            Dim psmStats = TabulatePSMStats(lstUniqueSequences, lstUniqueProteins, lstUniquePhosphopeptides)
+
             If blnUsingMSGFOrEValueFilter Then
-                mMSGFBasedCounts.TotalPSMs = (From item In lstUniqueSequences Select item.Value).Sum()
-                mMSGFBasedCounts.UniquePeptideCount = lstUniqueSequences.Count
-                mMSGFBasedCounts.UniqueProteinCount = lstUniqueProteins.Count
+                mMSGFBasedCounts = psmStats
             Else
-                mFDRBasedCounts.TotalPSMs = (From item In lstUniqueSequences Select item.Value).Sum()
-                mFDRBasedCounts.UniquePeptideCount = lstUniqueSequences.Count
-                mFDRBasedCounts.UniqueProteinCount = lstUniqueProteins.Count
+                mFDRBasedCounts = psmStats
             End If
 
         Catch ex As Exception
@@ -1427,6 +1784,33 @@ Public Class clsMSGFResultsSummarizer
 
         Return True
     End Function
+
+    Private Function TabulatePSMStats(
+      lstUniqueSequences As IDictionary(Of Integer, udtUniqueSeqInfo),
+      lstUniqueProteins As IDictionary(Of String, Integer),
+      lstUniquePhosphopeptides As IDictionary(Of Integer, udtUniqueSeqInfo)) As udtPSMStatsType
+
+        Dim psmStats = New udtPSMStatsType()
+        psmStats.TotalPSMs = (From item In lstUniqueSequences Select item.Value.ObsCount).Sum()
+        psmStats.UniquePeptideCount = lstUniqueSequences.Count
+        psmStats.UniqueProteinCount = lstUniqueProteins.Count
+
+        psmStats.MissedCleavageRatio = ComputeMissedCleavageRatio(lstUniqueSequences)
+
+        psmStats.KeratinPeptides = (From item In lstUniqueSequences Where item.Value.KeratinPeptide = True Select item.Key).Count()
+        psmStats.TrypsinPeptides = (From item In lstUniqueSequences Where item.Value.TrypsinPeptide = True Select item.Key).Count()
+        psmStats.TrypticPeptides = (From item In lstUniqueSequences Where item.Value.Tryptic = True Select item.Key).Count()
+
+        psmStats.UniquePhosphopeptideCount = lstUniquePhosphopeptides.Count
+
+        psmStats.UniquePhosphopeptidesCTermK = (From item In lstUniquePhosphopeptides Where item.Value.CTermK Select item.Key).Count()
+        psmStats.UniquePhosphopeptidesCTermR = (From item In lstUniquePhosphopeptides Where item.Value.CTermR Select item.Key).Count()
+
+        psmStats.MissedCleavageRatioPhospho = ComputeMissedCleavageRatio(lstUniquePhosphopeptides)
+
+        Return psmStats
+    End Function
+
 
 #Region "Event Handlers"
 
