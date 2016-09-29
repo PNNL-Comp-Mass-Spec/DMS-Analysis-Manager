@@ -12,14 +12,12 @@
 
 Option Strict On
 
-Imports System.Linq
 Imports PHRPReader
 Imports System.Data.SqlClient
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text
 Imports System.Text.RegularExpressions
-Imports AnalysisManagerBase
 
 Public Class clsMSGFResultsSummarizer
 
@@ -29,9 +27,11 @@ Public Class clsMSGFResultsSummarizer
     Public Const DEFAULT_EVALUE_THRESHOLD As Double = 0.0001            ' 1E-4   (only used when MSGF Scores are not available)
     Public Const DEFAULT_FDR_THRESHOLD As Double = 0.01                 ' 1% FDR
 
-    Public Const DEFAULT_CONNECTION_STRING As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
+    Private Const DEFAULT_CONNECTION_STRING As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
 
     Private Const STORE_JOB_PSM_RESULTS_SP_NAME As String = "StoreJobPSMStats"
+
+    Private Const MSGF_RESULT_FILENAME_SUFFIX As String = "_MSGF.txt"
 
 #End Region
 
@@ -98,6 +98,10 @@ Public Class clsMSGFResultsSummarizer
         End Sub
     End Structure
 
+#End Region
+
+#Region "Events"
+    Public Event ErrorEvent(errMsg As String)
 #End Region
 
 #Region "Member variables"
@@ -466,7 +470,7 @@ Public Class clsMSGFResultsSummarizer
             ' Keys are Scan_Charge, values are Scan number
             Dim lstUniqueSpectra = New Dictionary(Of String, Integer)
 
-            Dim startupOptions As clsPHRPStartupOptions = clsMSGFInputCreator.GetMinimalMemoryPHRPStartupOptions()
+            Dim startupOptions As clsPHRPStartupOptions = GetMinimalMemoryPHRPStartupOptions()
 
             Using objReader = New clsPHRPReader(strFirstHitsFilePath, startupOptions)
                 While objReader.MoveNext()
@@ -588,8 +592,12 @@ Public Class clsMSGFResultsSummarizer
                 " GROUP BY Scan_Count_Total"
 
             Dim lstResults As List(Of List(Of String)) = Nothing
-            Dim success = clsGlobal.GetQueryResults(queryScanStats, mConnectionString, lstResults,
-                                                    "LookupScanStats_V_Dataset_Scans_Export")
+
+            Dim dbTools = New PRISM.DataBase.clsDBTools(mConnectionString)
+
+            AddHandler dbTools.ErrorEvent, AddressOf DbToolsErrorEventHandler
+
+            Dim success = dbTools.GetQueryResults(queryScanStats, lstResults, "LookupScanStats_V_Dataset_Scans_Export")
 
             If success AndAlso lstResults.Count > 0 Then
 
@@ -614,8 +622,7 @@ Public Class clsMSGFResultsSummarizer
                 " WHERE Dataset = '" & DatasetName & "'"
 
             lstResults.Clear()
-            success = clsGlobal.GetQueryResults(queryScanTotal, mConnectionString, lstResults,
-                                                "LookupScanStats_V_Dataset_Export")
+            success = dbTools.GetQueryResults(queryScanTotal, lstResults, "LookupScanStats_V_Dataset_Export")
 
             If success AndAlso lstResults.Count > 0 Then
 
@@ -765,7 +772,7 @@ Public Class clsMSGFResultsSummarizer
 
             If Not blnValidMSGFOrEValue Then
                 ' None of the data has MSGF values or E-Values; cannot compute FDR
-                mErrorMessage = "Data does not contain MSGF values or EValues; cannot compute a decoy-based FDR"
+                SetErrorMessage("Data does not contain MSGF values or EValues; cannot compute a decoy-based FDR")
                 lstPSMs.Clear()
                 Return False
             End If
@@ -818,7 +825,7 @@ Public Class clsMSGFResultsSummarizer
 
             If intDecoyResults = 0 Then
                 ' We never encountered any decoy proteins; cannot compute FDR
-                mErrorMessage = "Data does not contain decoy proteins; cannot compute a decoy-based FDR"
+                SetErrorMessage("Data does not contain decoy proteins; cannot compute a decoy-based FDR")
                 lstPSMs.Clear()
                 Return False
             End If
@@ -931,6 +938,18 @@ Public Class clsMSGFResultsSummarizer
 
         Return clsPSMInfo.UNKNOWN_SEQID
 
+    End Function
+
+    Private Function GetMinimalMemoryPHRPStartupOptions() As clsPHRPStartupOptions
+
+        Dim startupOptions = New clsPHRPStartupOptions()
+        With startupOptions
+            .LoadModsAndSeqInfo = False
+            .LoadMSGFResults = False
+            .LoadScanStatsData = False
+            .MaxProteinsPerPSM = 1
+        End With
+        Return startupOptions
     End Function
 
     Private Function GetNormalizedPeptideInfo(
@@ -1124,8 +1143,7 @@ Public Class clsMSGFResultsSummarizer
                 strPHRPFirstHitsFileName = strPHRPSynopsisFileName
             End If
 
-            mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(strPHRPSynopsisFileName) &
-                                    clsMSGFInputCreator.MSGF_RESULT_FILENAME_SUFFIX
+            mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(strPHRPSynopsisFileName) & MSGF_RESULT_FILENAME_SUFFIX
 
             strPHRPFirstHitsFilePath = Path.Combine(mWorkDir, strPHRPFirstHitsFileName)
             strPHRPSynopsisFilePath = Path.Combine(mWorkDir, strPHRPSynopsisFileName)
@@ -1266,7 +1284,7 @@ Public Class clsMSGFResultsSummarizer
             ' Note that this will set .LoadModsAndSeqInfo to false
             ' That is fine because we will have access to the modification info from the _SeqInfo.txt file
             ' Since we're looking for trypsin and keratin proteins, we need to change MaxProteinsPerPSM back to a large number
-            Dim startupOptions As clsPHRPStartupOptions = clsMSGFInputCreator.GetMinimalMemoryPHRPStartupOptions()
+            Dim startupOptions As clsPHRPStartupOptions = GetMinimalMemoryPHRPStartupOptions()
             startupOptions.LoadMSGFResults = blnLoadMSGFResults
             startupOptions.MaxProteinsPerPSM = 1000
 
@@ -1699,9 +1717,10 @@ Public Class clsMSGFResultsSummarizer
         Return
     End Sub
 
-    Private Sub SetErrorMessage(strMessage As String)
-        Console.WriteLine(strMessage)
-        mErrorMessage = strMessage
+    Private Sub SetErrorMessage(errMsg As String)
+        Console.WriteLine(errMsg)
+        mErrorMessage = errMsg
+        RaiseEvent ErrorEvent(errMsg)
     End Sub
 
     ''' <summary>
@@ -1834,19 +1853,18 @@ Public Class clsMSGFResultsSummarizer
         Return psmStats
     End Function
 
-
 #Region "Event Handlers"
 
     Private Sub m_ExecuteSP_DebugEvent(Message As String) Handles mStoredProcedureExecutor.DebugEvent
         Console.WriteLine(Message)
     End Sub
 
-    Private Sub m_ExecuteSP_DBErrorEvent(Message As String) Handles mStoredProcedureExecutor.DBErrorEvent
-        SetErrorMessage(Message)
+    Private Sub m_ExecuteSP_DBErrorEvent(errMsg As String) Handles mStoredProcedureExecutor.DBErrorEvent
+        SetErrorMessage(errMsg)
+    End Sub
 
-        If Message.Contains("permission was denied") Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message)
-        End If
+    Private Sub DbToolsErrorEventHandler(errMsg As String)
+        SetErrorMessage(errMsg)
     End Sub
 
 #End Region
