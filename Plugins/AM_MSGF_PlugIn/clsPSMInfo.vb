@@ -87,15 +87,19 @@ Public Class clsPSMInfo
 
     Public Overrides Function ToString() As String
         If Observations.Count = 0 Then
-            Return "SeqID " & SeqIdFirst & ", " & Protein
+            Return String.Format("SeqID {0}, {1} (0 observations)",
+                                 SeqIdFirst, Protein)
         End If
 
         If Observations.Count = 1 Then
-            Return "SeqID " & SeqIdFirst & ", " & Protein & ", Scan " & Observations(0).Scan
+            Return String.Format("SeqID {0}, {1}, Scan {2} (1 observation)",
+                                 SeqIdFirst, Protein, Observations(0).Scan)
+        Else
+            Return String.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)",
+                                 SeqIdFirst, Protein, Observations(0).Scan,
+                                 Observations(Observations.Count - 1).Scan, Observations.Count)
         End If
 
-        Return "SeqID " & SeqIdFirst & ", " & Protein & ", Scans " & Observations(0).Scan.ToString() & "-" &
-               Observations(Observations.Count - 1).Scan.ToString()
     End Function
 
     Public Class PSMObservation
@@ -130,5 +134,9 @@ Public Class clsPSMInfo
             EValue = UNKNOWN_EVALUE
             PassesFilter = False
         End Sub
+
+        Public Overrides Function ToString() As String
+            Return String.Format("Scan {0}, FDR {1:F4}, MSGF {2:E3}", Scan, FDR, MSGF)
+        End Function
     End Class
 End Class

@@ -33,10 +33,10 @@ Public Class clsNormalizedPeptideInfo
     End Sub
 
     Public Overrides Function ToString() As String
-        If ModifiedResidues Is Nothing Then
+        If Modifications Is Nothing Then
             Return String.Format("{0}: {1}, ModCount={2}", SeqID, CleanSequence, 0)
         Else
-            Return String.Format("{0}: {1}, ModCount={2}", SeqID, CleanSequence, ModifiedResidues.Count)
+            Return String.Format("{0}: {1}, ModCount={2}", SeqID, CleanSequence, Modifications.Count)
         End If
     End Function
 
