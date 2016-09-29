@@ -15,9 +15,9 @@ Imports PHRPReader
 Imports System.IO
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "April 25, 2016"
+    Public Const PROGRAM_DATE As String = "September 28, 2016"
 
-	Private mMSGFSynFilePath As String = String.Empty
+    Private mMSGFSynFilePath As String = String.Empty
 	Private mInputFolderPath As String = String.Empty
 	Private mOutputFolderPath As String = String.Empty
 
@@ -109,7 +109,7 @@ Module modMain
                     Return False
                 End If
 
-                Dim diFolder As DirectoryInfo = New DirectoryInfo(mInputFolderPath)
+                Dim diFolder = New DirectoryInfo(mInputFolderPath)
                 If Not diFolder.Exists Then
                     ShowErrorMessage("Input folder not found: " & diFolder.FullName)
                     Return False
@@ -241,12 +241,26 @@ Module modMain
             Console.WriteLine(("Unique Peptides (" & strFilterText & " Filter): ").PadRight(35) & objSummarizer.UniquePeptideCountMSGF)
             Console.WriteLine(("Unique Proteins (" & strFilterText & " Filter): ").PadRight(35) & objSummarizer.UniqueProteinCountMSGF)
 
+            Console.WriteLine()
             Console.WriteLine("Total PSMs (FDR Filter): ".PadRight(35) & objSummarizer.TotalPSMsFDR)
             Console.WriteLine("Unique Peptides (FDR Filter): ".PadRight(35) & objSummarizer.UniquePeptideCountFDR)
+            Console.WriteLine("Tryptic Peptides (FDR Filter): ".PadRight(35) & objSummarizer.TrypticPeptidesFDR)
             Console.WriteLine("Unique Proteins (FDR Filter): ".PadRight(35) & objSummarizer.UniqueProteinCountFDR)
 
             Console.WriteLine()
+            Console.WriteLine("Unique Phosphopeptides (FDR Filter): ".PadRight(35) & objSummarizer.UniquePhosphopeptideCountFDR)
+            Console.WriteLine("Phosphopeptides with C-term K: ".PadRight(35) & objSummarizer.UniquePhosphopeptidesCTermK_FDR)
+            Console.WriteLine("Phosphopeptides with C-term R: ".PadRight(35) & objSummarizer.UniquePhosphopeptidesCTermR_FDR)
 
+            Console.WriteLine()
+            Console.WriteLine("Missed Cleavage Ratio (FDR Filter): ".PadRight(35) & objSummarizer.MissedCleavageRatioFDR)
+            Console.WriteLine("Missed Cleavage Ratio for Phosphopeptides: ".PadRight(35) & objSummarizer.MissedCleavageRatioPhosphoFDR)
+
+            Console.WriteLine()
+            Console.WriteLine("Keratin Peptides (FDR Filter): ".PadRight(35) & objSummarizer.KeratinPeptidesFDR)
+            Console.WriteLine("Trypsin Peptides (FDR Filter): ".PadRight(35) & objSummarizer.TrypsinPeptidesFDR)
+
+            Console.WriteLine()
             Console.WriteLine("Percent MSn Scans No PSM: ".PadRight(38) & objSummarizer.PercentMSnScansNoPSM.ToString("0.0") & "%")
             Console.WriteLine("Maximum Scan Gap Adjacent MSn Scans: ".PadRight(38) & objSummarizer.MaximumScanGapAdjacentMSn)
 
@@ -260,24 +274,24 @@ Module modMain
 
     End Function
 
-	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
-		' Returns True if no problems; otherwise, returns false
+    Private Function SetOptionsUsingCommandLineParameters(objParseCommandLine As clsParseCommandLine) As Boolean
+        ' Returns True if no problems; otherwise, returns false
 
-		Dim strValue As String = String.Empty
-        Dim strValidParameters() As String = New String() {"I", "Folder", "Dataset", "Job", "O", "NoDatabase", "NoText", "DB"}
+        Dim strValue As String = String.Empty
+        Dim strValidParameters = New List(Of String) From {"I", "Folder", "Dataset", "Job", "O", "NoDatabase", "NoText", "DB"}
 
-		Try
-			' Make sure no invalid parameters are present
-			If objParseCommandLine.InvalidParametersPresent(strValidParameters) Then
-				Return False
-			Else
-				With objParseCommandLine
-					' Query objParseCommandLine to see if various parameters are present
-					If .RetrieveValueForParameter("I", strValue) Then
-						mMSGFSynFilePath = strValue
-					ElseIf .NonSwitchParameterCount > 0 Then
-						mMSGFSynFilePath = .RetrieveNonSwitchParameter(0)
-					End If
+        Try
+            ' Make sure no invalid parameters are present
+            If objParseCommandLine.InvalidParametersPresent(strValidParameters) Then
+                Return False
+            Else
+                With objParseCommandLine
+                    ' Query objParseCommandLine to see if various parameters are present
+                    If .RetrieveValueForParameter("I", strValue) Then
+                        mMSGFSynFilePath = strValue
+                    ElseIf .NonSwitchParameterCount > 0 Then
+                        mMSGFSynFilePath = .RetrieveNonSwitchParameter(0)
+                    End If
 
                     If .RetrieveValueForParameter("Folder", strValue) Then
                         mInputFolderPath = strValue
@@ -287,14 +301,14 @@ Module modMain
                         mDatasetName = strValue
                     End If
 
-					If .RetrieveValueForParameter("Job", strValue) Then
-						If Not Integer.TryParse(strValue, mJob) Then
-							ShowErrorMessage("Job number not numeric: " & strValue)
-							Return False
-						End If
-					End If
+                    If .RetrieveValueForParameter("Job", strValue) Then
+                        If Not Integer.TryParse(strValue, mJob) Then
+                            ShowErrorMessage("Job number not numeric: " & strValue)
+                            Return False
+                        End If
+                    End If
 
-					.RetrieveValueForParameter("O", mOutputFolderPath)
+                    .RetrieveValueForParameter("O", mOutputFolderPath)
 
                     If .IsParameterPresent("NoDatabase") Then
                         mContactDatabase = False
@@ -308,31 +322,31 @@ Module modMain
                         mPostResultsToDb = True
                     End If
 
-				End With
+                End With
 
-				Return True
-			End If
+                Return True
+            End If
 
-		Catch ex As Exception
-			Console.WriteLine("Error parsing the command line parameters: " & ControlChars.NewLine & ex.Message)
-		End Try
+        Catch ex As Exception
+            Console.WriteLine("Error parsing the command line parameters: " & ControlChars.NewLine & ex.Message)
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Private Sub ShowErrorMessage(ByVal strMessage As String)
-		Const strSeparator As String = "------------------------------------------------------------------------------"
+    Private Sub ShowErrorMessage(strMessage As String)
+        Const strSeparator = "------------------------------------------------------------------------------"
 
-		Console.WriteLine()
-		Console.WriteLine(strSeparator)
-		Console.WriteLine(strMessage)
-		Console.WriteLine(strSeparator)
-		Console.WriteLine()
+        Console.WriteLine()
+        Console.WriteLine(strSeparator)
+        Console.WriteLine(strMessage)
+        Console.WriteLine(strSeparator)
+        Console.WriteLine()
 
-	End Sub
+    End Sub
 
-	Private Sub ShowProgramHelp()
+    Private Sub ShowProgramHelp()
 
 		Try
 
