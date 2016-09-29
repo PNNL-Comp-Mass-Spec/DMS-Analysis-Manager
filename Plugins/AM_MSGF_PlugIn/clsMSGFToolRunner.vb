@@ -16,6 +16,7 @@ Imports System.Linq
 Imports System.Runtime.InteropServices
 Imports System.Threading
 Imports System.Xml
+Imports MSGFResultsSummarizer
 Imports PRISM.Processes
 
 ' ReSharper disable once ClassNeverInstantiated.Global
@@ -2363,8 +2364,9 @@ Public Class clsMSGFRunner
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             End If
 
-            objSummarizer = New clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir,
-                                                         strConnectionString)
+            objSummarizer = New clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString)
+            AddHandler objSummarizer.ErrorEvent, AddressOf MSGFResultsSummarizer_ErrorHandler
+
             objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
 
             objSummarizer.ContactDatabase = True
@@ -2637,6 +2639,14 @@ Public Class clsMSGFRunner
     End Sub
 
     ''' <summary>
+    ''' Event handler for the MSGResultsSummarizer
+    ''' </summary>
+    ''' <param name="errorMessage"></param>
+    Private Sub MSGFResultsSummarizer_ErrorHandler(errorMessage As String)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+    End Sub
+
+    ''' <summary>
     ''' Event handler that fires while MSGF is processing
     ''' </summary>
     ''' <remarks></remarks>
@@ -2663,4 +2673,5 @@ Public Class clsMSGFRunner
     End Sub
 
 #End Region
+
 End Class
