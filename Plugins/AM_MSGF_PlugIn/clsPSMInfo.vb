@@ -1,8 +1,10 @@
 ﻿Option Strict On
 
 Imports System.Linq
+Imports System.Reflection
 
 Public Class clsPSMInfo
+    Inherits clsUniqueSeqInfo
 
     Public Const UNKNOWN_MSGF_SPECPROB As Double = 10
     Public Const UNKNOWN_EVALUE As Double = Double.MaxValue
@@ -11,27 +13,11 @@ Public Class clsPSMInfo
 
     Private ReadOnly mObservations As List(Of PSMObservation)
 
-    ''' <summary>
-    ''' True if the C-terminus of the peptide is Lysine
-    ''' </summary>
-    Public Property CTermK As Boolean
-
-    ''' <summary>
-    ''' True if the C-terminus of the peptide is Arginine
-    ''' </summary>
-    Public Property CTermR As Boolean
-
-    ''' <summary>
-    ''' True if the peptide is from a keratin protein
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property KeratinPeptide As Boolean
-
-    ''' <summary>
-    ''' True if the peptide has an internal K or R that is not followed by P
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property MissedCleavage As Boolean
+    Public Overrides ReadOnly Property ObsCount As Integer
+        Get
+            Return mObservations.Count
+        End Get
+    End Property
 
     ''' <summary>
     ''' True if this is a phosphopeptide
@@ -49,18 +35,6 @@ Public Class clsPSMInfo
     Public Property SeqIdFirst As Integer
 
     ''' <summary>
-    ''' True if the peptide is from a trypsin protein
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property TrypsinPeptide As Boolean
-
-    ''' <summary>
-    ''' True if the peptide is partially or fully tryptic
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property Tryptic As Boolean
-
-    ''' <summary>
     ''' Details for each PSM that maps to this class
     ''' </summary>
     Public ReadOnly Property Observations As List(Of PSMObservation)
@@ -71,30 +45,30 @@ Public Class clsPSMInfo
 
     Public ReadOnly Property BestMSGF As Double
         Get
-            If Observations.Count = 0 Then
+            If mObservations.Count = 0 Then
                 Return UNKNOWN_MSGF_SPECPROB
             Else
-                Return (From item In Observations Order By item.MSGF Select item.MSGF).First
+                Return (From item In mObservations Order By item.MSGF Select item.MSGF).First
             End If
         End Get
     End Property
 
     Public ReadOnly Property BestEValue As Double
         Get
-            If Observations.Count = 0 Then
+            If mObservations.Count = 0 Then
                 Return UNKNOWN_EVALUE
             Else
-                Return (From item In Observations Order By item.EValue Select item.EValue).First
+                Return (From item In mObservations Order By item.EValue Select item.EValue).First
             End If
         End Get
     End Property
 
     Public ReadOnly Property BestFDR As Double
         Get
-            If Observations.Count = 0 Then
+            If mObservations.Count = 0 Then
                 Return UNKNOWN_FDR
             Else
-                Return (From item In Observations Order By item.FDR Select item.FDR).First
+                Return (From item In mObservations Order By item.FDR Select item.FDR).First
             End If
         End Get
     End Property
@@ -110,17 +84,14 @@ Public Class clsPSMInfo
     ''' <summary>
     ''' Reset the fields
     ''' </summary>
-    Public Sub Clear()
+    Public Overrides Sub Clear()
+        MyBase.Clear()
         Protein = String.Empty
         SeqIdFirst = UNKNOWN_SEQID
-        mObservations.Clear()
-        CTermK = False
-        CTermR = False
-        MissedCleavage = False
-        KeratinPeptide = False
-        TrypsinPeptide = False
+        If Not mObservations Is Nothing Then
+            mObservations.Clear()
+        End If
         Phosphopeptide = False
-        Tryptic = False
     End Sub
 
     ''' <summary>
@@ -131,19 +102,43 @@ Public Class clsPSMInfo
         mObservations.Add(observation)
     End Sub
 
+    ''' <summary>
+    ''' Clone this class as a new clsUniqueSeqInfo instance
+    ''' </summary>
+    ''' <returns></returns>
+    Public Function CloneAsSeqInfo() As clsUniqueSeqInfo
+
+        Dim seqInfo = New clsUniqueSeqInfo()
+
+        seqInfo.UpdateObservationCount(Me.ObsCount)
+        seqInfo.CTermK = Me.CTermK
+        seqInfo.CTermR = Me.CTermR
+        seqInfo.MissedCleavage = Me.MissedCleavage
+        seqInfo.KeratinPeptide = Me.KeratinPeptide
+        seqInfo.TrypsinPeptide = Me.TrypsinPeptide
+        seqInfo.Tryptic = Me.Tryptic
+
+        Return seqInfo
+
+    End Function
+
+    Public Overrides Sub UpdateObservationCount(observationCount As Integer)
+        Throw New InvalidOperationException("Observation count cannot be updated in clsPSMInfo")
+    End Sub
+
     Public Overrides Function ToString() As String
-        If Observations.Count = 0 Then
+        If mObservations.Count = 0 Then
             Return String.Format("SeqID {0}, {1} (0 observations)",
                                  SeqIdFirst, Protein)
         End If
 
-        If Observations.Count = 1 Then
+        If mObservations.Count = 1 Then
             Return String.Format("SeqID {0}, {1}, Scan {2} (1 observation)",
-                                 SeqIdFirst, Protein, Observations(0).Scan)
+                                 SeqIdFirst, Protein, mObservations(0).Scan)
         Else
             Return String.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)",
-                                 SeqIdFirst, Protein, Observations(0).Scan,
-                                 Observations(Observations.Count - 1).Scan, Observations.Count)
+                                 SeqIdFirst, Protein, mObservations(0).Scan,
+                                 mObservations(mObservations.Count - 1).Scan, mObservations.Count)
         End If
 
     End Function
@@ -185,4 +180,5 @@ Public Class clsPSMInfo
             Return String.Format("Scan {0}, FDR {1:F4}, MSGF {2:E3}", Scan, FDR, MSGF)
         End Function
     End Class
+
 End Class

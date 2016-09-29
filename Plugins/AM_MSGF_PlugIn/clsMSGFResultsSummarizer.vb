@@ -98,16 +98,6 @@ Public Class clsMSGFResultsSummarizer
         End Sub
     End Structure
 
-    Private Structure udtUniqueSeqInfo
-        Public ObsCount As Integer
-        Public CTermK As Boolean
-        Public CTermR As Boolean
-        Public MissedCleavage As Boolean
-        Public KeratinPeptide As Boolean
-        Public TrypsinPeptide As Boolean
-        Public Tryptic As Boolean
-    End Structure
-
 #End Region
 
 #Region "Member variables"
@@ -454,15 +444,14 @@ Public Class clsMSGFResultsSummarizer
     End Sub
 
     Private Sub AddUpdateUniqueSequence(
-      lstUniqueSeqs As IDictionary(Of Integer, udtUniqueSeqInfo),
+      lstUniqueSeqs As IDictionary(Of Integer, clsUniqueSeqInfo),
       intSeqId As Integer,
-      seqInfoToStore As udtUniqueSeqInfo)
+      seqInfoToStore As clsUniqueSeqInfo)
 
-        Dim existingSeqInfo As udtUniqueSeqInfo
+        Dim existingSeqInfo As clsUniqueSeqInfo = Nothing
 
         If lstUniqueSeqs.TryGetValue(intSeqId, existingSeqInfo) Then
-            seqInfoToStore.ObsCount += existingSeqInfo.ObsCount
-            lstUniqueSeqs(intSeqId) = seqInfoToStore
+            existingSeqInfo.UpdateObservationCount(seqInfoToStore.ObsCount + existingSeqInfo.ObsCount)
         Else
             lstUniqueSeqs.Add(intSeqId, seqInfoToStore)
         End If
@@ -514,6 +503,7 @@ Public Class clsMSGFResultsSummarizer
 
         Catch ex As Exception
             SetErrorMessage(ex.Message)
+            Console.WriteLine(ex.StackTrace)
             Return
         End Try
     End Sub
@@ -561,7 +551,7 @@ Public Class clsMSGFResultsSummarizer
         End If
     End Sub
 
-    Private Function ComputeMissedCleavageRatio(lstUniqueSequences As IDictionary(Of Integer, udtUniqueSeqInfo)) As Single
+    Private Function ComputeMissedCleavageRatio(lstUniqueSequences As IDictionary(Of Integer, clsUniqueSeqInfo)) As Single
         If lstUniqueSequences.Count = 0 Then
             Return 0
         End If
@@ -883,7 +873,6 @@ Public Class clsMSGFResultsSummarizer
 
         Return True
     End Function
-
 
     ''' <summary>
     ''' Search dictNormalizedPeptides for an entry that either exactly matches normalizedPeptide 
@@ -1208,6 +1197,7 @@ Public Class clsMSGFResultsSummarizer
 
         Catch ex As Exception
             SetErrorMessage(ex.Message)
+            Console.WriteLine(ex.StackTrace)
             Return False
         End Try
     End Function
@@ -1584,6 +1574,7 @@ Public Class clsMSGFResultsSummarizer
 
         Catch ex As Exception
             SetErrorMessage(ex.Message)
+            Console.WriteLine(ex.StackTrace)
             blnSuccess = False
         End Try
 
@@ -1715,11 +1706,11 @@ Public Class clsMSGFResultsSummarizer
       lstSeqInfo As IDictionary(Of Integer, clsSeqInfo)) As Boolean
 
         Try
-            ' The Keys in this dictionary are SeqID values; the values track observation count and whether the peptide ends in K or R
-            Dim lstUniqueSequences = New Dictionary(Of Integer, udtUniqueSeqInfo)
+            ' The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
+            Dim lstUniqueSequences = New Dictionary(Of Integer, clsUniqueSeqInfo)
 
-            ' The Keys in this dictionary are SeqID values; the values track observation count and whether the peptide ends in K or R
-            Dim lstUniquePhosphopeptides = New Dictionary(Of Integer, udtUniqueSeqInfo)
+            ' The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
+            Dim lstUniquePhosphopeptides = New Dictionary(Of Integer, clsUniqueSeqInfo)
 
             ' The Keys in this dictionary are protein names; the values are observation count
             Dim lstUniqueProteins = New Dictionary(Of String, Integer)
@@ -1737,17 +1728,8 @@ Public Class clsMSGFResultsSummarizer
                 ' Otherwise, the keys are ResultID values
                 Dim intSeqID As Integer = result.Key
 
-                Dim seqInfoToStore = New udtUniqueSeqInfo()
-                With seqInfoToStore
-                    .CTermK = result.Value.CTermK
-                    .CTermR = result.Value.CTermR
-                    .MissedCleavage = result.Value.MissedCleavage
-                    .KeratinPeptide = result.Value.KeratinPeptide
-                    .TrypsinPeptide = result.Value.TrypsinPeptide
-                    .Tryptic = result.Value.Tryptic
-                    .ObsCount = obsCountForResult
-                End With
-
+                ' Make a deep copy of result.Value as class clsUniqueSeqInfo
+                Dim seqInfoToStore = result.Value.CloneAsSeqInfo()
 
                 AddUpdateUniqueSequence(lstUniqueSequences, intSeqID, seqInfoToStore)
 
@@ -1813,9 +1795,9 @@ Public Class clsMSGFResultsSummarizer
     End Function
 
     Private Function TabulatePSMStats(
-      lstUniqueSequences As IDictionary(Of Integer, udtUniqueSeqInfo),
+      lstUniqueSequences As IDictionary(Of Integer, clsUniqueSeqInfo),
       lstUniqueProteins As IDictionary(Of String, Integer),
-      lstUniquePhosphopeptides As IDictionary(Of Integer, udtUniqueSeqInfo)) As udtPSMStatsType
+      lstUniquePhosphopeptides As IDictionary(Of Integer, clsUniqueSeqInfo)) As udtPSMStatsType
 
         Dim psmStats = New udtPSMStatsType()
         psmStats.TotalPSMs = (From item In lstUniqueSequences Select item.Value.ObsCount).Sum()

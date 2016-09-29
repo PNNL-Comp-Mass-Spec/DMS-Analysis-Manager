@@ -105,6 +105,7 @@
     <Compile Include="clsMSGFToolRunner.vb" />
     <Compile Include="clsNormalizedPeptideInfo.vb" />
     <Compile Include="clsPSMInfo.vb" />
+    <Compile Include="clsUniqueSeqInfo.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <ItemGroup>
