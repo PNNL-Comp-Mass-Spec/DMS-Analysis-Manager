@@ -105,12 +105,18 @@ Public Class clsPSMInfo
     ''' <summary>
     ''' Clone this class as a new clsUniqueSeqInfo instance
     ''' </summary>
+    ''' <param name="obsCountOverride">Observation count override; ignored if less than 0</param>
     ''' <returns></returns>
-    Public Function CloneAsSeqInfo() As clsUniqueSeqInfo
+    Public Function CloneAsSeqInfo(Optional obsCountOverride As Integer = -1) As clsUniqueSeqInfo
 
         Dim seqInfo = New clsUniqueSeqInfo()
 
-        seqInfo.UpdateObservationCount(Me.ObsCount)
+        If obsCountOverride >= 0 Then
+            seqInfo.UpdateObservationCount(obsCountOverride)
+        Else
+            seqInfo.UpdateObservationCount(Me.ObsCount)
+        End If
+
         seqInfo.CTermK = Me.CTermK
         seqInfo.CTermR = Me.CTermR
         seqInfo.MissedCleavage = Me.MissedCleavage

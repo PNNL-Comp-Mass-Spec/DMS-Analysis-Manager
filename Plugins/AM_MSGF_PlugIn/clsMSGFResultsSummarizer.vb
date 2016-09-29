@@ -1729,7 +1729,7 @@ Public Class clsMSGFResultsSummarizer
                 Dim intSeqID As Integer = result.Key
 
                 ' Make a deep copy of result.Value as class clsUniqueSeqInfo
-                Dim seqInfoToStore = result.Value.CloneAsSeqInfo()
+                Dim seqInfoToStore = result.Value.CloneAsSeqInfo(obsCountForResult)
 
                 AddUpdateUniqueSequence(lstUniqueSequences, intSeqID, seqInfoToStore)
 
