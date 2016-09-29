@@ -887,13 +887,16 @@ Public Class clsMSGFResultsSummarizer
       newNormalizedPeptide As clsNormalizedPeptideInfo) As Integer
 
         ' Find normalized peptides with the new normalized peptide's clean sequence
-        Dim normalizedPeptides As List(Of clsNormalizedPeptideInfo) = Nothing
+        Dim normalizedPeptideCandidates As List(Of clsNormalizedPeptideInfo) = Nothing
 
-        If Not dictNormalizedPeptides.TryGetValue(newNormalizedPeptide.CleanSequence, normalizedPeptides) Then
+        If Not dictNormalizedPeptides.TryGetValue(newNormalizedPeptide.CleanSequence, normalizedPeptideCandidates) Then
             Return clsPSMInfo.UNKNOWN_SEQID
         End If
 
-        For Each candidate In normalizedPeptides
+        ' Step through the normalized peptides that correspond to newNormalizedPeptide.CleanSequence
+        ' Note that each candidate will have an empty CleanSequence value because of how they are stored in dictNormalizedPeptides
+
+        For Each candidate In normalizedPeptideCandidates
             If newNormalizedPeptide.Modifications.Count = 0 AndAlso candidate.Modifications.Count = 0 Then
                 ' Match found
                 Return candidate.SeqID
@@ -911,7 +914,9 @@ Public Class clsMSGFResultsSummarizer
                     Exit For
                 End If
 
+                ' Mod names do match                
                 If Math.Abs(newNormalizedPeptide.Modifications(modIndex).Value - candidate.Modifications(modIndex).Value) <= 1 Then
+                    ' The affected residues are at the same index or are one index apart                    
                     residueMatchCount += 1
                 End If
 
@@ -1614,21 +1619,30 @@ Public Class clsMSGFResultsSummarizer
 
         Dim modList = New List(Of KeyValuePair(Of String, Integer))
 
-        Dim lstMods = oSeqInfo.ModDescription.Split(","c)
-        For Each modDescriptor In lstMods
-            Dim colonIndex = modDescriptor.IndexOf(":"c)
-            Dim modName As String
-            Dim modIndex = 0
+        If Not String.IsNullOrWhiteSpace(oSeqInfo.ModDescription) Then
+            ' Parse the modifications
 
-            If colonIndex > 0 Then
-                modName = modDescriptor.Substring(0, colonIndex)
-                Integer.TryParse(modDescriptor.Substring(colonIndex + 1), modIndex)
-            Else
-                modName = modDescriptor
-            End If
+            Dim lstMods = oSeqInfo.ModDescription.Split(","c)
+            For Each modDescriptor In lstMods
+                Dim colonIndex = modDescriptor.IndexOf(":"c)
+                Dim modName As String
+                Dim modIndex = 0
 
-            modList.Add(New KeyValuePair(Of String, Integer)(modName, modIndex))
-        Next
+                If colonIndex > 0 Then
+                    modName = modDescriptor.Substring(0, colonIndex)
+                    Integer.TryParse(modDescriptor.Substring(colonIndex + 1), modIndex)
+                Else
+                    modName = modDescriptor
+                End If
+
+                If String.IsNullOrWhiteSpace(modName) Then
+                    ' Empty mod name; this is unexpected
+                    Throw New Exception(String.Format("Empty mod name parsed from the ModDescription for SeqID {0}: {1}", oSeqInfo.SeqID, oSeqInfo.ModDescription))
+                End If
+
+                modList.Add(New KeyValuePair(Of String, Integer)(modName, modIndex))
+            Next
+        End If
 
         Return GetNormalizedPeptideInfo(peptideCleanSequence, modList, seqID)
     End Function
