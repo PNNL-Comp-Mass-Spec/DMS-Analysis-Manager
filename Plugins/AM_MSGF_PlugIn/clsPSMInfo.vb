@@ -12,6 +12,33 @@ Public Class clsPSMInfo
     Private ReadOnly mObservations As List(Of PSMObservation)
 
     ''' <summary>
+    ''' True if the C-terminus of the peptide is Lysine
+    ''' </summary>
+    Public Property CTermK As Boolean
+
+    ''' <summary>
+    ''' True if the C-terminus of the peptide is Arginine
+    ''' </summary>
+    Public Property CTermR As Boolean
+
+    ''' <summary>
+    ''' True if the peptide is from a keratin protein
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property KeratinPeptide As Boolean
+
+    ''' <summary>
+    ''' True if the peptide has an internal K or R that is not followed by P
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property MissedCleavage As Boolean
+
+    ''' <summary>
+    ''' True if this is a phosphopeptide
+    ''' </summary>
+    Public Property Phosphopeptide As Boolean
+
+    ''' <summary>
     ''' Protein name (from the _fht.txt or _syn.txt file)
     ''' </summary>
     Public Property Protein As String
@@ -20,6 +47,18 @@ Public Class clsPSMInfo
     ''' First sequence ID for this normalized peptide
     ''' </summary>
     Public Property SeqIdFirst As Integer
+
+    ''' <summary>
+    ''' True if the peptide is from a trypsin protein
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property TrypsinPeptide As Boolean
+
+    ''' <summary>
+    ''' True if the peptide is partially or fully tryptic
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property Tryptic As Boolean
 
     ''' <summary>
     ''' Details for each PSM that maps to this class
@@ -75,6 +114,13 @@ Public Class clsPSMInfo
         Protein = String.Empty
         SeqIdFirst = UNKNOWN_SEQID
         mObservations.Clear()
+        CTermK = False
+        CTermR = False
+        MissedCleavage = False
+        KeratinPeptide = False
+        TrypsinPeptide = False
+        Phosphopeptide = False
+        Tryptic = False
     End Sub
 
     ''' <summary>

@@ -10,11 +10,12 @@ Public Class clsNormalizedPeptideInfo
     ''' <remarks>This field is empty in dictNormalizedPeptides because the keys in the dictionary are the clean sequence</remarks>
     Public ReadOnly Property CleanSequence As String
 
+    ' ReSharper disable once CollectionNeverUpdated.Global
     ''' <summary>
     ''' List of modified amino acids
     ''' </summary>
     ''' <remarks>Keys are mod names or symbols; values are the 0-based residue index</remarks>
-    Public Property ModifiedResidues As List(Of KeyValuePair(Of String, Integer))
+    Public ReadOnly Property Modifications As List(Of KeyValuePair(Of String, Integer))
 
     ''' <summary>
     ''' Sequence ID for this normalized peptide
@@ -28,8 +29,13 @@ Public Class clsNormalizedPeptideInfo
     ''' <param name="peptideCleanSequence"></param>
     Public Sub New(peptideCleanSequence As String)
         CleanSequence = peptideCleanSequence
-        ModifiedResidues = New List(Of KeyValuePair(Of String, Integer))
+        Modifications = New List(Of KeyValuePair(Of String, Integer))
         SeqID = -1
+    End Sub
+
+    Public Sub StoreModifications(newModifications As IEnumerable(Of KeyValuePair(Of String, Integer)))
+        Modifications.Clear()
+        Modifications.AddRange(newModifications)
     End Sub
 
     Public Overrides Function ToString() As String
