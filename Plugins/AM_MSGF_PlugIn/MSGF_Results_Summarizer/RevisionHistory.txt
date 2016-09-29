@@ -1,5 +1,10 @@
 MSGF Results Summarizer Change Log
 
+Version 1.1.6116; September 29, 2016
+	- Improved logic that determines normalized peptides
+		- Peptides are merged only if they have the same clean sequence and each of the modifications is on the the same residue or one residue away
+	- Added new counts: KeratinPeptides, TrypsinPeptides, TrypticPeptides, MissedCleavageRatio, and Phosphopeptides
+
 Version 1.1.5683; July 24, 2015
 	- When finding PSMs and unique peptide counts, now ignoring the position of modifications in peptides (though order still matters)
 		- For example, PEPT*IDES and PEPTIDES* are treated as the same peptide
