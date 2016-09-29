@@ -9,9 +9,9 @@
     </SchemaVersion>
     <ProjectGuid>{6F9965FA-1606-42C1-AEE8-260E316CC39F}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>MSGF_Results_Summarizer.modMain</StartupObject>
-    <RootNamespace>MSGF_Results_Summarizer</RootNamespace>
-    <AssemblyName>MSGF_Results_Summarizer</AssemblyName>
+    <StartupObject>MSGFResultsSummarizerProgram.modMain</StartupObject>
+    <RootNamespace>MSGFResultsSummarizerProgram</RootNamespace>
+    <AssemblyName>MSGFResultsSummarizerProgram</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Console</MyType>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
@@ -35,7 +35,7 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\</OutputPath>
-    <DocumentationFile>MSGF_Results_Summarizer.xml</DocumentationFile>
+    <DocumentationFile>MSGFResultsSummarizerProgram.xml</DocumentationFile>
     <NoWarn>
     </NoWarn>
     <DebugType>full</DebugType>
@@ -47,7 +47,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>MSGF_Results_Summarizer.xml</DocumentationFile>
+    <DocumentationFile>MSGFResultsSummarizerProgram.xml</DocumentationFile>
     <Optimize>true</Optimize>
     <NoWarn>
     </NoWarn>
@@ -93,9 +93,9 @@
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AnalysisManagerMSGFPlugin.vbproj">
-      <Project>{7A6DE396-7309-43E1-8F8A-B387709508DD}</Project>
-      <Name>AnalysisManagerMSGFPlugin</Name>
+    <ProjectReference Include="..\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.vbproj">
+      <Project>{60c3570f-82bd-4103-ac4b-ac6cdd4a729c}</Project>
+      <Name>MSGFResultsSummarizer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

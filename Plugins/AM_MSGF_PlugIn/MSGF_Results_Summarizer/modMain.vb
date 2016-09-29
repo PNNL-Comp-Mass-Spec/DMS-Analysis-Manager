@@ -13,6 +13,7 @@
 ' 
 Imports PHRPReader
 Imports System.IO
+Imports MSGFResultsSummarizer
 
 Module modMain
     Public Const PROGRAM_DATE As String = "September 29, 2016"
@@ -82,7 +83,7 @@ Module modMain
 
         Dim dctFileSuffixes As Dictionary(Of String, clsPHRPReader.ePeptideHitResultType)
 
-        Dim objSummarizer As AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer
+        Dim objSummarizer As clsMSGFResultsSummarizer
 
         Dim eResultType As clsPHRPReader.ePeptideHitResultType
 
@@ -201,10 +202,12 @@ Module modMain
                 End If
             End If
 
-            objSummarizer = New AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, fiSourceFile.Directory.FullName)
-            objSummarizer.MSGFThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
-            objSummarizer.EValueThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD
-            objSummarizer.FDRThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD
+            objSummarizer = New clsMSGFResultsSummarizer(eResultType, mDatasetName, mJob, fiSourceFile.Directory.FullName)
+            AddHandler objSummarizer.ErrorEvent, AddressOf MSGFResultsSummarizer_ErrorHandler
+
+            objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
+            objSummarizer.EValueThreshold = clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD
+            objSummarizer.FDRThreshold = clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD
 
             objSummarizer.OutputFolderPath = mOutputFolderPath
             objSummarizer.PostJobPSMResultsToDB = mPostResultsToDb
@@ -392,5 +395,14 @@ Module modMain
 
 	End Sub
 
+#Region "Event Handlers"
+    ''' <summary>
+    ''' Event handler for the MSGResultsSummarizer
+    ''' </summary>
+    ''' <param name="errorMessage"></param>
+    Private Sub MSGFResultsSummarizer_ErrorHandler(errorMessage As String)
+        ShowErrorMessage(errorMessage)
+    End Sub
+#End Region
 
 End Module
