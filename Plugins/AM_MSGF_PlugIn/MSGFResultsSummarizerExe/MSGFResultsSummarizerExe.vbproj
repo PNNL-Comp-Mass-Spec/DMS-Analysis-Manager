@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -9,9 +9,9 @@
     </SchemaVersion>
     <ProjectGuid>{6F9965FA-1606-42C1-AEE8-260E316CC39F}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>MSGFResultsSummarizerProgram.modMain</StartupObject>
-    <RootNamespace>MSGFResultsSummarizerProgram</RootNamespace>
-    <AssemblyName>MSGFResultsSummarizerProgram</AssemblyName>
+    <StartupObject>MSGFResultsSummarizerExe.modMain</StartupObject>
+    <RootNamespace>MSGFResultsSummarizerExe</RootNamespace>
+    <AssemblyName>MSGFResultsSummarizerExe</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Console</MyType>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
@@ -35,7 +35,7 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\</OutputPath>
-    <DocumentationFile>MSGFResultsSummarizerProgram.xml</DocumentationFile>
+    <DocumentationFile>MSGFResultsSummarizerExe.xml</DocumentationFile>
     <NoWarn>
     </NoWarn>
     <DebugType>full</DebugType>
@@ -47,7 +47,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>MSGFResultsSummarizerProgram.xml</DocumentationFile>
+    <DocumentationFile>MSGFResultsSummarizerExe.xml</DocumentationFile>
     <Optimize>true</Optimize>
     <NoWarn>
     </NoWarn>

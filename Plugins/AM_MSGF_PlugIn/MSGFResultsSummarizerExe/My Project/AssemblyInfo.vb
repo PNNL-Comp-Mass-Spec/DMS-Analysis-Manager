@@ -8,10 +8,10 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("MSGF_Results_Summarizer")> 
+<Assembly: AssemblyTitle("MSGFResultsSummarizerExe")> 
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("PNNL")> 
-<Assembly: AssemblyProduct("MSGF_Results_Summarizer")> 
+<Assembly: AssemblyProduct("MSGFResultsSummarizerExe")> 
 <Assembly: AssemblyCopyright("Copyright © PNNL 2012")> 
 <Assembly: AssemblyTrademark("")> 
 
