@@ -146,6 +146,9 @@ copy "$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin"
 copy "$(TargetPath)" "$(ProjectDir)MSGF_Results_Summarizer\bin
 copy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)MSGF_Results_Summarizer\bin
 copy "$(TargetDir)$(TargetName).xml" "$(ProjectDir)MSGF_Results_Summarizer\bin
-copy "$(TargetDir)AM_Shared.*" "$(ProjectDir)MSGF_Results_Summarizer\bin</PostBuildEvent>
+copy "$(TargetDir)AM_Shared.*" "$(ProjectDir)MSGF_Results_Summarizer\bin
+copy "$(TargetDir)MSGFResultsSummarizer.dll" "$(ProjectDir)..\..\AM_Common"
+copy "$(TargetDir)MSGFResultsSummarizer.dll" "$(ProjectDir)..\..\AM_Program\bin"
+</PostBuildEvent>
   </PropertyGroup>
 </Project>
