@@ -386,6 +386,7 @@ Public Class clsGlobal
     ''' <param name="callingFunction">Name of the calling function (for logging purposes)</param>
     ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
     ''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+    '''<param name="maxRowsToReturn">Maximum rows to return; 0 to return all rows</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>
     ''' Null values are converted to empty strings
@@ -398,63 +399,19 @@ Public Class clsGlobal
       <Out()> ByRef lstResults As List(Of List(Of String)),
       callingFunction As String,
       Optional retryCount As Short = 3,
-      Optional timeoutSeconds As Integer = 5,
+      Optional timeoutSeconds As Integer = 30,
       Optional maxRowsToReturn As Integer = 0) As Boolean
 
         If retryCount < 1 Then retryCount = 1
         If timeoutSeconds < 5 Then timeoutSeconds = 5
 
-        lstResults = New List(Of List(Of String))
+        Dim dbTools = New PRISM.DataBase.clsDBTools(connectionString)
 
-        While retryCount > 0
-            Try
-                Using dbConnection = New SqlConnection(connectionString)
-                    Using cmd = New SqlCommand(sqlQuery, dbConnection)
+        AddHandler dbTools.ErrorEvent, AddressOf DbToolsErrorEventHandler
 
-                        cmd.CommandTimeout = timeoutSeconds
+        Dim success = dbTools.GetQueryResults(sqlQuery, lstResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn)
 
-                        dbConnection.Open()
-
-                        Dim reader = cmd.ExecuteReader()
-
-                        While reader.Read()
-                            Dim lstCurrentRow = New List(Of String)
-
-                            For columnIndex = 0 To reader.FieldCount - 1
-                                Dim value = reader.GetValue(columnIndex)
-
-                                If DBNull.Value.Equals(value) Then
-                                    lstCurrentRow.Add(String.Empty)
-                                Else
-                                    lstCurrentRow.Add(value.ToString())
-                                End If
-
-                            Next
-
-                            lstResults.Add(lstCurrentRow)
-
-                            If maxRowsToReturn > 0 AndAlso lstResults.Count >= maxRowsToReturn Then
-                                Exit While
-                            End If
-                        End While
-
-                    End Using
-                End Using
-
-                Return True
-
-            Catch ex As Exception
-                retryCount -= 1S
-                Dim errorMessage = "Exception querying database: " + ex.Message + "; ConnectionString: " + connectionString
-                errorMessage &= ", RetryCount = " + retryCount.ToString
-                errorMessage &= ", Query " & sqlQuery
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-                Thread.Sleep(5000)              'Delay for 5 second before trying again
-            End Try
-        End While
-
-        Return False
+        Return success
 
     End Function
 
@@ -1579,7 +1536,17 @@ Public Class clsGlobal
         End If
 
     End Function
+
 #End Region
+
+#Region "EventHandlers"
+
+    Private Shared Sub DbToolsErrorEventHandler(errorMessage As String)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+    End Sub
+
+#End Region
+
 End Class
 
 
