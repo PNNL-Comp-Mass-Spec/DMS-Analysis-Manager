@@ -2643,7 +2643,11 @@ Public Class clsMSGFRunner
     ''' </summary>
     ''' <param name="errorMessage"></param>
     Private Sub MSGFResultsSummarizer_ErrorHandler(errorMessage As String)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+        If Message.ToLower().Contains("permission was denied") Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage)
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+        End If
     End Sub
 
     ''' <summary>

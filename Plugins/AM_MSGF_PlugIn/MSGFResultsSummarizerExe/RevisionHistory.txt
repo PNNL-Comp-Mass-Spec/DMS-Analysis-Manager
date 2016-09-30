@@ -1,5 +1,8 @@
 MSGF Results Summarizer Change Log
 
+Version 1.1.6117; September 30, 2016
+	- Now uses MSGFResultsSummarizer.dll instead of AnalysisManagerMSGFPlugin.dll
+
 Version 1.1.6116; September 29, 2016
 	- Improved logic that determines normalized peptides
 		- Peptides are merged only if they have the same clean sequence and each of the modifications is on the the same residue or one residue away
