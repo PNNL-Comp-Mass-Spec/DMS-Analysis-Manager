@@ -952,6 +952,36 @@ Public Class clsMSGFResultsSummarizer
         Return startupOptions
     End Function
 
+    ''' <summary>
+    ''' Get the RegEx for matching keratin proteins
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks>Used by SMAQC</remarks>
+    Public Shared Function GetKeratinRegEx() As Regex
+        ' Regex to match keratin proteins, including 
+        '   K1C9_HUMAN, K1C10_HUMAN, K1CI_HUMAN
+        '   K2C1_HUMAN, K2C1B_HUMAN, K2C3_HUMAN, K2C6C_HUMAN, K2C71_HUMAN
+        '   K22E_HUMAN And K22O_HUMAN
+        '   Contaminant_K2C1_HUMAN
+        '   Contaminant_K22E_HUMAN
+        '   Contaminant_K1C9_HUMAN
+        '   Contaminant_K1C10_HUMAN
+        Return New Regex("(K[1-2]C\d+[A-K]*|K22[E,O]|K1CI)_HUMAN", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+    End Function
+
+    ''' <summary>
+    ''' Get the RegEx for matching trypsin proteins
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks>Used by SMAQC</remarks>    
+    Public Shared Function GetTrypsinRegEx() As Regex
+        ' Regex to match trypsin proteins, including
+        '   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
+        '   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
+        '   Contaminant_Trypa
+        Return New Regex("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+    End Function
+
     Public Shared Function GetNormalizedPeptideInfo(
       peptideCleanSequence As String,
       modifications As IEnumerable(Of KeyValuePair(Of String, Integer)),
@@ -1253,21 +1283,11 @@ Public Class clsMSGFResultsSummarizer
         ' Regex for determining that a peptide has a missed cleavage (i.e. an internal tryptic cleavage point)
         Dim reMissedCleavage = New Regex("[KR][^P][A-Z]", RegexOptions.Compiled)
 
-        ' Regex to match keratin proteins, including 
-        '   K1C9_HUMAN, K1C10_HUMAN, K1CI_HUMAN
-        '   K2C1_HUMAN, K2C1B_HUMAN, K2C3_HUMAN, K2C6C_HUMAN, K2C71_HUMAN
-        '   K22E_HUMAN And K22O_HUMAN
-        '   Contaminant_K2C1_HUMAN
-        '   Contaminant_K22E_HUMAN
-        '   Contaminant_K1C9_HUMAN
-        '   Contaminant_K1C10_HUMAN
-        Dim reKeratinProtein = New Regex("(K[1-2]C\d+[A-K]*|K22[E,O]|K1CI)_HUMAN", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        ' Regex to match keratin proteins    
+        Dim reKeratinProtein = GetKeratinRegEx()
 
-        ' Regex to match trypsin proteins, including
-        '   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
-        '   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
-        '   Contaminant_Trypa
-        Dim reTrypsinProtein = New Regex("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+        ' Regex to match trypsin proteins
+        Dim reTrypsinProtein = GetTrypsinRegEx()
 
         lstResultToSeqMap = New SortedList(Of Integer, Integer)
         lstSeqToProteinMap = New SortedList(Of Integer, List(Of clsProteinInfo))
@@ -1520,7 +1540,7 @@ Public Class clsMSGFResultsSummarizer
                         End If
 
                         ' Make a new normalized peptide entry that does not have clean sequence 
-                        ' (to conserve memory, since tracked by dictNormalizedPeptides)
+                        ' (to conserve memory, since keys in dictionary normalizedPeptides are clean sequence)
                         Dim normalizedPeptideToStore = New clsNormalizedPeptideInfo(String.Empty)
                         normalizedPeptideToStore.StoreModifications(normalizedPeptide.Modifications)
                         normalizedPeptideToStore.SeqID = intSeqID
