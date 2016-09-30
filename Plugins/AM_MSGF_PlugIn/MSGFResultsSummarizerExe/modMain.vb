@@ -16,7 +16,7 @@ Imports System.IO
 Imports MSGFResultsSummarizer
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "September 30, 2016"
+    Private Const PROGRAM_DATE As String = "September 30, 2016"
 
     Private mMSGFSynFilePath As String = String.Empty
 	Private mInputFolderPath As String = String.Empty
@@ -30,28 +30,25 @@ Module modMain
 	Private mPostResultsToDb As Boolean = False
 
 	Public Function Main() As Integer
-		' Returns 0 if no error, error code if an error
+        ' Returns 0 if no error, error code if an error
 
-		Dim intReturnCode As Integer
-		Dim objParseCommandLine As New clsParseCommandLine
-		Dim blnProceed As Boolean
+        Dim objParseCommandLine As New clsParseCommandLine
+        Dim blnProceed As Boolean
 
 		Dim blnSuccess As Boolean
 
-		intReturnCode = 0
-
-		Try
-			blnProceed = False
-			If objParseCommandLine.ParseCommandLine Then
-				If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
-			End If
+        Try
+            blnProceed = False
+            If objParseCommandLine.ParseCommandLine Then
+                If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
+            End If
 
             If Not blnProceed OrElse objParseCommandLine.NeedToShowHelp Then
                 ShowProgramHelp()
-                intReturnCode = -1
+                Return -1
             ElseIf (objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0) Then
                 ShowProgramHelp()
-                intReturnCode = -1
+                Return -1
             ElseIf String.IsNullOrEmpty(mMSGFSynFilePath) AndAlso String.IsNullOrEmpty(mInputFolderPath) Then
                 ShowErrorMessage("Must define either the MSGFSynFilePath or InputFolderPath")
                 ShowProgramHelp()
@@ -61,17 +58,17 @@ Module modMain
                 blnSuccess = SummarizeMSGFResults()
 
                 If Not blnSuccess Then
-                    intReturnCode = -1
+                    Return -1
                 End If
 
             End If
 
         Catch ex As Exception
             Console.WriteLine("Error occurred in modMain->Main: " & ControlChars.NewLine & ex.Message)
-            intReturnCode = -1
+            Return -1
         End Try
 
-        Return intReturnCode
+        Return 0
 
     End Function
 
