@@ -1558,7 +1558,10 @@ Public Class clsMSGFResultsSummarizer
 
                         ' Check whether this peptide has a missed cleavage
                         ' This only works for Trypsin
-                        If reMissedCleavage.IsMatch(normalizedPeptide.CleanSequence) Then
+                        If objPSM.NumMissedCleavages > 0 Then
+                            psmInfo.MissedCleavage = True
+                        ElseIf reMissedCleavage.IsMatch(normalizedPeptide.CleanSequence) Then
+                            Console.WriteLine("NumMissedCleavages is zero but the peptide matches the MissedCleavage Regex; this is unexpected")
                             psmInfo.MissedCleavage = True
                         End If
 
@@ -1587,7 +1590,7 @@ Public Class clsMSGFResultsSummarizer
                         ' Check whether this is a phosphopeptide
                         ' This check only works if the _ModSummary.txt file was loaded because it relies on the mod name being Phosph
                         For Each modification In normalizedPeptide.Modifications
-                            If modification.Key.StartsWith("Phosph", StringComparison.InvariantCultureIgnoreCase) Then
+                            If String.Equals(modification.Key, "Phosph", StringComparison.InvariantCultureIgnoreCase) Then
                                 psmInfo.Phosphopeptide = True
                                 Exit For
                             End If
