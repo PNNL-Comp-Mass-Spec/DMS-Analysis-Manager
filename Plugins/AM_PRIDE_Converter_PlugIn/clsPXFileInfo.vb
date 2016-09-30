@@ -1,11 +1,10 @@
 ﻿Imports AnalysisManagerBase
-Imports AnalysisManagerBase.clsAnalysisResources
 
 Public Class clsPXFileInfo
     Inherits clsPXFileInfoBase
 
 #Region "Module Variables"
-    Protected mFileMappings As List(Of Integer)
+    Protected ReadOnly mFileMappings As List(Of Integer)
 #End Region
 
 #Region "Auto-properties"

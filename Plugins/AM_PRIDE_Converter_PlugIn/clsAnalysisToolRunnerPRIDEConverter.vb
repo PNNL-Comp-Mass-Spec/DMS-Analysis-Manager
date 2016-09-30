@@ -260,7 +260,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Const maxErrorCount = 10
             Dim intJobsProcessed = 0
             Dim intJobFailureCount = 0
-            Dim dtLastLogTime As DateTime = DateTime.UtcNow
+            Dim dtLastLogTime = DateTime.UtcNow
 
             ' This dictionary tracks the datasets that have been processed
             ' Keys are dataset ID, values are dataset name
@@ -307,7 +307,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     Console.WriteLine()
                     Console.WriteLine(m_StatusTools.CurrentOperation)
 
-                    AddPlaceholderDatasetEntry(kvDatasetInfo, dctDatasetRawFilePaths)
+                    AddPlaceholderDatasetEntry(kvDatasetInfo)
                 End If
             Next
 
@@ -390,25 +390,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Private Sub AddPlaceholderDatasetEntry(
-      kvDatasetInfo As KeyValuePair(Of Integer, clsDataPackageDatasetInfo),
-      dctDatasetRawFilePaths As Dictionary(Of String, String))
+    Private Sub AddPlaceholderDatasetEntry(kvDatasetInfo As KeyValuePair(Of Integer, clsDataPackageDatasetInfo))
 
         AddNEWTInfo(kvDatasetInfo.Value.Experiment_NEWT_ID, kvDatasetInfo.Value.Experiment_NEWT_Name)
 
         ' Store the instrument group and instrument name
         StoreInstrumentInfo(kvDatasetInfo.Value)
 
-        Dim strDatasetRawFilePath As String = String.Empty
-
-        If dctDatasetRawFilePaths.Count > 0 Then
-            strDatasetRawFilePath = Path.GetDirectoryName(dctDatasetRawFilePaths.FirstOrDefault().Value)
-        Else
-            strDatasetRawFilePath = "D:\Data"
-        End If
-
         Dim udtDatasetInfo = kvDatasetInfo.Value
-        strDatasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset & ".raw")
+        Dim strDatasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset & ".raw")
 
         Dim dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(udtDatasetInfo)
 
@@ -509,7 +499,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="lstList"></param>
     ''' <param name="strValue"></param>
     ''' <remarks></remarks>
-    Private Sub AddToListIfNew(lstList As List(Of String), strValue As String)
+    Private Sub AddToListIfNew(lstList As ICollection(Of String), strValue As String)
         If Not lstList.Contains(strValue) Then
             lstList.Add(strValue)
         End If
@@ -517,7 +507,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     Private Function AppendToPXFileInfo(
        dataPkgJob As clsDataPackageJobInfo,
-       dctDatasetRawFilePaths As Dictionary(Of String, String),
+       dctDatasetRawFilePaths As IReadOnlyDictionary(Of String, String),
        resultFiles As clsResultFileContainer) As Boolean
 
         ' Add the files to be submitted to ProteomeXchange to the master file list
@@ -850,7 +840,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     Private Function CreateMzXMLFileIfMissing(
        strDataset As String,
        objAnalysisResults As clsAnalysisResults,
-       dctDatasetRawFilePaths As Dictionary(Of String, String)) As Boolean
+       dctDatasetRawFilePaths As IReadOnlyDictionary(Of String, String)) As Boolean
 
         Dim blnSuccess As Boolean
         Dim strDestPath As String = String.Empty
@@ -881,8 +871,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             ' Need to create the .mzXML file
 
-            Dim dctDatasetYearQuarter As Dictionary(Of String, String)
-            dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER)
+            Dim dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER)
 
             If Not dctDatasetRawFilePaths.ContainsKey(strDataset) Then
                 m_message = "Dataset " & strDataset & " not found in job parameter " & clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS & "; unable to create the missing .mzXML file"
@@ -999,7 +988,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
       intJob As Integer,
       strDataset As String,
       udtFilterThresholds As udtFilterThresholdsType,
-      lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType))) As String
+      lstPseudoMSGFData As IDictionary(Of String, List(Of udtPseudoMSGFDataType))) As String
 
         Const MSGF_SPECPROB_NOTDEFINED = 10
         Const PVALUE_NOTDEFINED = 10
@@ -1598,7 +1587,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
       strTemplateFileName As String,
       dataPkgJob As clsDataPackageJobInfo,
       strPseudoMsgfFilePath As String,
-      lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)),
+      lstPseudoMSGFData As IReadOnlyDictionary(Of String, List(Of udtPseudoMSGFDataType)),
       strOrgDBNameGenerated As String,
       strProteinCollectionListOrFasta As String,
       udtFilterThresholds As udtFilterThresholdsType) As String
@@ -1776,7 +1765,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                         End If
 
                                     Case "Identifications"
-                                        If Not CreateMSGFReportXMLFileWriteIDs(objXmlWriter, lstPseudoMSGFData, strOrgDBNameGenerated, dataPkgJob.PeptideHitResultType) Then
+                                        If Not CreateMSGFReportXMLFileWriteIDs(objXmlWriter, lstPseudoMSGFData, strOrgDBNameGenerated) Then
                                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreateMSGFReportXMLFileWriteIDs returned false; aborting")
                                             Return String.Empty
                                         End If
@@ -1927,9 +1916,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     Private Function CreateMSGFReportXMLFileWriteIDs(
       objXmlWriter As XmlTextWriter,
-      lstPseudoMSGFData As Dictionary(Of String, List(Of udtPseudoMSGFDataType)),
-      strOrgDBNameGenerated As String,
-      ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+      lstPseudoMSGFData As IReadOnlyDictionary(Of String, List(Of udtPseudoMSGFDataType)),
+      strOrgDBNameGenerated As String) As Boolean
 
         Try
 
@@ -2221,7 +2209,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Private Function CreatePXSubmissionFile(dctTemplateParameters As Dictionary(Of String, String)) As Boolean
+    Private Function CreatePXSubmissionFile(dctTemplateParameters As IReadOnlyDictionary(Of String, String)) As Boolean
 
         Const TBD = "******* UPDATE ****** "
 
@@ -2605,7 +2593,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Private Function DictionaryHasDefinedValue(dctTemplateParameters As Dictionary(Of String, String), termName As String) As Boolean
+    Private Function DictionaryHasDefinedValue(dctTemplateParameters As IReadOnlyDictionary(Of String, String), termName As String) As Boolean
         Dim value As String = String.Empty
 
         If dctTemplateParameters.TryGetValue(termName, value) Then
@@ -2806,7 +2794,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Private Function GetValueOrDefault(strType As String, dctParameters As Dictionary(Of String, String), defaultValue As String) As String
+    Private Function GetValueOrDefault(strType As String, dctParameters As IReadOnlyDictionary(Of String, String), defaultValue As String) As String
 
         Dim strValueOverride As String = String.Empty
 
@@ -3024,8 +3012,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
       kvJobInfo As KeyValuePair(Of Integer, clsDataPackageJobInfo),
       udtFilterThresholds As udtFilterThresholdsType,
       objAnalysisResults As clsAnalysisResults,
-      dctDatasetRawFilePaths As Dictionary(Of String, String),
-      dctTemplateParameters As Dictionary(Of String, String),
+      dctDatasetRawFilePaths As IReadOnlyDictionary(Of String, String),
+      dctTemplateParameters As IReadOnlyDictionary(Of String, String),
       assumeInstrumentDataUnpurged As Boolean) As IJobParams.CloseOutType
 
         Dim blnSuccess As Boolean
@@ -3210,8 +3198,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim strTemplateFilePath As String
         Dim strLineIn As String
 
-        Dim dctParameters As Dictionary(Of String, String)
-        dctParameters = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+        Dim dctParameters = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
         Dim dctKeyNameOverrides = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
         dctKeyNameOverrides.Add("name", "submitter_name")
@@ -3353,7 +3340,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     ' Make sure the myEMSLUtilities object knows about this dataset
                     m_MyEMSLUtilities.AddDataset(strDataset)
                     Dim cleanFilePath As String = Nothing
-                    MyEMSLReader.DatasetInfo.ExtractMyEMSLFileID(sourceFilePath, cleanFilePath)
+                    DatasetInfoBase.ExtractMyEMSLFileID(sourceFilePath, cleanFilePath)
 
                     Dim fiSourceFile = New FileInfo(cleanFilePath)
                     Dim unzipRequired = (fiSourceFile.Extension.ToLower() = ".zip" OrElse fiSourceFile.Extension.ToLower() = ".gz")
@@ -3767,7 +3754,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     Private Function UpdateMzIdFiles(
       dataPkgJob As clsDataPackageJobInfo,
       <Out()> ByRef mzIdFilePaths As List(Of String),
-      dctTemplateParameters As Dictionary(Of String, String)) As Boolean
+      dctTemplateParameters As IReadOnlyDictionary(Of String, String)) As Boolean
 
         Dim sampleMetadata = New clsSampleMetadata()
         sampleMetadata.Clear()
@@ -3814,7 +3801,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 For splitFastaResultID = 1 To dataPkgJob.NumberOfClonedSteps
                     success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, splitFastaResultID, sampleMetadata, strMzIDFilePath)
                     If success Then
-                        mzIdFilePaths.add(strMzIDFilePath)
+                        mzIdFilePaths.Add(strMzIDFilePath)
                     Else
                         Exit For
                     End If
@@ -3823,7 +3810,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Else
                 success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, 0, sampleMetadata, strMzIDFilePath)
                 If success Then
-                    mzIdFilePaths.add(strMzIDFilePath)
+                    mzIdFilePaths.Add(strMzIDFilePath)
                 End If
             End If
 
@@ -4196,11 +4183,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="swPXFile"></param>
     ''' <param name="strType"></param>
     ''' <param name="strValue"></param>
-    ''' <returns>The actual value used (strValue)</returns>
     ''' <remarks></remarks>
-    Private Function WritePXHeader(swPXFile As StreamWriter, strType As String, strValue As String) As String
-        Return WritePXHeader(swPXFile, strType, strValue, New Dictionary(Of String, String))
-    End Function
+    Private Sub WritePXHeader(swPXFile As StreamWriter, strType As String, strValue As String)
+        WritePXHeader(swPXFile, strType, strValue, New Dictionary(Of String, String))
+    End Sub
 
     ''' <summary>
     ''' Append a new header line to the .px file
@@ -4209,12 +4195,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="strType"></param>
     ''' <param name="strValue"></param>
     ''' <param name="dctParameters"></param>
-    ''' <returns>The actual value used (either strValue or the cached value in dctParameters)</returns>
     ''' <remarks></remarks>
-    Private Function WritePXHeader(swPXFile As StreamWriter, strType As String, strValue As String, dctParameters As Dictionary(Of String, String)) As String
-
-        Return WritePXHeader(swPXFile, strType, strValue, dctParameters, intMinimumValueLength:=0)
-    End Function
+    Private Sub WritePXHeader(swPXFile As StreamWriter, strType As String, strValue As String, dctParameters As IReadOnlyDictionary(Of String, String))
+        WritePXHeader(swPXFile, strType, strValue, dctParameters, intMinimumValueLength:=0)
+    End Sub
 
     ''' <summary>
     ''' Append a new header line to the .px file
@@ -4224,14 +4208,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' <param name="strValue"></param>
     ''' <param name="dctParameters"></param>
     ''' <param name="intMinimumValueLength"></param>
-    ''' <returns>The actual value used (either strValue or the cached value in dctParameters)</returns>
     ''' <remarks></remarks>
-    Private Function WritePXHeader(
+    Private Sub WritePXHeader(
       swPXFile As StreamWriter,
       strType As String,
       strValue As String,
-      dctParameters As Dictionary(Of String, String),
-      intMinimumValueLength As Integer) As String
+      dctParameters As IReadOnlyDictionary(Of String, String),
+      intMinimumValueLength As Integer)
 
         Dim strValueOverride As String = String.Empty
 
@@ -4251,9 +4234,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         WritePXLine(swPXFile, New List(Of String) From {"MTD", strType, strValue})
 
-        Return strValue
-
-    End Function
+    End Sub
 
     Private Sub WritePXInstruments(swPXFile As StreamWriter)
 
@@ -4276,7 +4257,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Sub
 
-    Private Sub WritePXLine(swPXFile As StreamWriter, lstItems As List(Of String))
+    Private Sub WritePXLine(swPXFile As TextWriter, lstItems As IReadOnlyCollection(Of String))
         If lstItems.Count > 0 Then
             swPXFile.WriteLine(String.Join(ControlChars.Tab, lstItems))
         End If
