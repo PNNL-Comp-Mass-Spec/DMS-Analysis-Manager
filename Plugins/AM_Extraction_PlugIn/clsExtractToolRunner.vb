@@ -10,6 +10,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports AnalysisManagerMSGFDBPlugIn
+Imports MSGFResultsSummarizer
 Imports PHRPReader
 
 ''' <summary>
@@ -988,10 +989,10 @@ Public Class clsExtractToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
         End If
 
-        Dim objSummarizer = New AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer(eResultType, m_Dataset, job, m_WorkDir)
-        objSummarizer.MSGFThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
-        objSummarizer.EValueThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD
-        objSummarizer.FDRThreshold = AnalysisManagerMSGFPlugin.clsMSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD
+        Dim objSummarizer = New clsMSGFResultsSummarizer(eResultType, m_Dataset, job, m_WorkDir)
+        AddHandler objSummarizer.ErrorEvent, AddressOf MSGFResultsSummarizer_ErrorHandler
+
+        objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
 
         objSummarizer.ContactDatabase = True
         objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB
@@ -2193,6 +2194,19 @@ Public Class clsExtractToolRunner
     Private Sub mMSGFDBUtils_WarningEvent(warningMsg As String) Handles mMSGFDBUtils.WarningEvent
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning in MSGFDBUtils: " & warningMsg)
     End Sub
+
+    ''' <summary>
+    ''' Event handler for the MSGResultsSummarizer
+    ''' </summary>
+    ''' <param name="errorMessage"></param>
+    Private Sub MSGFResultsSummarizer_ErrorHandler(errorMessage As String)
+        If Message.ToLower().Contains("permission was denied") Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage)
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+        End If
+    End Sub
+
 #End Region
 
 
