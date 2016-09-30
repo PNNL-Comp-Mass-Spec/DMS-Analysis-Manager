@@ -889,7 +889,7 @@ Public Class clsMSGFResultsSummarizer
     ''' <param name="newNormalizedPeptide">New normalized peptide</param>
     ''' <returns>The Sequence ID of a matching normalized peptide, or -1 if no match</returns>
     ''' <remarks>A near match is one where the position of each modified residue is the same or just one residue apart</remarks>
-    Private Function FindNormalizedSequence(
+    Public Shared Function FindNormalizedSequence(
       dictNormalizedPeptides As IReadOnlyDictionary(Of String, List(Of clsNormalizedPeptideInfo)),
       newNormalizedPeptide As clsNormalizedPeptideInfo) As Integer
 
@@ -952,7 +952,7 @@ Public Class clsMSGFResultsSummarizer
         Return startupOptions
     End Function
 
-    Private Function GetNormalizedPeptideInfo(
+    Public Shared Function GetNormalizedPeptideInfo(
       peptideCleanSequence As String,
       modifications As IEnumerable(Of KeyValuePair(Of String, Integer)),
       seqID As Integer) As clsNormalizedPeptideInfo
