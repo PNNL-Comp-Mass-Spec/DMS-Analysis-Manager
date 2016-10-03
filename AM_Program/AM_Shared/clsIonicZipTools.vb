@@ -135,6 +135,7 @@ Public Class clsIonicZipTools
         Return Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) & ".zip")
     End Function
 
+    ''' <summary>
     ''' Unzip GZipFilePath into the working directory defined when this class was instantiated
     ''' Existing files will be overwritten
     ''' </summary>
@@ -650,12 +651,12 @@ Public Class clsIonicZipTools
 
     ''' <summary>
     ''' Verifies that the zip file exists and is not corrupt
-    ''' If the file size is less than 2 GB, then also performs a full CRC check of the data
+    ''' If the file size is less than 4 GB, then also performs a full CRC check of the data
     ''' </summary>
     ''' <param name="zipFilePath">Zip file to check</param>
     ''' <returns>True if a valid zip file, otherwise false</returns>	
     Public Function VerifyZipFile(zipFilePath As String) As Boolean
-        Return VerifyZipFile(zipFilePath, crcCheckThresholdGB:=2)
+        Return VerifyZipFile(zipFilePath, crcCheckThresholdGB:=4)
     End Function
 
     ''' <summary>
@@ -690,8 +691,8 @@ Public Class clsIonicZipTools
                 Return False
             End If
 
-            ' For zip files less than 2 GB in size, perform a full unzip test to confirm that the file is not corrupted
-            Dim crcCheckThresholdBytes As Int64 = CLng(crcCheckThresholdGB * 1024 * 1024 * 1024)
+            ' For zip files less than 4 GB in size, perform a full unzip test to confirm that the file is not corrupted
+            Dim crcCheckThresholdBytes = CLng(crcCheckThresholdGB * 1024 * 1024 * 1024)
 
             If fiZipFile.Length < crcCheckThresholdBytes Then
 
@@ -750,15 +751,14 @@ Public Class clsIonicZipTools
     ''' <summary>
     ''' Stores SourceFilePath in a zip file with the same name, but extension .zip
     ''' </summary>
-    ''' <param name="SourceFilePath">Full path to the file to be zipped</param>
-    ''' <param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+    ''' <param name="sourceFilePath">Full path to the file to be zipped</param>
+    ''' <param name="deleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
     ''' <returns>True if success; false if an error</returns>
-    Public Function ZipFile(SourceFilePath As String, DeleteSourceAfterZip As Boolean) As Boolean
+    Public Function ZipFile(sourceFilePath As String, deleteSourceAfterZip As Boolean) As Boolean
 
-        Dim fiFile = New FileInfo(SourceFilePath)
-        Dim ZipFilePath = Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) & ".zip")
+        Dim zipFilePath = GetZipFilePathForFile(sourceFilePath)
 
-        Return ZipFile(SourceFilePath, DeleteSourceAfterZip, ZipFilePath)
+        Return ZipFile(sourceFilePath, deleteSourceAfterZip, ZipFilePath)
 
     End Function
 
@@ -794,7 +794,7 @@ Public Class clsIonicZipTools
 
             End If
         Catch ex As Exception
-            m_Message = "Error deleting target .zip file prior to zipping " & SourceFilePath & ": " & ex.Message
+            m_Message = "Error deleting target .zip file prior to zipping file " & SourceFilePath & " using IonicZip: " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
             Return False
         End Try
@@ -826,6 +826,9 @@ Public Class clsIonicZipTools
             Return False
         End Try
 
+        ' Verify that the zip file is not corrupt
+        ' Files less than 4 GB get a full CRC check
+        ' Large files get a quick check
         If Not VerifyZipFile(ZipFilePath) Then
             Return False
         End If
@@ -889,7 +892,7 @@ Public Class clsIonicZipTools
                 Thread.Sleep(250)
             End If
         Catch ex As Exception
-            m_Message = "Error deleting target .zip file prior to zipping " & SourceDirectoryPath & ": " & ex.Message
+            m_Message = "Error deleting target .zip file prior to zipping folder " & SourceDirectoryPath & " using IonicZip: " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
             Return False
         End Try
@@ -933,6 +936,9 @@ Public Class clsIonicZipTools
             Return False
         End Try
 
+        ' Verify that the zip file is not corrupt
+        ' Files less than 4 GB get a full CRC check
+        ' Large files get a quick check
         If Not VerifyZipFile(ZipFilePath) Then
             Return False
         End If
