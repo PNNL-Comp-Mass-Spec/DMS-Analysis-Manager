@@ -1596,6 +1596,15 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
+    ''' Gets the .zip file path to create when zipping a single file
+    ''' </summary>
+    ''' <param name="sourceFilePath"></param>
+    ''' <returns></returns>
+    Public Function GetZipFilePathForFile(sourceFilePath As String) As String
+        Return clsIonicZipTools.GetZipFilePathForFile(sourceFilePath)
+    End Function
+
+    ''' <summary>
     ''' Decompresses the specified gzipped file
     ''' Output folder is m_WorkDir
     ''' </summary>
@@ -3597,6 +3606,25 @@ Public Class clsAnalysisToolRunnerBase
         End Try
 
         Return blnDataFound
+
+    End Function
+
+    ''' <summary>
+    ''' Verifies that the zip file exists.  
+    ''' If the file size is less than crcCheckThresholdGB, then also performs a full CRC check of the data
+    ''' </summary>
+    ''' <param name="zipFilePath">Zip file to check</param>
+    ''' <param name="crcCheckThresholdGB">Threshold (in GB) below which a full CRC check should be performed</param>
+    ''' <returns>True if a valid zip file, otherwise false</returns>
+    Protected Function VerifyZipFile(zipFilePath As String, Optional crcCheckThresholdGB As Single = 4) As Boolean
+
+        Dim success As Boolean
+        m_IonicZipTools.DebugLevel = m_DebugLevel
+
+        ' Note that m_IonicZipTools logs error messages using clsLogTools
+        success = m_IonicZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB)
+
+        Return success
 
     End Function
 

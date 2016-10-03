@@ -126,6 +126,15 @@ Public Class clsIonicZipTools
     End Sub
 
     ''' <summary>
+    ''' Gets the .zip file path to create when zipping a single file
+    ''' </summary>
+    ''' <param name="sourceFilePath"></param>
+    ''' <returns></returns>
+    Public Shared Function GetZipFilePathForFile(sourceFilePath As String) As String
+        Dim fiFile = New FileInfo(sourceFilePath)
+        Return Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) & ".zip")
+    End Function
+
     ''' Unzip GZipFilePath into the working directory defined when this class was instantiated
     ''' Existing files will be overwritten
     ''' </summary>
