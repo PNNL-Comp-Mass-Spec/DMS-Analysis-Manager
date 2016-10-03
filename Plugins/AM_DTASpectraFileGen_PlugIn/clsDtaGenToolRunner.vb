@@ -258,6 +258,7 @@ Public Class clsDtaGenToolRunner
         End Select
 
     End Function
+
     ''' <summary>
     ''' Detailed method for running a tool
     ''' </summary>
@@ -1124,6 +1125,7 @@ Public Class clsDtaGenToolRunner
         Return existingResultsAreValid
 
     End Function
+
 	''' <summary>
 	''' Zips concatenated DTA file to reduce size
 	''' </summary>
@@ -1131,34 +1133,60 @@ Public Class clsDtaGenToolRunner
 	''' <remarks></remarks>
 	Protected Function ZipConcDtaFile() As IJobParams.CloseOutType
 
-		'Zips the concatenated dta file
 		Dim DtaFileName As String = m_Dataset & "_dta.txt"
 		Dim DtaFilePath As String = Path.Combine(m_WorkDir, DtaFileName)
 
 		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_StepNum)
 
-		'Verify file exists
+		' Verify the _dta.txt file exists
 		If Not File.Exists(DtaFilePath) Then
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file")
 			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End If
 
-		'Zip the file
-		Try
-			If Not MyBase.ZipFile(DtaFilePath, False) Then
-				Dim Msg As String = "Error zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
-		Catch ex As Exception
-			Dim Msg As String = "Exception zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum & ": " & ex.Message
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        ' Zip the file using IonicZip
+        Try
+            If MyBase.ZipFile(DtaFilePath, False) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            End If
+        Catch ex As Exception
+            Dim msg As String = "Exception zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum & ": " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        ' Occasionally the zip file is corrupted and will need to be zipped using ICSharpCode.SharpZipLib instead
+        ' If the file exists and is not zero bytes in length, try zipping again, but instead use ICSharpCode.SharpZipLib
 
-	End Function
+        Dim fiZipFile = New FileInfo(MyBase.GetZipFilePathForFile(DtaFilePath))
+        If Not fiZipFile.Exists OrElse fiZipFile.Length <= 0 Then
+            Dim msg As String = "Error zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+        Try
+            Threading.Thread.Sleep(250)
+
+            If MyBase.ZipFileSharpZipLib(DtaFilePath) Then
+                Dim warningMsg = String.Format("Zip file created using IonicZip was corrupted; successfully compressed it using SharpZipLib instead: {0}", DtaFileName)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMsg)
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            End If
+
+            Dim msg As String = "Error zipping concat dta file using SharpZipLib, job " & m_JobNum & ", step " & m_StepNum
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+        Catch ex As Exception
+            Dim msg As String = "Exception zipping concat dta file using SharpZipLib, job " & m_JobNum & ", step " & m_StepNum & ": " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
+
+
+
+    End Function
 #End Region
 
 End Class
