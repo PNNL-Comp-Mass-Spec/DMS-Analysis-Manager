@@ -574,8 +574,6 @@ Public Class clsIonicZipTools
         Dim dtStartTime As DateTime
         Dim dtEndTime As DateTime
 
-        Dim objZipper As Ionic.Zip.ZipFile
-
         m_Message = String.Empty
         m_MostRecentZipFilePath = String.Copy(ZipFilePath)
         m_MostRecentUnzippedFiles.Clear()
@@ -592,42 +590,44 @@ Public Class clsIonicZipTools
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file: " & fiFile.FullName)
             End If
-            objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
 
-            dtStartTime = DateTime.UtcNow
+            Using objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
 
-            If String.IsNullOrEmpty(FileFilter) Then
-                objZipper.ExtractAll(TargetDirectory, eOverwriteBehavior)
+                dtStartTime = DateTime.UtcNow
 
-                For Each objItem As Ionic.Zip.ZipEntry In objZipper.Entries
-                    If Not objItem.IsDirectory Then
-                        ' Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
-                        Dim fiUnzippedItem As FileInfo = New FileInfo(Path.Combine(TargetDirectory, objItem.FileName.Replace("/"c, Path.DirectorySeparatorChar)))
-                        m_MostRecentUnzippedFiles.Add(New KeyValuePair(Of String, String)(fiUnzippedItem.Name, fiUnzippedItem.FullName))
-                    End If
-                Next
-            Else
-                Dim objEntries As ICollection(Of Ionic.Zip.ZipEntry)
-                objEntries = objZipper.SelectEntries(FileFilter)
+                If String.IsNullOrEmpty(FileFilter) Then
+                    objZipper.ExtractAll(TargetDirectory, eOverwriteBehavior)
 
-                For Each objItem As Ionic.Zip.ZipEntry In objEntries
-                    objItem.Extract(TargetDirectory, eOverwriteBehavior)
-                    If Not objItem.IsDirectory Then
-                        ' Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
-                        Dim fiUnzippedItem As FileInfo = New FileInfo(Path.Combine(TargetDirectory, objItem.FileName.Replace("/"c, Path.DirectorySeparatorChar)))
-                        m_MostRecentUnzippedFiles.Add(New KeyValuePair(Of String, String)(fiUnzippedItem.Name, fiUnzippedItem.FullName))
-                    End If
-                Next
-            End If
+                    For Each objItem As Ionic.Zip.ZipEntry In objZipper.Entries
+                        If Not objItem.IsDirectory Then
+                            ' Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
+                            Dim fiUnzippedItem = New FileInfo(Path.Combine(TargetDirectory, objItem.FileName.Replace("/"c, Path.DirectorySeparatorChar)))
+                            m_MostRecentUnzippedFiles.Add(New KeyValuePair(Of String, String)(fiUnzippedItem.Name, fiUnzippedItem.FullName))
+                        End If
+                    Next
+                Else
+                    Dim objEntries As ICollection(Of Ionic.Zip.ZipEntry)
+                    objEntries = objZipper.SelectEntries(FileFilter)
 
-            dtEndTime = DateTime.UtcNow
+                    For Each objItem As Ionic.Zip.ZipEntry In objEntries
+                        objItem.Extract(TargetDirectory, eOverwriteBehavior)
+                        If Not objItem.IsDirectory Then
+                            ' Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
+                            Dim fiUnzippedItem = New FileInfo(Path.Combine(TargetDirectory, objItem.FileName.Replace("/"c, Path.DirectorySeparatorChar)))
+                            m_MostRecentUnzippedFiles.Add(New KeyValuePair(Of String, String)(fiUnzippedItem.Name, fiUnzippedItem.FullName))
+                        End If
+                    Next
+                End If
 
-            If m_DebugLevel >= 2 Then
-                ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
-            End If
+                dtEndTime = DateTime.UtcNow
 
-            ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
-            DisposeZipper(objZipper)
+                If m_DebugLevel >= 2 Then
+                    ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
+                End If
+
+                ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
+                DisposeZipper(objZipper)
+            End Using
 
         Catch ex As Exception
             m_Message = "Error unzipping file " & ZipFilePath & ": " & ex.Message
@@ -688,39 +688,43 @@ Public Class clsIonicZipTools
 
                 ' Unzip each zipped file to a byte buffer (no need to actually write to disk)
 
-                Dim objZipper = New Ionic.Zip.ZipFile(zipFilePath)
+                Using objZipper = New Ionic.Zip.ZipFile(zipFilePath)
 
-                Dim objEntries As ICollection(Of Ionic.Zip.ZipEntry)
-                objEntries = objZipper.SelectEntries("*")
+                    Dim objEntries As ICollection(Of Ionic.Zip.ZipEntry)
+                    objEntries = objZipper.SelectEntries("*")
 
-                For Each objItem As Ionic.Zip.ZipEntry In objEntries
+                    For Each objItem As Ionic.Zip.ZipEntry In objEntries
 
-                    If Not objItem.IsDirectory Then
+                        If Not objItem.IsDirectory Then
 
-                        Dim bytBuffer As Byte() = New Byte(8095) {}
-                        Dim n As Integer
-                        Dim totalBytesRead As Int64 = 0
+                            Dim bytBuffer = New Byte(8095) {}
+                            Dim n As Integer
+                            Dim totalBytesRead As Int64 = 0
 
-                        Using srReader = objItem.OpenReader()
+                            Using srReader = objItem.OpenReader()
 
-                            Do
-                                n = srReader.Read(bytBuffer, 0, bytBuffer.Length)
-                                totalBytesRead += n
-                            Loop While (n > 0)
+                                Do
+                                    n = srReader.Read(bytBuffer, 0, bytBuffer.Length)
+                                    totalBytesRead += n
+                                Loop While (n > 0)
 
-                            If (srReader.Crc <> objItem.Crc) Then
-                                m_Message = String.Format("Zip entry " & objItem.FileName & " failed the CRC Check in " & zipFilePath & " (0x{0:X8} != 0x{1:X8})", srReader.Crc, objItem.Crc)
-                            End If
+                                If (srReader.Crc <> objItem.Crc) Then
+                                    m_Message = String.Format("Zip entry " & objItem.FileName & " failed the CRC Check in " & zipFilePath & " (0x{0:X8} != 0x{1:X8})", srReader.Crc, objItem.Crc)
+                                    Return False
+                                End If
 
-                            If (totalBytesRead <> objItem.UncompressedSize) Then
-                                m_Message = String.Format("Unexpected number of bytes for entry " & objItem.FileName & " in " & zipFilePath & " ({0} != {1})", totalBytesRead, objItem.UncompressedSize)
-                            End If
+                                If (totalBytesRead <> objItem.UncompressedSize) Then
+                                    m_Message = String.Format("Unexpected number of bytes for entry " & objItem.FileName & " in " & zipFilePath & " ({0} != {1})", totalBytesRead, objItem.UncompressedSize)
+                                    Return False
+                                End If
 
-                        End Using
+                            End Using
 
-                    End If
+                        End If
 
-                Next
+                    Next
+
+                End Using
 
             End If
 
@@ -791,20 +795,21 @@ Public Class clsIonicZipTools
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .zip file: " & ZipFilePath)
             End If
 
-            Dim objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
-            objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
+            Using objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
+                objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
-            dtStartTime = DateTime.UtcNow
-            objZipper.AddItem(fiFile.FullName, String.Empty)
-            objZipper.Save()
-            dtEndTime = DateTime.UtcNow
+                dtStartTime = DateTime.UtcNow
+                objZipper.AddItem(fiFile.FullName, String.Empty)
+                objZipper.Save()
+                dtEndTime = DateTime.UtcNow
 
-            If m_DebugLevel >= 2 Then
-                ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
-            End If
+                If m_DebugLevel >= 2 Then
+                    ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
+                End If
 
-            ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
-            DisposeZipper(objZipper)
+                ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
+                DisposeZipper(objZipper)
+            End Using
 
         Catch ex As Exception
             m_Message = "Error zipping file " & fiFile.FullName & ": " & ex.Message
@@ -859,8 +864,6 @@ Public Class clsIonicZipTools
         Dim dtStartTime As DateTime
         Dim dtEndTime As DateTime
 
-        Dim objZipper As Ionic.Zip.ZipFile
-
         Dim diDirectory As DirectoryInfo
         diDirectory = New DirectoryInfo(SourceDirectoryPath)
 
@@ -887,31 +890,33 @@ Public Class clsIonicZipTools
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .zip file: " & ZipFilePath)
             End If
 
-            objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
-            objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
+            Using objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
+                objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
-            dtStartTime = DateTime.UtcNow
+                dtStartTime = DateTime.UtcNow
 
-            If String.IsNullOrEmpty(FileFilter) AndAlso Recurse Then
-                objZipper.AddDirectory(diDirectory.FullName)
-            Else
-                If String.IsNullOrEmpty(FileFilter) Then
-                    FileFilter = "*"
+                If String.IsNullOrEmpty(FileFilter) AndAlso Recurse Then
+                    objZipper.AddDirectory(diDirectory.FullName)
+                Else
+                    If String.IsNullOrEmpty(FileFilter) Then
+                        FileFilter = "*"
+                    End If
+
+                    objZipper.AddSelectedFiles(FileFilter, diDirectory.FullName, String.Empty, Recurse)
                 End If
 
-                objZipper.AddSelectedFiles(FileFilter, diDirectory.FullName, String.Empty, Recurse)
-            End If
+                objZipper.Save()
 
-            objZipper.Save()
+                dtEndTime = DateTime.UtcNow
 
-            dtEndTime = DateTime.UtcNow
+                If m_DebugLevel >= 2 Then
+                    ReportZipStats(diDirectory, dtStartTime, dtEndTime, True)
+                End If
 
-            If m_DebugLevel >= 2 Then
-                ReportZipStats(diDirectory, dtStartTime, dtEndTime, True)
-            End If
+                ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
+                DisposeZipper(objZipper)
 
-            ' Dispose of the zipper and call the garbage collector to assure the handle to the .zip file is released
-            DisposeZipper(objZipper)
+            End Using
 
         Catch ex As Exception
             m_Message = "Error zipping directory " & diDirectory.FullName & ": " & ex.Message
