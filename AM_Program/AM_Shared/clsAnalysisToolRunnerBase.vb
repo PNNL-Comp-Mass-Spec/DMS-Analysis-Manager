@@ -3351,39 +3351,39 @@ Public Class clsAnalysisToolRunnerBase
     ''' Unzips all files in the specified Zip file
     ''' Output folder is m_WorkDir
     ''' </summary>
-    ''' <param name="ZipFilePath">File to unzip</param>
+    ''' <param name="zipFilePath">File to unzip</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function UnzipFile(ZipFilePath As String) As Boolean
-        Return UnzipFile(ZipFilePath, m_WorkDir, String.Empty)
+    Public Function UnzipFile(zipFilePath As String) As Boolean
+        Return UnzipFile(zipFilePath, m_WorkDir, String.Empty)
     End Function
 
     ''' <summary>
     ''' Unzips all files in the specified Zip file
     ''' Output folder is targetDirectory
     ''' </summary>
-    ''' <param name="ZipFilePath">File to unzip</param>
+    ''' <param name="zipFilePath">File to unzip</param>
     ''' <param name="targetDirectory">Target directory for the extracted files</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function UnzipFile(ZipFilePath As String, targetDirectory As String) As Boolean
-        Return UnzipFile(ZipFilePath, targetDirectory, String.Empty)
+    Public Function UnzipFile(zipFilePath As String, targetDirectory As String) As Boolean
+        Return UnzipFile(zipFilePath, targetDirectory, String.Empty)
     End Function
 
     ''' <summary>
     ''' Unzips files in the specified Zip file that match the FileFilter spec
     ''' Output folder is targetDirectory
     ''' </summary>
-    ''' <param name="ZipFilePath">File to unzip</param>
+    ''' <param name="zipFilePath">File to unzip</param>
     ''' <param name="targetDirectory">Target directory for the extracted files</param>
     ''' <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function UnzipFile(ZipFilePath As String, targetDirectory As String, FileFilter As String) As Boolean
+    Public Function UnzipFile(zipFilePath As String, targetDirectory As String, FileFilter As String) As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
         ' Note that m_IonicZipTools logs error messages using clsLogTools
-        Return m_IonicZipTools.UnzipFile(ZipFilePath, targetDirectory, FileFilter)
+        Return m_IonicZipTools.UnzipFile(zipFilePath, targetDirectory, FileFilter)
 
     End Function
 
@@ -3636,39 +3636,88 @@ Public Class clsAnalysisToolRunnerBase
     ''' <returns>True if success; false if an error</returns>
     Public Function ZipFile(sourceFilePath As String, deleteSourceAfterZip As Boolean) As Boolean
 
-        Dim blnSuccess As Boolean
+        Dim success As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
         ' Note that m_IonicZipTools logs error messages using clsLogTools
-        blnSuccess = m_IonicZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip)
+        success = m_IonicZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip)
 
-        If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+        If Not success AndAlso m_IonicZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower) Then
             m_NeedToAbortProcessing = True
         End If
 
-        Return blnSuccess
+        Return success
 
     End Function
 
     ''' <summary>
-    ''' Stores sourceFilePath in a zip file named ZipfilePath
+    ''' Compress a file using SharpZipLib
+    ''' </summary>
+    ''' <returns>True if success; false if an error</returns>
+    ''' <remarks>IonicZip is faster, so we typically use function ZipFile</remarks>
+    Public Function ZipFileSharpZipLib(sourceFilePath As String) As Boolean
+
+        Try
+            Dim fiSourceFile = New FileInfo(sourceFilePath)
+
+            Dim zipFilePath = GetZipFilePathForFile(sourceFilePath)
+
+            Try
+                If File.Exists(zipFilePath) Then
+
+                    If m_DebugLevel >= 3 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting target .zip file: " & zipFilePath)
+                    End If
+
+                    File.Delete(zipFilePath)
+                    Thread.Sleep(250)
+
+                End If
+            Catch ex As Exception
+                m_message = "Error deleting target .zip file prior to zipping file " & sourceFilePath & " using SharpZipLib: " & ex.Message
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End Try
+
+            Dim zipper = New ICSharpCode.SharpZipLib.Zip.FastZip()
+            zipper.CreateZip(zipFilePath, fiSourceFile.DirectoryName, False, fiSourceFile.Name)
+
+            ' Verify that the zip file is not corrupt
+            ' Files less than 4 GB get a full CRC check
+            ' Large files get a quick check
+            If Not VerifyZipFile(zipFilePath) Then
+                Return False
+            End If
+
+            Return True
+
+        Catch ex As Exception
+            m_message = "Exception zipping " & sourceFilePath & " using SharpZipLib"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum & ": " & ex.Message)
+            Return False
+        End Try
+
+    End Function
+
+    ''' <summary>
+    ''' Stores sourceFilePath in a zip file named zipFilePath
     ''' </summary>
     ''' <param name="sourceFilePath">Full path to the file to be zipped</param>
     ''' <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
-    ''' <param name="ZipfilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
+    ''' <param name="zipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
     ''' <returns>True if success; false if an error</returns>
     Public Function ZipFile(sourceFilePath As String, deleteSourceAfterZip As Boolean, zipFilePath As String) As Boolean
-        Dim blnSuccess As Boolean
+        Dim success As Boolean
         m_IonicZipTools.DebugLevel = m_DebugLevel
 
         ' Note that m_IonicZipTools logs error messages using clsLogTools
-        blnSuccess = m_IonicZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath)
+        success = m_IonicZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath)
 
-        If Not blnSuccess AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
+        If Not success AndAlso m_IonicZipTools.Message.ToLower.Contains("OutOfMemoryException".ToLower) Then
             m_NeedToAbortProcessing = True
         End If
 
-        Return blnSuccess
+        Return success
 
     End Function
 

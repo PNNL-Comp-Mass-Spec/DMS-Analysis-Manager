@@ -71,6 +71,10 @@
     <Reference Include="FlexibleFileSortUtility">
       <HintPath>..\..\AM_Common\FlexibleFileSortUtility.dll</HintPath>
     </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
     <Reference Include="Ionic.Zip">
       <HintPath>..\..\AM_Common\Ionic.Zip.dll</HintPath>
     </Reference>
