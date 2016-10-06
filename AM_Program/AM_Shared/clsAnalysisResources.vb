@@ -521,7 +521,7 @@ Public MustInherit Class clsAnalysisResources
 
         Dim strLockFilePath = dataFilePath & LOCK_FILE_EXTENSION
         Using swLockFile = New StreamWriter(New FileStream(strLockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
-            swLockFile.WriteLine(taskDescription & " at " & DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt"))
+            swLockFile.WriteLine(taskDescription & " at " & Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
         End Using
 
         Return strLockFilePath
@@ -1082,7 +1082,18 @@ Public MustInherit Class clsAnalysisResources
             End If
 
         Catch ex As Exception
-            m_message = "Exception generating OrgDb file"
+            If ex.Message.StartsWith("Legacy fasta file not found:") Then
+                Dim rePathMatcher = New Regex("not found: (?<SourceFolder>.+)\\")
+                Dim reMatch = rePathMatcher.Match(ex.Message)
+                If reMatch.Success Then
+                    m_message = "Legacy fasta file not found at " & reMatch.Groups("SourceFolder").Value
+                Else
+                    m_message = "Legacy fasta file not found in the organism folder for this job"
+                End If
+            Else
+                m_message = "Exception generating OrgDb file"
+            End If
+
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception generating OrgDb file; " + orgDBDescription + "; " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex))
             Return False
         End Try
