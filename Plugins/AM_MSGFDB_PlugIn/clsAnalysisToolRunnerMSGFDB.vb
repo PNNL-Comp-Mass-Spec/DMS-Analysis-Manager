@@ -1155,6 +1155,12 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Else
                 msgfPlusResultsFileName = String.Copy(resultsFileName)
             End If
+
+            Dim skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", False)
+
+            If skipPeptideToProteinMapping Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping PeptideToProteinMapping based on job parameter SkipPeptideToProteinMapping")
+                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             End If
 
             ' Create the Peptide to Protein map file
