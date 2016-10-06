@@ -529,6 +529,43 @@ Public Class clsExtractToolRunner
 
     End Function
 
+    ''' <summary>
+    ''' Create the Peptide to Protein map file for the given MSGF+ results file
+    ''' </summary>
+    ''' <param name="resultsFileName"></param>
+    ''' <returns></returns>
+    Private Function CreateMSGFPlusResultsProteinToPeptideMappingFile(resultsFileName As String) As IJobParams.CloseOutType
+
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the missing _PepToProtMap.txt file")
+
+        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+        If mMSGFDBUtils Is Nothing Then
+            mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum.ToString(), m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
+        End If
+
+        mMSGFDBUtilsError = False
+
+        ' Assume this is true
+        Dim resultsIncludeAutoAddedDecoyPeptides = True
+
+        Dim result = mMSGFDBUtils.CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
+
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+            Return result
+        End If
+
+        If mMSGFDBUtilsError Then
+            If String.IsNullOrWhiteSpace(m_message) Then
+                LogError("mMSGFDBUtilsError is True after call to CreatePeptideToProteinMapping")
+            End If
+
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
+
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
     Private Function ParallelMSGFPlusMergeTSVFiles(
      numberOfClonedSteps As Integer,
      numberOfHitsPerScanToKeep As Integer,
@@ -1244,33 +1281,17 @@ Public Class clsExtractToolRunner
                         Dim strPeptoProtMapFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb" & suffixToAdd & "_PepToProtMap.txt")
 
                         If Not File.Exists(strPeptoProtMapFilePath) Then
-                            ' Create the Peptide to Protein map file
+                            Dim skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", False)
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the missing _PepToProtMap.txt file")
-
-                            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
-                            If mMSGFDBUtils Is Nothing Then
-                                mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum.ToString(), m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
-                            End If
-
-                            mMSGFDBUtilsError = False
-
-                            ' Assume this is true
-                            Dim resultsIncludeAutoAddedDecoyPeptides = True
-
-                            Dim result = mMSGFDBUtils.CreatePeptideToProteinMapping(strTargetFilePath, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
-
-                            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
-                                Return result
-                            End If
-
-                            If mMSGFDBUtilsError Then
-                                If String.IsNullOrWhiteSpace(m_message) Then
-                                    LogError("mMSGFDBUtilsError is True after call to CreatePeptideToProteinMapping")
+                            If skipPeptideToProteinMapping Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping PeptideToProteinMapping based on job parameter SkipPeptideToProteinMapping")
+                            Else
+                                eResult = CreateMSGFPlusResultsProteinToPeptideMappingFile(strTargetFilePath)
+                                If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                                    Return eResult
                                 End If
-
-                                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                             End If
+
                         End If
 
                     Next
