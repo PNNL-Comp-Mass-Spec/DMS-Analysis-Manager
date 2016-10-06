@@ -1172,32 +1172,47 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' <param name="dctFilesToCopy">Dictionary with filenames and file sizes</param>
     ''' <param name="blnUsingLegacyFasta"></param>
     ''' <param name="dtMinWriteTimeThresholdUTC"></param>
+    ''' <param name="verifyingRemoteFolder">True when validating files on a remote server, false if verifying the local DMS_Temp_Org folder</param>
     ''' <returns>True if all files are found and are the right size</returns>
     ''' <remarks></remarks>
     Private Function ValidateFiles(
       strFolderPathToCheck As String,
-      dctFilesToCopy As Dictionary(Of String, Int64),
+      dctFilesToCopy As Dictionary(Of String, Long),
       blnUsingLegacyFasta As Boolean,
-      dtMinWriteTimeThresholdUTC As DateTime) As Boolean
+      dtMinWriteTimeThresholdUTC As DateTime,
+      verifyingRemoteFolder As Boolean) As Boolean
 
-        For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+        Dim sourceDescription As String
+        If verifyingRemoteFolder Then
+            sourceDescription = "Remote MSGF+ index file"
+        Else
+            sourceDescription = "Local MSGF+ index file"
+        End If
+
+        For Each entry As KeyValuePair(Of String, Long) In dctFilesToCopy
             Dim fiSourceFile As FileInfo
             fiSourceFile = New FileInfo(Path.Combine(strFolderPathToCheck, entry.Key))
 
             If Not fiSourceFile.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Remote MSGF+ index file not found: " & fiSourceFile.FullName)
+                ' Remote MSGF+ index file not found
+                ' Local MSGF+ index file not found
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, sourceDescription & " not found: " & fiSourceFile.FullName)
                 Return False
+
             ElseIf fiSourceFile.Length <> entry.Value Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Remote MSGF+ index file is not the expected size: " & fiSourceFile.FullName & " should be " & entry.Value & " bytes but is actually " & fiSourceFile.Length & " bytes")
+                ' Remote MSGF+ index file is not the expected size
+                ' Local MSGF+ index file is not the expected size
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, sourceDescription & " is not the expected size: " & fiSourceFile.FullName & " should be " & entry.Value & " bytes but is actually " & fiSourceFile.Length & " bytes")
                 Return False
+
             ElseIf blnUsingLegacyFasta Then
                 ' Require that the index files be newer than the fasta file
                 If fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1) Then
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, sourceDescription & " is older than the fasta file; " &
                       fiSourceFile.FullName & " modified " &
-                      fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
-                      dtMinWriteTimeThresholdUTC.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt"))
+                      fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT) & " vs. " &
+                      dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(DATE_TIME_FORMAT))
 
                     Return False
                 End If
