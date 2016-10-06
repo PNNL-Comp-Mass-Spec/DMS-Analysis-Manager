@@ -32,7 +32,7 @@ Public Class clsAnalysisResourcesExtraction
 #Region "Methods"
 
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities)
 
         ' Always retrieve the FASTA file because PHRP uses it
         ' This includes for MSGF+ because it uses the order of the proteins in the 
@@ -397,11 +397,11 @@ Public Class clsAnalysisResourcesExtraction
 
                         If Not SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
                             ' Examine the date of the TSV file
-                            ' If less than 4 hours old, then retrieve it; otherwise, grab the _msgfplus.zip file and re-generate the .tsv file
+                            ' If less than 12 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
 
                             Dim fiTSVFile As FileInfo
                             fiTSVFile = New FileInfo(Path.Combine(SourceFolderPath, fileToGet))
-                            If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
+                            If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 12 Then
                                 ' File is recent; grab it
                                 If Not CopyFileToWorkDir(fileToGet, SourceFolderPath, m_WorkingDir) Then
                                     ' File copy failed; that's OK; we'll grab the _msgfplus.mzid.gz file
@@ -449,6 +449,8 @@ Public Class clsAnalysisResourcesExtraction
                     ' See if IgnorePeptideToProteinMapError=True
                     If m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False) Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True")
+                    ElseIf m_jobParams.GetJobParameter("SkipProteinMods", False) Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMap.txt file since 'SkipProteinMods' = True")
                     Else
                         If blnUseLegacyMSGFDB Then
                             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -457,7 +459,6 @@ Public Class clsAnalysisResourcesExtraction
                             createPepToProtMapFile = True
                         End If
                     End If
-
 
                 Else
                     If splitFastaEnabled Then
