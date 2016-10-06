@@ -18,21 +18,21 @@ Imports System.Security.Cryptography
 Public Class clsGlobal
 
 #Region "Constants"
-	Public Const LOG_LOCAL_ONLY As Boolean = True
-	Public Const LOG_DATABASE As Boolean = False
-	Public Const XML_FILENAME_PREFIX As String = "JobParameters_"
-	Public Const XML_FILENAME_EXTENSION As String = "xml"
+    Public Const LOG_LOCAL_ONLY As Boolean = True
+    Public Const LOG_DATABASE As Boolean = False
+    Public Const XML_FILENAME_PREFIX As String = "JobParameters_"
+    Public Const XML_FILENAME_EXTENSION As String = "xml"
 
-	Public Const STEPTOOL_PARAMFILESTORAGEPATH_PREFIX As String = "StepTool_ParamFileStoragePath_"
+    Public Const STEPTOOL_PARAMFILESTORAGEPATH_PREFIX As String = "StepTool_ParamFileStoragePath_"
 
-	Public Const SERVER_CACHE_HASHCHECK_FILE_SUFFIX As String = ".hashcheck"
+    Public Const SERVER_CACHE_HASHCHECK_FILE_SUFFIX As String = ".hashcheck"
 
 #End Region
 
 #Region "Enums"
-	Public Enum eAnalysisResourceOptions
-		OrgDbRequired = 0
-	End Enum
+    Public Enum eAnalysisResourceOptions
+        OrgDbRequired = 0
+    End Enum
 #End Region
 
 #Region "Module variables"

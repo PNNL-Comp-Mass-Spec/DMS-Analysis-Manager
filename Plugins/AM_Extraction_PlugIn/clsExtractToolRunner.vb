@@ -18,43 +18,43 @@ Imports PHRPReader
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsExtractToolRunner
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
 #Region "Constants"
-	Protected Const SEQUEST_PROGRESS_EXTRACTION_DONE As Single = 33
-	Protected Const SEQUEST_PROGRESS_PHRP_DONE As Single = 66
-	Protected Const SEQUEST_PROGRESS_PEPPROPHET_DONE As Single = 100
+    Protected Const SEQUEST_PROGRESS_EXTRACTION_DONE As Single = 33
+    Protected Const SEQUEST_PROGRESS_PHRP_DONE As Single = 66
+    Protected Const SEQUEST_PROGRESS_PEPPROPHET_DONE As Single = 100
 
-	Public Const INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX As String = "_inspect_unfiltered.txt"
+    Public Const INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX As String = "_inspect_unfiltered.txt"
 
-	Protected Const MODa_JAR_NAME As String = "moda.jar"
-	Protected Const MODa_FILTER_JAR_NAME As String = "anal_moda.jar"
+    Protected Const MODa_JAR_NAME As String = "moda.jar"
+    Protected Const MODa_FILTER_JAR_NAME As String = "anal_moda.jar"
 
     Protected Const MODPlus_JAR_NAME As String = "modp_pnnl.jar"
     Protected Const MODPlus_FILTER_JAR_NAME As String = "tda_plus.jar"
 
 #End Region
 
-#Region "Module variables"
-	Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
-	Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
+#Region "Module variables"  
+    Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
+    Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
 
     Protected WithEvents mMSGFDBUtils As clsMSGFDBUtils
     Protected mMSGFDBUtilsError As Boolean
 
-	Protected mGeneratedFastaFilePath As String
+    Protected mGeneratedFastaFilePath As String
 #End Region
 
 #Region "Properties"
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Runs the data extraction tool(s)
-	''' </summary>
-	''' <returns>IJobParams.CloseOutType representing success or failure</returns>
-	''' <remarks></remarks>
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Runs the data extraction tool(s)
+    ''' </summary>
+    ''' <returns>IJobParams.CloseOutType representing success or failure</returns>
+    ''' <remarks></remarks>
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim msg As String
         Dim eResult As IJobParams.CloseOutType
@@ -189,7 +189,7 @@ Public Class clsExtractToolRunner
 
                     ' Run PHRP
                     strCurrentAction = "running peptide hits result processor for MSPathFinder"
-                    eResult = RunPhrpForMSPathFinder()
+                    eResult = RunPHRPForMSPathFinder()
 
                 Case Else
                     ' Should never get here - invalid result type specified

@@ -2331,9 +2331,9 @@ Public MustInherit Class clsAnalysisResources
 
             ' Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
 #If DISABLE_MYEMSL_SEARCH Then
-			If m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe") Then
-				lstPathsToCheck.Remove(MYEMSL_PATH_FLAG)
-			End If
+            If m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe") Then
+                lstPathsToCheck.Remove(MYEMSL_PATH_FLAG)
+            End If
 #End If
             If (m_AuroraAvailable OrElse Not MyEMSLAvailable) AndAlso Not assumeUnpurged Then
                 AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), True)

@@ -1293,29 +1293,29 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
 #If EnableHPC = "True" Then
 
-	Private Sub mComputeCluster_ErrorEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.ErrorEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message)
-	End Sub
-
-	Private Sub mComputeCluster_MessageEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.MessageEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message)
-	End Sub
-
-	Private Sub mComputeCluster_ProgressEvent(sender As Object, e As HPC_Submit.ProgressEventArgs) Handles mComputeCluster.ProgressEvent
-		mHPCMonitorInitTimer.Enabled = False
-		MonitorProgress()
+    Private Sub mComputeCluster_ErrorEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.ErrorEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message)
     End Sub
 
-	''' <summary>
-	''' This timer is started just before the call to mComputeCluster.MonitorJob
-	''' The event will fire very 30 seconds, allowing the manager to update its status
-	''' </summary>
-	''' <param name="sender"></param>
-	''' <param name="e"></param>
-	''' <remarks>When event mComputeCluster.ProgressEvent fires, it will disable this timer</remarks>
-	Private Sub mHPCMonitorInitTimer_Elapsed(sender As Object, e As Timers.ElapsedEventArgs) Handles mHPCMonitorInitTimer.Elapsed
+    Private Sub mComputeCluster_MessageEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.MessageEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message)
+    End Sub
+
+    Private Sub mComputeCluster_ProgressEvent(sender As Object, e As HPC_Submit.ProgressEventArgs) Handles mComputeCluster.ProgressEvent
+        mHPCMonitorInitTimer.Enabled = False
+        MonitorProgress()
+    End Sub
+
+    ''' <summary>
+    ''' This timer is started just before the call to mComputeCluster.MonitorJob
+    ''' The event will fire very 30 seconds, allowing the manager to update its status
+    ''' </summary>
+    ''' <param name="sender"></param>
+    ''' <param name="e"></param>
+    ''' <remarks>When event mComputeCluster.ProgressEvent fires, it will disable this timer</remarks>
+    Private Sub mHPCMonitorInitTimer_Elapsed(sender As Object, e As Timers.ElapsedEventArgs) Handles mHPCMonitorInitTimer.Elapsed
         UpdateStatusRunning()
-	End Sub
+    End Sub
 
 #End If
 

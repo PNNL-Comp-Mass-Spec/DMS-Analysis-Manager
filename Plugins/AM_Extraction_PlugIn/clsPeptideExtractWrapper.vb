@@ -17,11 +17,11 @@ Imports PeptideFileExtractor
 Public Class clsPeptideExtractWrapper
 
 #Region "Event Handlers"
-	Private Sub m_ExtractTools_EndTask() Handles m_ExtractTools.EndTask
+    Private Sub m_ExtractTools_EndTask() Handles m_ExtractTools.EndTask
 
-		m_ExtractInProgress = False
+        m_ExtractInProgress = False
 
-	End Sub
+    End Sub
 
     Private Sub m_ExtractTools_CurrentProgress(fractionDone As Double) Handles m_ExtractTools.CurrentProgress
         Const MIN_STATUS_INTERVAL_SECONDS = 3
