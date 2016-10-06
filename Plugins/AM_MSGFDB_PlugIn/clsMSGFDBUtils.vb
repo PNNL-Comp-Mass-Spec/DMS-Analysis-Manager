@@ -546,7 +546,7 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
 
-            msg = "Error validating MSGF-DB results file contents in CreatePeptideToProteinMapping"
+            msg = "Error validating MSGF+ results file contents in CreatePeptideToProteinMapping"
             ReportError(msg, msg & ", job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
@@ -601,7 +601,7 @@ Public Class clsMSGFDBUtils
                 .ShowMessages = False
             End With
 
-            ' Note that clsPeptideToProteinMapEngine utilizes Data.SQLite.dll
+            ' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
             blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
 
             mPeptideToProteinMapper.CloseLogFileNow()

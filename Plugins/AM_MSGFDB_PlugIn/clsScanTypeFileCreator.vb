@@ -57,7 +57,7 @@ Public Class clsScanTypeFileCreator
 
 #End Region
 
-    Public Sub New(ByVal strWorkDirectoryPath As String, ByVal strDatasetName As String)
+    Public Sub New(strWorkDirectoryPath As String, strDatasetName As String)
         mWorkDir = strWorkDirectoryPath
         mDatasetName = strDatasetName
         mErrorMessage = String.Empty
@@ -66,7 +66,7 @@ Public Class clsScanTypeFileCreator
     End Sub
 
 
-    Private Function CacheScanTypeUsingScanStatsEx(ByVal strScanStatsExFilePath As String) As Boolean
+    Private Function CacheScanTypeUsingScanStatsEx(strScanStatsExFilePath As String) As Boolean
 
         Try
             If mScanTypeMap Is Nothing Then

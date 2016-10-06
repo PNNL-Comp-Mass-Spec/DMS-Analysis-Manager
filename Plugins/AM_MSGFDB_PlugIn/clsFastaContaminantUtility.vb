@@ -43,32 +43,32 @@ Public Class clsFastaContaminantUtility
 
 	End Sub
 
-	Private Sub AddProtein(ByVal proteinName As String, ByVal proteinDescription As String, ByVal proteinSequence As String)
-		mProteins.Add(proteinName, New KeyValuePair(Of String, String)(proteinDescription, proteinSequence))
+    Private Sub AddProtein(proteinName As String, proteinDescription As String, proteinSequence As String)
+        mProteins.Add(proteinName, New KeyValuePair(Of String, String)(proteinDescription, proteinSequence))
 
-	End Sub
+    End Sub
 
-	Public Sub WriteProteinToFasta(ByVal fastaWriter As StreamWriter, ByVal proteinName As String)
+    Public Sub WriteProteinToFasta(fastaWriter As StreamWriter, proteinName As String)
 
-		Dim kvDetails As KeyValuePair(Of String, String) = Nothing
+        Dim kvDetails As KeyValuePair(Of String, String) = Nothing
 
-		If mProteins.TryGetValue(proteinName, kvDetails) Then
-			fastaWriter.WriteLine(">" & proteinName & " " & kvDetails.Key)
+        If mProteins.TryGetValue(proteinName, kvDetails) Then
+            fastaWriter.WriteLine(">" & proteinName & " " & kvDetails.Key)
 
-			Dim proteinResidues = kvDetails.Value
-			Dim startIndex = 0
+            Dim proteinResidues = kvDetails.Value
+            Dim startIndex = 0
 
-			While startIndex < proteinResidues.Length
-				If startIndex + 60 < proteinResidues.Length Then
-					fastaWriter.WriteLine(proteinResidues.Substring(startIndex, 60))
-				Else
-					fastaWriter.WriteLine(proteinResidues.Substring(startIndex))
-				End If
+            While startIndex < proteinResidues.Length
+                If startIndex + 60 < proteinResidues.Length Then
+                    fastaWriter.WriteLine(proteinResidues.Substring(startIndex, 60))
+                Else
+                    fastaWriter.WriteLine(proteinResidues.Substring(startIndex))
+                End If
 
-				startIndex += 60
-			End While
+                startIndex += 60
+            End While
 
-		End If
+        End If
 
-	End Sub
+    End Sub
 End Class

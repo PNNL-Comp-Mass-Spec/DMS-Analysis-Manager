@@ -251,7 +251,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     End Function
 
-    Public Shared Function MakeHPCBatchFile(ByVal workDirPath As String, ByVal batchFileName As String, ByVal commandToRun As String) As String
+    Public Shared Function MakeHPCBatchFile(workDirPath As String, batchFileName As String, commandToRun As String) As String
 
         Const waitTimeSeconds = 35
 
@@ -277,8 +277,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' <returns></returns>
     ''' <remarks></remarks>
     Private Function RunMSGFPlus(
-      ByVal javaProgLoc As String,
-      ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
+      javaProgLoc As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
       <Out()> ByRef fiMSGFPlusResults As FileInfo,
       <Out()> ByRef blnProcessingError As Boolean,
       <Out()> ByRef blnTooManySkippedSpectra As Boolean) As IJobParams.CloseOutType
@@ -402,16 +402,18 @@ Public Class clsAnalysisToolRunnerMSGFDB
         ' executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that 
         ' had large numbers of tasks on a small, finite number of threads
 
-        Dim intJavaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000)
-        If intJavaMemorySize < 512 Then intJavaMemorySize = 512
+        Dim javaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000)
+        If javaMemorySize < 512 Then javaMemorySize = 512
 
-        If udtHPCOptions.UsingHPC AndAlso intJavaMemorySize < 10000 Then
-            ' Automatically bump up the memory to use to 28 GB  (the machines have 32 GB per socket)
-            intJavaMemorySize = 28000
+        If udtHPCOptions.UsingHPC Then
+            If javaMemorySize < 10000 Then
+                ' Automatically bump up the memory to use to 28 GB  (the machines have 32 GB per socket)
+                javaMemorySize = 28000
+            End If
         End If
 
-        'Set up and execute a program runner to run MSGFDB
-        Dim cmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
+        ' Set up and execute a program runner to run MSGFDB
+        Dim cmdStr = " -Xmx" & javaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
 
         ' Define the input file, output file, and fasta file
         Select Case eInputFileFormat
@@ -438,7 +440,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
 
         If Not udtHPCOptions.UsingHPC Then
-            If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess) Then
+            If Not clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess) Then
                 m_message = "Not enough free memory to run MSGF+"
                 ' Immediately exit the plugin; results and console output files will not be saved
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -812,7 +814,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     End Function
 #End If
 
-    Private Function StartMSGFPlusLocal(ByVal javaExePath As String, ByVal CmdStr As String) As Boolean
+    Private Function StartMSGFPlusLocal(javaExePath As String, CmdStr As String) As Boolean
 
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath & " " & CmdStr)
@@ -847,7 +849,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' <param name="javaProgLoc"></param>
     ''' <returns>The name of the .tsv file if successful; empty string if an error</returns>
     ''' <remarks></remarks>
-    Private Function ConvertMZIDToTSV(ByVal strMZIDFileName As String, ByVal javaProgLoc As String, udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As String
+    Private Function ConvertMZIDToTSV(strMZIDFileName As String, javaProgLoc As String, udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As String
 
         Dim blnConversionRequired = True
 
@@ -1046,7 +1048,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' <param name="resultsFileName"></param>
     ''' <returns>The path to the new file if success, otherwise the original filename</returns>
     ''' <remarks></remarks>
-    Private Function ParallelMSGFPlusRenameFile(ByVal resultsFileName As String) As String
+    Private Function ParallelMSGFPlusRenameFile(resultsFileName As String) As String
 
         Dim filePathNew = "??"
 
@@ -1075,7 +1077,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' Parse the MSGFDB console output file to determine the MSGFDB version and to track the search progress
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal workingDirectory As String)
+    Private Sub ParseConsoleOutputFile(workingDirectory As String)
 
         Dim sngMSGFBProgress As Single = 0
 
@@ -1106,9 +1108,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>Assumes that the calling function has verified that resultsFileName exists</remarks>
     Private Function PostProcessMSGFDBResults(
-      ByVal resultsFileName As String,
-      ByVal javaProgLoc As String,
-      ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+      resultsFileName As String,
+      javaProgLoc As String,
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
         Dim currentTask = "Starting"
 
@@ -1136,7 +1138,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 m_jobParams.AddResultFileToSkip(resultsFileName & ".temp.tsv")
             End If
 
-            Dim strMSGFDBResultsFileName As String
+            Dim msgfPlusResultsFileName As String
             If Path.GetExtension(resultsFileName).ToLower() = ".mzid" Then
 
                 ' Convert the .mzid file to a .tsv file 
@@ -1144,14 +1146,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
                 currentTask = "Calling ConvertMZIDToTSV"
                 UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
-                strMSGFDBResultsFileName = ConvertMZIDToTSV(resultsFileName, javaProgLoc, udtHPCOptions)
+                msgfPlusResultsFileName = ConvertMZIDToTSV(resultsFileName, javaProgLoc, udtHPCOptions)
 
-                If String.IsNullOrEmpty(strMSGFDBResultsFileName) Then
+                If String.IsNullOrEmpty(msgfPlusResultsFileName) Then
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
             Else
-                strMSGFDBResultsFileName = String.Copy(resultsFileName)
+                msgfPlusResultsFileName = String.Copy(resultsFileName)
+            End If
             End If
 
             ' Create the Peptide to Protein map file
@@ -1167,7 +1170,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
 
             currentTask = "Calling CreatePeptideToProteinMapping"
-            result = mMSGFDBUtils.CreatePeptideToProteinMapping(strMSGFDBResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
+            result = mMSGFDBUtils.CreatePeptideToProteinMapping(msgfPlusResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
                 Return result
             End If
@@ -1211,7 +1214,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     End Function
 
-    Private Function VerifyHPCMSGFDb(ByVal udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As Boolean
+    Private Function VerifyHPCMSGFDb(udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As Boolean
 
         Try
             ' Make sure the copy of MSGF+ is up-to-date on PICfs
@@ -1260,7 +1263,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         MonitorProgress()
     End Sub
 
-    Private Sub mMSGFDBUtils_ErrorEvent(ByVal errorMessage As String, ByVal detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
+    Private Sub mMSGFDBUtils_ErrorEvent(errorMessage As String, detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
         m_message = String.Copy(errorMessage)
         If String.IsNullOrEmpty(detailedMessage) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)

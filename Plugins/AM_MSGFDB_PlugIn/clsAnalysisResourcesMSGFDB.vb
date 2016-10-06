@@ -150,7 +150,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
     End Function
 
-    Private Sub CheckParentFolder(ByVal diPicFsWorkDir As DirectoryInfo)
+    Private Sub CheckParentFolder(diPicFsWorkDir As DirectoryInfo)
 
         Try
             Dim lstParentDirectories = diPicFsWorkDir.Parent.GetDirectories().ToList()
@@ -307,7 +307,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
     End Function
 
-    Public Shared Function ValidateScanStatsFileHasDetailedScanTypes(ByVal strScanStatsFilePath As String) As Boolean
+    Public Shared Function ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath As String) As Boolean
 
         Dim lstColumnNameWithScanType = New List(Of String) From {"ScanTypeName", "Collision Mode", "Scan Filter Text"}
         Dim lstColumnIndicesToCheck = New List(Of Integer)
@@ -390,7 +390,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
     End Function
 
-    Private Function ValidateScanStatsFileHasScanTypeNameColumn(ByVal strScanStatsFilePath As String) As Boolean
+    Private Function ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsFilePath As String) As Boolean
 
         Dim blnScanTypeColumnFound = False
 

@@ -17,6 +17,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 #Region "Constants"
 	Public Const LEGACY_MSGFDB_SUBDIRECTORY_NAME As String = "Legacy_MSGFDB"
     Private Const MSGF_PLUS_INDEX_FILE_INFO_SUFFIX As String = ".MSGFPlusIndexFileInfo"
+    Private Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
 #End Region
 
 #Region "Module Variables"
@@ -83,7 +84,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Dim fiMSGFPlusIndexFileInfo As FileInfo
             fiMSGFPlusIndexFileInfo = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name & MSGF_PLUS_INDEX_FILE_INFO_SUFFIX))
 
-            Dim fileSizeTotalKB As Int64 = 0
+            Dim fileSizeTotalKB As Long = 0
 
             If Not fiMSGFPlusIndexFileInfo.Exists Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -93,8 +94,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             ' There should be 3 columns: FileName, FileSize, and FileDateUTC
             ' When looking for existing files we only require that the filesize match; FileDateUTC is not used
 
-            Dim dctFilesToCopy As Dictionary(Of String, Int64)
-            dctFilesToCopy = New Dictionary(Of String, Int64)
+            Dim dctFilesToCopy As Dictionary(Of String, Long)
+            dctFilesToCopy = New Dictionary(Of String, Long)
 
             Using srInFile = New StreamReader(New FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
@@ -108,8 +109,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                     If lstData.Count >= 3 Then
                         ' Add this file to the list of files to copy
-                        Dim intFileSizeBytes As Int64
-                        If Int64.TryParse(lstData(1), intFileSizeBytes) Then
+                        Dim intFileSizeBytes As Long
+                        If Long.TryParse(lstData(1), intFileSizeBytes) Then
                             dctFilesToCopy.Add(lstData(0), intFileSizeBytes)
                             fileSizeTotalKB += CLng(intFileSizeBytes / 1024.0)
                         End If
@@ -125,8 +126,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 blnFilesAreValid = False
             Else
                 ' Confirm that each file in dctFilesToCopy exists on the remote server
-                ' If using a legacy fasta file, then must also confirm that each file is newer than the fasta file that was indexed
-                blnFilesAreValid = ValidateFiles(diRemoteIndexFolderPath.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
+                ' If using a legacy fasta file, must also confirm that each file is newer than the fasta file that was indexed
+                blnFilesAreValid = ValidateFiles(diRemoteIndexFolderPath.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc, True)
             End If
 
             If Not blnFilesAreValid Then
@@ -147,9 +148,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
 
             ' Compute the total disk space required
-            Dim fileSizeTotalBytes As Int64 = 0
+            Dim fileSizeTotalBytes As Long = 0
 
-            For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+            For Each entry As KeyValuePair(Of String, Long) In dctFilesToCopy
                 Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
                 fileSizeTotalBytes += fiSourceFile.Length
             Next
@@ -176,7 +177,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 ' then we should once again check to see if the required files exist
 
                 ' Now confirm that each file was successfully copied locally
-                blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
+                blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc, False)
                 If blnSuccess Then
                     ' Files now exist
                     DeleteLockFile(fiRemoteLockFile2)
@@ -185,7 +186,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
             End If
 
-            For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+            For Each entry As KeyValuePair(Of String, Long) In dctFilesToCopy
 
                 Dim fiSourceFile = New FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key))
 
@@ -202,7 +203,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Next
 
             ' Now confirm that each file was successfully copied locally
-            blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc)
+            blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc, False)
 
             DeleteLockFile(fiRemoteLockFile2)
 
@@ -244,7 +245,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' <param name="remoteIndexFolderPath"></param>
     ''' <param name="debugLevel"></param>
     ''' <param name="managerName">Manager name (only required because the constructor for PRISM.Files.clsFileTools requires this)</param>
-    ''' <param name="createIndexFileForExistingFiles">When true, then assumes that the index files were previously copied to remoteIndexFolderPath, and we should simply create the .MSGFPlusIndexFileInfo file for the matching files</param>
+    ''' <param name="createIndexFileForExistingFiles">When true, assumes that the index files were previously copied to remoteIndexFolderPath, and we should simply create the .MSGFPlusIndexFileInfo file for the matching files</param>
     ''' <param name="strErrorMessage"></param>
     ''' <returns></returns>
     ''' <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
@@ -277,8 +278,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 fiFastaFile = New FileInfo(remoteFastaPath)
             End If
 
-            Dim dctFilesToCopy As Dictionary(Of String, Int64)
-            dctFilesToCopy = New Dictionary(Of String, Int64)
+            Dim dctFilesToCopy As Dictionary(Of String, Long)
+            dctFilesToCopy = New Dictionary(Of String, Long)
 
             Dim lstFileInfo As List(Of String)
             lstFileInfo = New List(Of String)
@@ -288,7 +289,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 If fiSourceFile.FullName <> fiFastaFile.FullName Then
                     If fiSourceFile.Extension <> ".hashcheck" AndAlso fiSourceFile.Extension <> ".MSGFPlusIndexFileInfo" Then
                         dctFilesToCopy.Add(fiSourceFile.Name, fiSourceFile.Length)
-                        lstFileInfo.Add(fiSourceFile.Name & ControlChars.Tab & fiSourceFile.Length & ControlChars.Tab & fiSourceFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"))
+                        lstFileInfo.Add(fiSourceFile.Name & ControlChars.Tab & fiSourceFile.Length & ControlChars.Tab & fiSourceFile.LastWriteTimeUtc.ToString(DATE_TIME_FORMAT))
                     End If
                 End If
             Next
@@ -301,7 +302,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 oFileTools = New PRISM.Files.clsFileTools(managerName, debugLevel)
 
-                For Each entry As KeyValuePair(Of String, Int64) In dctFilesToCopy
+                For Each entry As KeyValuePair(Of String, Long) In dctFilesToCopy
                     Dim strSourceFilePath As String
                     Dim strTargetFilePath As String
 
@@ -354,7 +355,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     ''' <param name="javaProgLoc"></param>
     ''' <param name="msgfDbProgLoc"></param>
     ''' <param name="strFASTAFilePath">FASTA file path</param>
-    ''' <param name="blnFastaFileIsDecoy">When True, then only creates the forward-based index files.  When False, then creates both the forward and reverse index files</param>
+    ''' <param name="blnFastaFileIsDecoy">When True, only creates the forward-based index files.  When False, creates both the forward and reverse index files</param>
     ''' <param name="strMSGFPlusIndexFilesFolderPathBase">Folder path from which to copy (or store) the index files</param>
     ''' <param name="strMSGFPlusIndexFilesFolderPathLegacyDB">Folder path from which to copy (or store) the index files for Legacy DBs (.fasta files not created from the protein sequences database)</param>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
@@ -401,7 +402,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             End If
 
             ' Protein collection files will start with ID_ then have at least 6 integers, then an alphanumeric hash string, for example ID_004208_295531A4.fasta
-            ' If the filename does not match that pattern, then we're using a legacy fasta file
+            ' If the filename does not match that pattern, we're using a legacy fasta file
             Dim reProtectionCollectionFasta = New Regex("ID_\d{6,}_[0-9a-z]+\.fasta", RegexOptions.IgnoreCase)
             Dim blnUsingLegacyFasta = Not reProtectionCollectionFasta.IsMatch(fiFastaFile.Name)
 
@@ -517,8 +518,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                         If fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1) Then
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Index file is older than the fasta file; " &
                               fiIndexFile.FullName & " modified " &
-                              fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt") & " vs. " &
-                              fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd hh:mm:ss tt"))
+                              fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT) & " vs. " &
+                              fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT))
 
                             blnReindexingRequired = True
                             Exit For
@@ -692,7 +693,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Threading.Thread.Sleep(oRandom.Next(2, 5) * 1000)
 
             ' Check one more time for a lock file
-            ' If it exists, then another manager just created it and we should abort
+            ' If it exists, another manager just created it and we should abort
             strCurrentTask = "Look for the lock file one last time"
             fiLockFile.Refresh()
             If fiLockFile.Exists Then
@@ -1237,7 +1238,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 End If
             Loop
 
-            'If the duration time has exceeded sngMaxWaitTimeHours, then delete the lock file and try again with this manager
+            ' If the duration time has exceeded sngMaxWaitTimeHours, delete the lock file and try again with this manager
             If blnStaleFile Then
                 Dim strLogMessage As String
                 strLogMessage = "Waited over " & sngMaxWaitTimeHours.ToString("0.0") & " hour(s) for lock file to be deleted, but it is still present; deleting the file now and continuing: " & fiLockFile.FullName
