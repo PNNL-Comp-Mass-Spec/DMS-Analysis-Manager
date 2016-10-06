@@ -390,7 +390,6 @@ Public Class clsMSGFDBUtils
             If fileSizeMB < 1000 Then javaMemorySizeMB = 8000
             If fileSizeMB < 800 Then javaMemorySizeMB = 7000
             If fileSizeMB < 600 Then javaMemorySizeMB = 6000
-            If fileSizeMB < 600 Then javaMemorySizeMB = 6000
             If fileSizeMB < 400 Then javaMemorySizeMB = 5000
             If fileSizeMB < 300 Then javaMemorySizeMB = 4000
             If fileSizeMB < 200 Then javaMemorySizeMB = 3000
@@ -422,7 +421,7 @@ Public Class clsMSGFDBUtils
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
             End With
 
-            ' This process is quite fast, so we do not track CPU usage
+            ' This process is typically quite fast, so we do not track CPU usage
             Dim blnSuccess = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", True)
 
             If Not blnSuccess Then

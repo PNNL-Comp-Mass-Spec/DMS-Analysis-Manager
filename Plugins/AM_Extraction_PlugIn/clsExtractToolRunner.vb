@@ -872,7 +872,7 @@ Public Class clsExtractToolRunner
             End If
 
         Catch ex As Exception
-            msg = "clsExtractToolRunner.PerformPeptideExtraction(); Exception running extraction tool: " & _
+            msg = "clsExtractToolRunner.PerformPeptideExtraction(); Exception running extraction tool: " &
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool")
@@ -906,7 +906,7 @@ Public Class clsExtractToolRunner
             eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST)
 
         Catch ex As Exception
-            msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " & _
+            msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " &
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
@@ -957,7 +957,7 @@ Public Class clsExtractToolRunner
             End If
 
         Catch ex As Exception
-            msg = "clsExtractToolRunner.RunPhrpForXTandem(); Exception running PHRP: " & _
+            msg = "clsExtractToolRunner.RunPhrpForXTandem(); Exception running PHRP: " &
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
@@ -1005,7 +1005,7 @@ Public Class clsExtractToolRunner
             End If
 
         Catch ex As Exception
-            msg = "clsExtractToolRunner.RunPhrpForMSAlign(); Exception running PHRP: " & _
+            msg = "clsExtractToolRunner.RunPhrpForMSAlign(); Exception running PHRP: " &
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
@@ -1115,7 +1115,7 @@ Public Class clsExtractToolRunner
                 m_jobParams.AddResultFileToSkip(strFilteredMODaResultsFilePath)
 
             Catch ex As Exception
-                msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " & _
+                msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " &
                  ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
@@ -1190,7 +1190,7 @@ Public Class clsExtractToolRunner
                 End If
 
             Catch ex As Exception
-                msg = "clsExtractToolRunner.RunPhrpForMODPlus(); Exception running PHRP: " & _
+                msg = "clsExtractToolRunner.RunPhrpForMODPlus(); Exception running PHRP: " &
                  ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
