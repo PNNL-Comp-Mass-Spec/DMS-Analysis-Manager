@@ -1159,7 +1159,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Dim skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", False)
 
             If skipPeptideToProteinMapping Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping PeptideToProteinMapping based on job parameter SkipPeptideToProteinMapping")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True")
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             End If
 

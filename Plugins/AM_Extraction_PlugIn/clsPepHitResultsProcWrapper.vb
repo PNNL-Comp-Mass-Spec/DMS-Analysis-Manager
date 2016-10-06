@@ -88,10 +88,10 @@ Public Class clsPepHitResultsProcWrapper
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ExtractDataFromResults(PeptideSearchResultsFileName As String, _
-      CreateFirstHitsFile As Boolean, _
-      CreateSynopsisFile As Boolean, _
-      FastaFilePath As String, _
+    Public Function ExtractDataFromResults(PeptideSearchResultsFileName As String,
+      CreateFirstHitsFile As Boolean,
+      CreateSynopsisFile As Boolean,
+      FastaFilePath As String,
       ResultType As String) As IJobParams.CloseOutType
 
         Dim ModDefsFileName As String

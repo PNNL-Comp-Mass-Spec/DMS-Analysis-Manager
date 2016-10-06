@@ -589,7 +589,7 @@ Public Class clsExtractToolRunner
             ' Values the lowest SpecEValue for the scan/charge
             Dim dctScanChargeBestScore = New Dictionary(Of String, Double)
 
-            Dim totalLinesProcessed As Int64 = 0
+            Dim totalLinesProcessed As Long = 0
             Dim warningsLogged = 0
 
             Using swMergedFile = New StreamWriter(New FileStream(mergedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -743,8 +743,8 @@ Public Class clsExtractToolRunner
             Dim fiTempFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_PepToProtMap.tmp"))
             m_jobParams.AddResultFileToSkip(fiTempFile.Name)
 
-            Dim totalLinesProcessed As Int64 = 0
-            Dim totalLinesToWrite As Int64 = 0
+            Dim totalLinesProcessed As Long = 0
+            Dim totalLinesToWrite As Long = 0
 
             Dim lstPepProtMappingWritten = New SortedSet(Of String)
 
@@ -1284,7 +1284,7 @@ Public Class clsExtractToolRunner
                             Dim skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", False)
 
                             If skipPeptideToProteinMapping Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping PeptideToProteinMapping based on job parameter SkipPeptideToProteinMapping")
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True")
                             Else
                                 eResult = CreateMSGFPlusResultsProteinToPeptideMappingFile(strTargetFilePath)
                                 If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -1431,7 +1431,7 @@ Public Class clsExtractToolRunner
                 End If
 
             Catch ex As Exception
-                msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " & _
+                msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " &
                  ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
@@ -1573,7 +1573,7 @@ Public Class clsExtractToolRunner
             End Try
 
         Catch ex As Exception
-            msg = "clsExtractToolRunner.RunPhrpForInSpecT(); Exception running PHRP: " & _
+            msg = "clsExtractToolRunner.RunPhrpForInSpecT(); Exception running PHRP: " &
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
@@ -1700,8 +1700,8 @@ Public Class clsExtractToolRunner
             If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
 
                 ' Make sure the Peptide Prophet output file was actually created
-                strPepProphetOutputFilePath = Path.Combine(m_PeptideProphet.OutputFolderPath, _
-                  Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) & _
+                strPepProphetOutputFilePath = Path.Combine(m_PeptideProphet.OutputFolderPath,
+                  Path.GetFileNameWithoutExtension(strFileList(intFileIndex)) &
                   PEPPROPHET_RESULT_FILE_SUFFIX)
 
                 If m_DebugLevel >= 3 Then
@@ -1727,7 +1727,7 @@ Public Class clsExtractToolRunner
                     End If
                 End If
             Else
-                msg = "clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " & strSynFileNameAndSize & _
+                msg = "clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " & strSynFileNameAndSize &
                    ": " & m_PeptideProphet.ErrMsg
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
 
@@ -1827,8 +1827,8 @@ Public Class clsExtractToolRunner
     ''' <param name="blnLookForHeaderLine">When true, then looks for a header line by checking if the first column contains a number</param>
     ''' <returns>True if success; false if failure</returns>
     ''' <remarks></remarks>
-    Protected Function InterleaveFiles(ByRef strFileList() As String, _
-      strCombinedFilePath As String, _
+    Protected Function InterleaveFiles(ByRef strFileList() As String,
+      strCombinedFilePath As String,
       blnLookForHeaderLine As Boolean) As Boolean
 
         Dim msg As String
@@ -1953,9 +1953,9 @@ Public Class clsExtractToolRunner
     ''' <param name="strSplitFileList">Output array listing the full paths to the split files that were created</param>
     ''' <returns>True if success, false if failure</returns>
     ''' <remarks></remarks>
-    Private Function SplitFileRoundRobin(strSrcFilePath As String, _
-     lngMaxSizeBytes As Int64, _
-     blnLookForHeaderLine As Boolean, _
+    Private Function SplitFileRoundRobin(strSrcFilePath As String,
+     lngMaxSizeBytes As Long,
+     blnLookForHeaderLine As Boolean,
      ByRef strSplitFileList() As String) As Boolean
 
         Dim fiFileInfo As FileInfo
@@ -2199,7 +2199,7 @@ Public Class clsExtractToolRunner
         m_StatusTools.UpdateAndWrite(m_progress)
 
         If m_DebugLevel >= 1 Then
-            If DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS And m_DebugLevel >= 3 OrElse _
+            If DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS And m_DebugLevel >= 3 OrElse
                DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS Then
                 dtLastPHRPStatusLog = DateTime.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running PHRP: " & taskDescription & "; " & percentComplete & "% complete")

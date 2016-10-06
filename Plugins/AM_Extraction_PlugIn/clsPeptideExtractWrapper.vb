@@ -100,7 +100,7 @@ Public Class clsPeptideExtractWrapper
     ''' <remarks></remarks>
     Public Function PerformExtraction() As IJobParams.CloseOutType
 
-        Dim StartParams As New clsPeptideFileExtractor.StartupArguments( _
+        Dim StartParams As New clsPeptideFileExtractor.StartupArguments(
           m_MgrParams.GetParam("workdir"), m_JobParams.GetParam("DatasetNum"))
 
         With StartParams
