@@ -278,7 +278,7 @@ Public Class clsCleanupMgrErrors
         Try
             Dim strPath As String = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME)
             Using Sw As StreamWriter = New StreamWriter(New FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read))
-                Sw.WriteLine(DateTime.Now().ToString())
+                Sw.WriteLine(Date.Now().ToString())
                 Sw.Flush()
             End Using
 
@@ -297,7 +297,7 @@ Public Class clsCleanupMgrErrors
         Try
             Dim strPath As String = Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
             Using Sw As StreamWriter = New StreamWriter(New FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read))
-                Sw.WriteLine(DateTime.Now().ToString())
+                Sw.WriteLine(Date.Now().ToString())
                 Sw.Flush()
             End Using
 

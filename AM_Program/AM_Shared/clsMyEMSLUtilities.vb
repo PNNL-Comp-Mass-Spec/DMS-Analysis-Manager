@@ -14,8 +14,8 @@ Public Class clsMyEMSLUtilities
     Private ReadOnly m_AllFoundMyEMSLFiles As List(Of DatasetFolderOrFileInfo)
 
     Private m_RecentlyFoundMyEMSLFiles As List(Of DatasetFolderOrFileInfo)
-    
-    Private m_LastMyEMSLProgressWriteTime As DateTime = DateTime.UtcNow
+
+    Private m_LastMyEMSLProgressWriteTime As DateTime = Date.UtcNow
 
     Private ReadOnly mFileIDComparer As clsMyEMSLFileIDComparer
 
@@ -207,7 +207,7 @@ Public Class clsMyEMSLUtilities
     Public Sub ClearDownloadQueue()
         m_MyEMSLDatasetListInfo.FilesToDownload.Clear()
     End Sub
-    
+
     ''' <summary>
     ''' Look for the given file (optionally in a given subfolder) for the given dataset
     ''' </summary>
@@ -291,8 +291,8 @@ Public Class clsMyEMSLUtilities
     End Sub
 
     Private Sub m_MyEMSLDatasetListInfo_ProgressEvent(sender As Object, e As ProgressEventArgs) Handles m_MyEMSLDatasetListInfo.ProgressEvent
-        If DateTime.UtcNow.Subtract(m_LastMyEMSLProgressWriteTime).TotalMinutes > 0.2 Then
-            m_LastMyEMSLProgressWriteTime = DateTime.UtcNow
+        If Date.UtcNow.Subtract(m_LastMyEMSLProgressWriteTime).TotalMinutes > 0.2 Then
+            m_LastMyEMSLProgressWriteTime = Date.UtcNow
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MyEMSL downloader: " & e.PercentComplete & "% complete")
         End If
     End Sub

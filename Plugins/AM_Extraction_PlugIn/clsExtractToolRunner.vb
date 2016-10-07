@@ -211,7 +211,7 @@ Public Class clsExtractToolRunner
             End If
 
             ' Stop the job timer
-            m_StopTime = DateTime.UtcNow
+            m_StopTime = Date.UtcNow
 
             Dim eReturnCode As IJobParams.CloseOutType
 
@@ -2176,14 +2176,14 @@ Public Class clsExtractToolRunner
 #Region "Event handlers"
     Private Sub m_PeptideProphet_PeptideProphetRunning(PepProphetStatus As String, PercentComplete As Single) Handles m_PeptideProphet.PeptideProphetRunning
         Const PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS = 60
-        Static dtLastPepProphetStatusLog As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS * 2))
+        Static dtLastPepProphetStatusLog As DateTime = Date.UtcNow.Subtract(New TimeSpan(0, 0, PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
         m_progress = SEQUEST_PROGRESS_PHRP_DONE + CSng(PercentComplete / 3.0)
         m_StatusTools.UpdateAndWrite(m_progress)
 
         If m_DebugLevel >= 4 Then
-            If DateTime.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds >= PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS Then
-                dtLastPepProphetStatusLog = DateTime.UtcNow
+            If Date.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds >= PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS Then
+                dtLastPepProphetStatusLog = Date.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running peptide prophet: " & PepProphetStatus & "; " & PercentComplete & "% complete")
             End If
         End If
@@ -2193,15 +2193,15 @@ Public Class clsExtractToolRunner
         Const PHRP_LOG_INTERVAL_SECONDS = 180
         Const PHRP_DETAILED_LOG_INTERVAL_SECONDS = 20
 
-        Static dtLastPHRPStatusLog As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, PHRP_DETAILED_LOG_INTERVAL_SECONDS * 2))
+        Static dtLastPHRPStatusLog As DateTime = Date.UtcNow.Subtract(New TimeSpan(0, 0, PHRP_DETAILED_LOG_INTERVAL_SECONDS * 2))
 
         m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + CSng(percentComplete / 3.0)
         m_StatusTools.UpdateAndWrite(m_progress)
 
         If m_DebugLevel >= 1 Then
-            If DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS And m_DebugLevel >= 3 OrElse
-               DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS Then
-                dtLastPHRPStatusLog = DateTime.UtcNow
+            If Date.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS And m_DebugLevel >= 3 OrElse
+               Date.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS Then
+                dtLastPHRPStatusLog = Date.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running PHRP: " & taskDescription & "; " & percentComplete & "% complete")
             End If
         End If

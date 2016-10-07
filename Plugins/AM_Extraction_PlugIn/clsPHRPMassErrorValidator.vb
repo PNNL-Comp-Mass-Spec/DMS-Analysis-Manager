@@ -163,7 +163,7 @@ Public Class clsPHRPMassErrorValidator
 
             Dim intErrorCount = 0
             Dim intPsmCount = 0
-            Dim dtLastProgress As DateTime = DateTime.UtcNow
+            Dim dtLastProgress As DateTime = Date.UtcNow
 
             Dim strPeptideDescription As String
             Dim lstLargestMassErrors = New SortedDictionary(Of Double, String)
@@ -196,8 +196,8 @@ Public Class clsPHRPMassErrorValidator
 
                 intPsmCount += 1
 
-                If intPsmCount Mod 100 = 0 AndAlso DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15 Then
-                    dtLastProgress = DateTime.UtcNow
+                If intPsmCount Mod 100 = 0 AndAlso Date.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15 Then
+                    dtLastProgress = Date.UtcNow
                     Dim statusMessage = "Validating mass errors: " & mPHRPReader.PercentComplete.ToString("0.0") & "% complete"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage)
                     Console.WriteLine(statusMessage)

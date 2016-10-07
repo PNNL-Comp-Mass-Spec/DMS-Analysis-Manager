@@ -577,7 +577,7 @@ Public MustInherit Class clsMSGFInputCreator
                 End If
             End If
 
-            mLogFile.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab & strErrorMessage)
+            mLogFile.WriteLine(Date.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab & strErrorMessage)
 
         Catch ex As Exception
             RaiseEvent ErrorEvent("Error writing to MSGFInputCreator log file: " & ex.Message)

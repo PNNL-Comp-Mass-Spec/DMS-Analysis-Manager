@@ -28,29 +28,29 @@ Public Class clsPeptideExtractWrapper
         Const MIN_LOG_INTERVAL_SECONDS = 5
         Const MAX_LOG_INTERVAL_SECONDS = 300
 
-        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
-        Static dtLastLogTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(0, 0, MIN_LOG_INTERVAL_SECONDS * 2))
+        Static dtLastStatusUpdate As DateTime = Date.UtcNow
+        Static dtLastLogTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(0, 0, MIN_LOG_INTERVAL_SECONDS * 2))
 
         Dim blnUpdateLog = False
 
         ' We divide the progress by 3 since creation of the FHT and SYN files takes ~33% of the time, while the remainder is spent running PHRP and PeptideProphet
         m_Progress = CSng(100.0 * fractionDone / 3.0)
 
-        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS Then
-            dtLastStatusUpdate = DateTime.UtcNow
+        If Date.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS Then
+            dtLastStatusUpdate = Date.UtcNow
             m_StatusTools.UpdateAndWrite(m_Progress)
         End If
 
-        If m_DebugLevel > 3 AndAlso DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS Then
+        If m_DebugLevel > 3 AndAlso Date.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS Then
             ' Over MIN_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
             blnUpdateLog = True
-        ElseIf m_DebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS Then
+        ElseIf m_DebugLevel >= 1 AndAlso Date.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS Then
             ' Over MAX_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
             blnUpdateLog = True
         End If
 
         If blnUpdateLog Then
-            dtLastLogTime = DateTime.UtcNow
+            dtLastLogTime = Date.UtcNow
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Extraction progress: " & m_Progress.ToString("##0.0") & "%")
         End If
 

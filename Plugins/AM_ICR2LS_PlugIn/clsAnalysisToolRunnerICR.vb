@@ -291,7 +291,7 @@ Public Class clsAnalysisToolRunnerICR
 
                             ' Name should be of the form: Dataset_1_24_2010.PAR
                             ' The datestamp in the name is month_day_year
-                            strDesiredName = strDatasetName & "_" & DateTime.Now.ToString("M_d_yyyy") & "." & strExtension
+                            strDesiredName = strDatasetName & "_" & Date.Now.ToString("M_d_yyyy") & "." & strExtension
 
                             If fiFile.Name.ToLower <> strDesiredName.ToLower Then
                                 Try

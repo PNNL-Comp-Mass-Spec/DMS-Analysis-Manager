@@ -263,7 +263,7 @@ Public MustInherit Class clsAnalysisResources
 
     Protected m_MyEMSLUtilities As clsMyEMSLUtilities
 
-    Private Shared mLastJobParameterFromHistoryLookup As DateTime = DateTime.UtcNow
+    Private Shared mLastJobParameterFromHistoryLookup As DateTime = Date.UtcNow
 
     Private m_ResourceOptions As Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
 
@@ -465,7 +465,7 @@ Public MustInherit Class clsAnalysisResources
         Dim fiLockFile = New FileInfo(dataFilePath & LOCK_FILE_EXTENSION)
 
         If fiLockFile.Exists Then
-            If DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes Then
+            If Date.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes Then
                 blnWaitingForLockFile = True
                 dtLockFileCreated = fiLockFile.LastWriteTimeUtc
 
@@ -480,7 +480,7 @@ Public MustInherit Class clsAnalysisResources
 
         If blnWaitingForLockFile Then
 
-            Dim dtLastProgressTime = DateTime.UtcNow
+            Dim dtLastProgressTime = Date.UtcNow
             If logIntervalMinutes < 1 Then logIntervalMinutes = 1
 
             Do While blnWaitingForLockFile
@@ -491,12 +491,12 @@ Public MustInherit Class clsAnalysisResources
 
                 If Not fiLockFile.Exists Then
                     blnWaitingForLockFile = False
-                ElseIf DateTime.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes Then
+                ElseIf Date.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes Then
                     blnWaitingForLockFile = False
                 Else
-                    If DateTime.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes Then
+                    If Date.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes Then
                         LogDebugMessage("Waiting for lock file " & fiLockFile.Name, statusTools)
-                        dtLastProgressTime = DateTime.UtcNow
+                        dtLastProgressTime = Date.UtcNow
                     End If
                 End If
             Loop
@@ -1052,7 +1052,7 @@ Public MustInherit Class clsAnalysisResources
             m_SplitFastaFileUtility = New clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps, m_MgrName)
             m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB
 
-            m_SplitFastaLastUpdateTime = DateTime.UtcNow
+            m_SplitFastaLastUpdateTime = Date.UtcNow
             m_SplitFastaLastPercentComplete = 0
 
             Dim success = m_SplitFastaFileUtility.ValidateSplitFastaFile(proteinCollectionInfo.LegacyFastaName, legacyFastaToUse)
@@ -1117,8 +1117,8 @@ Public MustInherit Class clsAnalysisResources
                 ' Also log the file creation and modification dates
                 Try
 
-                    strFastaFileMsg = "Fasta file last modified: " + GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString()
-                    strFastaFileMsg &= "; file created: " + GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString()
+                    strFastaFileMsg = "Fasta file last modified: " + GetHumanReadableTimeInterval(Date.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString()
+                    strFastaFileMsg &= "; file created: " + GetHumanReadableTimeInterval(Date.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString()
                     strFastaFileMsg &= "; file size: " + fiFastaFile.Length.ToString() + " bytes"
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strFastaFileMsg)
@@ -1133,7 +1133,7 @@ Public MustInherit Class clsAnalysisResources
         Dim lastUsedFilePath = fiFastaFile.FullName & ".LastUsed"
         Try
             Using swLastUsedFile = New StreamWriter(New FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
+                swLastUsedFile.WriteLine(Date.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
             End Using
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning: unable to create a new .LastUsed file at " & lastUsedFilePath & ": " & ex.Message)
@@ -3093,7 +3093,7 @@ Public MustInherit Class clsAnalysisResources
             ' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
             ' Alternatively, add the user to the "Administrators" group.
             ' In either case, you will need to reboot the computer for the change to take effect
-            If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
+            If Not blnVirtualMachineOnPIC AndAlso Date.Now().Hour = 0 AndAlso Date.Now().Minute <= 30 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " + ex.Message)
             End If
         End Try
@@ -3106,7 +3106,7 @@ Public MustInherit Class clsAnalysisResources
                 If blnVirtualMachineOnPIC Then
                     ' The Memory performance counters are not available on Windows instances running under VMWare on PIC
                 Else
-                    If DateTime.Now().Hour = 15 Then
+                    If Date.Now().Hour = 15 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Performance monitor reports 0 MB available; using alternate method: Devices.ComputerInfo().AvailablePhysicalMemory (this message is only logged between 3:00 pm and 4:00 pm)")
                     End If
                 End If
@@ -3116,7 +3116,7 @@ Public MustInherit Class clsAnalysisResources
             End If
 
         Catch ex As Exception
-            If DateTime.Now().Hour = 15 Then
+            If Date.Now().Hour = 15 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining available memory using Devices.ComputerInfo().AvailablePhysicalMemory (this message is only logged between 3:00 pm and 4:00 pm): " + ex.Message)
             End If
         End Try
@@ -4004,11 +4004,11 @@ Public MustInherit Class clsAnalysisResources
         errorMsg = String.Empty
 
         ' Throttle the calls to this function to avoid overloading the database for data packages with hundreds of jobs
-        While DateTime.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50
+        While Date.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50
             Thread.Sleep(25)
         End While
 
-        mLastJobParameterFromHistoryLookup = DateTime.UtcNow
+        mLastJobParameterFromHistoryLookup = Date.UtcNow
 
         Try
 
@@ -4433,7 +4433,7 @@ Public MustInherit Class clsAnalysisResources
                 ' Abort this process if the LastUsed date of this file is less than 5 days old
                 Dim dtLastUsed As DateTime
                 If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
-                    If DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
+                    If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "All fasta files in " & localOrgDbFolder & " are less than 5 days old; will not purge any more files to free disk space")
                         Exit For
                     End If
@@ -5175,7 +5175,7 @@ Public MustInherit Class clsAnalysisResources
 
             If splitFastaJobs.Count > 0 Then
 
-                Dim lastStatusTime = DateTime.UtcNow
+                Dim lastStatusTime = Date.UtcNow
                 Dim statusIntervalSeconds = 4
                 Dim jobsProcessed = 0
 
@@ -5200,11 +5200,11 @@ Public MustInherit Class clsAnalysisResources
 
                         jobsProcessed += 1
 
-                        If DateTime.UtcNow.Subtract(lastStatusTime).TotalSeconds >= statusIntervalSeconds Then
+                        If Date.UtcNow.Subtract(lastStatusTime).TotalSeconds >= statusIntervalSeconds Then
                             Dim pctComplete = jobsProcessed / splitFastaJobs.Count * 100
                             LogDebugMessage("Retrieving job parameters from history for SplitFasta jobs; " & pctComplete.ToString("0") & "% complete", Nothing)
 
-                            lastStatusTime = DateTime.UtcNow
+                            lastStatusTime = Date.UtcNow
 
                             ' Double the status interval, allowing for a maximum of 30 seconds
                             statusIntervalSeconds = Math.Min(30, statusIntervalSeconds * 2)
@@ -5753,7 +5753,7 @@ Public MustInherit Class clsAnalysisResources
             ' Cache the current dataset and job info
             Dim currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
 
-            Dim dtLastProgressUpdate = DateTime.UtcNow
+            Dim dtLastProgressUpdate = Date.UtcNow
             Dim datasetsProcessed = 0
             Dim datasetsToProcess = dctInstrumentDataToRetrieve.Count
 
@@ -5823,9 +5823,9 @@ Public MustInherit Class clsAnalysisResources
                 Dim percentComplete = CSng(datasetsProcessed) / datasetsToProcess * 2
                 m_StatusTools.UpdateAndWrite(percentComplete)
 
-                If (DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30) Then
+                If (Date.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30) Then
 
-                    dtLastProgressUpdate = DateTime.UtcNow
+                    dtLastProgressUpdate = Date.UtcNow
 
                     Dim progressMsg = "Retrieving mzXML files: " & datasetsProcessed & " / " & datasetsToProcess & " datasets"
 
@@ -6945,7 +6945,7 @@ Public MustInherit Class clsAnalysisResources
 
 
             If Not UnzipOverNetwork Then
-                Dim dtStartTime As DateTime = DateTime.UtcNow
+                Dim dtStartTime As DateTime = Date.UtcNow
 
                 Do While strFilesToDelete.Count > 0
                     ' Try to process the files remaining in queue strFilesToDelete
@@ -6953,7 +6953,7 @@ Public MustInherit Class clsAnalysisResources
                     DeleteQueuedFiles(strFilesToDelete, String.Empty)
 
                     If strFilesToDelete.Count > 0 Then
-                        If DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 20 Then
+                        If Date.UtcNow.Subtract(dtStartTime).TotalSeconds > 20 Then
                             ' Stop trying to delete files; it's not worth continuing to try
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete all of the files in queue strFilesToDelete; Queue Length = " + strFilesToDelete.Count.ToString() + "; this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)")
                             Exit Do
@@ -7721,9 +7721,9 @@ Public MustInherit Class clsAnalysisResources
 
                 Dim UnZipper As New PRISM.Files.ZipTools(outFolderPath, strExternalUnzipperFilePath)
 
-                Dim dtStartTime = DateTime.UtcNow
+                Dim dtStartTime = Date.UtcNow
                 Dim blnSuccess = UnZipper.UnzipFile("", zipFilePath, outFolderPath)
-                Dim dtEndTime = DateTime.UtcNow
+                Dim dtEndTime = Date.UtcNow
 
                 If blnSuccess Then
                     m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
@@ -8034,9 +8034,9 @@ Public MustInherit Class clsAnalysisResources
         Static dtLastUpdateTime As DateTime
 
         If m_DebugLevel >= 1 Then
-            If m_DebugLevel = 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse
-               m_DebugLevel > 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
-                dtLastUpdateTime = DateTime.UtcNow
+            If m_DebugLevel = 1 AndAlso Date.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse
+               m_DebugLevel > 1 AndAlso Date.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
+                dtLastUpdateTime = Date.UtcNow
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... CDTAUtilities: " & percentComplete.ToString("0.00") & "% complete")
             End If
@@ -8055,7 +8055,7 @@ Public MustInherit Class clsAnalysisResources
 
     Private Sub m_FastaTools_FileGenerationProgress(statusMsg As String, fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
         Const MINIMUM_LOG_INTERVAL_SEC = 10
-        Static dtLastLogTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
+        Static dtLastLogTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(1, 0, 0))
         Static dblFractionDoneSaved As Double = -1
 
         Dim blnForcelog = m_DebugLevel >= 1 AndAlso statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT)
@@ -8063,9 +8063,9 @@ Public MustInherit Class clsAnalysisResources
         If m_DebugLevel >= 3 OrElse blnForcelog Then
             ' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
             If blnForcelog OrElse
-               DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse
+               Date.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse
                fractionDone - dblFractionDoneSaved >= 0.25 Then
-                dtLastLogTime = DateTime.UtcNow
+                dtLastLogTime = Date.UtcNow
                 dblFractionDoneSaved = fractionDone
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Generating Fasta file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg)
             End If
@@ -8079,11 +8079,11 @@ Public MustInherit Class clsAnalysisResources
     Private Sub m_SplitFastaFileUtility_ProgressUpdate(progressMessage As String, percentComplete As Integer) Handles m_SplitFastaFileUtility.ProgressUpdate
 
         If m_DebugLevel >= 1 Then
-            If m_DebugLevel = 1 AndAlso DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 OrElse
-               m_DebugLevel > 1 AndAlso DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 OrElse
+            If m_DebugLevel = 1 AndAlso Date.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 OrElse
+               m_DebugLevel > 1 AndAlso Date.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 OrElse
                percentComplete = 100 And m_SplitFastaLastPercentComplete < 100 Then
 
-                m_SplitFastaLastUpdateTime = DateTime.UtcNow
+                m_SplitFastaLastUpdateTime = Date.UtcNow
                 m_SplitFastaLastPercentComplete = percentComplete
 
                 If percentComplete > 0 Then

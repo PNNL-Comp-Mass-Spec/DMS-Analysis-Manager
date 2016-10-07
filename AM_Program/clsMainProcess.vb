@@ -277,7 +277,7 @@ Public Class clsMainProcess
         Dim blnErrorDeletingFilesFlagFile As Boolean
 
         Dim strMessage As String
-        Dim dtLastConfigDBUpdate As DateTime = DateTime.UtcNow
+        Dim dtLastConfigDBUpdate As DateTime = Date.UtcNow
 
         Dim blnRequestJobs As Boolean
         Dim blnOneTaskStarted As Boolean
@@ -609,10 +609,10 @@ Public Class clsMainProcess
         End If
 
         ' Update the cached most recent job info
-        m_MostRecentJobInfo = ConstructMostRecentJobInfoText(DateTime.Now.ToString(), jobNum, datasetName, jobToolDescription)
+        m_MostRecentJobInfo = ConstructMostRecentJobInfoText(Date.Now.ToString(), jobNum, datasetName, jobToolDescription)
 
         With m_StatusTools
-            .TaskStartTime = DateTime.UtcNow
+            .TaskStartTime = Date.UtcNow
             .Dataset = datasetName
             .JobNumber = jobNum
             .JobStep = stepNum
@@ -1429,7 +1429,7 @@ Public Class clsMainProcess
             m_StatusTools = New clsStatusFile(statusFileLoc, m_DebugLevel)
 
             With m_StatusTools
-                .TaskStartTime = DateTime.UtcNow
+                .TaskStartTime = Date.UtcNow
                 .Dataset = ""
                 .JobNumber = 0
                 .JobStep = 0
@@ -1599,7 +1599,7 @@ Public Class clsMainProcess
 
         For Each fiFile As FileInfo In lstFilesToDelete
             Try
-                If DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24 Then
+                If Date.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24 Then
                     If Me.TraceMode Then ShowTraceMessage("Deleting temp file " & fiFile.FullName)
                     fiFile.Delete()
                 End If
@@ -1706,7 +1706,7 @@ Public Class clsMainProcess
     End Function
 
     Public Shared Sub ShowTraceMessage(strMessage As String)
-        Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
+        Console.WriteLine(Date.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
     End Sub
 
     Private Sub UpdateClose(ManagerCloseMessage As String)
@@ -1728,9 +1728,9 @@ Public Class clsMainProcess
 
         Dim blnSuccess = True
 
-        If (DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates) Then
+        If (Date.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates) Then
 
-            dtLastConfigDBUpdate = DateTime.UtcNow
+            dtLastConfigDBUpdate = Date.UtcNow
 
             If Me.TraceMode Then ShowTraceMessage("Loading manager settings from the manager control DB")
 

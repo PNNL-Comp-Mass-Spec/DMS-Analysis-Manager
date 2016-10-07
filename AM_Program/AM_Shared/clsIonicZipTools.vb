@@ -195,7 +195,7 @@ Public Class clsIonicZipTools
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file: " & fiFile.FullName)
             End If
 
-            dtStartTime = DateTime.UtcNow
+            dtStartTime = Date.UtcNow
 
             ' Get original file extension, for example "doc" from report.doc.gz
             Dim curFile As String = fiFile.Name
@@ -229,7 +229,7 @@ Public Class clsIonicZipTools
                 End Using
             End Using
 
-            dtEndTime = DateTime.UtcNow
+            dtEndTime = Date.UtcNow
 
             If m_DebugLevel >= 2 Then
                 ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
@@ -342,7 +342,7 @@ Public Class clsIonicZipTools
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .gz file using " & fiGZip.Name & ": " & GZipFilePath)
             End If
 
-            dtStartTime = DateTime.UtcNow
+            dtStartTime = Date.UtcNow
 
             Dim objProgRunner As clsRunDosProgram
             Dim blnSuccess As Boolean
@@ -375,7 +375,7 @@ Public Class clsIonicZipTools
 
             Thread.Sleep(100)
 
-            dtEndTime = DateTime.UtcNow
+            dtEndTime = Date.UtcNow
 
             ' Confirm that the .gz file was created
 
@@ -429,7 +429,7 @@ Public Class clsIonicZipTools
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .gz file using IonicZip: " & GZipFilePath)
             End If
 
-            dtStartTime = DateTime.UtcNow
+            dtStartTime = Date.UtcNow
 
             Using inFile As Stream = fiFile.OpenRead()
                 Using outFile = File.Create(GZipFilePath)
@@ -441,7 +441,7 @@ Public Class clsIonicZipTools
                 End Using
             End Using
 
-            dtEndTime = DateTime.UtcNow
+            dtEndTime = Date.UtcNow
 
             If m_DebugLevel >= 2 Then
                 ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
@@ -603,7 +603,7 @@ Public Class clsIonicZipTools
 
             Using objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
 
-                dtStartTime = DateTime.UtcNow
+                dtStartTime = Date.UtcNow
 
                 If String.IsNullOrEmpty(FileFilter) Then
                     objZipper.ExtractAll(TargetDirectory, eOverwriteBehavior)
@@ -629,7 +629,7 @@ Public Class clsIonicZipTools
                     Next
                 End If
 
-                dtEndTime = DateTime.UtcNow
+                dtEndTime = Date.UtcNow
 
                 If m_DebugLevel >= 2 Then
                     ReportZipStats(fiFile, dtStartTime, dtEndTime, False)
@@ -758,7 +758,7 @@ Public Class clsIonicZipTools
 
         Dim zipFilePath = GetZipFilePathForFile(sourceFilePath)
 
-        Return ZipFile(sourceFilePath, deleteSourceAfterZip, ZipFilePath)
+        Return ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath)
 
     End Function
 
@@ -807,10 +807,10 @@ Public Class clsIonicZipTools
             Using objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
                 objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
-                dtStartTime = DateTime.UtcNow
+                dtStartTime = Date.UtcNow
                 objZipper.AddItem(fiFile.FullName, String.Empty)
                 objZipper.Save()
-                dtEndTime = DateTime.UtcNow
+                dtEndTime = Date.UtcNow
 
                 If m_DebugLevel >= 2 Then
                     ReportZipStats(fiFile, dtStartTime, dtEndTime, True)
@@ -905,7 +905,7 @@ Public Class clsIonicZipTools
             Using objZipper = New Ionic.Zip.ZipFile(ZipFilePath)
                 objZipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary
 
-                dtStartTime = DateTime.UtcNow
+                dtStartTime = Date.UtcNow
 
                 If String.IsNullOrEmpty(FileFilter) AndAlso Recurse Then
                     objZipper.AddDirectory(diDirectory.FullName)
@@ -919,7 +919,7 @@ Public Class clsIonicZipTools
 
                 objZipper.Save()
 
-                dtEndTime = DateTime.UtcNow
+                dtEndTime = Date.UtcNow
 
                 If m_DebugLevel >= 2 Then
                     ReportZipStats(diDirectory, dtStartTime, dtEndTime, True)

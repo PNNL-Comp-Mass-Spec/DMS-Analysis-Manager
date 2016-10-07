@@ -81,10 +81,10 @@ Public Class clsAnalysisToolRunnerBase
 
     Protected m_MyEMSLUtilities As clsMyEMSLUtilities
 
-    Private m_LastProgressWriteTime As DateTime = DateTime.UtcNow
-    Private m_LastProgressConsoleTime As DateTime = DateTime.UtcNow
+    Private m_LastProgressWriteTime As DateTime = Date.UtcNow
+    Private m_LastProgressConsoleTime As DateTime = Date.UtcNow
 
-    Private m_LastStatusFileUpdate As DateTime = DateTime.UtcNow
+    Private m_LastStatusFileUpdate As DateTime = Date.UtcNow
 
     Private mLastSortUtilityProgress As DateTime
     Private mSortUtilityErrorMessage As String
@@ -171,7 +171,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' <remarks></remarks>
     Public Sub New()
         MyBase.New("clsAnalysisToolRunnerBase")
-        mProgRunnerStartTime = DateTime.UtcNow
+        mProgRunnerStartTime = Date.UtcNow
         mCoreUsageHistory = New Queue(Of KeyValuePair(Of DateTime, Single))
     End Sub
 
@@ -243,7 +243,7 @@ Public Class clsAnalysisToolRunnerBase
 
         If stopTime < startTime Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
-            stopTime = DateTime.UtcNow
+            stopTime = Date.UtcNow
         End If
 
         If stopTime < startTime OrElse startTime = DateTime.MinValue Then
@@ -1309,14 +1309,14 @@ Public Class clsAnalysisToolRunnerBase
        objMgrParams As IMgrParams,
        ByRef debugLevel As Short) As Boolean
 
-        Static dtLastUpdateTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
+        Static dtLastUpdateTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
         Try
 
-            If intUpdateIntervalSeconds > 0 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds < intUpdateIntervalSeconds Then
+            If intUpdateIntervalSeconds > 0 AndAlso Date.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds < intUpdateIntervalSeconds Then
                 Return True
             End If
-            dtLastUpdateTime = DateTime.UtcNow
+            dtLastUpdateTime = Date.UtcNow
 
             If debugLevel >= 5 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings from the Manager Control DB")
@@ -1887,13 +1887,13 @@ Public Class clsAnalysisToolRunnerBase
 
             Dim progressMessage = " ... " & m_progress.ToString("0.0") & "% complete for " & toolName & ", job " & m_JobNum
 
-            If DateTime.UtcNow.Subtract(m_LastProgressConsoleTime).TotalMinutes >= CONSOLE_PROGRESS_INTERVAL_MINUTES Then
-                m_LastProgressConsoleTime = DateTime.UtcNow
+            If Date.UtcNow.Subtract(m_LastProgressConsoleTime).TotalMinutes >= CONSOLE_PROGRESS_INTERVAL_MINUTES Then
+                m_LastProgressConsoleTime = Date.UtcNow
                 Console.WriteLine(progressMessage)
             End If
 
-            If DateTime.UtcNow.Subtract(m_LastProgressWriteTime).TotalMinutes >= logIntervalMinutes Then
-                m_LastProgressWriteTime = DateTime.UtcNow
+            If Date.UtcNow.Subtract(m_LastProgressWriteTime).TotalMinutes >= logIntervalMinutes Then
+                m_LastProgressWriteTime = Date.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progressMessage)
             End If
 
@@ -2213,7 +2213,7 @@ Public Class clsAnalysisToolRunnerBase
     Private Sub PurgeOldServerCacheFiles(strCacheFolderPath As String, spaceUsageThresholdGB As Integer)
 
         Const PURGE_INTERVAL_MINUTES = 90
-        Static dtLastCheck As DateTime = DateTime.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
+        Static dtLastCheck As DateTime = Date.UtcNow.AddMinutes(-PURGE_INTERVAL_MINUTES * 2)
 
         Dim diCacheFolder As DirectoryInfo
         Dim lstDataFiles = New List(Of KeyValuePair(Of DateTime, FileInfo))
@@ -2237,7 +2237,7 @@ Public Class clsAnalysisToolRunnerBase
         End If
 
         Try
-            If DateTime.UtcNow.Subtract(dtLastCheck).TotalMinutes < PURGE_INTERVAL_MINUTES Then
+            If Date.UtcNow.Subtract(dtLastCheck).TotalMinutes < PURGE_INTERVAL_MINUTES Then
                 Exit Sub
             End If
             diCacheFolder = New DirectoryInfo(strCacheFolderPath)
@@ -2249,7 +2249,7 @@ Public Class clsAnalysisToolRunnerBase
             ' Look for a purge check file
             Dim fiPurgeCheckFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeCheckFile.txt"))
             If fiPurgeCheckFile.Exists Then
-                If DateTime.UtcNow.Subtract(fiPurgeCheckFile.LastWriteTimeUtc).TotalMinutes < PURGE_INTERVAL_MINUTES Then
+                If Date.UtcNow.Subtract(fiPurgeCheckFile.LastWriteTimeUtc).TotalMinutes < PURGE_INTERVAL_MINUTES Then
                     Exit Sub
                 End If
             End If
@@ -2257,7 +2257,7 @@ Public Class clsAnalysisToolRunnerBase
             ' Create / update the purge check file
             Try
                 Using swPurgeCheckFile = New StreamWriter(New FileStream(fiPurgeCheckFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read))
-                    swPurgeCheckFile.WriteLine(DateTime.Now.ToString(DATE_TIME_FORMAT) & " - " & m_MachName)
+                    swPurgeCheckFile.WriteLine(Date.Now.ToString(DATE_TIME_FORMAT) & " - " & m_MachName)
                 End Using
 
             Catch ex As Exception
@@ -2265,7 +2265,7 @@ Public Class clsAnalysisToolRunnerBase
                 ' Ignore the error and proceed to look for files to purge
             End Try
 
-            dtLastCheck = DateTime.UtcNow
+            dtLastCheck = Date.UtcNow
 
             ' Make a list of all of the hashcheck files in diCacheFolder
 
@@ -2297,7 +2297,7 @@ Public Class clsAnalysisToolRunnerBase
                 ' Keep track of the deleted file info using this list
                 Dim purgedFileLogEntries = New List(Of String)
 
-                Dim fiPurgeLogFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeLog_" & DateTime.Now.Year & ".txt"))
+                Dim fiPurgeLogFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeLog_" & Date.Now.Year & ".txt"))
                 If Not fiPurgeLogFile.Exists Then
                     ' Create the purge log file and write the header line
                     Try
@@ -2330,7 +2330,7 @@ Public Class clsAnalysisToolRunnerBase
                         kvItem.Value.Delete()
 
                         ' Keep track of the deleted file's details
-                        purgedFileLogEntries.Add(String.Join(vbTab, New String() {DateTime.Now.ToString(DATE_TIME_FORMAT),
+                        purgedFileLogEntries.Add(String.Join(vbTab, New String() {Date.Now.ToString(DATE_TIME_FORMAT),
                                                                          managerName,
                                                                          fileSizeMB.ToString("0.00"),
                                                                          kvItem.Value.LastWriteTime.ToString(DATE_TIME_FORMAT),
@@ -2558,7 +2558,7 @@ Public Class clsAnalysisToolRunnerBase
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
 
         'Start the job timer
-        m_StartTime = DateTime.UtcNow
+        m_StartTime = Date.UtcNow
 
         'Remainder of method is supplied by subclasses
 
@@ -2589,7 +2589,7 @@ Public Class clsAnalysisToolRunnerBase
 
             swToolVersionFile = New StreamWriter(New FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
 
-            swToolVersionFile.WriteLine("Date: " & DateTime.Now().ToString(DATE_TIME_FORMAT))
+            swToolVersionFile.WriteLine("Date: " & Date.Now().ToString(DATE_TIME_FORMAT))
             swToolVersionFile.WriteLine("Dataset: " & m_Dataset)
             swToolVersionFile.WriteLine("Job: " & m_JobNum)
             swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("StepParameters", "Step"))
@@ -2736,7 +2736,7 @@ Public Class clsAnalysisToolRunnerBase
         Try
             Dim sortUtility = New FlexibleFileSortUtility.TextFileSorter
 
-            mLastSortUtilityProgress = DateTime.UtcNow
+            mLastSortUtilityProgress = Date.UtcNow
             mSortUtilityErrorMessage = String.Empty
 
             sortUtility.WorkingDirectoryPath = m_WorkDir
@@ -3319,7 +3319,7 @@ Public Class clsAnalysisToolRunnerBase
             'Add the data
             m_SummaryFile.Add("Job Number" & ControlChars.Tab & m_JobNum)
             m_SummaryFile.Add("Job Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
-            m_SummaryFile.Add("Date" & ControlChars.Tab & DateTime.Now().ToString)
+            m_SummaryFile.Add("Date" & ControlChars.Tab & Date.Now().ToString)
             m_SummaryFile.Add("Processor" & ControlChars.Tab & m_MachName)
             m_SummaryFile.Add("Tool" & ControlChars.Tab & strToolAndStepTool)
             m_SummaryFile.Add("Dataset Name" & ControlChars.Tab & m_Dataset)
@@ -3392,7 +3392,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' </summary>
     ''' <remarks>Public because used by clsDtaGenThermoRaw</remarks>
     Public Sub ResetProgRunnerCpuUsage()
-        mProgRunnerStartTime = DateTime.UtcNow
+        mProgRunnerStartTime = Date.UtcNow
         mCoreUsageHistory.Clear()
     End Sub
 
@@ -3439,7 +3439,7 @@ Public Class clsAnalysisToolRunnerBase
 
         ' Cache the core usage values for the last 5 minutes
         If coreUsage >= 0 Then
-            mCoreUsageHistory.Enqueue(New KeyValuePair(Of DateTime, Single)(DateTime.Now, coreUsage))
+            mCoreUsageHistory.Enqueue(New KeyValuePair(Of DateTime, Single)(Date.Now, coreUsage))
 
             If secondsBetweenUpdates < 10 Then
                 If mCoreUsageHistory.Count > 5 * 60 / 10 Then
@@ -3459,7 +3459,7 @@ Public Class clsAnalysisToolRunnerBase
             m_StatusTools.StoreCoreUsageHistory(mCoreUsageHistory)
 
             ' If the Program has been running for at least 3 minutes, store the actual CoreUsage in the database
-            If DateTime.UtcNow.Subtract(mProgRunnerStartTime).TotalMinutes >= 3 Then
+            If Date.UtcNow.Subtract(mProgRunnerStartTime).TotalMinutes >= 3 Then
 
                 ' Average the data in the history queue
 
@@ -3519,8 +3519,8 @@ Public Class clsAnalysisToolRunnerBase
         If frequencySeconds < 5 Then frequencySeconds = 5
 
         ' Update the status file (limit the updates to every x seconds)
-        If DateTime.UtcNow.Subtract(m_LastStatusFileUpdate).TotalSeconds >= frequencySeconds Then
-            m_LastStatusFileUpdate = DateTime.UtcNow
+        If Date.UtcNow.Subtract(m_LastStatusFileUpdate).TotalSeconds >= frequencySeconds Then
+            m_LastStatusFileUpdate = Date.UtcNow
             UpdateStatusRunning(sngPercentComplete)
         End If
 
@@ -3761,8 +3761,8 @@ Public Class clsAnalysisToolRunnerBase
     End Sub
 
     Private Sub mSortUtility_ProgressChanged(sender As Object, e As FlexibleFileSortUtility.ProgressChangedEventArgs)
-        If m_DebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(mLastSortUtilityProgress).TotalSeconds >= 5 Then
-            mLastSortUtilityProgress = DateTime.UtcNow
+        If m_DebugLevel >= 1 AndAlso Date.UtcNow.Subtract(mLastSortUtilityProgress).TotalSeconds >= 5 Then
+            mLastSortUtilityProgress = Date.UtcNow
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.taskDescription & ": " & e.percentComplete.ToString("0.0") & "% complete")
         End If
     End Sub

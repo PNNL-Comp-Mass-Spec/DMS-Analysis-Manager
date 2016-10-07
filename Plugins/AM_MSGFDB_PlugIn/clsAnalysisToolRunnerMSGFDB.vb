@@ -192,7 +192,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             m_progress = clsMSGFDBUtils.PROGRESS_PCT_COMPLETE
 
             'Stop the job timer
-            m_StopTime = DateTime.UtcNow
+            m_StopTime = Date.UtcNow
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
@@ -493,7 +493,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         If blnSuccess Then
             If Not mMSGFPlusComplete Then
                 mMSGFPlusComplete = True
-                mMSGFPlusCompletionTime = DateTime.UtcNow
+                mMSGFPlusCompletionTime = Date.UtcNow
             End If
         Else
 
@@ -537,8 +537,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSGF+ finished, but the log file reports " & mMSGFDBUtils.TaskCountCompleted & " / " & mMSGFDBUtils.TaskCountTotal & " completed tasks")
 
-                Dim waitStartTime = DateTime.UtcNow
-                While DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45
+                Dim waitStartTime = Date.UtcNow
+                While Date.UtcNow.Subtract(waitStartTime).TotalSeconds < 45
 
                     Threading.Thread.Sleep(5000)
                     mMSGFDBUtils.ParseMSGFDBConsoleOutputFile(mWorkingDirectoryInUse)
@@ -549,7 +549,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 End While
 
                 If mMSGFDBUtils.TaskCountCompleted = mMSGFDBUtils.TaskCountTotal Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Reparsing the MSGF+ log file now indicates that all tasks finished (waited " & DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") & " seconds)")
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Reparsing the MSGF+ log file now indicates that all tasks finished (waited " & Date.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") & " seconds)")
                 ElseIf mMSGFDBUtils.TaskCountCompleted > savedCountCompleted Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Reparsing the MSGF+ log file now indicates that " & mMSGFDBUtils.TaskCountCompleted & " tasks finished.  That is an increase over the previous value but still not all " & mMSGFDBUtils.TaskCountTotal & " tasks")
                 Else
@@ -994,13 +994,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Const SECONDS_BETWEEN_UPDATE = 30
 
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
+        Static dtLastConsoleOutputParse As DateTime = Date.UtcNow
 
         UpdateStatusFile()
 
         ' Parse the console output file every 30 seconds
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
+        If Date.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
+            dtLastConsoleOutputParse = Date.UtcNow
 
             ParseConsoleOutputFile(mWorkingDirectoryInUse)
             If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
@@ -1014,9 +1014,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
             If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE - Single.Epsilon Then
                 If Not mMSGFPlusComplete Then
                     mMSGFPlusComplete = True
-                    mMSGFPlusCompletionTime = DateTime.UtcNow
+                    mMSGFPlusCompletionTime = Date.UtcNow
                 Else
-                    If DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
+                    If Date.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
                         ' MSGF+ is stuck at 96% complete and has been that way for 5 minutes
                         ' Java is likely frozen and thus the process should be aborted
                         Dim warningMessage = "MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE.ToString("0") & "% complete for 5 minutes; aborting since Java appears frozen"

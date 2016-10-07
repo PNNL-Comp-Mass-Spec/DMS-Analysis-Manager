@@ -534,7 +534,7 @@ Public Class clsAnalysisMgrSettings
     End Function
 
     Private Shared Sub ShowTraceMessage(strMessage As String)
-        Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
+        Console.WriteLine(Date.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
     End Sub
 
     ''' <summary>

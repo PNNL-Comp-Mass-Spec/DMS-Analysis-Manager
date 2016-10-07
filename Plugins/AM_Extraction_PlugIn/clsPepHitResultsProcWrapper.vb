@@ -384,11 +384,11 @@ Public Class clsPepHitResultsProcWrapper
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+        Static dtLastStatusUpdate As DateTime = Date.UtcNow
 
         'Update the status by parsing the PHRP Console Output file every 20 seconds
-        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20 Then
-            dtLastStatusUpdate = DateTime.UtcNow
+        If Date.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20 Then
+            dtLastStatusUpdate = Date.UtcNow
             ParsePHRPConsoleOutputFile()
         End If
 

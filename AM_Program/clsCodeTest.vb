@@ -786,7 +786,7 @@ Public Class clsCodeTest
 
         Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
-        objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results_" & DateTime.Now.ToString("hh_mm_ss"))
+        objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results_" & Date.Now.ToString("hh_mm_ss"))
         objJobParams.SetParam("JobParameters", "transferFolderPath", "\\proto-3\DMS3_XFER")
         objJobParams.SetParam("JobParameters", "DatasetNum", "Test_Dataset")
 
@@ -1779,7 +1779,7 @@ Public Class clsCodeTest
 
         Const REGEX_MSPathFinder_PROGRESS As String = "(\d+)% complete"
         Static reCheckProgress As New Regex(REGEX_MSPathFinder_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-        Static dtLastProgressWriteTime As DateTime = DateTime.UtcNow
+        Static dtLastProgressWriteTime As DateTime = Date.UtcNow
 
         Static reProcessingProteins As New Regex("Processing (\d+)th proteins", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
@@ -1858,11 +1858,11 @@ Public Class clsCodeTest
                 progressComplete = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched)
             End If
 
-            If m_Progress < progressComplete OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 60 Then
+            If m_Progress < progressComplete OrElse Date.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 60 Then
                 m_Progress = progressComplete
 
-                If m_DebugLevel >= 3 OrElse DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
-                    dtLastProgressWriteTime = DateTime.UtcNow
+                If m_DebugLevel >= 3 OrElse Date.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
+                    dtLastProgressWriteTime = Date.UtcNow
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_Progress.ToString("0") & "% complete")
                 End If
             End If

@@ -172,7 +172,7 @@ Public Class clsStatusFile
 
         TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK
         TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
-        TaskStartTime = DateTime.UtcNow
+        TaskStartTime = Date.UtcNow
 
         Dataset = String.Empty
         CurrentOperation = String.Empty
@@ -400,7 +400,7 @@ Public Class clsStatusFile
             mCPUUsagePerformanceCounter.ReadOnly = True
         Catch ex As Exception
             ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-            If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
+            If Not blnVirtualMachineOnPIC AndAlso Date.Now().Hour = 0 AndAlso Date.Now().Minute <= 30 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Processor.[% Processor Time] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
             End If
         End Try
@@ -413,7 +413,7 @@ Public Class clsStatusFile
             ' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
             ' Alternatively, add the user to the "Administrators" group.
             ' In either case, you will need to reboot the computer for the change to take effect
-            If Not blnVirtualMachineOnPIC AndAlso DateTime.Now().Hour = 0 AndAlso DateTime.Now().Minute <= 30 Then
+            If Not blnVirtualMachineOnPIC AndAlso Date.Now().Hour = 0 AndAlso Date.Now().Minute <= 30 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
             End If
 
@@ -491,7 +491,7 @@ Public Class clsStatusFile
     Protected Sub LogStatusToMessageQueue(strStatusXML As String)
 
         Const MINIMUM_LOG_FAILURE_INTERVAL_MINUTES As Single = 10
-        Static dtLastFailureTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
+        Static dtLastFailureTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
         Try
             If m_MessageSender Is Nothing Then
@@ -518,8 +518,8 @@ Public Class clsStatusFile
             End If
 
         Catch ex As Exception
-            If DateTime.UtcNow.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
-                dtLastFailureTime = DateTime.UtcNow
+            If Date.UtcNow.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
+                dtLastFailureTime = Date.UtcNow
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsStatusFile.LogStatusToMessageQueue (B): " & ex.Message)
             End If
 
@@ -540,7 +540,7 @@ Public Class clsStatusFile
         With udtStatusInfo
             .MgrName = MgrName
             .MgrStatus = MgrStatus
-            .LastUpdate = DateTime.UtcNow()
+            .LastUpdate = Date.UtcNow()
             .LastStartTime = TaskStartTime
             .CPUUtilization = CpuUtilization
             .FreeMemoryMB = m_FreeMemoryMB
@@ -672,7 +672,7 @@ Public Class clsStatusFile
         Dim sngRunTimeHours As Single
 
         Try
-            dtLastUpdate = DateTime.UtcNow()
+            dtLastUpdate = Date.UtcNow()
             sngRunTimeHours = GetRunTime()
 
             CpuUtilization = CInt(GetCPUUtilization())
@@ -796,19 +796,19 @@ Public Class clsStatusFile
 
         Const MIN_FILE_WRITE_INTERVAL_SECONDS = 2
 
-        Static dtLastFileWriteTime As DateTime = DateTime.UtcNow
+        Static dtLastFileWriteTime As DateTime = Date.UtcNow
 
         Dim strTempStatusFilePath As String
         Dim blnSuccess As Boolean
 
         blnSuccess = True
 
-        If DateTime.UtcNow.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
+        If Date.UtcNow.Subtract(dtLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS Then
             ' We will write out the Status XML to a temporary file, then rename the temp file to the primary file
 
             strTempStatusFilePath = Path.Combine(Path.GetDirectoryName(FileNamePath), Path.GetFileNameWithoutExtension(FileNamePath) & "_Temp.xml")
 
-            dtLastFileWriteTime = DateTime.UtcNow
+            dtLastFileWriteTime = Date.UtcNow
 
             Dim logWarning = True
             If Tool.ToLower().Contains("glyq") OrElse Tool.ToLower().Contains("modplus") Then
@@ -1156,7 +1156,7 @@ Public Class clsStatusFile
     ''' <remarks></remarks>
     Private Function GetRunTime() As Single
 
-        Return CSng(DateTime.UtcNow.Subtract(TaskStartTime).TotalHours)
+        Return CSng(Date.UtcNow.Subtract(TaskStartTime).TotalHours)
 
     End Function
 

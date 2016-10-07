@@ -2711,11 +2711,11 @@ Public Class clsMSGFDBUtils
     Private Sub mPeptideToProteinMapper_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
 
         Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS = 120
-        Static dtLastLogTime As DateTime = DateTime.UtcNow
+        Static dtLastLogTime As DateTime = Date.UtcNow
 
         If m_DebugLevel >= 1 Then
-            If DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
-                dtLastLogTime = DateTime.UtcNow
+            If Date.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
+                dtLastLogTime = Date.UtcNow
                 ReportMessage("Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
             End If
         End If

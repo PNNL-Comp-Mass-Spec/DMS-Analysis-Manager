@@ -135,7 +135,7 @@ Public Class clsLogTools
             Case LoggerTypes.LogFile
                 myLogger = m_FileLogger
                 ' Check to determine if a new file should be started
-                Dim testFileDate = DateTime.Now.ToString("MM-dd-yyyy")
+                Dim testFileDate = Date.Now.ToString("MM-dd-yyyy")
                 If Not String.Equals(testFileDate, m_FileDate) Then
                     m_FileDate = testFileDate
                     ChangeLogFileName()
@@ -311,7 +311,7 @@ Public Class clsLogTools
     ''' <param name="logFileNameBase">Base name for log file</param>
     ''' <returns>A configured file appender</returns>
     Private Shared Function CreateFileAppender(logFileNameBase As String) As FileAppender
-        m_FileDate = DateTime.Now.ToString("MM-dd-yyyy")
+        m_FileDate = Date.Now.ToString("MM-dd-yyyy")
         m_BaseFileName = logFileNameBase
 
         Dim layout = New log4net.Layout.PatternLayout()

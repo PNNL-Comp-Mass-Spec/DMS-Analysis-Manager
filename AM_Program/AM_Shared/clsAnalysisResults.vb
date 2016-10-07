@@ -288,7 +288,7 @@ Public Class clsAnalysisResults
         swArchivedFolderInfoFile = New StreamWriter(New FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
         With swArchivedFolderInfoFile
-            .WriteLine("Date" & ControlChars.Tab & DateTime.Now())
+            .WriteLine("Date" & ControlChars.Tab & Date.Now())
             .WriteLine("ResultsFolderName" & ControlChars.Tab & strResultsFolderName)
             .WriteLine("Manager" & ControlChars.Tab & m_mgrParams.GetParam("MgrName"))
             If Not m_jobParams Is Nothing Then
@@ -296,7 +296,7 @@ Public Class clsAnalysisResults
                 .WriteLine("Job" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Job"))
                 .WriteLine("Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
             End If
-            .WriteLine("Date" & ControlChars.Tab & DateTime.Now().ToString)
+            .WriteLine("Date" & ControlChars.Tab & Date.Now().ToString)
             If Not m_jobParams Is Nothing Then
                 .WriteLine("Tool" & ControlChars.Tab & m_jobParams.GetParam("toolname"))
                 .WriteLine("StepTool" & ControlChars.Tab & m_jobParams.GetParam("StepTool"))
@@ -389,7 +389,7 @@ Public Class clsAnalysisResults
 
         ' Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
         For Each fiFileInfo In diTargetFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT & "*")
-            If DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS Then
+            If Date.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS Then
                 ' File was modified before the threshold; delete the results folder, then rename this file
 
                 Try

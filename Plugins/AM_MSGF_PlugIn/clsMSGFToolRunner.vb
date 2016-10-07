@@ -239,7 +239,7 @@ Public Class clsMSGFRunner
             End If
 
             'Stop the job timer
-            m_StopTime = DateTime.UtcNow
+            m_StopTime = Date.UtcNow
 
             If blnProcessingError Then
                 ' Something went wrong
@@ -736,7 +736,7 @@ Public Class clsMSGFRunner
             mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath()
 
             mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides
-            mMSGFInputCreator.MGFInstrumentData = blnMGFInstrumentData
+            mMSGFInputCreator.MgfInstrumentData = blnMGFInstrumentData
 
             m_StatusTools.CurrentOperation = "Creating the MSGF Input file"
 
@@ -2655,18 +2655,18 @@ Public Class clsMSGFRunner
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub mMSGFRunner_LoopWaiting() Handles mMSGFRunner.LoopWaiting
-        Static dtLastUpdateTime As DateTime = DateTime.UtcNow
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
+        Static dtLastUpdateTime As DateTime = Date.UtcNow
+        Static dtLastConsoleOutputParse As DateTime = Date.UtcNow
 
-        If DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
+        If Date.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
             ' Update the MSGF progress by counting the number of lines in the _MSGF.txt file
             UpdateMSGFProgress(mCurrentMSGFResultsFilePath)
 
-            dtLastUpdateTime = DateTime.UtcNow
+            dtLastUpdateTime = Date.UtcNow
         End If
 
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
+        If Date.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = Date.UtcNow
 
             ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
             If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFVersion) Then

@@ -143,7 +143,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Dim strManager As String = GetPseudoManagerName()
 
             Dim filesCopied = 0
-            Dim dtLastStatusUpdate = DateTime.UtcNow
+            Dim dtLastStatusUpdate = Date.UtcNow
 
             oFileTools = New PRISM.Files.clsFileTools(strManager, intDebugLevel)
 
@@ -195,8 +195,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 filesCopied += 1
 
-                If intDebugLevel >= 1 AndAlso DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30 Then
-                    dtLastStatusUpdate = DateTime.UtcNow
+                If intDebugLevel >= 1 AndAlso Date.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30 Then
+                    dtLastStatusUpdate = Date.UtcNow
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved " & filesCopied & " / " & dctFilesToCopy.Count & " index files")
                 End If
 
@@ -894,7 +894,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         Try
             Using swLockFile = New StreamWriter(strLockFilePath)
-                swLockFile.WriteLine("Date: " & DateTime.Now.ToString())
+                swLockFile.WriteLine("Date: " & Date.Now.ToString())
                 swLockFile.WriteLine("Manager: " & mMgrName)
             End Using
 
@@ -1226,7 +1226,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     Private Sub WaitForExistingLockfile(fiLockFile As FileInfo, intDebugLevel As Integer, sngMaxWaitTimeHours As Single)
 
         ' Check to see if another Analysis Manager is already creating the indexed DB files
-        If fiLockFile.Exists AndAlso DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60 Then
+        If fiLockFile.Exists AndAlso Date.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60 Then
             ' Lock file is over 60 minutes old; delete it
             If intDebugLevel >= 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file is over 60 minutes old (created " & fiLockFile.LastWriteTime.ToString() & "); deleting " & fiLockFile.FullName)
@@ -1245,7 +1245,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 ' Sleep for 2 seconds
                 Threading.Thread.Sleep(2000)
 
-                If DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= sngMaxWaitTimeHours Then
+                If Date.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= sngMaxWaitTimeHours Then
                     blnStaleFile = True
                     Exit Do
                 Else
@@ -1277,10 +1277,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     End Sub
 
     Private Sub mComputeCluster_ProgressEvent(sender As Object, e As HPC_Submit.ProgressEventArgs) Handles mComputeCluster.ProgressEvent
-        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
+        Static dtLastStatusUpdate As DateTime = Date.UtcNow
 
-        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 60 Then
-            dtLastStatusUpdate = DateTime.UtcNow
+        If Date.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 60 Then
+            dtLastStatusUpdate = Date.UtcNow
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running BuildSA with HPC, " & (e.HoursElapsed * 60).ToString("0.00") & " minutes elapsed")
         End If
 

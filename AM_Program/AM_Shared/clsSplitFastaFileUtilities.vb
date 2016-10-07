@@ -75,7 +75,7 @@ Public Class clsSplitFastaFileUtilities
     ''' <remarks></remarks>
     Private Function CreateLockStream(fiBaseFastaFile As FileInfo, <Out()> ByRef lockFilePath As String) As StreamWriter
 
-        Dim startTime = DateTime.UtcNow
+        Dim startTime = Date.UtcNow
         Dim intAttemptCount = 0
 
         Dim lockStream As StreamWriter
@@ -95,10 +95,10 @@ Public Class clsSplitFastaFileUtilities
                     Dim LockTimeoutTime As DateTime = lockFi.LastWriteTimeUtc.AddMinutes(60)
                     OnProgressUpdate(LOCK_FILE_PROGRESS_TEXT & " found; waiting until it is deleted or until " & LockTimeoutTime.ToLocalTime().ToString() & ": " & lockFi.Name, 0)
 
-                    While lockFi.Exists AndAlso DateTime.UtcNow < LockTimeoutTime
+                    While lockFi.Exists AndAlso Date.UtcNow < LockTimeoutTime
                         Thread.Sleep(5000)
                         lockFi.Refresh()
-                        If DateTime.UtcNow.Subtract(startTime).TotalMinutes >= 60 Then
+                        If Date.UtcNow.Subtract(startTime).TotalMinutes >= 60 Then
                             Exit While
                         End If
                     End While
@@ -430,7 +430,7 @@ Public Class clsSplitFastaFileUtilities
                 Throw New Exception("Unable to create lock file required to split " & fiBaseFastaFile.FullName)
             End If
 
-            lockStream.WriteLine("ValidateSplitFastaFile, started at " & DateTime.Now.ToString() & " by " & mManagerName)
+            lockStream.WriteLine("ValidateSplitFastaFile, started at " & Date.Now.ToString() & " by " & mManagerName)
 
             ' Check again for the existence of the desired .Fasta file
             ' It's possible another process created the .Fasta file while this process was waiting for the other process's lock file to disappear

@@ -232,7 +232,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             m_progress = PROGRESS_PCT_COMPLETE
 
             'Stop the job timer
-            m_StopTime = DateTime.UtcNow
+            m_StopTime = Date.UtcNow
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
@@ -466,7 +466,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         If success Then
             If Not mMSGFPlusComplete Then
                 mMSGFPlusComplete = True
-                mMSGFPlusCompletionTime = DateTime.UtcNow
+                mMSGFPlusCompletionTime = Date.UtcNow
             End If
         Else
             Dim msg As String
@@ -661,15 +661,15 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     Private Sub MonitorProgress()
 
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
+        Static dtLastConsoleOutputParse As DateTime = Date.UtcNow
 
         UpdateStatusFile()
 
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds < 30 Then
+        If Date.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds < 30 Then
             Return
         End If
 
-        dtLastConsoleOutputParse = DateTime.UtcNow
+        dtLastConsoleOutputParse = Date.UtcNow
 
         If mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus Then
 
@@ -683,9 +683,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
             If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE Then
                 If Not mMSGFPlusComplete Then
                     mMSGFPlusComplete = True
-                    mMSGFPlusCompletionTime = DateTime.UtcNow
+                    mMSGFPlusCompletionTime = Date.UtcNow
                 Else
-                    If DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
+                    If Date.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
                         ' MSGF+ is stuck at 96% complete and has been that way for 5 minutes
                         ' Java is likely frozen and thus the process should be aborted
                         Dim warningMessage = "MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE.ToString("0") & "% complete for 5 minutes; aborting since Java appears frozen"

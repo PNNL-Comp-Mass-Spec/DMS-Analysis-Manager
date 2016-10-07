@@ -64,7 +64,7 @@ Public Class clsSplitMGFFile
             End If
 
             If splitCount < 2 Then splitCount = 2
-            Dim dtLastProgress = DateTime.UtcNow
+            Dim dtLastProgress = Date.UtcNow
 
             OnProgressUpdate("Splitting " & fiMgfFile.Name & " into " & splitCount & " parts", 0)
 
@@ -115,12 +115,12 @@ Public Class clsSplitMGFFile
                         totalSpectraWritten += 1
 
                         swScanToPartMapFile.WriteLine(scanNumber & ControlChars.Tab & totalSpectraWritten & ControlChars.Tab & nextWriter.PartNumber & ControlChars.Tab & nextWriter.SpectraWritten)
-                        
+
                         swWriters.Enqueue(nextWriter)
                     End If
 
-                    If DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5 Then
-                        dtLastProgress = DateTime.UtcNow
+                    If Date.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5 Then
+                        dtLastProgress = Date.UtcNow
                         Dim percentComplete = bytesRead / srMgfFile.BaseStream.Length * 100
                         If percentComplete > 100 Then percentComplete = 100
                         OnProgressUpdate("Splitting MGF file", CInt(percentComplete))

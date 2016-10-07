@@ -72,7 +72,7 @@ Public Class clsAnalysisResourcesIcr2ls
                 If Not String.IsNullOrEmpty(serFileOrFolderPath) Then
                     ' File found in the archive; need to copy it locally
 
-                    Dim dtStartTime As DateTime = DateTime.UtcNow
+                    Dim dtStartTime As DateTime = Date.UtcNow
 
                     If blnIsFolder Then
                         Dim diSourceFolder As DirectoryInfo
@@ -83,7 +83,7 @@ Public Class clsAnalysisResourcesIcr2ls
                         m_FileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name))
 
                         If m_DebugLevel >= 1 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied 0.ser folder in " & DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied 0.ser folder in " & Date.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
                         End If
 
                     Else
@@ -98,7 +98,7 @@ Public Class clsAnalysisResourcesIcr2ls
                             If m_DebugLevel >= 1 Then
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
                                                      "Successfully copied " & Path.GetFileName(serFileOrFolderPath) & " file in " &
-                                                     DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
+                                                     Date.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
                             End If
                         End If
 

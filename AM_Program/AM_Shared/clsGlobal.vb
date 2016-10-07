@@ -633,7 +633,7 @@ Public Class clsGlobal
     End Function
 
     ''' <summary>
-    ''' Converts Value to an single (aka float)
+    ''' Converts Value to a single (aka float)
     ''' </summary>
     ''' <param name="Value"></param>
     ''' <param name="sngDefaultValue">Single to return if Value is not numeric</param>
@@ -1012,7 +1012,7 @@ Public Class clsGlobal
         If String.IsNullOrWhiteSpace(strMD5Hash) Then strMD5Hash = String.Empty
 
         Using swOutFile = New StreamWriter(New FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swOutFile.WriteLine("# Hashcheck file created " & DateTime.Now().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
+            swOutFile.WriteLine("# Hashcheck file created " & Date.Now().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
             swOutFile.WriteLine("size=" & fiDataFile.Length)
             swOutFile.WriteLine("modification_date_utc=" & fiDataFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"))
             swOutFile.WriteLine("hash=" & strMD5Hash)

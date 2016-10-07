@@ -130,7 +130,7 @@ Public Class clsDBStatusLogger
     ''' <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
     Public Sub LogStatus(udtStatusInfo As udtStatusInfoType, blnForceLogToDB As Boolean)
 
-        Static dtLastWriteTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
+        Static dtLastWriteTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
         Dim MyConnection As SqlClient.SqlConnection
         Dim myCmd As New SqlClient.SqlCommand
@@ -141,11 +141,11 @@ Public Class clsDBStatusLogger
                 Exit Sub
             End If
 
-            If Not blnForceLogToDB AndAlso DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
+            If Not blnForceLogToDB AndAlso Date.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
                 ' Not enough time has elapsed since the last write; exit sub
                 Exit Sub
             End If
-            dtLastWriteTime = DateTime.UtcNow
+            dtLastWriteTime = Date.UtcNow
 
 
             MyConnection = New SqlClient.SqlConnection(m_DBConnectionString)

@@ -409,7 +409,7 @@ Public Class clsRunDosProgram
         m_AbortProgramPostLogEntry = True
         blnRuntimeExceeded = False
         blnAbortLogged = False
-        dtStartTime = DateTime.UtcNow
+        dtStartTime = Date.UtcNow
 
         Dim cachedProcessID = 0
 
@@ -425,14 +425,14 @@ Public Class clsRunDosProgram
                 Thread.Sleep(m_MonitorInterval)
 
                 If m_MaxRuntimeSeconds > 0 Then
-                    If DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > m_MaxRuntimeSeconds AndAlso Not m_AbortProgramNow Then
+                    If Date.UtcNow.Subtract(dtStartTime).TotalSeconds > m_MaxRuntimeSeconds AndAlso Not m_AbortProgramNow Then
                         m_AbortProgramNow = True
                         blnRuntimeExceeded = True
                         RaiseEvent Timeout()
                     End If
                 End If
 
-                If m_ProgRunner.State = PRISM.Processes.clsProgRunner.States.StartingProcess AndAlso DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 AndAlso DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90 Then
+                If m_ProgRunner.State = PRISM.Processes.clsProgRunner.States.StartingProcess AndAlso Date.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 AndAlso Date.UtcNow.Subtract(dtStartTime).TotalSeconds < 90 Then
                     ' It has taken over 30 seconds for the thread to start
                     ' Try re-joining
                     m_ProgRunner.JoinThreadNow()

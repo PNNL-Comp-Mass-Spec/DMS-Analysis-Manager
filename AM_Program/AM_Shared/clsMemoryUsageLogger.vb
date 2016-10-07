@@ -112,7 +112,7 @@ Public Class clsMemoryUsageLogger
             InitializePerfCounters()
         End If
 
-        Dim currentTime = DateTime.Now()
+        Dim currentTime = Date.Now()
 
         Return currentTime.ToString("yyyy-MM-dd") & COL_SEP &
                currentTime.ToString("hh:mm:ss tt") & COL_SEP &
@@ -219,20 +219,20 @@ Public Class clsMemoryUsageLogger
     ''' </summary>
     ''' <remarks></remarks>
     Public Sub WriteMemoryUsageLogEntry()
-        Static dtLastWriteTime As DateTime = DateTime.UtcNow.Subtract(New TimeSpan(1, 0, 0))
+        Static dtLastWriteTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
         Dim strLogFileName As String
         Dim strLogFilePath As String
 
         Try
-            If DateTime.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes Then
+            If Date.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes Then
                 ' Not enough time has elapsed since the last write; exit sub
                 Exit Sub
             End If
-            dtLastWriteTime = DateTime.UtcNow
+            dtLastWriteTime = Date.UtcNow
 
             ' We're creating a new log file each month
-            strLogFileName = "MemoryUsageLog_" & DateTime.Now.ToString("yyyy-MM") & ".txt"
+            strLogFileName = "MemoryUsageLog_" & Date.Now.ToString("yyyy-MM") & ".txt"
 
             If Not String.IsNullOrWhiteSpace(m_LogFolderPath) Then
                 strLogFilePath = Path.Combine(m_LogFolderPath, strLogFileName)

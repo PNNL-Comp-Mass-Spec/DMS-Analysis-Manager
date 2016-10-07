@@ -2,8 +2,8 @@
 
     Protected m_DebugLevel As Short = 1
 
-    Private m_LastLockQueueWaitTimeLog As DateTime = DateTime.UtcNow
-    Private m_LockQueueWaitTimeStart As DateTime = DateTime.UtcNow
+    Private m_LastLockQueueWaitTimeLog As DateTime = Date.UtcNow
+    Private m_LockQueueWaitTimeStart As DateTime = Date.UtcNow
 
     Protected m_FileTools As PRISM.Files.clsFileTools
 
@@ -21,9 +21,9 @@
 
         Dim intWaitTimeLogIntervalSeconds As Integer
 
-        If dtLockQueueWaitTimeStart = DateTime.MinValue Then dtLockQueueWaitTimeStart = DateTime.UtcNow()
+        If dtLockQueueWaitTimeStart = DateTime.MinValue Then dtLockQueueWaitTimeStart = Date.UtcNow()
 
-        Select Case DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes
+        Select Case Date.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes
             Case Is >= 30
                 intWaitTimeLogIntervalSeconds = 240
             Case Is >= 15
@@ -34,7 +34,7 @@
                 intWaitTimeLogIntervalSeconds = 30
         End Select
 
-        If DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
+        If Date.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
             Return True
         Else
             Return False
@@ -53,8 +53,8 @@
     End Sub
 
     Protected Sub ResetTimestampForQueueWaitTimeLogging()
-        m_LastLockQueueWaitTimeLog = DateTime.UtcNow
-        m_LockQueueWaitTimeStart = DateTime.UtcNow
+        m_LastLockQueueWaitTimeLog = Date.UtcNow
+        m_LockQueueWaitTimeStart = Date.UtcNow
     End Sub
 
 
@@ -98,7 +98,7 @@
     Private Sub m_FileTools_WaitingForLockQueue(sourceFilePath As String, targetFilePath As String, backlogSourceMB As Integer, backlogTargetMB As Integer)
 
         If IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
-            m_LastLockQueueWaitTimeLog = DateTime.UtcNow
+            m_LastLockQueueWaitTimeLog = Date.UtcNow
             If m_DebugLevel >= 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                                      "Waiting for lockfile queue to fall below threshold (" & m_derivedClassName & "); " &
