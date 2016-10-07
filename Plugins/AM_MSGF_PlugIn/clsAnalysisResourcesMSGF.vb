@@ -224,8 +224,14 @@ Public Class clsAnalysisResourcesMSGF
         FileToGet = clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, m_DatasetName)
         If Not String.IsNullOrEmpty(FileToGet) Then
             If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-                'Errors were reported in function call, so just return
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                If m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False) Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMapMTS.txt file since 'IgnorePeptideToProteinMapError' = True")
+                ElseIf m_jobParams.GetJobParameter("SkipProteinMods", False) Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring missing _PepToProtMapMTS.txt file since 'SkipProteinMods' = True")
+                Else
+                    ' Errors were reported in function call, so just return
+                    Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                End If
             End If
             m_jobParams.AddResultFileToSkip(FileToGet)
         End If
