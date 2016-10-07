@@ -158,6 +158,19 @@ Public Class clsPepHitResultsProcWrapper
                 CmdStr &= " /InsSyn:" & CreateSynopsisFile.ToString()
             End If
 
+            ' PHRP defaults to use /MSGFPlusSpecEValue:5E-7  and  /MSGFPlusEValue:0.75
+            ' Adjust these if defined in the job parameters
+            Dim msgfPlusSpecEValue = m_JobParams.GetJobParameter("MSGFPlusSpecEValue", "")
+            Dim msgfPlusEValue = m_JobParams.GetJobParameter("MSGFPlusEValue", "")
+
+            If Not String.IsNullOrEmpty(msgfPlusSpecEValue) Then
+                CmdStr &= " /MSGFPlusSpecEValue:" & msgfPlusSpecEValue
+            End If
+
+            If Not String.IsNullOrEmpty(msgfPlusEValue) Then
+                CmdStr &= " /MSGFPlusEValue:" & msgfPlusEValue
+            End If
+
             If m_DebugLevel >= 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
             End If
