@@ -12,21 +12,21 @@ Imports System.IO
 Imports AnalysisManagerBase
 
 Public Class clsCodeTestAM
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
-	'*********************************************************************************************************
-	'Base class for Sequest analysis
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Base class for Sequest analysis
+    '*********************************************************************************************************
 
 #Region "Methods"
-	
-	''' <summary>
-	''' Initializes class
-	''' </summary>
-	''' <param name="mgrParams">Object containing manager parameters</param>
-	''' <param name="jobParams">Object containing job parameters</param>
-	''' <param name="StatusTools">Object for updating status file as job progresses</param>
-	''' <remarks></remarks>
+
+    ''' <summary>
+    ''' Initializes class
+    ''' </summary>
+    ''' <param name="mgrParams">Object containing manager parameters</param>
+    ''' <param name="jobParams">Object containing job parameters</param>
+    ''' <param name="StatusTools">Object for updating status file as job progresses</param>
+    ''' <remarks></remarks>
     Public Overrides Sub Setup(
        mgrParams As IMgrParams,
        jobParams As IJobParams,

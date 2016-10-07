@@ -15,7 +15,7 @@ Imports System.Text.RegularExpressions
 Public Class clsCreateMSGFDBSuffixArrayFiles
 
 #Region "Constants"
-	Public Const LEGACY_MSGFDB_SUBDIRECTORY_NAME As String = "Legacy_MSGFDB"
+    Public Const LEGACY_MSGFDB_SUBDIRECTORY_NAME As String = "Legacy_MSGFDB"
     Private Const MSGF_PLUS_INDEX_FILE_INFO_SUFFIX As String = ".MSGFPlusIndexFileInfo"
     Private Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
 #End Region
@@ -28,16 +28,16 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     Private mPICHPCPassword As String
 
 #If EnableHPC = "True" Then
-	Private WithEvents mComputeCluster As HPC_Submit.WindowsHPC2012
+    Private WithEvents mComputeCluster As HPC_Submit.WindowsHPC2012
 #End If
 
 #End Region
 
-	Public ReadOnly Property ErrorMessage As String
-		Get
-			Return mErrorMessage
-		End Get
-	End Property
+    Public ReadOnly Property ErrorMessage As String
+        Get
+            Return mErrorMessage
+        End Get
+    End Property
 
     Public Sub New(strManagerName As String)
         Me.New(strManagerName, String.Empty, String.Empty)

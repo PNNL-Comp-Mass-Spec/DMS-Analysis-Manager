@@ -18,16 +18,16 @@ Imports System.Text.RegularExpressions
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerMzRefinery
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
 #Region "Constants and Enums"
-	Protected Const PROGRESS_PCT_STARTING As Single = 1
+    Protected Const PROGRESS_PCT_STARTING As Single = 1
     Protected Const PROGRESS_PCT_MZREFINERY_COMPLETE As Single = 97
-	Protected Const PROGRESS_PCT_PLOTS_GENERATED As Single = 98
-	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+    Protected Const PROGRESS_PCT_PLOTS_GENERATED As Single = 98
+    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
     Protected Const MZ_REFINERY_CONSOLE_OUTPUT As String = "MSConvert_MzRefinery_ConsoleOutput.txt"
-	Protected Const ERROR_CHARTER_CONSOLE_OUTPUT_FILE As String = "PPMErrorCharter_ConsoleOutput.txt"
+    Protected Const ERROR_CHARTER_CONSOLE_OUTPUT_FILE As String = "PPMErrorCharter_ConsoleOutput.txt"
 
     Public Const MSGFPLUS_MZID_SUFFIX As String = "_msgfplus.mzid"
 
@@ -41,20 +41,20 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 #Region "Module Variables"
 
-	Protected mToolVersionWritten As Boolean
+    Protected mToolVersionWritten As Boolean
 
-	Protected mConsoleOutputErrorMsg As String
+    Protected mConsoleOutputErrorMsg As String
 
-	Protected mMSGFDbProgLoc As String
-	Protected mMSConvertProgLoc As String
-	Protected mPpmErrorCharterProgLoc As String
+    Protected mMSGFDbProgLoc As String
+    Protected mMSConvertProgLoc As String
+    Protected mPpmErrorCharterProgLoc As String
 
-	Protected mMSGFPlusResultsFilePath As String
+    Protected mMSGFPlusResultsFilePath As String
 
     Protected mProgRunnerMode As eMzRefinerProgRunnerMode
-	
-	Protected mMSGFPlusComplete As Boolean
-	Protected mMSGFPlusCompletionTime As DateTime
+
+    Protected mMSGFPlusComplete As Boolean
+    Protected mMSGFPlusCompletionTime As DateTime
 
     Protected mSkipMzRefinery As Boolean
     Protected m_UnableToUseMzRefinery As Boolean

@@ -4,7 +4,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsAnalysisToolRunnerICR
-	Inherits clsAnalysisToolRunnerICRBase
+    Inherits clsAnalysisToolRunnerICRBase
 
     'Performs PEK analysis using ICR-2LS on Bruker S-folder MS data
 
@@ -35,10 +35,10 @@ Public Class clsAnalysisToolRunnerICR
     ' 
     ' 
 
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim ResCode As IJobParams.CloseOutType
-		Dim DSNamePath As String
+        Dim ResCode As IJobParams.CloseOutType
+        Dim DSNamePath As String
 
         Dim UseAllScans As Boolean
 
