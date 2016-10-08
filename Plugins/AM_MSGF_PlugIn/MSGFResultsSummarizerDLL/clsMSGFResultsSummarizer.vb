@@ -1004,107 +1004,46 @@ Public Class clsMSGFResultsSummarizer
 
             ' Call stored procedure StoreJobPSMStats in DMS5
 
-            Dim objCommand = New SqlCommand(STORE_JOB_PSM_RESULTS_SP_NAME)
-            With objCommand
-                .CommandType = CommandType.StoredProcedure
+            Dim objCommand = New SqlCommand(STORE_JOB_PSM_RESULTS_SP_NAME) With {
+                 .CommandType = CommandType.StoredProcedure
+            }
 
-                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+            objCommand.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+            objCommand.Parameters.Add(New SqlParameter("@Job", SqlDbType.Int)).Value = intJob
 
-                .Parameters.Add(New SqlParameter("@Job", SqlDbType.Int))
-                .Parameters.Item("@Job").Direction = ParameterDirection.Input
-                .Parameters.Item("@Job").Value = intJob
+            objCommand.Parameters.Add(New SqlParameter("@MSGFThreshold", SqlDbType.Float))
+            If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+                objCommand.Parameters.Item("@MSGFThreshold").Value = mEValueThreshold
+            Else
+                objCommand.Parameters.Item("@MSGFThreshold").Value = mMSGFThreshold
+            End If
 
-                .Parameters.Add(New SqlParameter("@MSGFThreshold", SqlDbType.Float))
-                .Parameters.Item("@MSGFThreshold").Direction = ParameterDirection.Input
+            objCommand.Parameters.Add(New SqlParameter("@FDRThreshold", SqlDbType.Float)).Value = mFDRThreshold
+            objCommand.Parameters.Add(New SqlParameter("@SpectraSearched", SqlDbType.Int)).Value = mSpectraSearched
+            objCommand.Parameters.Add(New SqlParameter("@TotalPSMs", SqlDbType.Int)).Value = mMSGFBasedCounts.TotalPSMs
+            objCommand.Parameters.Add(New SqlParameter("@UniquePeptides", SqlDbType.Int)).Value = mMSGFBasedCounts.UniquePeptideCount
+            objCommand.Parameters.Add(New SqlParameter("@UniqueProteins", SqlDbType.Int)).Value = mMSGFBasedCounts.UniqueProteinCount
+            objCommand.Parameters.Add(New SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int)).Value = mFDRBasedCounts.TotalPSMs
+            objCommand.Parameters.Add(New SqlParameter("@UniquePeptidesFDRFilter", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePeptideCount
+            objCommand.Parameters.Add(New SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int)).Value = mFDRBasedCounts.UniqueProteinCount
 
-                If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-                    .Parameters.Item("@MSGFThreshold").Value = mEValueThreshold
-                Else
-                    .Parameters.Item("@MSGFThreshold").Value = mMSGFThreshold
-                End If
+            objCommand.Parameters.Add(New SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt))
+            If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
+                objCommand.Parameters.Item("@MSGFThresholdIsEValue").Value = 1
+            Else
+                objCommand.Parameters.Item("@MSGFThresholdIsEValue").Value = 0
+            End If
 
-                .Parameters.Add(New SqlParameter("@FDRThreshold", SqlDbType.Float))
-                .Parameters.Item("@FDRThreshold").Direction = ParameterDirection.Input
-                .Parameters.Item("@FDRThreshold").Value = mFDRThreshold
-
-                .Parameters.Add(New SqlParameter("@SpectraSearched", SqlDbType.Int))
-                .Parameters.Item("@SpectraSearched").Direction = ParameterDirection.Input
-                .Parameters.Item("@SpectraSearched").Value = mSpectraSearched
-
-                .Parameters.Add(New SqlParameter("@TotalPSMs", SqlDbType.Int))
-                .Parameters.Item("@TotalPSMs").Direction = ParameterDirection.Input
-                .Parameters.Item("@TotalPSMs").Value = mMSGFBasedCounts.TotalPSMs
-
-                .Parameters.Add(New SqlParameter("@UniquePeptides", SqlDbType.Int))
-                .Parameters.Item("@UniquePeptides").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniquePeptides").Value = mMSGFBasedCounts.UniquePeptideCount
-
-                .Parameters.Add(New SqlParameter("@UniqueProteins", SqlDbType.Int))
-                .Parameters.Item("@UniqueProteins").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniqueProteins").Value = mMSGFBasedCounts.UniqueProteinCount
-
-                .Parameters.Add(New SqlParameter("@TotalPSMsFDRFilter", SqlDbType.Int))
-                .Parameters.Item("@TotalPSMsFDRFilter").Direction = ParameterDirection.Input
-                .Parameters.Item("@TotalPSMsFDRFilter").Value = mFDRBasedCounts.TotalPSMs
-
-                .Parameters.Add(New SqlParameter("@UniquePeptidesFDRFilter", SqlDbType.Int))
-                .Parameters.Item("@UniquePeptidesFDRFilter").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniquePeptidesFDRFilter").Value = mFDRBasedCounts.UniquePeptideCount
-
-                .Parameters.Add(New SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int))
-                .Parameters.Item("@UniqueProteinsFDRFilter").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniqueProteinsFDRFilter").Value = mFDRBasedCounts.UniqueProteinCount
-
-                .Parameters.Add(New SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt))
-                .Parameters.Item("@MSGFThresholdIsEValue").Direction = ParameterDirection.Input
-                If mResultType = clsPHRPReader.ePeptideHitResultType.MSAlign Then
-                    .Parameters.Item("@MSGFThresholdIsEValue").Value = 1
-                Else
-                    .Parameters.Item("@MSGFThresholdIsEValue").Value = 0
-                End If
-
-                .Parameters.Add(New SqlParameter("@PercentMSnScansNoPSM", SqlDbType.Real))
-                .Parameters.Item("@PercentMSnScansNoPSM").Direction = ParameterDirection.Input
-                .Parameters.Item("@PercentMSnScansNoPSM").Value = mPercentMSnScansNoPSM
-
-                .Parameters.Add(New SqlParameter("@MaximumScanGapAdjacentMSn", SqlDbType.Int))
-                .Parameters.Item("@MaximumScanGapAdjacentMSn").Direction = ParameterDirection.Input
-                .Parameters.Item("@MaximumScanGapAdjacentMSn").Value = mMaximumScanGapAdjacentMSn
-
-                .Parameters.Add(New SqlParameter("@UniquePhosphopeptideCountFDR", SqlDbType.Int))
-                .Parameters.Item("@UniquePhosphopeptideCountFDR").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniquePhosphopeptideCountFDR").Value = mFDRBasedCounts.UniquePhosphopeptideCount
-
-                .Parameters.Add(New SqlParameter("@UniquePhosphopeptidesCTermK", SqlDbType.Int))
-                .Parameters.Item("@UniquePhosphopeptidesCTermK").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniquePhosphopeptidesCTermK").Value = mFDRBasedCounts.UniquePhosphopeptidesCTermK
-
-                .Parameters.Add(New SqlParameter("@UniquePhosphopeptidesCTermR", SqlDbType.Int))
-                .Parameters.Item("@UniquePhosphopeptidesCTermR").Direction = ParameterDirection.Input
-                .Parameters.Item("@UniquePhosphopeptidesCTermR").Value = mFDRBasedCounts.UniquePhosphopeptidesCTermR
-
-                .Parameters.Add(New SqlParameter("@MissedCleavageRatio", SqlDbType.Real))
-                .Parameters.Item("@MissedCleavageRatio").Direction = ParameterDirection.Input
-                .Parameters.Item("@MissedCleavageRatio").Value = mFDRBasedCounts.MissedCleavageRatio
-
-                .Parameters.Add(New SqlParameter("@MissedCleavageRatioPhospho", SqlDbType.Real))
-                .Parameters.Item("@MissedCleavageRatioPhospho").Direction = ParameterDirection.Input
-                .Parameters.Item("@MissedCleavageRatioPhospho").Value = mFDRBasedCounts.MissedCleavageRatioPhospho
-
-                .Parameters.Add(New SqlParameter("@TrypticPeptides", SqlDbType.Int))
-                .Parameters.Item("@TrypticPeptides").Direction = ParameterDirection.Input
-                .Parameters.Item("@TrypticPeptides").Value = mFDRBasedCounts.TrypticPeptides
-
-                .Parameters.Add(New SqlParameter("@KeratinPeptides", SqlDbType.Int))
-                .Parameters.Item("@KeratinPeptides").Direction = ParameterDirection.Input
-                .Parameters.Item("@KeratinPeptides").Value = mFDRBasedCounts.KeratinPeptides
-
-                .Parameters.Add(New SqlParameter("@TrypsinPeptides", SqlDbType.Int))
-                .Parameters.Item("@TrypsinPeptides").Direction = ParameterDirection.Input
-                .Parameters.Item("@TrypsinPeptides").Value = mFDRBasedCounts.TrypsinPeptides
-
-            End With
+            objCommand.Parameters.Add(New SqlParameter("@PercentMSnScansNoPSM", SqlDbType.Real)).Value = mPercentMSnScansNoPSM
+            objCommand.Parameters.Add(New SqlParameter("@MaximumScanGapAdjacentMSn", SqlDbType.Int)).Value = mMaximumScanGapAdjacentMSn
+            objCommand.Parameters.Add(New SqlParameter("@UniquePhosphopeptideCountFDR", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptideCount
+            objCommand.Parameters.Add(New SqlParameter("@UniquePhosphopeptidesCTermK", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptidesCTermK
+            objCommand.Parameters.Add(New SqlParameter("@UniquePhosphopeptidesCTermR", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptidesCTermR
+            objCommand.Parameters.Add(New SqlParameter("@MissedCleavageRatio", SqlDbType.Real)).Value = mFDRBasedCounts.MissedCleavageRatio
+            objCommand.Parameters.Add(New SqlParameter("@MissedCleavageRatioPhospho", SqlDbType.Real)).Value = mFDRBasedCounts.MissedCleavageRatioPhospho
+            objCommand.Parameters.Add(New SqlParameter("@TrypticPeptides", SqlDbType.Int)).Value = mFDRBasedCounts.TrypticPeptides
+            objCommand.Parameters.Add(New SqlParameter("@KeratinPeptides", SqlDbType.Int)).Value = mFDRBasedCounts.KeratinPeptides
+            objCommand.Parameters.Add(New SqlParameter("@TrypsinPeptides", SqlDbType.Int)).Value = mFDRBasedCounts.TrypsinPeptides
 
             ' Execute the SP (retry the call up to 3 times)
             Dim ResCode As Integer

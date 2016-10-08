@@ -77,21 +77,13 @@ Public Class clsAnalysisMgrSettings
             myConnection.Open()
 
             'Set up the command object prior to SP execution
-            Dim myCmd = New SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection)
-            With myCmd
+            Dim myCmd = New SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) With {
                 .CommandType = CommandType.StoredProcedure
+            }
 
-                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-                .Parameters.Add(New SqlParameter("@managerName", SqlDbType.VarChar, 128))
-                .Parameters.Item("@managerName").Direction = ParameterDirection.Input
-                .Parameters.Item("@managerName").Value = Me.GetParam(MGR_PARAM_MGR_NAME)
-
-                .Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
-                .Parameters.Item("@message").Direction = ParameterDirection.Output
-                .Parameters.Item("@message").Value = ""
-            End With
+            myCmd.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+            myCmd.Parameters.Add(New SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = Me.GetParam(MGR_PARAM_MGR_NAME)
+            myCmd.Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output
 
             'Execute the SP
             myCmd.ExecuteNonQuery()

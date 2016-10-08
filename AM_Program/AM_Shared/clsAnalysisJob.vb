@@ -648,36 +648,17 @@ Public Class clsAnalysisJob
 
         Try
             'Set up the command object prior to SP execution
-            Dim myCmd = New SqlCommand(SP_NAME_REQUEST_TASK)
-            With myCmd
+            Dim myCmd = New SqlCommand(SP_NAME_REQUEST_TASK) With {
                 .CommandType = CommandType.StoredProcedure
+            }
 
-                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-                .Parameters.Add(New SqlParameter("@processorName", SqlDbType.VarChar, 128))
-                .Parameters.Item("@processorName").Direction = ParameterDirection.Input
-                .Parameters.Item("@processorName").Value = m_MgrParams.GetParam("MgrName")
-
-                .Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int))
-                .Parameters.Item("@jobNumber").Direction = ParameterDirection.Output
-
-                .Parameters.Add(New SqlParameter("@parameters", SqlDbType.VarChar, 8000))
-                .Parameters.Item("@parameters").Direction = ParameterDirection.Output
-                .Parameters.Item("@parameters").Value = ""
-
-                .Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512))
-                .Parameters.Item("@message").Direction = ParameterDirection.Output
-                .Parameters.Item("@message").Value = ""
-
-                .Parameters.Add(New SqlParameter("@infoOnly", SqlDbType.TinyInt))
-                .Parameters.Item("@infoOnly").Direction = ParameterDirection.Input
-                .Parameters.Item("@infoOnly").Value = 0
-
-                .Parameters.Add(New SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128))
-                .Parameters.Item("@AnalysisManagerVersion").Direction = ParameterDirection.Input
-                .Parameters.Item("@AnalysisManagerVersion").Value = strProductVersion
-            End With
+            myCmd.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+            myCmd.Parameters.Add(New SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("MgrName")
+            myCmd.Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output
+            myCmd.Parameters.Add(New SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output
+            myCmd.Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output
+            myCmd.Parameters.Add(New SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0
+            myCmd.Parameters.Add(New SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128)).Value = strProductVersion
 
             If m_DebugLevel > 4 Then
                 Dim MyMsg As String = "clsAnalysisJob.RequestAnalysisJob(), connection string: " & m_BrokerConnStr
@@ -865,48 +846,25 @@ Public Class clsAnalysisJob
         Dim returnCode As Integer
 
         ' Setup for execution of the stored procedure
-        Dim myCmd As New SqlCommand(spName)
-        With myCmd
+        Dim myCmd As New SqlCommand(spName) With {
             .CommandType = CommandType.StoredProcedure
+        }
 
-            .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-            .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-            .Parameters.Add(New SqlParameter("@job", SqlDbType.Int))
+        myCmd.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+        myCmd.Parameters.Add(New SqlParameter("@job", SqlDbType.Int)).Value = GetJobParameter("StepParameters", "Job", 0)
+        myCmd.Parameters.Add(New SqlParameter("@step", SqlDbType.Int)).Value = GetJobParameter("StepParameters", "Step", 0)
+        myCmd.Parameters.Add(New SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode
+        myCmd.Parameters.Add(New SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg
+        myCmd.Parameters.Add(New SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode
+        myCmd.Parameters.Add(New SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg
 
-            .Parameters.Item("@job").Direction = ParameterDirection.Input
-            .Parameters.Item("@job").Value = GetJobParameter("StepParameters", "Job", 0)
-
-            .Parameters.Add(New SqlParameter("@step", SqlDbType.Int))
-            .Parameters.Item("@step").Direction = ParameterDirection.Input
-            .Parameters.Item("@step").Value = GetJobParameter("StepParameters", "Step", 0)
-
-            .Parameters.Add(New SqlParameter("@completionCode", SqlDbType.Int))
-            .Parameters.Item("@completionCode").Direction = ParameterDirection.Input
-            .Parameters.Item("@completionCode").Value = compCode
-
-            .Parameters.Add(New SqlParameter("@completionMessage", SqlDbType.VarChar, 256))
-            .Parameters.Item("@completionMessage").Direction = ParameterDirection.Input
-            .Parameters.Item("@completionMessage").Value = compMsg
-
-            .Parameters.Add(New SqlParameter("@evaluationCode", SqlDbType.Int))
-            .Parameters.Item("@evaluationCode").Direction = ParameterDirection.Input
-            .Parameters.Item("@evaluationCode").Value = evalCode
-
-            .Parameters.Add(New SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256))
-            .Parameters.Item("@evaluationMessage").Direction = ParameterDirection.Input
-            .Parameters.Item("@evaluationMessage").Value = evalMsg
-
-            .Parameters.Add(New SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
-            .Parameters.Item("@organismDBName").Direction = ParameterDirection.Input
-
-            Dim strValue As String = String.Empty
-            If TryGetParam("PeptideSearch", "generatedFastaName", strValue) Then
-                .Parameters.Item("@organismDBName").Value = strValue
-            Else
-                .Parameters.Item("@organismDBName").Value = String.Empty
-            End If
-
-        End With
+        Dim orgDbNameParam = myCmd.Parameters.Add(New SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
+        Dim strValue As String = String.Empty
+        If TryGetParam("PeptideSearch", "generatedFastaName", strValue) Then
+            orgDbNameParam.Value = strValue
+        Else
+            orgDbNameParam.Value = String.Empty
+        End If
 
         ' Execute the Stored Procedure (retry the call up to 20 times)
         returnCode = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 20)
@@ -915,7 +873,6 @@ Public Class clsAnalysisJob
             success = True
         Else
             Dim Msg As String = "Error " & returnCode.ToString & " setting analysis job complete"
-            '			Msg &= "; Message = " & CStr(myCmd.Parameters("@message").Value)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             success = False
         End If

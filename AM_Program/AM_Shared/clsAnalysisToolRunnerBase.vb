@@ -2694,26 +2694,15 @@ Public Class clsAnalysisToolRunnerBase
         End If
 
         'Setup for execution of the stored procedure
-        Dim myCmd As New SqlClient.SqlCommand
-        With myCmd
-            .CommandType = CommandType.StoredProcedure
+        Dim myCmd As New SqlClient.SqlCommand() With {
+            .CommandType = CommandType.StoredProcedure,
             .CommandText = SP_NAME_SET_TASK_TOOL_VERSION
+        }
 
-            .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-            .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-            .Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int))
-            .Parameters.Item("@job").Direction = ParameterDirection.Input
-            .Parameters.Item("@job").Value = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
-
-            .Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int))
-            .Parameters.Item("@step").Direction = ParameterDirection.Input
-            .Parameters.Item("@step").Value = m_jobParams.GetJobParameter("StepParameters", "Step", 0)
-
-            .Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900))
-            .Parameters.Item("@ToolVersionInfo").Direction = ParameterDirection.Input
-            .Parameters.Item("@ToolVersionInfo").Value = strToolVersionInfoCombined
-        End With
+        myCmd.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+        myCmd.Parameters.Add(New SqlClient.SqlParameter("@job", SqlDbType.Int)).Value = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
+        myCmd.Parameters.Add(New SqlClient.SqlParameter("@step", SqlDbType.Int)).Value = m_jobParams.GetJobParameter("StepParameters", "Step", 0)
+        myCmd.Parameters.Add(New SqlClient.SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = strToolVersionInfoCombined
 
         Dim objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
 

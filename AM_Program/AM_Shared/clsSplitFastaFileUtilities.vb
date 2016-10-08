@@ -6,7 +6,7 @@ Imports FastaFileSplitterDLL
 Public Class clsSplitFastaFileUtilities
     Inherits clsEventNotifier
 
-	Public Const LOCK_FILE_PROGRESS_TEXT As String = "Lockfile"
+    Public Const LOCK_FILE_PROGRESS_TEXT As String = "Lockfile"
 
     Private Const SP_NAME_UPDATE_ORGANISM_DB_FILE As String = "AddUpdateOrganismDBFile"
     Private Const SP_NAME_REFRESH_CACHED_ORG_DB_INFO As String = "RefreshCachedOrganismDBInfo"
@@ -196,7 +196,7 @@ Public Class clsSplitFastaFileUtilities
 
         Const retryCount As Short = 3
 
-        Dim SqlStr As Text.StringBuilder = New Text.StringBuilder
+        Dim SqlStr = New Text.StringBuilder
 
         organismName = String.Empty
 
@@ -229,7 +229,7 @@ Public Class clsSplitFastaFileUtilities
 
     Private Function StoreSplitFastaFileNames(organismName As String, lstSplitFastaInfo As List(Of clsFastaFileSplitter.udtFastaFileInfoType)) As Boolean
 
-        Dim splitFastaName As String = "??"
+        Dim splitFastaName = "??"
 
         Try
 
@@ -240,45 +240,23 @@ Public Class clsSplitFastaFileUtilities
                 splitFastaName = fiSplitFastaFile.Name
 
                 'Setup for execution of the stored procedure
-                Dim myCmd As New SqlClient.SqlCommand
-                With myCmd
-                    .CommandType = CommandType.StoredProcedure
+                Dim myCmd As New SqlClient.SqlCommand() With {
+                    .CommandType = CommandType.StoredProcedure,
                     .CommandText = SP_NAME_UPDATE_ORGANISM_DB_FILE
+                }
 
-                    .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-                    .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-                    .Parameters.Add(New SqlClient.SqlParameter("@FastaFileName", SqlDbType.VarChar, 128))
-                    .Parameters.Item("@FastaFileName").Direction = ParameterDirection.Input
-                    .Parameters.Item("@FastaFileName").Value = splitFastaName
-
-                    .Parameters.Add(New SqlClient.SqlParameter("@OrganismName", SqlDbType.VarChar, 128))
-                    .Parameters.Item("@OrganismName").Direction = ParameterDirection.Input
-                    .Parameters.Item("@OrganismName").Value = organismName
-
-                    .Parameters.Add(New SqlClient.SqlParameter("@NumProteins", SqlDbType.Int))
-                    .Parameters.Item("@NumProteins").Direction = ParameterDirection.Input
-                    .Parameters.Item("@NumProteins").Value = udtFileInfo.NumProteins
-
-                    .Parameters.Add(New SqlClient.SqlParameter("@NumResidues", SqlDbType.BigInt))
-                    .Parameters.Item("@NumResidues").Direction = ParameterDirection.Input
-                    .Parameters.Item("@NumResidues").Value = udtFileInfo.NumResidues
-
-                    .Parameters.Add(New SqlClient.SqlParameter("@FileSizeKB", SqlDbType.Int))
-                    .Parameters.Item("@FileSizeKB").Direction = ParameterDirection.Input
-                    .Parameters.Item("@FileSizeKB").Value = (fiSplitFastaFile.Length / 1024.0).ToString("0")
-
-                    .Parameters.Add(New SqlClient.SqlParameter("@Message", SqlDbType.VarChar, 512))
-                    .Parameters.Item("@Message").Direction = ParameterDirection.InputOutput
-                    .Parameters.Item("@Message").Value = String.Empty
-
-                End With
-
+                myCmd.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+                myCmd.Parameters.Add(New SqlClient.SqlParameter("@FastaFileName", SqlDbType.VarChar, 128)).Value = splitFastaName
+                myCmd.Parameters.Add(New SqlClient.SqlParameter("@OrganismName", SqlDbType.VarChar, 128)).Value = organismName
+                myCmd.Parameters.Add(New SqlClient.SqlParameter("@NumProteins", SqlDbType.Int)).Value = udtFileInfo.NumProteins
+                myCmd.Parameters.Add(New SqlClient.SqlParameter("@NumResidues", SqlDbType.BigInt)).Value = udtFileInfo.NumResidues
+                myCmd.Parameters.Add(New SqlClient.SqlParameter("@FileSizeKB", SqlDbType.Int)).Value = (fiSplitFastaFile.Length / 1024.0).ToString("0")
+                myCmd.Parameters.Add(New SqlClient.SqlParameter("@Message", SqlDbType.VarChar, 512)).Value = String.Empty
 
                 Dim retryCount = 3
                 While retryCount > 0
                     Try
-                        Using connection As SqlClient.SqlConnection = New SqlClient.SqlConnection(mDMSConnectionString)
+                        Using connection = New SqlClient.SqlConnection(mDMSConnectionString)
                             connection.Open()
                             myCmd.Connection = connection
                             myCmd.ExecuteNonQuery()
@@ -330,20 +308,17 @@ Public Class clsSplitFastaFileUtilities
         Try
 
             'Setup for execution of the stored procedure
-            Dim myCmd As New SqlClient.SqlCommand
-            With myCmd
-                .CommandType = CommandType.StoredProcedure
+            Dim myCmd As New SqlClient.SqlCommand() With {
+                .CommandType = CommandType.StoredProcedure,
                 .CommandText = SP_NAME_REFRESH_CACHED_ORG_DB_INFO
+            }
 
-                .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-            End With
-
+            myCmd.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
 
             Dim retryCount = 3
             While retryCount > 0
                 Try
-                    Using connection As SqlClient.SqlConnection = New SqlClient.SqlConnection(mProteinSeqsDBConnectionString)
+                    Using connection = New SqlClient.SqlConnection(mProteinSeqsDBConnectionString)
                         connection.Open()
                         myCmd.Connection = connection
                         myCmd.ExecuteNonQuery()

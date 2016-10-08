@@ -4012,25 +4012,15 @@ Public MustInherit Class clsAnalysisResources
 
         Try
 
-            Dim myCmd = New SqlCommand("GetJobStepParamsAsTableUseHistory")
+            Dim myCmd = New SqlCommand("GetJobStepParamsAsTableUseHistory") With {
+                .CommandType = CommandType.StoredProcedure,
+                .Connection = brokerConnection,
+                .CommandTimeout = TIMEOUT_SECONDS
+            }
 
-            With myCmd
-                .CommandType = CommandType.StoredProcedure
-
-                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-                .Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int))
-                .Parameters.Item("@jobNumber").Direction = ParameterDirection.Input
-                .Parameters.Item("@jobNumber").Value = jobNumber
-
-                .Parameters.Add(New SqlParameter("@stepNumber", SqlDbType.Int))
-                .Parameters.Item("@stepNumber").Direction = ParameterDirection.Input
-                .Parameters.Item("@stepNumber").Value = 1
-            End With
-
-            myCmd.Connection = brokerConnection
-            myCmd.CommandTimeout = TIMEOUT_SECONDS
+            myCmd.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+            myCmd.Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int)).Value = jobNumber
+            myCmd.Parameters.Add(New SqlParameter("@stepNumber", SqlDbType.Int)).Value = 1
 
             ' Execute the SP
 

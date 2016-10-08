@@ -434,43 +434,26 @@ Public Class clsCleanupMgrErrors
 
     Private Sub ReportManagerErrorCleanup(eMgrCleanupActionCode As eCleanupActionCodeConstants, strFailureMessage As String)
 
-        Dim MyConnection As SqlClient.SqlConnection
-        Dim MyCmd As New SqlClient.SqlCommand
-
         Try
             If strFailureMessage Is Nothing Then strFailureMessage = String.Empty
 
-            MyConnection = New SqlClient.SqlConnection(mMgrConfigDBConnectionString)
-            MyConnection.Open()
+            Dim myConnection = New SqlClient.SqlConnection(mMgrConfigDBConnectionString)
+            myConnection.Open()
 
-            'Set up the command object prior to SP execution
-            With MyCmd
-                .CommandType = CommandType.StoredProcedure
-                .CommandText = SP_NAME_REPORTMGRCLEANUP
+            Dim myCmd = New SqlClient.SqlCommand() With {
+                .CommandType = CommandType.StoredProcedure,
+                .CommandText = SP_NAME_REPORTMGRCLEANUP,
                 .Connection = MyConnection
+            }
 
-                .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-                .Parameters.Add(New SqlClient.SqlParameter("@ManagerName", SqlDbType.VarChar, 128))
-                .Parameters.Item("@ManagerName").Direction = ParameterDirection.Input
-                .Parameters.Item("@ManagerName").Value = mManagerName
-
-                .Parameters.Add(New SqlClient.SqlParameter("@State", SqlDbType.Int))
-                .Parameters.Item("@State").Direction = ParameterDirection.Input
-                .Parameters.Item("@State").Value = eMgrCleanupActionCode
-
-                .Parameters.Add(New SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512))
-                .Parameters.Item("@FailureMsg").Direction = ParameterDirection.Input
-                .Parameters.Item("@FailureMsg").Value = strFailureMessage
-
-                .Parameters.Add(New SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512))
-                .Parameters.Item("@message").Direction = ParameterDirection.Output
-                .Parameters.Item("@message").Value = String.Empty
-            End With
+            myCmd.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+            myCmd.Parameters.Add(New SqlClient.SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName
+            myCmd.Parameters.Add(New SqlClient.SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode
+            myCmd.Parameters.Add(New SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = strFailureMessage
+            myCmd.Parameters.Add(New SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output
 
             'Execute the SP
-            MyCmd.ExecuteNonQuery()
+            myCmd.ExecuteNonQuery()
 
         Catch ex As Exception
             Dim strErrorMessage As String
