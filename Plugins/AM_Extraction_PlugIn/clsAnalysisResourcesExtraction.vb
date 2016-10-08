@@ -397,11 +397,11 @@ Public Class clsAnalysisResourcesExtraction
 
                         If Not SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
                             ' Examine the date of the TSV file
-                            ' If less than 12 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
+                            ' If less than 4 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
 
                             Dim fiTSVFile As FileInfo
                             fiTSVFile = New FileInfo(Path.Combine(SourceFolderPath, fileToGet))
-                            If DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 12 Then
+                            If Date.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
                                 ' File is recent; grab it
                                 If Not CopyFileToWorkDir(fileToGet, SourceFolderPath, m_WorkingDir) Then
                                     ' File copy failed; that's OK; we'll grab the _msgfplus.mzid.gz file
