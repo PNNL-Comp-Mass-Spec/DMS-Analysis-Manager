@@ -344,10 +344,7 @@ Public Class clsIonicZipTools
 
             dtStartTime = Date.UtcNow
 
-            Dim objProgRunner As clsRunDosProgram
             Dim blnSuccess As Boolean
-
-            objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath())
 
             Dim strArgs = "-f -k " & clsGlobal.PossiblyQuotePath(fiFile.FullName)
 
@@ -355,15 +352,14 @@ Public Class clsIonicZipTools
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, fiGZip.FullName & " " & strArgs)
             End If
 
-            With objProgRunner
-                .CacheStandardOutput = False
-                .CreateNoWindow = True
-                .EchoOutputToConsole = True
-                .WriteConsoleOutputToFile = False
-
-                .DebugLevel = 1
+            Dim objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath()) With {
+                .CacheStandardOutput = False,
+                .CreateNoWindow = True,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = False,
+                .DebugLevel = 1,
                 .MonitorInterval = 250
-            End With
+            }
 
             blnSuccess = objProgRunner.RunProgram(fiGZip.FullName, strArgs, "GZip", False)
 

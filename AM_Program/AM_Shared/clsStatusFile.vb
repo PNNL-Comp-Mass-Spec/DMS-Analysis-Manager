@@ -536,47 +536,52 @@ Public Class clsStatusFile
 
         Dim intIndex As Integer
 
-        Dim udtStatusInfo As clsDBStatusLogger.udtStatusInfoType
-        With udtStatusInfo
-            .MgrName = MgrName
-            .MgrStatus = MgrStatus
-            .LastUpdate = Date.UtcNow()
-            .LastStartTime = TaskStartTime
-            .CPUUtilization = CpuUtilization
-            .FreeMemoryMB = m_FreeMemoryMB
-            .ProcessID = GetProcessID()
-
-            .ProgRunnerProcessID = ProgRunnerProcessID
+        Dim udtStatusInfo = New clsDBStatusLogger.udtStatusInfoType() With {
+            .MgrName = MgrName,
+            .MgrStatus = MgrStatus,
+            .LastUpdate = Date.UtcNow(),
+            .LastStartTime = TaskStartTime,
+            .CPUUtilization = CpuUtilization,
+            .FreeMemoryMB = m_FreeMemoryMB,
+            .ProcessID = GetProcessID(),
+            .ProgRunnerProcessID = ProgRunnerProcessID,
             .ProgRunnerCoreUsage = ProgRunnerCoreUsage
+        }
 
-            If m_RecentErrorMessageCount = 0 Then
-                .MostRecentErrorMessage = String.Empty
-            Else
-                .MostRecentErrorMessage = m_RecentErrorMessages(0)
-                If m_RecentErrorMessageCount > 1 Then
-                    ' Append the next two error messages
-                    For intIndex = 1 To m_RecentErrorMessageCount - 1
-                        .MostRecentErrorMessage &= Environment.NewLine & m_RecentErrorMessages(intIndex)
-                        If intIndex >= 2 Then Exit For
-                    Next
-                End If
+        If m_RecentErrorMessageCount = 0 Then
+            udtStatusInfo.MostRecentErrorMessage = String.Empty
+        Else
+            udtStatusInfo.MostRecentErrorMessage = m_RecentErrorMessages(0)
+            If m_RecentErrorMessageCount > 1 Then
+                ' Append the next two error messages
+                For intIndex = 1 To m_RecentErrorMessageCount - 1
+                    udtStatusInfo.MostRecentErrorMessage &= Environment.NewLine & m_RecentErrorMessages(intIndex)
+                    If intIndex >= 2 Then Exit For
+                Next
             End If
+        End If
 
-            .Task.Tool = Tool
-            .Task.Status = TaskStatus
-            .Task.DurationHours = GetRunTime()
-            .Task.Progress = Progress
-            .Task.CurrentOperation = CurrentOperation
+        Dim udtTask = New clsDBStatusLogger.udtTaskInfoType() With {
+            .Tool = Tool,
+            .Status = TaskStatus,
+            .DurationHours = GetRunTime(),
+            .Progress = Progress,
+            .CurrentOperation = CurrentOperation
+        }
 
-            .Task.TaskDetails.Status = TaskStatusDetail
-            .Task.TaskDetails.Job = JobNumber
-            .Task.TaskDetails.JobStep = JobStep
-            .Task.TaskDetails.Dataset = Dataset
-            .Task.TaskDetails.MostRecentLogMessage = m_MostRecentLogMessage
-            .Task.TaskDetails.MostRecentJobInfo = MostRecentJobInfo
-            .Task.TaskDetails.SpectrumCount = SpectrumCount
+        Dim udtTaskDetails = New clsDBStatusLogger.udtTaskDetailsType() With {
+            .Status = TaskStatusDetail,
+            .Job = JobNumber,
+            .JobStep = JobStep,
+            .Dataset = Dataset,
+            .MostRecentLogMessage = m_MostRecentLogMessage,
+            .MostRecentJobInfo = MostRecentJobInfo,
+            .SpectrumCount = SpectrumCount
+        }
 
-        End With
+        udtTask.TaskDetails = udtTaskDetails
+        udtStatusInfo.Task = udtTask
+
 
         m_BrokerDBLogger.LogStatus(udtStatusInfo, ForceLogToBrokerDB)
     End Sub

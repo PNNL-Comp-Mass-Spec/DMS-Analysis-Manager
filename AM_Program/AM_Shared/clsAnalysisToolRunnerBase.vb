@@ -2982,11 +2982,8 @@ Public Class clsAnalysisToolRunnerBase
 
             strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_VersionInfo.txt")
 
-            Dim objProgRunner As clsRunDosProgram
             Dim blnSuccess As Boolean
             Dim strVersion As String = String.Empty
-
-            objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath())
 
             strArgs = PossiblyQuotePath(ioFileInfo.FullName) & " /O:" & PossiblyQuotePath(strVersionInfoFilePath)
 
@@ -2994,15 +2991,14 @@ Public Class clsAnalysisToolRunnerBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strAppPath & " " & strArgs)
             End If
 
-            With objProgRunner
-                .CacheStandardOutput = False
-                .CreateNoWindow = True
-                .EchoOutputToConsole = True
-                .WriteConsoleOutputToFile = False
-
-                .DebugLevel = 1
+            Dim objProgRunner = New clsRunDosProgram(clsGlobal.GetAppFolderPath()) With {
+                .CacheStandardOutput = False,
+                .CreateNoWindow = True,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = False,
+                .DebugLevel = 1,
                 .MonitorInterval = 250
-            End With
+            }
 
             blnSuccess = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", False)
 

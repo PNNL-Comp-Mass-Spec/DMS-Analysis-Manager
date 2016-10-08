@@ -1893,8 +1893,6 @@ Public Class clsMSGFRunner
             Return False
         End If
 
-        mMSGFRunner = New clsRunDosProgram(m_WorkDir)
-
         ' Delete the output file if it already exists (MSGFDB will not overwrite it)
         If File.Exists(strResultsFilePath) Then
             File.Delete(strResultsFilePath)
@@ -1968,14 +1966,13 @@ Public Class clsMSGFRunner
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc & " " & CmdStr)
 
-        With mMSGFRunner
-            .CreateNoWindow = False
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = False
-
-            .WriteConsoleOutputToFile = True
+        mMSGFRunner = New clsRunDosProgram(m_WorkDir) With {
+            .CreateNoWindow = False,
+            .CacheStandardOutput = False,
+            .EchoOutputToConsole = False,
+            .WriteConsoleOutputToFile = True,
             .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT)
-        End With
+        }
 
         Dim blnSuccess As Boolean
         blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", True)

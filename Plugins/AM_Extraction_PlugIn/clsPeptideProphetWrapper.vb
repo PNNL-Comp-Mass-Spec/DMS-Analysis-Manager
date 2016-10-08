@@ -24,7 +24,7 @@ Public Class clsPeptideProphetWrapper
 
 #Region "Module variables"
     Private ReadOnly m_PeptideProphetRunnerLocation As String = String.Empty
-	Private m_ErrMsg As String = String.Empty
+    Private m_ErrMsg As String = String.Empty
     Private m_DebugLevel As Short = 1
     Private m_InputFile As String = String.Empty
 
@@ -88,8 +88,6 @@ Public Class clsPeptideProphetWrapper
             ioInputFile = New FileInfo(m_InputFile)
             strPeptideProphetConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PeptideProphetConsoleOutput.txt")
 
-            CmdRunner = New clsRunDosProgram(ioInputFile.Directoryname)
-
             ' verify that program file exists
             If Not File.Exists(m_PeptideProphetRunnerLocation) Then
                 m_ErrMsg = "PeptideProphetRunner not found at " & m_PeptideProphetRunnerLocation
@@ -102,14 +100,13 @@ Public Class clsPeptideProphetWrapper
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_PeptideProphetRunnerLocation & " " & CmdStr)
             End If
 
-            With CmdRunner
-                .CreateNoWindow = True
-                .CacheStandardOutput = True
-                .EchoOutputToConsole = True
-
-                .WriteConsoleOutputToFile = True
+            CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName) With {
+                .CreateNoWindow = True,
+                .CacheStandardOutput = True,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = strPeptideProphetConsoleOutputFilePath
-            End With
+            }
 
             If Not CmdRunner.RunProgram(m_PeptideProphetRunnerLocation, CmdStr, "PeptideProphetRunner", True) Then
                 m_ErrMsg = "Error running PeptideProphetRunner"

@@ -109,13 +109,12 @@ Public Class clsPHRPMassErrorValidator
         Try
             mErrorMessage = String.Empty
 
-            Dim oStartupOptions = New clsPHRPStartupOptions()
-            With oStartupOptions
-                .LoadModsAndSeqInfo = True
-                .LoadMSGFResults = False
-                .LoadScanStatsData = False
+            Dim oStartupOptions = New clsPHRPStartupOptions() With {
+                .LoadModsAndSeqInfo = True,
+                .LoadMSGFResults = False,
+                .LoadScanStatsData = False,
                 .MaxProteinsPerPSM = 1
-            End With
+            }
 
             mPHRPReader = New clsPHRPReader(strInputFilePath, eResultType, oStartupOptions)
 

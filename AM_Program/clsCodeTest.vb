@@ -476,14 +476,12 @@ Public Class clsCodeTest
         'Dim oMassErrorExtractor = New clsDtaRefLogMassErrorExtractor(m_mgrParams, strWorkDir, m_DebugLevel, blnPostResultsToDB)
 
         For Each CurRow As DataRow In Dt.Rows
-            Dim udtPSMJob As udtPSMJobInfoType = New udtPSMJobInfoType
-
-            With udtPSMJob
-                .Dataset = clsGlobal.DbCStr(CurRow("Dataset"))
-                .DatasetID = clsGlobal.DbCInt(CurRow("Dataset_ID"))
-                .Job = clsGlobal.DbCInt(CurRow("Job"))
+            Dim udtPSMJob = New udtPSMJobInfoType() With {
+                .Dataset = clsGlobal.DbCStr(CurRow("Dataset")),
+                .DatasetID = clsGlobal.DbCInt(CurRow("Dataset_ID")),
+                .Job = clsGlobal.DbCInt(CurRow("Job")),
                 .DtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow("Dataset_Folder_Path")), clsGlobal.DbCStr(CurRow("Output_Folder")))
-            End With
+            }
 
             If Not Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath) Then
                 udtPSMJob.DtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow("Transfer_Folder_Path")), clsGlobal.DbCStr(CurRow("Output_Folder")))
@@ -512,16 +510,13 @@ Public Class clsCodeTest
         Dim dataFilePath = "E:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw"
         Dim cmdStr = dataFilePath & " --filter ""peakPicking true 1-"" --filter ""threshold count 500 most-intense"" --mgf -o E:\DMS_WorkDir"
 
-        m_RunProgTool = New clsRunDosProgram(workDir)
-
-        With m_RunProgTool
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = ""     ' Allow the console output filename to be auto-generated
-        End With
+        m_RunProgTool = New clsRunDosProgram(workDir) With {
+            .CreateNoWindow = True,
+            .CacheStandardOutput = True,
+            .EchoOutputToConsole = True,
+            .WriteConsoleOutputToFile = True,
+            .ConsoleOutputFilePath = ""             ' Allow the console output filename to be auto-generated
+        }
 
         If Not m_RunProgTool.RunProgram(exePath, cmdStr, "MSConvert", True) Then
             Console.WriteLine("Error running MSConvert")
@@ -1881,17 +1876,14 @@ Public Class clsCodeTest
 
         Dim objProgRunner As clsRunDosProgram
 
-        objProgRunner = New clsRunDosProgram(strWorkDir)
-
-        With objProgRunner
-            .CacheStandardOutput = True
-            .CreateNoWindow = True
-            .EchoOutputToConsole = True
-            .WriteConsoleOutputToFile = True
-
-            .DebugLevel = 1
+        objProgRunner = New clsRunDosProgram(strWorkDir) With {
+            .CacheStandardOutput = True,
+            .CreateNoWindow = True,
+            .EchoOutputToConsole = True,
+            .WriteConsoleOutputToFile = True,
+            .DebugLevel = 1,
             .MonitorInterval = 1000
-        End With
+        }
 
         blnSuccess = objProgRunner.RunProgram(strAppPath, "input.xml", "X!Tandem", False)
 

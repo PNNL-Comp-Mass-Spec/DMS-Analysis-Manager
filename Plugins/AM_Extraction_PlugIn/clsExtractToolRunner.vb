@@ -409,16 +409,13 @@ Public Class clsExtractToolRunner
             ' "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODPlus\tda_plus.jar -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt" -fdr 0.05 -d Reversed_            
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & cmdStr)
 
-            Dim progRunner = New clsRunDosProgram(m_WorkDir)
-
-            With progRunner
-                .CreateNoWindow = True
-                .CacheStandardOutput = False
-                .EchoOutputToConsole = True
-
-                .WriteConsoleOutputToFile = True
+            Dim progRunner = New clsRunDosProgram(m_WorkDir) With {
+                .CreateNoWindow = True,
+                .CacheStandardOutput = False,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, toolName & "_Filter_ConsoleOutput.txt")
-            End With
+            }
 
             Dim blnSuccess = progRunner.RunProgram(JavaProgLoc, cmdStr, toolName & "_Filter", True)
 

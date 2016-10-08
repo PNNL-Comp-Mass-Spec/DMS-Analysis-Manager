@@ -101,18 +101,16 @@ Public Class clsPeptideExtractWrapper
     Public Function PerformExtraction() As IJobParams.CloseOutType
 
         Dim StartParams As New clsPeptideFileExtractor.StartupArguments(
-          m_MgrParams.GetParam("workdir"), m_JobParams.GetParam("DatasetNum"))
-
-        With StartParams
-            .ExpandMultiORF = True
-            .FilterEFS = False
-            .FHTFilterScoreThreshold = 0.1
-            .FHTXCorrThreshold = 0.0
-            .SynXCorrThreshold = 1.5
-            .SynFilterScoreThreshold = 0.1
-            .MakeIRRFile = False
+          m_MgrParams.GetParam("workdir"), m_JobParams.GetParam("DatasetNum")) With {
+            .ExpandMultiORF = True,
+            .FilterEFS = False,
+            .FHTFilterScoreThreshold = 0.1,
+            .FHTXCorrThreshold = 0.0,
+            .SynXCorrThreshold = 1.5,
+            .SynFilterScoreThreshold = 0.1,
+            .MakeIRRFile = False,
             .MakeNLIFile = False            ' Not actually used by the extractor, since class PeptideHitEntry has COMPUTE_DISCRIMINANT_SCORE = False in the PeptideFileExtractor project
-        End With
+        }
 
         'Verify the concatenated _out.txt file exists
         If Not StartParams.CatOutFileExists Then

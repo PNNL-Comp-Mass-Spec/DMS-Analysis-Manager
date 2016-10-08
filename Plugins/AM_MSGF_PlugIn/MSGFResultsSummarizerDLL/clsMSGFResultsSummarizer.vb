@@ -942,13 +942,12 @@ Public Class clsMSGFResultsSummarizer
 
     Private Function GetMinimalMemoryPHRPStartupOptions() As clsPHRPStartupOptions
 
-        Dim startupOptions = New clsPHRPStartupOptions()
-        With startupOptions
-            .LoadModsAndSeqInfo = False
-            .LoadMSGFResults = False
-            .LoadScanStatsData = False
+        Dim startupOptions = New clsPHRPStartupOptions() With {
+            .LoadModsAndSeqInfo = False,
+            .LoadMSGFResults = False,
+            .LoadScanStatsData = False,
             .MaxProteinsPerPSM = 1
-        End With
+        }
         Return startupOptions
     End Function
 

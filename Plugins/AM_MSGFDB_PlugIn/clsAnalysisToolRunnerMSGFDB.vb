@@ -820,16 +820,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath & " " & CmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-        With CmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
+        CmdRunner = New clsRunDosProgram(m_WorkDir) With {
+            .CreateNoWindow = True,
+            .CacheStandardOutput = True,
+            .EchoOutputToConsole = True,
+            .WriteConsoleOutputToFile = True,
             .ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
-        End With
+        }
 
         m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
         ResetProgRunnerCpuUsage()

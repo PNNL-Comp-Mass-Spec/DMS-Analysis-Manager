@@ -823,17 +823,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
             Else
 
-                Dim objBuildSA = New clsRunDosProgram(fiFastaFile.DirectoryName)
                 consoleOutputFilePath = Path.Combine(strLogFileDir, "MSGFDB_BuildSA_ConsoleOutput.txt")
-
-                With objBuildSA
-                    .CreateNoWindow = True
-                    .CacheStandardOutput = True
-                    .EchoOutputToConsole = True
-
-                    .WriteConsoleOutputToFile = True
+                Dim objBuildSA = New clsRunDosProgram(fiFastaFile.DirectoryName) With {
+                    .CreateNoWindow = True,
+                    .CacheStandardOutput = True,
+                    .EchoOutputToConsole = True,
+                    .WriteConsoleOutputToFile = True,
                     .ConsoleOutputFilePath = consoleOutputFilePath
-                End With
+                }
 
 
                 strCurrentTask = "Run BuildSA using " & CmdStr

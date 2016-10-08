@@ -319,13 +319,12 @@ Public Class clsLogTools
 
         layout.ActivateOptions()
 
-        Dim returnAppender = New FileAppender()
-        With returnAppender
-            .Name = LOG_FILE_APPENDER
-            .File = m_BaseFileName & "_" & m_FileDate & ".txt"
-            .AppendToFile = True
+        Dim returnAppender = New FileAppender() With {
+            .Name = LOG_FILE_APPENDER,
+            .File = m_BaseFileName & "_" & m_FileDate & ".txt",
+            .AppendToFile = True,
             .Layout = layout
-        End With
+        }
 
         returnAppender.ActivateOptions()
 
@@ -403,47 +402,42 @@ Public Class clsLogTools
     ''' <param name="appenderName">Appender name</param>
     ''' <returns>ADONet database appender</returns>
     Public Shared Function CreateDbAppender(connectionString As String, moduleName As String, appenderName As String) As AdoNetAppender
-        Dim returnAppender = New AdoNetAppender()
-
-        With returnAppender
-            .BufferSize = 1
-            .ConnectionType = "System.Data.SqlClient.SqlConnection, System.Data, Version=1.0.3300.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-            .ConnectionString = connectionString
-            .CommandType = CommandType.StoredProcedure
-            .CommandText = "PostLogEntry"
+        Dim returnAppender = New AdoNetAppender() With {
+            .BufferSize = 1,
+            .ConnectionType = "System.Data.SqlClient.SqlConnection, System.Data, Version=1.0.3300.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+            .ConnectionString = connectionString,
+            .CommandType = CommandType.StoredProcedure,
+            .CommandText = "PostLogEntry",
             .Name = appenderName
-        End With
+        }
 
         'Type parameter
-        Dim typeParam = New AdoNetAppenderParameter()
-        With typeParam
-            .ParameterName = "@type"
-            .DbType = DbType.[String]
-            .Size = 50
+        Dim typeParam = New AdoNetAppenderParameter() With {
+            .ParameterName = "@type",
+            .DbType = DbType.[String],
+            .Size = 50,
             .Layout = CreateLayout("%level")
-        End With
+        }
 
         returnAppender.AddParameter(typeParam)
 
         'Message parameter
-        Dim msgParam = New AdoNetAppenderParameter()
-        With msgParam
-            .ParameterName = "@message"
-            .DbType = DbType.[String]
-            .Size = 4000
+        Dim msgParam = New AdoNetAppenderParameter() With {
+            .ParameterName = "@message",
+            .DbType = DbType.[String],
+            .Size = 4000,
             .Layout = CreateLayout("%message")
-        End With
+        }
 
         returnAppender.AddParameter(msgParam)
 
         'PostedBy parameter
-        Dim postByParam = New AdoNetAppenderParameter()
-        With postByParam
-            .ParameterName = "@postedBy"
-            .DbType = DbType.[String]
-            .Size = 128
+        Dim postByParam = New AdoNetAppenderParameter() With {
+            .ParameterName = "@postedBy",
+            .DbType = DbType.[String],
+            .Size = 128,
             .Layout = CreateLayout(moduleName)
-        End With
+        }
 
         returnAppender.AddParameter(postByParam)
 

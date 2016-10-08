@@ -381,22 +381,20 @@ Public Class clsRunDosProgram
 
         ' Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
         ' Also necessary to avoid problems caching the console output
-        m_ProgRunner = New PRISM.Processes.clsProgRunner
-        With m_ProgRunner
-            .Arguments = CmdLine
-            .CreateNoWindow = m_CreateNoWindow
-            .MonitoringInterval = m_MonitorInterval
-            .Name = ProgName
-            .Program = ProgNameLoc
-            .Repeat = False
-            .RepeatHoldOffTime = 0
-            .WorkDir = m_WorkDir
-            .CacheStandardOutput = m_CacheStandardOutput
-            .EchoOutputToConsole = m_EchoOutputToConsole
-
-            .WriteConsoleOutputToFile = m_WriteConsoleOutputToFile
+        m_ProgRunner = New clsProgRunner() With {
+            .Arguments = CmdLine,
+            .CreateNoWindow = m_CreateNoWindow,
+            .MonitoringInterval = m_MonitorInterval,
+            .Name = ProgName,
+            .Program = ProgNameLoc,
+            .Repeat = False,
+            .RepeatHoldOffTime = 0,
+            .WorkDir = m_WorkDir,
+            .CacheStandardOutput = m_CacheStandardOutput,
+            .EchoOutputToConsole = m_EchoOutputToConsole,
+            .WriteConsoleOutputToFile = m_WriteConsoleOutputToFile,
             .ConsoleOutputFilePath = m_ConsoleOutputFilePath
-        End With
+        }
 
         If m_DebugLevel >= 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Arguments = " & m_ProgRunner.Arguments)

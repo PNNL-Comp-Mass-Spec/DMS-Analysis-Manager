@@ -117,8 +117,6 @@ Public Class clsPepHitResultsProcWrapper
             ioInputFile = New FileInfo(PeptideSearchResultsFileName)
             m_PHRPConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt")
 
-            CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName)
-
             Dim progLoc As String = m_MgrParams.GetParam("PHRPProgLoc")
             progLoc = Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe")
 
@@ -175,14 +173,13 @@ Public Class clsPepHitResultsProcWrapper
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
             End If
 
-            With CmdRunner
-                .CreateNoWindow = True
-                .CacheStandardOutput = True
-                .EchoOutputToConsole = True
-
-                .WriteConsoleOutputToFile = True
+            CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName) With {
+                .CreateNoWindow = True,
+                .CacheStandardOutput = True,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
-            End With
+            }
 
             ' Abort PHRP if it runs for over 720 minutes (this generally indicates that it's stuck)
             Const intMaxRuntimeSeconds As Integer = 720 * 60
