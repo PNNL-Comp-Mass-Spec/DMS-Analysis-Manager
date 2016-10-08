@@ -12,10 +12,10 @@ Public Class clsDBStatusLogger
 
 #Region "Structures"
 
-	Public Structure udtStatusInfoType
-		Public MgrName As String
-		Public MgrStatus As IStatusFile.EnumMgrStatus
-		Public LastUpdate As DateTime
+    Public Structure udtStatusInfoType
+        Public MgrName As String
+        Public MgrStatus As IStatusFile.EnumMgrStatus
+        Public LastUpdate As DateTime
         Public LastStartTime As DateTime
 
         ''' <summary>
@@ -48,28 +48,28 @@ Public Class clsDBStatusLogger
         ''' <remarks></remarks>
         Public ProgRunnerCoreUsage As Single
 
-		Public MostRecentErrorMessage As String
-		Public Task As udtTaskInfoType
-	End Structure
+        Public MostRecentErrorMessage As String
+        Public Task As udtTaskInfoType
+    End Structure
 
-	Public Structure udtTaskInfoType
-		Public Tool As String
-		Public Status As IStatusFile.EnumTaskStatus
-		Public DurationHours As Single		 ' Task duration, in hours
-		Public Progress As Single		' Percent complete, value between 0 and 100
-		Public CurrentOperation As String
-		Public TaskDetails As udtTaskDetailsType
-	End Structure
+    Public Structure udtTaskInfoType
+        Public Tool As String
+        Public Status As IStatusFile.EnumTaskStatus
+        Public DurationHours As Single       ' Task duration, in hours
+        Public Progress As Single       ' Percent complete, value between 0 and 100
+        Public CurrentOperation As String
+        Public TaskDetails As udtTaskDetailsType
+    End Structure
 
-	Public Structure udtTaskDetailsType
-		Public Status As IStatusFile.EnumTaskStatusDetail
-		Public Job As Integer
-		Public JobStep As Integer
-		Public Dataset As String
-		Public MostRecentLogMessage As String
-		Public MostRecentJobInfo As String
-		Public SpectrumCount As Integer
-	End Structure
+    Public Structure udtTaskDetailsType
+        Public Status As IStatusFile.EnumTaskStatusDetail
+        Public Job As Integer
+        Public JobStep As Integer
+        Public Dataset As String
+        Public MostRecentLogMessage As String
+        Public MostRecentJobInfo As String
+        Public SpectrumCount As Integer
+    End Structure
 
 #End Region
 
@@ -79,28 +79,28 @@ Public Class clsDBStatusLogger
     ''' Stored procedure that could be used to report manager status; typically not used
     ''' </summary>
     ''' <remarks>This stored procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-	Private Const SP_NAME_UPDATE_MANAGER_STATUS As String = "UpdateManagerAndTaskStatus"
+    Private Const SP_NAME_UPDATE_MANAGER_STATUS As String = "UpdateManagerAndTaskStatus"
 
-	'Status file name and location
-	Private ReadOnly m_DBConnectionString As String
+    'Status file name and location
+    Private ReadOnly m_DBConnectionString As String
 
-	' The minimum interval between updating the manager status in the database
-	Private m_DBStatusUpdateIntervalMinutes As Single = 1
+    ' The minimum interval between updating the manager status in the database
+    Private m_DBStatusUpdateIntervalMinutes As Single = 1
 
 #End Region
 
 #Region "Properties"
 
-	Public ReadOnly Property DBConnectionString() As String
-		Get
-			Return m_DBConnectionString
-		End Get
-	End Property
+    Public ReadOnly Property DBConnectionString() As String
+        Get
+            Return m_DBConnectionString
+        End Get
+    End Property
 
-	Public Property DBStatusUpdateIntervalMinutes() As Single
-		Get
-			Return m_DBStatusUpdateIntervalMinutes
-		End Get
+    Public Property DBStatusUpdateIntervalMinutes() As Single
+        Get
+            Return m_DBStatusUpdateIntervalMinutes
+        End Get
         Set(value As Single)
             If value < 0 Then value = 0
             m_DBStatusUpdateIntervalMinutes = value
@@ -132,9 +132,6 @@ Public Class clsDBStatusLogger
 
         Static dtLastWriteTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(1, 0, 0))
 
-        Dim MyConnection As SqlClient.SqlConnection
-        Dim myCmd As New SqlClient.SqlCommand
-
         Try
             If String.IsNullOrEmpty(m_DBConnectionString) Then
                 ' Connection string not defined; unable to continue
@@ -148,53 +145,51 @@ Public Class clsDBStatusLogger
             dtLastWriteTime = Date.UtcNow
 
 
-            MyConnection = New SqlClient.SqlConnection(m_DBConnectionString)
-            MyConnection.Open()
+            Dim myConnection = New SqlClient.SqlConnection(m_DBConnectionString)
+            myConnection.Open()
 
             'Set up the command object prior to SP execution
-            With myCmd
+            Dim myCmd = New SqlClient.SqlCommand() With {
+                .CommandType = CommandType.StoredProcedure,
+                .CommandText = SP_NAME_UPDATE_MANAGER_STATUS,
+                .Connection = myConnection
+            }
 
-                .CommandType = CommandType.StoredProcedure
-                .CommandText = SP_NAME_UPDATE_MANAGER_STATUS
-                .Connection = MyConnection
-
-                .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+            myCmd.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
+            myCmd.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
 
 
-                ' Manager items
-                AddSPParameter(.Parameters, "@MgrName", udtStatusInfo.MgrName, 128)
-                AddSPParameter(.Parameters, "@MgrStatusCode", udtStatusInfo.MgrStatus)
+            ' Manager items
+            AddSPParameter(myCmd.Parameters, "@MgrName", udtStatusInfo.MgrName, 128)
+            AddSPParameter(myCmd.Parameters, "@MgrStatusCode", udtStatusInfo.MgrStatus)
 
-                AddSPParameter(.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime())
-                AddSPParameter(.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime())
-                AddSPParameter(.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization)
-                AddSPParameter(.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB)
-                AddSPParameter(.Parameters, "@ProcessID", udtStatusInfo.ProcessID)
-                AddSPParameter(.Parameters, "@ProgRunnerProcessID", udtStatusInfo.ProgRunnerProcessID)
-                AddSPParameter(.Parameters, "@ProgRunnerCoreUsage", udtStatusInfo.ProgRunnerCoreUsage)
+            AddSPParameter(myCmd.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime())
+            AddSPParameter(myCmd.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime())
+            AddSPParameter(myCmd.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization)
+            AddSPParameter(myCmd.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB)
+            AddSPParameter(myCmd.Parameters, "@ProcessID", udtStatusInfo.ProcessID)
+            AddSPParameter(myCmd.Parameters, "@ProgRunnerProcessID", udtStatusInfo.ProgRunnerProcessID)
+            AddSPParameter(myCmd.Parameters, "@ProgRunnerCoreUsage", udtStatusInfo.ProgRunnerCoreUsage)
 
-                AddSPParameter(.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024)
+            AddSPParameter(myCmd.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024)
 
-                ' Task items
-                AddSPParameter(.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128)
-                AddSPParameter(.Parameters, "@TaskStatusCode", udtStatusInfo.Task.Status)
-                AddSPParameter(.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours)
-                AddSPParameter(.Parameters, "@Progress", udtStatusInfo.Task.Progress)
-                AddSPParameter(.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256)
+            ' Task items
+            AddSPParameter(myCmd.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128)
+            AddSPParameter(myCmd.Parameters, "@TaskStatusCode", udtStatusInfo.Task.Status)
+            AddSPParameter(myCmd.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours)
+            AddSPParameter(myCmd.Parameters, "@Progress", udtStatusInfo.Task.Progress)
+            AddSPParameter(myCmd.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256)
 
-                ' Task detail items
-                AddSPParameter(.Parameters, "@TaskDetailStatusCode", udtStatusInfo.Task.TaskDetails.Status)
-                AddSPParameter(.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job)
-                AddSPParameter(.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep)
-                AddSPParameter(.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256)
-                AddSPParameter(.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024)
-                AddSPParameter(.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256)
-                AddSPParameter(.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount)
+            ' Task detail items
+            AddSPParameter(myCmd.Parameters, "@TaskDetailStatusCode", udtStatusInfo.Task.TaskDetails.Status)
+            AddSPParameter(myCmd.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job)
+            AddSPParameter(myCmd.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep)
+            AddSPParameter(myCmd.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256)
+            AddSPParameter(myCmd.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024)
+            AddSPParameter(myCmd.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256)
+            AddSPParameter(myCmd.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount)
 
-                AddSPParameterOutput(.Parameters, "@message", String.Empty, 512)
-
-            End With
+            AddSPParameterOutput(myCmd.Parameters, "@message", String.Empty, 512)
 
             'Execute the SP
             myCmd.ExecuteNonQuery()
@@ -212,9 +207,7 @@ Public Class clsDBStatusLogger
             strParamName = "@" & strParamName
         End If
 
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength))
-        objParameters.Item(strParamName).Direction = ParameterDirection.Input
-        objParameters.Item(strParamName).Value = strValue
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength)).Value = strValue
     End Sub
 
     Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, intValue As Integer)
@@ -223,9 +216,7 @@ Public Class clsDBStatusLogger
             strParamName = "@" & strParamName
         End If
 
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Int))
-        objParameters.Item(strParamName).Direction = ParameterDirection.Input
-        objParameters.Item(strParamName).Value = intValue
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Int)).Value = intValue
     End Sub
 
     Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, dtValue As DateTime)
@@ -234,9 +225,7 @@ Public Class clsDBStatusLogger
             strParamName = "@" & strParamName
         End If
 
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.DateTime))
-        objParameters.Item(strParamName).Direction = ParameterDirection.Input
-        objParameters.Item(strParamName).Value = dtValue
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.DateTime)).Value = dtValue
     End Sub
 
     Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, sngValue As Single)
@@ -245,9 +234,7 @@ Public Class clsDBStatusLogger
             strParamName = "@" & strParamName
         End If
 
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Real))
-        objParameters.Item(strParamName).Direction = ParameterDirection.Input
-        objParameters.Item(strParamName).Value = sngValue
+        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Real)).Value = sngValue
     End Sub
 
     Private Sub AddSPParameterOutput(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, strValue As String, intVarCharLength As Integer)

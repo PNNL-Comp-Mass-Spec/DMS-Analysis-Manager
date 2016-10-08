@@ -33,25 +33,25 @@ Imports System.Text.RegularExpressions
 Public Class clsSplitCattedFiles
 
 #Region "Constants"
-	Public Const REGEX_FILE_SEPARATOR As String = "^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$"
-	Public Const REGEX_FILE_NAME_PARTS As String = "^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)"
-	Public Const REGEX_DTA_FIRST_LINE As String = "^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+cs\=(?<chargestate>\d+)$"
+    Public Const REGEX_FILE_SEPARATOR As String = "^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$"
+    Public Const REGEX_FILE_NAME_PARTS As String = "^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)"
+    Public Const REGEX_DTA_FIRST_LINE As String = "^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+cs\=(?<chargestate>\d+)$"
 
 #End Region
-	Private ReadOnly r_FileSeparator As Regex
-	Private ReadOnly r_FileNameParts As Regex
-	Private ReadOnly r_DTAFirstLine As Regex
-	Private m_ResultsFileCount As Integer = 0
+    Private ReadOnly r_FileSeparator As Regex
+    Private ReadOnly r_FileNameParts As Regex
+    Private ReadOnly r_DTAFirstLine As Regex
+    Private m_ResultsFileCount As Integer = 0
 
-	Sub New()
+    Sub New()
 
-		Me.r_FileSeparator = New Regex(REGEX_FILE_SEPARATOR, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
+        Me.r_FileSeparator = New Regex(REGEX_FILE_SEPARATOR, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
-		Me.r_FileNameParts = New Regex(REGEX_FILE_NAME_PARTS, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
+        Me.r_FileNameParts = New Regex(REGEX_FILE_NAME_PARTS, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
-		Me.r_DTAFirstLine = New Regex(REGEX_DTA_FIRST_LINE, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
+        Me.r_DTAFirstLine = New Regex(REGEX_DTA_FIRST_LINE, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
-	End Sub
+    End Sub
 
     Public Function SplitCattedDTAsAndOuts(datasetName As String, resultsFolderPath As String) As Boolean
         Dim blnSuccess1 As Boolean

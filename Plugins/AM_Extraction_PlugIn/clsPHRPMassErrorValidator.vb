@@ -7,34 +7,34 @@ Public Class clsPHRPMassErrorValidator
 
 #Region "Module variables"
 
-	Protected mErrorMessage As String = String.Empty
-	Protected ReadOnly mDebugLevel As Integer
+    Protected mErrorMessage As String = String.Empty
+    Protected ReadOnly mDebugLevel As Integer
 
-	' This is a value between 0 and 100
-	Protected Const mErrorThresholdPercent As Double = 5
+    ' This is a value between 0 and 100
+    Protected Const mErrorThresholdPercent As Double = 5
 
     Protected WithEvents mPHRPReader As clsPHRPReader
 
 #End Region
 
-	Public ReadOnly Property ErrorMessage() As String
-		Get
-			Return mErrorMessage
-		End Get
-	End Property
+    Public ReadOnly Property ErrorMessage() As String
+        Get
+            Return mErrorMessage
+        End Get
+    End Property
 
-	''' <summary>
-	''' Value between 0 and 100
-	''' If more than this percent of the data has a mass error larger than the threshold, then ValidatePHRPResultMassErrors returns false
-	''' </summary>
-	''' <value></value>
-	''' <returns></returns>
-	''' <remarks></remarks>
-	Public ReadOnly Property ErrorThresholdPercent As Double
-		Get
-			Return mErrorThresholdPercent
-		End Get
-	End Property
+    ''' <summary>
+    ''' Value between 0 and 100
+    ''' If more than this percent of the data has a mass error larger than the threshold, then ValidatePHRPResultMassErrors returns false
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property ErrorThresholdPercent As Double
+        Get
+            Return mErrorThresholdPercent
+        End Get
+    End Property
 
     Public Sub New(intDebugLevel As Integer)
         mDebugLevel = intDebugLevel
@@ -301,15 +301,15 @@ Public Class clsPHRPMassErrorValidator
 
     End Function
 
-	Private Sub mPHRPReader_ErrorEvent(strErrorMessage As String) Handles mPHRPReader.ErrorEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage)
-	End Sub
+    Private Sub mPHRPReader_ErrorEvent(strErrorMessage As String) Handles mPHRPReader.ErrorEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage)
+    End Sub
 
-	Private Sub mPHRPReader_MessageEvent(strMessage As String) Handles mPHRPReader.MessageEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
-	End Sub
+    Private Sub mPHRPReader_MessageEvent(strMessage As String) Handles mPHRPReader.MessageEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
+    End Sub
 
-	Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage)
-	End Sub
+    Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage)
+    End Sub
 End Class

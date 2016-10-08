@@ -284,34 +284,31 @@ Public Class clsAnalysisResults
 
     Private Sub CopyFailedResultsCreateInfoFile(strFolderInfoFilePath As String, strResultsFolderName As String)
 
-        Dim swArchivedFolderInfoFile As StreamWriter
-        swArchivedFolderInfoFile = New StreamWriter(New FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+        Using swInfoFile = New StreamWriter(New FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            swInfoFile.WriteLine("Date" & ControlChars.Tab & Date.Now())
+            swInfoFile.WriteLine("ResultsFolderName" & ControlChars.Tab & strResultsFolderName)
+            swInfoFile.WriteLine("Manager" & ControlChars.Tab & m_mgrParams.GetParam("MgrName"))
 
-        With swArchivedFolderInfoFile
-            .WriteLine("Date" & ControlChars.Tab & Date.Now())
-            .WriteLine("ResultsFolderName" & ControlChars.Tab & strResultsFolderName)
-            .WriteLine("Manager" & ControlChars.Tab & m_mgrParams.GetParam("MgrName"))
             If Not m_jobParams Is Nothing Then
-                .WriteLine("JobToolDescription" & ControlChars.Tab & m_jobParams.GetCurrentJobToolDescription())
-                .WriteLine("Job" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Job"))
-                .WriteLine("Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
+                swInfoFile.WriteLine("JobToolDescription" & ControlChars.Tab & m_jobParams.GetCurrentJobToolDescription())
+                swInfoFile.WriteLine("Job" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Job"))
+                swInfoFile.WriteLine("Step" & ControlChars.Tab & m_jobParams.GetParam("StepParameters", "Step"))
             End If
-            .WriteLine("Date" & ControlChars.Tab & Date.Now().ToString)
-            If Not m_jobParams Is Nothing Then
-                .WriteLine("Tool" & ControlChars.Tab & m_jobParams.GetParam("toolname"))
-                .WriteLine("StepTool" & ControlChars.Tab & m_jobParams.GetParam("StepTool"))
-                .WriteLine("Dataset" & ControlChars.Tab & m_jobParams.GetParam("JobParameters", "DatasetNum"))
-                .WriteLine("XferFolder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
-                .WriteLine("ParamFileName" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
-                .WriteLine("SettingsFileName" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))
-                .WriteLine("LegacyOrganismDBName" & ControlChars.Tab & m_jobParams.GetParam("LegacyFastaFileName"))
-                .WriteLine("ProteinCollectionList" & ControlChars.Tab & m_jobParams.GetParam("ProteinCollectionList"))
-                .WriteLine("ProteinOptionsList" & ControlChars.Tab & m_jobParams.GetParam("ProteinOptions"))
-                .WriteLine("FastaFileName" & ControlChars.Tab & m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-            End If
-        End With
 
-        swArchivedFolderInfoFile.Close()
+            swInfoFile.WriteLine("Date" & ControlChars.Tab & Date.Now().ToString)
+            If Not m_jobParams Is Nothing Then
+                swInfoFile.WriteLine("Tool" & ControlChars.Tab & m_jobParams.GetParam("toolname"))
+                swInfoFile.WriteLine("StepTool" & ControlChars.Tab & m_jobParams.GetParam("StepTool"))
+                swInfoFile.WriteLine("Dataset" & ControlChars.Tab & m_jobParams.GetParam("JobParameters", "DatasetNum"))
+                swInfoFile.WriteLine("XferFolder" & ControlChars.Tab & m_jobParams.GetParam("transferFolderPath"))
+                swInfoFile.WriteLine("ParamFileName" & ControlChars.Tab & m_jobParams.GetParam("parmFileName"))
+                swInfoFile.WriteLine("SettingsFileName" & ControlChars.Tab & m_jobParams.GetParam("settingsFileName"))
+                swInfoFile.WriteLine("LegacyOrganismDBName" & ControlChars.Tab & m_jobParams.GetParam("LegacyFastaFileName"))
+                swInfoFile.WriteLine("ProteinCollectionList" & ControlChars.Tab & m_jobParams.GetParam("ProteinCollectionList"))
+                swInfoFile.WriteLine("ProteinOptionsList" & ControlChars.Tab & m_jobParams.GetParam("ProteinOptions"))
+                swInfoFile.WriteLine("FastaFileName" & ControlChars.Tab & m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            End If
+        End Using
 
     End Sub
 
