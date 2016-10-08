@@ -12,7 +12,7 @@ Public Class clsCodeTest
     'Imports Protein_Exporter.ExportProteinCollectionsIFC
 
     Private Const WORKING_DIRECTORY = "E:\DMS_WorkDir"
-    
+
     Private WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
     Private m_GenerationStarted As Boolean = False
     Private m_GenerationComplete As Boolean = False
@@ -118,7 +118,7 @@ Public Class clsCodeTest
                     ElseIf fileVersion.StartsWith("v1.") OrElse fileVersion.StartsWith("v2.") Then
                         frameworkVersion = String.Empty
                     End If
-                    
+
                     If dctResults.ContainsKey(fiFile.FullName) Then
                         Console.WriteLine("Skipping duplicate file: " & fiFile.Name & ", " & fileVersion & " and " & frameworkVersion)
                     Else
@@ -194,7 +194,7 @@ Public Class clsCodeTest
                         Else
                             Console.WriteLine(result.Value.Substring(startIndex, 80))
                         End If
-                        
+
                         startIndex += 80
                     End While
 
@@ -452,7 +452,7 @@ Public Class clsCodeTest
           "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
           " WHERE (JS.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JS.Tool = 'DTA_Refinery') AND (JS.State = 5)"
 
-        Const strConnectionString As String = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
+        Const strConnectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;"
         Const RetryCount As Short = 2
 
         Dim Dt As DataTable = Nothing
@@ -470,7 +470,7 @@ Public Class clsCodeTest
         End If
 
         Dim strWorkDir As String = m_mgrParams.GetParam("workdir")
-        Dim blnPostResultsToDB As Boolean = True
+        Dim blnPostResultsToDB = True
 
         ' Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
         'Dim oMassErrorExtractor = New clsDtaRefLogMassErrorExtractor(m_mgrParams, strWorkDir, m_DebugLevel, blnPostResultsToDB)
@@ -680,13 +680,13 @@ Public Class clsCodeTest
 
             Dim oJobParams As IJobParams = InitializeManagerParams()
 
-            Dim blnMsgfPlus As Boolean = True
-            Dim strJobNum As String = "12345"
-            Dim intDebugLevel As Short = CShort(m_mgrParams.GetParam("debuglevel", 1))
+            Dim blnMsgfPlus = True
+            Dim strJobNum = "12345"
+            Dim intDebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
 
-            Dim JavaProgLoc As String = "C:\Program Files\Java\jre8\bin\java.exe"
-            Dim MSGFDbProgLoc As String = "C:\DMS_Programs\MSGFDB\MSGFPlus.jar"
-            Dim FastaFileIsDecoy As Boolean = False
+            Dim JavaProgLoc = "C:\Program Files\Java\jre8\bin\java.exe"
+            Dim MSGFDbProgLoc = "C:\DMS_Programs\MSGFDB\MSGFPlus.jar"
+            Dim FastaFileIsDecoy = False
             Dim FastaFilePath As String = String.Empty
 
             oJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName)
@@ -774,7 +774,7 @@ Public Class clsCodeTest
 
     Public Sub TestDeliverResults()
 
-        Dim OutFileName As String = "MyTestDataset_out.txt"
+        Dim OutFileName = "MyTestDataset_out.txt"
 
         Dim objJobParams As clsAnalysisJob = Nothing
         Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
@@ -852,10 +852,10 @@ Public Class clsCodeTest
         Const sqlStr = "Select top 50 * from t_log_entries"
 
 
-        Const connectionString As String = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;"
-        Const callingFunction As String = "TestRunQuery"
+        Const connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;"
+        Const callingFunction = "TestRunQuery"
         Const retryCount As Short = 2
-        Const timeoutSeconds As Integer = 30
+        Const timeoutSeconds = 30
         Dim dtResults As DataTable = Nothing
 
         clsGlobal.GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
@@ -880,7 +880,7 @@ Public Class clsCodeTest
         Const connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;"
         Const callingFunction = "TestRunSP"
         Const retryCount As Short = 2
-        Const timeoutSeconds As Integer = 30
+        Const timeoutSeconds = 30
         Dim dtResults As DataTable = Nothing
 
         clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
@@ -914,7 +914,7 @@ Public Class clsCodeTest
 
         Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
-        Const sourceFilePath As String = "F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf"
+        Const sourceFilePath = "F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf"
 
         objToolRunner.GZipFile(sourceFilePath, "F:\Temp\ZipTest\QExact01\GZipTarget", False)
 
@@ -947,7 +947,7 @@ Public Class clsCodeTest
 
         Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
-        Const sourceFilePath As String = "F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf"
+        Const sourceFilePath = "F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf"
 
         objToolRunner.ZipFile(sourceFilePath, False)
 
@@ -1042,8 +1042,8 @@ Public Class clsCodeTest
 
 
     Public Function TestFileSplitThenCombine() As Boolean
-        Const SYN_FILE_MAX_SIZE_MB As Integer = 200
-        Const PEPPROPHET_RESULT_FILE_SUFFIX As String = "_PepProphet.txt"
+        Const SYN_FILE_MAX_SIZE_MB = 200
+        Const PEPPROPHET_RESULT_FILE_SUFFIX = "_PepProphet.txt"
 
         Dim SynFile As String
         Dim strSynFileNameAndSize As String
@@ -1368,7 +1368,7 @@ Public Class clsCodeTest
         Dim fiFileInfo As FileInfo
         Dim strBaseName As String
 
-        Dim intLinesRead As Integer = 0
+        Dim intLinesRead = 0
         Dim intTargetFileIndex As Integer
 
         Dim strLineIn As String = String.Empty
@@ -1381,7 +1381,7 @@ Public Class clsCodeTest
         Dim intIndex As Integer
 
         Dim blnProcessLine As Boolean
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
 
         Try
             fiFileInfo = New FileInfo(strSrcFilePath)
@@ -1505,10 +1505,10 @@ Public Class clsCodeTest
     End Function
 
     Public Sub TestResultsTransfer()
-        Dim strTransferFolderPath As String = "\\proto-5\DMS3_XFER"
-        Dim strDatasetFolderPath As String = "\\proto-5\LTQ_Orb1_DMS2"
-        Dim strDatasetName As String = "Trmt_hg_03_orbiB_25Jan08_Draco_07-12-24"
-        Dim strInputFolderName As String = "DTA_Gen_1_12_142914"
+        Dim strTransferFolderPath = "\\proto-5\DMS3_XFER"
+        Dim strDatasetFolderPath = "\\proto-5\LTQ_Orb1_DMS2"
+        Dim strDatasetName = "Trmt_hg_03_orbiB_25Jan08_Draco_07-12-24"
+        Dim strInputFolderName = "DTA_Gen_1_12_142914"
 
         PerformResultsXfer(strTransferFolderPath, strDatasetFolderPath, strDatasetName, strInputFolderName)
     End Sub
@@ -1640,10 +1640,10 @@ Public Class clsCodeTest
         Dim strTest As String
 
 
-        Const HPCMaxHours As Double = 2.75
-        Const PPN_VALUE As Integer = 8
+        Const HPCMaxHours = 2.75
+        Const PPN_VALUE = 8
 
-        Dim HPCNodeCount As String = "3"
+        Dim HPCNodeCount = "3"
 
         Dim WallTimeMax As Date = CDate("1/1/2010").AddHours(CDbl(HPCMaxHours))
         Dim WallTimeResult As String
@@ -1665,14 +1665,14 @@ Public Class clsCodeTest
 
 
 
-        Dim NewIDMatchText As String = ""
-        Dim NewIDReplaceText As String = ""
+        Dim NewIDMatchText = ""
+        Dim NewIDReplaceText = ""
 
-        Dim NewLabelMatchText As String = ""
-        Dim NewLabelReplaceText As String = ""
+        Dim NewLabelMatchText = ""
+        Dim NewLabelReplaceText = ""
 
-        Dim OriginalGroupID As Integer = 7432
-        Dim CurrentMaxNum As Integer = 10000
+        Dim OriginalGroupID = 7432
+        Dim CurrentMaxNum = 10000
 
         NewIDMatchText = "id=""" & OriginalGroupID.ToString
         NewIDReplaceText = "id=""" & (OriginalGroupID + CurrentMaxNum).ToString
@@ -1763,7 +1763,7 @@ Public Class clsCodeTest
         ' Searching the target database
         ' Generating C:\DMS_Temp_Org\ID_003962_71E1A1D4.icplcp... Done.
 
-        Const REGEX_MSPathFinder_PROGRESS As String = "(\d+)% complete"
+        Const REGEX_MSPathFinder_PROGRESS = "(\d+)% complete"
         Static reCheckProgress As New Regex(REGEX_MSPathFinder_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
         Static dtLastProgressWriteTime As DateTime = Date.UtcNow
 
@@ -1784,8 +1784,8 @@ Public Class clsCodeTest
 
             ' Value between 0 and 100
             Dim progressComplete As Single = 0
-            Dim targetProteinsSearched As Integer = 0
-            Dim decoyProteinsSearched As Integer = 0
+            Dim targetProteinsSearched = 0
+            Dim decoyProteinsSearched = 0
 
             Dim searchingDecoyDB = False
 
@@ -1904,33 +1904,30 @@ Public Class clsCodeTest
 
     Sub TestProgRunnerIDPicker()
 
-        Dim m_WorkDir As String = "E:\dms_workdir"
-        Dim strConsoleOutputFileName As String = ""
-        Dim blnWriteConsoleOutputFileRealtime As Boolean = False
+        Dim m_WorkDir = "E:\dms_workdir"
+        Dim strConsoleOutputFileName = ""
+        Dim blnWriteConsoleOutputFileRealtime = False
         Dim blnSuccess As Boolean
 
-        Dim strExePath As String = "C:\DMS_Programs\IDPicker\idpQonvert.exe"
-        Dim CmdStr As String = "-MaxFDR 0.1 -ProteinDatabase C:\DMS_Temp_Org\ID_003521_89E56851.fasta -SearchScoreWeights ""msgfspecprob -1"" -OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ -dump E:\DMS_WorkDir\Malaria844_msms_29Dec11_Draco_11-10-04.pepXML"
-        Dim strProgramDescription As String = "IDPQonvert"
+        Dim strExePath = "C:\DMS_Programs\IDPicker\idpQonvert.exe"
+        Dim cmdStr = "-MaxFDR 0.1 -ProteinDatabase C:\DMS_Temp_Org\ID_003521_89E56851.fasta -SearchScoreWeights ""msgfspecprob -1"" -OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ -dump E:\DMS_WorkDir\Malaria844_msms_29Dec11_Draco_11-10-04.pepXML"
+        Dim strProgramDescription = "IDPQonvert"
 
-        Dim CmdRunner As clsRunDosProgram
-
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-        With CmdRunner
-            .CreateNoWindow = False
+        Dim cmdRunner = New clsRunDosProgram(m_WorkDir) With {
+            .CreateNoWindow = False,
             .EchoOutputToConsole = False
-            If String.IsNullOrEmpty(strConsoleOutputFileName) OrElse Not blnWriteConsoleOutputFileRealtime Then
-                .CacheStandardOutput = False
-                .WriteConsoleOutputToFile = False
-            Else
-                .CacheStandardOutput = False
-                .WriteConsoleOutputToFile = True
-                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, strConsoleOutputFileName)
-            End If
-        End With
+        }
 
-        blnSuccess = CmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, True)
+        If String.IsNullOrEmpty(strConsoleOutputFileName) OrElse Not blnWriteConsoleOutputFileRealtime Then
+            cmdRunner.CacheStandardOutput = False
+            cmdRunner.WriteConsoleOutputToFile = False
+        Else
+            cmdRunner.CacheStandardOutput = False
+            cmdRunner.WriteConsoleOutputToFile = True
+            cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, strConsoleOutputFileName)
+        End If
+
+        blnSuccess = cmdRunner.RunProgram(strExePath, cmdStr, strProgramDescription, True)
 
         Console.WriteLine(blnSuccess)
 
@@ -2143,7 +2140,7 @@ Public Class clsCodeTest
 
     Public Sub TestGetFileContents()
 
-        Dim strFilePath As String = "TestInputFile.txt"
+        Dim strFilePath = "TestInputFile.txt"
         Dim strContents As String
 
         strContents = GetFileContents(strFilePath)
@@ -2196,7 +2193,7 @@ Public Class clsCodeTest
 
     Public Sub RemoveSparseSpectra()
 
-        Dim oCDTAUtilities As clsCDTAUtilities = New clsCDTAUtilities
+        Dim oCDTAUtilities = New clsCDTAUtilities
 
         oCDTAUtilities.RemoveSparseSpectra("e:\dms_workdir", "ALZ_VP2P101_C_SCX_02_7Dec08_Draco_08-10-29_dta.txt")
 
@@ -2214,11 +2211,11 @@ Public Class clsCodeTest
     End Sub
 
     Public Function ValidateSequestNodeCount(strLogFilePath As String, blnLogToConsole As Boolean) As Boolean
-        Const ERROR_CODE_A As Integer = 2
-        Const ERROR_CODE_B As Integer = 4
-        Const ERROR_CODE_C As Integer = 8
-        Const ERROR_CODE_D As Integer = 16
-        Const ERROR_CODE_E As Integer = 32
+        Const ERROR_CODE_A = 2
+        Const ERROR_CODE_B = 4
+        Const ERROR_CODE_C = 8
+        Const ERROR_CODE_D = 16
+        Const ERROR_CODE_E = 32
 
         Dim reStartingTask As System.Text.RegularExpressions.Regex
         Dim reWaitingForReadyMsg As System.Text.RegularExpressions.Regex
@@ -2300,7 +2297,7 @@ Public Class clsCodeTest
             ' Initialize the dictionary that will track processing rates
             dctHostProcessingRate = New Generic.Dictionary(Of String, Single)
 
-            Using srLogFile As StreamReader = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srLogFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 ' Read each line from the input file
                 Do While Not srLogFile.EndOfStream
