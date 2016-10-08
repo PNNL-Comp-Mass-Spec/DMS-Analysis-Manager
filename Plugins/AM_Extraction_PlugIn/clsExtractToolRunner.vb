@@ -470,21 +470,12 @@ Public Class clsExtractToolRunner
                 Return String.Empty
             End If
 
-            ' JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
-            Dim JavaProgLoc = GetJavaProgLoc()
-            If String.IsNullOrEmpty(JavaProgLoc) Then
-                Return String.Empty
-            End If
+            ' Determine the path to the MzidToTsvConverter
+            Dim mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverter", "MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe")
 
-            ' Determine the path to MSGF+
-            ' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
-            ' The reason?  The AM_MSGFDB_PlugIn uses "MSGFDB" when creating the ToolVersionInfo file
-            ' We need to keep the name the same since the PeptideHitResultsProcessor (and possibly other software) expects the file to be named Tool_Version_Info_MSGFDB.txt
-            Dim MSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", clsMSGFDBUtils.MSGFPLUS_JAR_NAME)
-
-            If String.IsNullOrEmpty(MSGFDbProgLoc) Then
+            If String.IsNullOrEmpty(mzidToTsvConverterProgLoc) Then
                 If String.IsNullOrEmpty(m_message) Then
-                    LogError("Parameter 'MSGFDbProgLoc' not defined for this manager")
+                    LogError("Parameter 'MzidToTsvConverter' not defined for this manager")
                 End If
                 Return String.Empty
             End If
@@ -493,7 +484,7 @@ Public Class clsExtractToolRunner
             mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
             mMSGFDBUtilsError = False
 
-            Dim strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(JavaProgLoc, MSGFDbProgLoc, m_Dataset, strMZIDFileName)
+            Dim strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName)
 
             If mMSGFDBUtilsError Then
                 If String.IsNullOrWhiteSpace(m_message) Then

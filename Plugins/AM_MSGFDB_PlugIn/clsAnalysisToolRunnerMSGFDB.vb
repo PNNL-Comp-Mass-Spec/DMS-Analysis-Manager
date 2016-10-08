@@ -843,10 +843,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' Convert the .mzid file created by MSGF+ to a .tsv file
     ''' </summary>
     ''' <param name="strMZIDFileName"></param>
-    ''' <param name="javaProgLoc"></param>
     ''' <returns>The name of the .tsv file if successful; empty string if an error</returns>
     ''' <remarks></remarks>
-    Private Function ConvertMZIDToTSV(strMZIDFileName As String, javaProgLoc As String, udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As String
+    Private Function ConvertMZIDToTSV(strMZIDFileName As String, udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As String
 
         Dim blnConversionRequired = True
 
@@ -864,7 +863,18 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End If
 
         If blnConversionRequired Then
-            strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(javaProgLoc, mMSGFDbProgLoc, m_Dataset, strMZIDFileName)
+
+            ' Determine the path to the MzidToTsvConverter
+            Dim mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverter", "MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe")
+
+            If String.IsNullOrEmpty(mzidToTsvConverterProgLoc) Then
+                If String.IsNullOrEmpty(m_message) Then
+                    LogError("Parameter 'MzidToTsvConverter' not defined for this manager")
+                End If
+                Return String.Empty
+            End If
+
+            strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName)
 
             If String.IsNullOrEmpty(strTSVFilePath) Then
                 If String.IsNullOrEmpty(m_message) Then
@@ -1143,7 +1153,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
                 currentTask = "Calling ConvertMZIDToTSV"
                 UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
-                msgfPlusResultsFileName = ConvertMZIDToTSV(resultsFileName, javaProgLoc, udtHPCOptions)
+                msgfPlusResultsFileName = ConvertMZIDToTSV(resultsFileName, udtHPCOptions)
 
                 If String.IsNullOrEmpty(msgfPlusResultsFileName) Then
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED

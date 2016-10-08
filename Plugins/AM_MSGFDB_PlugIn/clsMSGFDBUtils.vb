@@ -338,7 +338,89 @@ Public Class clsMSGFDBUtils
     End Sub
 
     ''' <summary>
-    ''' Convert a .mzid file to a tab-delimited text file (.tsv)
+    ''' Convert a .mzid file to a tab-delimited text file (.tsv) using MzidToTsvConverter.exe
+    ''' </summary>
+    ''' <param name="mzidToTsvConverterProgLoc">Full path to MzidToTsvConverter.exe</param>
+    ''' <param name="datasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
+    ''' <param name="mzidFileName">.mzid file name (assumed to be in the work directory)</param>
+    ''' <returns>TSV file path, or an empty string if an error</returns>
+    ''' <remarks></remarks>
+    Public Function ConvertMZIDToTSV(
+      mzidToTsvConverterProgLoc As String,
+      datasetName As String,
+      mzidFileName As String) As String
+
+        Try
+            ' Note that this file needs to be _msgfdb.tsv, not _msgfplus.tsv
+            ' The reason is that we want the PeptideToProtein Map file to be named Dataset_msgfdb_PepToProtMap.txt for compatibility with PHRPReader
+            Dim tsvFileName = datasetName & MSGFDB_TSV_SUFFIX
+            Dim strTSVFilePath = Path.Combine(m_WorkDir, tsvFileName)
+
+            ' Examine the size of the .mzid file
+            Dim fiMzidFile = New FileInfo(Path.Combine(m_WorkDir, mzidFileName))
+            If Not fiMzidFile.Exists Then
+                ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV (file not found)", "Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
+                Return String.Empty
+            End If
+
+            ' Make sure the mzid file ends with XML tag </MzIdentML>
+            Dim lastLine = String.Empty
+            Using reader = New StreamReader(New FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine()
+                    If Not String.IsNullOrWhiteSpace(dataLine) Then
+                        lastLine = dataLine
+                    End If
+                End While
+            End Using
+
+            If Not String.Equals(lastLine.Trim(), "</MzIdentML>", StringComparison.InvariantCulture) Then
+                ReportError("The .mzid file created by MSGF+ does not end with XML tag MzIdentML")
+                Return String.Empty
+            End If
+
+            ' Set up and execute a program runner to run MzidToTsvConverter.exe
+            Dim cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, mzidToTsvConverterProgLoc)
+
+            If m_DebugLevel >= 1 Then
+                ReportMessage(mzidToTsvConverterProgLoc & " " & cmdStr)
+            End If
+
+            Dim objCreateTSV = New clsRunDosProgram(m_WorkDir) With {
+                .CreateNoWindow = True,
+                .CacheStandardOutput = True,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = True,
+                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
+            }
+
+            ' This process is typically quite fast, so we do not track CPU usage
+            Dim blnSuccess = objCreateTSV.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", True)
+
+            If Not blnSuccess Then
+                ReportError("MzidToTsvConverter.exe returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
+                Return String.Empty
+            Else
+                Try
+                    ' Delete the console output file
+                    File.Delete(objCreateTSV.ConsoleOutputFilePath)
+                Catch ex As Exception
+                    ' Ignore errors here
+                End Try
+
+            End If
+
+            Return strTSVFilePath
+        Catch ex As Exception
+            ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV", "Error in clsMSGFDBUtils->ConvertMZIDToTSV: " & ex.Message)
+            Return String.Empty
+        End Try
+
+
+    End Function
+
+    ''' <summary>
+    ''' Convert a .mzid file to a tab-delimited text file (.tsv) using MSGFDB.jar
     ''' </summary>
     ''' <param name="javaProgLoc">Full path to Java</param>
     ''' <param name="msgfDbProgLoc">Folder with MSGFDB.jar</param>
@@ -346,6 +428,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="strMZIDFileName">.mzid file name (assumed to be in the work directory)</param>
     ''' <returns>TSV file path, or an empty string if an error</returns>
     ''' <remarks></remarks>
+    <Obsolete("Use the version of ConvertMzidToTsv that simply accepts a dataset name and .mzid file path and uses MzidToTsvConverter.exe")>
     Public Function ConvertMZIDToTSV(
       javaProgLoc As String,
       msgfDbProgLoc As String,
@@ -363,7 +446,7 @@ Public Class clsMSGFDBUtils
             ' Examine the size of the .mzid file
             Dim fiMzidFile = New FileInfo(Path.Combine(m_WorkDir, strMZIDFileName))
             If Not fiMzidFile.Exists Then
-                ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV (file not found)", "Error in MSGFDbPlugin->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
+                ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV (file not found)", "Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
                 Return String.Empty
             End If
 
@@ -410,16 +493,13 @@ Public Class clsMSGFDBUtils
                 ReportMessage(javaProgLoc & " " & cmdStr)
             End If
 
-            Dim objCreateTSV = New clsRunDosProgram(m_WorkDir)
-
-            With objCreateTSV
-                .CreateNoWindow = True
-                .CacheStandardOutput = True
-                .EchoOutputToConsole = True
-
-                .WriteConsoleOutputToFile = True
+            Dim objCreateTSV = New clsRunDosProgram(m_WorkDir) With {
+                .CreateNoWindow = True,
+                .CacheStandardOutput = True,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
-            End With
+            }
 
             ' This process is typically quite fast, so we do not track CPU usage
             Dim blnSuccess = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", True)
@@ -438,7 +518,7 @@ Public Class clsMSGFDBUtils
             End If
 
         Catch ex As Exception
-            ReportError("Error in MSGFDbPlugin->ConvertMZIDToTSV", "Error in MSGFDbPlugin->ConvertMZIDToTSV: " & ex.Message)
+            ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV", "Error in clsMSGFDBUtils->ConvertMZIDToTSV: " & ex.Message)
             Return String.Empty
         End Try
 
@@ -446,6 +526,31 @@ Public Class clsMSGFDBUtils
 
     End Function
 
+    ''' <summary>
+    ''' Construct the path for converting a .mzid file to .tsv using MzidToTsvConverter.exe
+    ''' </summary>
+    ''' <param name="mzidFileName"></param>
+    ''' <param name="tsvFileName"></param>
+    ''' <param name="workingDirectory"></param>
+    ''' <param name="mzidToTsvConverterProgLoc"></param>
+    ''' <returns></returns>
+    Public Shared Function GetMZIDtoTSVCommandLine(
+      mzidFileName As String,
+      tsvFileName As String,
+      workingDirectory As String,
+      mzidToTsvConverterProgLoc As String) As String
+
+        Dim cmdStr As String =
+            " -mzid:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) &
+            " -tsv:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) &
+            " -unroll" &
+            " -showDecoy"
+
+        Return cmdStr
+
+    End Function
+
+    <Obsolete("Use GetMZIDtoTSVCommandLine for MzidToTsvConverter.exe")>
     Public Shared Function GetMZIDtoTSVCommandLine(
       mzidFileName As String,
       tsvFileName As String,
@@ -453,21 +558,21 @@ Public Class clsMSGFDBUtils
       msgfDbProgLoc As String,
       javaMemorySizeMB As Integer) As String
 
-        Dim CmdStr As String
+        Dim cmdStr As String
 
         ' We're using "-XX:+UseConcMarkSweepGC" as directed at http://stackoverflow.com/questions/5839359/java-lang-outofmemoryerror-gc-overhead-limit-exceeded
         ' due to seeing error "java.lang.OutOfMemoryError: GC overhead limit exceeded" with a 353 MB .mzid file
 
-        CmdStr = " -Xmx" & javaMemorySizeMB & "M -XX:+UseConcMarkSweepGC -cp " & msgfDbProgLoc
-        CmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
+        cmdStr = " -Xmx" & javaMemorySizeMB & "M -XX:+UseConcMarkSweepGC -cp " & msgfDbProgLoc
+        cmdStr &= " edu.ucsd.msjava.ui.MzIDToTsv"
 
-        CmdStr &= " -i " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName))
-        CmdStr &= " -o " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName))
-        CmdStr &= " -showQValue 1"
-        CmdStr &= " -showDecoy 1"
-        CmdStr &= " -unroll 1"
+        cmdStr &= " -i " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName))
+        cmdStr &= " -o " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName))
+        cmdStr &= " -showQValue 1"
+        cmdStr &= " -showDecoy 1"
+        cmdStr &= " -unroll 1"
 
-        Return CmdStr
+        Return cmdStr
 
     End Function
 
@@ -574,31 +679,28 @@ Public Class clsMSGFDBUtils
 
             blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
 
-            mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
-
-            With mPeptideToProteinMapper
-                .DeleteTempFiles = True
-                .IgnoreILDifferences = False
-                .InspectParameterFilePath = String.Empty
-
-                If m_DebugLevel > 2 Then
-                    .LogMessagesToFile = True
-                    .LogFolderPath = m_WorkDir
-                Else
-                    .LogMessagesToFile = False
-                End If
-
-                .MatchPeptidePrefixAndSuffixToProtein = False
-                .OutputProteinSequence = False
-                .PeptideInputFileFormat = ePeptideInputFileFormat
-                .PeptideFileSkipFirstLine = False
-                .ProteinDataRemoveSymbolCharacters = True
-                .ProteinInputFilePath = strFastaFilePath
-                .SaveProteinToPeptideMappingFile = True
-                .SearchAllProteinsForPeptideSequence = True
-                .SearchAllProteinsSkipCoverageComputationSteps = True
+            mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine() With {
+                .DeleteTempFiles = True,
+                .IgnoreILDifferences = False,
+                .InspectParameterFilePath = String.Empty,
+                .MatchPeptidePrefixAndSuffixToProtein = False,
+                .OutputProteinSequence = False,
+                .PeptideInputFileFormat = ePeptideInputFileFormat,
+                .PeptideFileSkipFirstLine = False,
+                .ProteinDataRemoveSymbolCharacters = True,
+                .ProteinInputFilePath = strFastaFilePath,
+                .SaveProteinToPeptideMappingFile = True,
+                .SearchAllProteinsForPeptideSequence = True,
+                .SearchAllProteinsSkipCoverageComputationSteps = True,
                 .ShowMessages = False
-            End With
+            }
+
+            If m_DebugLevel > 2 Then
+                mPeptideToProteinMapper.LogMessagesToFile = True
+                mPeptideToProteinMapper.LogFolderPath = m_WorkDir
+            Else
+                mPeptideToProteinMapper.LogMessagesToFile = False
+            End If
 
             ' Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
             blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
@@ -813,11 +915,10 @@ Public Class clsMSGFDBUtils
                 ReportMessage("Creating decoy fasta file at " & strDecoyFastaFilePath)
             End If
 
-            objFastaFileReader = New ProteinFileReader.FastaFileReader
-            With objFastaFileReader
-                .ProteinLineStartChar = PROTEIN_LINE_START_CHAR
+            objFastaFileReader = New ProteinFileReader.FastaFileReader() With {
+                .ProteinLineStartChar = PROTEIN_LINE_START_CHAR,
                 .ProteinLineAccessionEndChar = PROTEIN_LINE_ACCESSION_END_CHAR
-            End With
+            }
 
             If Not objFastaFileReader.OpenFile(strInputFilePath) Then
                 ReportError("Error reading fasta file with ProteinFileReader to create decoy file")
