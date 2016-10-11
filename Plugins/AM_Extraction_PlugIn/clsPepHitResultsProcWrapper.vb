@@ -146,6 +146,7 @@ Public Class clsPepHitResultsProcWrapper
             End If
 
             If Not String.IsNullOrEmpty(FastaFilePath) Then
+                ' Note that FastaFilePath will likely be empty if job parameter SkipProteinMods is true
                 CmdStr &= " /F:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(FastaFilePath)
             End If
 

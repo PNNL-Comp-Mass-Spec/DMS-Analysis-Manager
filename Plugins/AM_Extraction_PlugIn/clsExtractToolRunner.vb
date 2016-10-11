@@ -83,6 +83,7 @@ Public Class clsExtractToolRunner
             Dim orgDbDir = m_mgrParams.GetParam("orgdbdir")
 
             ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+            ' However, if job parameter SkipProteinMods is True, the Fasta file will not have been retrieved
             Dim fastaFileName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
             If String.IsNullOrEmpty(fastaFileName) Then
                 mGeneratedFastaFilePath = String.Empty
