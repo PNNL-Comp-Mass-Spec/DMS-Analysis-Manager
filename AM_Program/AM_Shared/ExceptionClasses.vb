@@ -9,31 +9,31 @@
 Option Strict On
 
 Public Class AMFileNotFoundException
-	Inherits ApplicationException
+    Inherits ApplicationException
 
-	'*********************************************************************************************************
-	'Specialized handler for "file not found" exception
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Specialized handler for "file not found" exception
+    '*********************************************************************************************************
 
 #Region "Module variables"
-	Private m_FileName As String
+    Private m_FileName As String
 #End Region
 
 #Region "Properties"
-	Public ReadOnly Property FileName() As String
-		Get
-			Return m_FileName
-		End Get
-	End Property
+    Public ReadOnly Property FileName() As String
+        Get
+            Return m_FileName
+        End Get
+    End Property
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <param name="FileName">Name of file being processed when exception occurred</param>
-	''' <param name="Message">Message to be returned in exception</param>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="FileName">Name of file being processed when exception occurred</param>
+    ''' <param name="Message">Message to be returned in exception</param>
+    ''' <remarks></remarks>
     Public Sub New(FileName As String, Message As String)
 
         MyBase.New(Message)

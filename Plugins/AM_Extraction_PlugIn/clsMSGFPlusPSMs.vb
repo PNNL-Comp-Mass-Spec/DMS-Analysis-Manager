@@ -1,49 +1,49 @@
 ﻿Public Class clsMSGFPlusPSMs
 
-	Public Structure udtPSMType
-		Public Peptide As String
-		Public SpecEValue As Double
-		Public DataLine As String
-	End Structure
+    Public Structure udtPSMType
+        Public Peptide As String
+        Public SpecEValue As Double
+        Public DataLine As String
+    End Structure
 
-	' Keys are the protein and peptide (separated by an undercore)
-	' Values are the PSM details, including the original data line from the .TSV file
-	Private mPSMs As Dictionary(Of String, udtPSMType)
+    ' Keys are the protein and peptide (separated by an undercore)
+    ' Values are the PSM details, including the original data line from the .TSV file
+    Private mPSMs As Dictionary(Of String, udtPSMType)
 
-	' List of SpecEValues associated with this scan/charge
-	Private ReadOnly mSpecEValues As SortedSet(Of Double)
+    ' List of SpecEValues associated with this scan/charge
+    Private ReadOnly mSpecEValues As SortedSet(Of Double)
 
-	Private mBestSpecEValue As Double
-	Private mWorstSpecEValue As Double
+    Private mBestSpecEValue As Double
+    Private mWorstSpecEValue As Double
 
-	Private ReadOnly mCharge As Integer
-	Private ReadOnly mScan As Integer
+    Private ReadOnly mCharge As Integer
+    Private ReadOnly mScan As Integer
 
-	Private ReadOnly mMaximumPSMsToKeep As Integer
+    Private ReadOnly mMaximumPSMsToKeep As Integer
 
-	Public ReadOnly Property Charge() As Integer
-		Get
-			Return mCharge
-		End Get
-	End Property
+    Public ReadOnly Property Charge() As Integer
+        Get
+            Return mCharge
+        End Get
+    End Property
 
-	Public ReadOnly Property MaximumPSMsToKeep() As Integer
-		Get
-			Return mMaximumPSMsToKeep
-		End Get
-	End Property
+    Public ReadOnly Property MaximumPSMsToKeep() As Integer
+        Get
+            Return mMaximumPSMsToKeep
+        End Get
+    End Property
 
-	Public ReadOnly Property PSMs() As List(Of udtPSMType)
-		Get
-			Return mPSMs.Values.ToList()
-		End Get
-	End Property
+    Public ReadOnly Property PSMs() As List(Of udtPSMType)
+        Get
+            Return mPSMs.Values.ToList()
+        End Get
+    End Property
 
-	Public ReadOnly Property Scan() As Integer
-		Get
-			Return mScan
-		End Get
-	End Property
+    Public ReadOnly Property Scan() As Integer
+        Get
+            Return mScan
+        End Get
+    End Property
 
     Public Sub New(scanNumber As Integer, chargeState As Integer, maximumPSMsToRetain As Integer)
         mMaximumPSMsToKeep = maximumPSMsToRetain

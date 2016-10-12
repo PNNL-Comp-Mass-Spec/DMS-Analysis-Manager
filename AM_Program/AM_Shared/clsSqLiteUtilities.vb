@@ -8,19 +8,19 @@ Imports System.Data.SQLite
 
 Public Class clsSqLiteUtilities
 
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	Public Sub New()
-	End Sub
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    Public Sub New()
+    End Sub
 
-	''' <summary>
-	''' Clones a database, optionally skipping tables in list tablesToSkip
-	''' </summary>
-	''' <param name="sourceDBPath">Source database path</param>
-	''' <param name="targetDBPath">Target database path</param>
-	''' <returns>True if success, false if a problem</returns>
-	''' <remarks>If the target database already exists, then missing tables (and data) will be appended to the file</remarks>
+    ''' <summary>
+    ''' Clones a database, optionally skipping tables in list tablesToSkip
+    ''' </summary>
+    ''' <param name="sourceDBPath">Source database path</param>
+    ''' <param name="targetDBPath">Target database path</param>
+    ''' <returns>True if success, false if a problem</returns>
+    ''' <remarks>If the target database already exists, then missing tables (and data) will be appended to the file</remarks>
     Public Function CloneDB(sourceDBPath As String, targetDBPath As String) As Boolean
         Const appendToExistingDB = True
         Dim tablesToSkip = New List(Of String)()

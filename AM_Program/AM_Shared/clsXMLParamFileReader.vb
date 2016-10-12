@@ -1,32 +1,32 @@
 ﻿
 Public Class clsXMLParamFileReader
 
-	Protected mParamFilePath As String
-	Protected mSections As Dictionary(Of String, Dictionary(Of String, String))
+    Protected mParamFilePath As String
+    Protected mSections As Dictionary(Of String, Dictionary(Of String, String))
 
-	Public ReadOnly Property ParamFilePath As String
-		Get
-			Return mParamFilePath
-		End Get
-	End Property
+    Public ReadOnly Property ParamFilePath As String
+        Get
+            Return mParamFilePath
+        End Get
+    End Property
 
-	Public ReadOnly Property ParameterCount As Integer
-		Get
-			Dim intCount As Integer = 0
+    Public ReadOnly Property ParameterCount As Integer
+        Get
+            Dim intCount As Integer = 0
 
-			For Each section In mSections
-				intCount += section.Value.Count
-			Next
+            For Each section In mSections
+                intCount += section.Value.Count
+            Next
 
-			Return intCount
-		End Get
-	End Property
+            Return intCount
+        End Get
+    End Property
 
-	Public ReadOnly Property SectionCount As Integer
-		Get
-			Return mSections.Count
-		End Get
-	End Property
+    Public ReadOnly Property SectionCount As Integer
+        Get
+            Return mSections.Count
+        End Get
+    End Property
 
     Public Sub New(strParamFilePath As String)
         mParamFilePath = strParamFilePath

@@ -16,51 +16,51 @@ Public Interface IJobParams
 
 #Region "Enums"
 
-	''' <summary>
-	''' Job result codes
-	''' </summary>
-	''' <remarks></remarks>
-	Enum CloseOutType
-		CLOSEOUT_SUCCESS = 0
-		CLOSEOUT_FAILED = 1
-		CLOSEOUT_NO_DTA_FILES = 2
-		CLOSEOUT_NO_OUT_FILES = 3
-		CLOSEOUT_NO_ANN_FILES = 5
-		CLOSEOUT_NO_FAS_FILES = 6
-		CLOSEOUT_NO_PARAM_FILE = 7
-		CLOSEOUT_NO_SETTINGS_FILE = 8
-		CLOSEOUT_NO_MODDEFS_FILE = 9
-		CLOSEOUT_NO_MASSCORRTAG_FILE = 10
-		CLOSEOUT_NO_XT_FILES = 12
-		CLOSEOUT_NO_INSP_FILES = 13
-		CLOSEOUT_FILE_NOT_FOUND = 14
-		CLOSEOUT_ERROR_ZIPPING_FILE = 15
+    ''' <summary>
+    ''' Job result codes
+    ''' </summary>
+    ''' <remarks></remarks>
+    Enum CloseOutType
+        CLOSEOUT_SUCCESS = 0
+        CLOSEOUT_FAILED = 1
+        CLOSEOUT_NO_DTA_FILES = 2
+        CLOSEOUT_NO_OUT_FILES = 3
+        CLOSEOUT_NO_ANN_FILES = 5
+        CLOSEOUT_NO_FAS_FILES = 6
+        CLOSEOUT_NO_PARAM_FILE = 7
+        CLOSEOUT_NO_SETTINGS_FILE = 8
+        CLOSEOUT_NO_MODDEFS_FILE = 9
+        CLOSEOUT_NO_MASSCORRTAG_FILE = 10
+        CLOSEOUT_NO_XT_FILES = 12
+        CLOSEOUT_NO_INSP_FILES = 13
+        CLOSEOUT_FILE_NOT_FOUND = 14
+        CLOSEOUT_ERROR_ZIPPING_FILE = 15
         CLOSEOUT_FILE_NOT_IN_CACHE = 16
         CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY = 17
-		CLOSEOUT_NO_DATA = 20
-	End Enum
+        CLOSEOUT_NO_DATA = 20
+    End Enum
 #End Region
 
 #Region "Properties"
 
-	ReadOnly Property DatasetInfoList As Dictionary(Of String, Integer)
-	ReadOnly Property ResultFilesToKeep As SortedSet(Of String)
-	ReadOnly Property ResultFilesToSkip As SortedSet(Of String)
-	ReadOnly Property ResultFileExtensionsToSkip As SortedSet(Of String)
-	ReadOnly Property ServerFilesToDelete As SortedSet(Of String)
+    ReadOnly Property DatasetInfoList As Dictionary(Of String, Integer)
+    ReadOnly Property ResultFilesToKeep As SortedSet(Of String)
+    ReadOnly Property ResultFilesToSkip As SortedSet(Of String)
+    ReadOnly Property ResultFileExtensionsToSkip As SortedSet(Of String)
+    ReadOnly Property ServerFilesToDelete As SortedSet(Of String)
 
 #End Region
 
 #Region "Methods"
 
-	''' <summary>
-	''' Adds (or updates) a job parameter
-	''' </summary>
-	''' <param name="ParamSection">Section name for parameter</param>
-	''' <param name="ParamName">Name of parameter</param>
-	''' <param name="ParamValue">Value for parameter</param>
-	''' <returns>True if success, False if an error</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Adds (or updates) a job parameter
+    ''' </summary>
+    ''' <param name="ParamSection">Section name for parameter</param>
+    ''' <param name="ParamName">Name of parameter</param>
+    ''' <param name="ParamValue">Value for parameter</param>
+    ''' <returns>True if success, False if an error</returns>
+    ''' <remarks></remarks>
     Function AddAdditionalParameter(ParamSection As String, ParamName As String, ParamValue As String) As Boolean
 
     ''' <summary>
@@ -73,102 +73,102 @@ Public Interface IJobParams
     ''' <remarks></remarks>
     Function AddAdditionalParameter(ParamSection As String, ParamName As String, ParamValue As Boolean) As Boolean
 
-	''' <summary>
-	''' Add new dataset name and ID to DatasetInfoList
-	''' </summary>
-	''' <param name="DatasetName"></param>
-	''' <param name="DatasetID"></param>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Add new dataset name and ID to DatasetInfoList
+    ''' </summary>
+    ''' <param name="DatasetName"></param>
+    ''' <param name="DatasetID"></param>
+    ''' <remarks></remarks>
     Sub AddDatasetInfo(DatasetName As String, DatasetID As Integer)
 
-	''' <summary>
-	''' Add a filename to definitely move to the results folder
-	''' </summary>
-	''' <param name="FileName"></param>
+    ''' <summary>
+    ''' Add a filename to definitely move to the results folder
+    ''' </summary>
+    ''' <param name="FileName"></param>
     ''' <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToKeep</remarks>
     Sub AddResultFileToKeep(FileName As String)
 
-	''' <summary>
-	''' Add a file to be deleted from the storage server (requires full file path)
-	''' </summary>
-	''' <param name="FilePath">Full path to the file</param>
+    ''' <summary>
+    ''' Add a file to be deleted from the storage server (requires full file path)
+    ''' </summary>
+    ''' <param name="FilePath">Full path to the file</param>
     ''' <remarks>To delete the files, call clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
     Sub AddServerFileToDelete(FilePath As String)
 
-	''' <summary>
-	''' Add a filename to not move to the results folder
-	''' </summary>
-	''' <param name="FileName"></param>
+    ''' <summary>
+    ''' Add a filename to not move to the results folder
+    ''' </summary>
+    ''' <param name="FileName"></param>
     ''' <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
     Sub AddResultFileToSkip(FileName As String)
 
-	''' <summary>
-	''' Add a filename extension to not move to the results folder
-	''' </summary>
-	''' <param name="Extension"></param>
-	''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
+    ''' <summary>
+    ''' Add a filename extension to not move to the results folder
+    ''' </summary>
+    ''' <param name="Extension"></param>
+    ''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
     Sub AddResultFileExtensionToSkip(Extension As String)
 
-	''' <summary>
-	''' Contact the Pipeline database to close the analysis job
-	''' </summary>
-	''' <param name="CloseOut"></param>
-	''' <param name="CompMsg"></param>
-	''' <remarks>Implemented in clsAnalysisJob</remarks>
+    ''' <summary>
+    ''' Contact the Pipeline database to close the analysis job
+    ''' </summary>
+    ''' <param name="CloseOut"></param>
+    ''' <param name="CompMsg"></param>
+    ''' <remarks>Implemented in clsAnalysisJob</remarks>
     Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String)
 
-	''' <summary>
-	''' Contact the Pipeline database to close the analysis job
-	''' </summary>
-	''' <param name="CloseOut"></param>
-	''' <param name="CompMsg"></param>
-	''' <remarks>Implemented in clsAnalysisJob</remarks>
+    ''' <summary>
+    ''' Contact the Pipeline database to close the analysis job
+    ''' </summary>
+    ''' <param name="CloseOut"></param>
+    ''' <param name="CompMsg"></param>
+    ''' <remarks>Implemented in clsAnalysisJob</remarks>
     Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String, EvalCode As Integer, EvalMessage As String)
 
-	''' <summary>
-	''' Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
-	''' Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
-	''' </summary>
-	''' <returns>Tool name</returns>
-	''' <remarks></remarks>
-	Function GetCurrentJobToolDescription() As String
+    ''' <summary>
+    ''' Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
+    ''' Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
+    ''' </summary>
+    ''' <returns>Tool name</returns>
+    ''' <remarks></remarks>
+    Function GetCurrentJobToolDescription() As String
 
-	''' <summary>
-	''' Gets a job parameter with the given name (in any parameter section)
-	''' </summary>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; empty string if not found</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Gets a job parameter with the given name (in any parameter section)
+    ''' </summary>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; empty string if not found</returns>
+    ''' <remarks></remarks>
     Function GetParam(Name As String) As String
 
-	''' <summary>
-	''' Gets a job parameter with the given name, preferentially using the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section name for parameter</param>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; empty string if not found</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section name for parameter</param>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; empty string if not found</returns>
+    ''' <remarks></remarks>
     Function GetParam(Section As String, Name As String) As String
 
-	''' <summary>
-	''' Gets a job parameter with the given name (in any parameter section)
-	''' </summary>
-	''' <param name="Name">Key name for parameter</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-	''' <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
+    ''' <summary>
+    ''' Gets a job parameter with the given name (in any parameter section)
+    ''' </summary>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    ''' <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
     Function GetJobParameter(Name As String, ValueIfMissing As Boolean) As Boolean
     Function GetJobParameter(Name As String, ValueIfMissing As String) As String
     Function GetJobParameter(Name As String, ValueIfMissing As Integer) As Integer
     Function GetJobParameter(Name As String, ValueIfMissing As Short) As Short
     Function GetJobParameter(Name As String, ValueIfMissing As Single) As Single
 
-	''' <summary>
-	''' Gets a job parameter with the given name, preferentially using the specified parameter section
-	''' </summary>
-	''' <param name="Section">Section name for parameter</param>
-	''' <param name="Name">Key name for parameter</param>
-	''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-	''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+    ''' <summary>
+    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
+    ''' </summary>
+    ''' <param name="Section">Section name for parameter</param>
+    ''' <param name="Name">Key name for parameter</param>
+    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
     Function GetJobParameter(Section As String, Name As String, ValueIfMissing As Boolean) As Boolean
     Function GetJobParameter(Section As String, Name As String, ValueIfMissing As String) As String
     Function GetJobParameter(Section As String, Name As String, ValueIfMissing As Integer) As Integer

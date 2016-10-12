@@ -11,19 +11,19 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsAnalysisResourcesMSGFDB
-	Inherits clsAnalysisResources
-    
+    Inherits clsAnalysisResources
+
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-	''' <summary>
-	''' Retrieves files necessary for running MSGF+
-	''' </summary>
-	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Retrieves files necessary for running MSGF+
+    ''' </summary>
+    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim currentTask = "Initializing"
 

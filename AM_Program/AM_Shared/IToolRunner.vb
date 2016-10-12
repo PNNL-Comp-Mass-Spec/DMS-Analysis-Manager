@@ -10,30 +10,30 @@ Option Strict On
 
 Public Interface IToolRunner
 
-	'*********************************************************************************************************
-	'Insert general class description here
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Insert general class description here
+    '*********************************************************************************************************
 
 #Region "Properties"
-	ReadOnly Property EvalCode As Integer
-	ReadOnly Property EvalMessage As String
+    ReadOnly Property EvalCode As Integer
+    ReadOnly Property EvalMessage As String
 
-	ReadOnly Property ResFolderName() As String
+    ReadOnly Property ResFolderName() As String
 
-	' Explanation of what happened to last operation this class performed
-	' Used to report error messages
-	ReadOnly Property Message() As String
+    ' Explanation of what happened to last operation this class performed
+    ' Used to report error messages
+    ReadOnly Property Message() As String
 
-	ReadOnly Property NeedToAbortProcessing() As Boolean
+    ReadOnly Property NeedToAbortProcessing() As Boolean
 
-	' the state of completion of the job (as a percentage)
-	ReadOnly Property Progress() As Single
+    ' the state of completion of the job (as a percentage)
+    ReadOnly Property Progress() As Single
 #End Region
 
 #Region "Methods"
     Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, summaryFile As clsSummaryFile, myEMSLUtilities As clsMyEMSLUtilities)
 
-	Function RunTool() As IJobParams.CloseOutType
+    Function RunTool() As IJobParams.CloseOutType
 
 #End Region
 

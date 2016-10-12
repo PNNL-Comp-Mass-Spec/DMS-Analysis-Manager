@@ -9,15 +9,15 @@ Option Strict On
 
 Public Interface IMgrParams
 
-	'*********************************************************************************************************
-	'Interface for manager params storage class
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Interface for manager params storage class
+    '*********************************************************************************************************
 
-	ReadOnly Property ErrMsg As String
+    ReadOnly Property ErrMsg As String
 
 #Region "Methods"
-	Sub AckManagerUpdateRequired()
-	Function DisableManagerLocally() As Boolean
+    Sub AckManagerUpdateRequired()
+    Function DisableManagerLocally() As Boolean
 
     ''' <summary>
     ''' Gets a parameter from the manager parameters dictionary

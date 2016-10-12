@@ -8,9 +8,9 @@ Imports Apache.NMS
 ''' <remarks></remarks>
 Class clsMessageSender
 
-	Private ReadOnly topicName As String
-	Private ReadOnly brokerUri As String
-	Private ReadOnly processorName As String
+    Private ReadOnly topicName As String
+    Private ReadOnly brokerUri As String
+    Private ReadOnly processorName As String
 
     Private connection As IConnection
     Private session As ISession

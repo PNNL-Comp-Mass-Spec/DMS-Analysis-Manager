@@ -13,44 +13,44 @@ Imports System.Threading
 
 Public Class clsConcatToolWrapper
 
-	'*********************************************************************************************************
-	'Provides a wrapper around Ken Auberry's file concatenator dll to simplify use
-	'Requires FileConcatenator.dll to be referenced in project
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Provides a wrapper around Ken Auberry's file concatenator dll to simplify use
+    'Requires FileConcatenator.dll to be referenced in project
+    '*********************************************************************************************************
 
 #Region "Enums"
-	Public Enum ConcatFileTypes
-		CONCAT_DTA
-		CONCAT_OUT
-		CONCAT_ALL
-	End Enum
+    Public Enum ConcatFileTypes
+        CONCAT_DTA
+        CONCAT_OUT
+        CONCAT_ALL
+    End Enum
 #End Region
 
 #Region "Module variables"
-	Private m_CatInProgress As Boolean = False
-	Private WithEvents m_CatTools As IConcatenateFiles
-	Private m_ErrMsg As String = ""
-	Private m_DataPath As String = ""
-	Private m_Progress As Single = 0.0 'Percent complete, 0-100
+    Private m_CatInProgress As Boolean = False
+    Private WithEvents m_CatTools As IConcatenateFiles
+    Private m_ErrMsg As String = ""
+    Private m_DataPath As String = ""
+    Private m_Progress As Single = 0.0 'Percent complete, 0-100
 #End Region
 
 #Region "Properties"
-	Public ReadOnly Property Progress() As Single
-		Get
-			Return m_Progress
-		End Get
-	End Property
+    Public ReadOnly Property Progress() As Single
+        Get
+            Return m_Progress
+        End Get
+    End Property
 
-	Public ReadOnly Property ErrMsg() As String
-		Get
-			Return m_ErrMsg
-		End Get
-	End Property
+    Public ReadOnly Property ErrMsg() As String
+        Get
+            Return m_ErrMsg
+        End Get
+    End Property
 
-	Public Property DataPath() As String
-		Get
-			Return m_DataPath
-		End Get
+    Public Property DataPath() As String
+        Get
+            Return m_DataPath
+        End Get
         Set(Value As String)
             m_DataPath = Value
         End Set

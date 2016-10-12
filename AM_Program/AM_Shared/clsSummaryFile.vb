@@ -12,30 +12,30 @@ Imports System.IO
 
 Public Class clsSummaryFile
 
-	'*********************************************************************************************************
-	'Provides tools for creating an analysis job summary file
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Provides tools for creating an analysis job summary file
+    '*********************************************************************************************************
 
 #Region "Module Variables"
-	' ReSharper disable once FieldCanBeMadeReadOnly.Local
-	Private m_lines As New List(Of String)
+    ' ReSharper disable once FieldCanBeMadeReadOnly.Local
+    Private m_lines As New List(Of String)
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Clears summary file data
-	''' </summary>
-	''' <remarks></remarks>
-	Public Sub Clear()
-		m_lines.Clear()
-	End Sub
+    ''' <summary>
+    ''' Clears summary file data
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub Clear()
+        m_lines.Clear()
+    End Sub
 
-	''' <summary>
-	''' Writes the summary file to the specified location
-	''' </summary>
-	''' <param name="AnalysisSummaryFilePath">Full path of summary file to create</param>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Writes the summary file to the specified location
+    ''' </summary>
+    ''' <param name="AnalysisSummaryFilePath">Full path of summary file to create</param>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks></remarks>
     Public Function SaveSummaryFile(AnalysisSummaryFilePath As String) As Boolean
 
         Try

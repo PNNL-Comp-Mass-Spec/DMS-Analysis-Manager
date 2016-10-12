@@ -15,18 +15,18 @@ Public Class clsMemoryUsageLogger
 
     Private Const COL_SEP As Char = ControlChars.Tab
 
-	'Status file name and location
-	Private ReadOnly m_LogFolderPath As String
+    'Status file name and location
+    Private ReadOnly m_LogFolderPath As String
 
-	' The minimum interval between appending a new memory usage entry to the log
-	Private m_MinimumMemoryUsageLogIntervalMinutes As Single = 1
+    ' The minimum interval between appending a new memory usage entry to the log
+    Private m_MinimumMemoryUsageLogIntervalMinutes As Single = 1
 
-	'Used to determine the amount of free memory
-	Private m_PerfCounterFreeMemory As PerformanceCounter
-	Private m_PerfCounterPoolPagedBytes As PerformanceCounter
-	Private m_PerfCounterPoolNonpagedBytes As PerformanceCounter
+    'Used to determine the amount of free memory
+    Private m_PerfCounterFreeMemory As PerformanceCounter
+    Private m_PerfCounterPoolPagedBytes As PerformanceCounter
+    Private m_PerfCounterPoolNonpagedBytes As PerformanceCounter
 
-	Private m_PerfCountersIntitialized As Boolean = False
+    Private m_PerfCountersIntitialized As Boolean = False
 #End Region
 
 #Region "Properties"
@@ -37,11 +37,11 @@ Public Class clsMemoryUsageLogger
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks>If this is an empty string, the log file is created in the working directory</remarks>
-	Public ReadOnly Property LogFolderPath() As String
-		Get
-			Return m_LogFolderPath
-		End Get
-	End Property
+    Public ReadOnly Property LogFolderPath() As String
+        Get
+            Return m_LogFolderPath
+        End Get
+    End Property
 
     ''' <summary>
     ''' The minimum interval between appending a new memory usage entry to the log
@@ -49,10 +49,10 @@ Public Class clsMemoryUsageLogger
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-	Public Property MinimumLogIntervalMinutes() As Single
-		Get
-			Return m_MinimumMemoryUsageLogIntervalMinutes
-		End Get
+    Public Property MinimumLogIntervalMinutes() As Single
+        Get
+            Return m_MinimumMemoryUsageLogIntervalMinutes
+        End Get
         Set(value As Single)
             If value < 0 Then value = 0
             m_MinimumMemoryUsageLogIntervalMinutes = value

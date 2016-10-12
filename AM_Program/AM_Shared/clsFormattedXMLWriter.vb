@@ -14,20 +14,20 @@ Imports System.Xml
 
 Public Class clsFormattedXMLWriter
 
-	'*********************************************************************************************************
-	'Writes a formatted XML file
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Writes a formatted XML file
+    '*********************************************************************************************************
 
 #Region "Module variables"
-	Dim m_ErrMsg As String
+    Dim m_ErrMsg As String
 #End Region
 
 #Region "Properties"
-	Public ReadOnly Property ErrMsg() As String
-		Get
-			Return m_ErrMsg
-		End Get
-	End Property
+    Public ReadOnly Property ErrMsg() As String
+        Get
+            Return m_ErrMsg
+        End Get
+    End Property
 #End Region
 
 #Region "Methods"

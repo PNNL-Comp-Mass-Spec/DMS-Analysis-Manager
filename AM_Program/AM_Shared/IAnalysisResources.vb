@@ -14,7 +14,7 @@ Option Strict On
 Public Interface IAnalysisResources
 
 #Region "Properties"
-	ReadOnly Property Message() As String
+    ReadOnly Property Message() As String
 #End Region
 
 #Region "Methods"
@@ -28,29 +28,29 @@ Public Interface IAnalysisResources
     ''' <param name="myEMSLUtilities">MyEMSL download utilities</param>
     ''' <remarks></remarks>
     Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-    
-	''' <summary>
-	''' Main processing function for obtaining the required resources
-	''' </summary>
-	''' <returns>Status value indicating success or failure</returns>
-	''' <remarks></remarks>
-	Function GetResources() As IJobParams.CloseOutType
 
-	''' <summary>
-	''' Check the status of an analysis resource option
-	''' </summary>
-	''' <param name="resourceOption">Option to get</param>
-	''' <returns>The option value (true or false)</returns>
-	''' <remarks></remarks>
-	Function GetOption(resourceOption As clsGlobal.eAnalysisResourceOptions) As Boolean
+    ''' <summary>
+    ''' Main processing function for obtaining the required resources
+    ''' </summary>
+    ''' <returns>Status value indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Function GetResources() As IJobParams.CloseOutType
 
-	''' <summary>
-	''' Set the status of an analysis resource option
-	''' </summary>
-	''' <param name="resourceOption">Option to set</param>
-	''' <param name="enabled">True or false</param>
-	''' <remarks></remarks>
-	Sub SetOption(resourceOption As clsGlobal.eAnalysisResourceOptions, enabled As Boolean)
+    ''' <summary>
+    ''' Check the status of an analysis resource option
+    ''' </summary>
+    ''' <param name="resourceOption">Option to get</param>
+    ''' <returns>The option value (true or false)</returns>
+    ''' <remarks></remarks>
+    Function GetOption(resourceOption As clsGlobal.eAnalysisResourceOptions) As Boolean
+
+    ''' <summary>
+    ''' Set the status of an analysis resource option
+    ''' </summary>
+    ''' <param name="resourceOption">Option to set</param>
+    ''' <param name="enabled">True or false</param>
+    ''' <remarks></remarks>
+    Sub SetOption(resourceOption As clsGlobal.eAnalysisResourceOptions, enabled As Boolean)
 
 #End Region
 

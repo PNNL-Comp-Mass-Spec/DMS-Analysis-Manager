@@ -10,69 +10,69 @@ Option Strict On
 
 Public Interface IStatusFile
 
-	'*********************************************************************************************************
-	'Interface used by classes that create and update analysis status file
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Interface used by classes that create and update analysis status file
+    '*********************************************************************************************************
 
 #Region "Enums"
-	'Status constants
-	Enum EnumMgrStatus As Short
-		STOPPED
-		STOPPED_ERROR
-		RUNNING
-		DISABLED_LOCAL
-		DISABLED_MC
-	End Enum
+    'Status constants
+    Enum EnumMgrStatus As Short
+        STOPPED
+        STOPPED_ERROR
+        RUNNING
+        DISABLED_LOCAL
+        DISABLED_MC
+    End Enum
 
-	Enum EnumTaskStatus As Short
-		STOPPED
-		REQUESTING
-		RUNNING
-		CLOSING
-		FAILED
-		NO_TASK
-	End Enum
+    Enum EnumTaskStatus As Short
+        STOPPED
+        REQUESTING
+        RUNNING
+        CLOSING
+        FAILED
+        NO_TASK
+    End Enum
 
-	Enum EnumTaskStatusDetail As Short
-		RETRIEVING_RESOURCES
-		RUNNING_TOOL
-		PACKAGING_RESULTS
-		DELIVERING_RESULTS
-		CLOSING
-		NO_TASK
-	End Enum
+    Enum EnumTaskStatusDetail As Short
+        RETRIEVING_RESOURCES
+        RUNNING_TOOL
+        PACKAGING_RESULTS
+        DELIVERING_RESULTS
+        CLOSING
+        NO_TASK
+    End Enum
 #End Region
 
 #Region "Properties"
-	Property FileNamePath() As String
+    Property FileNamePath() As String
 
-	Property MgrName() As String
+    Property MgrName() As String
 
-	Property MgrStatus() As EnumMgrStatus
+    Property MgrStatus() As EnumMgrStatus
 
     ''' <summary>
     ''' Overall CPU utilization of all threads
     ''' </summary>
     ''' <remarks></remarks>
-	Property CpuUtilization() As Integer
+    Property CpuUtilization() As Integer
 
-	Property Tool() As String
+    Property Tool() As String
 
-	Property TaskStatus() As EnumTaskStatus
+    Property TaskStatus() As EnumTaskStatus
 
-	Property Progress() As Single
+    Property Progress() As Single
 
-	Property CurrentOperation() As String
+    Property CurrentOperation() As String
 
-	Property TaskStatusDetail() As EnumTaskStatusDetail
+    Property TaskStatusDetail() As EnumTaskStatusDetail
 
-	Property JobNumber() As Integer
+    Property JobNumber() As Integer
 
-	Property JobStep() As Integer
+    Property JobStep() As Integer
 
-	Property Dataset() As String
+    Property Dataset() As String
 
-	Property MostRecentJobInfo() As String
+    Property MostRecentJobInfo() As String
 
     ''' <summary>
     ''' ProcessID of an externally spawned process
@@ -86,13 +86,13 @@ Public Interface IStatusFile
     ''' <remarks></remarks>
     Property ProgRunnerCoreUsage As Single
 
-	Property SpectrumCount() As Integer
+    Property SpectrumCount() As Integer
 
-	Property MessageQueueURI() As String
+    Property MessageQueueURI() As String
 
-	Property MessageQueueTopic() As String
+    Property MessageQueueTopic() As String
 
-	Property LogToMsgQueue() As Boolean
+    Property LogToMsgQueue() As Boolean
 
 #End Region
 
