@@ -156,6 +156,7 @@ Public Class clsPHRPMassErrorValidator
 
             ' Define the precursor mass tolerance threshold
             ' At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
+            ' However, for MSGF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
             Dim dblPrecursorMassTolerance As Double = objSearchEngineParams.PrecursorMassToleranceDa
 
             If dblPrecursorMassTolerance < 6 Then
@@ -163,12 +164,11 @@ Public Class clsPHRPMassErrorValidator
             End If
 
             If mDebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Will use mass tolerance of " & dblPrecursorMassTolerance.ToString("0.0") & " Da when determining PHRP mass errors")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Will use mass tolerance of " & dblPrecursorMassTolerance.ToString("0.0") & " Da when determining PHRP mass errors")
             End If
 
             ' Count the number of PSMs with a mass error greater than dblPrecursorMassTolerance
-            Dim dblMassError As Double
-            Dim dblToleranceCurrent As Double
 
             Dim intErrorCount = 0
             Dim intPsmCount = 0
@@ -214,33 +214,44 @@ Public Class clsPHRPMassErrorValidator
 
                 Dim objCurrentPSM As clsPSM = mPHRPReader.CurrentPSM
 
-                If objCurrentPSM.PeptideMonoisotopicMass > 0 Then
-                    ' PrecursorNeutralMass is based on the mass value reported by the search engine 
-                    '   (will be reported mono mass or could be m/z or MH converted to neutral mass)
-                    ' PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
-                    dblMassError = objCurrentPSM.PrecursorNeutralMass - objCurrentPSM.PeptideMonoisotopicMass
+                If objCurrentPSM.PeptideMonoisotopicMass <= 0 Then
+                    Continue While
+                End If
 
+                ' PrecursorNeutralMass is based on the mass value reported by the search engine 
+                '   (will be reported mono mass or could be m/z or MH converted to neutral mass)
+                ' PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
+                Dim dblMassError = objCurrentPSM.PrecursorNeutralMass - objCurrentPSM.PeptideMonoisotopicMass
+                Dim dblToleranceCurrent As Double
+
+                Dim psmIsotopeError As String = Nothing
+                If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB AndAlso objCurrentPSM.TryGetScore("IsotopeError", psmIsotopeError) Then
+                    ' The integer value of dblMassError should match psmIsotopeError
+                    ' However, scale up the tolerance based on the peptide mass
+                    dblToleranceCurrent = 0.1 + objCurrentPSM.PeptideMonoisotopicMass / 50000.0
+                    dblMassError -= CInt(psmIsotopeError)
+                Else
                     dblToleranceCurrent = dblPrecursorMassTolerance + objCurrentPSM.Charge - 1
-                    If Math.Abs(dblMassError) > dblToleranceCurrent Then
+                End If
 
-                        strPeptideDescription = "Scan=" & objCurrentPSM.ScanNumberStart & ", charge=" & objCurrentPSM.Charge & ", peptide=" & objCurrentPSM.PeptideWithNumericMods
-                        intErrorCount += 1
+                If Math.Abs(dblMassError) <= dblToleranceCurrent Then
+                    Continue While
+                End If
 
-                        ' Keep track of the 100 largest mass errors
-                        If lstLargestMassErrors.Count < 100 Then
-                            If Not lstLargestMassErrors.ContainsKey(dblMassError) Then
-                                lstLargestMassErrors.Add(dblMassError, strPeptideDescription)
-                            End If
-                        Else
+                strPeptideDescription = "Scan=" & objCurrentPSM.ScanNumberStart & ", charge=" & objCurrentPSM.Charge & ", peptide=" & objCurrentPSM.PeptideWithNumericMods
+                intErrorCount += 1
 
-                            Dim dblMinValue As Double = lstLargestMassErrors.Keys.Min()
-                            If dblMassError > dblMinValue AndAlso Not lstLargestMassErrors.ContainsKey(dblMassError) Then
-                                lstLargestMassErrors.Remove(dblMinValue)
-                                lstLargestMassErrors.Add(dblMassError, strPeptideDescription)
-                            End If
+                ' Keep track of the 100 largest mass errors
+                If lstLargestMassErrors.Count < 100 Then
+                    If Not lstLargestMassErrors.ContainsKey(dblMassError) Then
+                        lstLargestMassErrors.Add(dblMassError, strPeptideDescription)
+                    End If
+                Else
 
-                        End If
-
+                    Dim dblMinValue As Double = lstLargestMassErrors.Keys.Min()
+                    If dblMassError > dblMinValue AndAlso Not lstLargestMassErrors.ContainsKey(dblMassError) Then
+                        lstLargestMassErrors.Remove(dblMinValue)
+                        lstLargestMassErrors.Add(dblMassError, strPeptideDescription)
                     End If
 
                 End If
@@ -256,58 +267,56 @@ Public Class clsPHRPMassErrorValidator
 
             Dim dblPercentInvalid = intErrorCount / intPsmCount * 100
 
-            If intErrorCount > 0 Then
-
-                Dim strMessage As String
-                mErrorMessage = dblPercentInvalid.ToString("0.0") & "% of the peptides have a mass error over " & dblPrecursorMassTolerance.ToString("0.0") & " Da"
-                strMessage = mErrorMessage & " (" & intErrorCount & " / " & intPsmCount & ")"
-
-                If dblPercentInvalid > mErrorThresholdPercent Then
-                    ShowErrorMessage(strMessage & "; this value is too large (over " & mErrorThresholdPercent.ToString("0.0") & "%)")
-
-                    ' Log the first, last, and middle entry in lstLargestMassErrors
-                    InformLargeErrorExample(lstLargestMassErrors.First)
-
-                    If lstLargestMassErrors.Count > 1 Then
-                        InformLargeErrorExample(lstLargestMassErrors.Last)
-
-                        If lstLargestMassErrors.Count > 2 Then
-                            Dim iterator = 0
-                            For Each massError In lstLargestMassErrors
-                                iterator += 1
-                                If iterator >= lstLargestMassErrors.Count / 2 Then
-                                    InformLargeErrorExample(massError)
-                                    Exit For
-                                End If
-                            Next
-                        End If
-
-                    End If
-
-
-                    blnSuccess = False
-                Else
-                    ShowWarningMessage(strMessage & "; this value is within tolerance")
-
-                    ' Blank out mErrorMessage since only a warning
-                    mErrorMessage = String.Empty
-                    blnSuccess = True
-                End If
-
-            Else
+            If intErrorCount <= 0 Then
                 If mDebugLevel >= 2 Then
-                    ShowMessage("All " & intPsmCount & " peptides have a mass error below " & dblPrecursorMassTolerance.ToString("0.0") & " Da")
+                    ShowMessage(
+                        "All " & intPsmCount & " peptides have a mass error below " &
+                        dblPrecursorMassTolerance.ToString("0.0") & " Da")
                 End If
-                blnSuccess = True
+                Return True
             End If
+
+            mErrorMessage = dblPercentInvalid.ToString("0.0") & "% of the peptides have a mass error over " &
+                            dblPrecursorMassTolerance.ToString("0.0") & " Da"
+
+            Dim warningMessage = mErrorMessage & " (" & intErrorCount & " / " & intPsmCount & ")"
+
+            If dblPercentInvalid <= mErrorThresholdPercent Then
+                ShowWarningMessage(warningMessage & "; this value is within tolerance")
+
+                ' Blank out mErrorMessage since only a warning
+                mErrorMessage = String.Empty
+                Return True
+            End If
+
+            ShowErrorMessage(warningMessage & "; this value is too large (over " & mErrorThresholdPercent.ToString("0.0") & "%)")
+
+            ' Log the first, last, and middle entry in lstLargestMassErrors
+            InformLargeErrorExample(lstLargestMassErrors.First)
+
+            If lstLargestMassErrors.Count > 1 Then
+                InformLargeErrorExample(lstLargestMassErrors.Last)
+
+                If lstLargestMassErrors.Count > 2 Then
+                    Dim iterator = 0
+                    For Each massError In lstLargestMassErrors
+                        iterator += 1
+                        If iterator >= lstLargestMassErrors.Count / 2 Then
+                            InformLargeErrorExample(massError)
+                            Exit For
+                        End If
+                    Next
+                End If
+
+            End If
+
+            Return False
 
         Catch ex As Exception
             ShowErrorMessage("Error in ValidatePHRPResultMassErrors", ex)
             mErrorMessage = "Exception in ValidatePHRPResultMassErrors"
             Return False
         End Try
-
-        Return blnSuccess
 
     End Function
 
