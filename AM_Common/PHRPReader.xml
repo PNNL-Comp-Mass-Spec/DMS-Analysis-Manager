@@ -501,6 +501,17 @@ PHRPReader
  <param name="intCurrentCharge"></param>
  <param name="intDesiredCharge"></param>
  <returns></returns>
+ <remarks>Uses the charge carrier mass defined by ChargeCarrierMass</remarks>
+</member>
+<member name="M:PHRPReader.clsPeptideMassCalculator.ConvoluteMass(System.Double,System.Int32,System.Int32,System.Double)">
+ <summary>
+ Converts the m/z value from one charge state to another charge state.  Either charge state can be 0, which means an uncharged peptide
+ </summary>
+ <param name="dblMassMZ">m/z</param>
+ <param name="intCurrentCharge">Current charge</param>
+ <param name="intDesiredCharge">Desired charge</param>
+ <param name="dblChargeCarrierMass">Charge carrier mass (Default is the mass of a proton)</param>
+ <returns></returns>
  <remarks></remarks>
 </member>
 <member name="M:PHRPReader.clsPeptideMassCalculator.GetAminoAcidAtomCounts(System.Char)">
@@ -720,6 +731,12 @@ PHRPReader
  <returns></returns>
  <remarks></remarks>
 </member>
+<member name="P:PHRPReader.clsPHRPParser.PepToProteinMap">
+ <summary>
+ Peptide to protein map file name
+ </summary>
+ <returns></returns>
+</member>
 <member name="P:PHRPReader.clsPHRPParser.ResultToSeqMap">
  <summary>
  Returns the cached mapping between ResultID and SeqID
@@ -918,6 +935,28 @@ PHRPReader
  <param name="strCommentChar">If defined, then looks for this character in the value portion of the setting and removes that character plus any text after it</param>
  <returns>KeyValuePair with key and value from strText; key and value will be empty if chDelimiter was not found</returns>
  <remarks>Automatically trims whitespace</remarks>
+</member>
+<member name="M:PHRPReader.clsPHRPParser.ReadKeyValuePairSearchEngineParamFile(System.String,System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType,PHRPReader.clsSearchEngineParameters)">
+ <summary>
+ Read a Search Engine parameter file where settings are stored as key/value pairs
+ </summary>
+ <param name="strSearchEngineName">Search engine name (e.g. MSGF+)</param>
+ <param name="strSearchEngineParamFileName">Search engine parameter file name (must exist in mInputFolderPath)</param>
+ <param name="ePeptideHitResultType">PeptideHitResultType (only important if reading a ModA parameter file</param>
+ <param name="objSearchEngineParams">SearchEngineParams container class (must be initialized by the calling function)</param>
+ <returns>True if success, false if an error</returns>
+</member>
+<member name="M:PHRPReader.clsPHRPParser.ReadKeyValuePairSearchEngineParamFile(System.String,System.String,PHRPReader.clsPHRPReader.ePeptideHitResultType,PHRPReader.clsSearchEngineParameters,System.String,System.String)">
+ <summary>
+ Read a Search Engine parameter file where settings are stored as key/value pairs
+ </summary>
+ <param name="searchEngineName">Search engine name (e.g. MSGF+)</param>
+ <param name="paramFilePath">Search engine parameter file path</param>
+ <param name="ePeptideHitResultType">PeptideHitResultType (only important if reading a ModA parameter file</param>
+ <param name="searchEngineParams">SearchEngineParams container class (must be initialized by the calling function)</param>
+ <param name="errorMessage">Output: error message</param>
+ <param name="warningMessage">Output: warning message</param>
+ <returns>True if success, false if an error</returns>
 </member>
 <member name="M:PHRPReader.clsPHRPParser.UpdatePSMUsingSeqInfo(PHRPReader.clsPSM)">
  <summary>
@@ -1817,6 +1856,16 @@ PHRPReader
  <returns>Precursor tolerance, in Da</returns>
  <remarks></remarks>
 </member>
+<member name="M:PHRPReader.clsPHRPParserMSGFDB.GetCustomChargeCarrierMass(PHRPReader.clsSearchEngineParameters,System.Double@)">
+ <summary>
+ Look for MSGF+ parameter ChargeCarrierMass
+ If defined, update chargeCarrierMass with the associated mass value and return True
+ Otherwise return false
+ </summary>
+ <param name="objSearchEngineParams"></param>
+ <param name="chargeCarrierMass"></param>
+ <returns></returns>
+</member>
 <member name="M:PHRPReader.clsPHRPParserMSGFDB.LoadSearchEngineParameters(System.String,PHRPReader.clsSearchEngineParameters@)">
  <summary>
  Parses the specified MSGFDB (aka MS-GF+) parameter file
@@ -2438,6 +2487,161 @@ PHRPReader
  </summary>
  <param name="strInputFilePath">Input file path</param>
  <returns>A Dictionary where keys are ScanNumber and values are clsScanStatsInfo objects</returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.Enzyme">
+ <summary>
+ Enzyme name
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.FastaFilePath">
+ <summary>
+ FASTA file path
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.FragmentMassType">
+ <summary>
+ Fragment mass type
+ </summary>
+ <returns></returns>
+ <remarks>Typically "monoisotopic" or "average"</remarks>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.MaxNumberInternalCleavages">
+ <summary>
+ Maximum number of internal cleavages (missed cleavage points)
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.MinNumberTermini">
+ <summary>
+ 0 means no-enzyme, 1 means partially tryptic, 2 means fully tryptic
+ </summary>
+ <returns></returns>
+ <remarks>For trypsin, this is NTT or Number of Tryptic Terminii</remarks>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.ModInfo">
+ <summary>
+ Dynamic and static mods to search for
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.Parameters">
+ <summary>
+ Parameter dictionary (key/value pairs)
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.PrecursorMassToleranceDa">
+ <summary>
+ Precursor mass tolerance, in Da; 0 if unknown
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.PrecursorMassTolerancePpm">
+ <summary>
+ Precursor mass tolerance, in ppm; 0 if unknown
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.PrecursorMassType">
+ <summary>
+ Precursor mass type
+ </summary>
+ <returns></returns>
+ <remarks>Typically "monoisotopic" or "average"</remarks>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.SearchEngineName">
+ <summary>
+ Search engine name
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.SearchEngineParamFilePath">
+ <summary>
+ Search engine parameter file path
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.SearchEngineVersion">
+ <summary>
+ Search engine version
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:PHRPReader.clsSearchEngineParameters.SearchDate">
+ <summary>
+ Search date
+ </summary>
+ <returns></returns>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.#ctor(System.String)">
+ <summary>
+ Constructor
+ </summary>
+ <param name="searchEngineName"></param>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.#ctor(System.String,System.Collections.Generic.List{PHRPReader.clsModificationDefinition})">
+ <summary>
+ Constructor
+ </summary>
+ <param name="searchEngineName"></param>
+ <param name="objModInfo"></param>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.#ctor(System.String,System.Collections.Generic.List{PHRPReader.clsModificationDefinition},System.Collections.Generic.Dictionary{System.String,System.String})">
+ <summary>
+ Constructor
+ </summary>
+ <param name="searchEngineName"></param>
+ <param name="objModInfo"></param>
+ <param name="Parameters"></param>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.AddModification(PHRPReader.clsModificationDefinition)">
+ <summary>
+ Add a new dynamic or static modification
+ </summary>
+ <param name="objModInfo"></param>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.AddUpdateParameter(System.Collections.Generic.KeyValuePair{System.String,System.String})">
+ <summary>
+ Add/update a parameter
+ </summary>
+ <param name="kvSetting"></param>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.AddUpdateParameter(System.String,System.String)">
+ <summary>
+ Add/update a parameter
+ </summary>
+ <param name="ParamName"></param>
+ <param name="ParamValue"></param>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.ClearModifications">
+ <summary>
+ Clear stored dynamic and static modifications
+ </summary>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.ClearParameters">
+ <summary>
+ Clear stored key/value parameters
+ </summary>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.UpdateSearchEngineParamFilePath(System.String)">
+ <summary>
+ Update the search engine parameter file path
+ </summary>
+ <param name="paramFilePath"></param>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.UpdateSearchEngineVersion(System.String)">
+ <summary>
+ Update the search engine version
+ </summary>
+ <param name="strSearchEngineVersion"></param>
+</member>
+<member name="M:PHRPReader.clsSearchEngineParameters.UpdateSearchDate(System.DateTime)">
+ <summary>
+ Update the search date
+ </summary>
+ <param name="dtSearchDate"></param>
 </member>
 <member name="P:PHRPReader.clsSeqInfo.SeqID">
  <summary>
