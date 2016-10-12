@@ -45,7 +45,7 @@ Public Class clsPHRPMassErrorValidator
     End Sub
 
     Protected Function LoadSearchEngineParameters(
-       ByRef objPHRPReader As clsPHRPReader,
+       objPHRPReader As clsPHRPReader,
        strSearchEngineParamFilePath As String,
        eResultType As clsPHRPReader.ePeptideHitResultType) As clsSearchEngineParameters
 
@@ -103,17 +103,17 @@ Public Class clsPHRPMassErrorValidator
     ''' <remarks></remarks>
     Public Function ValidatePHRPResultMassErrors(strInputFilePath As String, eResultType As clsPHRPReader.ePeptideHitResultType, strSearchEngineParamFilePath As String) As Boolean
 
-        Dim blnSuccess As Boolean
-        Dim objSearchEngineParams As clsSearchEngineParameters
-
         Try
             mErrorMessage = String.Empty
+
+            Dim oPeptideMassCalculator = New clsPeptideMassCalculator()
 
             Dim oStartupOptions = New clsPHRPStartupOptions() With {
                 .LoadModsAndSeqInfo = True,
                 .LoadMSGFResults = False,
                 .LoadScanStatsData = False,
-                .MaxProteinsPerPSM = 1
+                .MaxProteinsPerPSM = 1,
+                .PeptideMassCalculator = oPeptideMassCalculator
             }
 
             mPHRPReader = New clsPHRPReader(strInputFilePath, eResultType, oStartupOptions)
@@ -142,7 +142,17 @@ Public Class clsPHRPMassErrorValidator
             mPHRPReader.SkipDuplicatePSMs = True
 
             ' Load the search engine parameters
-            objSearchEngineParams = LoadSearchEngineParameters(mPHRPReader, strSearchEngineParamFilePath, eResultType)
+            Dim objSearchEngineParams = LoadSearchEngineParameters(mPHRPReader, strSearchEngineParamFilePath, eResultType)
+
+            ' Check for a custom charge carrier mass
+            Dim customChargeCarrierMass As Double
+            If clsPHRPParserMSGFDB.GetCustomChargeCarrierMass(objSearchEngineParams, customChargeCarrierMass) Then
+                If mDebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     String.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass))
+                End If
+                oPeptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass
+            End If
 
             ' Define the precursor mass tolerance threshold
             ' At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
