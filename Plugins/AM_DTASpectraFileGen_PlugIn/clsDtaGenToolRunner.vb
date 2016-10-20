@@ -16,166 +16,166 @@ Imports System.IO
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsDtaGenToolRunner
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
 #Region "Constants and Enums"
-	Public Const CDTA_FILE_SUFFIX As String = "_dta.txt"
-	Protected Const CENTROID_CDTA_PROGRESS_START As Integer = 70
+    Public Const CDTA_FILE_SUFFIX As String = "_dta.txt"
+    Protected Const CENTROID_CDTA_PROGRESS_START As Integer = 70
 
-	Public Enum eDTAGeneratorConstants
-		Unknown = 0
-		ExtractMSn = 1
-		DeconMSn = 2
-		MSConvert = 3
-		MGFtoDTA = 4
-		DeconConsole = 5
-	End Enum
+    Public Enum eDTAGeneratorConstants
+        Unknown = 0
+        ExtractMSn = 1
+        DeconMSn = 2
+        MSConvert = 3
+        MGFtoDTA = 4
+        DeconConsole = 5
+    End Enum
 #End Region
 
 #Region "Module-wide variables"
-	Protected m_CentroidDTAs As Boolean
-	Protected m_ConcatenateDTAs As Boolean
-	Protected m_StepNum As Integer
+    Protected m_CentroidDTAs As Boolean
+    Protected m_ConcatenateDTAs As Boolean
+    Protected m_StepNum As Integer
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Runs the analysis tool
-	''' </summary>
-	''' <returns>CloseoutType enum indicating success or failure</returns>
-	''' <remarks>This method is used to meet the interface requirement</remarks>
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Runs the analysis tool
+    ''' </summary>
+    ''' <returns>CloseoutType enum indicating success or failure</returns>
+    ''' <remarks>This method is used to meet the interface requirement</remarks>
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim result As IJobParams.CloseOutType
+        Dim result As IJobParams.CloseOutType
 
-		' Do the stuff in the base class
-		If Not MyBase.RunTool() = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        ' Do the stuff in the base class
+        If Not MyBase.RunTool() = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-		m_StepNum = m_jobParams.GetJobParameter("Step", 0)
+        m_StepNum = m_jobParams.GetJobParameter("Step", 0)
 
-		' Create spectra files
-		result = CreateMSMSSpectra()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Something went wrong
-			' In order to help diagnose things, we will move key files into the result folder, 
-			'  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			CopyFailedResultsToArchiveFolder()
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Create spectra files
+        result = CreateMSMSSpectra()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Something went wrong
+            ' In order to help diagnose things, we will move key files into the result folder, 
+            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            CopyFailedResultsToArchiveFolder()
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Stop the job timer
-		m_StopTime = DateTime.UtcNow
+        ' Stop the job timer
+        m_StopTime = DateTime.UtcNow
 
-		' Add the current job data to the summary file
-		Try
-			If Not UpdateSummaryFile() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
-			End If
-		Catch Err As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
-		End Try
+        ' Add the current job data to the summary file
+        Try
+            If Not UpdateSummaryFile() Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
+            End If
+        Catch Err As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
+        End Try
 
-		' Get rid of raw data file
-		result = DeleteDataFile()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			Return result
-		End If
+        ' Get rid of raw data file
+        result = DeleteDataFile()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
-		' Add all the extensions of the files to delete after run
-		m_jobParams.AddResultFileExtensionToSkip(CDTA_FILE_SUFFIX) ' Unzipped, concatenated DTA
-		m_jobParams.AddResultFileExtensionToSkip(".dta")	 ' DTA files
-		m_jobParams.AddResultFileExtensionToSkip("DeconMSn_progress.txt")
+        ' Add all the extensions of the files to delete after run
+        m_jobParams.AddResultFileExtensionToSkip(CDTA_FILE_SUFFIX) ' Unzipped, concatenated DTA
+        m_jobParams.AddResultFileExtensionToSkip(".dta")     ' DTA files
+        m_jobParams.AddResultFileExtensionToSkip("DeconMSn_progress.txt")
 
-		' Add any files that are an exception to the captured files to delete list
-		m_jobParams.AddResultFileToKeep("lcq_dta.txt")
+        ' Add any files that are an exception to the captured files to delete list
+        m_jobParams.AddResultFileToKeep("lcq_dta.txt")
 
-		result = MakeResultsFolder()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			Return result
-		End If
+        result = MakeResultsFolder()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
-		result = MoveResultFiles()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-			Return result
-		End If
+        result = MoveResultFiles()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+            Return result
+        End If
 
-		result = CopyResultsFolderToServer()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-			Return result
-		End If
+        result = CopyResultsFolderToServer()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+            Return result
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Creates DTA files and filters if necessary
-	''' </summary>
-	''' <returns>CloseoutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Function CreateMSMSSpectra() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Creates DTA files and filters if necessary
+    ''' </summary>
+    ''' <returns>CloseoutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Function CreateMSMSSpectra() As IJobParams.CloseOutType
 
-		Dim Result As IJobParams.CloseOutType
+        Dim Result As IJobParams.CloseOutType
 
-		'Make the spectra files
-		Result = MakeSpectraFiles()
-		If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return Result
+        'Make the spectra files
+        Result = MakeSpectraFiles()
+        If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return Result
 
-		'Concatenate spectra files
-		If m_ConcatenateDTAs Then
-			Result = ConcatSpectraFiles()
-			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return Result
-		End If
+        'Concatenate spectra files
+        If m_ConcatenateDTAs Then
+            Result = ConcatSpectraFiles()
+            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return Result
+        End If
 
-		If m_CentroidDTAs Then
-			Result = CentroidCDTA()
-			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return Result
-		End If
+        If m_CentroidDTAs Then
+            Result = CentroidCDTA()
+            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return Result
+        End If
 
-		'Zip concatenated spectra files
-		Result = ZipConcDtaFile()
-		If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return Result
+        'Zip concatenated spectra files
+        Result = ZipConcDtaFile()
+        If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return Result
 
-		'If we got to here, everything's OK
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        'If we got to here, everything's OK
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	Protected Function GetDTAGenerator(ByRef SpectraGen As clsDtaGen) As eDTAGeneratorConstants
+    Protected Function GetDTAGenerator(ByRef SpectraGen As clsDtaGen) As eDTAGeneratorConstants
 
-		Dim strErrorMessage As String = String.Empty
+        Dim strErrorMessage As String = String.Empty
 
-		Dim eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, m_ConcatenateDTAs, strErrorMessage)
+        Dim eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, m_ConcatenateDTAs, strErrorMessage)
 
-		Select Case eDtaGeneratorType
-			Case eDTAGeneratorConstants.MGFtoDTA
-				SpectraGen = New clsMGFtoDtaGenMainProcess()
+        Select Case eDtaGeneratorType
+            Case eDTAGeneratorConstants.MGFtoDTA
+                SpectraGen = New clsMGFtoDtaGenMainProcess()
 
-			Case eDTAGeneratorConstants.MSConvert
-				SpectraGen = New clsDtaGenMSConvert()
+            Case eDTAGeneratorConstants.MSConvert
+                SpectraGen = New clsDtaGenMSConvert()
 
-			Case eDTAGeneratorConstants.DeconConsole
-				SpectraGen = New clsDtaGenDeconConsole()
+            Case eDTAGeneratorConstants.DeconConsole
+                SpectraGen = New clsDtaGenDeconConsole()
 
-			Case eDTAGeneratorConstants.ExtractMSn, eDTAGeneratorConstants.DeconMSn
-				SpectraGen = New clsDtaGenThermoRaw()
+            Case eDTAGeneratorConstants.ExtractMSn, eDTAGeneratorConstants.DeconMSn
+                SpectraGen = New clsDtaGenThermoRaw()
 
-			Case eDTAGeneratorConstants.Unknown
-				If String.IsNullOrEmpty(strErrorMessage) Then
-					m_message = "GetDTAGeneratorInfo reported an Unknown DTAGenerator type"
-				Else
-					m_message = strErrorMessage
-				End If
+            Case eDTAGeneratorConstants.Unknown
+                If String.IsNullOrEmpty(strErrorMessage) Then
+                    m_message = "GetDTAGeneratorInfo reported an Unknown DTAGenerator type"
+                Else
+                    m_message = strErrorMessage
+                End If
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 
-		End Select
+        End Select
 
-		Return eDtaGeneratorType
+        Return eDtaGeneratorType
 
-	End Function
+    End Function
 
     Public Shared Function GetDTAGeneratorInfo(oJobParams As IJobParams, ByRef strErrorMessage As String) As eDTAGeneratorConstants
         Dim blnConcatenateDTAs As Boolean
@@ -931,7 +931,7 @@ Public Class clsDtaGenToolRunner
         End If
 
         ' Loop until the spectra generator finishes
-        While (oDTAGenerator.Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING) Or _
+        While (oDTAGenerator.Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING) Or
            (oDTAGenerator.Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING)
 
             If blnSecondPass Then
@@ -1126,23 +1126,23 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-	''' <summary>
-	''' Zips concatenated DTA file to reduce size
-	''' </summary>
-	''' <returns>CloseoutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Protected Function ZipConcDtaFile() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Zips concatenated DTA file to reduce size
+    ''' </summary>
+    ''' <returns>CloseoutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Protected Function ZipConcDtaFile() As IJobParams.CloseOutType
 
-		Dim DtaFileName As String = m_Dataset & "_dta.txt"
-		Dim DtaFilePath As String = Path.Combine(m_WorkDir, DtaFileName)
+        Dim DtaFileName As String = m_Dataset & "_dta.txt"
+        Dim DtaFilePath As String = Path.Combine(m_WorkDir, DtaFileName)
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_StepNum)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_StepNum)
 
-		' Verify the _dta.txt file exists
-		If Not File.Exists(DtaFilePath) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Verify the _dta.txt file exists
+        If Not File.Exists(DtaFilePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         ' Zip the file using IonicZip
         Try
@@ -1153,7 +1153,7 @@ Public Class clsDtaGenToolRunner
             Dim msg As String = "Exception zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+        End Try
 
         ' Occasionally the zip file is corrupted and will need to be zipped using ICSharpCode.SharpZipLib instead
         ' If the file exists and is not zero bytes in length, try zipping again, but instead use ICSharpCode.SharpZipLib

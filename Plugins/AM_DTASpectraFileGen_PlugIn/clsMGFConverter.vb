@@ -7,42 +7,42 @@ Imports System.IO
 Public Class clsMGFConverter
 
 #Region "Structures"
-	Protected Structure udtScanInfoType
-		Public ScanStart As Integer
-		Public ScanEnd As Integer
-		Public Charge As Integer
-	End Structure
+    Protected Structure udtScanInfoType
+        Public ScanStart As Integer
+        Public ScanEnd As Integer
+        Public Charge As Integer
+    End Structure
 #End Region
 
 #Region "Member variables"
-	Protected m_DebugLevel As Integer
-	Protected m_WorkDir As String
-	Protected m_ErrMsg As String
+    Protected m_DebugLevel As Integer
+    Protected m_WorkDir As String
+    Protected m_ErrMsg As String
 
-	Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
+    Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
 
 #End Region
 
 #Region "Properties"
-	Public ReadOnly Property ErrorMessage() As String
-		Get
-			If String.IsNullOrEmpty(m_ErrMsg) Then
-				Return String.Empty
-			Else
-				Return m_ErrMsg
-			End If
-		End Get
-	End Property
+    Public ReadOnly Property ErrorMessage() As String
+        Get
+            If String.IsNullOrEmpty(m_ErrMsg) Then
+                Return String.Empty
+            Else
+                Return m_ErrMsg
+            End If
+        End Get
+    End Property
 
-	Public ReadOnly Property SpectraCountWritten() As Integer
-		Get
-			If mMGFtoDTA Is Nothing Then
-				Return 0
-			Else
-				Return mMGFtoDTA.SpectraCountWritten
-			End If
-		End Get
-	End Property
+    Public ReadOnly Property SpectraCountWritten() As Integer
+        Get
+            If mMGFtoDTA Is Nothing Then
+                Return 0
+            Else
+                Return mMGFtoDTA.SpectraCountWritten
+            End If
+        End Get
+    End Property
 #End Region
 
     Public Sub New(intDebugLevel As Integer, strWorkDir As String)
@@ -343,12 +343,12 @@ Public Class clsMGFConverter
 
     End Function
 
-	Private Sub mMGFtoDTA_ErrorEvent(strMessage As String) Handles mMGFtoDTA.ErrorEvent
-		If String.IsNullOrEmpty(m_ErrMsg) Then
-			m_ErrMsg = "MGFtoDTA_Error: " & strMessage
-		ElseIf m_ErrMsg.Length < 300 Then
-			m_ErrMsg &= "; MGFtoDTA_Error: " & strMessage
-		End If
+    Private Sub mMGFtoDTA_ErrorEvent(strMessage As String) Handles mMGFtoDTA.ErrorEvent
+        If String.IsNullOrEmpty(m_ErrMsg) Then
+            m_ErrMsg = "MGFtoDTA_Error: " & strMessage
+        ElseIf m_ErrMsg.Length < 300 Then
+            m_ErrMsg &= "; MGFtoDTA_Error: " & strMessage
+        End If
 
-	End Sub
+    End Sub
 End Class

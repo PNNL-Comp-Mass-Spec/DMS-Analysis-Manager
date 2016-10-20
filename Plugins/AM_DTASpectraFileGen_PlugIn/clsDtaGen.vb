@@ -15,34 +15,34 @@ Imports System.Text.RegularExpressions
 ''' </summary>
 ''' <remarks></remarks>
 Public MustInherit Class clsDtaGen
-	Implements ISpectraFileProcessor
+    Implements ISpectraFileProcessor
 
 #Region "Module variables"
-	Protected m_ErrMsg As String = String.Empty
-	Protected m_WorkDir As String = String.Empty	'Working directory on analysis machine
-	Protected m_Dataset As String = String.Empty
-	Protected m_RawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
+    Protected m_ErrMsg As String = String.Empty
+    Protected m_WorkDir As String = String.Empty    'Working directory on analysis machine
+    Protected m_Dataset As String = String.Empty
+    Protected m_RawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
 
-	Protected m_DtaToolNameLoc As String = String.Empty				' Path to the program used to create DTA files
+    Protected m_DtaToolNameLoc As String = String.Empty             ' Path to the program used to create DTA files
 
-	Protected m_Status As ISpectraFileProcessor.ProcessStatus
-	Protected m_Results As ISpectraFileProcessor.ProcessResults
-	Protected m_MgrParams As IMgrParams
-	Protected m_JobParams As IJobParams
-	Protected m_DebugLevel As Short = 0
-	Protected m_SpectraFileCount As Integer
-	Protected m_StatusTools As IStatusFile
+    Protected m_Status As ISpectraFileProcessor.ProcessStatus
+    Protected m_Results As ISpectraFileProcessor.ProcessResults
+    Protected m_MgrParams As IMgrParams
+    Protected m_JobParams As IJobParams
+    Protected m_DebugLevel As Short = 0
+    Protected m_SpectraFileCount As Integer
+    Protected m_StatusTools As IStatusFile
 
     Protected m_ToolRunner As clsAnalysisToolRunnerBase
 
-	Protected m_AbortRequested As Boolean = False
+    Protected m_AbortRequested As Boolean = False
 
-	' The following is a value between 0 and 100
-	Protected m_Progress As Single = 0
+    ' The following is a value between 0 and 100
+    Protected m_Progress As Single = 0
 #End Region
 
 #Region "Properties"
-	Public WriteOnly Property StatusTools() As IStatusFile Implements ISpectraFileProcessor.StatusTools
+    Public WriteOnly Property StatusTools() As IStatusFile Implements ISpectraFileProcessor.StatusTools
         Set(Value As IStatusFile)
             m_StatusTools = Value
         End Set

@@ -16,119 +16,119 @@ Imports System.Collections.Generic
 Imports System.IO
 
 Public Class clsDtaGenDeconConsole
-	Inherits clsDtaGenThermoRaw
+    Inherits clsDtaGenThermoRaw
 
 #Region "Constants"
-	Protected Const PROGRESS_DECON_CONSOLE_START As Integer = 5
-	Protected Const PROGRESS_MGF_TO_CDTA_START As Integer = 85
-	Protected Const PROGRESS_CDTA_CREATED As Integer = 95
+    Protected Const PROGRESS_DECON_CONSOLE_START As Integer = 5
+    Protected Const PROGRESS_MGF_TO_CDTA_START As Integer = 85
+    Protected Const PROGRESS_CDTA_CREATED As Integer = 95
 #End Region
 
 #Region "Structures"
 
-	Protected Structure udtDeconToolsStatusType
-		Public CurrentLCScan As Integer		' LC Scan number or IMS Frame Number
-		Public PercentComplete As Single
-		Public Sub Clear()
-			CurrentLCScan = 0
-			PercentComplete = 0
-		End Sub
-	End Structure
+    Protected Structure udtDeconToolsStatusType
+        Public CurrentLCScan As Integer     ' LC Scan number or IMS Frame Number
+        Public PercentComplete As Single
+        Public Sub Clear()
+            CurrentLCScan = 0
+            PercentComplete = 0
+        End Sub
+    End Structure
 
 #End Region
 
 #Region "Classwide variables"
-	Protected mInputFilePath As String
-	Protected mDeconConsoleExceptionThrown As Boolean
-	Protected mDeconConsoleFinishedDespiteProgRunnerError As Boolean
+    Protected mInputFilePath As String
+    Protected mDeconConsoleExceptionThrown As Boolean
+    Protected mDeconConsoleFinishedDespiteProgRunnerError As Boolean
 #End Region
 
-	Protected mDeconConsoleStatus As udtDeconToolsStatusType
+    Protected mDeconConsoleStatus As udtDeconToolsStatusType
 
-	''' <summary>
-	''' Returns the default path to the DTA generator tool
-	''' </summary>
-	''' <returns></returns>
-	''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
-	Protected Overrides Function ConstructDTAToolPath() As String
+    ''' <summary>
+    ''' Returns the default path to the DTA generator tool
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+    Protected Overrides Function ConstructDTAToolPath() As String
 
-		Dim strDTAToolPath As String
+        Dim strDTAToolPath As String
 
-		Dim DeconToolsDir As String = m_MgrParams.GetParam("DeconToolsProgLoc")			' DeconConsole.exe is stored in the DeconTools folder
-		strDTAToolPath = Path.Combine(DeconToolsDir, DECON_CONSOLE_FILENAME)
+        Dim DeconToolsDir As String = m_MgrParams.GetParam("DeconToolsProgLoc")         ' DeconConsole.exe is stored in the DeconTools folder
+        strDTAToolPath = Path.Combine(DeconToolsDir, DECON_CONSOLE_FILENAME)
 
-		Return strDTAToolPath
+        Return strDTAToolPath
 
-	End Function
+    End Function
 
-	Protected Overrides Sub MakeDTAFilesThreaded()
+    Protected Overrides Sub MakeDTAFilesThreaded()
 
-		m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
-		m_ErrMsg = String.Empty
+        m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+        m_ErrMsg = String.Empty
 
-		m_Progress = PROGRESS_DECON_CONSOLE_START
+        m_Progress = PROGRESS_DECON_CONSOLE_START
 
-		If Not ConvertRawToMGF(m_RawDataType) Then
-			If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-				m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-				m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			End If
-			Return
-		End If
+        If Not ConvertRawToMGF(m_RawDataType) Then
+            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
+                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            End If
+            Return
+        End If
 
-		m_Progress = PROGRESS_MGF_TO_CDTA_START
+        m_Progress = PROGRESS_MGF_TO_CDTA_START
 
-		If Not ConvertMGFtoDTA() Then
-			If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-				m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-				m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			End If
-			Return
-		End If
+        If Not ConvertMGFtoDTA() Then
+            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
+                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            End If
+            Return
+        End If
 
-		m_Progress = PROGRESS_CDTA_CREATED
+        m_Progress = PROGRESS_CDTA_CREATED
 
-		m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
-		m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+        m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
+        m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-	''' This functon is called by MakeDTAFilesThreaded
-	''' </summary>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks></remarks>
-	Protected Function ConvertMGFtoDTA() As Boolean
+    ''' <summary>
+    ''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
+    ''' This functon is called by MakeDTAFilesThreaded
+    ''' </summary>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks></remarks>
+    Protected Function ConvertMGFtoDTA() As Boolean
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
-		Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
+        Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
+        Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
 
-		Dim oMGFConverter As clsMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir)
+        Dim oMGFConverter As clsMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir)
 
-		eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
-		blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset)
+        eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
+        blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset)
 
-		If Not blnSuccess Then
-			m_ErrMsg = oMGFConverter.ErrorMessage
-		End If
+        If Not blnSuccess Then
+            m_ErrMsg = oMGFConverter.ErrorMessage
+        End If
 
-		m_SpectraFileCount = oMGFConverter.SpectraCountWritten
+        m_SpectraFileCount = oMGFConverter.SpectraCountWritten
 
-		Return blnSuccess
+        Return blnSuccess
 
-	End Function
+    End Function
 
 
-	''' <summary>
-	''' Create .mgf file using MSConvert
-	''' This function is called by MakeDTAFilesThreaded
-	''' </summary>
-	''' <param name="eRawDataType">Raw data file type</param>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Create .mgf file using MSConvert
+    ''' This function is called by MakeDTAFilesThreaded
+    ''' </summary>
+    ''' <param name="eRawDataType">Raw data file type</param>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks></remarks>
     Private Function ConvertRawToMGF(eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
 
         Dim CmdStr As String

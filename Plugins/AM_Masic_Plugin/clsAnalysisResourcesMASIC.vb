@@ -17,7 +17,7 @@ Public Class clsAnalysisResourcesMASIC
         ' Get input data file
         Dim CreateStoragePathInfoOnly = False
         Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
-		Dim toolName As String = m_jobParams.GetParam("ToolName")
+        Dim toolName As String = m_jobParams.GetParam("ToolName")
 
         Select Case RawDataType.ToLower()
             Case RAW_DATA_TYPE_DOT_RAW_FILES,
@@ -38,44 +38,44 @@ Public Class clsAnalysisResourcesMASIC
                 CreateStoragePathInfoOnly = False
         End Select
 
-		If Not RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		If String.Compare(RawDataType, RAW_DATA_TYPE_DOT_RAW_FILES, True) = 0 AndAlso toolName.ToLower().StartsWith("MASIC_Finnigan".ToLower()) Then
+        If String.Compare(RawDataType, RAW_DATA_TYPE_DOT_RAW_FILES, True) = 0 AndAlso toolName.ToLower().StartsWith("MASIC_Finnigan".ToLower()) Then
 
-			Dim strRawFileName = m_DatasetName & ".raw"
-			Dim strInputFilePath = ResolveStoragePath(m_WorkingDir, strRawFileName)
+            Dim strRawFileName = m_DatasetName & ".raw"
+            Dim strInputFilePath = ResolveStoragePath(m_WorkingDir, strRawFileName)
 
-			If String.IsNullOrWhiteSpace(strInputFilePath) Then
-				' Unable to resolve the file path
-				m_message = "Could not find " & strRawFileName & " or " & strRawFileName & STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If String.IsNullOrWhiteSpace(strInputFilePath) Then
+                ' Unable to resolve the file path
+                m_message = "Could not find " & strRawFileName & " or " & strRawFileName & STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' Examine the size of the .Raw file
-			Dim fiInputFile As New FileInfo(strInputFilePath)
+            ' Examine the size of the .Raw file
+            Dim fiInputFile As New FileInfo(strInputFilePath)
 
-			If clsAnalysisToolRunnerMASICFinnigan.NeedToConvertRawToMzXML(fiInputFile) Then
+            If clsAnalysisToolRunnerMASICFinnigan.NeedToConvertRawToMzXML(fiInputFile) Then
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating the ScanStats files from the .Raw file since it is over 2 GB (and MASIC will therefore process a .mzXML file)")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating the ScanStats files from the .Raw file since it is over 2 GB (and MASIC will therefore process a .mzXML file)")
 
-				If Not GenerateScanStatsFile(deleteRawDataFile:=False) Then
-					' Error message should already have been logged and stored in m_message
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
+                If Not GenerateScanStatsFile(deleteRawDataFile:=False) Then
+                    ' Error message should already have been logged and stored in m_message
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
 
-			End If
-		End If
-	
+            End If
+        End If
+
         ' Add additional extensions to delete after the tool finishes
-        m_JobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt")
+        m_jobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt")
 
         ' We'll add the following extensions to m_FilesToDeleteExt
         ' Note, though, that the DeleteDataFile function will delete the .Raw or .mgf/.cdf files

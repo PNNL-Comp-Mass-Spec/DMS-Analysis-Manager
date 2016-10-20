@@ -10,22 +10,22 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsMGFtoDtaGenMainProcess
-	Inherits clsDtaGen
+    Inherits clsDtaGen
 
 #Region "Constants"
-	Protected Const USE_THREADING As Boolean = True
+    Protected Const USE_THREADING As Boolean = True
 #End Region
 
 #Region "Module variables"
-	Private m_thThread As Threading.Thread
+    Private m_thThread As Threading.Thread
 
-	Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
+    Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
 
-	' DTA generation options
-	Private mScanStart As Integer
-	Private mScanStop As Integer
-	Private mMWLower As Single
-	Private mMWUpper As Single
+    ' DTA generation options
+    Private mScanStart As Integer
+    Private mScanStop As Integer
+    Private mMWLower As Single
+    Private mMWUpper As Single
 
 #End Region
 
@@ -211,30 +211,30 @@ Public Class clsMGFtoDtaGenMainProcess
 
     End Function
 
-	Private Function VerifyDtaCreation() As Boolean
+    Private Function VerifyDtaCreation() As Boolean
 
-		'Verify that the _DTA.txt file was created and is not empty
-		Dim fiCDTAFile As FileInfo
-		fiCDTAFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_DTA.txt"))
+        'Verify that the _DTA.txt file was created and is not empty
+        Dim fiCDTAFile As FileInfo
+        fiCDTAFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_DTA.txt"))
 
-		If Not fiCDTAFile.Exists Then
-			m_ErrMsg = "_DTA.txt file not created"
-			Return False
-		ElseIf fiCDTAFile.Length = 0 Then
-			m_ErrMsg = "_DTA.txt file is empty"
-			Return False
-		Else
-			Return True
-		End If
+        If Not fiCDTAFile.Exists Then
+            m_ErrMsg = "_DTA.txt file not created"
+            Return False
+        ElseIf fiCDTAFile.Length = 0 Then
+            m_ErrMsg = "_DTA.txt file is empty"
+            Return False
+        Else
+            Return True
+        End If
 
-	End Function
+    End Function
 
-	Private Sub mMGFtoDTA_ErrorEvent(strMessage As String) Handles mMGFtoDTA.ErrorEvent
-		If String.IsNullOrEmpty(m_ErrMsg) Then
-			m_ErrMsg = "MGFtoDTA_Error: " & strMessage
-		ElseIf m_ErrMsg.Length < 300 Then
-			m_ErrMsg &= "; MGFtoDTA_Error: " & strMessage
-		End If
-	End Sub
+    Private Sub mMGFtoDTA_ErrorEvent(strMessage As String) Handles mMGFtoDTA.ErrorEvent
+        If String.IsNullOrEmpty(m_ErrMsg) Then
+            m_ErrMsg = "MGFtoDTA_Error: " & strMessage
+        ElseIf m_ErrMsg.Length < 300 Then
+            m_ErrMsg &= "; MGFtoDTA_Error: " & strMessage
+        End If
+    End Sub
 
 End Class

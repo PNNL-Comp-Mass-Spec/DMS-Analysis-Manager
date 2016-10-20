@@ -20,29 +20,29 @@ Imports System.Text.RegularExpressions
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsDtaGenThermoRaw
-	Inherits clsDtaGen
+    Inherits clsDtaGen
 
 #Region "Constants"
-	Protected Const USE_THREADING As Boolean = True
-	Protected Const DEFAULT_SCAN_STOP As Integer = 999999
+    Protected Const USE_THREADING As Boolean = True
+    Protected Const DEFAULT_SCAN_STOP As Integer = 999999
 #End Region
 
 #Region "Module variables"
-	Protected m_NumScans As Integer
-	Protected WithEvents m_RunProgTool As clsRunDosProgram
-	Private m_thThread As Thread
+    Protected m_NumScans As Integer
+    Protected WithEvents m_RunProgTool As clsRunDosProgram
+    Private m_thThread As Thread
 
-	Protected m_MaxScanInFile As Integer
-	Private m_RunningExtractMSn As Boolean
-	Protected m_InstrumentFileName As String = String.Empty
+    Protected m_MaxScanInFile As Integer
+    Private m_RunningExtractMSn As Boolean
+    Protected m_InstrumentFileName As String = String.Empty
 
-	Private WithEvents mDTAWatcher As FileSystemWatcher
-	Private WithEvents mDeconMSnProgressWatcher As FileSystemWatcher
+    Private WithEvents mDTAWatcher As FileSystemWatcher
+    Private WithEvents mDeconMSnProgressWatcher As FileSystemWatcher
 
 #End Region
 
 #Region "API Declares"
-	'Used for getting dta count in spectra file via ICR2LS
+    'Used for getting dta count in spectra file via ICR2LS
     'Private Declare Function lopen Lib "kernel32" Alias "_lopen" (lpPathName As String, iReadWrite As Integer) As Integer
     'Private Declare Function lclose Lib "kernel32" Alias "_lclose" (hFile As Integer) As Integer
     'Private Declare Function XnumScans Lib "icr2ls32.dll" (FileHandle As Integer) As Integer
@@ -617,7 +617,7 @@ Public Class clsDtaGenThermoRaw
         Dim intScanNumber As Integer
 
         If reDTAFile Is Nothing Then
-            reDTAFile = New Regex("(\d+)\.\d+\.\d+\.dta$", _
+            reDTAFile = New Regex("(\d+)\.\d+\.\d+\.dta$",
             RegexOptions.Compiled Or RegexOptions.IgnoreCase)
         End If
 
@@ -707,7 +707,7 @@ Public Class clsDtaGenThermoRaw
 
 #End Region
 
-	Private Sub mDeconMSnProgressWatcher_Changed(sender As Object, e As FileSystemEventArgs) Handles mDeconMSnProgressWatcher.Changed
-		UpdateDeconMSnProgress(e.FullPath)
-	End Sub
+    Private Sub mDeconMSnProgressWatcher_Changed(sender As Object, e As FileSystemEventArgs) Handles mDeconMSnProgressWatcher.Changed
+        UpdateDeconMSnProgress(e.FullPath)
+    End Sub
 End Class

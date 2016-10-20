@@ -13,20 +13,20 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsDtaGenMSConvert
-	Inherits clsDtaGenThermoRaw
+    Inherits clsDtaGenThermoRaw
 
-	Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 250
+    Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 250
 
-	Protected mForceCentroidOn As Boolean = False
+    Protected mForceCentroidOn As Boolean = False
 
-	Public Property ForceCentroidOn As Boolean
-		Get
-			Return mForceCentroidOn
-		End Get
-		Set(value As Boolean)
-			mForceCentroidOn = value
-		End Set
-	End Property
+    Public Property ForceCentroidOn As Boolean
+        Get
+            Return mForceCentroidOn
+        End Get
+        Set(value As Boolean)
+            mForceCentroidOn = value
+        End Set
+    End Property
 
     Public Overrides Sub Setup(InitParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
         MyBase.Setup(InitParams, toolRunner)
@@ -44,59 +44,59 @@ Public Class clsDtaGenMSConvert
 
     End Sub
 
-	''' <summary>
-	''' Returns the default path to the DTA generator tool
-	''' </summary>
-	''' <returns></returns>
-	''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
-	Protected Overrides Function ConstructDTAToolPath() As String
+    ''' <summary>
+    ''' Returns the default path to the DTA generator tool
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+    Protected Overrides Function ConstructDTAToolPath() As String
 
-		Dim strDTAToolPath As String
+        Dim strDTAToolPath As String
 
-		Dim ProteoWizardDir As String = m_MgrParams.GetParam("ProteoWizardDir")			' MSConvert.exe is stored in the ProteoWizard folder
-		strDTAToolPath = Path.Combine(ProteoWizardDir, MSCONVERT_FILENAME)
+        Dim ProteoWizardDir As String = m_MgrParams.GetParam("ProteoWizardDir")         ' MSConvert.exe is stored in the ProteoWizard folder
+        strDTAToolPath = Path.Combine(ProteoWizardDir, MSCONVERT_FILENAME)
 
-		Return strDTAToolPath
+        Return strDTAToolPath
 
-	End Function
+    End Function
 
-	Protected Overrides Sub MakeDTAFilesThreaded()
+    Protected Overrides Sub MakeDTAFilesThreaded()
 
-		m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
-		m_ErrMsg = String.Empty
+        m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+        m_ErrMsg = String.Empty
 
-		m_Progress = 10
+        m_Progress = 10
 
-		If Not ConvertRawToMGF(m_RawDataType) Then
-			If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-				m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-				m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			End If
-			Return
-		End If
+        If Not ConvertRawToMGF(m_RawDataType) Then
+            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
+                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            End If
+            Return
+        End If
 
-		m_Progress = 75
+        m_Progress = 75
 
-		If Not ConvertMGFtoDTA() Then
-			If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-				m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-				m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
-			End If
-			Return
-		End If
+        If Not ConvertMGFtoDTA() Then
+            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
+                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            End If
+            Return
+        End If
 
-		m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
-		m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+        m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
+        m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-	''' This functon is called by MakeDTAFilesThreaded
-	''' </summary>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks></remarks>
-	Protected Function ConvertMGFtoDTA() As Boolean
+    ''' <summary>
+    ''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
+    ''' This functon is called by MakeDTAFilesThreaded
+    ''' </summary>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks></remarks>
+    Protected Function ConvertMGFtoDTA() As Boolean
 
         Try
             Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
@@ -120,15 +120,15 @@ Public Class clsDtaGenMSConvert
             Return False
         End Try
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Create .mgf file using MSConvert
-	''' This function is called by MakeDTAFilesThreaded
-	''' </summary>
-	''' <param name="eRawDataType">Raw data file type</param>
-	''' <returns>TRUE for success; FALSE for failure</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Create .mgf file using MSConvert
+    ''' This function is called by MakeDTAFilesThreaded
+    ''' </summary>
+    ''' <param name="eRawDataType">Raw data file type</param>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks></remarks>
     Private Function ConvertRawToMGF(eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
 
         Try
