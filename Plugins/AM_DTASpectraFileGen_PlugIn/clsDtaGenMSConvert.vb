@@ -28,15 +28,14 @@ Public Class clsDtaGenMSConvert
         End Set
     End Property
 
-    Public Overrides Sub Setup(InitParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
-        MyBase.Setup(InitParams, toolRunner)
+    Public Overrides Sub Setup(initParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
+        MyBase.Setup(initParams, toolRunner)
 
         ' Tool setup for MSConvert involves creating a
         '  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
         '  to indicate that we agree to the Thermo license
 
-        Dim objProteowizardTools As clsProteowizardTools
-        objProteowizardTools = New clsProteowizardTools(m_DebugLevel)
+        Dim objProteowizardTools = New clsProteowizardTools(m_DebugLevel)
 
         If Not objProteowizardTools.RegisterProteoWizard() Then
             Throw New Exception("Unable to register ProteoWizard")
@@ -92,11 +91,11 @@ Public Class clsDtaGenMSConvert
 
     ''' <summary>
     ''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-    ''' This functon is called by MakeDTAFilesThreaded
+    ''' This function is called by MakeDTAFilesThreaded
     ''' </summary>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Function ConvertMGFtoDTA() As Boolean
+    Private Function ConvertMGFtoDTA() As Boolean
 
         Try
             Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")

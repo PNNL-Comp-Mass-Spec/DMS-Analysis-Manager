@@ -10,6 +10,7 @@ Imports AnalysisManagerBase
 Imports MsMsDataFileReader
 Imports System.Collections.Generic
 Imports System.IO
+Imports System.Runtime.InteropServices
 
 ''' <summary>
 ''' Base class for DTA generation tool runners
@@ -20,7 +21,7 @@ Public Class clsDtaGenToolRunner
 
 #Region "Constants and Enums"
     Public Const CDTA_FILE_SUFFIX As String = "_dta.txt"
-    Protected Const CENTROID_CDTA_PROGRESS_START As Integer = 70
+    Private Const CENTROID_CDTA_PROGRESS_START As Integer = 70
 
     Public Enum eDTAGeneratorConstants
         Unknown = 0
@@ -29,13 +30,14 @@ Public Class clsDtaGenToolRunner
         MSConvert = 3
         MGFtoDTA = 4
         DeconConsole = 5
+        RawConverter = 6
     End Enum
 #End Region
 
 #Region "Module-wide variables"
-    Protected m_CentroidDTAs As Boolean
-    Protected m_ConcatenateDTAs As Boolean
-    Protected m_StepNum As Integer
+    Private m_CentroidDTAs As Boolean
+    Private m_ConcatenateDTAs As Boolean
+    Private m_StepNum As Integer
 #End Region
 
 #Region "Methods"
@@ -143,7 +145,7 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Protected Function GetDTAGenerator(ByRef SpectraGen As clsDtaGen) As eDTAGeneratorConstants
+    Private Function GetDTAGenerator(<Out()> ByRef spectraGen As clsDtaGen) As eDTAGeneratorConstants
 
         Dim strErrorMessage As String = String.Empty
 
@@ -344,18 +346,17 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Protected Function GetDtaGenInitParams() As ISpectraFileProcessor.InitializationParams
-        Dim InitParams As ISpectraFileProcessor.InitializationParams
-        With InitParams
-            .DebugLevel = m_DebugLevel
-            .JobParams = m_jobParams
-            .MgrParams = m_mgrParams
-            .StatusTools = m_StatusTools
-            .WorkDir = m_WorkDir
+    Private Function GetDtaGenInitParams() As ISpectraFileProcessor.InitializationParams
+        Dim initParams As New ISpectraFileProcessor.InitializationParams With {
+            .DebugLevel = m_DebugLevel,
+            .JobParams = m_jobParams,
+            .MgrParams = m_mgrParams,
+            .StatusTools = m_StatusTools,
+            .WorkDir = m_WorkDir,
             .DatasetName = m_Dataset
-        End With
+        }
 
-        Return InitParams
+        Return initParams
     End Function
 
     ''' <summary>
@@ -465,7 +466,7 @@ Public Class clsDtaGenToolRunner
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function CentroidCDTA() As IJobParams.CloseOutType
+    Private Function CentroidCDTA() As IJobParams.CloseOutType
 
         Dim strCDTAFileOriginal As String
         Dim strCDTAFileCentroided As String
@@ -571,7 +572,7 @@ Public Class clsDtaGenToolRunner
     ''' </summary>
     ''' <returns>CloseoutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Protected Function ConcatSpectraFiles() As IJobParams.CloseOutType
+    Private Function ConcatSpectraFiles() As IJobParams.CloseOutType
 
         ' Packages dta files into concatenated text files
 
@@ -600,9 +601,7 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
-
-        Dim result As IJobParams.CloseOutType
+    Private Sub CopyFailedResultsToArchiveFolder()
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -619,11 +618,10 @@ Public Class clsDtaGenToolRunner
         m_jobParams.AddResultFileExtensionToSkip(".dta")
 
         ' Try to save whatever files are in the work directory
-        Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
+        Dim strFolderPathToArchive = String.Copy(m_WorkDir)
 
         ' Make the results folder
-        result = MakeResultsFolder()
+        Dim result = MakeResultsFolder()
         If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
@@ -639,7 +637,7 @@ Public Class clsDtaGenToolRunner
 
     End Sub
 
-    Protected Function GetMSConvertAppPath() As String
+    Private Function GetMSConvertAppPath() As String
 
         Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")         ' MSConvert.exe is stored in the ProteoWizard folder
         Dim progLoc As String = Path.Combine(ProteoWizardDir, clsDtaGenMSConvert.MSCONVERT_FILENAME)
@@ -653,7 +651,7 @@ Public Class clsDtaGenToolRunner
     ''' </summary>
     ''' <returns>CloseoutType enum indicating success or failure</returns>
     ''' <remarks>Overridden for other types of input files</remarks>
-    Protected Function DeleteDataFile() As IJobParams.CloseOutType
+    Private Function DeleteDataFile() As IJobParams.CloseOutType
 
         'Deletes the .raw file from the working directory
         Dim lstFilesToDelete As List(Of String)
@@ -850,16 +848,15 @@ Public Class clsDtaGenToolRunner
         Return True
     End Function
 
-    Protected Function RemoveTitleAndParentIonLines(strSpectrumText As String) As String
+    Private Function RemoveTitleAndParentIonLines(strSpectrumText As String) As String
 
-        Dim strLine As String
         Dim sbOutput = New Text.StringBuilder(strSpectrumText.Length)
         Dim blnPreviousLineWasTitleLine = False
 
         Using trReader = New StringReader(strSpectrumText)
 
             While trReader.Peek() > -1
-                strLine = trReader.ReadLine()
+                Dim strLine = trReader.ReadLine()
 
                 If strLine.StartsWith("=") Then
                     ' Skip this line
@@ -894,7 +891,7 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Protected Function ScanHeadersMatch(udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, udtFragIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType) As Boolean
+    Private Function ScanHeadersMatch(udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, udtFragIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType) As Boolean
 
         If udtParentIonDataHeader.ScanNumberStart = udtFragIonDataHeader.ScanNumberStart Then
             If udtParentIonDataHeader.ScanNumberEnd = udtFragIonDataHeader.ScanNumberEnd Then
@@ -917,10 +914,10 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Protected Function StartAndWaitForDTAGenerator(oDTAGenerator As clsDtaGen, strCallingFunction As String, blnSecondPass As Boolean) As IJobParams.CloseOutType
+    Private Function StartAndWaitForDTAGenerator(oDTAGenerator As clsDtaGen, strCallingFunction As String, blnSecondPass As Boolean) As IJobParams.CloseOutType
 
-        Dim RetVal As ISpectraFileProcessor.ProcessStatus = oDTAGenerator.Start()
-        If RetVal = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
+        Dim retVal As ISpectraFileProcessor.ProcessStatus = oDTAGenerator.Start()
+        If retVal = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
             m_message = "Error starting spectra processor: " & oDTAGenerator.ErrMsg
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenToolRunner." & strCallingFunction & ": " & m_message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -978,17 +975,15 @@ Public Class clsDtaGenToolRunner
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(strDtaGeneratorAppPath As String, eDtaGenerator As eDTAGeneratorConstants) As Boolean
+    Private Function StoreToolVersionInfo(strDtaGeneratorAppPath As String, eDtaGenerator As eDTAGeneratorConstants) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-        Dim fiDtaGenerator As FileInfo
-        Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        fiDtaGenerator = New FileInfo(strDtaGeneratorAppPath)
+        Dim fiDtaGenerator = New FileInfo(strDtaGeneratorAppPath)
         If Not fiDtaGenerator.Exists Then
             Try
                 m_message = "DtaGenerator not found"
@@ -1010,7 +1005,7 @@ Public Class clsDtaGenToolRunner
             ' Lookup the version of the DeconConsole application
             Dim strDllPath As String
 
-            blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, fiDtaGenerator.FullName)
+            Dim blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, fiDtaGenerator.FullName)
             If Not blnSuccess Then Return False
 
             If eDtaGenerator = eDTAGeneratorConstants.DeconMSn Then
@@ -1054,7 +1049,7 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Protected Function StoreToolVersionInfoDLL(strDtaGeneratorDLLPath As String) As Boolean
+    Private Function StoreToolVersionInfoDLL(strDtaGeneratorDLLPath As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
 
@@ -1083,7 +1078,7 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Protected Function ValidateDeconMSnResults() As Boolean
+    Private Function ValidateDeconMSnResults() As Boolean
 
         Dim existingResultsAreValid = False
 
@@ -1098,7 +1093,7 @@ Public Class clsDtaGenToolRunner
             Dim headerLineFound = False
 
             Using srLogFile = New StreamReader(New FileStream(fiDeconMSnLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                While srLogFile.Peek > -1
+                While Not srLogFile.EndOfStream
                     Dim strLineIn = srLogFile.ReadLine()
 
                     If Not String.IsNullOrEmpty(strLineIn) Then
@@ -1131,7 +1126,7 @@ Public Class clsDtaGenToolRunner
     ''' </summary>
     ''' <returns>CloseoutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Protected Function ZipConcDtaFile() As IJobParams.CloseOutType
+    Private Function ZipConcDtaFile() As IJobParams.CloseOutType
 
         Dim DtaFileName As String = m_Dataset & "_dta.txt"
         Dim DtaFilePath As String = Path.Combine(m_WorkDir, DtaFileName)

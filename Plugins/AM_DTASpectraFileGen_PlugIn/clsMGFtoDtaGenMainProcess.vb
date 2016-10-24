@@ -13,13 +13,13 @@ Public Class clsMGFtoDtaGenMainProcess
     Inherits clsDtaGen
 
 #Region "Constants"
-    Protected Const USE_THREADING As Boolean = True
+    Private Const USE_THREADING As Boolean = True
 #End Region
 
 #Region "Module variables"
     Private m_thThread As Threading.Thread
 
-    Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
+    Private WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
 
     ' DTA generation options
     Private mScanStart As Integer
@@ -29,8 +29,8 @@ Public Class clsMGFtoDtaGenMainProcess
 
 #End Region
 
-    Public Overrides Sub Setup(InitParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
-        MyBase.Setup(InitParams, toolRunner)
+    Public Overrides Sub Setup(initParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
+        MyBase.Setup(initParams, toolRunner)
 
         m_DtaToolNameLoc = Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll")
 
@@ -95,7 +95,7 @@ Public Class clsMGFtoDtaGenMainProcess
 
     End Function
 
-    Protected Sub MakeDTAFilesThreaded()
+    Private Sub MakeDTAFilesThreaded()
 
         m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
         If Not MakeDTAFilesFromMGF() Then

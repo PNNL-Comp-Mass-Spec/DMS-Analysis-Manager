@@ -146,7 +146,7 @@ Public Class clsDtaGenResources
 
     End Function
 
-    Protected Function GetParameterFiles(eDtaGeneratorType As clsDtaGenToolRunner.eDTAGeneratorConstants) As Boolean
+    Private Function GetParameterFiles(eDtaGeneratorType As clsDtaGenToolRunner.eDTAGeneratorConstants) As Boolean
 
         If eDtaGeneratorType = clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole Then
 

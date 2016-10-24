@@ -23,7 +23,7 @@ Public Class clsDtaGenThermoRaw
     Inherits clsDtaGen
 
 #Region "Constants"
-    Protected Const USE_THREADING As Boolean = True
+    Private Const USE_THREADING As Boolean = True
     Protected Const DEFAULT_SCAN_STOP As Integer = 999999
 #End Region
 
@@ -42,12 +42,12 @@ Public Class clsDtaGenThermoRaw
 #End Region
 
 #Region "API Declares"
-    'Used for getting dta count in spectra file via ICR2LS
-    'Private Declare Function lopen Lib "kernel32" Alias "_lopen" (lpPathName As String, iReadWrite As Integer) As Integer
-    'Private Declare Function lclose Lib "kernel32" Alias "_lclose" (hFile As Integer) As Integer
-    'Private Declare Function XnumScans Lib "icr2ls32.dll" (FileHandle As Integer) As Integer
+    ' Used for getting dta count in spectra file via ICR2LS
+    ' Private Declare Function lopen Lib "kernel32" Alias "_lopen" (lpPathName As String, iReadWrite As Integer) As Integer
+    ' Private Declare Function lclose Lib "kernel32" Alias "_lclose" (hFile As Integer) As Integer
+    ' Private Declare Function XnumScans Lib "icr2ls32.dll" (FileHandle As Integer) As Integer
 
-    'API constants
+    ' API constants
     Private Const OF_READ As Short = &H0S
     Private Const OF_READWRITE As Short = &H2S
     Private Const OF_WRITE As Short = &H1S
@@ -61,13 +61,14 @@ Public Class clsDtaGenThermoRaw
     Public Const EXTRACT_MSN_FILENAME As String = "extract_msn.exe"
     Public Const MSCONVERT_FILENAME As String = "msconvert.exe"
     Public Const DECON_CONSOLE_FILENAME As String = "DeconConsole.exe"
+    Public Const RAWCONVERTER_FILENAME As String = "RawConverter.exe"
 
 #End Region
 
 #Region "Methods"
 
-    Public Overrides Sub Setup(InitParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
-        MyBase.Setup(InitParams, toolRunner)
+    Public Overrides Sub Setup(initParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
+        MyBase.Setup(initParams, toolRunner)
 
         m_DtaToolNameLoc = ConstructDTAToolPath()
 
@@ -82,7 +83,7 @@ Public Class clsDtaGenThermoRaw
 
         m_Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING
 
-        'Verify necessary files are in specified locations
+        ' Verify necessary files are in specified locations
         If Not InitSetup() Then
             m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
             m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
@@ -98,7 +99,7 @@ Public Class clsDtaGenThermoRaw
         ' Note that clsDtaGenMSConvert will update m_InstrumentFileName if processing a .mzXml file
         m_InstrumentFileName = m_Dataset & ".raw"
 
-        'Make the DTA files (the process runs in a separate thread)
+        ' Make the DTA files (the process runs in a separate thread)
         Try
             If USE_THREADING Then
                 m_thThread = New Thread(AddressOf MakeDTAFilesThreaded)
@@ -126,10 +127,8 @@ Public Class clsDtaGenThermoRaw
     ''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
     Protected Overridable Function ConstructDTAToolPath() As String
 
-        Dim strDTAGenProgram As String
+        Dim strDTAGenProgram = m_JobParams.GetJobParameter("DtaGenerator", "")
         Dim strDTAToolPath As String
-
-        strDTAGenProgram = m_JobParams.GetJobParameter("DtaGenerator", "")
 
         If strDTAGenProgram.ToLower() = EXTRACT_MSN_FILENAME.ToLower() Then
             ' Extract_MSn uses the lcqdtaloc folder path
@@ -150,11 +149,11 @@ Public Class clsDtaGenThermoRaw
     ''' <param name="DSName">Name of dataset being processed</param>
     ''' <returns>TRUE if file found; FALSE otherwise</returns>
     ''' <remarks></remarks>
-    Protected Function VerifyRawFileExists(WorkDir As String, DSName As String) As Boolean
+    Private Function VerifyRawFileExists(WorkDir As String, DSName As String) As Boolean
 
         Dim strExtension As String
 
-        'Verifies a the data file exists in specfied directory
+        ' Verifies a the data file exists in specfied directory
         Select Case m_RawDataType
             Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
                 strExtension = clsAnalysisResources.DOT_RAW_EXTENSION
@@ -192,22 +191,22 @@ Public Class clsDtaGenThermoRaw
     ''' <remarks></remarks>
     Protected Overrides Function InitSetup() As Boolean
 
-        'Verifies all necessary files exist in the specified locations
+        ' Verifies all necessary files exist in the specified locations
 
         If m_DebugLevel > 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenThermoRaw.InitSetup: Initializing DTA generator setup")
         End If
 
-        'Do tests specfied in base class
+        ' Do tests specfied in base class
         If Not MyBase.InitSetup Then Return False
 
-        'Raw data file exists?
-        If Not VerifyRawFileExists(m_WorkDir, m_Dataset) Then Return False 'Error message handled by VerifyRawFileExists
+        ' Raw data file exists?
+        If Not VerifyRawFileExists(m_WorkDir, m_Dataset) Then Return False ' Error message handled by VerifyRawFileExists
 
-        'DTA creation tool exists?
-        If Not VerifyFileExists(m_DtaToolNameLoc) Then Return False 'Error message handled by VerifyFileExists
+        ' DTA creation tool exists?
+        If Not VerifyFileExists(m_DtaToolNameLoc) Then Return False ' Error message handled by VerifyFileExists
 
-        'If we got to here, there was no problem
+        ' If we got to here, there was no problem
         Return True
 
     End Function
@@ -241,17 +240,15 @@ Public Class clsDtaGenThermoRaw
         '**************************************************************************************************************************************************************
         Dim NumScans As Integer
 
-        Dim XRawFile As MSFileReaderLib.MSFileReader_XRawfile
-        XRawFile = New MSFileReaderLib.MSFileReader_XRawfile
+        Dim XRawFile = New MSFileReaderLib.MSFileReader_XRawfile()
         XRawFile.Open(RawFile)
         XRawFile.SetCurrentController(0, 1)
         XRawFile.GetNumSpectra(NumScans)
-        'XRawFile.GetFirstSpectrumNumber(StartScan)
-        'XRawFile.GetLastSpectrumNumber(StopScan)
+        ' XRawFile.GetFirstSpectrumNumber(StartScan)
+        ' XRawFile.GetLastSpectrumNumber(StopScan)
         XRawFile.Close()
 
-        XRawFile = Nothing
-        'Pause and garbage collect to allow release of file lock on .raw file
+        ' Pause and garbage collect to allow release of file lock on .raw file
         Thread.Sleep(3000)      ' 3 second delay
         PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
@@ -273,7 +270,7 @@ Public Class clsDtaGenThermoRaw
             End If
         End If
 
-        'Remove any files with non-standard file names (extract_msn bug)
+        ' Remove any files with non-standard file names (extract_msn bug)
         If Not DeleteNonDosFiles() Then
             If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
                 m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
@@ -286,7 +283,7 @@ Public Class clsDtaGenThermoRaw
         ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
             m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
         Else
-            'Verify at least one dta file was created
+            ' Verify at least one dta file was created
             If Not VerifyDtaCreation() Then
                 m_Results = ISpectraFileProcessor.ProcessResults.SF_NO_FILES_CREATED
             Else

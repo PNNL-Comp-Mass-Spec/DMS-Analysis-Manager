@@ -7,7 +7,7 @@ Imports System.IO
 Public Class clsMGFConverter
 
 #Region "Structures"
-    Protected Structure udtScanInfoType
+    Private Structure udtScanInfoType
         Public ScanStart As Integer
         Public ScanEnd As Integer
         Public Charge As Integer
@@ -15,11 +15,11 @@ Public Class clsMGFConverter
 #End Region
 
 #Region "Member variables"
-    Protected m_DebugLevel As Integer
-    Protected m_WorkDir As String
-    Protected m_ErrMsg As String
+    Private m_DebugLevel As Integer
+    Private m_WorkDir As String
+    Private m_ErrMsg As String
 
-    Protected WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
+    Private WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
 
 #End Region
 
@@ -105,9 +105,9 @@ Public Class clsMGFConverter
 
     End Function
 
-    Protected Function GetCVParams(ByRef objXMLReader As Xml.XmlTextReader, strCurrentElementName As String) As Dictionary(Of String, String)
+    Private Function GetCVParams(ByRef objXMLReader As Xml.XmlTextReader, strCurrentElementName As String) As Dictionary(Of String, String)
 
-        Dim lstCVParams As Dictionary(Of String, String) = New Dictionary(Of String, String)()
+        Dim lstCVParams = New Dictionary(Of String, String)()
         Dim strAccession As String
         Dim strValue As String
 
@@ -132,7 +132,7 @@ Public Class clsMGFConverter
 
     End Function
 
-    Protected Function ParseMzMLFile(strMzMLFilePath As String, ByRef blnAutoNumberScans As Boolean, lstSpectrumIDToScanNumber As Dictionary(Of String, udtScanInfoType)) As Boolean
+    Private Function ParseMzMLFile(strMzMLFilePath As String, ByRef blnAutoNumberScans As Boolean, lstSpectrumIDToScanNumber As Dictionary(Of String, udtScanInfoType)) As Boolean
 
         Dim strSpectrumID As String = String.Empty
 
@@ -141,7 +141,7 @@ Public Class clsMGFConverter
         Dim intCharge As Integer
         Dim udtScanInfo As udtScanInfoType
 
-        Dim intScanNumberCurrent As Integer = 0
+        Dim intScanNumberCurrent = 0
         Dim strValue As String = String.Empty
         Dim intValue As Integer
 
@@ -153,7 +153,7 @@ Public Class clsMGFConverter
             lstSpectrumIDToScanNumber = New Dictionary(Of String, udtScanInfoType)
         End If
 
-        Using objXMLReader As Xml.XmlTextReader = New Xml.XmlTextReader(strMzMLFilePath)
+        Using objXMLReader = New Xml.XmlTextReader(strMzMLFilePath)
 
             Do While objXMLReader.Read()
                 XMLTextReaderSkipWhitespace(objXMLReader)
@@ -247,7 +247,7 @@ Public Class clsMGFConverter
         End If
     End Sub
 
-    Protected Function UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath As String, strMGFFilePath As String, strDatasetName As String) As Boolean
+    Private Function UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath As String, strMGFFilePath As String, strDatasetName As String) As Boolean
 
         Dim strNewMGFFile As String
         Dim strLineIn As String
@@ -258,8 +258,7 @@ Public Class clsMGFConverter
         Dim blnSuccess As Boolean
         Dim blnAutoNumberScans As Boolean
 
-        Dim lstSpectrumIDtoScanNumber As Dictionary(Of String, udtScanInfoType)
-        lstSpectrumIDtoScanNumber = New Dictionary(Of String, udtScanInfoType)
+        Dim lstSpectrumIDtoScanNumber = New Dictionary(Of String, udtScanInfoType)
 
         Try
 

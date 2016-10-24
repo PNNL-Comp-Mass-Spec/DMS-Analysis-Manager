@@ -14,19 +14,20 @@ Option Strict On
 Imports AnalysisManagerBase
 Imports System.Collections.Generic
 Imports System.IO
+Imports System.Runtime.InteropServices
 
 Public Class clsDtaGenDeconConsole
     Inherits clsDtaGenThermoRaw
 
 #Region "Constants"
-    Protected Const PROGRESS_DECON_CONSOLE_START As Integer = 5
-    Protected Const PROGRESS_MGF_TO_CDTA_START As Integer = 85
-    Protected Const PROGRESS_CDTA_CREATED As Integer = 95
+    Private Const PROGRESS_DECON_CONSOLE_START As Integer = 5
+    Private Const PROGRESS_MGF_TO_CDTA_START As Integer = 85
+    Private Const PROGRESS_CDTA_CREATED As Integer = 95
 #End Region
 
 #Region "Structures"
 
-    Protected Structure udtDeconToolsStatusType
+    Private Structure udtDeconToolsStatusType
         Public CurrentLCScan As Integer     ' LC Scan number or IMS Frame Number
         Public PercentComplete As Single
         Public Sub Clear()
@@ -38,12 +39,12 @@ Public Class clsDtaGenDeconConsole
 #End Region
 
 #Region "Classwide variables"
-    Protected mInputFilePath As String
-    Protected mDeconConsoleExceptionThrown As Boolean
-    Protected mDeconConsoleFinishedDespiteProgRunnerError As Boolean
+    Private mInputFilePath As String
+    Private mDeconConsoleExceptionThrown As Boolean
+    Private mDeconConsoleFinishedDespiteProgRunnerError As Boolean
 #End Region
 
-    Protected mDeconConsoleStatus As udtDeconToolsStatusType
+    Private mDeconConsoleStatus As udtDeconToolsStatusType
 
     ''' <summary>
     ''' Returns the default path to the DTA generator tool
@@ -52,10 +53,9 @@ Public Class clsDtaGenDeconConsole
     ''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
     Protected Overrides Function ConstructDTAToolPath() As String
 
-        Dim strDTAToolPath As String
+        Dim deconToolsDir As String = m_MgrParams.GetParam("DeconToolsProgLoc")         ' DeconConsole.exe is stored in the DeconTools folder
 
-        Dim DeconToolsDir As String = m_MgrParams.GetParam("DeconToolsProgLoc")         ' DeconConsole.exe is stored in the DeconTools folder
-        strDTAToolPath = Path.Combine(DeconToolsDir, DECON_CONSOLE_FILENAME)
+        Dim strDTAToolPath = Path.Combine(deconToolsDir, DECON_CONSOLE_FILENAME)
 
         Return strDTAToolPath
 
@@ -99,7 +99,7 @@ Public Class clsDtaGenDeconConsole
     ''' </summary>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Function ConvertMGFtoDTA() As Boolean
+    Private Function ConvertMGFtoDTA() As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -289,22 +289,12 @@ Public Class clsDtaGenDeconConsole
 
     End Sub
 
-    Protected Sub ParseDeconToolsLogFile(ByRef blnFinishedProcessing As Boolean, ByRef dtFinishTime As DateTime)
-
-        ''Dim TOTAL_WORKFLOW_STEPS As Integer = 2
-
-        Dim fiFileInfo As FileInfo
-
-        Dim strLogFilePath As String
-        Dim strLineIn As String
-        Dim blnDateValid As Boolean
-
-        Dim intCharIndex As Integer
+    Private Sub ParseDeconToolsLogFile(<Out()> ByRef blnFinishedProcessing As Boolean, <Out()> ByRef dtFinishTime As DateTime)
 
         Dim strScanLine As String = String.Empty
-        ''Dim intWorkFlowStep As Integer = 1
 
         blnFinishedProcessing = False
+        dtFinishTime = Date.MinValue
 
         Try
             Select Case m_RawDataType
@@ -413,7 +403,7 @@ Public Class clsDtaGenDeconConsole
 
             strProgressStats = strScanLine.Split(";"c)
 
-            For i As Integer = 0 To strProgressStats.Length - 1
+            For i = 0 To strProgressStats.Length - 1
                 kvStat = ParseKeyValue(strProgressStats(i))
                 If Not String.IsNullOrWhiteSpace(kvStat.Key) Then
                     Select Case kvStat.Key
@@ -443,13 +433,13 @@ Public Class clsDtaGenDeconConsole
     ''' <param name="strData"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function ParseKeyValue(strData As String) As KeyValuePair(Of String, String)
+    Private Function ParseKeyValue(strData As String) As KeyValuePair(Of String, String)
         Dim intCharIndex As Integer
         intCharIndex = strData.IndexOf("="c)
 
         If intCharIndex > 0 Then
             Try
-                Return New KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(), _
+                Return New KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(),
                  strData.Substring(intCharIndex + 1).Trim())
             Catch ex As Exception
                 ' Ignore errors here
