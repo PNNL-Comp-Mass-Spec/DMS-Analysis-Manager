@@ -168,35 +168,25 @@ Public Class clsMGFtoDtaGenMainProcess
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt")
         End If
 
-        mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA()
-
-        With mMGFtoDTA
-            .CreateIndividualDTAFiles = False
-            .MGFFileCommentLineStartChar = .MGFFileCommentLineStartChar
-            .GuesstimateChargeForAllSpectra = m_JobParams.GetJobParameter("GuesstimateChargeForAllSpectra", False)
-            .ForceChargeAddnForPredefined2PlusOr3Plus = m_JobParams.GetJobParameter("ForceChargeAddnForPredefined2PlusOr3Plus", False)
-
-            ' Note that these settings are values between 0 and 100
-            .ThresholdIonPctForSingleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForSingleCharge", CInt(.ThresholdIonPctForSingleCharge))
-            .ThresholdIonPctForDoubleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForDoubleCharge", CInt(.ThresholdIonPctForDoubleCharge))
-
-            .FilterSpectra = m_JobParams.GetJobParameter("FilterSpectra", False)
-
-            ' Filter spectra options:
-            .DiscardValidSpectra = .DiscardValidSpectra
-            .IonPairMassToleranceHalfWidthDa = .IonPairMassToleranceHalfWidthDa
-            .MinimumStandardMassSpacingIonPairs = .MinimumStandardMassSpacingIonPairs
-            .NoiseLevelIntensityThreshold = .NoiseLevelIntensityThreshold
-            .SequestParamFilePath = .SequestParamFilePath
-
-            .LogMessagesToFile = False
-
-            .MaximumIonsPerSpectrum = m_JobParams.GetJobParameter("MaximumIonsPerSpectrum", 0)
-            .ScanToExportMinimum = mScanStart
-            .ScanToExportMaximum = mScanStop
+        mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA() With {
+            .CreateIndividualDTAFiles = False,
+            .MGFFileCommentLineStartChar = .MGFFileCommentLineStartChar,
+            .GuesstimateChargeForAllSpectra = m_JobParams.GetJobParameter("GuesstimateChargeForAllSpectra", False),
+            .ForceChargeAddnForPredefined2PlusOr3Plus = m_JobParams.GetJobParameter("ForceChargeAddnForPredefined2PlusOr3Plus", False),
+            .ThresholdIonPctForSingleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForSingleCharge", CInt(.ThresholdIonPctForSingleCharge)), ' Value between 0 and 100
+            .ThresholdIonPctForDoubleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForDoubleCharge", CInt(.ThresholdIonPctForDoubleCharge)), ' Value between 0 and 100
+            .FilterSpectra = m_JobParams.GetJobParameter("FilterSpectra", False),
+            .DiscardValidSpectra = .DiscardValidSpectra,    ' FilterSpectra option
+            .IonPairMassToleranceHalfWidthDa = .IonPairMassToleranceHalfWidthDa, ' FilterSpectra option
+            .MinimumStandardMassSpacingIonPairs = .MinimumStandardMassSpacingIonPairs, ' FilterSpectra option
+            .NoiseLevelIntensityThreshold = .NoiseLevelIntensityThreshold, ' FilterSpectra option
+            .SequestParamFilePath = .SequestParamFilePath,
+            .LogMessagesToFile = False,
+            .MaximumIonsPerSpectrum = m_JobParams.GetJobParameter("MaximumIonsPerSpectrum", 0),
+            .ScanToExportMinimum = mScanStart,
+            .ScanToExportMaximum = mScanStop,
             .MinimumParentIonMZ = mMWLower
-
-        End With
+        }
 
         blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath)
 

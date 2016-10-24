@@ -17,7 +17,7 @@ Public Class clsDtaGenMSConvert
 
     Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 250
 
-    Protected mForceCentroidOn As Boolean = False
+    Private mForceCentroidOn As Boolean = False
 
     Public Property ForceCentroidOn As Boolean
         Get
@@ -98,9 +98,12 @@ Public Class clsDtaGenMSConvert
     Private Function ConvertMGFtoDTA() As Boolean
 
         Try
-            Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
+            Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", String.Empty)
 
-            Dim oMGFConverter As clsMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir)
+            Dim oMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir) With {
+                .IncludeExtraInfoOnParentIonLine = True,
+                .MinimumIonsPerSpectrum = 0
+            }
 
             Dim eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
             Dim blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset)
@@ -154,7 +157,7 @@ Public Class clsDtaGenMSConvert
             m_InstrumentFileName = Path.GetFileName(rawFilePath)
             m_JobParams.AddResultFileToSkip(m_InstrumentFileName)
 
-            Const scanStart As Integer = 1
+            Const scanStart = 1
             Dim scanStop = DEFAULT_SCAN_STOP
 
             If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
@@ -200,9 +203,6 @@ Public Class clsDtaGenMSConvert
 
             'Determine max number of scans to be used
             m_NumScans = scanStop - scanStart + 1
-
-            'Setup a program runner tool to make the spectra files
-            m_RunProgTool = New clsRunDosProgram(m_WorkDir)
 
             ' Lookup Centroid Settings
             Dim centroidMGF = m_JobParams.GetJobParameter("CentroidMGF", False)
@@ -250,14 +250,14 @@ Public Class clsDtaGenMSConvert
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)
             End If
 
-            With m_RunProgTool
-                .CreateNoWindow = True
-                .CacheStandardOutput = True
-                .EchoOutputToConsole = True
-
-                .WriteConsoleOutputToFile = True
+            'Setup a program runner tool to make the spectra files
+            m_RunProgTool = New clsRunDosProgram(m_WorkDir) With {
+                .CreateNoWindow = True,
+                .CacheStandardOutput = True,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = String.Empty      ' Allow the console output filename to be auto-generated
-            End With
+            }
 
             If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, cmdStr, "MSConvert", True) Then
                 ' .RunProgram returned False
@@ -268,7 +268,7 @@ Public Class clsDtaGenMSConvert
             End If
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MGF file created")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MGF file created using MSConvert")
             End If
 
             Return True

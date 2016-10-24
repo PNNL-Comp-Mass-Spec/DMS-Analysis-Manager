@@ -305,56 +305,39 @@ Public Class clsDtaGenThermoRaw
 
         Const LOOPING_CHUNK_SIZE = 25000
 
-        'Makes DTA files using extract_msn.exe or DeconMSn.exe
+        ' Makes DTA files using extract_msn.exe or DeconMSn.exe
         ' Warning: do not centroid spectra using DeconMSn since the masses reported when centroiding are not properly calibrated and thus could be off by 0.3 m/z or more
 
-        Dim CmdStr As String
-        Dim strInstrumentDataFilePath As String
-
-        Dim ScanStart As Integer
-        Dim ScanStop As Integer
-        Dim MaxIntermediateScansWhenGrouping As Integer
-        Dim MWLower As String
-        Dim MWUpper As String
-        Dim MassTol As String
-        Dim IonCount As String
-        Dim CreateDefaultCharges As Boolean
-        Dim ExplicitChargeStart As Short            ' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
-        Dim ExplicitChargeEnd As Short              ' Ignored if ExplicitChargeStart = 0 or ExplicitChargeEnd = 0
-
-        Dim LocCharge As Short
-        Dim LocScanStart As Integer
-        Dim LocScanStop As Integer
-
-        'DAC debugging
+        ' DAC debugging
         Thread.CurrentThread.Name = "MakeDTAFiles"
 
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating DTA files using " + Path.GetFileName(m_DtaToolNameLoc))
         End If
 
-        'Get the parameters from the various parameter dictionaries
+        ' Get the parameters from the various parameter dictionaries
 
-        strInstrumentDataFilePath = Path.Combine(m_WorkDir, m_InstrumentFileName)
+        Dim strInstrumentDataFilePath = Path.Combine(m_WorkDir, m_InstrumentFileName)
 
-        'Note: Defaults are used if certain parameters are not present in m_JobParams
+        ' Note: Defaults are used if certain parameters are not present in m_JobParams
 
-        ScanStart = m_JobParams.GetJobParameter("ScanStart", CInt(1))
-        ScanStop = m_JobParams.GetJobParameter("ScanStop", DEFAULT_SCAN_STOP)
+        Dim ScanStart = m_JobParams.GetJobParameter("ScanControl", "ScanStart", 1)
+        Dim ScanStop = m_JobParams.GetJobParameter("ScanControl", "ScanStop", DEFAULT_SCAN_STOP)
 
         ' Note: Set MaxIntermediateScansWhenGrouping to 0 to disable grouping
-        MaxIntermediateScansWhenGrouping = m_JobParams.GetJobParameter("MaxIntermediateScansWhenGrouping", CInt(1))
+        Dim MaxIntermediateScansWhenGrouping = m_JobParams.GetJobParameter("MaxIntermediateScansWhenGrouping", 1)
 
-        MWLower = m_JobParams.GetJobParameter("MWStart", "200")
-        MWUpper = m_JobParams.GetJobParameter("MWStop", "5000")
-        IonCount = m_JobParams.GetJobParameter("IonCount", "35")
-        MassTol = m_JobParams.GetJobParameter("MassTol", "3")
+        Dim MWLower = m_JobParams.GetJobParameter("MWControl", "MWStart", "200")
+        Dim MWUpper = m_JobParams.GetJobParameter("MWControl", "MWStop", "5000")
+        Dim IonCount = m_JobParams.GetJobParameter("IonCounts", "IonCount", "35")
+        Dim MassTol = m_JobParams.GetJobParameter("MassTol", "MassTol", "3")
 
-        CreateDefaultCharges = m_JobParams.GetJobParameter("CreateDefaultCharges", True)
-        ExplicitChargeStart = m_JobParams.GetJobParameter("ExplicitChargeStart", CShort(0))
-        ExplicitChargeEnd = m_JobParams.GetJobParameter("ExplicitChargeEnd", CShort(0))
+        Dim CreateDefaultCharges = m_JobParams.GetJobParameter("Charges", "CreateDefaultCharges", True)
 
-        'Get the maximum number of scans in the file
+        Dim ExplicitChargeStart = CShort(m_JobParams.GetJobParameter("Charges", "ExplicitChargeStart", 0))
+        Dim ExplicitChargeEnd = CShort(m_JobParams.GetJobParameter("Charges", "ExplicitChargeEnd", 0))
+
+        ' Get the maximum number of scans in the file
         Dim RawFile As String = String.Copy(strInstrumentDataFilePath)
         If Path.GetExtension(strInstrumentDataFilePath).ToLower() <> clsAnalysisResources.DOT_RAW_EXTENSION Then
             RawFile = Path.ChangeExtension(RawFile, clsAnalysisResources.DOT_RAW_EXTENSION)
@@ -382,7 +365,7 @@ Public Class clsDtaGenThermoRaw
                 Return False
         End Select
 
-        'Verify max scan specified is in file
+        ' Verify max scan specified is in file
         If m_MaxScanInFile > 0 Then
             If ScanStart = 1 AndAlso ScanStop = 999999 AndAlso ScanStop < m_MaxScanInFile Then
                 ' The default scan range for processing all scans has traditionally be 1 to 999999
@@ -394,11 +377,13 @@ Public Class clsDtaGenThermoRaw
             If ScanStop > m_MaxScanInFile Then ScanStop = m_MaxScanInFile
         End If
 
-        'Determine max number of scans to be performed
+        ' Determine max number of scans to be performed
         m_NumScans = ScanStop - ScanStart + 1
 
-        'Setup a program runner tool to make the spectra files
+        ' Setup a program runner tool to make the spectra files
         m_RunProgTool = New clsRunDosProgram(m_WorkDir)
+
+        Dim LocCharge As Integer
 
         ' Loop through the requested charge states, starting first with the default charges if appropriate
         If CreateDefaultCharges Then
@@ -436,7 +421,8 @@ Public Class clsDtaGenThermoRaw
                 ' Limit to chunks of LOOPING_CHUNK_SIZE scans due to limitation of extract_msn.exe
                 ' (only used if selected in manager settings, but "UseDTALooping" is typically set to True)
 
-                LocScanStart = ScanStart
+                Dim LocScanStart = ScanStart
+                Dim LocScanStop As Integer
 
                 If m_RunningExtractMSn AndAlso m_MgrParams.GetParam("UseDTALooping", False) Then
                     If ScanStop > (LocScanStart + LOOPING_CHUNK_SIZE) Then
@@ -448,7 +434,7 @@ Public Class clsDtaGenThermoRaw
                     LocScanStop = ScanStop
                 End If
 
-                'Loop until no more .dta files are created or ScanStop is reached
+                ' Loop until no more .dta files are created or ScanStop is reached
                 Do While (LocScanStart <= ScanStop)
                     ' Check for abort
                     If m_AbortRequested Then
@@ -456,31 +442,31 @@ Public Class clsDtaGenThermoRaw
                         Exit Do
                     End If
 
-                    'Set up command
-                    CmdStr = "-I" & IonCount & " -G1"
+                    ' Set up command
+                    Dim cmdStr = "-I" & IonCount & " -G1"
                     If LocCharge > 0 Then
-                        CmdStr &= " -C" & LocCharge.ToString
+                        cmdStr &= " -C" & LocCharge.ToString
                     End If
 
-                    CmdStr &= " -F" & LocScanStart.ToString & " -L" & LocScanStop.ToString
+                    cmdStr &= " -F" & LocScanStart.ToString & " -L" & LocScanStop.ToString
 
                     ' For ExtractMSn, -S means the number of allowed different intermediate scans for grouping (default=1), for example -S1
                     ' For DeconMSn, -S means the type of spectra to process, for example -SALL or -SCID
 
                     If m_RunningExtractMSn Then
-                        CmdStr &= " -S" & MaxIntermediateScansWhenGrouping
+                        cmdStr &= " -S" & MaxIntermediateScansWhenGrouping
                     End If
 
-                    CmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
-                    CmdStr &= " -D" & m_WorkDir
+                    cmdStr &= " -B" & MWLower & " -T" & MWUpper & " -M" & MassTol
+                    cmdStr &= " -D" & m_WorkDir
 
                     If Not m_RunningExtractMSn Then
-                        CmdStr &= " -XCDTA -Progress"
+                        cmdStr &= " -XCDTA -Progress"
                     End If
-                    CmdStr &= " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(m_WorkDir, m_InstrumentFileName))
+                    cmdStr &= " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(m_WorkDir, m_InstrumentFileName))
 
                     If m_DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & CmdStr)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)
                     End If
 
                     With m_RunProgTool
@@ -518,7 +504,7 @@ Public Class clsDtaGenThermoRaw
                          & Thread.CurrentThread.Name)
                     End If
 
-                    'Update loopy parameters
+                    ' Update loopy parameters
                     LocScanStart = LocScanStop + 1
                     LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE
                     If LocScanStop > ScanStop Then
@@ -552,13 +538,13 @@ Public Class clsDtaGenThermoRaw
             mDeconMSnProgressWatcher.EnableRaisingEvents = False
         End If
 
-        'DAC debugging
+        ' DAC debugging
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " _
               & Thread.CurrentThread.Name)
         End If
 
-        'We got this far, everything must have worked
+        ' We got this far, everything must have worked
         If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
             LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING")
             Return False
@@ -583,7 +569,7 @@ Public Class clsDtaGenThermoRaw
 
         Try
             Using swProgress = New StreamReader(New FileStream(progressFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                Do While swProgress.Peek > -1
+                While Not swProgress.EndOfStream
                     Dim strLineIn = swProgress.ReadLine()
                     If strLineIn.StartsWith("Percent complete") Then
 
@@ -600,7 +586,7 @@ Public Class clsDtaGenThermoRaw
                             Integer.TryParse(reMatch.Groups(1).Value, m_SpectraFileCount)
                         End If
                     End If
-                Loop
+                End While
             End Using
         Catch ex As Exception
             ' Ignore errors here
@@ -641,7 +627,7 @@ Public Class clsDtaGenThermoRaw
 
         If m_RunningExtractMSn Then
             ' Verify at least one .dta file has been created
-            'Returns the number of dta files in the working directory
+            ' Returns the number of dta files in the working directory
             Dim FileList() As String = Directory.GetFiles(m_WorkDir, "*.dta")
 
             If FileList.GetLength(0) < 1 Then

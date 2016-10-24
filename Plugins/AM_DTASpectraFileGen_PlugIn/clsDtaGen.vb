@@ -19,7 +19,7 @@ Public MustInherit Class clsDtaGen
 
 #Region "Module variables"
     Protected m_ErrMsg As String = String.Empty
-    Protected m_WorkDir As String = String.Empty    'Working directory on analysis machine
+    Protected m_WorkDir As String = String.Empty    ' Working directory on analysis machine
     Protected m_Dataset As String = String.Empty
     Protected m_RawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
 
@@ -119,11 +119,11 @@ Public MustInherit Class clsDtaGen
     Public MustOverride Function Start() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Start
 
     Public Overridable Sub Setup(
-      InitParams As ISpectraFileProcessor.InitializationParams,
+      initParams As ISpectraFileProcessor.InitializationParams,
       toolRunner As clsAnalysisToolRunnerBase) Implements ISpectraFileProcessor.Setup
 
-        'Copies all input data required for plugin operation to appropriate memory variables
-        With InitParams
+        ' Copies all input data required for plugin operation to appropriate memory variables
+        With initParams
             m_DebugLevel = CShort(.DebugLevel)
             m_JobParams = .JobParams
             m_MgrParams = .MgrParams
@@ -146,7 +146,7 @@ Public MustInherit Class clsDtaGen
 
     Protected Function VerifyDirExists(TestDir As String) As Boolean
 
-        'Verifies that the specified directory exists
+        ' Verifies that the specified directory exists
         If Directory.Exists(TestDir) Then
             m_ErrMsg = ""
             Return True
@@ -158,7 +158,7 @@ Public MustInherit Class clsDtaGen
     End Function
 
     Protected Function VerifyFileExists(TestFile As String) As Boolean
-        'Verifies specified file exists
+        ' Verifies specified file exists
         If File.Exists(TestFile) Then
             m_ErrMsg = ""
             Return True
@@ -171,34 +171,34 @@ Public MustInherit Class clsDtaGen
 
     Protected Overridable Function InitSetup() As Boolean
 
-        'Initializes module variables and verifies mandatory parameters have been propery specified
+        ' Initializes module variables and verifies mandatory parameters have been propery specified
 
-        'Manager parameters
+        ' Manager parameters
         If m_MgrParams Is Nothing Then
             m_ErrMsg = "Manager parameters not specified"
             Return False
         End If
 
-        'Job parameters
+        ' Job parameters
         If m_JobParams Is Nothing Then
             m_ErrMsg = "Job parameters not specified"
             Return False
         End If
 
-        'Status tools
+        ' Status tools
         If m_StatusTools Is Nothing Then
             m_ErrMsg = "Status tools object not set"
             Return False
         End If
 
-        'If we got here, everything's OK
+        ' If we got here, everything's OK
         Return True
 
     End Function
 
     Protected Function DeleteNonDosFiles() As Boolean
 
-        'extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters. This
+        ' extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters. This
         '	function removes those files
 
         Dim WorkDir As New DirectoryInfo(m_WorkDir)
@@ -221,18 +221,9 @@ Public MustInherit Class clsDtaGen
     End Function
 
     Protected Sub LogDTACreationStats(strProcedureName As String, strDTAToolName As String, strErrorMessage As String)
-        Dim objFolderInfo As DirectoryInfo
-        Dim objFiles() As FileInfo
-
-        Dim intIndex As Integer
-        Dim intDTACount As Integer
 
         Dim strMostRecentBlankDTA As String = String.Empty
         Dim strMostRecentValidDTA As String = String.Empty
-        Dim lngDTAFileSize As Long = 0
-
-        Dim intMostRecentValidDTAIndex As Integer = -1
-        Dim intMostRecentBlankDTAIndex As Integer = -1
 
         If strProcedureName Is Nothing Then
             strProcedureName = "clsDtaGen.??"
@@ -250,16 +241,18 @@ Public MustInherit Class clsDtaGen
         ' Now count the number of .Dta files in the working folder
 
         Try
-            objFolderInfo = New DirectoryInfo(m_WorkDir)
+            Dim objFolderInfo = New DirectoryInfo(m_WorkDir)
+            Dim objFiles = objFolderInfo.GetFiles("*.dta")
+            Dim intDTACount As Integer
 
-            objFiles = objFolderInfo.GetFiles("*.dta")
             If objFiles Is Nothing OrElse objFiles.Length <= 0 Then
                 intDTACount = 0
             Else
                 intDTACount = objFiles.Length
 
-                intMostRecentValidDTAIndex = -1
-                intMostRecentBlankDTAIndex = -1
+                Dim intMostRecentValidDTAIndex = -1
+                Dim intMostRecentBlankDTAIndex = -1
+                Dim lngDTAFileSize As Long = 0
 
                 ' Find the most recently created .Dta file
                 ' However, track blank (zero-length) .Dta files separate from those with data 
@@ -292,23 +285,23 @@ Public MustInherit Class clsDtaGen
                     lngDTAFileSize = objFiles(intMostRecentValidDTAIndex).Length
                 End If
 
+                If intDTACount > 0 Then
+                    ' Log the name of the most recently created .Dta file
+                    If intMostRecentValidDTAIndex >= 0 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent .Dta file created is " & strMostRecentValidDTA & " with size " & lngDTAFileSize.ToString & " bytes")
+                    Else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", No valid (non zero length) .Dta files were created")
+                    End If
+
+                    If intMostRecentBlankDTAIndex >= 0 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent blank (zero-length) .Dta file created is " & strMostRecentBlankDTA)
+                    End If
+                End If
+
             End If
 
             ' Log the number of .Dta files that were found
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", " & strDTAToolName & " created " & intDTACount.ToString & " .dta files")
-
-            If intDTACount > 0 Then
-                ' Log the name of the most recently created .Dta file
-                If intMostRecentValidDTAIndex >= 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent .Dta file created is " & strMostRecentValidDTA & " with size " & lngDTAFileSize.ToString & " bytes")
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", No valid (non zero length) .Dta files were created")
-                End If
-
-                If intMostRecentBlankDTAIndex >= 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent blank (zero-length) .Dta file created is " & strMostRecentBlankDTA)
-                End If
-            End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcedureName & ", Error finding the most recently created .Dta file: " & ex.Message)

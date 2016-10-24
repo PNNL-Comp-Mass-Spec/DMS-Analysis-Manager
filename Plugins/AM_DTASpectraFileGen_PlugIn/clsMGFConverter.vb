@@ -34,6 +34,18 @@ Public Class clsMGFConverter
         End Get
     End Property
 
+    ''' <summary>
+    ''' When true, the parent ion line will include text like "scan=5823 cs=3"
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property IncludeExtraInfoOnParentIonLine As Boolean
+
+    ''' <summary>
+    ''' If non-zero, spectra with fewer than this many ions are excluded from the _dta.txt file
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property MinimumIonsPerSpectrum As Integer
+
     Public ReadOnly Property SpectraCountWritten() As Integer
         Get
             If mMGFtoDTA Is Nothing Then
@@ -45,6 +57,11 @@ Public Class clsMGFConverter
     End Property
 #End Region
 
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="intDebugLevel"></param>
+    ''' <param name="strWorkDir"></param>
     Public Sub New(intDebugLevel As Integer, strWorkDir As String)
         m_DebugLevel = intDebugLevel
         m_WorkDir = strWorkDir
@@ -74,8 +91,7 @@ Public Class clsMGFConverter
             ' Read the .mzML file to construct a mapping between "title" line and scan number
             ' If necessary, update the .mgf file to have new "title" lines that clsMGFtoDTA will recognize
 
-            Dim strMzMLFilePath As String
-            strMzMLFilePath = Path.Combine(m_WorkDir, strDatasetName & clsAnalysisResources.DOT_MZML_EXTENSION)
+            Dim strMzMLFilePath = Path.Combine(m_WorkDir, strDatasetName & clsAnalysisResources.DOT_MZML_EXTENSION)
 
             blnSuccess = UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath, strMGFFilePath, strDatasetName)
             If Not blnSuccess Then
@@ -84,16 +100,16 @@ Public Class clsMGFConverter
 
         End If
 
-        mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA()
-
-        With mMGFtoDTA
-            .CreateIndividualDTAFiles = False
-            .FilterSpectra = False
-            .ForceChargeAddnForPredefined2PlusOr3Plus = False
-            .GuesstimateChargeForAllSpectra = False
-            .LogMessagesToFile = False
+        mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA() With {
+            .CreateIndividualDTAFiles = False,
+            .FilterSpectra = False,
+            .ForceChargeAddnForPredefined2PlusOr3Plus = False,
+            .GuesstimateChargeForAllSpectra = False,
+            .IncludeExtraInfoOnParentIonLine = IncludeExtraInfoOnParentIonLine,
+            .LogMessagesToFile = False,
+            .MinimumIonsPerSpectrum = MinimumIonsPerSpectrum,
             .MaximumIonsPerSpectrum = 0
-        End With
+        }
 
         blnSuccess = mMGFtoDTA.ProcessFile(strMGFFilePath, m_WorkDir)
 
@@ -287,34 +303,33 @@ Public Class clsMGFConverter
             strNewMGFFile = Path.GetTempFileName
 
             ' Now read the MGF file and update the title lines
-            Using srSourceMGF As StreamReader = New StreamReader(New FileStream(strMGFFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                Using swNewMGF As StreamWriter = New StreamWriter(New FileStream(strNewMGFFile, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using srSourceMGF = New StreamReader(New FileStream(strMGFFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)),
+                  swNewMGF = New StreamWriter(New FileStream(strNewMGFFile, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                    Do While srSourceMGF.Peek > -1
-                        strLineIn = srSourceMGF.ReadLine()
+                While Not srSourceMGF.EndOfStream
+                    strLineIn = srSourceMGF.ReadLine()
 
-                        If String.IsNullOrEmpty(strLineIn) Then
-                            strLineIn = String.Empty
-                        Else
+                    If String.IsNullOrEmpty(strLineIn) Then
+                        strLineIn = String.Empty
+                    Else
 
-                            If strLineIn.StartsWith("TITLE=") Then
-                                strTitle = strLineIn.Substring("TITLE=".Length())
+                        If strLineIn.StartsWith("TITLE=") Then
+                            strTitle = strLineIn.Substring("TITLE=".Length())
 
-                                ' Look for strTitle in lstSpectrumIDtoScanNumber
-                                If lstSpectrumIDtoScanNumber.TryGetValue(strTitle, udtScanInfo) Then
-                                    strLineIn = "TITLE=" & strDatasetName & "." & udtScanInfo.ScanStart.ToString("0000") & "." & udtScanInfo.ScanEnd.ToString("0000") & "."
-                                    If udtScanInfo.Charge > 0 Then
-                                        ' Also append charge
-                                        strLineIn &= udtScanInfo.Charge
-                                    End If
+                            ' Look for strTitle in lstSpectrumIDtoScanNumber
+                            If lstSpectrumIDtoScanNumber.TryGetValue(strTitle, udtScanInfo) Then
+                                strLineIn = "TITLE=" & strDatasetName & "." & udtScanInfo.ScanStart.ToString("0000") & "." & udtScanInfo.ScanEnd.ToString("0000") & "."
+                                If udtScanInfo.Charge > 0 Then
+                                    ' Also append charge
+                                    strLineIn &= udtScanInfo.Charge
                                 End If
                             End If
                         End If
+                    End If
 
-                        swNewMGF.WriteLine(strLineIn)
-                    Loop
+                    swNewMGF.WriteLine(strLineIn)
+                End While
 
-                End Using
             End Using
 
             If m_DebugLevel >= 1 Then
@@ -327,7 +342,7 @@ Public Class clsMGFConverter
             clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, m_DebugLevel)
             Threading.Thread.Sleep(500)
 
-            Dim ioNewMGF As FileInfo = New FileInfo(strNewMGFFile)
+            Dim ioNewMGF = New FileInfo(strNewMGFFile)
             ioNewMGF.MoveTo(strMGFFilePath)
 
             blnSuccess = True

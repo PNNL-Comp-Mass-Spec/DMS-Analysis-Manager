@@ -684,20 +684,7 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Protected Function MergeCDTAs(strCDTAWithParentIonData As String, strCDTAWithFragIonData As String, strCDTAFileFinal As String) As Boolean
-
-        Dim strMsMsDataList() As String = Nothing
-        Dim intMsMsDataCount As Integer
-        Dim strDataLinesToAppend As String
-
-        Dim strMsMsDataListCentroid() As String = Nothing
-        Dim intMsMsDataCountCentroid As Integer
-
-        Dim udtParentIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-        Dim udtFragIonDataHeader = New clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-
-        Dim blnNextSpectrumAvailable As Boolean
-        Dim intSpectrumCountSkipped As Integer
+    Private Function MergeCDTAs(strCDTAWithParentIonData As String, strCDTAWithFragIonData As String, strCDTAFileFinal As String) As Boolean
 
         Dim dtLastStatus = DateTime.UtcNow
 
@@ -724,13 +711,16 @@ Public Class clsDtaGenToolRunner
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Scanning " & Path.GetFileName(strCDTAWithFragIonData) & " to cache the scan range for each MS/MS spectrum")
 
             Do While True
-                blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
+                Dim msMsDataListCentroid As List(Of String) = Nothing
+
+                Dim udtFragIonDataHeaderCentroid As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = Nothing
+                Dim blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(msMsDataListCentroid, udtFragIonDataHeaderCentroid)
                 If Not blnNextSpectrumAvailable Then
                     Exit Do
                 End If
 
-                Dim scanStart = udtFragIonDataHeader.ScanNumberStart
-                Dim scanEnd = udtFragIonDataHeader.ScanNumberEnd
+                Dim scanStart = udtFragIonDataHeaderCentroid.ScanNumberStart
+                Dim scanEnd = udtFragIonDataHeaderCentroid.ScanNumberEnd
 
                 Dim endScanList As SortedSet(Of Integer) = Nothing
                 If fragIonDataScanStatus.TryGetValue(scanStart, endScanList) Then
@@ -745,7 +735,7 @@ Public Class clsDtaGenToolRunner
 
             ' Close, then re-open strCDTAWithFragIonData
             oCDTAReaderFragIonData.CloseFile()
-            udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo()
+            Dim udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo()
 
             Threading.Thread.Sleep(10)
 
@@ -758,10 +748,12 @@ Public Class clsDtaGenToolRunner
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Merging " & Path.GetFileName(strCDTAWithParentIonData) & " with " & Path.GetFileName(strCDTAWithFragIonData))
 
-            intSpectrumCountSkipped = 0
+            Dim intSpectrumCountSkipped = 0
             Using swCDTAOut = New StreamWriter(New FileStream(strCDTAFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                While oCDTAReaderParentIons.ReadNextSpectrum(strMsMsDataList, intMsMsDataCount, udtParentIonDataHeader)
+                Dim msMsDataList As List(Of String) = Nothing
+                Dim udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = Nothing
+                While oCDTAReaderParentIons.ReadNextSpectrum(msMsDataList, udtParentIonDataHeader)
 
                     If Not ScanMatchIsPossible(udtParentIonDataHeader, fragIonDataScanStatus) Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MergeCDTAs could not find spectrum with StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " for " & Path.GetFileName(strCDTAWithParentIonData))
@@ -769,8 +761,11 @@ Public Class clsDtaGenToolRunner
                         Continue While
                     End If
 
+                    Dim msMsDataListCentroid As List(Of String) = Nothing
+                    Dim blnNextSpectrumAvailable As Boolean
+
                     Do While Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
-                        blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
+                        blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(msMsDataListCentroid, udtFragIonDataHeader)
                         If Not blnNextSpectrumAvailable Then Exit Do
                     Loop
 
@@ -791,7 +786,7 @@ Public Class clsDtaGenToolRunner
                         End If
 
                         Do While Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
-                            blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(strMsMsDataListCentroid, intMsMsDataCountCentroid, udtFragIonDataHeader)
+                            blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(msMsDataListCentroid, udtFragIonDataHeader)
                             If Not blnNextSpectrumAvailable Then Exit Do
                         Loop
 
@@ -807,7 +802,7 @@ Public Class clsDtaGenToolRunner
                         swCDTAOut.WriteLine(udtParentIonDataHeader.SpectrumTitleWithCommentChars)
                         swCDTAOut.WriteLine(udtParentIonDataHeader.ParentIonLineText)
 
-                        strDataLinesToAppend = RemoveTitleAndParentIonLines(oCDTAReaderFragIonData.GetMostRecentSpectrumFileText)
+                        Dim strDataLinesToAppend = RemoveTitleAndParentIonLines(oCDTAReaderFragIonData.GetMostRecentSpectrumFileText)
 
                         If String.IsNullOrWhiteSpace(strDataLinesToAppend) Then
                             m_message = "oCDTAReaderFragIonData.GetMostRecentSpectrumFileText returned empty text for StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " in MergeCDTAs for " & Path.GetFileName(strCDTAWithParentIonData)

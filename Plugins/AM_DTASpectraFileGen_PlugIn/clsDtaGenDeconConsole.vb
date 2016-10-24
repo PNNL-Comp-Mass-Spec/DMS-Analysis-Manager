@@ -106,7 +106,10 @@ Public Class clsDtaGenDeconConsole
         Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
         Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
 
-        Dim oMGFConverter As clsMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir)
+        Dim oMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir) With {
+            .IncludeExtraInfoOnParentIonLine = True,
+            .MinimumIonsPerSpectrum = 0
+        }
 
         eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
         blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset)
@@ -131,7 +134,6 @@ Public Class clsDtaGenDeconConsole
     ''' <remarks></remarks>
     Private Function ConvertRawToMGF(eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
 
-        Dim CmdStr As String
         Dim RawFilePath As String
 
         If m_DebugLevel > 0 Then
@@ -163,16 +165,12 @@ Public Class clsDtaGenDeconConsole
         'Determine max number of scans to be performed
         m_NumScans = m_MaxScanInFile
 
-        'Setup a program runner tool to make the spectra files
-        m_RunProgTool = New clsRunDosProgram(m_WorkDir)
-
         ' Reset the state variables
         mDeconConsoleExceptionThrown = False
         mDeconConsoleFinishedDespiteProgRunnerError = False
         mDeconConsoleStatus.Clear()
 
-        Dim strParamFilePath As String
-        strParamFilePath = m_JobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", String.Empty)
+        Dim strParamFilePath = m_JobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", String.Empty)
 
         If String.IsNullOrEmpty(strParamFilePath) Then
             m_ErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_JobParams, "DeconMSn_ParamFile")
@@ -182,23 +180,21 @@ Public Class clsDtaGenDeconConsole
         End If
 
         'Set up command
-        CmdStr = " " & RawFilePath & " " & strParamFilePath
+        Dim cmdStr = " " & RawFilePath & " " & strParamFilePath
 
         If m_DebugLevel > 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)
         End If
 
-        With m_RunProgTool
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
+        'Setup a program runner tool to make the spectra files
+        m_RunProgTool = New clsRunDosProgram(m_WorkDir) With {
+            .CreateNoWindow = True,
+            .CacheStandardOutput = True,
+            .EchoOutputToConsole = True,
+            .WriteConsoleOutputToFile = False   ' Disable since the DeconConsole log file has very similar information
+        }
 
-            '  We don't need to capture the console output since the DeconConsole log file has very similar information
-            .WriteConsoleOutputToFile = False
-        End With
-
-        Dim blnSuccess As Boolean
-        blnSuccess = m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "DeconConsole", True)
+        Dim blnSuccess = m_RunProgTool.RunProgram(m_DtaToolNameLoc, cmdStr, "DeconConsole", True)
 
         ' Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 
@@ -217,8 +213,7 @@ Public Class clsDtaGenDeconConsole
 
         ' Look for file Dataset*BAD_ERROR_log.txt
         ' If it exists, an exception occurred
-        Dim diWorkdir As DirectoryInfo
-        diWorkdir = New DirectoryInfo(Path.Combine(m_WorkDir))
+        Dim diWorkdir = New DirectoryInfo(Path.Combine(m_WorkDir))
 
         For Each fiFile As FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
             m_ErrMsg = "Error running DeconTools; Bad_Error_log file exists"
@@ -247,7 +242,7 @@ Public Class clsDtaGenDeconConsole
         End If
 
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MGF file created")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MGF file created using DeconConsole")
         End If
 
         Return True
@@ -263,14 +258,13 @@ Public Class clsDtaGenDeconConsole
 
         If m_DebugLevel >= 2 Then
 
-            Dim strProgressMessage As String
-            strProgressMessage = "Scan=" & mDeconConsoleStatus.CurrentLCScan
+            Dim strProgressMessage = "Scan=" & mDeconConsoleStatus.CurrentLCScan
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "... " & strProgressMessage & ", " & m_Progress.ToString("0.0") & "% complete")
 
         End If
 
 
-        Const MAX_LOGFINISHED_WAITTIME_SECONDS As Integer = 120
+        Const MAX_LOGFINISHED_WAITTIME_SECONDS = 120
         If blnFinishedProcessing Then
             ' The DeconConsole Log File reports that the task is complete
             ' If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
@@ -297,6 +291,8 @@ Public Class clsDtaGenDeconConsole
         dtFinishTime = Date.MinValue
 
         Try
+            Dim strLogFilePath As String
+
             Select Case m_RawDataType
                 Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
                     ' As of 11/19/2010, the _Log.txt file is created inside the .D folder
@@ -305,85 +301,87 @@ Public Class clsDtaGenDeconConsole
                     strLogFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) & "_log.txt")
             End Select
 
-            If File.Exists(strLogFilePath) Then
+            If Not File.Exists(strLogFilePath) Then '
+                Return
+            End If
 
-                Using srInFile As StreamReader = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                    Do While srInFile.Peek >= 0
-                        strLineIn = srInFile.ReadLine
+                While Not srInFile.EndOfStream
+                    Dim strLineIn = srInFile.ReadLine
 
-                        If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                            intCharIndex = strLineIn.ToLower().IndexOf("finished file processing")
-                            If intCharIndex >= 0 Then
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue While
 
-                                blnDateValid = False
-                                If intCharIndex > 1 Then
-                                    ' Parse out the date from strLineIn
-                                    If DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
-                                        blnDateValid = True
-                                    Else
-                                        ' Unable to parse out the date
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim & "'; will use file modification date as the processing finish time")
-                                    End If
-                                End If
+                    Dim intCharIndex = strLineIn.IndexOf("finished file processing", StringComparison.InvariantCultureIgnoreCase)
+                    If intCharIndex >= 0 Then
 
-                                If Not blnDateValid Then
-                                    fiFileInfo = New FileInfo(strLogFilePath)
-                                    dtFinishTime = fiFileInfo.LastWriteTime
-                                End If
-
-                                If m_DebugLevel >= 3 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconConsole log file reports 'finished file processing' at " & dtFinishTime.ToString())
-                                End If
-
-                                ''If intWorkFlowStep < TOTAL_WORKFLOW_STEPS Then
-                                ''	intWorkFlowStep += 1
-                                ''End If
-
-                                blnFinishedProcessing = True
+                        Dim blnDateValid = False
+                        If intCharIndex > 1 Then
+                            ' Parse out the date from strLineIn
+                            If DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
+                                blnDateValid = True
+                            Else
+                                ' Unable to parse out the date
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim & "'; will use file modification date as the processing finish time")
                             End If
+                        End If
 
-                            If intCharIndex < 0 Then
-                                intCharIndex = strLineIn.IndexOf("DeconTools.Backend.dll")
-                                If intCharIndex > 0 Then
-                                    ' DeconConsole reports "Finished file processing" at the end of each step in the workflow
-                                    ' Reset blnFinishedProcessing back to false
-                                    blnFinishedProcessing = False
-                                End If
-                            End If
+                        If Not blnDateValid Then
+                            Dim fiFileInfo = New FileInfo(strLogFilePath)
+                            dtFinishTime = fiFileInfo.LastWriteTime
+                        End If
 
-                            If intCharIndex < 0 Then
-                                intCharIndex = strLineIn.ToLower.IndexOf("scan/frame")
-                                If intCharIndex > 0 Then
-                                    strScanLine = strLineIn.Substring(intCharIndex)
-                                End If
-                            End If
+                        If m_DebugLevel >= 3 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconConsole log file reports 'finished file processing' at " & dtFinishTime.ToString())
+                        End If
 
-                            If intCharIndex < 0 Then
-                                intCharIndex = strLineIn.ToLower.IndexOf("scan=")
-                                If intCharIndex > 0 Then
-                                    strScanLine = strLineIn.Substring(intCharIndex)
-                                End If
-                            End If
+                        ''If intWorkFlowStep < TOTAL_WORKFLOW_STEPS Then
+                        ''	intWorkFlowStep += 1
+                        ''End If
 
-                            If intCharIndex < 0 Then
+                        blnFinishedProcessing = True
+                    End If
 
-                                intCharIndex = strLineIn.IndexOf("ERROR THROWN")
-                                If intCharIndex >= 0 Then
-                                    ' An exception was reported in the log file; treat this as a fatal error
-                                    m_ErrMsg = "Error thrown by DeconConsole"
+                    If intCharIndex < 0 Then
+                        intCharIndex = strLineIn.IndexOf("DeconTools.Backend.dll", StringComparison.Ordinal)
+                        If intCharIndex > 0 Then
+                            ' DeconConsole reports "Finished file processing" at the end of each step in the workflow
+                            ' Reset blnFinishedProcessing back to false
+                            blnFinishedProcessing = False
+                        End If
+                    End If
 
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeconConsole reports " & strLineIn.Substring(intCharIndex))
-                                    mDeconConsoleExceptionThrown = True
+                    If intCharIndex < 0 Then
+                        intCharIndex = strLineIn.ToLower.IndexOf("scan/frame", StringComparison.Ordinal)
+                        If intCharIndex > 0 Then
+                            strScanLine = strLineIn.Substring(intCharIndex)
+                        End If
+                    End If
 
-                                End If
-                            End If
+                    If intCharIndex < 0 Then
+                        intCharIndex = strLineIn.ToLower.IndexOf("scan=", StringComparison.Ordinal)
+                        If intCharIndex > 0 Then
+                            strScanLine = strLineIn.Substring(intCharIndex)
+                        End If
+                    End If
+
+                    If intCharIndex < 0 Then
+
+                        intCharIndex = strLineIn.IndexOf("ERROR THROWN", StringComparison.Ordinal)
+                        If intCharIndex >= 0 Then
+                            ' An exception was reported in the log file; treat this as a fatal error
+                            m_ErrMsg = "Error thrown by DeconConsole"
+
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeconConsole reports " & strLineIn.Substring(intCharIndex))
+                            mDeconConsoleExceptionThrown = True
 
                         End If
-                    Loop
+                    End If
 
-                End Using
-            End If
+
+                End While
+
+            End Using
 
         Catch ex As Exception
             ' Ignore errors here		
