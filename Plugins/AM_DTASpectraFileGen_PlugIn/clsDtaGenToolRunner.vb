@@ -150,19 +150,23 @@ Public Class clsDtaGenToolRunner
         Dim strErrorMessage As String = String.Empty
 
         Dim eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, m_ConcatenateDTAs, strErrorMessage)
+        spectraGen = Nothing
 
         Select Case eDtaGeneratorType
             Case eDTAGeneratorConstants.MGFtoDTA
-                SpectraGen = New clsMGFtoDtaGenMainProcess()
+                spectraGen = New clsMGFtoDtaGenMainProcess()
 
             Case eDTAGeneratorConstants.MSConvert
-                SpectraGen = New clsDtaGenMSConvert()
+                spectraGen = New clsDtaGenMSConvert()
 
             Case eDTAGeneratorConstants.DeconConsole
-                SpectraGen = New clsDtaGenDeconConsole()
+                spectraGen = New clsDtaGenDeconConsole()
 
             Case eDTAGeneratorConstants.ExtractMSn, eDTAGeneratorConstants.DeconMSn
-                SpectraGen = New clsDtaGenThermoRaw()
+                spectraGen = New clsDtaGenThermoRaw()
+
+            Case eDTAGeneratorConstants.RawConverter
+                spectraGen = New clsDtaGenRawConverter()
 
             Case eDTAGeneratorConstants.Unknown
                 If String.IsNullOrEmpty(strErrorMessage) Then
@@ -172,7 +176,6 @@ Public Class clsDtaGenToolRunner
                 End If
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-
         End Select
 
         Return eDtaGeneratorType
@@ -209,35 +212,34 @@ Public Class clsDtaGenToolRunner
 
         Select Case eRawDataType
             Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-                If strDTAGenerator.ToLower() = clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower() Then
-                    blnConcatenateDTAs = False
-                    Return eDTAGeneratorConstants.MSConvert
 
-                ElseIf strDTAGenerator.ToLower() = clsDtaGenThermoRaw.DECON_CONSOLE_FILENAME.ToLower() Then
-                    blnConcatenateDTAs = False
-                    Return eDTAGeneratorConstants.DeconConsole
+                blnConcatenateDTAs = False
+                Select Case strDTAGenerator.ToLower()
+                    Case clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower()
+                        Return eDTAGeneratorConstants.MSConvert
 
-                Else
-                    Select Case strDTAGenerator.ToLower()
-                        Case clsDtaGenThermoRaw.EXTRACT_MSN_FILENAME.ToLower()
-                            blnConcatenateDTAs = True
-                            Return eDTAGeneratorConstants.ExtractMSn
+                    Case clsDtaGenThermoRaw.DECON_CONSOLE_FILENAME.ToLower()
+                        Return eDTAGeneratorConstants.DeconConsole
 
-                        Case clsDtaGenThermoRaw.DECONMSN_FILENAME.ToLower()
-                            blnConcatenateDTAs = False
-                            Return eDTAGeneratorConstants.DeconMSn
+                    Case clsDtaGenThermoRaw.EXTRACT_MSN_FILENAME.ToLower()
+                        blnConcatenateDTAs = True
+                        Return eDTAGeneratorConstants.ExtractMSn
 
-                        Case Else
-                            If String.IsNullOrEmpty(strDTAGenerator) Then
-                                strErrorMessage = NotifyMissingParameter(oJobParams, "DtaGenerator")
-                            Else
-                                strErrorMessage = "Unknown DTAGenerator for Thermo Raw files: " & strDTAGenerator
-                            End If
+                    Case clsDtaGenThermoRaw.DECONMSN_FILENAME.ToLower()
+                        Return eDTAGeneratorConstants.DeconMSn
 
-                            Return eDTAGeneratorConstants.Unknown
-                    End Select
+                    Case clsDtaGenThermoRaw.RAWCONVERTER_FILENAME.ToLower()
+                        Return eDTAGeneratorConstants.RawConverter
 
-                End If
+                    Case Else
+                        If String.IsNullOrEmpty(strDTAGenerator) Then
+                            strErrorMessage = NotifyMissingParameter(oJobParams, "DtaGenerator")
+                        Else
+                            strErrorMessage = "Unknown DTAGenerator for Thermo Raw files: " & strDTAGenerator
+                        End If
+
+                        Return eDTAGeneratorConstants.Unknown
+                End Select
 
             Case clsAnalysisResources.eRawDataTypeConstants.mzML
                 If strDTAGenerator.ToLower() = clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower() Then
