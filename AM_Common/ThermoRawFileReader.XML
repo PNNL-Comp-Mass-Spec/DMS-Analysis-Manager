@@ -935,6 +935,14 @@
             </summary>
             <returns>the number of scans, or -1 if an error</returns>
         </member>
+        <member name="M:ThermoRawFileReader.XRawFileIO.GetRetentionTime(System.Int32,System.Double@)">
+            <summary>
+            Get the retention time for the specified scan. Use when searching for scans in a time range.
+            </summary>
+            <param name="scan">Scan number</param>
+            <param name="retentionTime">retention time</param>
+            <returns>True if no error, False if an error</returns>
+        </member>
         <member name="M:ThermoRawFileReader.XRawFileIO.GetScanInfo(System.Int32,ThermoRawFileReader.clsScanInfo@)">
             <summary>
             Get the header info for the specified scan

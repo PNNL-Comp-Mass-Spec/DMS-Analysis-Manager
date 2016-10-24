@@ -30,6 +30,53 @@ PHRPReader
  <returns></returns>
  <remarks>For ambiguous mods, indicates the first residue on which the mod could appear</remarks>
 </member>
+<member name="P:PHRPReader.clsEmpiricalFormula.ElementCounts">
+ <summary>
+ Elements in the empirical formula
+ Keys are element symbols, values are element counts
+ </summary>
+ <returns></returns>
+</member>
+<member name="M:PHRPReader.clsEmpiricalFormula.#ctor">
+ <summary>
+ Constructor
+ </summary>
+</member>
+<member name="M:PHRPReader.clsEmpiricalFormula.#ctor(System.Collections.Generic.Dictionary{System.String,System.Int32})">
+ <summary>
+ Constructor, initialized with an existing dictionary of element symbols and counts
+ </summary>
+</member>
+<member name="M:PHRPReader.clsEmpiricalFormula.#ctor(System.Collections.Generic.IEnumerable{System.String})">
+ <summary>
+ Constructor, initialized with a list of element symbols
+ </summary>
+</member>
+<member name="M:PHRPReader.clsEmpiricalFormula.#ctor(System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Int32}})">
+ <summary>
+ Constructor, initialized with a list of KeyValuePairs of element symbol and element count
+ </summary>
+</member>
+<member name="M:PHRPReader.clsEmpiricalFormula.AddElement(System.String,System.Int32)">
+ <summary>
+ Add a new element to the empirical formula
+ </summary>
+ <param name="elementSymbol"></param>
+ <param name="elementCount"></param>
+</member>
+<member name="M:PHRPReader.clsEmpiricalFormula.AddElements(PHRPReader.clsEmpiricalFormula)">
+ <summary>
+ Adds all of the elements from the given empirical formula
+ </summary>
+ <param name="empiricalFormula"></param>
+</member>
+<member name="M:PHRPReader.clsEmpiricalFormula.GetElementCount(System.Char)">
+ <summary>
+ Return the number of atoms of the given element in the empirical formula
+ </summary>
+ <param name="elementSymbol"></param>
+ <returns>Element Count, or 0 if the element is not in ElementCounts</returns>
+</member>
 <member name="F:PHRPReader.clsModificationDefinition.eModificationTypeConstants.UnknownType">
  <summary>
  Unknown mod type on a residue; essentially treated as a dynamic mod
@@ -418,11 +465,34 @@ PHRPReader
  <returns>True if the characters match the currently defined cleavage rule</returns>
  <remarks></remarks>
 </member>
-<member name="T:PHRPReader.clsPeptideMassCalculator.udtAtomCountsType">
+<member name="F:PHRPReader.clsPeptideMassCalculator.udtPeptideSequenceModInfoType.ResidueLocInPeptide">
  <summary>
- Tracks elemental composition of each amino acid
+ Position that the modification occurs; not used by clsPeptideMassCalculator
  </summary>
- <remarks>In MGSF+, amino acids can only be C, H, N, O, and S</remarks>
+</member>
+<member name="F:PHRPReader.clsPeptideMassCalculator.udtPeptideSequenceModInfoType.ModificationMass">
+ <summary>
+ Modification mass
+ </summary>
+</member>
+<member name="F:PHRPReader.clsPeptideMassCalculator.udtPeptideSequenceModInfoType.AffectedAtom">
+ <summary>
+ Affected atom
+ </summary>
+ <remarks>
+ Set to Nothing or to NO_AFFECTED_ATOM_SYMBOL for positional modifications (including terminus modifications)
+ For Isotopic modifications, indicate the atom affected (e.g. C, H, N, O, or S)
+ </remarks>
+</member>
+<member name="F:PHRPReader.clsPeptideMassCalculator.mAtomicFormulaRegEx">
+ <summary>
+ Regular expression for parsing an empirical formula
+ </summary>
+</member>
+<member name="F:PHRPReader.clsPeptideMassCalculator.mElementMonoMasses">
+ <summary>
+ This dictionary tracks element symbols and monoisotopic masses
+ </summary>
 </member>
 <member name="P:PHRPReader.clsPeptideMassCalculator.ErrorMessage">
  <summary>
@@ -432,24 +502,38 @@ PHRPReader
  <returns></returns>
  <remarks></remarks>
 </member>
+<member name="M:PHRPReader.clsPeptideMassCalculator.#cctor">
+ <summary>
+ Constructor for shared (static) variables
+ </summary>
+</member>
 <member name="M:PHRPReader.clsPeptideMassCalculator.#ctor">
  <summary>
  Constructor
  </summary>
  <remarks></remarks>
 </member>
-<member name="M:PHRPReader.clsPeptideMassCalculator.AddAminoAcidStatEntry(System.Byte)">
+<member name="M:PHRPReader.clsPeptideMassCalculator.ComputeMonoistopicMass(PHRPReader.clsEmpiricalFormula)">
  <summary>
- Adds a new entry to parallel arrays AminoAcidMasses and AminoAcidSymbols
+ Compute the monoisotopic mass of the given empirical formula
  </summary>
- <param name="intIndex"></param>
- <remarks></remarks>
+ <param name="empiricalFormula"></param>
+ <returns></returns>
+ <remarks>Throws an exception if an unknown symbol is encountered</remarks>
+</member>
+<member name="M:PHRPReader.clsPeptideMassCalculator.ComputeMonoistopicMass(System.Collections.Generic.Dictionary{System.String,System.Int32},System.Collections.Generic.List{System.String}@)">
+ <summary>
+ Compute the monoisotopic mass of the compound represented by elementalComposition
+ </summary>
+ <param name="elementalComposition"></param>
+ <param name="unknownSymbols"></param>
+ <returns></returns>
 </member>
 <member name="M:PHRPReader.clsPeptideMassCalculator.ComputeSequenceMass(System.String)">
  <summary>
  Compute the mass of peptide sequence strSequence (it cannot contain modification symbols)
  </summary>
- <param name="strSequence"></param>
+ <param name="strSequence">One letter amino acid symbols (no modification symbols or numbers); can have prefix and suffix letters</param>
  <returns>Monoisotopic mass, or -1 if an error</returns>
  <remarks>
  Looks for and removes prefix and suffix letters if .RemovePrefixAndSuffixIfPresent = True
@@ -469,7 +553,7 @@ PHRPReader
  <summary>
  Compute the mass of peptide sequence strSequence; uses the information in udtResidueModificationInfo() to determine modification masses
  </summary>
- <param name="strSequence"></param>
+ <param name="strSequence">One letter amino acid symbols (no modification symbols or numbers)</param>
  <param name="modifiedResidues">List of modified residues</param>
  <returns>The computed mass, or -1 if an error</returns>
  <remarks>Looks for and removes prefix and suffix letters if .RemovePrefixAndSuffixIfPresent = True</remarks>
@@ -484,14 +568,6 @@ PHRPReader
  <param name="strSequence"></param>
  <returns></returns>
  <remarks>Looks for and removes prefix and suffix letters if .RemovePrefixAndSuffixIfPresent = True</remarks>
-</member>
-<member name="M:PHRPReader.clsPeptideMassCalculator.ConvertElementalCompositionToAtomCounts(System.Collections.Generic.Dictionary{System.Char,System.Int32})">
- <summary>
- Populate a udtAtomCountsType instance using the information in elementalComposition
- </summary>
- <param name="elementalComposition"></param>
- <returns></returns>
- <remarks>Only valid for amino acids, since udtAtomCountsType only supports C, H, N, O, and S</remarks>
 </member>
 <member name="M:PHRPReader.clsPeptideMassCalculator.ConvoluteMass(System.Double,System.Int32,System.Int32)">
  <summary>
@@ -508,19 +584,18 @@ PHRPReader
  Converts the m/z value from one charge state to another charge state.  Either charge state can be 0, which means an uncharged peptide
  </summary>
  <param name="dblMassMZ">m/z</param>
- <param name="intCurrentCharge">Current charge</param>
+ <param name="intCurrentCharge">Current charge; if 0, assumes dblMassMZ is the neutral, monoisotopic mass</param>
  <param name="intDesiredCharge">Desired charge</param>
  <param name="dblChargeCarrierMass">Charge carrier mass (Default is the mass of a proton)</param>
  <returns></returns>
- <remarks></remarks>
+ <remarks>To return the neutral mass, set intDesiredCharge to 0</remarks>
 </member>
-<member name="M:PHRPReader.clsPeptideMassCalculator.GetAminoAcidAtomCounts(System.Char)">
+<member name="M:PHRPReader.clsPeptideMassCalculator.ConvertAminoAcidSequenceToEmpiricalFormula(System.String)">
  <summary>
- Returns a structure with the number of atoms of C, H, N, O, and S in the specified amino acid
+ Convert an amino acid sequence into an empirical formula
  </summary>
- <param name="chAminoAcidSymbol"></param>
+ <param name="strSequence">One letter amino acid symbols (no modification symbols or numbers)</param>
  <returns></returns>
- <remarks></remarks>
 </member>
 <member name="M:PHRPReader.clsPeptideMassCalculator.GetAminoAcidMass(System.Char)">
  <summary>
@@ -530,9 +605,17 @@ PHRPReader
  <returns></returns>
  <remarks></remarks>
 </member>
-<member name="M:PHRPReader.clsPeptideMassCalculator.GetAtomCountsStruct(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+<member name="M:PHRPReader.clsPeptideMassCalculator.GetAminoAcidEmpiricalFormula(System.Char)">
  <summary>
- Create a new udtAtomCountsType struct with the specified number of atoms
+ Returns a List with the number of atoms of C, H, N, O, and S in the specified amino acid
+ </summary>
+ <param name="chAminoAcidSymbol"></param>
+ <returns></returns>
+ <remarks></remarks>
+</member>
+<member name="M:PHRPReader.clsPeptideMassCalculator.GetAminoAcidEmpiricalFormula(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+ <summary>
+ Create a new clsEmpiricalFormula instnance with the specified number of atoms
  </summary>
  <param name="countC"></param>
  <param name="countH"></param>
@@ -542,13 +625,33 @@ PHRPReader
  <returns></returns>
  <remarks></remarks>
 </member>
+<member name="M:PHRPReader.clsPeptideMassCalculator.GetAtomicFormulaRegEx(System.Collections.Generic.Dictionary{System.String,System.Double})">
+ <summary>
+ Create a regex for parsing an empirical formula that optionally contains element counts and optionally contains plus or minus signs
+ Examples of supported empirical formulas:
+  CHNOS
+  C3H3NOS4
+  CH23NO-5S+4
+ </summary>
+ <param name="elementMonoMasses"></param>
+ <returns>RegEx with named capture groups ElementSymbol and ElementCount</returns>
+</member>
+<member name="M:PHRPReader.clsPeptideMassCalculator.GetElementMonoMasses">
+ <summary>
+ Return a dictionary of element symbols and element masses
+ </summary>
+ <returns></returns>
+</member>
 <member name="M:PHRPReader.clsPeptideMassCalculator.GetEmpiricalFormulaComponents(System.String)">
  <summary>
  Parse the given empirical formula to return a dictionary of the elements
- IMPORTANT: Only supports C, H, N, O, S, and P
+ Examples of supported empirical formulas:
+  CHNOS
+  C3H3NOS4
+  CH23NO-5S+4
  </summary>
  <param name="strEmpiricalformula"></param>
- <returns>Dictionary where keys are element symbols and values are the element counts</returns>
+ <returns>EmpiricalFormula instnance tracking the element symbols and counts</returns>
 </member>
 <member name="M:PHRPReader.clsPeptideMassCalculator.MassToPPM(System.Double,System.Double)">
  <summary>
@@ -604,13 +707,22 @@ PHRPReader
  </summary>
  <remarks></remarks>
 </member>
-<member name="M:PHRPReader.clsPeptideMassCalculator.SetAminoAcidAtomCounts(System.Char,PHRPReader.clsPeptideMassCalculator.udtAtomCountsType)">
+<member name="M:PHRPReader.clsPeptideMassCalculator.SetAminoAcidAtomCounts(System.Char,System.Collections.Generic.Dictionary{System.String,System.Int32})">
  <summary>
- Defines the number of C, H, N, O, and S atoms in an amino acid
+ Defines the number of C, H, N, O, S, etc. elements in an amino acid
  </summary>
- <param name="chAminoAcidSymbol"></param>
- <param name="udtAtomCounts"></param>
- <returns></returns>
+ <param name="chAminoAcidSymbol">Amino acid symbol</param>
+ <param name="elementalComposition">Dictionary where keys are element symbols and values are the element counts</param>
+ <returns>True if success, False if an invalid amino acid symbol</returns>
+ <remarks></remarks>
+</member>
+<member name="M:PHRPReader.clsPeptideMassCalculator.SetAminoAcidAtomCounts(System.Char,PHRPReader.clsEmpiricalFormula)">
+ <summary>
+ Defines the number of C, H, N, O, S, etc. elements in an amino acid
+ </summary>
+ <param name="chAminoAcidSymbol">>Amino acid symbol</param>
+ <param name="empiricalFormula">Empirical formula class</param>
+ <returns>True if success, False if an invalid amino acid symbol</returns>
  <remarks></remarks>
 </member>
 <member name="M:PHRPReader.clsPeptideMassCalculator.SetAminoAcidMass(System.Char,System.Double)">
@@ -619,7 +731,14 @@ PHRPReader
  </summary>
  <param name="chAminoAcidSymbol"></param>
  <param name="dblMass"></param>
- <returns></returns>
+ <returns>True if success, False if an invalid amino acid symbol</returns>
+ <remarks></remarks>
+</member>
+<member name="M:PHRPReader.clsPeptideMassCalculator.UpdateAminoAcidStatEntry(System.Byte)">
+ <summary>
+ Updates an entry in parallel arrays AminoAcidMasses and AminoAcidSymbols
+ </summary>
+ <param name="aminoAcidIndex"></param>
  <remarks></remarks>
 </member>
 <member name="M:PHRPReader.clsPeptideModificationContainer.AddModification(PHRPReader.clsModificationDefinition,System.Boolean)">
@@ -1172,9 +1291,9 @@ PHRPReader
 </member>
 <member name="F:PHRPReader.clsPHRPReader.mFastReadMode">
  <summary>
- When set to true, then calls to MoveNext will read the next data line, but will skip several additional processing steps for performance reasons
+ When set to true, calls to MoveNext will read the next data line, but will skip several additional processing steps for performance reasons
  </summary>
- <remarks>If the peptide is a peptide of interest, then call FinalizeCurrentPSM</remarks>
+ <remarks>If the peptide is a peptide of interest, you must call FinalizeCurrentPSM after calling .MoveNext()</remarks>
 </member>
 <member name="F:PHRPReader.clsPHRPReader.mParentIonMzMatchNonMsx">
  <summary>
@@ -1865,6 +1984,7 @@ PHRPReader
  <param name="objSearchEngineParams"></param>
  <param name="chargeCarrierMass"></param>
  <returns></returns>
+ <remarks>This function is used by clsPHRPMassErrorValidator in the Analysis Manager</remarks>
 </member>
 <member name="M:PHRPReader.clsPHRPParserMSGFDB.LoadSearchEngineParameters(System.String,PHRPReader.clsSearchEngineParameters@)">
  <summary>
