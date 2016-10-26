@@ -18,6 +18,8 @@ Public MustInherit Class clsMSXmlGen
     Protected ReadOnly mDatasetName As String
     Protected ReadOnly mRawDataType As clsAnalysisResources.eRawDataTypeConstants
     Protected mSourceFilePath As String = String.Empty
+    Protected mOutputFileName As String = String.Empty
+
     Protected ReadOnly mOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
 
     Protected ReadOnly mCentroidMS1 As Boolean
@@ -37,6 +39,10 @@ Public MustInherit Class clsMSXmlGen
 
 #Region "Properties"
 
+    public Property ConsoleOutputFileName as String = ""
+
+    Public Property ConsoleOutputSuffix As String = ""
+
     Public Property DebugLevel As Integer = 1
 
     Public ReadOnly Property ErrorMessage() As String
@@ -46,6 +52,12 @@ Public MustInherit Class clsMSXmlGen
             Else
                 Return mErrorMessage
             End If
+        End Get
+    End Property
+
+    Public ReadOnly Property OutputFileName As String
+        Get
+            Return mOutputFileName
         End Get
     End Property
 
@@ -98,7 +110,7 @@ Public MustInherit Class clsMSXmlGen
         mErrorMessage = String.Empty
     End Sub
 
-    Protected MustOverride Function CreateArguments(msXmlFormat As String, RawFilePath As String) As String
+    Protected MustOverride Function CreateArguments(msXmlFormat As String, rawFilePath As String) As String
 
     ''' <summary>
     ''' Generate the mzXML or mzML file
@@ -115,10 +127,13 @@ Public MustInherit Class clsMSXmlGen
                 clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf,
                 clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
                 mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
+            Case clsAnalysisResources.eRawDataTypeConstants.mzXML
+                mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
+            Case clsAnalysisResources.eRawDataTypeConstants.mzML
+                mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_MZML_EXTENSION)
             Case Else
                 Throw New ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString())
         End Select
-
 
         Dim blnSuccess As Boolean
 
@@ -139,7 +154,7 @@ Public MustInherit Class clsMSXmlGen
             Return False
         End If
 
-        'Set up and execute a program runner to run MS XML executable
+        ' Set up and execute a program runner to run MS XML executable
 
         Dim cmdStr = CreateArguments(msXmlFormat, mSourceFilePath)
 
@@ -153,6 +168,9 @@ Public MustInherit Class clsMSXmlGen
 
         RaiseEvent ProgRunnerStarting(mProgramPath & cmdStr)
 
+        If ConsoleOutputSuffix Is Nothing Then ConsoleOutputSuffix = String.Empty
+        ConsoleOutputFileName = Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput" & ConsoleOutputSuffix & ".txt"
+
         With CmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
@@ -160,8 +178,7 @@ Public MustInherit Class clsMSXmlGen
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(mWorkDir,
-                                                  Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput.txt")
+            .ConsoleOutputFilePath = Path.Combine(mWorkDir, ConsoleOutputFileName)
 
             .WorkDir = mWorkDir
         End With
@@ -202,8 +219,8 @@ Public MustInherit Class clsMSXmlGen
             End If
         Else
             ' Make sure the output file was created and is not empty
-            Dim outputFilePath As String
-            outputFilePath = Path.ChangeExtension(mSourceFilePath, msXmlFormat)
+            Dim sourceFile = New FileInfo(mSourceFilePath)
+            Dim outputFilePath = Path.Combine(sourceFile.Directory.FullName, GetOutputFileName(msXmlFormat, mSourceFilePath, mRawDataType))
 
             If Not File.Exists(outputFilePath) Then
                 mErrorMessage = "Output file not found: " & outputFilePath
@@ -219,6 +236,8 @@ Public MustInherit Class clsMSXmlGen
 
         End If
     End Function
+
+    Protected MustOverride Function GetOutputFileName(msXmlFormat As String, rawFilePath As String, rawDataType As clsAnalysisResources.eRawDataTypeConstants) As String
 
     Public Sub LogCreationStatsSourceToMsXml(dtStartTimeUTC As DateTime, strSourceFilePath As String, strMsXmlFilePath As String)
 

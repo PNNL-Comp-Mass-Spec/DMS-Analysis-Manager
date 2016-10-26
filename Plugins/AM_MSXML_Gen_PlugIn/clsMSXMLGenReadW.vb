@@ -68,6 +68,9 @@ Public Class clsMSXMLGenReadW
 
 
         Return CmdStr
+
+    Protected Overrides Function GetOutputFileName(msXmlFormat As String, rawFilePath As String, rawDataType As clsAnalysisResources.eRawDataTypeConstants) As String
+        Return IO.Path.GetFileName(IO.Path.ChangeExtension(rawFilePath, msXmlFormat))
     End Function
 
     Protected Overrides Function SetupTool() As Boolean

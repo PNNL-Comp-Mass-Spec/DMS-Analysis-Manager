@@ -258,6 +258,16 @@ Public Class clsAnalysisToolRunnerMSXMLGen
                 Return False
             End If
 
+            ' Possibly update the file using results from RawConverter
+
+            Dim recalculatePrecursors = m_jobParams.GetJobParameter("RecalculatePrecursors", False)
+            If recalculatePrecursors Then
+                Dim success = RecalculatePrecursorIons(fiMSXmlFile)
+                If Not success Then
+                    Return False
+                End If
+            End If
+
             ' Compress the file using GZip
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
                                  "GZipping " & fiMSXmlFile.Name)
@@ -309,6 +319,214 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         Return True
     End Function
 
+    ''' <summary>
+    ''' Recalculate the precursor ions in a MzML file
+    ''' The only supported option at present is RawConverter
+    ''' </summary>
+    ''' <param name="sourceMsXmlFile">MzML file to read</param>
+    ''' <returns>True if success, false if an error</returns>
+    Private Function RecalculatePrecursorIons(sourceMsXmlFile As FileInfo) As Boolean
+
+        If mMSXmlOutputFileType <> clsAnalysisResources.MSXMLOutputTypeConstants.mzML Then
+            LogError("Unsupported file extension for RecalculatePrecursors=True; must be mzML, not " & mMSXmlOutputFileType.ToString())
+            Return False
+        End If
+
+        Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
+        Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
+        Dim rawFilePath As String
+
+        If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
+            rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+        Else
+            LogError("Unsupported dataset type for RecalculatePrecursors=True; must be .Raw, not " & eRawDataType.ToString())
+            Return False
+        End If
+
+        Dim rawConverterDir As String = m_mgrParams.GetParam("RawConverterProgLoc")
+        If String.IsNullOrWhiteSpace(rawConverterDir) Then
+            LogError("Manager parameter RawConverterProgLoc is not defined; cannot find RawConverter.exe")
+            Return False
+        End If
+
+        Dim mgfFile As FileInfo = Nothing
+        Dim rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterDir, rawFilePath, mgfFile)
+        If Not rawConverterSuccess Then Return False
+
+        Dim mzMLUpdated = RecalculatePrecursorIonsUpdateMzML(sourceMsXmlFile, mgfFile)
+        Return mzMLUpdated
+
+    End Function
+
+    Private Function RecalculatePrecursorIonsCreateMGF(rawConverterDir As String, rawFilePath As String, <Out()> ByRef mgfFile As FileInfo) As Boolean
+
+        Try
+            If m_message Is Nothing Then m_message = String.Empty
+            Dim messageAtStart = String.Copy(m_message)
+
+            Dim converter = New clsRawConverterRunner(rawConverterDir, m_DebugLevel)
+            AddHandler converter.ErrorEvent, AddressOf RawConverterRunner_ErrorEvent
+            AddHandler converter.ProgressUpdate, AddressOf RawConverterRunner_ProgressEvent
+
+            Dim success = converter.ConvertRawToMGF(rawFilePath)
+
+            If Not success Then
+                If String.IsNullOrWhiteSpace(m_message) OrElse String.Equals(messageAtStart, m_message) Then
+                    LogError("Unknown RawConverter error")
+                End If
+                mgfFile = Nothing
+                Return False
+            End If
+
+            ' Confirm that RawConverter created a .mgf file
+
+            mgfFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION))
+            If Not mgfFile.Exists Then
+                LogError("RawConverter did not create file " & mgfFile.Name)
+                Return False
+            End If
+
+            m_jobParams.AddResultFileToSkip(mgfFile.Name)
+
+            Return True
+
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RawConverter error", ex)
+            m_message = "Exception running RawConverter"
+            mgfFile = Nothing
+            Return False
+        End Try
+
+    End Function
+
+    Private Function RecalculatePrecursorIonsUpdateMzML(sourceMsXmlFile As FileInfo, mgfFile As FileInfo) As Boolean
+
+        Try
+            Dim messageAtStart = String.Copy(m_message)
+
+            Dim updater = New clsParentIonUpdater()
+            AddHandler updater.ErrorEvent, AddressOf ParentIonUpdater_ErrorEvent
+            AddHandler updater.WarningEvent, AddressOf ParentIonUpdater_WarningEvent
+            AddHandler updater.ProgressUpdate, AddressOf ParentIonUpdater_ProgressEvent
+
+            Dim updatedMzMLPath = updater.UpdateMzMLParentIonInfoUsingMGF(sourceMsXmlFile.FullName, mgfFile.FullName, False)
+
+            If String.IsNullOrEmpty(updatedMzMLPath) Then
+                If String.IsNullOrWhiteSpace(m_message) OrElse String.Equals(messageAtStart, m_message) Then
+                    LogError("Unknown ParentIonUpdater error")
+                End If
+                Return False
+            End If
+
+            ' Confirm that clsParentIonUpdater created a new .mzML file
+
+            Dim updatedMzMLFile = New FileInfo(updatedMzMLPath)
+            If Not updatedMzMLFile.Exists Then
+                LogError("ParentIonUpdater did not create file " & mgfFile.Name)
+                Return False
+            End If
+
+            Dim finalMsXmlFilePath = String.Copy(sourceMsXmlFile.FullName)
+
+            ' Delete the original mzML file
+            Threading.Thread.Sleep(125)
+            sourceMsXmlFile.Delete()
+
+            Threading.Thread.Sleep(125)
+
+            ' Rename the updated mzML file so that it does not end in _new.mzML
+            updatedMzMLFile.MoveTo(finalMsXmlFilePath)
+
+            ' Re-index the mzML file using MSConvert
+
+            Dim success = ReindexMzML(finalMsXmlFilePath)
+
+            Return success
+
+        Catch ex As Exception
+            LogError("RecalculatePrecursorIonsUpdateMzML error", ex)
+            m_message = "Exception in RecalculatePrecursorIonsUpdateMzML"
+            Return False
+        End Try
+
+    End Function
+
+    Private Function ReindexMzML(mzMLFilePath As String) As Boolean
+        Try
+
+            If m_DebugLevel > 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Re-index the mzML file using MSConvert")
+            End If
+
+            Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Must be MSConvert.exe
+
+            If Not msXmlGenerator.ToLower().Contains("msconvert") Then
+                LogError("ParentIonUpdater only supports MSConvert, not " & msXmlGenerator)
+                Return False
+            End If
+
+            If String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
+                LogError("mMSXmlGeneratorAppPath is empty; this is unexpected")
+                Return False
+            End If
+
+            Dim eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML
+            Dim outputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML
+            Dim centroidMS1 = False
+            Dim centroidMS2 = False
+
+            Dim sourcefileBase = Path.GetFileNameWithoutExtension(mzMLFilePath)
+
+            Dim msConvertRunner = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, sourcefileBase, eRawDataType,
+                                                         outputFileType, centroidMS1, centroidMS2, 0)
+
+            msConvertRunner.ConsoleOutputSuffix = "_Reindex"
+            msConvertRunner.DebugLevel = m_DebugLevel
+
+            If Not File.Exists(mMSXmlGeneratorAppPath) Then
+                LogError("MsXmlGenerator not found: " & mMSXmlGeneratorAppPath)
+                Return False
+            End If
+
+            ' Create the file
+            Dim success = msConvertRunner.CreateMSXMLFile()
+
+            If Not success Then
+                LogError(msConvertRunner.ErrorMessage)
+                Return False
+            Else
+                m_jobParams.AddResultFileToSkip(msConvertRunner.ConsoleOutputFileName)
+            End If
+
+            If msConvertRunner.ErrorMessage.Length > 0 Then
+                LogError(msConvertRunner.ErrorMessage)
+            End If
+
+            ' Replace the original .mzML file with the new .mzML file
+            Dim reindexedMzMLFile = New FileInfo(Path.Combine(m_WorkDir, msConvertRunner.OutputFileName))
+
+            If Not reindexedMzMLFile.Exists Then
+                LogError("Reindexed mzML file not found at " & reindexedMzMLFile.FullName)
+                m_message = "Reindexed mzML file not found"
+                Return False
+            End If
+
+            ' Replace the original .mzML file with the indexed one
+            Threading.Thread.Sleep(125)
+            File.Delete(mzMLFilePath)
+            Threading.Thread.Sleep(125)
+
+            reindexedMzMLFile.MoveTo(mzMLFilePath)
+            Return True
+
+        Catch ex As Exception
+            LogError("ReindexMzML error", ex)
+            m_message = "Exception in ReindexMzML"
+            Return False
+        End Try
+
+    End Function
     ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
@@ -384,6 +602,31 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     ''' <remarks></remarks>
     Private Sub mMSXmlGen_ProgRunnerStarting(CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
+    End Sub
+
+    Private Sub RawConverterRunner_ErrorEvent(strMessage As String)
+        Console.WriteLine(m_message)
+        LogError(m_message)
+    End Sub
+
+    Private Sub RawConverterRunner_ProgressEvent(progressMessage As String, percentComplete As Integer)
+        Console.WriteLine(progressMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progressMessage)
+    End Sub
+
+    Private Sub ParentIonUpdater_ErrorEvent(strMessage As String)
+        Console.WriteLine(m_message)
+        LogError(m_message)
+    End Sub
+
+    Private Sub ParentIonUpdater_WarningEvent(strMessage As String)
+        Console.WriteLine(strMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+    End Sub
+
+    Private Sub ParentIonUpdater_ProgressEvent(progressMessage As String, percentcomplete As Integer)
+        Console.WriteLine(progressMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progressMessage)
     End Sub
 
 #End Region

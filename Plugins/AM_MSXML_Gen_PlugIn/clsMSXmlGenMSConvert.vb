@@ -125,9 +125,30 @@ Public Class clsMSXmlGenMSConvert
             CmdStr &= " " & mCustomMSConvertArguments
         End If
 
-        CmdStr &= "  -o " & mWorkDir
+        mOutputFileName = GetOutputFileName(msXmlFormat, rawFilePath, mRawDataType)
 
-        Return CmdStr
+        ' Specify the output directory and the output file name
+        cmdStr &= "  -o " & mWorkDir & " --outfile " & mOutputFileName
+
+        Return cmdStr
+
+    End Function
+
+    Protected Overrides Function GetOutputFileName(msXmlFormat As String, rawFilePath As String, rawDataType As clsAnalysisResources.eRawDataTypeConstants) As String
+
+        If String.Equals(msXmlFormat, "mzML", StringComparison.InvariantCultureIgnoreCase) AndAlso
+          mRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML Then
+            ' Input and output files are both .mzML
+            Return IO.Path.GetFileNameWithoutExtension(rawFilePath) & "_new" & clsAnalysisResources.DOT_MZML_EXTENSION
+        ElseIf String.Equals(msXmlFormat, "mzXML", StringComparison.InvariantCultureIgnoreCase) AndAlso
+               mRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzXML Then
+            ' Input and output files are both .mzXML
+            ' Include switch --outfile
+            Return IO.Path.GetFileNameWithoutExtension(rawFilePath) & "_new" & clsAnalysisResources.DOT_MZXML_EXTENSION
+        Else
+            Return IO.Path.GetFileName(IO.Path.ChangeExtension(rawFilePath, msXmlFormat))
+        End If
+
     End Function
 
     Protected Overrides Function SetupTool() As Boolean
