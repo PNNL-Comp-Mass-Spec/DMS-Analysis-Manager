@@ -37,55 +37,53 @@ Public Class clsMSXmlGenMSConvert
 #Region "Methods"
 
     Public Sub New(WorkDir As String,
-      MSConvertProgramPath As String,
-      DatasetName As String,
-      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+      msConvertProgramPath As String,
+      datasetName As String,
+      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
       eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      CustomMSConvertArguments As String)
+      customMSConvertArguments As String)
 
-        MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, centroidMSXML:=False)
+        MyBase.New(WorkDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML:=False)
 
-        mCustomMSConvertArguments = CustomMSConvertArguments
+        mCustomMSConvertArguments = customMSConvertArguments
 
         mUseProgRunnerResultCode = False
     End Sub
 
-    Public Sub New(WorkDir As String,
-      MSConvertProgramPath As String,
-      DatasetName As String,
-      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+    Public Sub New(workDir As String,
+      msConvertProgramPath As String,
+      datasetName As String,
+      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
       eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      CentroidMSXML As Boolean,
-      CentroidPeakCountToRetain As Integer)
+      centroidMSXML As Boolean,
+      centroidPeakCountToRetain As Integer)
 
-        MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, CentroidMSXML)
+        MyBase.New(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML)
 
-        mCentroidPeakCountToRetain = CentroidPeakCountToRetain
+        mCentroidPeakCountToRetain = centroidPeakCountToRetain
 
         mUseProgRunnerResultCode = False
     End Sub
 
-    Public Sub New(WorkDir As String,
-      MSConvertProgramPath As String,
-      DatasetName As String,
-      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
+    Public Sub New(workDir As String,
+      msConvertProgramPath As String,
+      datasetName As String,
+      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
       eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      CentroidMS1 As Boolean,
-      CentroidMS2 As Boolean,
-      CentroidPeakCountToRetain As Integer)
+      centroidMS1 As Boolean,
+      centroidMS2 As Boolean,
+      centroidPeakCountToRetain As Integer)
 
-        MyBase.New(WorkDir, MSConvertProgramPath, DatasetName, RawDataType, eOutputType, CentroidMS1, CentroidMS2)
+        MyBase.New(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMS1, centroidMS2)
 
-        mCentroidPeakCountToRetain = CentroidPeakCountToRetain
+        mCentroidPeakCountToRetain = centroidPeakCountToRetain
 
         mUseProgRunnerResultCode = False
     End Sub
 
-    Protected Overrides Function CreateArguments(msXmlFormat As String, RawFilePath As String) As String
+    Protected Overrides Function CreateArguments(msXmlFormat As String, rawFilePath As String) As String
 
-        Dim CmdStr As String
-
-        CmdStr = " " & RawFilePath
+        Dim cmdStr = " " & rawFilePath
 
         If String.IsNullOrWhiteSpace(mCustomMSConvertArguments) Then
 
@@ -99,11 +97,11 @@ Public Class clsMSXmlGenMSConvert
                 ' --filter "peakPicking true 1-" --filter "threshold count 150 most-intense"
 
                 If mCentroidMS1 And Not mCentroidMS2 Then
-                    CmdStr &= " --filter ""peakPicking true 1"""
+                    cmdStr &= " --filter ""peakPicking true 1"""
                 ElseIf Not mCentroidMS1 And mCentroidMS2 Then
-                    CmdStr &= " --filter ""peakPicking true 2-"""
+                    cmdStr &= " --filter ""peakPicking true 2-"""
                 Else
-                    CmdStr &= " --filter ""peakPicking true 1-"""
+                    cmdStr &= " --filter ""peakPicking true 1-"""
                 End If
 
                 If mCentroidPeakCountToRetain < 0 Then
@@ -115,14 +113,14 @@ Public Class clsMSXmlGenMSConvert
                         mCentroidPeakCountToRetain = 25
                     End If
 
-                    CmdStr &= " --filter ""threshold count " & mCentroidPeakCountToRetain & " most-intense"""
+                    cmdStr &= " --filter ""threshold count " & mCentroidPeakCountToRetain & " most-intense"""
                 End If
 
             End If
 
-            CmdStr &= " --" & msXmlFormat & " --32"
+            cmdStr &= " --" & msXmlFormat & " --32"
         Else
-            CmdStr &= " " & mCustomMSConvertArguments
+            cmdStr &= " " & mCustomMSConvertArguments
         End If
 
         mOutputFileName = GetOutputFileName(msXmlFormat, rawFilePath, mRawDataType)

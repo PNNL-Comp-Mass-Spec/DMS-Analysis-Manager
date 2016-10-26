@@ -142,28 +142,28 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             End Select
 
             ' Lookup Centroid Settings
-            Dim CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", False)
-            Dim CentroidMS1 = m_jobParams.GetJobParameter("CentroidMS1", False)
-            Dim CentroidMS2 = m_jobParams.GetJobParameter("CentroidMS2", False)
+            Dim centroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", False)
+            Dim centroidMS1 = m_jobParams.GetJobParameter("CentroidMS1", False)
+            Dim centroidMS2 = m_jobParams.GetJobParameter("CentroidMS2", False)
 
-            If CentroidMSXML Then
-                CentroidMS1 = True
-                CentroidMS2 = True
+            If centroidMSXML Then
+                centroidMS1 = True
+                centroidMS2 = True
             End If
 
             ' Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
             ' If the value is -1, then will retain all data points
-            Dim CentroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0)
+            Dim centroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0)
 
-            If CentroidPeakCountToRetain = 0 Then
+            If centroidPeakCountToRetain = 0 Then
                 ' Look for parameter CentroidPeakCountToRetain in any section
-                CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain",
+                centroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain",
                                                                         clsMSXmlGenMSConvert.
                                                                            DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
             End If
 
             ' Look for custom processing arguments
-            Dim CustomMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "")
+            Dim customMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "")
 
             If String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
@@ -231,9 +231,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             End If
 
         Catch ex As Exception
-            m_message = "Exception in CreateMSXMLFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 m_message & ": " & ex.Message)
+            LogError("Exception in CreateMSXMLFile", ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -276,6 +274,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
                                  "GZipping " & fiMSXmlFile.Name)
 
             ' Note that if this process turns out to be slow, we can have MSConvert do this for us using --gzip
+            ' However, that will not work if RecalculatePrecursors is true
             fiMSXmlFile = GZipFile(fiMSXmlFile)
             If fiMSXmlFile Is Nothing Then
                 Return False
@@ -313,9 +312,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             End If
 
         Catch ex As Exception
-            m_message = "Exception in PostProcessMSXmlFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 m_message & ": " & ex.Message)
+            LogError("Exception in PostProcessMSXmlFile", ex)
             Return False
         End Try
 
@@ -577,8 +574,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            LogError("Exception calling SetStepTaskToolVersion", ex)
             Return False
         End Try
     End Function

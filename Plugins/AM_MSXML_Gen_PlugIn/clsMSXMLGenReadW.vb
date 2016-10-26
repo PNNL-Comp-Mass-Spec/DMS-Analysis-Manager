@@ -40,7 +40,7 @@ Public Class clsMSXMLGenReadW
 
     Protected Overrides Function CreateArguments(msXmlFormat As String, RawFilePath As String) As String
 
-        Dim CmdStr As String
+        Dim cmdStr As String
 
         If mProgramPath.ToLower.Contains("\v2.") Then
             ' Version 2.x syntax
@@ -48,9 +48,9 @@ Public Class clsMSXMLGenReadW
 
             If mCentroidMS1 OrElse mCentroidMS2 Then
                 ' Centroiding is enabled
-                CmdStr = " " & RawFilePath & " c"
+                cmdStr = " " & RawFilePath & " c"
             Else
-                CmdStr = " " & RawFilePath & " p"
+                cmdStr = " " & RawFilePath & " p"
             End If
 
         Else
@@ -60,14 +60,17 @@ Public Class clsMSXMLGenReadW
 
             If mCentroidMS1 OrElse mCentroidMS2 Then
                 ' Centroiding is enabled
-                CmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
+                cmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
             Else
-                CmdStr = " --" & msXmlFormat & " " & RawFilePath
+                ' Not centroiding
+                cmdStr = " --" & msXmlFormat & " " & RawFilePath
             End If
         End If
 
+        mOutputFileName = GetOutputFileName(msXmlFormat, RawFilePath, mRawDataType)
 
-        Return CmdStr
+        Return cmdStr
+    End Function
 
     Protected Overrides Function GetOutputFileName(msXmlFormat As String, rawFilePath As String, rawDataType As clsAnalysisResources.eRawDataTypeConstants) As String
         Return IO.Path.GetFileName(IO.Path.ChangeExtension(rawFilePath, msXmlFormat))

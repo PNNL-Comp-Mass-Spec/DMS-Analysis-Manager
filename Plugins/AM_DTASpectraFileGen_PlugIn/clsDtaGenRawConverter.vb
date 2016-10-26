@@ -27,8 +27,8 @@ Public Class clsDtaGenRawConverter
 
         Dim strDTAToolPath As String
 
-        Dim ProteoWizardDir As String = m_MgrParams.GetParam("RawConverterProgLoc")
-        strDTAToolPath = Path.Combine(ProteoWizardDir, RAWCONVERTER_FILENAME)
+        Dim rawConverterDir As String = m_MgrParams.GetParam("RawConverterProgLoc")
+        strDTAToolPath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME)
 
         Return strDTAToolPath
 
