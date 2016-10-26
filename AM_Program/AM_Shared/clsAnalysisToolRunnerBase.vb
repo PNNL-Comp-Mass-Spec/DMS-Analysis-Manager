@@ -2291,100 +2291,105 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             Next
 
-            If dblTotalSizeMB / 1024 > spaceUsageThresholdGB Then
-                ' Purge files until the space usage falls below the threshold
-                ' Start with the earliest file then work our way forward
+            If dblTotalSizeMB / 1024 <= spaceUsageThresholdGB Then
+                Return
+            End If
 
-                ' Keep track of the deleted file info using this list
-                Dim purgedFileLogEntries = New List(Of String)
+            ' Purge files until the space usage falls below the threshold
+            ' Start with the earliest file then work our way forward
 
-                Dim fiPurgeLogFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeLog_" & Date.Now.Year & ".txt"))
-                If Not fiPurgeLogFile.Exists Then
-                    ' Create the purge log file and write the header line
-                    Try
-                        Using swPurgeLogFile = New StreamWriter(New FileStream(fiPurgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read))
-                            swPurgeLogFile.WriteLine(String.Join(vbTab, New String() {"Date",
-                                                                                      "Manager",
-                                                                                      "Size (MB)",
-                                                                                      "Modification_Date",
-                                                                                      "Path"}))
-                        End Using
-                    Catch ex As Exception
-                        ' Likely another manager tried to create the file at the same time
-                        ' Ignore the error
-                    End Try
-                End If
+            ' Keep track of the deleted file info using this list
+            Dim purgedFileLogEntries = New List(Of String)
 
-                Dim lstSortedFiles = (From item In lstDataFiles Select item Order By item.Key)
-                Dim managerName As String = m_mgrParams.GetParam("MgrName", m_MachName)
+            Dim fiPurgeLogFile = New FileInfo(Path.Combine(diCacheFolder.FullName, "PurgeLog_" & Date.Now.Year & ".txt"))
+            If Not fiPurgeLogFile.Exists Then
+                ' Create the purge log file and write the header line
+                Try
+                    Using swPurgeLogFile = New StreamWriter(New FileStream(fiPurgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read))
+                        swPurgeLogFile.WriteLine(String.Join(vbTab, New String() {"Date",
+                                                                                    "Manager",
+                                                                                    "Size (MB)",
+                                                                                    "Modification_Date",
+                                                                                    "Path"}))
+                    End Using
+                Catch ex As Exception
+                    ' Likely another manager tried to create the file at the same time
+                    ' Ignore the error
+                End Try
+            End If
 
-                For Each kvItem As KeyValuePair(Of DateTime, FileInfo) In lstSortedFiles
+            Dim lstSortedFiles = (From item In lstDataFiles Select item Order By item.Key)
+            Dim managerName As String = m_mgrParams.GetParam("MgrName", m_MachName)
 
-                    Try
-                        Dim fileSizeMB As Double = kvItem.Value.Length / 1024.0 / 1024.0
+            For Each kvItem As KeyValuePair(Of DateTime, FileInfo) In lstSortedFiles
 
-                        Dim hashcheckPath = kvItem.Value.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-                        Dim fiHashCheckFile = New FileInfo(hashcheckPath)
+                Try
+                    Dim fileSizeMB As Double = kvItem.Value.Length / 1024.0 / 1024.0
 
-                        dblTotalSizeMB -= fileSizeMB
+                    Dim hashcheckPath = kvItem.Value.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
+                    Dim fiHashCheckFile = New FileInfo(hashcheckPath)
 
-                        kvItem.Value.Delete()
+                    dblTotalSizeMB -= fileSizeMB
 
-                        ' Keep track of the deleted file's details
-                        purgedFileLogEntries.Add(String.Join(vbTab, New String() {Date.Now.ToString(DATE_TIME_FORMAT),
-                                                                         managerName,
-                                                                         fileSizeMB.ToString("0.00"),
-                                                                         kvItem.Value.LastWriteTime.ToString(DATE_TIME_FORMAT),
-                                                                         kvItem.Value.FullName}))
+                    kvItem.Value.Delete()
 
-                        dblSizeDeletedMB += fileSizeMB
-                        intFileDeleteCount += 1
+                    ' Keep track of the deleted file's details
+                    purgedFileLogEntries.Add(String.Join(vbTab, New String() {Date.Now.ToString(DATE_TIME_FORMAT),
+                                                                                managerName,
+                                                                                fileSizeMB.ToString("0.00"),
+                                                                                kvItem.Value.LastWriteTime.ToString(DATE_TIME_FORMAT),
+                                                                                kvItem.Value.FullName}))
 
-                        If fiHashCheckFile.Exists Then
-                            fiHashCheckFile.Delete()
-                        End If
+                    dblSizeDeletedMB += fileSizeMB
+                    intFileDeleteCount += 1
 
-                    Catch ex As Exception
-                        ' Keep track of the number of times we have an exception
-                        intFileDeleteErrorCount += 1
-
-                        Dim intOccurrences = 1
-                        Dim strExceptionName As String = ex.GetType.ToString()
-                        If dctErrorSummary.TryGetValue(strExceptionName, intOccurrences) Then
-                            dctErrorSummary(strExceptionName) = intOccurrences + 1
-                        Else
-                            dctErrorSummary.Add(strExceptionName, 1)
-                        End If
-
-                    End Try
-
-                    If dblTotalSizeMB / 1024.0 < spaceUsageThresholdGB * 0.95 Then
-                        Exit For
+                    If fiHashCheckFile.Exists Then
+                        fiHashCheckFile.Delete()
                     End If
+
+                Catch ex As Exception
+                    ' Keep track of the number of times we have an exception
+                    intFileDeleteErrorCount += 1
+
+                    Dim intOccurrences = 1
+                    Dim strExceptionName As String = ex.GetType.ToString()
+                    If dctErrorSummary.TryGetValue(strExceptionName, intOccurrences) Then
+                        dctErrorSummary(strExceptionName) = intOccurrences + 1
+                    Else
+                        dctErrorSummary.Add(strExceptionName, 1)
+                    End If
+
+                End Try
+
+                If dblTotalSizeMB / 1024.0 < spaceUsageThresholdGB * 0.95 Then
+                    Exit For
+                End If
+            Next
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                 "Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath &
+                                 ", recovering " & dblSizeDeletedMB.ToString("0.0") & " MB in disk space")
+
+            If intFileDeleteErrorCount > 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath)
+                For Each kvItem As KeyValuePair(Of String, Integer) In dctErrorSummary
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " & kvItem.Key & ": " & kvItem.Value)
                 Next
+            End If
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath & ", recovering " & dblSizeDeletedMB.ToString("0.0") & " MB in disk space")
-
-                If intFileDeleteErrorCount > 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath)
-                    For Each kvItem As KeyValuePair(Of String, Integer) In dctErrorSummary
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " & kvItem.Key & ": " & kvItem.Value)
-                    Next
-                End If
-
-                If purgedFileLogEntries.Count > 0 Then
-                    ' Log the info for each of the deleted files
-                    Try
-                        Using swPurgeLogFile = New StreamWriter(New FileStream(fiPurgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-                            For Each purgedFileLogEntry In purgedFileLogEntries
-                                swPurgeLogFile.WriteLine(purgedFileLogEntry)
-                            Next
-                        End Using
-                    Catch ex As Exception
-                        ' Likely another manager tried to create the file at the same time
-                        ' Ignore the error
-                    End Try
-                End If
+            If purgedFileLogEntries.Count > 0 Then
+                ' Log the info for each of the deleted files
+                Try
+                    Using swPurgeLogFile = New StreamWriter(New FileStream(fiPurgeLogFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                        For Each purgedFileLogEntry In purgedFileLogEntries
+                            swPurgeLogFile.WriteLine(purgedFileLogEntry)
+                        Next
+                    End Using
+                Catch ex As Exception
+                    ' Likely another manager tried to create the file at the same time
+                    ' Ignore the error
+                End Try
             End If
 
         Catch ex As Exception
@@ -2419,7 +2424,6 @@ Public Class clsAnalysisToolRunnerBase
     Protected Function ReadVersionInfoFile(strDLLFilePath As String, strVersionInfoFilePath As String, <Out()> ByRef strVersion As String) As Boolean
 
         ' Open strVersionInfoFilePath and read the Version= line
-        Dim srInFile As StreamReader
         Dim strLineIn As String
         Dim strKey As String
         Dim strValue As String
@@ -2435,12 +2439,15 @@ Public Class clsAnalysisToolRunnerBase
                 Return False
             End If
 
-            srInFile = New StreamReader(New FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-            Do While Not srInFile.EndOfStream
-                strLineIn = srInFile.ReadLine()
+                While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
 
-                If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If String.IsNullOrWhiteSpace(strLineIn) Then
+                        Continue While
+                    End If
+
                     intEqualsLoc = strLineIn.IndexOf("="c)
 
                     If intEqualsLoc > 0 Then
@@ -2471,10 +2478,9 @@ Public Class clsAnalysisToolRunnerBase
                         End Select
                     End If
 
-                End If
-            Loop
+                End While
 
-            srInFile.Close()
+            End Using
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading Version Info File for " & Path.GetFileName(strDLLFilePath), ex)
