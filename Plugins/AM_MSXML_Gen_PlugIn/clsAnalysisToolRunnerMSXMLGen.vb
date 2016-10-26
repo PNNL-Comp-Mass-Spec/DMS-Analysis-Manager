@@ -24,8 +24,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
     Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 5
 
-    Protected WithEvents mMSXmlGen As clsMSXmlGen
-
     Protected mMSXmlGeneratorAppPath As String = String.Empty
 
     Protected mMSXmlOutputFileType As clsAnalysisResources.MSXMLOutputTypeConstants
@@ -176,13 +174,15 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
             Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
 
+            Dim msXmlGen As clsMSXmlGen
+
             ' Determine the program path and Instantiate the processing class
             If msXmlGenerator.ToLower.Contains("readw") Then
                 ' ReAdW
                 ' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
-                mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
-                                                 mMSXmlOutputFileType, CentroidMS1 Or CentroidMS2)
+                msXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
+                                                 mMSXmlOutputFileType, centroidMS1 Or centroidMS2)
 
                 If rawDataType <> clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES Then
                     LogError("ReAdW can only be used with .Raw files, not with " & rawDataType)
@@ -193,38 +193,41 @@ Public Class clsAnalysisToolRunnerMSXMLGen
                 ' MSConvert
 
                 If String.IsNullOrWhiteSpace(CustomMSConvertArguments) Then
-                    mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
-                                                         mMSXmlOutputFileType, CentroidMS1, CentroidMS2,
-                                                         CentroidPeakCountToRetain)
+                    msXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
+                                                         mMSXmlOutputFileType, centroidMS1, centroidMS2,
+                                                         centroidPeakCountToRetain)
                 Else
-                    mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
-                                                         mMSXmlOutputFileType, CustomMSConvertArguments)
+                    msXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
+                                                         mMSXmlOutputFileType, customMSConvertArguments)
                 End If
 
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Unsupported XmlGenerator: " & msXmlGenerator)
+                LogError("Unsupported XmlGenerator: " & msXmlGenerator)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            mMSXmlGen.DebugLevel = m_DebugLevel
+            ' Attach events to msXmlGen
+            AddHandler msXmlGen.LoopWaiting, AddressOf MSXmlGen_LoopWaiting
+            AddHandler msXmlGen.ProgRunnerStarting, AddressOf MSXmlGen_ProgRunnerStarting
+
+            msXmlGen.DebugLevel = m_DebugLevel
 
             If Not File.Exists(mMSXmlGeneratorAppPath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "MsXmlGenerator not found: " & mMSXmlGeneratorAppPath)
+                LogError("MsXmlGenerator not found: " & mMSXmlGeneratorAppPath)
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             ' Create the file
-            Dim success = mMSXmlGen.CreateMSXMLFile()
+            Dim success = msXmlGen.CreateMSXMLFile()
 
             If Not success Then
-                LogError(mMSXmlGen.ErrorMessage)
+                LogError(msXmlGen.ErrorMessage)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-            ElseIf mMSXmlGen.ErrorMessage.Length > 0 Then
-                LogError(mMSXmlGen.ErrorMessage)
+            End If
 
+            If msXmlGen.ErrorMessage.Length > 0 Then
+                LogError(msXmlGen.ErrorMessage)
             End If
 
         Catch ex As Exception
@@ -585,22 +588,20 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 #Region "Event Handlers"
 
     ''' <summary>
-    ''' Event handler for MSXmlGenReadW.LoopWaiting event
+    ''' Event handler for msXmlGen.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGen.LoopWaiting
-
+    Private Sub MSXmlGen_LoopWaiting()
         UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING)
-
-        LogProgress("MSXmlGen ReadW")
+        LogProgress("MSXmlGen")
     End Sub
 
     ''' <summary>
-    ''' Event handler for mMSXmlGen.ProgRunnerStarting event
+    ''' Event handler for msXmlGen.ProgRunnerStarting event
     ''' </summary>
     ''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
     ''' <remarks></remarks>
-    Private Sub mMSXmlGen_ProgRunnerStarting(CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
+    Private Sub MSXmlGen_ProgRunnerStarting(CommandLine As String)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
     End Sub
 
