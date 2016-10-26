@@ -10,6 +10,8 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Runtime.InteropServices
+Imports PRISM.Processes
 
 ' ReSharper disable once UnusedMember.Global
 Public Class clsAnalysisToolRunnerMSXMLGen

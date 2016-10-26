@@ -668,8 +668,6 @@ Public Class clsStatusFile
     Public Sub WriteStatusFile(ForceLogToBrokerDB As Boolean) Implements IStatusFile.WriteStatusFile
 
         'Writes a status file for external monitor to read
-        Dim objMemoryStream As MemoryStream
-        Dim srMemoryStreamReader As StreamReader
 
         Dim strXMLText As String = String.Empty
 
@@ -689,7 +687,7 @@ Public Class clsStatusFile
         ' Set up the XML writer
         Try
             ' Create a new memory stream in which to write the XML
-            objMemoryStream = New MemoryStream
+            Dim objMemoryStream = New MemoryStream
             Using xWriter = New XmlTextWriter(objMemoryStream, Text.Encoding.UTF8)
 
                 xWriter.Formatting = Formatting.Indented
@@ -756,13 +754,13 @@ Public Class clsStatusFile
 
                 xWriter.WriteEndElement()               ' Root
 
-                'Close out the XML document (but do not close XWriter yet)
+                ' Close out the XML document (but do not close XWriter yet)
                 xWriter.WriteEndDocument()
                 xWriter.Flush()
 
                 ' Now use a StreamReader to copy the XML text to a string variable
                 objMemoryStream.Seek(0, SeekOrigin.Begin)
-                srMemoryStreamReader = New StreamReader(objMemoryStream)
+                Dim srMemoryStreamReader = New StreamReader(objMemoryStream)
                 strXMLText = srMemoryStreamReader.ReadToEnd
 
                 srMemoryStreamReader.Close()

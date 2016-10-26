@@ -5,6 +5,7 @@
 ' Created 05/10/2011
 '
 ' Uses MSConvert to create a .mzXML or .mzML file
+' Also used by RecalculatePrecursorIonsUpdateMzML in clsAnalysisToolRunnerMSXMLGen to re-index a .mzML file to create a new .mzML file
 '*********************************************************************************************************
 
 Option Strict On

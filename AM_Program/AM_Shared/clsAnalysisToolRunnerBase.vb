@@ -2575,30 +2575,28 @@ Public Class clsAnalysisToolRunnerBase
     ''' <returns></returns>
     ''' <remarks></remarks>
     Protected Function SaveToolVersionInfoFile(strFolderPath As String, strToolVersionInfo As String) As Boolean
-        Dim swToolVersionFile As StreamWriter
-        Dim strToolVersionFilePath As String
-        Dim strStepToolName As String
 
         Try
-            strStepToolName = m_jobParams.GetParam("StepTool")
+            Dim strStepToolName = m_jobParams.GetParam("StepTool")
             If strStepToolName.ToLower().StartsWith("msgfplus") Then
                 ' For backwards compatibility, need to make sure the file does not start with "MSGFPlus" 
                 strStepToolName = clsGlobal.ReplaceIgnoreCase(strStepToolName, "MSGFPlus", "MSGFDB")
             End If
 
-            strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" & strStepToolName & ".txt")
+            Dim strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" & strStepToolName & ".txt")
 
-            swToolVersionFile = New StreamWriter(New FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+            Using swToolVersionFile = New StreamWriter(New FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
 
-            swToolVersionFile.WriteLine("Date: " & Date.Now().ToString(DATE_TIME_FORMAT))
-            swToolVersionFile.WriteLine("Dataset: " & m_Dataset)
-            swToolVersionFile.WriteLine("Job: " & m_JobNum)
-            swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("StepParameters", "Step"))
-            swToolVersionFile.WriteLine("Tool: " & m_jobParams.GetParam("StepTool"))
-            swToolVersionFile.WriteLine("ToolVersionInfo:")
+                swToolVersionFile.WriteLine("Date: " & Date.Now().ToString(DATE_TIME_FORMAT))
+                swToolVersionFile.WriteLine("Dataset: " & m_Dataset)
+                swToolVersionFile.WriteLine("Job: " & m_JobNum)
+                swToolVersionFile.WriteLine("Step: " & m_jobParams.GetParam("StepParameters", "Step"))
+                swToolVersionFile.WriteLine("Tool: " & m_jobParams.GetParam("StepTool"))
+                swToolVersionFile.WriteLine("ToolVersionInfo:")
 
-            swToolVersionFile.WriteLine(strToolVersionInfo.Replace("; ", Environment.NewLine))
-            swToolVersionFile.Close()
+                swToolVersionFile.WriteLine(strToolVersionInfo.Replace("; ", Environment.NewLine))
+
+            End Using
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving tool version info: " & ex.Message)

@@ -4529,7 +4529,6 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks></remarks>
     Public Shared Function ResolveStoragePath(FolderPath As String, FileName As String) As String
 
-        Dim srInFile As StreamReader
         Dim strPhysicalFilePath As String = String.Empty
         Dim strFilePath As String
 
@@ -4548,12 +4547,11 @@ Public MustInherit Class clsAnalysisResources
                 ' The _StoragePathInfo.txt file is present
                 ' Open that file to read the file path on the first line of the file
 
-                srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                Using srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    strLineIn = srInFile.ReadLine
+                    strPhysicalFilePath = strLineIn
+                End Using
 
-                strLineIn = srInFile.ReadLine
-                strPhysicalFilePath = strLineIn
-
-                srInFile.Close()
             End If
         End If
 
@@ -4578,7 +4576,6 @@ Public MustInherit Class clsAnalysisResources
         Dim diFolder As DirectoryInfo
         Dim fiFile As FileInfo
 
-        Dim srInFile As StreamReader
         Dim strPhysicalFilePath As String
         Dim strFilePath As String
 
@@ -4591,12 +4588,12 @@ Public MustInherit Class clsAnalysisResources
             ' The _StoragePathInfo.txt file is present
             ' Open that file to read the file path on the first line of the file
 
-            srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-            strLineIn = srInFile.ReadLine
-            strPhysicalFilePath = strLineIn
+                strLineIn = srInFile.ReadLine
+                strPhysicalFilePath = strLineIn
 
-            srInFile.Close()
+            End Using
         Else
             ' The desired file was not found
 
@@ -4609,7 +4606,7 @@ Public MustInherit Class clsAnalysisResources
                 strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
                 diFolder = New DirectoryInfo(strPhysicalFilePath)
                 If Not diFolder.Exists Then
-                    strPhysicalFilePath = ""
+                    strPhysicalFilePath = String.Empty
                 End If
             End If
 
