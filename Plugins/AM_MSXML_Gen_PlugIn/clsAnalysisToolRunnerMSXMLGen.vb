@@ -8,10 +8,10 @@
 
 Option Strict On
 
+Imports System.Collections.Generic
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
-Imports PRISM.Processes
 
 ' ReSharper disable once UnusedMember.Global
 Public Class clsAnalysisToolRunnerMSXMLGen
@@ -240,6 +240,33 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
     End Function
 
+    ''' <summary>
+    ''' Get the path to the .Exe to use for recalculating precursor ion m/z and charge values
+    ''' </summary>
+    ''' <param name="recalculatePrecursorsTool"></param>
+    ''' <returns>Path to the exe, or an empty string if an error</returns>
+    Private Function GetRecalculatePrecursorsToolProgLoc(<Out()> ByRef recalculatePrecursorsTool As String) As String
+
+        recalculatePrecursorsTool = m_jobParams.GetJobParameter("RecalculatePrecursorsTool", String.Empty)
+        If String.IsNullOrWhiteSpace(recalculatePrecursorsTool) Then
+            LogError("Job parameter RecalculatePrecursorsTool is not defined in the settings file; cannot determine tool to use")
+            Return String.Empty
+        End If
+
+        If String.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase) Then
+            Dim rawConverterDir As String = m_mgrParams.GetParam("RawConverterProgLoc")
+            If String.IsNullOrWhiteSpace(rawConverterDir) Then
+                LogError("Manager parameter RawConverterProgLoc is not defined; cannot find the folder for " & clsRawConverterRunner.RAWCONVERTER_FILENAME)
+                Return String.Empty
+            Else
+                Return Path.Combine(rawConverterDir, clsRawConverterRunner.RAWCONVERTER_FILENAME)
+            End If
+        Else
+            Return String.Empty
+        End If
+
+    End Function
+
     Private Function PostProcessMSXmlFile() As Boolean
         Try
             Dim resultFileExtension As String
@@ -345,21 +372,36 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Return False
         End If
 
-        Dim rawConverterDir As String = m_mgrParams.GetParam("RawConverterProgLoc")
-        If String.IsNullOrWhiteSpace(rawConverterDir) Then
-            LogError("Manager parameter RawConverterProgLoc is not defined; cannot find RawConverter.exe")
+        Dim recalculatePrecursorsTool As String = Nothing
+        Dim recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(recalculatePrecursorsTool)
+        If String.IsNullOrWhiteSpace(recalculatePrecursorsToolProgLoc) Then
             Return False
         End If
 
-        Dim mgfFile As FileInfo = Nothing
-        Dim rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterDir, rawFilePath, mgfFile)
-        If Not rawConverterSuccess Then Return False
+        If String.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase) Then
+            ' Using RawConverter.exe
+            Dim mgfFile As FileInfo = Nothing
+            Dim rawConverterExe = New FileInfo(recalculatePrecursorsToolProgLoc)
 
-        Dim mzMLUpdated = RecalculatePrecursorIonsUpdateMzML(sourceMsXmlFile, mgfFile)
-        Return mzMLUpdated
+            Dim rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterExe.Directory.FullName, rawFilePath, mgfFile)
+            If Not rawConverterSuccess Then Return False
+
+            Dim mzMLUpdated = RecalculatePrecursorIonsUpdateMzML(sourceMsXmlFile, mgfFile)
+            Return mzMLUpdated
+        Else
+            LogError("Unsupported tool for precursursor recalculation: " & recalculatePrecursorsTool)
+            Return False
+        End If
 
     End Function
 
+    ''' <summary>
+    ''' Use RawConverter to process the Thermo .Raw file and recalculate the precursor ion information, writing the results to a .MGF file
+    ''' </summary>
+    ''' <param name="rawConverterDir"></param>
+    ''' <param name="rawFilePath"></param>
+    ''' <param name="mgfFile"></param>
+    ''' <returns></returns>
     Private Function RecalculatePrecursorIonsCreateMGF(rawConverterDir As String, rawFilePath As String, <Out()> ByRef mgfFile As FileInfo) As Boolean
 
         Try
@@ -529,6 +571,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         End Try
 
     End Function
+
     ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
@@ -543,7 +586,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
         End If
 
         ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New Generic.List(Of FileInfo)
+        Dim ioToolFiles As New List(Of FileInfo)
 
         ' Determine the path to the XML Generator
         Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReAdW.exe or MSConvert.exe
@@ -573,12 +616,25 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Return False
         End If
 
+        Dim recalculatePrecursors = m_jobParams.GetJobParameter("RecalculatePrecursors", False)
+        If recalculatePrecursors Then
+
+            Dim recalculatePrecursorsTool As String = Nothing
+            Dim recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(recalculatePrecursorsTool)
+
+            If Not String.IsNullOrEmpty(recalculatePrecursorsToolProgLoc) Then
+                ioToolFiles.Add(New FileInfo(recalculatePrecursorsToolProgLoc))
+            End If
+
+        End If
+
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
         Catch ex As Exception
             LogError("Exception calling SetStepTaskToolVersion", ex)
             Return False
         End Try
+
     End Function
 
 #End Region
