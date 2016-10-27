@@ -46,6 +46,8 @@ Public Class clsRawConverterRunner
 
         Try
 
+            Dim fiSourceFile = New FileInfo(rawFilePath)
+
             If m_DebugLevel > 0 Then
                 OnProgressUpdate("Creating .MGF file using RawConverter", 0)
             End If
@@ -53,7 +55,7 @@ Public Class clsRawConverterRunner
             Dim fiRawConverter = New FileInfo(RawConverterExePath)
 
             ' Set up command
-            Dim cmdStr = " " & rawFilePath & " --mgf"
+            Dim cmdStr = " " & clsGlobal.PossiblyQuotePath(fiSourceFile.FullName) & " --mgf"
 
             If m_DebugLevel > 0 Then
                 OnProgressUpdate(fiRawConverter.FullName & " " & cmdStr, 0)
@@ -63,12 +65,14 @@ Public Class clsRawConverterRunner
             ' The working directory must be the folder that has RawConverter.exe
             ' Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
 
+            Dim consoleOutputFilePath = Path.Combine(fiSourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt")
+
             Dim progRunner = New clsRunDosProgram(fiRawConverter.Directory.FullName) With {
                 .CreateNoWindow = True,
                 .CacheStandardOutput = True,
                 .EchoOutputToConsole = True,
                 .WriteConsoleOutputToFile = True,
-                .ConsoleOutputFilePath = String.Empty      ' Allow the console output filename to be auto-generated
+                .ConsoleOutputFilePath = consoleOutputFilePath
             }
 
             AddHandler progRunner.ConsoleErrorEvent, AddressOf ProgRunner_ConsoleErrorEvent
