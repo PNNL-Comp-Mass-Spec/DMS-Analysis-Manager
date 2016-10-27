@@ -242,7 +242,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim dtElapsedTime As TimeSpan
 
         If stopTime < startTime Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
+            ReportStatus("CalcElapsedTime: Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
             stopTime = Date.UtcNow
         End If
 
@@ -392,8 +392,7 @@ Public Class clsAnalysisToolRunnerBase
             Return remoteCacheFilePath
 
         Catch ex As Exception
-            m_message = "Exception in CopyFileToServerCache"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            LogError("Exception in CopyFileToServerCache", ex)
             Return String.Empty
         End Try
 
@@ -455,6 +454,7 @@ Public Class clsAnalysisToolRunnerBase
             Dim diCacheFolder = New DirectoryInfo(cacheFolderPath)
 
             If Not diCacheFolder.Exists Then
+                Console.WriteLine("Cache folder not found: " & cacheFolderPath)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & cacheFolderPath)
                 Return False
             End If
@@ -489,8 +489,7 @@ Public Class clsAnalysisToolRunnerBase
             strHashcheckFilePath = clsGlobal.CreateHashcheckFile(sourceFilePath, blnComputeMD5Hash:=True)
 
             If String.IsNullOrEmpty(strHashcheckFilePath) Then
-                m_message = "Error in CopyFileToServerCache: Hashcheck file was not created"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Error in CopyFileToServerCache: Hashcheck file was not created")
                 Return False
             End If
 
@@ -514,7 +513,7 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyFileToServerCache: " & ex.Message)
+            LogError("Error in CopyFileToServerCache", ex)
             blnSuccess = False
         End Try
 
@@ -557,7 +556,7 @@ Public Class clsAnalysisToolRunnerBase
             blnSuccess = CopyFileToServerCache(strMSXMLCacheFolderPath, strMSXmlGeneratorName, strsourceFilePath, strDatasetYearQuarter, blnPurgeOldFilesIfNeeded)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CopyMzXMLFileToServerCache: " & ex.Message)
+            LogError("Error in CopyMzXMLFileToServerCache", ex)
             blnSuccess = False
         End Try
 
@@ -611,8 +610,10 @@ Public Class clsAnalysisToolRunnerBase
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS, 0)
 
             If String.IsNullOrEmpty(m_ResFolderName) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
-                m_message = "Results folder not defined (job parameter OutputFolderName)"
+                ' Log this error to the database
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                                     "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+                LogError("Results folder not defined (job parameter OutputFolderName)")
                 ' Without a source folder; there isn't much we can do
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -621,8 +622,10 @@ Public Class clsAnalysisToolRunnerBase
 
             ' Verify the source folder exists
             If Not Directory.Exists(sourceFolderPath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & sourceFolderPath)
-                m_message = "Results folder not found"
+                ' Log this error to the database
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                                     "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & sourceFolderPath)
+                LogError("Results folder not found")
                 ' Without a source folder; there isn't much we can do
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -635,7 +638,7 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory: " & ex.Message)
+            LogError("Error creating results folder in transfer directory", ex)
             m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory")
             If Not String.IsNullOrEmpty(sourceFolderPath) Then
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath)
@@ -659,7 +662,7 @@ Public Class clsAnalysisToolRunnerBase
             If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then blnErrorEncountered = True
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results folder to " & Path.GetPathRoot(targetDirectoryPath) & " : " & ex.Message)
+            LogError("Error copying results folder to " & Path.GetPathRoot(targetDirectoryPath), ex)
             m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & Path.GetPathRoot(targetDirectoryPath))
             blnErrorEncountered = True
         End Try
@@ -727,6 +730,7 @@ Public Class clsAnalysisToolRunnerBase
                             strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
 
                             If objSourceFile.Name <> clsAnalysisJob.JobParametersFilename(m_JobNum) Then
+                                Console.WriteLine("Warning: " & strMessage)
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
                             End If
 
@@ -739,7 +743,7 @@ Public Class clsAnalysisToolRunnerBase
                 Try
                     objAnalysisResults.CreateFolderWithRetry(targetDirectoryPath)
                 Catch ex As Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating results folder in transfer directory, " & Path.GetPathRoot(targetDirectoryPath) & ": " & ex.Message)
+                    LogError("Error creating results folder in transfer directory, " & Path.GetPathRoot(targetDirectoryPath), ex)
                     m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder in transfer directory, " & Path.GetPathRoot(targetDirectoryPath))
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -747,7 +751,7 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error comparing files in source folder to " & targetDirectoryPath & ": " & ex.Message)
+            LogError("Error comparing files in source folder to " & targetDirectoryPath, ex)
             m_message = clsGlobal.AppendToComment(m_message, "Error comparing files in source folder to transfer directory")
             objAnalysisResults.CopyFailedResultsToArchiveFolder(RootSourceFolderPath)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -774,7 +778,7 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             Catch ex As Exception
                 ' Continue copying files; we'll fail the results at the end of this function
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " CopyResultsFolderToServer: error copying " & Path.GetFileName(FileToCopy) & " to " & strTargetPath & ": " & ex.Message)
+                LogError(" CopyResultsFolderToServer: error copying " & Path.GetFileName(FileToCopy) & " to " & strTargetPath, ex)
                 blnErrorEncountered = True
                 intFailedFileCount += 1
             End Try
@@ -816,7 +820,7 @@ Public Class clsAnalysisToolRunnerBase
         ' Verify transfer directory exists
         ' First make sure TransferFolderPath is defined
         If String.IsNullOrEmpty(transferFolderPath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
+            ReportStatus("Transfer folder path not defined; job param 'transferFolderPath' is empty", 0, True)
             m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
             Return String.Empty
         End If
@@ -834,7 +838,7 @@ Public Class clsAnalysisToolRunnerBase
     Protected Function CreateRemoteTransferFolder(objAnalysisResults As clsAnalysisResults, transferFolderPath As String) As String
 
         If String.IsNullOrEmpty(m_ResFolderName) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+            LogError("Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
             m_message = "Results folder job parameter not defined (OutputFolderName)"
             Return String.Empty
         End If
@@ -843,15 +847,14 @@ Public Class clsAnalysisToolRunnerBase
         Try
             objAnalysisResults.FolderExistsWithRetry(transferFolderPath)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error verifying transfer directory, " & Path.GetPathRoot(transferFolderPath) & ": " & ex.Message)
-            m_message = clsGlobal.AppendToComment(m_message, "Error verifying transfer directory, " & Path.GetPathRoot(transferFolderPath))
+            LogError("Error verifying transfer directory, " & Path.GetPathRoot(transferFolderPath), ex)
             Return String.Empty
         End Try
 
         'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
         ' First make sure "DatasetNum" is defined
         If String.IsNullOrEmpty(m_Dataset) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Dataset name is undefined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+            LogError("Dataset name is undefined, job " & m_jobParams.GetParam("StepParameters", "Job"))
             m_message = "Dataset name is undefined"
             Return String.Empty
         End If
@@ -870,8 +873,7 @@ Public Class clsAnalysisToolRunnerBase
         Try
             objAnalysisResults.CreateFolderWithRetry(strRemoteTransferFolderPath, MaxRetryCount:=5, RetryHoldoffSeconds:=20, blnIncreaseHoldoffOnEachRetry:=True)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating dataset folder in transfer directory, " & Path.GetPathRoot(strRemoteTransferFolderPath) & ": " & ex.Message)
-            m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory, " & Path.GetPathRoot(strRemoteTransferFolderPath))
+            LogError("Error creating dataset folder in transfer directory, " & Path.GetPathRoot(strRemoteTransferFolderPath), ex)
             Return String.Empty
         End Try
 
@@ -1092,13 +1094,12 @@ Public Class clsAnalysisToolRunnerBase
                 If DeleteFileWithRetries(FileOrFolderName) Then
                     Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
                 Else
-                    m_message = "Error deleting raw data file " & FileOrFolderName
+                    LogError("Error deleting raw data file " & FileOrFolderName)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
             Catch ex As Exception
-                m_message = "Exception deleting raw data file " & FileOrFolderName & ": " &
-                    ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                LogError("Exception deleting raw data file " & FileOrFolderName, ex)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End Try
         ElseIf IsNetworkDir Then
@@ -1112,8 +1113,7 @@ Public Class clsAnalysisToolRunnerBase
                 End If
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             Catch ex As Exception
-                m_message = "Exception deleting raw data folder " & FileOrFolderName & ": " &
-                    ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                LogError("Exception deleting raw data folder " & FileOrFolderName, ex)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End Try
         End If
@@ -1129,7 +1129,7 @@ Public Class clsAnalysisToolRunnerBase
                 File.Delete(strFilePath)
             End If
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting temporary file " & strFilePath, ex)
+            ReportStatus("Exception deleting temporary file " & strFilePath, 0, True)
         End Try
 
     End Sub
@@ -1196,6 +1196,7 @@ Public Class clsAnalysisToolRunnerBase
 
         If String.IsNullOrWhiteSpace(progLoc) Then
             errorMessage = "Manager parameter " & strProgLocManagerParamName & " is not defined in the Manager Control DB"
+            Console.WriteLine(errorMessage)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
             Return String.Empty
         End If
@@ -1208,6 +1209,7 @@ Public Class clsAnalysisToolRunnerBase
 
             If Not Directory.Exists(progLoc) Then
                 errorMessage = "Version-specific folder not found for " & strStepToolName
+                Console.WriteLine(errorMessage)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage & ": " & progLoc)
                 Return String.Empty
             Else
@@ -1220,6 +1222,7 @@ Public Class clsAnalysisToolRunnerBase
 
         If Not File.Exists(progLoc) Then
             errorMessage = "Cannot find " & strStepToolName & " program file " & strExeName
+            Console.WriteLine(errorMessage)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage & " at " & progLoc)
             Return String.Empty
         End If
@@ -1251,7 +1254,7 @@ Public Class clsAnalysisToolRunnerBase
                     dctData.Add(strKey, strValue)
                 End If
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Packed dictionary item does not contain an equals sign: " & strItem)
+                LogError("Packed dictionary item does not contain an equals sign: " & strItem)
             End If
         Next
 
@@ -1330,14 +1333,18 @@ Public Class clsAnalysisToolRunnerBase
             Dim newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, 0)
 
             If debugLevel > 0 AndAlso newDebugLevel <> debugLevel Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Debug level changed from " & debugLevel.ToString & " to " & newDebugLevel.ToString)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Debug level changed from " & debugLevel.ToString & " to " & newDebugLevel.ToString)
                 debugLevel = newDebugLevel
             End If
 
             Return True
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception getting current manager settings from the manager control DB: " & ex.Message)
+            Dim errorMessage = "Exception getting current manager settings from the manager control DB"
+            Console.WriteLine(errorMessage)
+            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage & ": " & ex.Message)
         End Try
 
         Return False
@@ -1394,14 +1401,12 @@ Public Class clsAnalysisToolRunnerBase
         Dim javaProgLoc As String = m_mgrParams.GetParam("JavaLoc")
 
         If String.IsNullOrEmpty(javaProgLoc) Then
-            m_message = "Parameter 'JavaLoc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            LogError("Parameter 'JavaLoc' not defined for this manager")
             Return String.Empty
         End If
 
         If Not File.Exists(javaProgLoc) Then
-            m_message = "Cannot find Java: " & javaProgLoc
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            LogError("Cannot find Java: " & javaProgLoc)
             Return String.Empty
         End If
 
@@ -1431,8 +1436,7 @@ Public Class clsAnalysisToolRunnerBase
             strMSXmlGeneratorAppPath = Path.Combine(ProteoWizardDir, strMSXmlGeneratorExe)
 
         Else
-            m_message = "Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            LogError("Invalid value for MSXMLGenerator; should be 'ReadW' or 'MSConvert'")
         End If
 
         Return strMSXmlGeneratorAppPath
@@ -1570,8 +1574,7 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
         Catch ex As Exception
-            m_message = "Exception in GetRPathFromWindowsRegistry"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            LogError("Exception in GetRPathFromWindowsRegistry", ex)
             Return String.Empty
         End Try
 
@@ -1587,7 +1590,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")
 
         If String.IsNullOrEmpty(transferFolderPath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Transfer folder path not defined; job param 'transferFolderPath' is empty")
+            LogError("Transfer folder path not defined; job param 'transferFolderPath' is empty")
             m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
             Return String.Empty
         End If
@@ -1708,8 +1711,7 @@ Public Class clsAnalysisToolRunnerBase
             Return fiGZippedFile
 
         Catch ex As Exception
-            m_message = "Exception in GZipFile(fiResultFile As FileInfo)"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            LogError("Exception in GZipFile(fiResultFile As FileInfo)", ex)
             Return Nothing
         End Try
 
@@ -1826,26 +1828,40 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Update m_message with an error message and record the error in the manager's daily log file
+    ''' Update m_message with an error message and record the error in the manager's log file
     ''' </summary>
-    ''' <param name="errorMessage"></param>
-    ''' <remarks></remarks>
+    ''' <param name="errorMessage">Error message</param>
     Protected Sub LogError(errorMessage As String)
         m_message = errorMessage
+        Console.WriteLine(errorMessage)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
     End Sub
 
+    ''' <summary>
+    ''' Update m_message with an error message and record the error in the manager's log file
+    ''' </summary>
+    ''' <param name="errorMessage">Error message</param>
+    ''' <param name="ex">Exception to log</param>
     Protected Sub LogError(errorMessage As String, ex As Exception)
-        m_message = String.Copy(errorMessage)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage, ex)
+        m_message = errorMessage
+        ReportStatus(errorMessage, ex)
     End Sub
 
+    ''' <summary>
+    ''' Update m_message with an error message and record the error in the manager's log file
+    ''' Also write the detailed error message to the local log file
+    ''' </summary>
+    ''' <param name="errorMessage">Error message</param>
+    ''' <param name="detailedMessage">Detailed error message</param>
     Protected Sub LogError(errorMessage As String, detailedMessage As String)
-        m_message = String.Copy(errorMessage)
+        m_message = errorMessage
         If String.IsNullOrEmpty(detailedMessage) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+            Console.WriteLine(errorMessage)
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
+            Console.WriteLine(errorMessage)
+            Console.WriteLine(detailedMessage)
         End If
     End Sub
 
@@ -1877,7 +1893,7 @@ Public Class clsAnalysisToolRunnerBase
     ''' </summary>
     ''' <param name="toolName"></param>
     ''' <param name="logIntervalMinutes"></param>
-    ''' <remarks>UCalls GetCurrentMgrSettingsFromDB every 300 seconds</remarks>
+    ''' <remarks>Calls GetCurrentMgrSettingsFromDB every 300 seconds</remarks>
     Protected Sub LogProgress(toolName As String, logIntervalMinutes As Integer)
 
         Const CONSOLE_PROGRESS_INTERVAL_MINUTES = 1
@@ -1917,17 +1933,18 @@ Public Class clsAnalysisToolRunnerBase
 
         m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.PACKAGING_RESULTS, 0)
 
-        'Makes results folder and moves files into it
+        ' Makes results folder and moves files into it
 
-        'Log status
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Creating results folder, Job " & m_JobNum)
+        ' Log status
+        ReportStatus(m_MachName & ": Creating results folder, Job " & m_JobNum)
         Dim ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
 
-        'make the results folder
+        ' Make the results folder
         Try
             Directory.CreateDirectory(ResFolderNamePath)
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error making results folder, job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(Err))
+        Catch ex As Exception
+            ' Log this error to the database
+            ReportStatus("Error making results folder, job " & m_JobNum, ex)
             m_message = clsGlobal.AppendToComment(m_message, "Error making results folder")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
@@ -1980,9 +1997,8 @@ Public Class clsAnalysisToolRunnerBase
                       "; ResultFileExtensionsToSkip contains " & m_jobParams.ResultFileExtensionsToSkip.Count.ToString & " entries" &
                       "; ResultFilesToKeep contains " & m_jobParams.ResultFilesToKeep.Count.ToString & " entries"
                 End If
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strLogMessage)
+                ReportStatus(strLogMessage, m_DebugLevel)
             End If
-
 
             ' Obtain a list of all files in the working directory
             ' Ignore subdirectories
@@ -2086,7 +2102,7 @@ Public Class clsAnalysisToolRunnerBase
                     Catch ex2 As Exception
                         ' Copy also failed
                         ' Continue moving files; we'll fail the results at the end of this function
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " MoveResultFiles: error moving/copying file: " & tmpFileName & ex.Message)
+                        ReportStatus(" MoveResultFiles: error moving/copying file: " & tmpFileName, ex)
                         blnErrorEncountered = True
                     End Try
                 End Try
@@ -2098,7 +2114,8 @@ Public Class clsAnalysisToolRunnerBase
                 objExtension = dctAcceptStats.GetEnumerator
                 Do While objExtension.MoveNext
                     If objExtension.Current.Value > ACCEPT_LOGGING_THRESHOLD Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted a total of " & objExtension.Current.Value & " files with extension " & objExtension.Current.Key)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                             " MoveResultFiles: Accepted a total of " & objExtension.Current.Value & " files with extension " & objExtension.Current.Key)
                     End If
                 Loop
 
@@ -2106,18 +2123,21 @@ Public Class clsAnalysisToolRunnerBase
                 objExtension = dctRejectStats.GetEnumerator
                 Do While objExtension.MoveNext
                     If objExtension.Current.Value > REJECT_LOGGING_THRESHOLD Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected a total of " & objExtension.Current.Value & " files with extension " & objExtension.Current.Key)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                             " MoveResultFiles: Rejected a total of " & objExtension.Current.Value & " files with extension " & objExtension.Current.Key)
                     End If
                 Loop
             End If
 
-        Catch Err As Exception
+        Catch ex As Exception
             If m_DebugLevel > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Tmpfile = " & tmpFileName)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder name = " & Path.Combine(ResFolderNamePath, Path.GetFileName(tmpFileName)))
+                ReportStatus("clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder", 0, True)
+                ReportStatus("Tmpfile = " & tmpFileName)
+                ReportStatus("Results folder name = " & Path.Combine(ResFolderNamePath, Path.GetFileName(tmpFileName)))
             End If
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error moving results files, job " & m_JobNum & Err.Message)
+
+            ' Log this error to the database
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error moving results files, job " & m_JobNum & ex.Message)
             m_message = clsGlobal.AppendToComment(m_message, "Error moving results files")
 
             blnErrorEncountered = True
@@ -2268,6 +2288,9 @@ Public Class clsAnalysisToolRunnerBase
 
             dtLastCheck = Date.UtcNow
 
+            Dim dtLastProgress = Date.UtcNow
+            ReportStatus("Examining hashcheck files in folder " & diCacheFolder.FullName, 1)
+
             ' Make a list of all of the hashcheck files in diCacheFolder
 
             For Each fiItem As FileInfo In diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories)
@@ -2284,10 +2307,16 @@ Public Class clsAnalysisToolRunnerBase
 
                             dblTotalSizeMB += fiDataFile.Length / 1024.0 / 1024.0
                         Catch ex As Exception
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception adding to file list " + fiDataFile.Name + "; " + ex.Message)
+                            ReportStatus("Exception adding to file list " + fiDataFile.Name + "; " + ex.Message, 0, True)
                         End Try
 
+                        If Date.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5 Then
+                            dtLastProgress = Date.UtcNow
+                            ReportStatus(String.Format(" ... {0:#,##0} files processed", lstDataFiles.Count))
+                        End If
+
                     End If
+
                 End If
             Next
 
@@ -2366,13 +2395,12 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             Next
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                 "Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath &
-                                 ", recovering " & dblSizeDeletedMB.ToString("0.0") & " MB in disk space")
+            ReportStatus("Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath &
+                         ", recovering " & dblSizeDeletedMB.ToString("0.0") & " MB in disk space")
 
             If intFileDeleteErrorCount > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath)
+                ReportStatus("Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath, 0, True)
+                Console.WriteLine("See the log file for details")
                 For Each kvItem As KeyValuePair(Of String, Integer) In dctErrorSummary
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " & kvItem.Key & ": " & kvItem.Value)
                 Next
@@ -2393,7 +2421,7 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PurgeOldServerCacheFiles", ex)
+            ReportStatus("Error in PurgeOldServerCacheFiles: " & clsGlobal.GetExceptionStackTrace(ex), 0, True)
         End Try
     End Sub
 
@@ -2435,7 +2463,7 @@ Public Class clsAnalysisToolRunnerBase
         Try
 
             If Not File.Exists(strVersionInfoFilePath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Version Info File not found: " & strVersionInfoFilePath)
+                ReportStatus("Version Info File not found: " & strVersionInfoFilePath, 0, True)
                 Return False
             End If
 
@@ -2465,13 +2493,13 @@ Public Class clsAnalysisToolRunnerBase
                             Case "version"
                                 strVersion = String.Copy(strValue)
                                 If String.IsNullOrWhiteSpace(strVersion) Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Empty version line in Version Info file for " & Path.GetFileName(strDLLFilePath))
+                                    ReportStatus("Empty version line in Version Info file for " & Path.GetFileName(strDLLFilePath), 0, True)
                                     blnSuccess = False
                                 Else
                                     blnSuccess = True
                                 End If
                             Case "error"
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reported by DLLVersionInspector for " & Path.GetFileName(strDLLFilePath) & ": " & strValue)
+                                ReportStatus("Error reported by DLLVersionInspector for " & Path.GetFileName(strDLLFilePath) & ": " & strValue, 0, True)
                                 blnSuccess = False
                             Case Else
                                 ' Ignore the line
@@ -2483,7 +2511,7 @@ Public Class clsAnalysisToolRunnerBase
             End Using
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading Version Info File for " & Path.GetFileName(strDLLFilePath), ex)
+            ReportStatus("Error reading Version Info File for " & Path.GetFileName(strDLLFilePath) & ": " & clsGlobal.GetExceptionStackTrace(ex), 0, True)
         End Try
 
         Return blnSuccess
@@ -2500,16 +2528,14 @@ Public Class clsAnalysisToolRunnerBase
         Dim FileToDelete = ""
 
         Try
-            'Log status
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Remove Files from the storage server; ServerFilesToDelete contains " & m_jobParams.ServerFilesToDelete.Count.ToString & " entries")
-            End If
+            ' Log status
+            ReportStatus("Remove Files from the storage server; " &
+                         "ServerFilesToDelete contains " & m_jobParams.ServerFilesToDelete.Count.ToString & " entries", 2)
 
             For Each FileToDelete In m_jobParams.ServerFilesToDelete
-                If m_DebugLevel >= 4 Then
-                    ' Log file to be deleted
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting " & FileToDelete)
-                End If
+
+                ' Log file to be deleted
+                ReportStatus("Deleting " & FileToDelete, 4)
 
                 If File.Exists(FileToDelete) Then
                     'Verify file is not set to readonly, then delete it
@@ -2518,7 +2544,7 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             Next
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.RemoveNonResultServerFiles(), Error deleting file " & FileToDelete, ex)
+            ReportStatus("clsGlobal.RemoveNonResultServerFiles(), Error deleting file " & FileToDelete, ex)
             'Even if an exception occurred, return true since the results were already copied back to the server
             Return True
         End Try
@@ -2540,7 +2566,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Catch ex As Exception
             If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ReplaceUpdatedFile: " & ex.Message)
+                ReportStatus("Error in ReplaceUpdatedFile", ex)
             End If
 
             Return False
@@ -2549,6 +2575,50 @@ Public Class clsAnalysisToolRunnerBase
         Return True
 
     End Function
+
+    ''' <summary>
+    ''' Shows information about an exception at the console and in the log file
+    ''' Unlike LogErrors, does not update m_message
+    ''' </summary>
+    ''' <param name="errorMessage">Error message (do not include ex.message)</param>
+    ''' <param name="ex">Exception</param>
+    Protected Sub ReportStatus(errorMessage As String, ex As Exception)
+        Dim formattedError As String
+        If errorMessage.EndsWith(ex.Message) Then
+            formattedError = errorMessage
+        Else
+            formattedError = errorMessage & ": " & ex.Message
+        End If
+
+        Console.WriteLine(formattedError)
+        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
+    End Sub
+
+    ''' <summary>
+    ''' Show a status message at the console and optionally include in the log file
+    ''' </summary>
+    ''' <param name="statusMessage">Status message</param>
+    ''' <param name="logFileDebugLevel">
+    ''' Log level for whether to log to disk: 
+    ''' 0 to always log
+    ''' 1 to log if m_DebugLevel is >= 1
+    ''' 2 to log if m_DebugLevel is >= 2
+    ''' 10 to not log to disk
+    ''' </param>
+    ''' <param name="isError">True if this is an error</param>
+    ''' <remarks>Unlike LogErrors, does not update m_message</remarks>
+    Protected Sub ReportStatus(statusMessage As String, Optional logFileDebugLevel As Integer = 0, optional isError as Boolean =false)
+        Console.WriteLine(statusMessage)
+        If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
+            If isError Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage)
+            Else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage)
+            End If
+        End If
+
+    End Sub
 
     ''' <summary>
     ''' Runs the analysis tool
@@ -2562,7 +2632,7 @@ Public Class clsAnalysisToolRunnerBase
         GetCurrentMgrSettingsFromDB()
 
         'Make log entry
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MachName & ": Starting analysis, job " & m_JobNum)
+        ReportStatus(m_MachName & ": Starting analysis, job " & m_JobNum)
 
         'Start the job timer
         m_StartTime = Date.UtcNow
@@ -2605,7 +2675,7 @@ Public Class clsAnalysisToolRunnerBase
             End Using
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving tool version info: " & ex.Message)
+            ReportStatus("Exception saving tool version info", ex)
             Return False
         End Try
 
@@ -2672,17 +2742,13 @@ Public Class clsAnalysisToolRunnerBase
                 Try
                     If ioFileInfo.Exists Then
                         strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name & ": " & ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT))
-
-                        If m_DebugLevel >= 2 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "EXE Info: " & strExeInfo)
-                        End If
-
+                        ReportStatus("EXE Info: " & strExeInfo, 2)
                     Else
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " & ioFileInfo.FullName)
+                        ReportStatus("Warning: Tool file not found: " & ioFileInfo.FullName)
                     End If
 
                 Catch ex As Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking up tool version file info: " & ex.Message)
+                    ReportStatus("Exception looking up tool version file info", ex)
                 End Try
             Next
         End If
@@ -2717,8 +2783,7 @@ Public Class clsAnalysisToolRunnerBase
         If ResCode = 0 Then
             Outcome = True
         Else
-            Dim Msg As String = "Error " & ResCode.ToString & " storing tool version for current processing step"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            ReportStatus("Error " & ResCode.ToString & " storing tool version for current processing step", 0, True)
             Outcome = False
         End If
 
@@ -2799,7 +2864,7 @@ Public Class clsAnalysisToolRunnerBase
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & strAssemblyName & ": " & ex.Message)
+            ReportStatus("Exception determining Assembly info for " & strAssemblyName, ex)
             Return False
         End Try
 
@@ -2824,7 +2889,7 @@ Public Class clsAnalysisToolRunnerBase
             ioFileInfo = New FileInfo(strDLLFilePath)
 
             If Not ioFileInfo.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
+                ReportStatus("Warning: File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
                 Return False
             Else
 
@@ -2856,7 +2921,7 @@ Public Class clsAnalysisToolRunnerBase
             '  <startup useLegacyV2RuntimeActivationPolicy="true">
             '    <supportedRuntime version="v4.0" />
             '  </startup>
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " & Path.GetFileName(strDLLFilePath) & ": " & ex.Message)
+            ReportStatus("Exception determining Assembly info for " & Path.GetFileName(strDLLFilePath), ex)
             blnSuccess = False
         End Try
 
@@ -2882,7 +2947,7 @@ Public Class clsAnalysisToolRunnerBase
 
             If Not ioFileInfo.Exists Then
                 m_message = "File not found by StoreToolVersionInfoViaSystemDiagnostics"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message & ": " & strDLLFilePath)
+                ReportStatus(m_message & ": " & strDLLFilePath)
                 Return False
             End If
 
@@ -2920,8 +2985,7 @@ Public Class clsAnalysisToolRunnerBase
             Return True
 
         Catch ex As Exception
-            m_message = "Exception determining File Version for " & Path.GetFileName(strDLLFilePath)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            LogError("Exception determining File Version for " & Path.GetFileName(strDLLFilePath), ex)
             Return False
         End Try
 
@@ -2975,11 +3039,11 @@ Public Class clsAnalysisToolRunnerBase
 
             If Not ioFileInfo.Exists Then
                 m_message = "File not found by StoreToolVersionInfoOneFileUseExe"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDLLFilePath)
+                ReportStatus(m_message & ": " & strDLLFilePath, 0, True)
                 Return False
             ElseIf Not File.Exists(strAppPath) Then
                 m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFileUseExe"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strAppPath)
+                ReportStatus(m_message & ": " & strAppPath, 0, True)
                 Return False
             End If
 
@@ -3035,7 +3099,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Catch ex As Exception
             m_message = "Exception determining Version info for " & Path.GetFileName(strDLLFilePath) & " using " & versionInspectorExeName
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            ReportStatus(m_message, ex)
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, Path.GetFileNameWithoutExtension(strDLLFilePath))
         End Try
 
@@ -3242,7 +3306,8 @@ Public Class clsAnalysisToolRunnerBase
                                 Return False
                             End If
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName & "; RetriesRemaining: " & retriesRemaining)
+                            ReportStatus("Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName &
+                                         "; RetriesRemaining: " & retriesRemaining, 0, True)
 
                             ' Wait 2 seconds then try again
                             Thread.Sleep(2000)
@@ -3260,8 +3325,7 @@ Public Class clsAnalysisToolRunnerBase
                     Dim success = SynchronizeFolders(diSubFolder.FullName, subfolderTargetPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders)
 
                     If Not success Then
-                        m_message = "Error copying subfolder " & diSubFolder.FullName & " to " & targetDirectoryPath
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        LogError("Error copying subfolder " & diSubFolder.FullName & " to " & targetDirectoryPath)
                         Exit For
                     End If
 
@@ -3269,8 +3333,7 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
         Catch ex As Exception
-            m_message = "Error in SynchronizeFolders"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Error in SynchronizeFolders", ex)
             Return False
         End Try
 
@@ -3328,8 +3391,8 @@ Public Class clsAnalysisToolRunnerBase
             m_SummaryFile.Add(Environment.NewLine)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("StepParameters", "Step") _
-             & " - " & ex.Message)
+            ReportStatus("Error creating summary file, job " & m_JobNum &
+                         ", step " & m_jobParams.GetParam("StepParameters", "Step") & ": " & ex.Message)
             Return False
         End Try
 
@@ -3411,7 +3474,7 @@ Public Class clsAnalysisToolRunnerBase
             Return coreUsage
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in UpdateCpuUsageByProcessName determining the processor usage of " & processName)
+            ReportStatus("Exception in UpdateCpuUsageByProcessName determining the processor usage of " & processName, ex)
             Return -1
         End Try
 
@@ -3566,8 +3629,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Try
             If Not File.Exists(strDTAFilePath) Then
-                m_message = "_DTA.txt file not found"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strDTAFilePath)
+                LogError("_DTA.txt file not found", strDTAFilePath)
                 Return False
             End If
 
@@ -3585,13 +3647,11 @@ Public Class clsAnalysisToolRunnerBase
             End Using
 
             If Not blnDataFound Then
-                m_message = "The _DTA.txt file is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("The _DTA.txt file is empty")
             End If
 
         Catch ex As Exception
-            m_message = "Exception in ValidateCDTAFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            LogError("Exception in ValidateCDTAFile", ex)
             Return False
         End Try
 
@@ -3664,8 +3724,7 @@ Public Class clsAnalysisToolRunnerBase
 
                 End If
             Catch ex As Exception
-                m_message = "Error deleting target .zip file prior to zipping file " & sourceFilePath & " using SharpZipLib: " & ex.Message
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Error deleting target .zip file prior to zipping file " & sourceFilePath & " using SharpZipLib", ex)
                 Return False
             End Try
 
@@ -3682,8 +3741,7 @@ Public Class clsAnalysisToolRunnerBase
             Return True
 
         Catch ex As Exception
-            m_message = "Exception zipping " & sourceFilePath & " using SharpZipLib"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum & ": " & ex.Message)
+            LogError("Exception zipping " & sourceFilePath & " using SharpZipLib", ex)
             Return False
         End Try
 
@@ -3717,8 +3775,7 @@ Public Class clsAnalysisToolRunnerBase
             If String.IsNullOrWhiteSpace(fileDescription) Then fileDescription = "Unknown_Source"
 
             If Not ZipFile(fiResultsFile.FullName, False) Then
-                m_message = "Error zipping " & fileDescription & " results file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Error zipping " & fileDescription & " results file")
                 Return False
             End If
 
@@ -3726,8 +3783,7 @@ Public Class clsAnalysisToolRunnerBase
             m_jobParams.AddResultFileToSkip(fiResultsFile.Name)
 
         Catch ex As Exception
-            m_message = "Exception zipping " & fileDescription & " results file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum & ": " & ex.Message)
+            LogError("Exception zipping " & fileDescription & " results file", ex)
             Return False
         End Try
 
@@ -3741,33 +3797,32 @@ Public Class clsAnalysisToolRunnerBase
 
     Private Sub mSortUtility_ErrorEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
         mSortUtilityErrorMessage = e.Message
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "SortUtility: " & e.Message)
+        ReportStatus("SortUtility: " & e.Message, 0, True)
     End Sub
 
     Private Sub mSortUtility_MessageEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message)
+            ReportStatus(e.Message)
         End If
     End Sub
 
     Private Sub mSortUtility_ProgressChanged(sender As Object, e As FlexibleFileSortUtility.ProgressChangedEventArgs)
         If m_DebugLevel >= 1 AndAlso Date.UtcNow.Subtract(mLastSortUtilityProgress).TotalSeconds >= 5 Then
             mLastSortUtilityProgress = Date.UtcNow
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.taskDescription & ": " & e.percentComplete.ToString("0.0") & "% complete")
+            ReportStatus(e.taskDescription & ": " & e.percentComplete.ToString("0.0") & "% complete")
         End If
     End Sub
 
     Private Sub mSortUtility_WarningEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SortUtility: " & e.Message)
+        ReportStatus("SortUtility Warning: " & e.Message)
     End Sub
 
     Private Sub m_MyEMSLUtilities_ErrorEvent(strMessage As String)
-        m_message = strMessage
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+        LogError(strMessage)
     End Sub
 
     Private Sub m_MyEMSLUtilities_WarningEvent(strMessage As String)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
+        ReportStatus("MyEMSL Warning: " & strMessage)
     End Sub
 
 #End Region
