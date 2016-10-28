@@ -293,22 +293,29 @@ Public Class clsGlobal
         Dim strMsg As String
 
         If cmd Is Nothing Then Throw New ArgumentException("command is undefined", NameOf(cmd))
-        If String.IsNullOrEmpty(connectionString) Then Throw New ArgumentException("ConnectionString cannot be empty", NameOf(connectionString))
+        If String.IsNullOrEmpty(connectionString) Then
+            Throw New ArgumentException("ConnectionString cannot be empty", NameOf(connectionString))
+        End If
+
         If String.IsNullOrEmpty(callingFunction) Then callingFunction = "UnknownCaller"
         If retryCount < 1 Then retryCount = 1
         If timeoutSeconds < 5 Then timeoutSeconds = 5
 
+        ' When data retrieval fails, delay for 5 seconds on the first try
+        ' Double the delay time for each subsequent attempt, up to a maximum of 90 seconds between attempts
+        Dim retryDelaySeconds = 5
+
         While retryCount > 0
             Try
-                Using Cn = New SqlConnection(connectionString)
+                Using cn = New SqlConnection(connectionString)
 
-                    cmd.Connection = Cn
+                    cmd.Connection = cn
                     cmd.CommandTimeout = timeoutSeconds
 
-                    Using Da = New SqlDataAdapter(cmd)
-                        Using Ds = New DataSet
-                            Da.Fill(Ds)
-                            dtResults = Ds.Tables(0)
+                    Using da = New SqlDataAdapter(cmd)
+                        Using ds = New DataSet
+                            da.Fill(ds)
+                            dtResults = ds.Tables(0)
                         End Using
                     End Using
                 End Using
@@ -331,7 +338,13 @@ Public Class clsGlobal
                 End If
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-                Thread.Sleep(5000)              'Delay for 5 second before trying again
+                Thread.Sleep(retryDelaySeconds * 1000)
+
+                retryDelaySeconds *= 2
+                If retryDelaySeconds > 90 Then
+                    retryDelaySeconds = 90
+                End If
+
             End Try
         End While
 
