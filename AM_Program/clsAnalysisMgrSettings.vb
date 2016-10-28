@@ -300,7 +300,7 @@ Public Class clsAnalysisMgrSettings
 
     Private Function LoadMgrSettingsFromDBWork(ManagerName As String, <Out()> ByRef dtSettings As DataTable, blnReturnErrorIfNoParameters As Boolean) As Boolean
 
-        Const retryCount As Short = 3
+        Const retryCount As Short = 6
 
         ' Data Source=proteinseqs;Initial Catalog=manager_control
         Dim connectionString As String = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, String.Empty)
@@ -393,10 +393,9 @@ Public Class clsAnalysisMgrSettings
         '   Name="StepTool_ParamFileStoragePath_LCMSFeatureFinder"
         '   Value="\\gigasax\dms_parameter_Files\LCMSFeatureFinder"
 
-        Dim RetryCount As Short = 3
-        Dim MyMsg As String
-        Dim ParamKey As String
-        Dim ParamVal As String
+        Dim retryCount As Short = 6
+        Dim paramKey As String
+        Dim paramVal As String
         Dim connectionString As String = Me.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
 
         If mTraceMode = True Then ShowTraceMessage("LoadBrokerDBSettings has brokerconnectionstring = " & connectionString)
