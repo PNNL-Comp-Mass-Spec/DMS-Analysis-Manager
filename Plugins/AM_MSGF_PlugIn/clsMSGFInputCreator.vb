@@ -14,6 +14,7 @@
 Option Strict On
 
 Imports System.IO
+Imports MsMsDataFileReader
 Imports PHRPReader
 
 Public MustInherit Class clsMSGFInputCreator
@@ -216,18 +217,12 @@ Public MustInherit Class clsMSGFInputCreator
     End Function
 
     Private Function CreateMGFScanToIndexMap(strMGFFilePath As String) As Boolean
-        Dim objMGFReader As New MsMsDataFileReader.clsMGFReader
 
-        Dim intMsMsDataCount As Integer
-        Dim strMSMSDataList() As String = Nothing
-        Dim udtSpectrumHeaderInfo As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-
-        Dim strScanAndCharge As String
-        Dim intSpectrumIndex As Integer
-
-        Dim blnSpectrumFound As Boolean
+        Dim intSpectrumIndex = 0
 
         Try
+
+            Dim objMGFReader As New clsMGFReader()
 
             If Not objMGFReader.OpenFile(strMGFFilePath) Then
                 ReportError("Error opening the .MGF file")
@@ -237,32 +232,34 @@ Public MustInherit Class clsMSGFInputCreator
             mScanAndChargeToMGFIndex = New SortedDictionary(Of String, Integer)
             mMGFIndexToScan = New SortedDictionary(Of Integer, Integer)
 
-            udtSpectrumHeaderInfo = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
 
-            intSpectrumIndex = 0
-            Do
+
+            While True
                 ' Read the next available spectrum
-                blnSpectrumFound = objMGFReader.ReadNextSpectrum(strMSMSDataList, intMsMsDataCount,
-                                                                 udtSpectrumHeaderInfo)
-                If blnSpectrumFound Then
-                    intSpectrumIndex += 1
+                Dim msmsDataList As List(Of String) = Nothing
+                Dim udtSpectrumHeaderInfo As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = Nothing
 
-                    If udtSpectrumHeaderInfo.ParentIonChargeCount = 0 Then
-                        strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, 0)
-                        mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
-                    Else
-                        For intChargeIndex = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
-                            strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart,
+                Dim blnSpectrumFound = objMGFReader.ReadNextSpectrum(msmsDataList, udtSpectrumHeaderInfo)
+                If Not blnSpectrumFound Then Exit While
+
+                intSpectrumIndex += 1
+
+                If udtSpectrumHeaderInfo.ParentIonChargeCount = 0 Then
+                    Dim strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, 0)
+                    mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
+                Else
+                    For intChargeIndex = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
+                        Dim strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart,
                                                                        udtSpectrumHeaderInfo.ParentIonCharges(
                                                                            intChargeIndex))
-                            mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
-                        Next
-                    End If
-
-                    mMGFIndexToScan.Add(intSpectrumIndex, udtSpectrumHeaderInfo.ScanNumberStart)
-
+                        mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
+                    Next
                 End If
-            Loop While blnSpectrumFound
+
+                mMGFIndexToScan.Add(intSpectrumIndex, udtSpectrumHeaderInfo.ScanNumberStart)
+
+
+            End While
 
         Catch ex As Exception
             ReportError("Error indexing the MGF file: " & ex.Message)
