@@ -131,7 +131,7 @@ Public Class clsDtaGenRawConverter
             Dim fiRawConverter = New FileInfo(m_DtaToolNameLoc)
 
             ' Set up command
-            Dim cmdStr = " " & rawFilePath & " --mgf"
+            Dim cmdStr = " " & clsGlobal.PossiblyQuotePath(rawFilePath) & " --mgf"
 
             If m_DebugLevel > 0 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)

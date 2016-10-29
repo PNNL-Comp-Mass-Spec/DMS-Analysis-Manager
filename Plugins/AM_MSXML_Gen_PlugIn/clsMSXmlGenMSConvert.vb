@@ -84,7 +84,7 @@ Public Class clsMSXmlGenMSConvert
 
     Protected Overrides Function CreateArguments(msXmlFormat As String, rawFilePath As String) As String
 
-        Dim cmdStr = " " & rawFilePath
+        Dim cmdStr = " " & clsGlobal.PossiblyQuotePath(rawFilePath)
 
         If String.IsNullOrWhiteSpace(mCustomMSConvertArguments) Then
 
@@ -142,7 +142,6 @@ Public Class clsMSXmlGenMSConvert
         ElseIf String.Equals(msXmlFormat, "mzXML", StringComparison.InvariantCultureIgnoreCase) AndAlso
                mRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzXML Then
             ' Input and output files are both .mzXML
-            ' Include switch --outfile
             Return IO.Path.GetFileNameWithoutExtension(rawFilePath) & "_new" & clsAnalysisResources.DOT_MZXML_EXTENSION
         Else
             Return IO.Path.GetFileName(IO.Path.ChangeExtension(rawFilePath, msXmlFormat))
