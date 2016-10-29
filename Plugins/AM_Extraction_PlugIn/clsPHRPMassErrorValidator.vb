@@ -228,7 +228,7 @@ Public Class clsPHRPMassErrorValidator
                 If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB AndAlso objCurrentPSM.TryGetScore("IsotopeError", psmIsotopeError) Then
                     ' The integer value of dblMassError should match psmIsotopeError
                     ' However, scale up the tolerance based on the peptide mass
-                    dblToleranceCurrent = 0.1 + objCurrentPSM.PeptideMonoisotopicMass / 50000.0
+                    dblToleranceCurrent = 0.2 + objCurrentPSM.PeptideMonoisotopicMass / 50000.0
                     dblMassError -= CInt(psmIsotopeError)
                 Else
                     dblToleranceCurrent = dblPrecursorMassTolerance + objCurrentPSM.Charge - 1
