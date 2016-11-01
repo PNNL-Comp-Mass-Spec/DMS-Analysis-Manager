@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 using AnalysisManagerBase;
@@ -20,7 +20,7 @@ namespace AnalysisManager_IDM_Plugin
                 if (m_DebugLevel >= 1)
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
-				}
+                }
 
                 string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
 
@@ -30,19 +30,19 @@ namespace AnalysisManager_IDM_Plugin
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-				bool useExistingIDMResults = m_jobParams.GetJobParameter("UseExistingIDMResults", false);
+                bool useExistingIDMResults = m_jobParams.GetJobParameter("UseExistingIDMResults", false);
 
-				if (useExistingIDMResults)
-				{
-					var fiIDMResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepOutputFolderName"), "Results.db3"));
-					if (fiIDMResultsDB.Exists)
-					{
-						string targetFilePath = Path.Combine(m_WorkingDir, clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
-						fiIDMResultsDB.CopyTo(targetFilePath);
+                if (useExistingIDMResults)
+                {
+                    var fiIDMResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepOutputFolderName"), "Results.db3"));
+                    if (fiIDMResultsDB.Exists)
+                    {
+                        string targetFilePath = Path.Combine(m_WorkingDir, clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
+                        fiIDMResultsDB.CopyTo(targetFilePath);
 
-						m_jobParams.AddResultFileToSkip(clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
-					}
-				}
+                        m_jobParams.AddResultFileToSkip(clsAnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);
+                    }
+                }
 
             }
             catch (Exception ex)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Mage;
@@ -82,7 +82,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// /// </summary>
         /// <param name="inputFolderPath">Path to folder containing files to be imported</param>
         /// <param name="fileNameList">List of specific file names that will be imported (ignored if blank)</param>
-		/// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>
+        /// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>
         public void ImportFilesInFolderToSQLite(string inputFolderPath, string fileNameList, string importMode)
         {
 

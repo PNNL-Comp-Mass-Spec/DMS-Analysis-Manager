@@ -1,4 +1,4 @@
-﻿/*****************************************************************
+/*****************************************************************
 ** Written by Matthew Monroe for the US Department of Energy    **
 ** Pacific Northwest National Laboratory, Richland, WA          **
 ** Created 04/29/2015                                           **
@@ -21,7 +21,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             try
             {
                 // Retrieve the export script
-				currentTask = "Get parameter BrukerSpectraExportScriptFile";
+                currentTask = "Get parameter BrukerSpectraExportScriptFile";
                 var exportScriptName = m_jobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
                 if (string.IsNullOrEmpty(exportScriptName))
                 {

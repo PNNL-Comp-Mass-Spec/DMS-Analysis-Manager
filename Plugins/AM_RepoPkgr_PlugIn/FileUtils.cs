@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -58,13 +58,13 @@ namespace AnalysisManager_RepoPkgr_PlugIn
       // get file handler object to access the targetDir
       var diTargetDir = new DirectoryInfo(targetDir);
 
-	  if (!diTargetDir.Exists)
-		  return 0;
+      if (!diTargetDir.Exists)
+          return 0;
 
       // get file handler object to access the workDir
       var diWorkDir = new DirectoryInfo(workDir);
 
-	  int filesUpdated = 0;
+      int filesUpdated = 0;
 
       // for each zip file in target folder
       foreach (var tarFi in diTargetDir.GetFiles("*.zip")) {
@@ -101,20 +101,20 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         }
 
         // move the gzip file to target directory
-	    string targetFilePath = Path.Combine(targetDir, gzFileName);
-	    if (File.Exists(targetFilePath))
-		  File.Delete(targetFilePath);
+        string targetFilePath = Path.Combine(targetDir, gzFileName);
+        if (File.Exists(targetFilePath))
+          File.Delete(targetFilePath);
 
-	    File.Move(Path.Combine(workDir, gzFileName), targetFilePath);
+        File.Move(Path.Combine(workDir, gzFileName), targetFilePath);
 
         // get rid of zip file on both sides		  
         File.Delete(Path.Combine(workDir, tarFi.Name));
         File.Delete(tarFi.FullName);
 
-		filesUpdated++;
+        filesUpdated++;
       }
 
-	  return filesUpdated;
+      return filesUpdated;
     }
 
   }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -298,11 +298,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 // Look in m_WorkDir for the .mzXML or .mzML file for this dataset
                 var candidateFileNames = new List<string>
-					{
-						datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION,
-						datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION,
-						datasetName + clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION
-					};
+                    {
+                        datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION,
+                        datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION,
+                        datasetName + clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION
+                    };
 
                 foreach (var candidateFile in candidateFileNames)
                 {

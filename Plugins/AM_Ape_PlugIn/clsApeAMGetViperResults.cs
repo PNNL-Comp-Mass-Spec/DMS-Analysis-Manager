@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Data.SqlClient;
@@ -11,11 +11,11 @@ namespace AnalysisManager_Ape_PlugIn
 
         #region Member Variables
 
-		#endregion
+        #endregion
 
-		#region Constructors
+        #region Constructors
 
-		/// <summary>
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="jobParms"></param>
@@ -53,8 +53,8 @@ namespace AnalysisManager_Ape_PlugIn
                     }
                     else
                     {
-						mErrorMessage = "Error using APE to create QRollup database for workflow " + GetJobParam("ApeWorkflowName");
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
+                        mErrorMessage = "Error using APE to create QRollup database for workflow " + GetJobParam("ApeWorkflowName");
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
                         blnSuccess = false;
                     }
                 }
@@ -73,13 +73,13 @@ namespace AnalysisManager_Ape_PlugIn
             string dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
             Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-			string MDIDList = GetMDIDList();
-			if (string.IsNullOrEmpty(MDIDList))
-			{
-				return false;
-			}
+            string MDIDList = GetMDIDList();
+            if (string.IsNullOrEmpty(MDIDList))
+            {
+                return false;
+            }
 
-			Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.ViperResults, dotnetConnString, MDIDList, apeDatabase, mHandle);
+            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.ViperResults, dotnetConnString, MDIDList, apeDatabase, mHandle);
 
             return blnSuccess;
         }
@@ -87,29 +87,29 @@ namespace AnalysisManager_Ape_PlugIn
         private string GetMDIDList()
         {
             string constr = RequireMgrParam("connectionstring");
-			string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
-			string dataPackageID = GetJobParam("DataPackageID");
+            string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
+            string dataPackageID = GetJobParam("DataPackageID");
 
-			if (string.IsNullOrEmpty(apeMTSDatabaseName))
-			{
-				mErrorMessage = "MTS Database not defined via job parameter ApeMTSDatabase"; 
-				return string.Empty;
-			}
+            if (string.IsNullOrEmpty(apeMTSDatabaseName))
+            {
+                mErrorMessage = "MTS Database not defined via job parameter ApeMTSDatabase"; 
+                return string.Empty;
+            }
 
-			if (string.IsNullOrEmpty(dataPackageID))
-			{
-				mErrorMessage = "Data Package ID not defined via job parameter dataPackageID";
-				return string.Empty;
-			}
+            if (string.IsNullOrEmpty(dataPackageID))
+            {
+                mErrorMessage = "Data Package ID not defined via job parameter dataPackageID";
+                return string.Empty;
+            }
 
             string sqlText = "SELECT DISTINCT vmts.MD_ID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
                              "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " +
-							 "WHERE Data_Package_ID = " + dataPackageID + " and Task_Database = '" + apeMTSDatabaseName + "'";
+                             "WHERE Data_Package_ID = " + dataPackageID + " and Task_Database = '" + apeMTSDatabaseName + "'";
 
             //Add State if defined MD_State will typically be 2=OK or 5=Superseded
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDState")))
             {
-				sqlText = sqlText + " and MD_State = " + GetJobParam("ApeMDState");
+                sqlText = sqlText + " and MD_State = " + GetJobParam("ApeMDState");
             };
 
             //Add ini filename if defined
@@ -118,8 +118,8 @@ namespace AnalysisManager_Ape_PlugIn
                 sqlText = sqlText + " and Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";
             };
 
-			string MDIDList = string.Empty;
-			int intMDIDCount = 0;
+            string MDIDList = string.Empty;
+            int intMDIDCount = 0;
             using (SqlConnection conn = new SqlConnection(constr))
             {
                 conn.Open();
@@ -131,24 +131,24 @@ namespace AnalysisManager_Ape_PlugIn
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-							MDIDList += reader[0].ToString() + ", ";
-							intMDIDCount += 1;
+                            MDIDList += reader[0].ToString() + ", ";
+                            intMDIDCount += 1;
                         }
                     }
                 }
             }
 
-			if (string.IsNullOrEmpty(MDIDList))
-			{
-				mErrorMessage = "MDIDs not found via query " + sqlText;
-			}
-			else
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving " + intMDIDCount + " MDIDs in clsApeAMGetViperResults");
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MDID list: " + MDIDList);
-			}
+            if (string.IsNullOrEmpty(MDIDList))
+            {
+                mErrorMessage = "MDIDs not found via query " + sqlText;
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving " + intMDIDCount + " MDIDs in clsApeAMGetViperResults");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MDID list: " + MDIDList);
+            }
 
-			return MDIDList;
+            return MDIDList;
         }
 
     }

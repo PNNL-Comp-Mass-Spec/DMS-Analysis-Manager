@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -18,20 +18,20 @@ namespace TestMagePlugIn {
         private void Test_Tool_Runner_Click(object sender, EventArgs e) {
             TestToolRunnerMage ttr = new TestToolRunnerMage();
 
-			AnalysisManagerBase.IJobParams.CloseOutType eResult;
+            AnalysisManagerBase.IJobParams.CloseOutType eResult;
             eResult = ttr.TestIMPROVJob();
 
-			System.Windows.Forms.MessageBox.Show("Test complete: " + eResult.ToString());
+            System.Windows.Forms.MessageBox.Show("Test complete: " + eResult.ToString());
         }
 
         private void Test_ImportDataPackageFiles_Click(object sender, EventArgs e) {
             TestAMMageOperations tpp = new TestAMMageOperations();
             bool bSuccess = tpp.Test_ImportDataPackageFiles();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
         private void Test_ImportImprovClusterFiles_Click(object sender, EventArgs e) {
@@ -46,52 +46,52 @@ namespace TestMagePlugIn {
 
         private void Test_ImportFDRTables_Click(object sender, EventArgs e) {
             TestAMMageOperations tpp = new TestAMMageOperations();
-			bool bSuccess = tpp.Test_ImportFDRTables();
+            bool bSuccess = tpp.Test_ImportFDRTables();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
         private void Test_GetFactors_Click(object sender, EventArgs e) {
             TestAMMageOperations tpp = new TestAMMageOperations();
-			bool bSuccess = tpp.Test_GetFactors();
+            bool bSuccess = tpp.Test_GetFactors();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
         private void Test_ImportFirstHits_Click(object sender, EventArgs e) {
             TestAMMageOperations tpp = new TestAMMageOperations();
-			bool bSuccess = tpp.Test_ImportFirstHits();
+            bool bSuccess = tpp.Test_ImportFirstHits();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
         private void Test_ImportReporterIons_Click(object sender, EventArgs e) {
             TestAMMageOperations tpp = new TestAMMageOperations();
-			bool bSuccess = tpp.Test_ImportReporterIons();
+            bool bSuccess = tpp.Test_ImportReporterIons();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
         private void Test_ExtractFromJobs_Click(object sender, EventArgs e) {
             TestAMMageOperations tpp = new TestAMMageOperations();
-			bool bSuccess = tpp.Test_ExtractFromJobs();
+            bool bSuccess = tpp.Test_ExtractFromJobs();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
         private void Junk_Click(object sender, EventArgs e) {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
@@ -17,353 +17,353 @@ using MessageEventArgs = AScore_DLL.MessageEventArgs;
 
 namespace AnalysisManager_AScore_PlugIn
 {
-	/// <summary>
-	/// This is a Mage module that does AScore processing 
-	/// of results for jobs that are supplied to it via standard tabular input
-	/// </summary>
-	public class MageAScoreModule : ContentFilter
-	{
-		#region Constants
+    /// <summary>
+    /// This is a Mage module that does AScore processing 
+    /// of results for jobs that are supplied to it via standard tabular input
+    /// </summary>
+    public class MageAScoreModule : ContentFilter
+    {
+        #region Constants
 
-		public const string ASCORE_OUTPUT_FILE_NAME_BASE = "AScoreFile";
+        public const string ASCORE_OUTPUT_FILE_NAME_BASE = "AScoreFile";
 
-		#endregion
+        #endregion
 
-		#region Member Variables
+        #region Member Variables
 
-	    protected string mConnectionString;
+        protected string mConnectionString;
 
-		protected string[] jobFieldNames;
+        protected string[] jobFieldNames;
 
-		// indexes to look up values for some key job fields
-	    protected int jobIdx;
-		protected int toolIdx;
-		protected int paramFileIdx;
-		protected int resultsFldrIdx;
-		protected int datasetNameIdx;
-		protected int datasetTypeIdx;
-		protected int settingsFileIdx;
+        // indexes to look up values for some key job fields
+        protected int jobIdx;
+        protected int toolIdx;
+        protected int paramFileIdx;
+        protected int resultsFldrIdx;
+        protected int datasetNameIdx;
+        protected int datasetTypeIdx;
+        protected int settingsFileIdx;
 
-		protected clsIonicZipTools mIonicZipTools;
+        protected clsIonicZipTools mIonicZipTools;
 
-		#endregion
+        #endregion
 
-		#region Properties
+        #region Properties
 
-		public ExtractionType ExtractionParms { get; set; }
-		public string ExtractedResultsFileName { get; set; }
-		public string WorkingDir { get; set; }
-		public string ResultsDBFileName { get; set; }
-		public string searchType { get; set; }
-		public string ascoreParamFileName { get; set; }
+        public ExtractionType ExtractionParms { get; set; }
+        public string ExtractedResultsFileName { get; set; }
+        public string WorkingDir { get; set; }
+        public string ResultsDBFileName { get; set; }
+        public string searchType { get; set; }
+        public string ascoreParamFileName { get; set; }
 
-		public string FastaFilePath { get; set; }
+        public string FastaFilePath { get; set; }
 
-		#endregion
+        #endregion
 
-		#region Constructors
+        #region Constructors
 
-		// constructor
-		public MageAScoreModule(string connectionString)
-		{
-		    mConnectionString = connectionString;
-			ExtractedResultsFileName = "extracted_results.txt";
-		}
+        // constructor
+        public MageAScoreModule(string connectionString)
+        {
+            mConnectionString = connectionString;
+            ExtractedResultsFileName = "extracted_results.txt";
+        }
 
-		public void Initialize(clsIonicZipTools ionicZipTools)
-		{
-			mIonicZipTools = ionicZipTools;
-		}
+        public void Initialize(clsIonicZipTools ionicZipTools)
+        {
+            mIonicZipTools = ionicZipTools;
+        }
 
-		#endregion
+        #endregion
 
-		#region Overrides of Mage ContentFilter
+        #region Overrides of Mage ContentFilter
 
-		// set up internal references
-		protected override void ColumnDefsFinished()
-		{
-			// get array of column names
-			jobFieldNames = InputColumnDefs.Select(colDef => colDef.Name).ToArray();
+        // set up internal references
+        protected override void ColumnDefsFinished()
+        {
+            // get array of column names
+            jobFieldNames = InputColumnDefs.Select(colDef => colDef.Name).ToArray();
 
-			// set up column indexes
+            // set up column indexes
             jobIdx = InputColumnPos["Job"];
-			toolIdx = InputColumnPos["Tool"];
-			paramFileIdx = InputColumnPos["Parameter_File"];
-			resultsFldrIdx = InputColumnPos["Folder"];
-			datasetNameIdx = InputColumnPos["Dataset"];
-			datasetTypeIdx = InputColumnPos["Dataset_Type"];
-			settingsFileIdx = InputColumnPos["Settings_File"];
-		}
+            toolIdx = InputColumnPos["Tool"];
+            paramFileIdx = InputColumnPos["Parameter_File"];
+            resultsFldrIdx = InputColumnPos["Folder"];
+            datasetNameIdx = InputColumnPos["Dataset"];
+            datasetTypeIdx = InputColumnPos["Dataset_Type"];
+            settingsFileIdx = InputColumnPos["Settings_File"];
+        }
 
-		// process the job described by the fields in the input vals object
-		protected override bool CheckFilter(ref string[] vals)
-		{
+        // process the job described by the fields in the input vals object
+        protected override bool CheckFilter(ref string[] vals)
+        {
 
-			try
-			{
-				// extract contents of results file for current job to local file in working directory
-				BaseModule currentJob = MakeJobSourceModule(jobFieldNames, vals);
-				ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
+            try
+            {
+                // extract contents of results file for current job to local file in working directory
+                BaseModule currentJob = MakeJobSourceModule(jobFieldNames, vals);
+                ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
                 
-				// copy DTA file for current job to working directory
-			    string jobText = vals[jobIdx];
-			    int jobNumber;
-			    if (!int.TryParse(jobText, out jobNumber))
-			    {
+                // copy DTA file for current job to working directory
+                string jobText = vals[jobIdx];
+                int jobNumber;
+                if (!int.TryParse(jobText, out jobNumber))
+                {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Job number is not numeric: " + jobText);
                     return false;
-			    }
+                }
 
-			    string resultsFolderPath = vals[resultsFldrIdx];
-				string paramFileNameForPSMTool = vals[paramFileIdx];
-				string datasetName = vals[datasetNameIdx];
-				string datasetType = vals[datasetTypeIdx];
+                string resultsFolderPath = vals[resultsFldrIdx];
+                string paramFileNameForPSMTool = vals[paramFileIdx];
+                string datasetName = vals[datasetNameIdx];
+                string datasetType = vals[datasetTypeIdx];
                 string analysisTool = vals[toolIdx];
                 
-				string dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath, jobNumber, analysisTool, mConnectionString);
-				if (string.IsNullOrEmpty(dtaFilePath))
-				{
-					return false;
-				}
-				
-				string fragtype;
-				if (datasetType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) > 0)
-					fragtype = "hcd";
-				else if (datasetType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) > 0)
-				{
-					fragtype = "etd";
-				}
-				else
-				{
-					string settingsFileName = vals[settingsFileIdx];
-					string findFragmentation = (paramFileNameForPSMTool + "_" + settingsFileName).ToLower();
-					if (findFragmentation.Contains("hcd"))
-					{
-						fragtype = "hcd";
-					}
-					else if (findFragmentation.Contains("etd"))
-					{
-						fragtype = "etd";
-					}
-					else
-					{
-						fragtype = "cid";
-					}
-				}
-			
+                string dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath, jobNumber, analysisTool, mConnectionString);
+                if (string.IsNullOrEmpty(dtaFilePath))
+                {
+                    return false;
+                }
+                
+                string fragtype;
+                if (datasetType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) > 0)
+                    fragtype = "hcd";
+                else if (datasetType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    fragtype = "etd";
+                }
+                else
+                {
+                    string settingsFileName = vals[settingsFileIdx];
+                    string findFragmentation = (paramFileNameForPSMTool + "_" + settingsFileName).ToLower();
+                    if (findFragmentation.Contains("hcd"))
+                    {
+                        fragtype = "hcd";
+                    }
+                    else if (findFragmentation.Contains("etd"))
+                    {
+                        fragtype = "etd";
+                    }
+                    else
+                    {
+                        fragtype = "cid";
+                    }
+                }
+            
 
-				// process extracted results file and DTA file with AScore
-				const string ascoreOutputFile = ASCORE_OUTPUT_FILE_NAME_BASE + ".txt"; 
-				string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
+                // process extracted results file and DTA file with AScore
+                const string ascoreOutputFile = ASCORE_OUTPUT_FILE_NAME_BASE + ".txt"; 
+                string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
 
-				string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
-				string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
-				string paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragtype + ".xml");
+                string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
+                string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
+                string paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragtype + ".xml");
 
-				if (!File.Exists(paramFileToUse))
-				{
-					string msg = "Parameter file not found: " + paramFileToUse;
-					OnWarningMessage(new MageStatusEventArgs(msg));
-					Console.WriteLine(msg);
+                if (!File.Exists(paramFileToUse))
+                {
+                    string msg = "Parameter file not found: " + paramFileToUse;
+                    OnWarningMessage(new MageStatusEventArgs(msg));
+                    Console.WriteLine(msg);
 
-					string paramFileToUse2 = Path.Combine(WorkingDir, ascoreParamFileName);
-					if (Path.GetExtension(paramFileToUse2).Length == 0)
-						paramFileToUse2 += ".xml";
+                    string paramFileToUse2 = Path.Combine(WorkingDir, ascoreParamFileName);
+                    if (Path.GetExtension(paramFileToUse2).Length == 0)
+                        paramFileToUse2 += ".xml";
 
-					if (File.Exists(paramFileToUse2))
-					{
-						msg = " ... will instead use: " + paramFileToUse2;
-						OnWarningMessage(new MageStatusEventArgs(msg));
-						Console.WriteLine(msg);
-						paramFileToUse = paramFileToUse2;
-					}
-					else
-					{
-						throw new FileNotFoundException("Parameter file not found: " + paramFileToUse);
-					}
-				}
+                    if (File.Exists(paramFileToUse2))
+                    {
+                        msg = " ... will instead use: " + paramFileToUse2;
+                        OnWarningMessage(new MageStatusEventArgs(msg));
+                        Console.WriteLine(msg);
+                        paramFileToUse = paramFileToUse2;
+                    }
+                    else
+                    {
+                        throw new FileNotFoundException("Parameter file not found: " + paramFileToUse);
+                    }
+                }
 
-				var paramManager = new ParameterFileManager(paramFileToUse);
-				var dtaManager = new DtaManager(dtaFile);
-				DatasetManager datasetManager;
+                var paramManager = new ParameterFileManager(paramFileToUse);
+                var dtaManager = new DtaManager(dtaFile);
+                DatasetManager datasetManager;
 
-				switch (searchType)
-				{
-					case "xtandem":
-						datasetManager = new XTandemFHT(fhtFile);
-						break;
-					case "sequest":
-						datasetManager = new SequestFHT(fhtFile);
-						break;
-					case "inspect":
-						datasetManager = new InspectFHT(fhtFile);
-						break;
-					case "msgfdb":
-					case "msgfplus":
-						datasetManager = new MsgfdbFHT(fhtFile);
-						break;
-					default:
-						Console.WriteLine("Incorrect search type check again");
-						return false;
-				}
+                switch (searchType)
+                {
+                    case "xtandem":
+                        datasetManager = new XTandemFHT(fhtFile);
+                        break;
+                    case "sequest":
+                        datasetManager = new SequestFHT(fhtFile);
+                        break;
+                    case "inspect":
+                        datasetManager = new InspectFHT(fhtFile);
+                        break;
+                    case "msgfdb":
+                    case "msgfplus":
+                        datasetManager = new MsgfdbFHT(fhtFile);
+                        break;
+                    default:
+                        Console.WriteLine("Incorrect search type check again");
+                        return false;
+                }
 
-				// Make the call to AScore
-				var ascoreEngine = new Algorithm();
+                // Make the call to AScore
+                var ascoreEngine = new Algorithm();
 
-				// Attach the events
-				ascoreEngine.ErrorEvent += ascoreAlgorithm_ErrorEvent;
-				ascoreEngine.WarningEvent += ascoreAlgorithm_WarningEvent;
-				ascoreEngine.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath, FastaFilePath);
+                // Attach the events
+                ascoreEngine.ErrorEvent += ascoreAlgorithm_ErrorEvent;
+                ascoreEngine.WarningEvent += ascoreAlgorithm_WarningEvent;
+                ascoreEngine.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath, FastaFilePath);
 
-				Console.WriteLine();
+                Console.WriteLine();
 
-				// Confirm that AScore created the output file
-				var fiAScoreFile = new FileInfo(ascoreOutputFilePath);
-				if (fiAScoreFile.Exists)
-				{
-					// Look for the _ProteinMap.txt file
-					// Ascore will create that file if a valid FastaFile is defined
-					var fiProteinMap = new FileInfo(Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(fiAScoreFile.Name) + "_ProteinMap.txt"));
-					if (fiProteinMap.Exists && fiProteinMap.Length > fiAScoreFile.Length)
-						fiAScoreFile = fiProteinMap;
+                // Confirm that AScore created the output file
+                var fiAScoreFile = new FileInfo(ascoreOutputFilePath);
+                if (fiAScoreFile.Exists)
+                {
+                    // Look for the _ProteinMap.txt file
+                    // Ascore will create that file if a valid FastaFile is defined
+                    var fiProteinMap = new FileInfo(Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(fiAScoreFile.Name) + "_ProteinMap.txt"));
+                    if (fiProteinMap.Exists && fiProteinMap.Length > fiAScoreFile.Length)
+                        fiAScoreFile = fiProteinMap;
 
-					// load AScore results into SQLite database
-					const string tableName = "t_results_ascore";
-					string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
-					clsAScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
-				}
-				
-				dtaManager.Abort();
-				if (File.Exists(ascoreOutputFilePath))
-				{
-					try
-					{
-						clsAnalysisToolRunnerBase.DeleteFileWithRetries(ascoreOutputFilePath, intDebugLevel: 1, MaxRetryCount: 2);
-					}
-					catch (Exception ex)
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " + Path.GetFileName(ascoreOutputFilePath) + " (" + ex.Message + "); may lead to duplicate values in Results.db3");
-					}
+                    // load AScore results into SQLite database
+                    const string tableName = "t_results_ascore";
+                    string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
+                    clsAScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
+                }
+                
+                dtaManager.Abort();
+                if (File.Exists(ascoreOutputFilePath))
+                {
+                    try
+                    {
+                        clsAnalysisToolRunnerBase.DeleteFileWithRetries(ascoreOutputFilePath, intDebugLevel: 1, MaxRetryCount: 2);
+                    }
+                    catch (Exception ex)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " + Path.GetFileName(ascoreOutputFilePath) + " (" + ex.Message + "); may lead to duplicate values in Results.db3");
+                    }
 
-				}
+                }
 
-				// Delete extracted_results file and DTA file
-				if (File.Exists(fhtFile))
-				{
-					File.Delete(fhtFile);
-				}
+                // Delete extracted_results file and DTA file
+                if (File.Exists(fhtFile))
+                {
+                    File.Delete(fhtFile);
+                }
 
-				if (File.Exists(dtaFilePath))
-				{
-					File.Delete(dtaFilePath);
-				}
+                if (File.Exists(dtaFilePath))
+                {
+                    File.Delete(dtaFilePath);
+                }
 
-				return true;
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in clsAScoreMage.CheckFilter: " + ex.Message);
-				Console.WriteLine(ex.Message);
-				throw;
-			}
+                return true;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in clsAScoreMage.CheckFilter: " + ex.Message);
+                Console.WriteLine(ex.Message);
+                throw;
+            }
 
-		}
+        }
 
-		#endregion
+        #endregion
 
-		#region MageAScore Mage Pipelines
+        #region MageAScore Mage Pipelines
 
-		// Build and run Mage pipeline to to extract contents of job
-		private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParms, string extractedResultsFileName)
-		{
-			// search job results folders for list of results files to process and accumulate into buffer module
-			var fileList = new SimpleSink();
-			ProcessingPipeline pgFileList = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
-			pgFileList.RunRoot(null);
+        // Build and run Mage pipeline to to extract contents of job
+        private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParms, string extractedResultsFileName)
+        {
+            // search job results folders for list of results files to process and accumulate into buffer module
+            var fileList = new SimpleSink();
+            ProcessingPipeline pgFileList = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
+            pgFileList.RunRoot(null);
 
-			// add job metadata to results database via a Mage pipeline
-			string resultsDBPath = Path.Combine(WorkingDir, ResultsDBFileName);
-			var resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_metadata");
-			var peJobMetadata = ExtractionPipelines.MakePipelineToExportJobMetadata(currentJob, resultsDB);
-			peJobMetadata.RunRoot(null);
+            // add job metadata to results database via a Mage pipeline
+            string resultsDBPath = Path.Combine(WorkingDir, ResultsDBFileName);
+            var resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_metadata");
+            var peJobMetadata = ExtractionPipelines.MakePipelineToExportJobMetadata(currentJob, resultsDB);
+            peJobMetadata.RunRoot(null);
 
-			// add file metadata to results database via a Mage pipeline
-			resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_file_list");
-			var peFileMetadata = ExtractionPipelines.MakePipelineToExportJobMetadata(new SinkWrapper(fileList), resultsDB);
-			peFileMetadata.RunRoot(null);
+            // add file metadata to results database via a Mage pipeline
+            resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_file_list");
+            var peFileMetadata = ExtractionPipelines.MakePipelineToExportJobMetadata(new SinkWrapper(fileList), resultsDB);
+            peFileMetadata.RunRoot(null);
 
-			// extract contents of files
-			//DestinationType destination = new DestinationType("SQLite_Output", Path.Combine(mWorkingDir, mResultsDBFileName), "t_results");
-			var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
-			ProcessingPipeline peFileContents = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
-			peFileContents.RunRoot(null);
-		}
+            // extract contents of files
+            //DestinationType destination = new DestinationType("SQLite_Output", Path.Combine(mWorkingDir, mResultsDBFileName), "t_results");
+            var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
+            ProcessingPipeline peFileContents = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
+            peFileContents.RunRoot(null);
+        }
 
-		#endregion
+        #endregion
 
-		#region MageAScore Utility Methods
+        #region MageAScore Utility Methods
 
-		// look for "_dta.zip" file in job results folder and copy it to working directory and unzip it
-		private string CopyDTAResults(string datasetName, string resultsFolderPath, int jobNumber, string toolName, string connectionString)
-		{
-			string dtaZipPathLocal;
+        // look for "_dta.zip" file in job results folder and copy it to working directory and unzip it
+        private string CopyDTAResults(string datasetName, string resultsFolderPath, int jobNumber, string toolName, string connectionString)
+        {
+            string dtaZipPathLocal;
 
-			var diResultsFolder = new DirectoryInfo(resultsFolderPath);
+            var diResultsFolder = new DirectoryInfo(resultsFolderPath);
 
-			if (resultsFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
-			{
-				// Need to retrieve the _DTA.zip file from MyEMSL
+            if (resultsFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+            {
+                // Need to retrieve the _DTA.zip file from MyEMSL
 
                 dtaZipPathLocal = CopyDtaResultsFromMyEMSL(datasetName, diResultsFolder, jobNumber, toolName, connectionString);
-			}
-			else
-			{
-				dtaZipPathLocal = CopyDTAResultsFromServer(diResultsFolder, jobNumber, toolName, connectionString);
-			}
+            }
+            else
+            {
+                dtaZipPathLocal = CopyDTAResultsFromServer(diResultsFolder, jobNumber, toolName, connectionString);
+            }
 
-			// If we have changed the string from empty we have found the correct _dta.zip file
-			if (string.IsNullOrEmpty(dtaZipPathLocal))
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DTA File not found");
-				return null;
-			}
+            // If we have changed the string from empty we have found the correct _dta.zip file
+            if (string.IsNullOrEmpty(dtaZipPathLocal))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DTA File not found");
+                return null;
+            }
 
-			try
-			{
-				// Unzip the file
-				mIonicZipTools.UnzipFile(dtaZipPathLocal);
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception copying and unzipping _DTA.zip file: " + ex.Message);
-				return null;
-			}
+            try
+            {
+                // Unzip the file
+                mIonicZipTools.UnzipFile(dtaZipPathLocal);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception copying and unzipping _DTA.zip file: " + ex.Message);
+                return null;
+            }
 
-			try
-			{
-				// Perform garage collection to force the Unzip tool to release the file handle
-				Thread.Sleep(250);
-				clsProgRunner.GarbageCollectNow();
+            try
+            {
+                // Perform garage collection to force the Unzip tool to release the file handle
+                Thread.Sleep(250);
+                clsProgRunner.GarbageCollectNow();
 
-				clsAnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, intDebugLevel: 1, MaxRetryCount: 2);
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete _dta.zip file: " + ex.Message);
-			}
+                clsAnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, intDebugLevel: 1, MaxRetryCount: 2);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete _dta.zip file: " + ex.Message);
+            }
 
-			string unzippedDtaResultsFilePath = Path.ChangeExtension(dtaZipPathLocal, ".txt");
-			return unzippedDtaResultsFilePath;
-		}
+            string unzippedDtaResultsFilePath = Path.ChangeExtension(dtaZipPathLocal, ".txt");
+            return unzippedDtaResultsFilePath;
+        }
 
-		protected string CopyDtaResultsFromMyEMSL(string datasetName, DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
-		{
-			clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
-			var lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", diResultsFolder.Name, datasetName);
+        protected string CopyDtaResultsFromMyEMSL(string datasetName, DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
+        {
+            clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
+            var lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", diResultsFolder.Name, datasetName);
 
-			if (lstArchiveFiles.Count == 0)
-			{
-				// Lookup the shared results folder name
+            if (lstArchiveFiles.Count == 0)
+            {
+                // Lookup the shared results folder name
                 var dtaFolderName = GetSharedResultFolderName(jobNumber, toolName, connectionString);
 
                 if (string.IsNullOrEmpty(dtaFolderName))
@@ -372,89 +372,89 @@ namespace AnalysisManager_AScore_PlugIn
                     return null;
                 }
 
-				lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaFolderName, datasetName);
+                lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaFolderName, datasetName);
 
-				if (lstArchiveFiles.Count == 0)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-										 "DTA file not found in folder " + dtaFolderName + " in MyEMSL");
-					return null;
-				}
-			}
+                if (lstArchiveFiles.Count == 0)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                         "DTA file not found in folder " + dtaFolderName + " in MyEMSL");
+                    return null;
+                }
+            }
 
-			clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
+            clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
 
-			if (!clsAScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-									 "Error downloading the _DTA.zip file from MyEMSL");
-				return null;
-			}
+            if (!clsAScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "Error downloading the _DTA.zip file from MyEMSL");
+                return null;
+            }
 
-			string dtaZipPathLocal = Path.Combine(WorkingDir, lstArchiveFiles.First().FileInfo.Filename);
+            string dtaZipPathLocal = Path.Combine(WorkingDir, lstArchiveFiles.First().FileInfo.Filename);
 
-			return dtaZipPathLocal;
-		}
+            return dtaZipPathLocal;
+        }
 
 
-		protected string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
-		{
-			// Check if the dta is in the search tool's directory					
-			string dtaZipSourceFilePath;
+        protected string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
+        {
+            // Check if the dta is in the search tool's directory					
+            string dtaZipSourceFilePath;
 
-			var lstFiles = diResultsFolder.GetFiles("*_dta.zip").ToList();
-			if (lstFiles.Count > 0)
-			{
-				dtaZipSourceFilePath = lstFiles.First().FullName;
-			}
-			else
-			{
-				// File not found
+            var lstFiles = diResultsFolder.GetFiles("*_dta.zip").ToList();
+            if (lstFiles.Count > 0)
+            {
+                dtaZipSourceFilePath = lstFiles.First().FullName;
+            }
+            else
+            {
+                // File not found
                 // Prior to January 2015 we would examine the JobParameters file to determine the appropriate dta directory (by looking for parameter SharedResultsFolders)
                 // That method is not reliable, so we instead now query V_Job_Steps and V_Job_Steps_History
 
-			    var dtaFolderName = GetSharedResultFolderName(jobNumber, toolName, connectionString);
+                var dtaFolderName = GetSharedResultFolderName(jobNumber, toolName, connectionString);
 
-				if (string.IsNullOrEmpty(dtaFolderName))
-				{
-					// Error has already been logged
-					return null;
-				}
+                if (string.IsNullOrEmpty(dtaFolderName))
+                {
+                    // Error has already been logged
+                    return null;
+                }
 
-				if (diResultsFolder.Parent == null || !diResultsFolder.Parent.Exists)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-										 "DTA directory not found; " + diResultsFolder.FullName + " does not have a parent folder");
-					return null;
-				}
+                if (diResultsFolder.Parent == null || !diResultsFolder.Parent.Exists)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                         "DTA directory not found; " + diResultsFolder.FullName + " does not have a parent folder");
+                    return null;
+                }
 
-				var diAlternateDtaFolder = new DirectoryInfo(Path.Combine(diResultsFolder.Parent.FullName, dtaFolderName));
-				if (!diAlternateDtaFolder.Exists)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-										 "DTA directory not found: " + diAlternateDtaFolder.FullName);
-					return null;
-				}
+                var diAlternateDtaFolder = new DirectoryInfo(Path.Combine(diResultsFolder.Parent.FullName, dtaFolderName));
+                if (!diAlternateDtaFolder.Exists)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                         "DTA directory not found: " + diAlternateDtaFolder.FullName);
+                    return null;
+                }
 
-				lstFiles = diAlternateDtaFolder.GetFiles("*_dta.zip").ToList();
-				if (lstFiles.Count == 0)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-										 "DTA file not found in folder " + diAlternateDtaFolder.FullName);
-					return null;
-				}
+                lstFiles = diAlternateDtaFolder.GetFiles("*_dta.zip").ToList();
+                if (lstFiles.Count == 0)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                         "DTA file not found in folder " + diAlternateDtaFolder.FullName);
+                    return null;
+                }
 
-				dtaZipSourceFilePath = lstFiles.First().FullName;
-			}
+                dtaZipSourceFilePath = lstFiles.First().FullName;
+            }
 
-			var fiDtaZipRemote = new FileInfo(dtaZipSourceFilePath);
-			string dtaZipPathLocal = Path.Combine(WorkingDir, fiDtaZipRemote.Name);
+            var fiDtaZipRemote = new FileInfo(dtaZipSourceFilePath);
+            string dtaZipPathLocal = Path.Combine(WorkingDir, fiDtaZipRemote.Name);
 
-			// Copy the DTA file locally, overwriting if it already exists
-			fiDtaZipRemote.CopyTo(dtaZipPathLocal, true);
+            // Copy the DTA file locally, overwriting if it already exists
+            fiDtaZipRemote.CopyTo(dtaZipPathLocal, true);
 
-			return dtaZipPathLocal;
-		}
+            return dtaZipPathLocal;
+        }
 
         /// <summary>
         /// Lookup the shared result folder name for the given job
@@ -498,125 +498,125 @@ namespace AnalysisManager_AScore_PlugIn
             }
            
 
-	    }
+        }
 
-	    private string ReadJobParametersFile(string jobParameterFilePath)
-		{
-			string dtaFolderName = string.Empty;
+        private string ReadJobParametersFile(string jobParameterFilePath)
+        {
+            string dtaFolderName = string.Empty;
 
-			try
-			{
-				var oXmlDoc = new XmlDocument();
-				oXmlDoc.Load(jobParameterFilePath);
+            try
+            {
+                var oXmlDoc = new XmlDocument();
+                oXmlDoc.Load(jobParameterFilePath);
 
-				string folderVals = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
-				List<string> folders = folderVals.Split(',').ToList();
-				dtaFolderName = folders.Last(); //this is the default folder if all else fails
-				if (folders.Count > 1)
-				{
-					folders.RemoveAll(entries => entries.Contains("DTA_Gen"));	//I love lambda expressions
-					if (folders.Count > 0)
-					{
-						dtaFolderName = folders.Last();
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining DTA directory from JobParameters XML file by looking for job parameter SharedResultsFolders: " + ex.Message);
-			}
+                string folderVals = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
+                List<string> folders = folderVals.Split(',').ToList();
+                dtaFolderName = folders.Last(); //this is the default folder if all else fails
+                if (folders.Count > 1)
+                {
+                    folders.RemoveAll(entries => entries.Contains("DTA_Gen"));	//I love lambda expressions
+                    if (folders.Count > 0)
+                    {
+                        dtaFolderName = folders.Last();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error determining DTA directory from JobParameters XML file by looking for job parameter SharedResultsFolders: " + ex.Message);
+            }
 
-			if (string.IsNullOrWhiteSpace(dtaFolderName))
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine the DTA directory from JobParameters XML file by looking for job parameter SharedResultsFolders");
-				return string.Empty;
-			}
-			
-			return dtaFolderName.Trim();
-		}
+            if (string.IsNullOrWhiteSpace(dtaFolderName))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine the DTA directory from JobParameters XML file by looking for job parameter SharedResultsFolders");
+                return string.Empty;
+            }
+            
+            return dtaFolderName.Trim();
+        }
 
-		///  <summary>
-		///  The function gets the name of the "value" attribute.
-		///  </summary>
-		/// <param name="oXmlDoc"></param>
-		/// <param name="sectionName">The name of the section.</param>
-		///  <param name="keyName">The name of the key.</param>
-		/// <return>The function returns the name of the "value" attribute.</return>
-		private string GetIniValue(XmlDocument oXmlDoc, string sectionName, string keyName)
-		{
-			XmlNode N = GetItem(oXmlDoc, sectionName, keyName);
-			if (N != null)
-			{
-				if (N.Attributes != null)
-				{
-					return (N.Attributes.GetNamedItem("value").Value);
-				}
-			}
-			return null;
-		}
-
-
-		/// <summary>
-		/// The function gets an item.
-		/// </summary>
-		/// <param name="oXmlDoc"></param>
-		/// <param name="sectionName">The name of the section.</param>
-		/// <param name="keyName">The name of the key.</param>
-		/// <return>The function returns a XML element.</return>
-		private XmlElement GetItem(XmlDocument oXmlDoc, string sectionName, string keyName)
-		{
-			if (!string.IsNullOrEmpty(keyName))
-			{
-				XmlElement section = GetSection(oXmlDoc, sectionName);
-				if (section != null)
-				{
-					return (XmlElement)section.SelectSingleNode("item[@key='" + keyName + "']");
-				}
-			}
-			return null;
-		}
-
-		/// <summary>
-		/// The function gets a section as XmlElement.
-		/// </summary>
-		/// <param name="oXmlDoc"></param>
-		/// <param name="sectionName">The name of a section.</param>
-		/// <return>The function returns a section as XmlElement.</return>
-		private XmlElement GetSection(XmlDocument oXmlDoc, string sectionName)
-		{
-			if (!string.IsNullOrEmpty(sectionName))
-			{
-				return (XmlElement)oXmlDoc.SelectSingleNode("//section[@name='" + sectionName + "']");
-			}
-			return null;
-		}
+        ///  <summary>
+        ///  The function gets the name of the "value" attribute.
+        ///  </summary>
+        /// <param name="oXmlDoc"></param>
+        /// <param name="sectionName">The name of the section.</param>
+        ///  <param name="keyName">The name of the key.</param>
+        /// <return>The function returns the name of the "value" attribute.</return>
+        private string GetIniValue(XmlDocument oXmlDoc, string sectionName, string keyName)
+        {
+            XmlNode N = GetItem(oXmlDoc, sectionName, keyName);
+            if (N != null)
+            {
+                if (N.Attributes != null)
+                {
+                    return (N.Attributes.GetNamedItem("value").Value);
+                }
+            }
+            return null;
+        }
 
 
-		// Build Mage source module containing one job to process
-		private BaseModule MakeJobSourceModule(string[] jobFieldNameList, string[] jobFields)
-		{
-			var currentJob = new DataGenerator
-			{
-				AddAdHocRow = jobFieldNameList
-			};
-			currentJob.AddAdHocRow = jobFields;
-			return currentJob;
-		}
+        /// <summary>
+        /// The function gets an item.
+        /// </summary>
+        /// <param name="oXmlDoc"></param>
+        /// <param name="sectionName">The name of the section.</param>
+        /// <param name="keyName">The name of the key.</param>
+        /// <return>The function returns a XML element.</return>
+        private XmlElement GetItem(XmlDocument oXmlDoc, string sectionName, string keyName)
+        {
+            if (!string.IsNullOrEmpty(keyName))
+            {
+                XmlElement section = GetSection(oXmlDoc, sectionName);
+                if (section != null)
+                {
+                    return (XmlElement)section.SelectSingleNode("item[@key='" + keyName + "']");
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// The function gets a section as XmlElement.
+        /// </summary>
+        /// <param name="oXmlDoc"></param>
+        /// <param name="sectionName">The name of a section.</param>
+        /// <return>The function returns a section as XmlElement.</return>
+        private XmlElement GetSection(XmlDocument oXmlDoc, string sectionName)
+        {
+            if (!string.IsNullOrEmpty(sectionName))
+            {
+                return (XmlElement)oXmlDoc.SelectSingleNode("//section[@name='" + sectionName + "']");
+            }
+            return null;
+        }
 
 
-		#endregion
+        // Build Mage source module containing one job to process
+        private BaseModule MakeJobSourceModule(string[] jobFieldNameList, string[] jobFields)
+        {
+            var currentJob = new DataGenerator
+            {
+                AddAdHocRow = jobFieldNameList
+            };
+            currentJob.AddAdHocRow = jobFields;
+            return currentJob;
+        }
 
-		#region "Event handlers"
 
-		void ascoreAlgorithm_WarningEvent(object sender, MessageEventArgs e)
-		{
-			OnWarningMessage(new MageStatusEventArgs(e.Message));
-		}
+        #endregion
 
-		void ascoreAlgorithm_ErrorEvent(object sender, MessageEventArgs e)
-		{
-			OnWarningMessage(new MageStatusEventArgs(e.Message));
-		}
-		#endregion
-	}
+        #region "Event handlers"
+
+        void ascoreAlgorithm_WarningEvent(object sender, MessageEventArgs e)
+        {
+            OnWarningMessage(new MageStatusEventArgs(e.Message));
+        }
+
+        void ascoreAlgorithm_ErrorEvent(object sender, MessageEventArgs e)
+        {
+            OnWarningMessage(new MageStatusEventArgs(e.Message));
+        }
+        #endregion
+    }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Data.SqlClient;
@@ -11,11 +11,11 @@ namespace AnalysisManager_Ape_PlugIn
 
         #region Member Variables
 
-		#endregion
+        #endregion
 
-		#region Constructors
+        #region Constructors
 
-		/// <summary>
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="jobParms"></param>
@@ -40,7 +40,7 @@ namespace AnalysisManager_Ape_PlugIn
         private bool GetQRollupResultsAll()
         {
             bool blnSuccess = true;
-			Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+            Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
@@ -53,8 +53,8 @@ namespace AnalysisManager_Ape_PlugIn
                     }
                     else
                     {
-	                    mErrorMessage = "Error running Ape in GetQRollupResultsAll";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
+                        mErrorMessage = "Error running Ape in GetQRollupResultsAll";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
                         blnSuccess = false;
                     }
                 }
@@ -82,14 +82,14 @@ namespace AnalysisManager_Ape_PlugIn
 
             string dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
-			Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-			string QIDList = GetQIDList();
-			if (string.IsNullOrEmpty(QIDList))
-			{
-				return false;
-			}
+            Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
+            string QIDList = GetQIDList();
+            if (string.IsNullOrEmpty(QIDList))
+            {
+                return false;
+            }
 
-			Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.QRollupResults, dotnetConnString, QIDList, apeDatabase, mHandle);
+            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.QRollupResults, dotnetConnString, QIDList, apeDatabase, mHandle);
             
             return blnSuccess;
         }
@@ -97,24 +97,24 @@ namespace AnalysisManager_Ape_PlugIn
         private string GetQIDList()
         {
             string constr = RequireMgrParam("connectionstring");
-			string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
-			string dataPackageID = GetJobParam("DataPackageID");
+            string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
+            string dataPackageID = GetJobParam("DataPackageID");
 
-			if (string.IsNullOrEmpty(apeMTSDatabaseName))
-			{
-				mErrorMessage = "MTS Database not defined via job parameter ApeMTSDatabase";
-				return string.Empty;
-			}
+            if (string.IsNullOrEmpty(apeMTSDatabaseName))
+            {
+                mErrorMessage = "MTS Database not defined via job parameter ApeMTSDatabase";
+                return string.Empty;
+            }
 
-			if (string.IsNullOrEmpty(dataPackageID))
-			{
-				mErrorMessage = "Data Package ID not defined via job parameter dataPackageID";
-				return string.Empty;
-			}
+            if (string.IsNullOrEmpty(dataPackageID))
+            {
+                mErrorMessage = "Data Package ID not defined via job parameter dataPackageID";
+                return string.Empty;
+            }
 
             string sqlText = "SELECT DISTINCT vmts.QID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
                              "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " +
-							 "WHERE Data_Package_ID = " + dataPackageID + " and Task_Database = '" + apeMTSDatabaseName + "'";
+                             "WHERE Data_Package_ID = " + dataPackageID + " and Task_Database = '" + apeMTSDatabaseName + "'";
 
             //Add State if defined MD_State will typically be 2=OK or 5=Superseded
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDState")))
@@ -129,11 +129,11 @@ namespace AnalysisManager_Ape_PlugIn
             };
 
             string QIDList = string.Empty;
-			int intQIDCount = 0;
+            int intQIDCount = 0;
             using (SqlConnection conn = new SqlConnection(constr))
             {
                 conn.Open();
-				// Get the matching QIDs for this data package
+                // Get the matching QIDs for this data package
                 SqlCommand query = new SqlCommand(sqlText, conn);
                 using (SqlDataReader reader = query.ExecuteReader())
                 {
@@ -141,26 +141,26 @@ namespace AnalysisManager_Ape_PlugIn
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-							QIDList += reader[0].ToString() + ", ";
-							intQIDCount += 1;
+                            QIDList += reader[0].ToString() + ", ";
+                            intQIDCount += 1;
                         }
                     }
                 }
             }
 
-			if (string.IsNullOrEmpty(QIDList))
-			{
-				mErrorMessage = "QIDs not found via query " + sqlText;
-			}
-			else
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving " + intQIDCount + " QIDs in clsApeAMGetQRollupResults");
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "QID list: " + QIDList);
-			}
+            if (string.IsNullOrEmpty(QIDList))
+            {
+                mErrorMessage = "QIDs not found via query " + sqlText;
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving " + intQIDCount + " QIDs in clsApeAMGetQRollupResults");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "QID list: " + QIDList);
+            }
 
             return QIDList;
         }
 
     }
-	
+    
 }

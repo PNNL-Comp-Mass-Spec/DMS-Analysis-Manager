@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +18,7 @@ namespace TestApePlugIn {
         /// </summary>
         public bool Test_GetImprovResults()
         {
-			Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+            Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "Job", "678425" },
                 { "ApeOperations",	"GetImprovResults" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\159_MAC_Test_Data_Package_For_Improv" },
@@ -36,7 +36,7 @@ namespace TestApePlugIn {
                 { "ImprovMSGFThreshold", "1" },
                 { "DataPackageID", "167" }
             };
-			Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+            Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "workdir", @"C:\DMS_WorkDir" },
                 { "logfilename", "AM_AnalysisManager_Log" },
@@ -52,7 +52,7 @@ namespace TestApePlugIn {
             clsApeAMOperations ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
             bool bSuccess = TestRunOperation(ops, "GetImprovResults");
 
-			return bSuccess;
+            return bSuccess;
 
         }
 
@@ -61,7 +61,7 @@ namespace TestApePlugIn {
         /// <summary>
         /// 
         /// </summary>
-		public bool Test_RunWorkflow()
+        public bool Test_RunWorkflow()
         {
             Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
                 {"ApeOperations", "RunWorkflow"},
@@ -97,13 +97,13 @@ namespace TestApePlugIn {
             mLogFilename = m_mgrParams.GetParam("logfilename");
             
             clsApeAMOperations ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
-			bool bSuccess = TestRunOperation(ops, "RunWorkflow");
+            bool bSuccess = TestRunOperation(ops, "RunWorkflow");
 
-			return bSuccess;
+            return bSuccess;
 
         }
 
-		public bool Test_GetQRollupResults()
+        public bool Test_GetQRollupResults()
         {
             Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
                 { "Job", "678425" },
@@ -138,9 +138,9 @@ namespace TestApePlugIn {
             mLogFilename = m_mgrParams.GetParam("logfilename");
 
             clsApeAMOperations ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
-			bool bSuccess = TestRunOperation(ops, "GetQRollupResults");
+            bool bSuccess = TestRunOperation(ops, "GetQRollupResults");
 
-			return bSuccess;
+            return bSuccess;
 
         }
 
@@ -152,14 +152,14 @@ namespace TestApePlugIn {
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
             clsLogTools.ChangeLogFileName(LogFileName);
 
-			bool bSuccess = ops.RunApeOperations(operationName);
+            bool bSuccess = ops.RunApeOperations(operationName);
 
             // Change the name of the log file back to the analysis manager log file
             LogFileName = mLogFilename;
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
             clsLogTools.ChangeLogFileName(LogFileName);
 
-			return bSuccess;
+            return bSuccess;
         }
  
     }

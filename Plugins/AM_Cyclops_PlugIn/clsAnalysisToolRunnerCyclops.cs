@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Collections.Generic;
 using System;
 using AnalysisManagerBase;
@@ -61,16 +61,16 @@ namespace AnalysisManager_Cyclops_PlugIn
                 }
 
                 var d_Params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-				{
-					{"Job", m_jobParams.GetParam("Job")},
-					{"RDLL", rProgLocFromRegistry},
-					{"CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName")},
-					{"workDir", m_WorkDir},
-					{"Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor")},
-					{"Fixed_Effect", m_jobParams.GetParam("Fixed_Effect")},
-					{"RunProteinProphet", m_jobParams.GetParam("RunProteinProphet")},
-					{"orgdbdir", m_mgrParams.GetParam("orgdbdir")}
-				};
+                {
+                    {"Job", m_jobParams.GetParam("Job")},
+                    {"RDLL", rProgLocFromRegistry},
+                    {"CyclopsWorkflowName", m_jobParams.GetParam("CyclopsWorkflowName")},
+                    {"workDir", m_WorkDir},
+                    {"Consolidation_Factor", m_jobParams.GetParam("Consolidation_Factor")},
+                    {"Fixed_Effect", m_jobParams.GetParam("Fixed_Effect")},
+                    {"RunProteinProphet", m_jobParams.GetParam("RunProteinProphet")},
+                    {"orgdbdir", m_mgrParams.GetParam("orgdbdir")}
+                };
 
 
                 // Create the cyclops log file
@@ -338,9 +338,9 @@ namespace AnalysisManager_Cyclops_PlugIn
 
             // Store paths to key DLLs
             var ioToolFiles = new List<FileInfo>
-			{
-				new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll"))
-			};
+            {
+                new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll"))
+            };
 
             try
             {

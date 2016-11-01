@@ -1,4 +1,4 @@
-﻿/*****************************************************************
+/*****************************************************************
 ** Written by Matthew Monroe for the US Department of Energy    **
 ** Pacific Northwest National Laboratory, Richland, WA          **
 ** Created 04/29/2015                                           **
@@ -63,10 +63,10 @@ namespace AnalysisManagerNOMSIPlugin
                 }
                 m_jobParams.AddResultFileToSkip(fileToGet);
 
-				currentTask = "Process the MyEMSL download queue";
+                currentTask = "Process the MyEMSL download queue";
                 if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
-			        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;

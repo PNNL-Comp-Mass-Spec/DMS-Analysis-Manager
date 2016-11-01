@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
@@ -12,59 +12,59 @@ namespace AnalysisManager_AScore_PlugIn
 
         public override IJobParams.CloseOutType GetResources()
         {
-			// WARNING: AScore accesses the files over the network, retrieving the files using Mage
-			//          If the files have been purged, they may not be accessible 
-			//          (Mage supports retrieving files from Aurora or MyEmsl, 
-			//           but this has not be tested as of July 16, 2014)
-			//
+            // WARNING: AScore accesses the files over the network, retrieving the files using Mage
+            //          If the files have been purged, they may not be accessible 
+            //          (Mage supports retrieving files from Aurora or MyEmsl, 
+            //           but this has not be tested as of July 16, 2014)
+            //
             // bool blnSuccess = true;
-			//  blnSuccess = RunAScoreGetResources();
-			//
+            //  blnSuccess = RunAScoreGetResources();
+            //
             // if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
             if (m_DebugLevel > 2)
             {
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No input files to retrieve; AScore accesses the files over the network");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No input files to retrieve; AScore accesses the files over the network");
             }
 
-	        if (!RetrieveFastaFile())
-	        {
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to retrieve the fasta file; AScore results will not have protein information");		        
-	        }
+            if (!RetrieveFastaFile())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to retrieve the fasta file; AScore results will not have protein information");		        
+            }
 
-	        return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-		/// <summary>
-		/// Retrieve the fasta file (if defined)
-		/// </summary>
-		/// <returns></returns>
-		private bool RetrieveFastaFile()
-		{
+        /// <summary>
+        /// Retrieve the fasta file (if defined)
+        /// </summary>
+        /// <returns></returns>
+        private bool RetrieveFastaFile()
+        {
 
-			string currentTask = "Initializing";
+            string currentTask = "Initializing";
 
 
-			try
-			{
-				// Retrieve the Fasta file
-				var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            try
+            {
+                // Retrieve the Fasta file
+                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
 
-				currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
+                currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
-				var success = RetrieveOrgDB(localOrgDbFolder);
-				
-				return success;
+                var success = RetrieveOrgDB(localOrgDbFolder);
+                
+                return success;
 
-			}
-			catch (Exception ex)
-			{
-				m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
-				return false;
-			}
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                return false;
+            }
 
-		}
+        }
 
 
         ///// <summary>
@@ -117,7 +117,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
         //        return false;
-			
+            
         //    return blnSuccess;
         //}
 
@@ -187,10 +187,10 @@ namespace AnalysisManager_AScore_PlugIn
         //protected string GetDatasetID(string DatasetName)
         //{
         //    int DatasetID;
-				
+                
         //    if ( m_jobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
         //        return DatasetID.ToString(CultureInfo.InvariantCulture);
-	        
+            
         //    return string.Empty;
         //}
 

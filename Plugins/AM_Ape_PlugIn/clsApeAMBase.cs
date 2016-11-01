@@ -1,30 +1,30 @@
-﻿using System;
+using System;
 using AnalysisManagerBase;
 
 namespace AnalysisManager_Ape_PlugIn
 {
     class clsApeAMBase
     {
-		#region "Event Delegates and Classes"
-			public event ProgressChangedEventHandler ProgressChanged;
-			public delegate void ProgressChangedEventHandler(object sender, ProgressChangedEventArgs e);
-		#endregion
+        #region "Event Delegates and Classes"
+            public event ProgressChangedEventHandler ProgressChanged;
+            public delegate void ProgressChangedEventHandler(object sender, ProgressChangedEventArgs e);
+        #endregion
 
-		#region Enums
-			public enum eSqlServerToSqlLiteConversionMode
-			{
-				ViperResults=0,
-				PTDB=1,
-				AMTTagDBAll=2,
-				AMTTagDbJobs=3,
-				ImproveDB=4,
-				QRollupResults=5
-			}
+        #region Enums
+            public enum eSqlServerToSqlLiteConversionMode
+            {
+                ViperResults=0,
+                PTDB=1,
+                AMTTagDBAll=2,
+                AMTTagDbJobs=3,
+                ImproveDB=4,
+                QRollupResults=5
+            }
 
-		#endregion
+        #endregion
 
-		#region Member Variables
-		protected string mResultsDBFileName = "";
+        #region Member Variables
+        protected string mResultsDBFileName = "";
 
         protected string mWorkingDir;
 
@@ -32,19 +32,19 @@ namespace AnalysisManager_Ape_PlugIn
 
         protected IMgrParams mMgrParms;
 
-		protected string mErrorMessage = string.Empty;
-
-		#endregion
-
-		#region "Properties"
-
-		public string ErrorMessage
-		{
-			get { return mErrorMessage; }
-		}
+        protected string mErrorMessage = string.Empty;
 
         #endregion
-		
+
+        #region "Properties"
+
+        public string ErrorMessage
+        {
+            get { return mErrorMessage; }
+        }
+
+        #endregion
+        
         #region Constructors
 
         public clsApeAMBase(IJobParams jobParms, IMgrParams mgrParms) {
@@ -64,7 +64,7 @@ namespace AnalysisManager_Ape_PlugIn
             string val = mMgrParms.GetParam(paramName);
             if (string.IsNullOrEmpty(val))
             {
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
             }
             return val;
         }
@@ -72,10 +72,10 @@ namespace AnalysisManager_Ape_PlugIn
         public string RequireJobParam(string paramName)
         {
             string val = mJobParms.GetParam(paramName);
-			if (string.IsNullOrEmpty(val)) {
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
-			}
-			return val;
+            if (string.IsNullOrEmpty(val)) {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
+            }
+            return val;
         }
 
         public string GetJobParam(string paramName)
@@ -85,26 +85,26 @@ namespace AnalysisManager_Ape_PlugIn
 
         public string GetJobParam(string paramName, string defaultValue)
         {
-			return mJobParms.GetJobParameter(paramName, defaultValue);
+            return mJobParms.GetJobParameter(paramName, defaultValue);
         }
 
 
         #endregion
 
-		protected void OnProgressChanged(string TaskDescription, float PctComplete) {
-			if (ProgressChanged != null)
-				ProgressChanged(this, new ProgressChangedEventArgs(TaskDescription, PctComplete));
-		}	
+        protected void OnProgressChanged(string TaskDescription, float PctComplete) {
+            if (ProgressChanged != null)
+                ProgressChanged(this, new ProgressChangedEventArgs(TaskDescription, PctComplete));
+        }	
 
-		public class ProgressChangedEventArgs : EventArgs {
-			public readonly string taskDescription;     // Current task
-			public readonly float percentComplete;      // number between 0 and 100
+        public class ProgressChangedEventArgs : EventArgs {
+            public readonly string taskDescription;     // Current task
+            public readonly float percentComplete;      // number between 0 and 100
 
-			public ProgressChangedEventArgs(string strTaskDescription, float fPercentComplete) {
-				taskDescription = strTaskDescription;
-				percentComplete = fPercentComplete;
-			}
-		}
+            public ProgressChangedEventArgs(string strTaskDescription, float fPercentComplete) {
+                taskDescription = strTaskDescription;
+                percentComplete = fPercentComplete;
+            }
+        }
 
     }
 }

@@ -1,4 +1,4 @@
-﻿/*****************************************************************
+/*****************************************************************
 ** Written by Matthew Monroe for the US Department of Energy    **
 ** Pacific Northwest National Laboratory, Richland, WA          **
 ** Created 11/02/2015                                           **
@@ -153,7 +153,7 @@ namespace AnalysisManagerQCARTPlugin
                 m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.NEW_BASELINE_DATASETS_METADATA_FILE);
                 m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("ParmFileName"));
 
-				// Skip the .Rout file
+                // Skip the .Rout file
                 m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME + "out");
                 
                 var result = MakeResultsFolder();

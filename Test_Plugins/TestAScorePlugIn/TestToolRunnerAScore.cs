@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AnalysisManagerBase;
 using AnalysisManager_AScore_PlugIn;
@@ -8,18 +8,18 @@ namespace TestAScorePlugIn {
 
     class TestToolRunnerAScore {
 
-		private Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+        private Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "workdir", @"C:\DMS_WorkDir" },
                 { "connectionstring", "Data Source=gigasax;Initial Catalog=DMS5_T3;Integrated Security=SSPI;" },
                 { "MgrName", "Test_harness" },
-				{ "brokerconnectionstring", "Data Source=gigasax;Initial Catalog=DMS_Pipeline_Test;Integrated Security=SSPI;" },
-				{ "MgrCnfgDbConnectStr", "Data Source=ProteinSeqs;Initial Catalog=Manager_Control;Integrated Security=SSPI;" },
-				{ "zipprogram", @"C:\PKWare\Pkzipc\Pkzipc.exe" },
+                { "brokerconnectionstring", "Data Source=gigasax;Initial Catalog=DMS_Pipeline_Test;Integrated Security=SSPI;" },
+                { "MgrCnfgDbConnectStr", "Data Source=ProteinSeqs;Initial Catalog=Manager_Control;Integrated Security=SSPI;" },
+                { "zipprogram", @"C:\PKWare\Pkzipc\Pkzipc.exe" },
                 { "StepTool_ParamFileStoragePath_AScore", @"\\gigasax\DMS_Parameter_Files\AScore"}
             };
-	
-		private Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+    
+        private Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "Job", "520598" },
                 { "AScoreOperations",	"GetImprovResults" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\162_Test_DatapackegeJosh" },
@@ -42,27 +42,27 @@ namespace TestAScorePlugIn {
                 { "AScoreSearchType", "sequest" }
             };
 
-		public IJobParams.CloseOutType TestRunAScore()
-		{
+        public IJobParams.CloseOutType TestRunAScore()
+        {
             clsAnalysisResourcesAScore ascoreResourcer = new clsAnalysisResourcesAScore();
             clsAnalysisToolRunnerAScore ascoreToolRunner = new clsAnalysisToolRunnerAScore();
-			clsSummaryFile summaryFile = new clsSummaryFile();
+            clsSummaryFile summaryFile = new clsSummaryFile();
 
             IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
-			IJobParams jobParams = new JobParamsStub(mJobParms);
+            IJobParams jobParams = new JobParamsStub(mJobParms);
             StatusFileStub statusFile = new StatusFileStub();
-			IJobParams.CloseOutType eResult;
+            IJobParams.CloseOutType eResult;
 
             ascoreResourcer.Setup(mgrParams, jobParams);
-			eResult = ascoreResourcer.GetResources();
+            eResult = ascoreResourcer.GetResources();
 
-			if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
-				return eResult;
+            if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                return eResult;
 
             ascoreToolRunner.Setup(mgrParams, jobParams, statusFile, ref summaryFile);						
             eResult = ascoreToolRunner.RunTool();
 
-			return eResult;
+            return eResult;
         }
 
 

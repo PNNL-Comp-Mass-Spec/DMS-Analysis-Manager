@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AnalysisManagerBase;
 using AnalysisManager_AScore_PlugIn;
@@ -14,7 +14,7 @@ namespace TestAScorePlugIn {
         /// </summary>
         public void Test_RunAScore()
         {
-			var dctJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+            var dctJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "Job", "520598" },
                 { "AScoreOperations",	"GetImprovResults" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\162_Test_DatapackegeJosh" },
@@ -37,7 +37,7 @@ namespace TestAScorePlugIn {
                 { "AScoreSearchType", "sequest" }
             };
 
-			var dctMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+            var dctMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "AScoreprogloc", @"C:\ToolsApplications\AScore\AScore_Console.exe" },
                 { "workdir", @"C:\DMS_WorkDir" },
@@ -50,23 +50,23 @@ namespace TestAScorePlugIn {
             };
             var mgrParams = new MgrParamsStub(dctMgrParms);
             var jobParams = new JobParamsStub(dctJobParms);
-			
+            
             string workDir = mgrParams.GetParam("workdir");
             string logFilenameSaved = mgrParams.GetParam("logfilename");
 
-			var ionicZipTools = new clsIonicZipTools(1, workDir);
+            var ionicZipTools = new clsIonicZipTools(1, workDir);
 
             //Change the name of the log file for the local log file to the plugin log filename
-			String logFileName = Path.Combine(workDir, "AScore_Log");
+            String logFileName = Path.Combine(workDir, "AScore_Log");
             log4net.GlobalContext.Properties["LogName"] = logFileName;
             clsLogTools.ChangeLogFileName(logFileName);
 
-			var ascoreMage = new clsAScoreMagePipeline(jobParams, mgrParams, ionicZipTools);
-			ascoreMage.Run();
+            var ascoreMage = new clsAScoreMagePipeline(jobParams, mgrParams, ionicZipTools);
+            ascoreMage.Run();
 
             // Change the name of the log file back to the analysis manager log file
-			log4net.GlobalContext.Properties["LogName"] = logFilenameSaved;
-			clsLogTools.ChangeLogFileName(logFilenameSaved);
+            log4net.GlobalContext.Properties["LogName"] = logFilenameSaved;
+            clsLogTools.ChangeLogFileName(logFilenameSaved);
 
         }
 

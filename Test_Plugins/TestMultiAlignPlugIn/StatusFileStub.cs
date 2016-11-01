@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -177,23 +177,23 @@ namespace TestMultiAlignPlugIn {
         }
 
         public void UpdateAndWrite(IStatusFile.EnumMgrStatus mgrStatus, IStatusFile.EnumTaskStatus taskStatus, IStatusFile.EnumTaskStatusDetail taskDetailStatus, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string MostRecentJobInfo, bool ForceLogToBrokerDB) {
-			// This would update a status file; instead, do nothing
-			return;
+            // This would update a status file; instead, do nothing
+            return;
         }
 
         public void UpdateAndWrite(IStatusFile.EnumTaskStatus Status, float PercentComplete, int SpectrumCount) {
-			// This would update a status file; instead, do nothing
-			return;
+            // This would update a status file; instead, do nothing
+            return;
         }
 
         public void UpdateAndWrite(IStatusFile.EnumMgrStatus mgrStatus, IStatusFile.EnumTaskStatus taskStatus, IStatusFile.EnumTaskStatusDetail taskDetailStatus, float PercentComplete) {
             // This would update a status file; instead, do nothing
-			return;
+            return;
         }
 
         public void UpdateAndWrite(float PercentComplete) {
-			// This would update a status file; instead, do nothing
-			return;
+            // This would update a status file; instead, do nothing
+            return;
         }
 
         public void UpdateClose(string ManagerIdleMessage, ref string[] RecentErrorMessages, string MostRecentJobInfo, bool ForceLogToBrokerDB) {

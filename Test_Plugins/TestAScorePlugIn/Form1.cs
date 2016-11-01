@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows.Forms;
 
 namespace TestAScorePlugIn {
@@ -10,17 +10,17 @@ namespace TestAScorePlugIn {
         private void Test_Tool_Runner_Click(object sender, EventArgs e) {
             TestToolRunnerAScore ttr = new TestToolRunnerAScore();
 
-			AnalysisManagerBase.IJobParams.CloseOutType eResult;
-			eResult = ttr.TestRunAScore();
+            AnalysisManagerBase.IJobParams.CloseOutType eResult;
+            eResult = ttr.TestRunAScore();
 
-			System.Windows.Forms.MessageBox.Show("Test complete: " + eResult.ToString());
+            System.Windows.Forms.MessageBox.Show("Test complete: " + eResult.ToString());
         }
 
         private void Test_GetAScoreResults_Click(object sender, EventArgs e)
         {
             TestAMAScore tpp = new TestAMAScore();
             tpp.Test_RunAScore();
-			System.Windows.Forms.MessageBox.Show("Test complete");
+            System.Windows.Forms.MessageBox.Show("Test complete");
         }
 
 

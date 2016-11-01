@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,7 +44,7 @@ namespace Mage {
 
         // path to the folder into which the 
         // processed input file contents will be saved as an output file
-		// (required by subclasses that create result files)
+        // (required by subclasses that create result files)
         public string OutputFolderPath { get; set; }
 
         // name of the column in the standard tabular input

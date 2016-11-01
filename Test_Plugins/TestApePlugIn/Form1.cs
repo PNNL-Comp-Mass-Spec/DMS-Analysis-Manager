@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -18,43 +18,43 @@ namespace TestApePlugIn {
         private void Test_Tool_Runner_Click(object sender, EventArgs e) {
             TestToolRunnerApe ttr = new TestToolRunnerApe();
 
-			AnalysisManagerBase.IJobParams.CloseOutType eResult;
-			eResult = ttr.TestRunWorkflow();
+            AnalysisManagerBase.IJobParams.CloseOutType eResult;
+            eResult = ttr.TestRunWorkflow();
 
-			System.Windows.Forms.MessageBox.Show("Test complete: " + eResult.ToString());
+            System.Windows.Forms.MessageBox.Show("Test complete: " + eResult.ToString());
         }
 
         private void Test_RunWorkflow_Click(object sender, EventArgs e)
         {
             TestAMApeOperations tpp = new TestAMApeOperations();
-			bool bSuccess = tpp.Test_RunWorkflow();
+            bool bSuccess = tpp.Test_RunWorkflow();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
         private void Test_GetImprovResults_Click(object sender, EventArgs e)
         {
             TestAMApeOperations tpp = new TestAMApeOperations();
-			bool bSuccess = tpp.Test_GetImprovResults();
+            bool bSuccess = tpp.Test_GetImprovResults();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
         private void Test_GetQRollupResults_Click(object sender, EventArgs e)
         {
             TestAMApeOperations tpp = new TestAMApeOperations();
-			bool bSuccess = tpp.Test_GetQRollupResults();
+            bool bSuccess = tpp.Test_GetQRollupResults();
 
-			if (bSuccess)
-				System.Windows.Forms.MessageBox.Show("Test complete");
-			else
-				System.Windows.Forms.MessageBox.Show("Test failed");
+            if (bSuccess)
+                System.Windows.Forms.MessageBox.Show("Test complete");
+            else
+                System.Windows.Forms.MessageBox.Show("Test failed");
         }
 
 
