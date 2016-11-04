@@ -329,7 +329,9 @@ Public Class clsRunDosProgram
                     Return currentCoreUsage
                 End If
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in GetCoreUsage: " & ex.Message)
+                Dim msg = "Exception in GetCoreUsage"
+                Console.WriteLine(msg & ": " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex)
                 Return -1
             End Try
 
@@ -439,11 +441,14 @@ Public Class clsRunDosProgram
                 If m_AbortProgramNow Then
                     If m_AbortProgramPostLogEntry AndAlso Not blnAbortLogged Then
                         blnAbortLogged = True
+                        Dim msg As String
                         If blnRuntimeExceeded Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  Aborting ProgRunner since " & m_MaxRuntimeSeconds & " seconds has elapsed")
+                            msg = "  Aborting ProgRunner since " & m_MaxRuntimeSeconds & " seconds has elapsed"
                         Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  Aborting ProgRunner since AbortProgramNow() was called")
+                            msg = "  Aborting ProgRunner since AbortProgramNow() was called"
                         End If
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                     End If
                     m_ProgRunner.StopMonitoringProgram(Kill:=True)
                 End If
@@ -452,7 +457,9 @@ Public Class clsRunDosProgram
             clsProgRunner.ClearCachedPerformanceCounterForProcessID(cachedProcessID)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception running DOS program " & ProgNameLoc & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            Dim msg = "Exception running DOS program " & ProgNameLoc
+            Console.WriteLine(msg & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex)
             m_ProgRunner = Nothing
             Return False
         End Try
@@ -463,7 +470,9 @@ Public Class clsRunDosProgram
 
         If (UseResCode And m_ExitCode <> 0) Then
             If (m_AbortProgramNow AndAlso m_AbortProgramPostLogEntry) OrElse Not m_AbortProgramNow Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ProgRunner.ExitCode = " & m_ExitCode.ToString & " for Program = " & ProgNameLoc)
+                Dim msg = "  ProgRunner.ExitCode = " & m_ExitCode.ToString & " for Program = " & ProgNameLoc
+                Console.WriteLine(msg)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             End If
             Return False
         End If

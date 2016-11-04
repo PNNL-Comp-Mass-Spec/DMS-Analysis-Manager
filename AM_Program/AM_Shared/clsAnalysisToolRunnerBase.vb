@@ -451,8 +451,7 @@ Public Class clsAnalysisToolRunnerBase
             Dim diCacheFolder = New DirectoryInfo(cacheFolderPath)
 
             If Not diCacheFolder.Exists Then
-                Console.WriteLine("Cache folder not found: " & cacheFolderPath)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cache folder not found: " & cacheFolderPath)
+                LogWarning("Cache folder not found: " & cacheFolderPath)
                 Return False
             End If
 
@@ -610,7 +609,10 @@ Public Class clsAnalysisToolRunnerBase
                 ' Log this error to the database
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
                                      "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
+
+                ' Also log to the local log file (and display at console)
                 LogError("Results folder not defined (job parameter OutputFolderName)")
+
                 ' Without a source folder; there isn't much we can do
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -622,7 +624,10 @@ Public Class clsAnalysisToolRunnerBase
                 ' Log this error to the database
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
                                      "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & sourceFolderPath)
+
+                ' Also log to the local log file (and display at console)
                 LogError("Results folder not found")
+
                 ' Without a source folder; there isn't much we can do
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -727,8 +732,7 @@ Public Class clsAnalysisToolRunnerBase
                             strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
 
                             If objSourceFile.Name <> clsAnalysisJob.JobParametersFilename(m_JobNum) Then
-                                Console.WriteLine("Warning: " & strMessage)
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+                                LogWarning(strMessage)
                             End If
 
                             htFilesToOverwrite.Add(objSourceFile.Name.ToLower, 1)
@@ -965,7 +969,10 @@ Public Class clsAnalysisToolRunnerBase
                 RetryCount += 1
 
             Catch Err3 As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting file, exception ERR3 " & FileNamePath & Err3.Message)
+                Dim msg = "Error deleting file, exception ERR3 " & FileNamePath & Err3.Message
+                Console.WriteLine(msg)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 Throw New AMFileNotDeletedException(FileNamePath, Err3.Message)
             End Try
         End While
@@ -1176,6 +1183,8 @@ Public Class clsAnalysisToolRunnerBase
     ''' <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
     ''' <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
     ''' <param name="strStepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
+    ''' <param name="mgrParams">Manager parameters</param>
+    ''' <param name="errorMessage">Output: error message</param>
     ''' <returns>The path to the program, or an empty string if there is a problem</returns>
     ''' <remarks></remarks>
     Public Shared Function DetermineProgramLocation(
@@ -1881,6 +1890,20 @@ Public Class clsAnalysisToolRunnerBase
             ' Ignore errors here
         End Try
 
+    End Sub
+
+    ''' <summary>
+    ''' Log a warning message in the manager's log file
+    ''' Also display it at console
+    ''' Optionally update m_EvalMessage
+    ''' </summary>
+    ''' <param name="warningMessage">Warning message</param>
+    Protected Sub LogWarning(warningMessage As String, Optional updateEvalMessage As Boolean = False)
+        If updateEvalMessage Then
+            m_EvalMessage = warningMessage
+        End If
+        Console.WriteLine(warningMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
     End Sub
 
     ''' <summary>

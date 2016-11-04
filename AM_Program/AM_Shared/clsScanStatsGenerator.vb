@@ -117,18 +117,17 @@ Public Class clsScanStatsGenerator
         Const MsDataFileReaderClass As String = "MSFileInfoScanner.clsMSFileInfoScanner"
 
         Dim objMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner = Nothing
-        Dim msg As String
 
         Try
             If Not File.Exists(strMSFileInfoScannerDLLPath) Then
-                msg = "DLL not found: " + strMSFileInfoScannerDLLPath
+                Dim msg = "DLL not found: " + strMSFileInfoScannerDLLPath
+                Console.WriteLine(msg)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             Else
-                Dim obj As Object
-                obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath)
+                Dim obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath)
                 If obj IsNot Nothing Then
                     objMSFileInfoScanner = DirectCast(obj, MSFileInfoScannerInterfaces.iMSFileInfoScanner)
-                    msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath
+                    Dim msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath
                     If mDebugLevel >= 2 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
                     End If
@@ -136,7 +135,8 @@ Public Class clsScanStatsGenerator
 
             End If
         Catch ex As Exception
-            msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message
+            Dim msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message
+            Console.WriteLine(msg)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
         End Try
 
@@ -153,6 +153,7 @@ Public Class clsScanStatsGenerator
             obj = Activator.CreateInstance(dllType)
         Catch ex As Exception
             Dim msg As String = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message
+            Console.WriteLine(msg)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
         End Try
         Return obj
@@ -160,7 +161,9 @@ Public Class clsScanStatsGenerator
 
     Protected Sub mMSFileInfoScanner_ErrorEvent(Message As String) Handles mMSFileInfoScanner.ErrorEvent
         mMSFileInfoScannerErrorCount += 1
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSFileInfoScanner error: " & Message)
+        Dim msg = "MSFileInfoScanner error: " & Message
+        Console.WriteLine(msg)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
     End Sub
 
     Protected Sub mMSFileInfoScanner_MessageEvent(Message As String) Handles mMSFileInfoScanner.MessageEvent

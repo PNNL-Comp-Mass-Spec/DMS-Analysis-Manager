@@ -337,6 +337,7 @@ Public Class clsGlobal
                     strMsg &= ", Query = " + cmd.CommandText
                 End If
 
+                Console.WriteLine(strMsg)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
                 Thread.Sleep(retryDelaySeconds * 1000)
 
@@ -1517,6 +1518,7 @@ Public Class clsGlobal
         If Not diDirectory.Exists Then
             ' Example error message: Organism DB directory not found: G:\DMS_Temp_Org
             errorMessage = directoryDescription & " not found: " & directoryPath
+            Console.WriteLine(errorMessage)
             clsLogTools.WriteLog(eLogLocationIfNotFound, clsLogTools.LogLevels.ERROR, errorMessage)
             Return False
         End If
@@ -1542,6 +1544,7 @@ Public Class clsGlobal
         If freeSpaceMB < minFreeSpaceMB Then
             ' Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
             errorMessage = directoryDescription & " drive has less than " & minFreeSpaceMB.ToString & " MB free: " & CInt(freeSpaceMB).ToString() & " MB"
+            Console.WriteLine(errorMessage)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
             Return False
         Else
@@ -1555,6 +1558,7 @@ Public Class clsGlobal
 #Region "EventHandlers"
 
     Private Shared Sub DbToolsErrorEventHandler(errorMessage As String)
+        Console.WriteLine(errorMessage)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
     End Sub
 

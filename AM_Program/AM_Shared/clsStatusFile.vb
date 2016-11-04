@@ -520,7 +520,9 @@ Public Class clsStatusFile
         Catch ex As Exception
             If Date.UtcNow.Subtract(dtLastFailureTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES Then
                 dtLastFailureTime = Date.UtcNow
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in clsStatusFile.LogStatusToMessageQueue (B): " & ex.Message)
+                Dim msg = "Error in clsStatusFile.LogStatusToMessageQueue (B): " & ex.Message
+                Console.WriteLine(msg)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             End If
 
         End Try
@@ -772,7 +774,9 @@ Public Class clsStatusFile
             WriteStatusFileToDisk(strXMLText)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error generating status info: " & ex.Message)
+            Dim msg = "Error generating status info: " & ex.Message
+            Console.WriteLine(msg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
         End Try
 
         CheckForAbortProcessingFile()
@@ -826,8 +830,10 @@ Public Class clsStatusFile
                     ' Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
                     If logWarning Then
                         ' Log a warning that the file copy failed
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" &
-                          Path.GetFileName(strTempStatusFilePath) & " to " & Path.GetFileName(FileNamePath) & "):" & ex.Message)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                             "Unable to copy temporary status file to the final status file (" &
+                                             Path.GetFileName(strTempStatusFilePath) & " to " &
+                                             Path.GetFileName(FileNamePath) & "):" & ex.Message)
                     End If
 
                 End Try
@@ -880,7 +886,9 @@ Public Class clsStatusFile
                 ' 5 or more errors in a row have occurred
                 ' Post an entry to the log, only when intWritingErrorCountSaved is 5, 10, 20, 30, etc.
                 If intWritingErrorCountSaved = WRITE_FAILURE_LOG_THRESHOLD OrElse intWritingErrorCountSaved Mod 10 = 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error writing status file " & Path.GetFileName(strFilePath) & ": " & ex.Message)
+                    Dim msg = "Error writing status file " & Path.GetFileName(strFilePath) & ": " & ex.Message
+                    Console.WriteLine(msg)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
                 End If
             End If
             blnSuccess = False

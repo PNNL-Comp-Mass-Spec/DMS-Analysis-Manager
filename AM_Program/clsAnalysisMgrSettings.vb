@@ -89,8 +89,9 @@ Public Class clsAnalysisMgrSettings
             myCmd.ExecuteNonQuery()
 
         Catch ex As Exception
-            Const strErrorMessage As String = "Exception calling " & SP_NAME_ACKMANAGERUPDATE
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage & ex.Message)
+            Dim msg = "Exception calling " & SP_NAME_ACKMANAGERUPDATE & ex.Message
+            Console.WriteLine(msg)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
         End Try
 
     End Sub

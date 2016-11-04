@@ -90,8 +90,9 @@ Public Class clsProteowizardTools
             End If
 
         Catch ex As Exception
-            Dim Msg As String = "Error creating ProteoWizard registry key: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            Dim msg As String = "Error creating ProteoWizard registry key"
+            Console.WriteLine(msg & ": " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex)
             Return False
         End Try
 
