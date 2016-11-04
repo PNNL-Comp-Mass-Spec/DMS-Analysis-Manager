@@ -3,22 +3,22 @@
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesPRIDEConverter
-	Inherits clsAnalysisResources
+    Inherits clsAnalysisResources
 
-	Public Const JOB_PARAM_DATASETS_MISSING_MZXML_FILES As String = "PackedParam_DatasetsMissingMzXMLFiles"
-	Public Const JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS As String = "PackedParam_DataPackagePeptideHitJobs"
-	Public Const JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER As String = "PackedParam_DatasetStorage_YearQuarter"
+    Public Const JOB_PARAM_DATASETS_MISSING_MZXML_FILES As String = "PackedParam_DatasetsMissingMzXMLFiles"
+    Public Const JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS As String = "PackedParam_DataPackagePeptideHitJobs"
+    Public Const JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER As String = "PackedParam_DatasetStorage_YearQuarter"
 
-	Public Const JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME As String = "MSGFReportFileTemplate"
-	Public Const JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PXSubmissionTemplate"
+    Public Const JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME As String = "MSGFReportFileTemplate"
+    Public Const JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PXSubmissionTemplate"
 
-	Public Const DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME As String = "Template.msgf-report.xml"
-	Public Const MSGF_REPORT_FILE_SUFFIX As String = "msgf-report.xml"
+    Public Const DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME As String = "Template.msgf-report.xml"
+    Public Const MSGF_REPORT_FILE_SUFFIX As String = "msgf-report.xml"
 
-	Public Const DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PX_Submission_Template.px"
-	Public Const PX_SUBMISSION_FILE_SUFFIX As String = ".px"
+    Public Const DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PX_Submission_Template.px"
+    Public Const PX_SUBMISSION_FILE_SUFFIX As String = ".px"
 
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim lstDataPackagePeptideHitJobs = New List(Of clsDataPackageJobInfo)
 
@@ -39,7 +39,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
         If blnCreatePrideXMLFiles Then
             udtOptions.RetrievePHRPFiles = True
         Else
-            udtOptions.retrievePHRPFiles = False
+            udtOptions.RetrievePHRPFiles = False
         End If
 
         udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", True)

@@ -93,8 +93,7 @@ Public Class clsIonicZipTools
 
         Catch ex As Exception
             ' Log this as an error, but don't treat this as fatal
-            m_Message = "Error deleting " & diFolder.FullName & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error deleting " & diFolder.FullName, ex)
         End Try
 
     End Sub
@@ -119,8 +118,7 @@ Public Class clsIonicZipTools
 
         Catch ex As Exception
             ' Log this as an error, but don't treat this as fatal
-            m_Message = "Error deleting " & fiFile.FullName & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error deleting " & fiFile.FullName, ex)
         End Try
 
     End Sub
@@ -180,14 +178,12 @@ Public Class clsIonicZipTools
             Dim fiFile = New FileInfo(GZipFilePath)
 
             If Not fiFile.Exists Then
-                m_Message = "GZip file not found: " & fiFile.FullName
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+                LogError("GZip file not found: " & fiFile.FullName)
                 Return False
             End If
 
             If fiFile.Extension.ToLower() <> ".gz" Then
-                m_Message = "Not a GZipped file; must have extension .gz: " & fiFile.FullName
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+                LogError("Not a GZipped file; must have extension .gz: " & fiFile.FullName)
                 Return False
             End If
 
@@ -206,6 +202,7 @@ Public Class clsIonicZipTools
             If fiDecompressedFile.Exists Then
                 If eOverwriteBehavior = Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite Then
                     m_Message = "Decompressed file already exists; will not overwrite: " & fiDecompressedFile.FullName
+                    Console.WriteLine(m_Message)
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Message)
                     Return True
                 ElseIf eOverwriteBehavior = Ionic.Zip.ExtractExistingFileAction.Throw Then
@@ -245,8 +242,7 @@ Public Class clsIonicZipTools
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
         Catch ex As Exception
-            m_Message = "Error unzipping .gz file " & GZipFilePath & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error unzipping .gz file " & GZipFilePath, ex)
             Return False
         End Try
 
@@ -294,8 +290,7 @@ Public Class clsIonicZipTools
 
             End If
         Catch ex As Exception
-            m_Message = "Error deleting target .gz file prior to zipping " & SourceFilePath & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error deleting target .gz file prior to zipping " & SourceFilePath, ex)
             Return False
         End Try
 
@@ -364,8 +359,7 @@ Public Class clsIonicZipTools
             blnSuccess = objProgRunner.RunProgram(fiGZip.FullName, strArgs, "GZip", False)
 
             If Not blnSuccess Then
-                m_Message = "GZip.exe reported an error code"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+                LogError("GZip.exe reported an error code")
                 Return False
             End If
 
@@ -377,8 +371,7 @@ Public Class clsIonicZipTools
 
             Dim fiCompressedFile = New FileInfo(fiFile.FullName & ".gz")
             If Not fiCompressedFile.Exists Then
-                m_Message = "GZip.exe did not create a .gz file: " & fiCompressedFile.FullName
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+                LogError("GZip.exe did not create a .gz file: " & fiCompressedFile.FullName)
                 Return False
             End If
 
@@ -400,8 +393,7 @@ Public Class clsIonicZipTools
             End If
 
         Catch ex As Exception
-            m_Message = "Error gzipping file " & fiFile.FullName & " using gzip.exe: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error gzipping file " & fiFile.FullName & " using gzip.exe", ex)
             Return False
         End Try
 
@@ -447,22 +439,82 @@ Public Class clsIonicZipTools
             Dim fiGZippedFile = New FileInfo(GZipFilePath)
 
             If Not fiGZippedFile.Exists Then
-                m_Message = "IonicZip did not create a .gz file: " & GZipFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+                LogError("IonicZip did not create a .gz file: " & GZipFilePath)
                 Return False
             End If
 
             fiGZippedFile.LastWriteTimeUtc = fiFile.LastWriteTimeUtc
 
         Catch ex As Exception
-            m_Message = "Error gzipping file " & fiFile.FullName & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error gzipping file " & fiFile.FullName, ex)
             Return False
         End Try
 
         Return True
 
     End Function
+
+    ''' <summary>
+    ''' Update m_message with an error message and record the error in the manager's log file
+    ''' </summary>
+    ''' <param name="errorMessage">Error message</param>
+    Protected Sub LogError(errorMessage As String)
+        m_Message = errorMessage
+        Console.WriteLine(errorMessage)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+    End Sub
+
+    ''' <summary>
+    ''' Update m_message with an error message and record the error in the manager's log file
+    ''' </summary>
+    ''' <param name="errorMessage">Error message</param>
+    ''' <param name="ex">Exception to log</param>
+    Protected Sub LogError(errorMessage As String, ex As Exception, Optional appendExceptionToMessage As Boolean = True)
+        If appendExceptionToMessage Then
+            m_Message = errorMessage & ": " & ex.Message
+        Else
+            m_Message = errorMessage
+        End If
+
+        ReportStatus(errorMessage, ex)
+    End Sub
+
+    ''' <summary>
+    ''' Update m_message with an error message and record the error in the manager's log file
+    ''' Also write the detailed error message to the local log file
+    ''' </summary>
+    ''' <param name="errorMessage">Error message</param>
+    ''' <param name="detailedMessage">Detailed error message</param>
+    Protected Sub LogError(errorMessage As String, detailedMessage As String)
+        m_Message = errorMessage
+        If String.IsNullOrEmpty(detailedMessage) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+            Console.WriteLine(errorMessage)
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
+            Console.WriteLine(errorMessage)
+            Console.WriteLine(detailedMessage)
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Shows information about an exception at the console and in the log file
+    ''' Unlike LogErrors, does not update m_message
+    ''' </summary>
+    ''' <param name="errorMessage">Error message (do not include ex.message)</param>
+    ''' <param name="ex">Exception</param>
+    Protected Sub ReportStatus(errorMessage As String, ex As Exception)
+        Dim formattedError As String
+        If errorMessage.EndsWith(ex.Message) Then
+            formattedError = errorMessage
+        Else
+            formattedError = errorMessage & ": " & ex.Message
+        End If
+
+        Console.WriteLine(formattedError)
+        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
+    End Sub
 
     Protected Sub ReportZipStats(
       fiFileSystemInfo As FileSystemInfo,
@@ -588,8 +640,7 @@ Public Class clsIonicZipTools
             Dim fiFile = New FileInfo(ZipFilePath)
 
             If Not File.Exists(ZipFilePath) Then
-                m_Message = "Zip file not found: " & fiFile.FullName
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+                LogError("Zip file not found: " & fiFile.FullName)
                 Return False
             End If
 
@@ -636,8 +687,7 @@ Public Class clsIonicZipTools
             End Using
 
         Catch ex As Exception
-            m_Message = "Error unzipping file " & ZipFilePath & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error unzipping file " & ZipFilePath, ex)
             Return False
         End Try
 
@@ -671,8 +721,7 @@ Public Class clsIonicZipTools
             ' Confirm that the zip file was created
             Dim fiZipFile = New FileInfo(zipFilePath)
             If Not fiZipFile.Exists Then
-                m_Message = "Zip file not found: " & zipFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+                LogError("Zip file not found: " & zipFilePath)
                 Return False
             End If
 
@@ -681,8 +730,7 @@ Public Class clsIonicZipTools
 
             If Not blnsuccess Then
                 If String.IsNullOrEmpty(m_Message) Then
-                    m_Message = "Zip quick check failed for " & zipFilePath
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+                    LogError("Zip quick check failed for " & zipFilePath)
                 End If
                 Return False
             End If
@@ -735,8 +783,7 @@ Public Class clsIonicZipTools
             End If
 
         Catch ex As Exception
-            m_Message = "Error verifying zip file " & zipFilePath & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error verifying zip file " & zipFilePath, ex)
             Return False
         End Try
 
@@ -790,8 +837,7 @@ Public Class clsIonicZipTools
 
             End If
         Catch ex As Exception
-            m_Message = "Error deleting target .zip file prior to zipping file " & SourceFilePath & " using IonicZip: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error deleting target .zip file prior to zipping file " & SourceFilePath & " using IonicZip", ex)
             Return False
         End Try
 
@@ -817,8 +863,7 @@ Public Class clsIonicZipTools
             End Using
 
         Catch ex As Exception
-            m_Message = "Error zipping file " & fiFile.FullName & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error zipping file " & fiFile.FullName, ex)
             Return False
         End Try
 
@@ -888,8 +933,7 @@ Public Class clsIonicZipTools
                 Thread.Sleep(250)
             End If
         Catch ex As Exception
-            m_Message = "Error deleting target .zip file prior to zipping folder " & SourceDirectoryPath & " using IonicZip: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error deleting target .zip file prior to zipping folder " & SourceDirectoryPath & " using IonicZip", ex)
             Return False
         End Try
 
@@ -927,8 +971,7 @@ Public Class clsIonicZipTools
             End Using
 
         Catch ex As Exception
-            m_Message = "Error zipping directory " & diDirectory.FullName & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
+            LogError("Error zipping directory " & diDirectory.FullName, ex)
             Return False
         End Try
 

@@ -193,7 +193,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim blnSuccess As Boolean
 
         Try
-            'Call base class for initial setup
+            ' Call base class for initial setup
             If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -214,7 +214,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             ' Store the PRIDE Converter version info in the database
             If Not StoreToolVersionInfo(mPrideConverterProgLoc) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+                LogError("Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining PRIDE Converter version"
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -230,8 +230,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             ' Initialize dctDataPackageDatasets
             Dim dctDataPackageDatasets As Dictionary(Of Integer, clsDataPackageDatasetInfo) = Nothing
             If Not LoadDataPackageDatasetInfo(dctDataPackageDatasets) Then
-                m_message = "Error loading data package dataset info"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false")
+                Dim msg = "Error loading data package dataset info"
+                LogError(msg & ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false")
+                m_message = msg
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -328,15 +329,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 End If
             End If
 
-            'Stop the job timer
+            ' Stop the job timer
             m_StopTime = DateTime.UtcNow
 
-            'Add the current job data to the summary file
+            ' Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+                LogWarning("Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
 
-            'Make sure objects are released
+            ' Make sure objects are released
             Threading.Thread.Sleep(500)         ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
@@ -352,7 +353,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             result = MakeResultsFolder()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'MakeResultsFolder handles posting to local log, so set database error message and exit
+                ' MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -371,12 +372,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End If
 
         Catch ex As Exception
-            m_message = "Exception in PRIDEConverterPlugin->RunTool"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in PRIDEConverterPlugin->RunTool", ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+        ' No failures so everything must have succeeded
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -469,14 +470,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim oMasterPXFileInfo As clsPXFileInfoBase = Nothing
             If Not mPxMasterFileList.TryGetValue(fiFile.Name, oMasterPXFileInfo) Then
                 ' File not found in mPxMasterFileList, we cannot add the mapping
-                m_message = "File " & fiFile.Name & " not found in mPxMasterFileList; unable to add to mPxResultFiles"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("File " & fiFile.Name & " not found in mPxMasterFileList; unable to add to mPxResultFiles")
                 Return False
             End If
 
             If oMasterPXFileInfo.FileID <> intFileID Then
-                m_message = "FileID mismatch for " & fiFile.Name
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ":  mPxMasterFileList.FileID = " & oMasterPXFileInfo.FileID & " vs. FileID " & intFileID & " passed into AddPxFileToMapping")
+                Dim msg = "FileID mismatch for " & fiFile.Name
+                LogError(msg & ":  mPxMasterFileList.FileID = " & oMasterPXFileInfo.FileID & " vs. FileID " & intFileID & " passed into AddPxFileToMapping")
+                m_message = msg
                 Return False
             End If
 
@@ -692,8 +693,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim fiCDTAFile = New FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset & "_dta.txt"))
 
             If Not fiCDTAFile.Exists Then
-                m_message = "_dta.txt file not found for job " & dataPkgJob.Job
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiCDTAFile.FullName)
+                Dim msg = "_dta.txt file not found for job " & dataPkgJob.Job
+                LogError(msg & ": " & fiCDTAFile.FullName)
+                m_message = msg
                 Return False
             End If
 
@@ -714,12 +716,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 End If
 
                 If fiCDTAFile.Length <> oFileInfo.Length Then
-                    m_message = "Dataset " & dataPkgJob.Dataset & " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": file size mismatch of " & fiCDTAFile.Length & " for job " & dataPkgJob.Job & " vs " & oFileInfo.Length & " for job " & oFileInfo.JobInfo.Job)
+                    Dim msg = "Dataset " & dataPkgJob.Dataset & " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported"
+                    LogError(msg & ": file size mismatch of " & fiCDTAFile.Length & " for job " & dataPkgJob.Job &
+                             " vs " & oFileInfo.Length & " for job " & oFileInfo.JobInfo.Job)
+                    m_message = msg
                     Return False
                 ElseIf strMD5Hash <> oFileInfo.MD5Hash Then
-                    m_message = "Dataset " & dataPkgJob.Dataset & " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": MD5 hash mismatch of " & strMD5Hash & " for job " & dataPkgJob.Job & " vs. " & oFileInfo.MD5Hash & " for job " & oFileInfo.JobInfo.Job)
+                    Dim msg = "Dataset " & dataPkgJob.Dataset & " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported"
+                    LogError(msg & ": MD5 hash mismatch of " & strMD5Hash & " for job " & dataPkgJob.Job & " vs. " & oFileInfo.MD5Hash & " for job " & oFileInfo.JobInfo.Job)
+                    m_message = msg
                     Return False
                 End If
 
@@ -740,8 +745,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End If
 
             If Not mDTAtoMGF.ProcessFile(fiCDTAFile.FullName) Then
-                m_message = "Error converting " & fiCDTAFile.Name & " to a .mgf file for job " & dataPkgJob.Job
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
+                Dim msg = "Error converting " & fiCDTAFile.Name & " to a .mgf file for job " & dataPkgJob.Job
+                LogError(msg & ": " & mDTAtoMGF.GetErrorMessage())
+                m_message = msg
                 Return False
             Else
                 ' Delete the _dta.txt file
@@ -760,16 +766,16 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             If Not fiNewMGFFile.Exists Then
                 ' MGF file was not created
-                m_message = "A .mgf file was not created for the _dta.txt file for job " & dataPkgJob.Job
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
+                Dim msg = "A .mgf file was not created for the _dta.txt file for job " & dataPkgJob.Job
+                m_message = msg
+                LogError(msg & ": " & mDTAtoMGF.GetErrorMessage())
                 Return False
             End If
 
             strMGFFilePath = fiNewMGFFile.FullName
 
         Catch ex As Exception
-            m_message = "Exception in ConvertCDTAToMGF"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in ConvertCDTAToMGF", ex)
             Return False
         End Try
 
@@ -784,7 +790,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+        LogWarning("Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
 
         ' Bump up the debug level if less than 2
         If m_DebugLevel < 2 Then m_DebugLevel = 2
@@ -874,8 +880,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER)
 
             If Not dctDatasetRawFilePaths.ContainsKey(strDataset) Then
-                m_message = "Dataset " & strDataset & " not found in job parameter " & clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS & "; unable to create the missing .mzXML file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Dataset " & strDataset & " not found in job parameter " & clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS &
+                         "; unable to create the missing .mzXML file")
                 Return False
             End If
 
@@ -931,6 +937,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 ElseIf Not m_message.Contains(strDataset) Then
                     m_message &= "; dataset " & strDataset
                 End If
+                LogError(m_message)
             End If
 
             If Not blnSuccess Then Return False
@@ -939,7 +946,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             If fiMzXmlFilePathLocal.Exists Then
                 AddToListIfNew(mPreviousDatasetFilesToDelete, fiMzXmlFilePathLocal.FullName)
             Else
-                m_message = "MSXmlCreator did not create the .mzXML file for dataset " & strDataset
+                LogError("MSXmlCreator did not create the .mzXML file for dataset " & strDataset)
                 Return False
             End If
 
@@ -975,8 +982,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End Try
 
         Catch ex As Exception
-            m_message = "Exception in CreateMzXMLFileIfMissing"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in CreateMzXMLFileIfMissing", ex)
             Return False
         End Try
 
@@ -1028,8 +1034,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim dataPkgJob As clsDataPackageJobInfo = Nothing
 
             If Not mDataPackagePeptideHitJobs.TryGetValue(intJob, dataPkgJob) Then
-                m_message = "Job " & intJob & " not found in mDataPackagePeptideHitJobs; this is unexpected"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Job " & intJob & " not found in mDataPackagePeptideHitJobs; this is unexpected")
                 Return String.Empty
             End If
 
@@ -1431,8 +1436,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 
         Catch ex As Exception
-            m_message = "Exception in CreatePseudoMSGFFileUsingPHRPReader"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in CreatePseudoMSGFFileUsingPHRPReader", ex)
             Return String.Empty
         End Try
 
@@ -1475,16 +1479,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             strOrgDBNameGenerated = m_jobParams.GetJobParameter("PeptideSearch", clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(intJob), String.Empty)
             If String.IsNullOrEmpty(strOrgDBNameGenerated) Then
-                m_message = "Job parameter " & clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(intJob) & " was not found in CreateMSGFReportFile; unable to continue"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Job parameter " & clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(intJob) &
+                         " was not found in CreateMSGFReportFile; unable to continue")
                 Return False
             End If
 
             Dim dataPkgJob As clsDataPackageJobInfo = Nothing
 
             If Not mDataPackagePeptideHitJobs.TryGetValue(intJob, dataPkgJob) Then
-                m_message = "Job " & intJob & " not found in mDataPackagePeptideHitJobs; unable to continue"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                LogError("Job " & intJob & " not found in mDataPackagePeptideHitJobs; unable to continue")
                 Return False
             End If
 
@@ -1505,8 +1508,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 objFastaFileReader = New ProteinFileReader.FastaFileReader()
 
                 If Not objFastaFileReader.OpenFile(strFastaFilePath) Then
-                    m_message = "Error opening fasta file " & strOrgDBNameGenerated & "; objFastaFileReader.OpenFile() returned false"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; see " & strLocalOrgDBFolder)
+                    Dim msg = "Error opening fasta file " & strOrgDBNameGenerated & "; objFastaFileReader.OpenFile() returned false"
+                    LogError(msg & "; see " & strLocalOrgDBFolder)
+                    m_message = msg
                     Return False
                 Else
                     Console.WriteLine()
@@ -1549,8 +1553,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             If String.IsNullOrEmpty(strPseudoMsgfFilePath) Then
                 If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Pseudo Msgf file not created for job " & intJob & ", dataset " & strDataset
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    LogError("Pseudo Msgf file not created for job " & intJob & ", dataset " & strDataset)
                 End If
                 Return False
             End If
@@ -1563,8 +1566,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                 If String.IsNullOrEmpty(strPrideReportXMLFilePath) Then
                     If String.IsNullOrEmpty(m_message) Then
-                        m_message = "Pride report XML file not created for job " & intJob & ", dataset " & strDataset
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                        LogError("Pride report XML file not created for job " & intJob & ", dataset " & strDataset)
                     End If
                     Return False
                 End If
@@ -1574,8 +1576,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             blnSuccess = True
 
         Catch ex As Exception
-            m_message = "Exception in CreateMSGFReportFile for job " & intJob & ", dataset " & strDataset
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in CreateMSGFReportFile for job " & intJob & ", dataset " & strDataset, ex)
             Return False
         End Try
 
@@ -1766,12 +1767,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                                     Case "Identifications"
                                         If Not CreateMSGFReportXMLFileWriteIDs(objXmlWriter, lstPseudoMSGFData, strOrgDBNameGenerated) Then
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreateMSGFReportXMLFileWriteIDs returned false; aborting")
+                                            LogError("CreateMSGFReportXMLFileWriteIDs returned false; aborting")
                                             Return String.Empty
                                         End If
 
                                         If Not CreateMSGFReportXMLFileWriteProteins(objXmlWriter, strOrgDBNameGenerated) Then
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreateMSGFReportXMLFileWriteProteins returned false; aborting")
+                                            LogError("CreateMSGFReportXMLFileWriteProteins returned false; aborting")
                                             Return String.Empty
                                         End If
 
@@ -1893,8 +1894,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 
         Catch ex As Exception
-            m_message = "Exception in CreateMSGFReportXMLFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in CreateMSGFReportXMLFile", ex)
 
             Dim strRecentElements As String = String.Empty
             For Each strItem In lstRecentElements
@@ -2025,8 +2025,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             objXmlWriter.WriteEndElement()          ' Identifications
 
         Catch ex As Exception
-            m_message = "Exception in CreateMSGFReportXMLFileWriteIDs"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in CreateMSGFReportXMLFileWriteIDs", ex)
             Return False
         End Try
 
@@ -2080,8 +2079,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
 
         Catch ex As Exception
-            m_message = "Exception in CreateMSGFReportXMLFileWriteProteins"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in CreateMSGFReportXMLFileWriteProteins", ex)
             Return False
         End Try
 
@@ -2184,15 +2182,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             If Not blnSuccess Then
                 If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Unknown error calling RunPrideConverter"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    LogError("Unknown error calling RunPrideConverter", m_message)
                 End If
             Else
                 ' Make sure the result file was created
                 strPrideXmlFilePath = Path.Combine(m_WorkDir, strBaseFileName & FILE_EXTENSION_MSGF_PRIDE_XML)
                 If Not File.Exists(strPrideXmlFilePath) Then
-                    m_message = "Pride XML file not created for job " & intJob & ": " & strPrideXmlFilePath
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    LogError("Pride XML file not created for job " & intJob & ": " & strPrideXmlFilePath)
                     Return False
                 End If
             End If
@@ -2200,8 +2196,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             blnSuccess = True
 
         Catch ex As Exception
-            m_message = "Exception in CreatePrideXMLFile for job " & intJob & ", dataset " & strDataset
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in CreatePrideXMLFile for job " & intJob & ", dataset " & strDataset, ex)
             Return False
         End Try
 
@@ -2518,7 +2513,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                         lstFileInfoCols.Add(GetValueOrDefault("quantification)", dctTemplateParameters, sampleMetadata.Quantification))           ' quantification
                         lstFileInfoCols.Add(sampleMetadata.ExperimentalFactor)               ' experimental_factor
                     Else
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " Sample Metadata not found for " & resultFile.Value)
+                        LogWarning(" Sample Metadata not found for " & resultFile.Value)
                     End If
 
                     WritePXLine(swPXFile, lstFileInfoCols)
@@ -2527,8 +2522,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End Using
 
         Catch ex As Exception
-            m_message = "Exception in CreatePXSubmissionFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in CreatePXSubmissionFile", ex)
             Return False
         End Try
 
@@ -2565,9 +2559,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         If String.IsNullOrEmpty(mPrideConverterProgLoc) Then
             If String.IsNullOrEmpty(m_message) Then
-                m_message = "Error determining PrideConverter program location"
+                LogError("Error determining PrideConverter program location")
             End If
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
             Return False
         End If
 
@@ -2582,8 +2575,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim oPXFileInfo As clsPXFileInfo = Nothing
 
         If Not mPxResultFiles.TryGetValue(intFileID, oPXFileInfo) Then
-            m_message = "FileID " & intFileID & " not found in mPxResultFiles; unable to add parent file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            LogError("FileID " & intFileID & " not found in mPxResultFiles; unable to add parent file")
             Return False
         End If
 
@@ -2613,7 +2605,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         If String.IsNullOrEmpty(value) Then
             value = String.Empty
         ElseIf value.Length > 200 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "CV value parameter truncated since too long: " & value)
+            LogWarning("CV value parameter truncated since too long: " & value)
             value = value.Substring(0, 200)
         End If
 
@@ -2769,12 +2761,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+            LogError(mConsoleOutputErrorMsg)
         End If
 
         If Not blnSuccess Then
-            m_message = "Error running PrideConverter to determine its version"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            LogError("Error running PrideConverter to determine its version")
         Else
             Dim fiVersionFile As FileInfo
             fiVersionFile = New FileInfo(strVersionFilePath)
@@ -2908,17 +2899,16 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         End If
 
         If Not LoadDataPackageJobInfo(dctDataPackageJobs) Then
-            m_message = "Error loading data package job info"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": clsAnalysisToolRunnerBase.LoadDataPackageJobInfo() returned false")
+            Dim msg = "Error loading data package job info"
+            LogError(msg & ": clsAnalysisToolRunnerBase.LoadDataPackageJobInfo() returned false")
+            m_message = msg
             Return False
         End If
 
         Dim lstJobsToUse = ExtractPackedJobParameterList(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS)
 
         If lstJobsToUse.Count = 0 Then
-            m_message = "Packed job parameter " & clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS & " is empty; no jobs to process"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
+            LogWarning("Packed job parameter " & clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS & " is empty; no jobs to process")
         Else
             ' Populate mDataPackagePeptideHitJobs using the jobs in lstJobsToUse and dctDataPackagePeptideHitJobs
             For Each strJob As String In lstJobsToUse
@@ -3002,7 +2992,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Catch ex As Exception
             ' Ignore errors here
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+                Console.WriteLine("Error parsing console output file (" & Path.GetFileName(strConsoleOutputFilePath) & ")")
             End If
         End Try
 
@@ -3249,8 +3241,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End Using
 
         Catch ex As Exception
-            m_message = "Error in ReadTemplatePX"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Error in ReadTemplatePXSubmissionFile", ex)
             Return dctParameters
         End Try
 
@@ -3360,8 +3351,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                 Dim fiLocalFile = New FileInfo(targetFilePath)
                 If Not fiLocalFile.Exists Then
-                    m_message = "PHRP file was not copied locally: " & fiLocalFile.Name
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    LogError("PHRP file was not copied locally: " & fiLocalFile.Name)
                     Return False
                 End If
 
@@ -3403,8 +3393,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End If
 
         Catch ex As Exception
-            m_message = "Error in RetrievePHRPFiles"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Error in RetrievePHRPFiles", ex)
             Return False
         End Try
 
@@ -3429,8 +3418,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Try
 
             If Not File.Exists(strStoragePathInfoFilePath) Then
-                m_message = "StoragePathInfo file not found"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strStoragePathInfoFilePath)
+                Dim msg = "StoragePathInfo file not found"
+                LogError(msg & ": " & strStoragePathInfoFilePath)
+                m_message = msg
                 Return False
             End If
 
@@ -3441,8 +3431,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End Using
 
             If String.IsNullOrEmpty(strSourceFilePath) Then
-                m_message = "StoragePathInfo file was empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & strStoragePathInfoFilePath)
+                Dim msg = "StoragePathInfo file was empty"
+                LogError(msg & ": " & strStoragePathInfoFilePath)
+                m_message = msg
                 Return False
             End If
 
@@ -3455,8 +3446,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End If
 
         Catch ex As Exception
-            m_message = "Error in RetrieveStoragePathInfoTargetFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Error in RetrieveStoragePathInfoTargetFile", ex)
             Return False
         End Try
 
@@ -3469,17 +3459,17 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim CmdStr As String
 
         If String.IsNullOrEmpty(strMsgfResultsFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "strMsgfResultsFilePath has not been defined; unable to continue")
+            LogError("strMsgfResultsFilePath has not been defined; unable to continue")
             Return False
         End If
 
         If String.IsNullOrEmpty(strMzXMLFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "strMzXMLFilePath has not been defined; unable to continue")
+            LogError("strMzXMLFilePath has not been defined; unable to continue")
             Return False
         End If
 
         If String.IsNullOrEmpty(strPrideReportFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "strPrideReportFilePath has not been defined; unable to continue")
+            LogError("strPrideReportFilePath has not been defined; unable to continue")
             Return False
         End If
 
@@ -3524,12 +3514,16 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 mConsoleOutputErrorMsg = String.Empty
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+                Console.WriteLine(mConsoleOutputErrorMsg)
             End If
         End If
 
         If Not blnSuccess Then
-            m_message = "Error running PrideConverter, dataset " & strDataset & ", job " & intJob.ToString()
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running PrideConverter, dataset " & strDataset & ", job " & intJob)
+            If String.IsNullOrWhiteSpace(m_message) Then
+                m_message = "Error running PrideConverter"
+                Console.WriteLine(m_message)
+            End If
         End If
 
         Return blnSuccess
@@ -3592,7 +3586,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     strToolVersionInfo = "Unknown"
                     Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo))
                 Catch ex As Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+                    Dim msg = "Exception calling SetStepTaskToolVersion: " & ex.Message
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+                    Console.WriteLine(msg)
                     Return False
                 End Try
 
@@ -3616,7 +3612,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex)
+            LogError("Exception calling SetStepTaskToolVersion", ex)
             Return False
         End Try
 
@@ -3633,7 +3629,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim strRemoteTransferFolder = CreateRemoteTransferFolder(objAnalysisResults, mCacheFolderPath)
 
             If String.IsNullOrEmpty(strRemoteTransferFolder) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CreateRemoteTransferFolder returned an empty string; unable to copy files to the transfer folder")
+                LogError("CreateRemoteTransferFolder returned an empty string; unable to copy files to the transfer folder")
                 lstFilesToRetry.AddRange(mPreviousDatasetFilesToCopy)
             Else
 
@@ -3653,7 +3649,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                 objAnalysisResults.CopyFileWithRetry(strSrcFilePath, strTargetFilePath, True)
                                 AddToListIfNew(mPreviousDatasetFilesToDelete, strSrcFilePath)
                             Catch ex As Exception
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception copying file to transfer directory: " & ex.Message)
+                                LogError("Exception copying file to transfer directory", ex)
                                 lstFilesToRetry.Add(strSrcFilePath)
                             End Try
 
@@ -3662,7 +3658,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                 Catch ex As Exception
                     ' Folder creation error
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating transfer directory folder: " & ex.Message)
+                    LogError("Exception creating transfer directory folder", ex)
                     lstFilesToRetry.AddRange(mPreviousDatasetFilesToCopy)
                 End Try
 
@@ -4439,7 +4435,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     End Sub
 
     Private Sub mDTAtoMGF_ErrorEvent(strMessage As String) Handles mDTAtoMGF.ErrorEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error from DTAtoMGF converter: " & mDTAtoMGF.GetErrorMessage())
+        LogError("Error from DTAtoMGF converter: " & mDTAtoMGF.GetErrorMessage())
     End Sub
 
     Private Sub mMSXmlCreator_DebugEvent(strMessage As String) Handles mMSXmlCreator.DebugEvent
@@ -4447,11 +4443,11 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     End Sub
 
     Private Sub mMSXmlCreator_ErrorEvent(strMessage As String) Handles mMSXmlCreator.ErrorEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+        LogError("Error from MSXmlCreator: " & strMessage)
     End Sub
 
     Private Sub mMSXmlCreator_WarningEvent(strMessage As String) Handles mMSXmlCreator.WarningEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
+        LogWarning(strMessage)
     End Sub
 
     Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
