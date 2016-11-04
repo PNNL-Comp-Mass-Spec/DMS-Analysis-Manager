@@ -85,8 +85,16 @@ Public Class clsDataPackageJobInfo
 
     Public Property ProteinOptions As String
 
+    ''' <summary>
+    ''' The folder (on the storage server) just above the dataset folder
+    ''' </summary>
+    ''' <returns></returns>
     Public Property ServerStoragePath As String
 
+    ''' <summary>
+    ''' The folder (in the archive) just above the dataset folder
+    ''' </summary>
+    ''' <returns></returns>
     Public Property ArchiveStoragePath As String
 
     Public Property ResultsFolderName As String

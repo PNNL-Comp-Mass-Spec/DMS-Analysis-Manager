@@ -3950,7 +3950,7 @@ Public MustInherit Class clsAnalysisResources
         Dim sqlStr = New Text.StringBuilder
 
         ' This query uses view V_Analysis_Job_Export_DataPkg in the DMS5 database
-        sqlStr.Append("SELECT Job, Dataset, DatasetID, InstrumentName as Instrument, InstrumentGroup,")
+        sqlStr.Append("SELECT Job, Dataset, DatasetID, InstrumentName As Instrument, InstrumentGroup,")
         sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
         sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName,")
         sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
