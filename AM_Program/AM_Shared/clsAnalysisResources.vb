@@ -5300,12 +5300,8 @@ Public MustInherit Class clsAnalysisResources
             lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(dataPackageID, lstAdditionalJobs)
 
             If lstDataPackagePeptideHitJobs.Count = 0 Then
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Did not find any peptide hit jobs associated with this job's data package ID (" & dataPackageID & ")"
-                End If
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
-                Console.WriteLine(m_message)
-                Return False
+                ' Did not find any peptide hit jobs associated with this job's data package ID
+                ' This is atypical, but is allowed
             End If
 
         Catch ex As Exception
@@ -5600,12 +5596,25 @@ Public MustInherit Class clsAnalysisResources
                 If Not dctRawFileRetrievalCommands.ContainsKey(datasetItem.Key) Then
 
                     Dim dataPkgJob = GetPseudoDataPackageJobInfo(datasetItem.Value)
+                    dataPkgJob.ResultsFolderName = "Undefined_Folder"
+
+                    If Not OverrideCurrentDatasetAndJobInfo(dataPkgJob) Then
+                        ' Error message has already been logged
+                        Return False
+                    End If
 
                     If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
                         Return False
                     End If
                 End If
             Next
+
+            If dctRawFileRetrievalCommands.Count = 0 Then
+                m_message = "Did not find any datasets associated with this job's data package ID (" & dataPackageID & ")"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
+                Console.WriteLine(m_message)
+                Return False
+            End If
 
             ' Restore the dataset and job info for this aggregation job
             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo)
