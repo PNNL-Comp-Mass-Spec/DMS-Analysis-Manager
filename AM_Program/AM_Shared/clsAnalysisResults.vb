@@ -32,9 +32,6 @@ Public Class clsAnalysisResults
     Private ReadOnly m_mgrParams As IMgrParams
     Private ReadOnly m_MgrName As String
 
-    ' for posting a general explanation for external consumption
-    Protected m_message As String
-
 #End Region
 
 #Region "Properties"
@@ -101,7 +98,7 @@ Public Class clsAnalysisResults
         If Not FolderExistsWithRetry(diSourceDir.FullName, 3, 3) Then
             strMessage = "Source directory does not exist: " + diSourceDir.FullName
             If ContinueOnError Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+                LogError(strMessage)
                 Exit Sub
             Else
                 Throw New DirectoryNotFoundException(strMessage)
@@ -111,7 +108,7 @@ Public Class clsAnalysisResults
             If Not FolderExistsWithRetry(diDestDir.Parent.FullName, 1, 1) Then
                 strMessage = "Destination directory does not exist: " + diDestDir.Parent.FullName
                 If ContinueOnError Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+                    LogError(strMessage)
                     Exit Sub
                 Else
                     Throw New DirectoryNotFoundException(strMessage)
@@ -140,7 +137,7 @@ Public Class clsAnalysisResults
 
                 Catch ex As Exception
                     If ContinueOnError Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResults,CopyDirectory", ex)
+                        LogError("clsAnalysisResults,CopyDirectory", ex)
                     Else
                         Throw
                     End If
@@ -199,12 +196,11 @@ Public Class clsAnalysisResults
                 If m_FileTools.CopyFileUsingLocks(SrcFilePath, DestFilePath, m_MgrName, Overwrite) Then
                     blnSuccess = True
                 Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CopyFileUsingLocks returned false copying " & SrcFilePath & " to " & DestFilePath)
+                    LogError("CopyFileUsingLocks returned false copying " & SrcFilePath & " to " & DestFilePath)
                 End If
 
             Catch ex As Exception
-                Dim ErrMsg As String = "clsAnalysisResults,CopyFileWithRetry: error copying " & SrcFilePath & " to " & DestFilePath & ": " & ex.Message
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg)
+                LogError("clsAnalysisResults,CopyFileWithRetry: error copying " & SrcFilePath & " to " & DestFilePath, ex)
 
                 If Not Overwrite AndAlso File.Exists(DestFilePath) Then
                     Throw New IOException("Tried to overwrite an existing file when Overwrite = False: " & DestFilePath)
@@ -240,7 +236,7 @@ Public Class clsAnalysisResults
 
             If String.IsNullOrEmpty(strFailedResultsFolderPath) Then
                 ' Failed results folder path is not defined; don't try to copy the results anywhere
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "FailedResultsFolderPath is not defined for this manager; cannot copy results")
+                LogError("FailedResultsFolderPath is not defined for this manager; cannot copy results")
                 Exit Sub
             End If
 
@@ -255,12 +251,12 @@ Public Class clsAnalysisResults
                 strFolderInfoFilePath = Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT & diSourceFolder.Name & ".txt")
                 CopyFailedResultsCreateInfoFile(strFolderInfoFilePath, diSourceFolder.Name)
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating the results folder info file '" & strFolderInfoFilePath, ex)
+                LogError("Error creating the results folder info file at " & strFolderInfoFilePath, ex)
             End Try
 
             ' Make sure the source folder exists
             If Not diSourceFolder.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Results folder not found; cannot copy results: " & ResultsFolderPath)
+                LogError("Results folder not found; cannot copy results: " & ResultsFolderPath)
             Else
                 ' Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
                 DeleteOldFailedResultsFolders(diTargetFolder)
@@ -269,15 +265,15 @@ Public Class clsAnalysisResults
                 strTargetFolderPath = Path.Combine(diTargetFolder.FullName, diSourceFolder.Name)
 
                 ' Actually copy the results folder
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying results folder to failed results archive: " & strTargetFolderPath)
+                ReportStatus("Copying results folder to failed results archive: " & strTargetFolderPath)
 
                 CopyDirectory(diSourceFolder.FullName, strTargetFolderPath, True, 2, True)
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copy complete")
+                ReportStatus("Copy complete")
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results from " & ResultsFolderPath & " to " & strFailedResultsFolderPath, ex)
+            LogError("Error copying results from " & ResultsFolderPath & " to " & strFailedResultsFolderPath, ex)
         End Try
 
     End Sub
@@ -355,8 +351,7 @@ Public Class clsAnalysisResults
                 End If
 
             Catch ex As Exception
-                Dim ErrMsg As String = "clsAnalysisResults: error creating folder " & FolderPath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
+                LogError("clsAnalysisResults: error creating folder " & FolderPath, ex)
 
                 Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))     'Wait several seconds before retrying
 
@@ -394,8 +389,7 @@ Public Class clsAnalysisResults
                     diOldResultsFolder = New DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName))
 
                     If diOldResultsFolder.Exists Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleting old failed results folder: " & diOldResultsFolder.FullName)
-
+                        ReportStatus("Deleting old failed results folder: " & diOldResultsFolder.FullName)
                         diOldResultsFolder.Delete(True)
                     End If
 
@@ -404,12 +398,11 @@ Public Class clsAnalysisResults
                         fiFileInfo.CopyTo(strTargetFilePath, True)
                         fiFileInfo.Delete()
                     Catch ex As Exception
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming failed results info file to " & strTargetFilePath, ex)
+                        LogError("Error renaming failed results info file to " & strTargetFilePath, ex)
                     End Try
 
                 Catch ex As Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting old failed results folder", ex)
-
+                    LogError("Error deleting old failed results folder", ex)
                 End Try
 
             End If
@@ -453,8 +446,7 @@ Public Class clsAnalysisResults
                 blnSuccess = True
 
             Catch ex As Exception
-                Dim ErrMsg As String = "clsAnalysisResults: error looking for folder " & FolderPath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg, ex)
+                LogError("clsAnalysisResults: error looking for folder " & FolderPath, ex)
 
                 Thread.Sleep(CInt(Math.Floor(sngRetryHoldoffSeconds * 1000)))     'Wait several seconds before retrying
 

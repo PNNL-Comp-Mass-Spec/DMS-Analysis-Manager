@@ -136,8 +136,7 @@ Public Class clsAnalysisJob
 
             Return True
         Catch ex As Exception
-            Dim Msg As String = "Exception adding parameter: " & ParamName & " Value: " & ParamValue & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            LogError("Exception adding parameter: " & ParamName & " Value: " & ParamValue, ex)
             Return False
         End Try
 
@@ -160,8 +159,7 @@ Public Class clsAnalysisJob
 
             Return True
         Catch ex As Exception
-            Dim Msg As String = "Exception adding parameter: " & ParamName & " Value: " & ParamValue & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            LogError("Exception adding parameter: " & ParamName & " Value: " & ParamValue, ex)
             Return False
         End Try
 
@@ -576,8 +574,8 @@ Public Class clsAnalysisJob
                 Dim section As XmlNode = lstSections(intindex)
 
                 Dim removeNode = (From item As XmlAttribute In section.Attributes.Cast(Of XmlAttribute)()
-                   Where item.Name = "name" And item.Value = sectionName
-                   Select item).ToList().Any()
+                                  Where item.Name = "name" And item.Value = sectionName
+                                  Select item).ToList().Any()
 
                 If removeNode Then
                     section.ParentNode.RemoveChild(section)
@@ -602,7 +600,7 @@ Public Class clsAnalysisJob
             Return filteredXML
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RemoveXmlSection: " & ex.Message)
+            LogError("Error in RemoveXmlSection", ex)
             Return paramXml
         End Try
 
@@ -661,10 +659,8 @@ Public Class clsAnalysisJob
             myCmd.Parameters.Add(New SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128)).Value = strProductVersion
 
             If m_DebugLevel > 4 Then
-                Dim MyMsg As String = "clsAnalysisJob.RequestAnalysisJob(), connection string: " & m_BrokerConnStr
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, MyMsg)
-                MyMsg = "clsAnalysisJob.RequestAnalysisJob(), printing param list"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, MyMsg)
+                ReportStatus("clsAnalysisJob.RequestAnalysisJob(), connection string: " & m_BrokerConnStr, clsLogTools.LogLevels.DEBUG)
+                ReportStatus("clsAnalysisJob.RequestAnalysisJob(), printing param list", clsLogTools.LogLevels.DEBUG)
                 PrintCommandParams(myCmd)
             End If
 
@@ -690,8 +686,7 @@ Public Class clsAnalysisJob
                         Outcome = RequestTaskResult.TaskFound
                     Else
                         'There was an error
-                        Const Msg = "clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+                        LogError("clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data")
                         Outcome = RequestTaskResult.ResultError
                     End If
                 Case RET_VAL_TASK_NOT_AVAILABLE
@@ -705,14 +700,13 @@ Public Class clsAnalysisJob
                     Outcome = RequestTaskResult.Deadlock
                 Case Else
                     'There was an SP error
-                    Dim msg As String = "clsAnalysisJob.RequestAnalysisJob(), SP execution error " & RetVal.ToString
-                    msg &= "; Msg text = " & CStr(myCmd.Parameters("@message").Value)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+                    LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " & RetVal.ToString &
+                        "; Msg text = " & CStr(myCmd.Parameters("@message").Value))
                     Outcome = RequestTaskResult.ResultError
             End Select
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception requesting analysis job: " & ex.Message)
+            LogError("Exception requesting analysis job", ex)
             Outcome = RequestTaskResult.ResultError
         End Try
 
@@ -776,16 +770,12 @@ Public Class clsAnalysisJob
             ' Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
             clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFilePath, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5)
 
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg)
-            End If
+            ReportStatus(Msg, clsLogTools.LogLevels.DEBUG)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception saving analysis job parameters to " & xmlParameterFilePath & ": " & ex.Message)
-            Return
+            LogError("Exception saving analysis job parameters to " & xmlParameterFilePath, ex)
         End Try
 
-        Return
     End Sub
 
     ''' <summary>
@@ -806,20 +796,16 @@ Public Class clsAnalysisJob
     ''' <param name="EvalMessage">Evaluation message ("" if no special message)</param>
     Public Overrides Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String, EvalCode As Integer, EvalMessage As String) Implements IJobParams.CloseTask
 
-        Dim MsgStr As String
-        Dim CompCode As Integer
-
-        CompCode = CInt(CloseOut)
+        Dim CompCode = CInt(CloseOut)
 
         If EvalMessage Is Nothing Then EvalMessage = String.Empty
 
         If m_TaskWasClosed Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job " & m_JobId & " has already been closed; will not call " & SP_NAME_SET_COMPLETE & " again")
+            ReportStatus("Job " & m_JobId & " has already been closed; will not call " & SP_NAME_SET_COMPLETE & " again")
         Else
             m_TaskWasClosed = True
             If Not SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage) Then
-                MsgStr = "Error setting job complete in database, job " & m_JobId
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, MsgStr)
+                LogError("Error setting job complete in database, job " & m_JobId)
             End If
         End If
 
@@ -872,8 +858,7 @@ Public Class clsAnalysisJob
         If returnCode = 0 Then
             success = True
         Else
-            Dim Msg As String = "Error " & returnCode.ToString & " setting analysis job complete"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+            LogError("Error " & returnCode.ToString & " setting analysis job complete")
             success = False
         End If
 
