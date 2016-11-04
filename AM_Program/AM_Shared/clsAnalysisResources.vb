@@ -11,7 +11,6 @@ Imports System.Data.SqlClient
 Imports PHRPReader
 Imports System.IO
 Imports System.Runtime.InteropServices
-Imports System.Runtime.Serialization.Formatters
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports MyEMSLReader
@@ -3389,35 +3388,48 @@ Public MustInherit Class clsAnalysisResources
     Public Shared Function GetPseudoDataPackageJobInfo(udtDatasetInfo As clsDataPackageDatasetInfo) As clsDataPackageJobInfo
 
         ' Store the negative of the dataset ID as the job number
-        Dim jobInfo = New clsDataPackageJobInfo(-udtDatasetInfo.DatasetID, udtDatasetInfo.Dataset)
-
-        With jobInfo
-            .DatasetID = udtDatasetInfo.DatasetID
-            .Instrument = udtDatasetInfo.Instrument
-            .InstrumentGroup = udtDatasetInfo.InstrumentGroup
-            .Experiment = udtDatasetInfo.Experiment
-            .Experiment_Reason = udtDatasetInfo.Experiment_Reason
-            .Experiment_Comment = udtDatasetInfo.Experiment_Comment
-            .Experiment_Organism = udtDatasetInfo.Experiment_Organism
-            .Experiment_NEWT_ID = udtDatasetInfo.Experiment_NEWT_ID
-            .Experiment_NEWT_Name = udtDatasetInfo.Experiment_NEWT_Name
-            .Tool = "Dataset info (no tool)"
-            .NumberOfClonedSteps = 0
-            .ResultType = "Dataset info (no type)"
-            .PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown
-            .SettingsFileName = String.Empty
-            .ParameterFileName = String.Empty
-            .OrganismDBName = String.Empty
-            .LegacyFastaFileName = String.Empty
-            .ProteinCollectionList = String.Empty
-            .ProteinOptions = String.Empty
-            .ServerStoragePath = udtDatasetInfo.ServerStoragePath
-            .ArchiveStoragePath = udtDatasetInfo.ArchiveStoragePath
-            .ResultsFolderName = String.Empty
-            .DatasetFolderName = udtDatasetInfo.Dataset
-            .SharedResultsFolder = String.Empty
+        Dim jobInfo = New clsDataPackageJobInfo(-udtDatasetInfo.DatasetID, udtDatasetInfo.Dataset) With {
+            .DatasetID = udtDatasetInfo.DatasetID,
+            .Instrument = udtDatasetInfo.Instrument,
+            .InstrumentGroup = udtDatasetInfo.InstrumentGroup,
+            .Experiment = udtDatasetInfo.Experiment,
+            .Experiment_Reason = udtDatasetInfo.Experiment_Reason,
+            .Experiment_Comment = udtDatasetInfo.Experiment_Comment,
+            .Experiment_Organism = udtDatasetInfo.Experiment_Organism,
+            .Experiment_NEWT_ID = udtDatasetInfo.Experiment_NEWT_ID,
+            .Experiment_NEWT_Name = udtDatasetInfo.Experiment_NEWT_Name,
+            .Tool = "Dataset info (no tool)",
+            .NumberOfClonedSteps = 0,
+            .ResultType = "Dataset info (no type)",
+            .PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown,
+            .SettingsFileName = String.Empty,
+            .ParameterFileName = String.Empty,
+            .OrganismDBName = String.Empty,
+            .LegacyFastaFileName = String.Empty,
+            .ProteinCollectionList = String.Empty,
+            .ProteinOptions = String.Empty,
+            .ResultsFolderName = String.Empty,
+            .DatasetFolderName = udtDatasetInfo.Dataset,
+            .SharedResultsFolder = String.Empty,
             .RawDataType = udtDatasetInfo.RawDataType
-        End With
+        }
+
+        Try
+            ' Archive storage path and server storage path track the folder just above the dataset folder
+            Dim archiveFolder = New DirectoryInfo(udtDatasetInfo.ArchiveStoragePath)
+            jobInfo.ArchiveStoragePath = archiveFolder.Parent.FullName
+        Catch ex As Exception
+            Console.WriteLine("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " & udtDatasetInfo.ArchiveStoragePath)
+            jobInfo.ArchiveStoragePath = udtDatasetInfo.ArchiveStoragePath.Replace(" \ " & udtDatasetInfo.Dataset, "")
+        End Try
+
+        Try
+            Dim storageFolder = New DirectoryInfo(udtDatasetInfo.ServerStoragePath)
+            jobInfo.ServerStoragePath = storageFolder.Parent.FullName
+        Catch ex As Exception
+            Console.WriteLine("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " & udtDatasetInfo.ServerStoragePath)
+            jobInfo.ServerStoragePath = udtDatasetInfo.ServerStoragePath.Replace(" \ " & udtDatasetInfo.Dataset, "")
+        End Try
 
         Return jobInfo
 
