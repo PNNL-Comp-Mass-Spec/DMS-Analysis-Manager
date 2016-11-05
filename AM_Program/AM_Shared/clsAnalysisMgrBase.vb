@@ -60,7 +60,9 @@
     ''' <param name="errorMessage">Error message</param>
     Protected Sub LogError(errorMessage As String)
         m_message = errorMessage
+        Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(errorMessage)
+        Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
     End Sub
 
@@ -82,14 +84,17 @@
     ''' <param name="detailedMessage">Detailed error message</param>
     Protected Sub LogError(errorMessage As String, detailedMessage As String)
         m_message = errorMessage
+        Console.ForegroundColor = ConsoleColor.Red
         If String.IsNullOrEmpty(detailedMessage) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
             Console.WriteLine(errorMessage)
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
             Console.WriteLine(errorMessage)
+            Console.ForegroundColor = ConsoleColor.Magenta
             Console.WriteLine(detailedMessage)
         End If
+        Console.ResetColor()
     End Sub
 
     ''' <summary>
@@ -105,9 +110,11 @@
         Else
             formattedError = errorMessage & ": " & ex.Message
         End If
-
+        Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(formattedError)
+        Console.ForegroundColor = ConsoleColor.Cyan
         Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
+        Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
     End Sub
 
@@ -126,6 +133,14 @@
     ''' <remarks>Unlike LogErrors, does not update m_message</remarks>
     Protected Sub ReportStatus(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
         Console.WriteLine(statusMessage)
+        If isError Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine(statusMessage)
+            Console.ResetColor()
+        Else
+            Console.WriteLine(statusMessage)
+        End If
+
         If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
             If isError Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage)

@@ -460,7 +460,9 @@ Public Class clsIonicZipTools
     ''' <param name="errorMessage">Error message</param>
     Protected Sub LogError(errorMessage As String)
         m_Message = errorMessage
+        Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(errorMessage)
+        Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Message)
     End Sub
 
@@ -487,14 +489,17 @@ Public Class clsIonicZipTools
     ''' <param name="detailedMessage">Detailed error message</param>
     Protected Sub LogError(errorMessage As String, detailedMessage As String)
         m_Message = errorMessage
+        Console.ForegroundColor = ConsoleColor.Red
         If String.IsNullOrEmpty(detailedMessage) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
             Console.WriteLine(errorMessage)
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
             Console.WriteLine(errorMessage)
+            Console.ForegroundColor = ConsoleColor.DarkMagenta
             Console.WriteLine(detailedMessage)
         End If
+        Console.ResetColor()
     End Sub
 
     ''' <summary>
@@ -510,9 +515,11 @@ Public Class clsIonicZipTools
         Else
             formattedError = errorMessage & ": " & ex.Message
         End If
-
+        Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(formattedError)
+        Console.ForegroundColor = ConsoleColor.Cyan
         Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
+        Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
     End Sub
 

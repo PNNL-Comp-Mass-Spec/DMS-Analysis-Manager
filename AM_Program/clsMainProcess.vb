@@ -1498,7 +1498,9 @@ Public Class clsMainProcess
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
     Private Sub LogError(errorMessage As String)
+        Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(errorMessage)
+        Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
     End Sub
 

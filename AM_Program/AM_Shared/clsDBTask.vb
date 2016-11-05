@@ -189,7 +189,9 @@ Public MustInherit Class clsDBTask
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
     Protected Sub LogError(errorMessage As String)
+        Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(errorMessage)
+        Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
     End Sub
 
@@ -236,9 +238,11 @@ Public MustInherit Class clsDBTask
         Else
             formattedError = errorMessage & ": " & ex.Message
         End If
-
+        Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(formattedError)
+        Console.ForegroundColor = ConsoleColor.Cyan
         Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
+        Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
     End Sub
 
@@ -256,7 +260,13 @@ Public MustInherit Class clsDBTask
     ''' <param name="isError">True if this is an error</param>
     ''' <remarks>Unlike LogErrors, does not update m_message</remarks>
     Protected Sub ReportStatus(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
-        Console.WriteLine(statusMessage)
+        If isError Then
+            Console.ForegroundColor = ConsoleColor.Red
+            Console.WriteLine(statusMessage)
+            Console.ResetColor()
+        Else
+            Console.WriteLine(statusMessage)
+        End If
         If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
             If isError Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage)

@@ -1902,7 +1902,9 @@ Public Class clsAnalysisToolRunnerBase
         If updateEvalMessage Then
             m_EvalMessage = warningMessage
         End If
+        Console.ForegroundColor = ConsoleColor.Yellow
         Console.WriteLine(warningMessage)
+        Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
     End Sub
 
