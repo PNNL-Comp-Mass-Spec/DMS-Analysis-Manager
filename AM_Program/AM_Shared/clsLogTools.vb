@@ -314,8 +314,12 @@ Public Class clsLogTools
         m_FileDate = Date.Now.ToString("MM-dd-yyyy")
         m_BaseFileName = logFileNameBase
 
-        Dim layout = New log4net.Layout.PatternLayout()
-        layout.ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline"
+        ' Old layout; deprecated in November 2016
+        ' Dim layout = New log4net.Layout.PatternLayout()
+        ' Layout.ConversionPattern="%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline"
+
+        Dim layout = New CustomPatternLayout()
+        layout.ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline %stack"
 
         layout.ActivateOptions()
 
