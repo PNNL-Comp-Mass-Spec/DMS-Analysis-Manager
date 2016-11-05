@@ -72,8 +72,9 @@ Module modMain
 
                     If mTraceMode Then ShowTraceMessage("Code test mode enabled")
 
-                    Dim objTest As New clsCodeTest
-                    objTest.TraceMode = mTraceMode
+                    Dim objTest As New clsCodeTest() With {
+                        .TraceMode = mTraceMode
+                    }
 
                     Try
                         'objTest.TestFileDateConversion()
@@ -147,7 +148,9 @@ Module modMain
 
                         ' objTest.GetLegacyFastaFileSize()
 
-                        objTest.GenerateScanStatsFile()
+                        ' objTest.GenerateScanStatsFile()
+
+                        objTest.TestLogging()
 
                     Catch ex As Exception
                         Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))

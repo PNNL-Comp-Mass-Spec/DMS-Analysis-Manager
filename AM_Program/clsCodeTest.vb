@@ -809,6 +809,39 @@ Public Class clsCodeTest
 
     End Sub
 
+    Public Sub TestLogging()
+
+        Dim logFileNameBase = "Logs\AnalysisMgr"
+
+        clsLogTools.CreateFileLogger(logFileNameBase)
+
+        Dim objJobParams As clsAnalysisJob = Nothing
+        Dim myEMSLUtilities As clsMyEMSLUtilities = Nothing
+
+        Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
+
+        objJobParams.DebugLevel = 2
+
+        For debugLevel = 0 To 5
+            objToolRunner.ReportStatus("Test status, debugLevel " & debugLevel, debugLevel, False)
+        Next
+
+        For debugLevel = 0 To 5
+            objToolRunner.ReportStatus("Test error, debugLevel " & debugLevel, debugLevel, True)
+        Next
+
+        objToolRunner.LogError("Test error, no detailed message")
+        objToolRunner.LogError("Test error", "Detailed message of the error")
+
+        Try
+            Throw New FileNotFoundException("TestFile.txt")
+        Catch ex As Exception
+            objToolRunner.LogError("Test exception", ex)
+        End Try
+
+        objToolRunner.ReportStatus("Testing complete")
+    End Sub
+
     Public Sub GetLegacyFastaFileSize()
 
 

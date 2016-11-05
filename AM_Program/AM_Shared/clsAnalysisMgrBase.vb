@@ -58,7 +58,7 @@
     ''' Update m_message with an error message and record the error in the manager's log file
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
-    Protected Sub LogError(errorMessage As String)
+    Public Sub LogError(errorMessage As String)
         m_message = errorMessage
         Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(errorMessage)
@@ -71,7 +71,7 @@
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
     ''' <param name="ex">Exception to log</param>
-    Protected Sub LogError(errorMessage As String, ex As Exception)
+    Public Sub LogError(errorMessage As String, ex As Exception)
         m_message = errorMessage
         ReportStatus(errorMessage, ex)
     End Sub
@@ -82,7 +82,7 @@
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
     ''' <param name="detailedMessage">Detailed error message</param>
-    Protected Sub LogError(errorMessage As String, detailedMessage As String)
+    Public Sub LogError(errorMessage As String, detailedMessage As String)
         m_message = errorMessage
         Console.ForegroundColor = ConsoleColor.Red
         If String.IsNullOrEmpty(detailedMessage) Then
@@ -103,7 +103,7 @@
     ''' </summary>
     ''' <param name="errorMessage">Error message (do not include ex.message)</param>
     ''' <param name="ex">Exception</param>
-    Protected Sub ReportStatus(errorMessage As String, ex As Exception)
+    Public Sub ReportStatus(errorMessage As String, ex As Exception)
         Dim formattedError As String
         If errorMessage.EndsWith(ex.Message) Then
             formattedError = errorMessage
@@ -131,8 +131,7 @@
     ''' </param>
     ''' <param name="isError">True if this is an error</param>
     ''' <remarks>Unlike LogErrors, does not update m_message</remarks>
-    Protected Sub ReportStatus(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
-        Console.WriteLine(statusMessage)
+    Public Sub ReportStatus(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
         If isError Then
             Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine(statusMessage)
