@@ -504,7 +504,7 @@ Public Class clsIonicZipTools
 
     ''' <summary>
     ''' Shows information about an exception at the console and in the log file
-    ''' Unlike LogErrors, does not update m_message
+    ''' Unlike LogError, does not update m_message
     ''' </summary>
     ''' <param name="errorMessage">Error message (do not include ex.message)</param>
     ''' <param name="ex">Exception</param>
@@ -518,7 +518,7 @@ Public Class clsIonicZipTools
         Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(formattedError)
         Console.ForegroundColor = ConsoleColor.Cyan
-        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
+        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
         Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
     End Sub

@@ -1,5 +1,9 @@
 ﻿Public MustInherit Class clsAnalysisMgrBase
 
+    ''' <summary>
+    ''' 1 to log info messages but not debug messages
+    ''' 2 to log info messages and debug messages
+    ''' </summary>
     Protected m_DebugLevel As Short = 1
 
     Private m_LastLockQueueWaitTimeLog As DateTime = Date.UtcNow
@@ -99,7 +103,7 @@
 
     ''' <summary>
     ''' Shows information about an exception at the console and in the log file
-    ''' Unlike LogErrors, does not update m_message
+    ''' Unlike LogError, does not update m_message
     ''' </summary>
     ''' <param name="errorMessage">Error message (do not include ex.message)</param>
     ''' <param name="ex">Exception</param>
@@ -113,7 +117,7 @@
         Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(formattedError)
         Console.ForegroundColor = ConsoleColor.Cyan
-        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex))
+        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
         Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
     End Sub
@@ -130,7 +134,7 @@
     ''' 10 to not log to disk
     ''' </param>
     ''' <param name="isError">True if this is an error</param>
-    ''' <remarks>Unlike LogErrors, does not update m_message</remarks>
+    ''' <remarks>Unlike LogError, does not update m_message</remarks>
     Public Sub ReportStatus(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
         If isError Then
             Console.ForegroundColor = ConsoleColor.Red
