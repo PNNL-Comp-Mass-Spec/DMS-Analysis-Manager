@@ -49,8 +49,7 @@ Public Class clsAnalysisResourcesMSGFDB
                         diPicFsWorkDir.Create()
 
                     Catch ex As Exception
-                        m_message = "Unable to create folder " & udtHPCOptions.WorkDirPath & ": " & ex.Message
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                        LogError("Unable to create folder " & udtHPCOptions.WorkDirPath & ": " & ex.Message, ex)
 
                         CheckParentFolder(diPicFsWorkDir)
 
@@ -79,9 +78,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
             If Not RetrieveOrgDB(localOrgDbFolder, udtHPCOptions) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
-            End If
+            ReportStatus("Getting param file", 2)
 
             ' Retrieve the parameter file
             ' This will also obtain the _ModDefs.txt file using query 
@@ -143,8 +140,7 @@ Public Class clsAnalysisResourcesMSGFDB
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
-            m_message = "Exception in GetResources: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            LogError("Exception in GetResources: " & ex.Message, ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -155,10 +151,10 @@ Public Class clsAnalysisResourcesMSGFDB
         Try
             Dim lstParentDirectories = diPicFsWorkDir.Parent.GetDirectories().ToList()
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Found " & lstParentDirectories.Count & " subdirectories in " & diPicFsWorkDir.FullName)
+            ReportStatus("Found " & lstParentDirectories.Count & " subdirectories in " & diPicFsWorkDir.FullName)
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking " & diPicFsWorkDir.Parent.FullName & ": " & ex.Message)
+            ReportStatus("Exception checking " & diPicFsWorkDir.Parent.FullName & ": " & ex.Message, 0, True)
         End Try
 
     End Sub
@@ -190,12 +186,9 @@ Public Class clsAnalysisResourcesMSGFDB
             ' Scan type is assumed; we don't need the Masic ScanStats.txt files or the .Raw file
             Select Case strAssumedScanType.ToUpper()
                 Case "CID", "ETD", "HCD"
-                    If m_DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Assuming scan type is '" & strAssumedScanType & "'")
-                    End If
+                    ReportStatus("Assuming scan type is '" & strAssumedScanType & "'", 1)
                 Case Else
-                    m_message = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    LogError("Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD")
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End Select
 
@@ -250,9 +243,7 @@ Public Class clsAnalysisResourcesMSGFDB
         End If
 
         If blnSuccess Then
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieved MASIC ScanStats and ScanStatsEx files")
-            End If
+            ReportStatus("Retrieved MASIC ScanStats and ScanStatsEx files", 1)
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
         End If
 
@@ -296,7 +287,7 @@ Public Class clsAnalysisResourcesMSGFDB
         ' Make sure that the spectra are centroided
         Dim strCDTAPath = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the _dta.txt file has centroided spectra")
+        ReportStatus("Validating that the _dta.txt file has centroided spectra")
 
         If Not ValidateCDTAFileIsCentroided(strCDTAPath) Then
             ' m_message is already updated
