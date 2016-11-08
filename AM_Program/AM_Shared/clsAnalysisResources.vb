@@ -4523,7 +4523,7 @@ Public MustInherit Class clsAnalysisResources
             m_DebugLevel >= 3
 
         If logInfoMessages Then
-            ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is {2:F0}% of the total space; purge required since less than threshold of {3}%",
+            ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%",
                                        localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent))
         End If
 
