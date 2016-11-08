@@ -1134,12 +1134,14 @@ Public Class clsMSGFDBUtils
         Dim result As IJobParams.CloseOutType
         Dim oRand = New Random()
 
-        Dim objIndexedDBCreator As clsCreateMSGFDBSuffixArrayFiles
         Dim strMgrName As String = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
         Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
         Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
 
-        objIndexedDBCreator = New clsCreateMSGFDBSuffixArrayFiles(strMgrName, sPICHPCUsername, sPICHPCPassword)
+        Dim objIndexedDBCreator = New clsCreateMSGFDBSuffixArrayFiles(strMgrName, sPICHPCUsername, sPICHPCPassword)
+        AddHandler objIndexedDBCreator.ErrorEvent, AddressOf CreateMSGFDBSuffixArrayFiles_ErrorEvent
+        AddHandler objIndexedDBCreator.MessageEvent, AddressOf CreateMSGFDBSuffixArrayFiles_MessageEvent
+        AddHandler objIndexedDBCreator.WarningEvent, AddressOf CreateMSGFDBSuffixArrayFiles_WarningEvent
 
         ' Define the path to the fasta file
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
@@ -2818,6 +2820,19 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Event Methods"
+
+    Private Sub CreateMSGFDBSuffixArrayFiles_ErrorEvent(message As String, detailedmessage As String)
+        ReportMessage("Error: " & message)
+    End Sub
+
+    Private Sub CreateMSGFDBSuffixArrayFiles_MessageEvent(message As String)
+        ReportMessage(message)
+    End Sub
+
+    Private Sub CreateMSGFDBSuffixArrayFiles_WarningEvent(message As String)
+        ReportWarning(message)
+    End Sub
+
     Private Sub ReportError(message As String)
         ReportError(message, String.Empty)
     End Sub
