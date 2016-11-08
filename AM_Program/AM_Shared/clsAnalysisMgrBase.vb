@@ -63,11 +63,11 @@
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
     Public Sub LogError(errorMessage As String)
-        m_message = errorMessage
+        m_message = clsGlobal.AppendToComment(m_message, errorMessage)
         Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(errorMessage)
         Console.ResetColor()
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
     End Sub
 
     ''' <summary>
@@ -76,7 +76,7 @@
     ''' <param name="errorMessage">Error message</param>
     ''' <param name="ex">Exception to log</param>
     Public Sub LogError(errorMessage As String, ex As Exception)
-        m_message = errorMessage
+        m_message = clsGlobal.AppendToComment(m_message, errorMessage)
         ReportStatus(errorMessage, ex)
     End Sub
 
@@ -87,7 +87,7 @@
     ''' <param name="errorMessage">Error message</param>
     ''' <param name="detailedMessage">Detailed error message</param>
     Public Sub LogError(errorMessage As String, detailedMessage As String)
-        m_message = errorMessage
+        m_message = clsGlobal.AppendToComment(m_message, errorMessage)
         Console.ForegroundColor = ConsoleColor.Red
         If String.IsNullOrEmpty(detailedMessage) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)

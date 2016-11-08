@@ -58,6 +58,12 @@ Public Class clsGlobal
         If String.IsNullOrWhiteSpace(baseComment) Then
             Return addnlComment
         Else
+            If String.IsNullOrWhiteSpace(addnlComment) OrElse baseComment.Contains(addnlComment) Then
+                ' Either addnlComment is empty (unlikely) or addnlComment is a duplicate comment
+                ' Return the base comment
+                Return baseComment
+            End If
+
             ' Append a semicolon to baseComment, but only if it doesn't already end in a semicolon
             If baseComment.TrimEnd(" "c).EndsWith(";"c) Then
                 Return baseComment & addnlComment
