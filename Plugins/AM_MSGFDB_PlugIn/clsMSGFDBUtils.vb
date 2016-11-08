@@ -359,16 +359,28 @@ Public Class clsMSGFDBUtils
             ' Examine the size of the .mzid file
             Dim fiMzidFile = New FileInfo(Path.Combine(m_WorkDir, mzidFileName))
             If Not fiMzidFile.Exists Then
-                ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV (file not found)", "Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
+                ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV (file not found)",
+                            "Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
                 Return String.Empty
             End If
 
             ' Make sure the mzid file ends with XML tag </MzIdentML>
+            ' Also make sure there is at least one result
             Dim lastLine = String.Empty
             Using reader = New StreamReader(New FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 While Not reader.EndOfStream
                     Dim dataLine = reader.ReadLine()
                     If Not String.IsNullOrWhiteSpace(dataLine) Then
+                        If dataLine.TrimStart().StartsWith("<SequenceCollection") Then
+                            ' Start of the sequence collection
+                            If dataLine.TrimEnd().EndsWith("/>") Then
+                                ' Empty sequence collection
+                                ' MSGF+ did not report any results
+                                ReportError("MSGF+ results file has no peptide identifications",
+                                            "MSGF+ results file has no peptide identifications (SequenceCollection Is empty)")
+                                Return String.Empty
+                            End If
+                        End If
                         lastLine = dataLine
                     End If
                 End While
@@ -398,7 +410,7 @@ Public Class clsMSGFDBUtils
             Dim blnSuccess = objCreateTSV.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", True)
 
             If Not blnSuccess Then
-                ReportError("MzidToTsvConverter.exe returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
+                ReportError("MzidToTsvConverter.exe returned an error code converting the .mzid file To a .tsv file: " & objCreateTSV.ExitCode)
                 Return String.Empty
             Else
                 Try
@@ -627,6 +639,19 @@ Public Class clsMSGFDBUtils
             ' Validate that the input file has at least one entry; if not, then no point in continuing
             Dim strLineIn As String
             Dim intLinesRead As Integer
+
+            Dim fiInputFile = New FileInfo(strInputFilePath)
+            If Not fiInputFile.Exists Then
+                msg = "MSGF+ TSV results file not found"
+                ReportError(msg, msg & ", job " & m_JobNum & "; " & strInputFilePath)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
+
+            If fiInputFile.Length = 0 Then
+                msg = "MSGF+ TSV results file is empty"
+                ReportError(msg, msg & ", job " & m_JobNum & "; " & strInputFilePath)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
             Using srInFile = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
