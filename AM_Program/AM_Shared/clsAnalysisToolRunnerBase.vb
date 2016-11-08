@@ -2289,7 +2289,7 @@ Public Class clsAnalysisToolRunnerBase
                         Try
                             lstDataFiles.Add(New KeyValuePair(Of DateTime, FileInfo)(fiDataFile.LastWriteTimeUtc, fiDataFile))
 
-                            dblTotalSizeMB += fiDataFile.Length / 1024.0 / 1024.0
+                            dblTotalSizeMB += clsGlobal.BytesToMB(fiDataFile.Length)
                         Catch ex As Exception
                             ReportStatus("Exception adding to file list " + fiDataFile.Name + "; " + ex.Message, 0, True)
                         End Try
@@ -2337,7 +2337,7 @@ Public Class clsAnalysisToolRunnerBase
             For Each kvItem As KeyValuePair(Of DateTime, FileInfo) In lstSortedFiles
 
                 Try
-                    Dim fileSizeMB As Double = kvItem.Value.Length / 1024.0 / 1024.0
+                    Dim fileSizeMB As Double = clsGlobal.BytesToMB(kvItem.Value.Length)
 
                     Dim hashcheckPath = kvItem.Value.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
                     Dim fiHashCheckFile = New FileInfo(hashcheckPath)

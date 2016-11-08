@@ -565,7 +565,7 @@ Public Class clsIonicZipTools
         End If
 
         If dblUnzipTimeSeconds > 0 Then
-            dblUnzipSpeedMBPerSec = (lngTotalSizeBytes / 1024.0 / 1024.0) / dblUnzipTimeSeconds
+            dblUnzipSpeedMBPerSec = clsGlobal.BytesToMB(lngTotalSizeBytes) / dblUnzipTimeSeconds
         Else
             dblUnzipSpeedMBPerSec = 0
         End If

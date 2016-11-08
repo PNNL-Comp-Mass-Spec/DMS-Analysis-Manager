@@ -347,7 +347,9 @@ Public Class clsCDTAUtilities
             If ioFileInfo.Length >= FILE_SIZE_THRESHOLD Then
                 ' Need to condense the file
 
-                strMessage = ioFileInfo.Name & " is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB in size; will now condense it by combining data points with consecutive zero-intensity values"
+                strMessage = ioFileInfo.Name & " is " &
+                    clsGlobal.BytesToGB(ioFileInfo.Length).ToString("0.00") & " GB in size; " &
+                    "will now condense it by combining data points with consecutive zero-intensity values"
                 ReportInfo(strMessage, 0)
 
                 m_CDTACondenser = New CondenseCDTAFile.clsCDTAFileCondenser
@@ -363,7 +365,8 @@ Public Class clsCDTAUtilities
 
                     ioFileInfo.Refresh()
 
-                    ReportInfo("Condensing complete; size of the new _dta.txt file is " & CSng(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") & " GB", 1)
+                    ReportInfo("Condensing complete; size of the new _dta.txt file is " &
+                               clsGlobal.BytesToGB(ioFileInfo.Length).ToString("0.00") & " GB", 1)
 
                     Try
                         strFilePathOld = Path.Combine(strWorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.FullName) & "_Old.txt")

@@ -169,7 +169,7 @@ Public Class clsMemoryUsageLogger
             objProcess = Process.GetCurrentProcess()
 
             ' The WorkingSet is the total physical memory usage 
-            Return CSng(objProcess.WorkingSet64 / 1024.0 / 1024)
+            Return CSng(clsGlobal.BytesToMB(objProcess.WorkingSet64))
         Catch ex As Exception
             Return 0
         End Try

@@ -3079,7 +3079,7 @@ Public MustInherit Class clsAnalysisResources
 
         Static mFreeMemoryPerformanceCounter As PerformanceCounter
 
-        Dim sngFreeMemory As Single = 0
+        Dim sngFreeMemoryMB As Single = 0
         Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
 
         Try
@@ -3089,10 +3089,10 @@ Public MustInherit Class clsAnalysisResources
             End If
 
             Dim intIterations = 0
-            sngFreeMemory = 0
-            Do While sngFreeMemory < Single.Epsilon AndAlso intIterations <= 3
-                sngFreeMemory = mFreeMemoryPerformanceCounter.NextValue()
-                If sngFreeMemory < Single.Epsilon Then
+            sngFreeMemoryMB = 0
+            Do While sngFreeMemoryMB < Single.Epsilon AndAlso intIterations <= 3
+                sngFreeMemoryMB = mFreeMemoryPerformanceCounter.NextValue()
+                If sngFreeMemoryMB < Single.Epsilon Then
                     ' You sometimes have to call .NextValue() several times before it returns a useful number
                     ' Wait 1 second and then try again
                     Thread.Sleep(1000)
@@ -3114,7 +3114,7 @@ Public MustInherit Class clsAnalysisResources
 
         Try
 
-            If sngFreeMemory < Single.Epsilon Then
+            If sngFreeMemoryMB < Single.Epsilon Then
                 ' The Performance counters are still reporting a value of 0 for available memory; use an alternate method
 
                 If blnVirtualMachineOnPIC Then
@@ -3128,7 +3128,7 @@ Public MustInherit Class clsAnalysisResources
                     End If
                 End If
 
-                sngFreeMemory = CSng(New Devices.ComputerInfo().AvailablePhysicalMemory / 1024.0 / 1024.0)
+                sngFreeMemoryMB = CSng(clsGlobal.BytesToMB(CLng(New Devices.ComputerInfo().AvailablePhysicalMemory)))
 
             End If
 
@@ -3140,7 +3140,7 @@ Public MustInherit Class clsAnalysisResources
             End If
         End Try
 
-        Return sngFreeMemory
+        Return sngFreeMemoryMB
 
     End Function
 
@@ -7665,7 +7665,7 @@ Public MustInherit Class clsAnalysisResources
             Dim strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram", String.Empty)
 
             Dim fiFileInfo = New FileInfo(zipFilePath)
-            Dim sngFileSizeMB = CSng(fiFileInfo.Length / 1024.0 / 1024)
+            Dim fileSizeMB = clsGlobal.BytesToMB(fiFileInfo.Length)
 
             If Not fiFileInfo.Exists Then
                 ' File not found
@@ -7686,7 +7686,7 @@ Public MustInherit Class clsAnalysisResources
 
             ' Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
             ' However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
-            If forceExternalZipProgramUse OrElse sngFileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
+            If forceExternalZipProgramUse OrElse fileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
                 If strExternalUnzipperFilePath.Length > 0 AndAlso
                    strExternalUnzipperFilePath.ToLower() <> "na" Then
                     If File.Exists(strExternalUnzipperFilePath) Then

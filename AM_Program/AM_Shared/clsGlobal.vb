@@ -69,6 +69,24 @@ Public Class clsGlobal
     End Function
 
     ''' <summary>
+    ''' Convert Bytes to Gigabytes
+    ''' </summary>
+    ''' <param name="bytes"></param>
+    ''' <returns></returns>
+    Public Shared Function BytesToGB(bytes As Int64) As Double
+        Return bytes / 1024.0 / 1024.0 / 1024.0
+    End Function
+
+    ''' <summary>
+    ''' Convert Bytes to Megabytes
+    ''' </summary>
+    ''' <param name="bytes"></param>
+    ''' <returns></returns>
+    Public Shared Function BytesToMB(bytes As Int64) As Double
+        Return bytes / 1024.0 / 1024.0
+    End Function
+
+    ''' <summary>
     '''Examines intCount to determine which string to return
     ''' </summary>
     ''' <param name="intCount"></param>
@@ -1530,7 +1548,7 @@ Public Class clsGlobal
             Dim lngTotalNumberOfFreeBytes As Long
 
             If GetDiskFreeSpace(diDirectory.FullName, lngFreeBytesAvailableToUser, lngTotalNumberOfBytes, lngTotalNumberOfFreeBytes) Then
-                freeSpaceMB = lngTotalNumberOfFreeBytes / 1024.0 / 1024.0
+                freeSpaceMB = clsGlobal.BytesToMB(lngTotalNumberOfFreeBytes)
             Else
                 freeSpaceMB = 0
             End If
@@ -1538,7 +1556,7 @@ Public Class clsGlobal
         Else
             ' Directory is a local drive; can query with .NET
             diDrive = New DriveInfo(diDirectory.Root.FullName)
-            freeSpaceMB = diDrive.TotalFreeSpace / 1024.0 / 1024.0
+            freeSpaceMB = clsGlobal.BytesToMB(diDrive.TotalFreeSpace)
         End If
 
         If freeSpaceMB < minFreeSpaceMB Then

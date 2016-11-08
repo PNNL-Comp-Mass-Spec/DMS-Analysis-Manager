@@ -467,7 +467,7 @@ Public Class clsStatusFile
             End If
 
             If sngFreeMemory < Single.Epsilon Then
-                sngFreeMemory = CSng(New Devices.ComputerInfo().AvailablePhysicalMemory / 1024.0 / 1024.0)
+                sngFreeMemory = CSng(clsGlobal.BytesToMB(CLng(New Devices.ComputerInfo().AvailablePhysicalMemory)))
             End If
 
         Catch ex As Exception
