@@ -4515,9 +4515,14 @@ Public MustInherit Class clsAnalysisResources
       requiredFreeSpaceMB As Double,
       percentFreeSpaceAtStart As Double)
 
+        Dim freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
 
-        If m_DebugLevel >= 1 Then
-            Dim freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
+        Dim logInfoMessages =
+            m_DebugLevel >= 1 AndAlso freeSpaceGB < 100 OrElse
+            m_DebugLevel >= 2 AndAlso freeSpaceGB < 250 OrElse
+            m_DebugLevel >= 3
+
+        If logInfoMessages Then
             ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is {2:F0}% of the total space; purge required since less than threshold of {3}%",
                                        localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent))
         End If
@@ -4533,8 +4538,10 @@ Public MustInherit Class clsAnalysisResources
             Dim dtLastUsed As DateTime
             If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
                 If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
-                    ReportStatus("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
-                                 "will not purge any more files to free disk space")
+                    If logInfoMessages Then
+                        ReportStatus("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
+                                     "will not purge any more files to free disk space")
+                    End If
                     Exit For
                 End If
             End If
@@ -4546,14 +4553,14 @@ Public MustInherit Class clsAnalysisResources
 
             ' Re-check the disk free space
             Dim percentFreeSpace = localDriveInfo.AvailableFreeSpace / CDbl(localDriveInfo.TotalSize) * 100
-            Dim freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
+            Dim updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
 
-            If requiredFreeSpaceMB > 0 AndAlso freeSpaceGB * 1024.0 < requiredFreeSpaceMB Then
+            If requiredFreeSpaceMB > 0 AndAlso updatedFreeSpaceGB * 1024.0 < requiredFreeSpaceMB Then
                 ' Required free space is known, and we're not yet there
                 ' Keep deleting files
                 If m_DebugLevel >= 2 Then
                     LogDebugMessage(String.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space",
-                                                  localDriveInfo.Name, freeSpaceGB, percentFreeSpace))
+                                                  localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace))
                 End If
             Else
                 ' Either required free space is not known, or we have more than enough free space
@@ -4563,13 +4570,13 @@ Public MustInherit Class clsAnalysisResources
                     If m_DebugLevel >= 1 Then
                         ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " &
                                                    "deleted {3:F1} GB of cached files",
-                                                   localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)))
+                                                   localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)))
                     End If
                     Exit For
                 ElseIf m_DebugLevel >= 2 Then
                     ' Keep deleting until we reach the target threshold for free space
                     LogDebugMessage(String.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space",
-                                                  localDriveInfo.Name, freeSpaceGB, percentFreeSpace))
+                                                  localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace))
                 End If
             End If
         Next
