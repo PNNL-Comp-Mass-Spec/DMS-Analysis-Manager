@@ -160,21 +160,19 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                 Return False
             End If
 
-            Dim strMSMSDataListFilt() As String = Nothing
+            Dim msmsDataListFilt As List(Of String) = Nothing
             Dim udtSpectrumHeaderInfoFilt = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-            Dim intMsMsDataCountFilt As Integer
 
-            Dim strMSMSDataListOrig() As String = Nothing
+            Dim msmsDataListOrig As List(Of String) = Nothing
             Dim udtSpectrumHeaderInfoOrig = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-            Dim intMsMsDataCountOrig As Integer
 
             Dim intOriginalCDTASpectra = 0
             Dim intFilteredCDTASpectra = 0
 
-            Do While objOriginalCDTA.ReadNextSpectrum(strMSMSDataListOrig, intMsMsDataCountOrig, udtSpectrumHeaderInfoOrig)
+            Do While objOriginalCDTA.ReadNextSpectrum(msmsDataListFilt, udtSpectrumHeaderInfoOrig)
                 intOriginalCDTASpectra += 1
 
-                If objFilteredCDTA.ReadNextSpectrum(strMSMSDataListFilt, intMsMsDataCountFilt, udtSpectrumHeaderInfoFilt) Then
+                If objFilteredCDTA.ReadNextSpectrum(msmsDataListOrig, udtSpectrumHeaderInfoFilt) Then
                     intFilteredCDTASpectra += 1
 
                     ' If the parent ions differ or the MS/MS spectral data differs, then the files do not match
@@ -186,15 +184,15 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                         Return False
                     End If
 
-                    If intMsMsDataCountOrig <> intMsMsDataCountFilt Then
+                    If msmsDataListOrig.Count <> msmsDataListFilt.Count Then
                         If m_DebugLevel >= 2 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has a different number of ions (" & intMsMsDataCountOrig & " vs. " & intMsMsDataCountFilt & "); files do not match")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has a different number of ions (" & msmsDataListOrig.Count & " vs. " & msmsDataListFilt.Count & "); files do not match")
                         End If
                         Return False
                     End If
 
-                    For intIndex = 0 To intMsMsDataCountOrig - 1
-                        If strMSMSDataListOrig(intIndex).Trim <> strMSMSDataListFilt(intIndex).Trim Then
+                    For intIndex = 0 To msmsDataListOrig.Count - 1
+                        If msmsDataListOrig(intIndex).Trim() <> msmsDataListFilt(intIndex).Trim() Then
                             If m_DebugLevel >= 2 Then
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has different ion mass or abundance values; files do not match")
                             End If
@@ -211,7 +209,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                 End If
             Loop
 
-            If objFilteredCDTA.ReadNextSpectrum(strMSMSDataListFilt, intMsMsDataCountFilt, udtSpectrumHeaderInfoFilt) Then
+            If objFilteredCDTA.ReadNextSpectrum(msmsDataListFilt, udtSpectrumHeaderInfoFilt) Then
                 ' Filtered CDTA file has more spectra than the original one
                 Return False
             End If
