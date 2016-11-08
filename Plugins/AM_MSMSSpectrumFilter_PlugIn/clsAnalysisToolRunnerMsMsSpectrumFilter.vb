@@ -18,14 +18,14 @@ Imports MSMSSpectrumFilter
 Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     Inherits clsAnalysisToolRunnerBase
 
-    Protected WithEvents m_MsMsSpectrumFilter As clsMsMsSpectrumFilter
-    Protected m_ErrMsg As String = String.Empty
-    Protected m_SettingsFileName As String = String.Empty			' Handy place to store value so repeated calls to m_JobParams aren't required
-    Protected m_Results As ISpectraFilter.ProcessResults
-    Protected m_DTATextFileName As String = String.Empty
+    Private WithEvents m_MsMsSpectrumFilter As clsMsMsSpectrumFilter
+    Private m_ErrMsg As String = String.Empty
+    Private m_SettingsFileName As String = String.Empty         ' Handy place to store value so repeated calls to m_JobParams aren't required
+    Private m_Results As ISpectraFilter.ProcessResults
+    Private m_DTATextFileName As String = String.Empty
 
-    Protected m_thThread As System.Threading.Thread
-    Protected m_FilterStatus As ISpectraFilter.ProcessStatus
+    Private m_thThread As Threading.Thread
+    Private m_FilterStatus As ISpectraFilter.ProcessStatus
 
 #Region "Methods"
     Public Sub New()
@@ -85,7 +85,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         End If
 
         'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+        m_StopTime = DateTime.UtcNow
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
@@ -121,7 +121,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
     End Function
 
-    Protected Function CDTAFilesMatch(ByVal strOriginalCDTA As String, ByVal strFilteredCDTA As String) As Boolean
+    Private Function CDTAFilesMatch(strOriginalCDTA As String, strFilteredCDTA As String) As Boolean
 
         Dim fiOriginalCDTA As IO.FileInfo
         Dim fiFilteredCDTA As IO.FileInfo
@@ -161,15 +161,15 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             End If
 
             Dim strMSMSDataListFilt() As String = Nothing
-            Dim udtSpectrumHeaderInfoFilt As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+            Dim udtSpectrumHeaderInfoFilt = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
             Dim intMsMsDataCountFilt As Integer
 
             Dim strMSMSDataListOrig() As String = Nothing
-            Dim udtSpectrumHeaderInfoOrig As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+            Dim udtSpectrumHeaderInfoOrig = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
             Dim intMsMsDataCountOrig As Integer
 
-            Dim intOriginalCDTASpectra As Integer = 0
-            Dim intFilteredCDTASpectra As Integer = 0
+            Dim intOriginalCDTASpectra = 0
+            Dim intFilteredCDTASpectra = 0
 
             Do While objOriginalCDTA.ReadNextSpectrum(strMSMSDataListOrig, intMsMsDataCountOrig, udtSpectrumHeaderInfoOrig)
                 intOriginalCDTASpectra += 1
@@ -193,7 +193,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                         Return False
                     End If
 
-                    For intIndex As Integer = 0 To intMsMsDataCountOrig - 1
+                    For intIndex = 0 To intMsMsDataCountOrig - 1
                         If strMSMSDataListOrig(intIndex).Trim <> strMSMSDataListFilt(intIndex).Trim Then
                             If m_DebugLevel >= 2 Then
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has different ion mass or abundance values; files do not match")
@@ -224,7 +224,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             Return False
         Finally
             Try
-                System.Threading.Thread.Sleep(250)
+                Threading.Thread.Sleep(250)
                 If Not objOriginalCDTA Is Nothing Then objOriginalCDTA.CloseFile()
                 If Not objFilteredCDTA Is Nothing Then objFilteredCDTA.CloseFile()
             Catch ex As Exception
@@ -235,7 +235,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
     End Function
 
-    Protected Overridable Function CountDtaFiles(ByVal strDTATextFilePath As String) As Integer
+    Protected Overridable Function CountDtaFiles(strDTATextFilePath As String) As Integer
         'Returns the number of dta files in the _dta.txt file
 
         ' This RegEx matches text of the form:
@@ -247,17 +247,17 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         ' It also can match lines where there is extra information associated with the charge state, for example:
         ' =================================== "QC_Shew_07_02-pt5-a_27Sep07_EARTH_07-08-15.351.351.1_1_2.dta" ==================================
         ' =================================== "vxl_VP2P74_B_4_F12_rn1_14May08_Falcon_080403-F4.1001.1001.2_1_2.dta" ==================================
-        Const DTA_FILENAME_REGEX As String = "^\s*[=]{5,}\s+\""([^.]+)\.\d+\.\d+\..+dta"
+        Const DTA_FILENAME_REGEX = "^\s*[=]{5,}\s+\""([^.]+)\.\d+\.\d+\..+dta"
 
         Dim intDTACount As Integer
         Dim strLineIn As String
 
-        Dim reFind As System.Text.RegularExpressions.Regex
+        Dim reFind As Text.RegularExpressions.Regex
 
         Try
-            reFind = New System.Text.RegularExpressions.Regex(DTA_FILENAME_REGEX, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+            reFind = New Text.RegularExpressions.Regex(DTA_FILENAME_REGEX, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 
-            Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strDTATextFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+            Using srInFile = New IO.StreamReader(New IO.FileStream(strDTATextFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
                 intDTACount = 0
                 Do While srInFile.Peek() >= 0
@@ -293,7 +293,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             m_MsMsSpectrumFilter = New clsMsMsSpectrumFilter
 
             ' Pre-read the parameter file now, so that we can override some of the settings
-            strParameterFilePath = System.IO.Path.Combine(m_WorkDir, m_SettingsFileName)
+            strParameterFilePath = IO.Path.Combine(m_WorkDir, m_SettingsFileName)
 
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Loading parameter file: " & strParameterFilePath)
@@ -343,7 +343,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             End If
 
             'Instantiate the thread to run MsMsSpectraFilter
-            m_thThread = New System.Threading.Thread(AddressOf FilterDTATextFileWork)
+            m_thThread = New Threading.Thread(AddressOf FilterDTATextFileWork)
             m_thThread.Start()
 
             If m_DebugLevel >= 4 Then
@@ -351,10 +351,10 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             End If
 
             Do While m_thThread.IsAlive
-                System.Threading.Thread.Sleep(2000)                 'Delay for 2 seconds
+                Threading.Thread.Sleep(2000)                 'Delay for 2 seconds
             Loop
 
-            System.Threading.Thread.Sleep(5000)                    'Delay for 5 seconds
+            Threading.Thread.Sleep(5000)                    'Delay for 5 seconds
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             'Removes the MsMsSpectra Filter object
@@ -396,7 +396,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             End If
 
             ' Define the input file name
-            strInputFilePath = System.IO.Path.Combine(m_WorkDir, m_DTATextFileName)
+            strInputFilePath = IO.Path.Combine(m_WorkDir, m_DTATextFileName)
 
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Call ProcessFilesWildcard for: " & strInputFilePath)
@@ -404,7 +404,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
             blnSuccess = m_MsMsSpectrumFilter.ProcessFilesWildcard(strInputFilePath, m_WorkDir, "")
 
-     
+
             Try
 
                 If blnSuccess Then
@@ -417,7 +417,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
                     strBakFilePath = strInputFilePath & ".bak"
 
-                    If Not System.IO.File.Exists(strBakFilePath) Then
+                    If Not IO.File.Exists(strBakFilePath) Then
                         LogErrors("FilterDTATextFileWork", "CDTA .Bak file not found", Nothing)
                         m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED
                     End If
@@ -427,16 +427,16 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
                     blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath)
 
-                    System.Threading.Thread.Sleep(250)
+                    Threading.Thread.Sleep(250)
                     PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
                     ' Delete the _dta.txt.bak file
-                    System.IO.File.Delete(strBakFilePath)
+                    IO.File.Delete(strBakFilePath)
 
-                    If blnfilesmatch Then
+                    If blnFilesMatch Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The filtered CDTA file matches the original CDTA file (same number of spectra and same spectral data); the filtered CDTA file will not be retained")
 
-                        System.IO.File.Delete(strInputFilePath)
+                        IO.File.Delete(strInputFilePath)
 
                         m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED
 
@@ -477,7 +477,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
     End Sub
 
-    Protected Function GenerateFinniganScanStatsFiles() As Boolean
+    Private Function GenerateFinniganScanStatsFiles() As Boolean
 
         Dim strRawFileName As String
         Dim strFinniganRawFilePath As String
@@ -516,7 +516,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             End If
 
             ' Look for an existing _ScanStats.txt file in a SIC folder below folder with the .Raw file
-            Dim fiRawFile As IO.FileInfo = New IO.FileInfo(strFinniganRawFilePath)
+            Dim fiRawFile = New IO.FileInfo(strFinniganRawFilePath)
 
             If Not fiRawFile.Exists Then
                 ' File not found at the specified path
@@ -557,14 +557,14 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
     End Function
 
-    Private Sub HandleProgressUpdate(ByVal percentComplete As Single)
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+    Private Sub HandleProgressUpdate(percentComplete As Single)
+        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
         m_progress = percentComplete
 
         ' Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = DateTime.UtcNow
             UpdateStatusRunning(m_progress, m_DtaCount)
         End If
 
@@ -611,7 +611,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         If Not VerifyDirExists(m_WorkDir) Then Return False 'Error msg handled by VerifyDirExists
 
         'Settings file exist?
-        Dim SettingsNamePath As String = System.IO.Path.Combine(m_WorkDir, m_SettingsFileName)
+        Dim SettingsNamePath As String = IO.Path.Combine(m_WorkDir, m_SettingsFileName)
         If Not VerifyFileExists(SettingsNamePath) Then Return False 'Error msg handled by VerifyFileExists
 
         'If we got here, everything's OK
@@ -619,20 +619,20 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
     End Function
 
-    Private Sub LogErrors(ByVal strSource As String, ByVal strMessage As String, ByVal ex As Exception, Optional ByVal blnLogLocalOnly As Boolean = True)
+    Private Sub LogErrors(strSource As String, strMessage As String, ex As Exception, Optional ByVal blnLogLocalOnly As Boolean = True)
 
         m_ErrMsg = String.Copy(strMessage).Replace(ControlChars.NewLine, "; ")
 
         If ex Is Nothing Then
-            ex = New System.Exception("Error")
+            ex = New Exception("Error")
         Else
             If Not ex.Message Is Nothing AndAlso ex.Message.Length > 0 Then
                 m_ErrMsg &= "; " & ex.Message
             End If
         End If
 
-        Trace.WriteLine(System.DateTime.Now().ToLongTimeString & "; " & m_ErrMsg, strSource)
-        Console.WriteLine(System.DateTime.Now().ToLongTimeString & "; " & m_ErrMsg, strSource)
+        Trace.WriteLine(DateTime.Now().ToLongTimeString & "; " & m_ErrMsg, strSource)
+        Console.WriteLine(DateTime.Now().ToLongTimeString & "; " & m_ErrMsg, strSource)
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ex.Message)
 
@@ -642,7 +642,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+    Private Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
@@ -662,8 +662,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         End If
 
         ' Store the path to MsMsDataFileReader.dll in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll")))
+        Dim ioToolFiles As New List(Of IO.FileInfo)
+        ioToolFiles.Add(New IO.FileInfo(IO.Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -674,10 +674,10 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
     End Function
 
-    Protected Overridable Function VerifyDirExists(ByVal TestDir As String) As Boolean
+    Protected Overridable Function VerifyDirExists(TestDir As String) As Boolean
 
         'Verifies that the specified directory exists
-        If System.IO.Directory.Exists(TestDir) Then
+        If IO.Directory.Exists(TestDir) Then
             m_ErrMsg = ""
             Return True
         Else
@@ -687,8 +687,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
     End Function
 
-    
-    Private Function VerifyDtaCreation(ByVal strDTATextFilePath As String) As Boolean
+
+    Private Function VerifyDtaCreation(strDTATextFilePath As String) As Boolean
 
         'Verify at least one .dta file has been created
         If CountDtaFiles(strDTATextFilePath) < 1 Then
@@ -700,9 +700,9 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
     End Function
 
-    Protected Overridable Function VerifyFileExists(ByVal TestFile As String) As Boolean
+    Protected Overridable Function VerifyFileExists(TestFile As String) As Boolean
         'Verifies specified file exists
-        If System.IO.File.Exists(TestFile) Then
+        If IO.File.Exists(TestFile) Then
             m_ErrMsg = ""
             Return True
         Else
@@ -721,10 +721,10 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
         'Zips the concatenated dta file
         Dim DtaFileName As String = m_Dataset & "_dta.txt"
-        Dim DtaFilePath As String = System.IO.Path.Combine(m_WorkDir, DtaFileName)
+        Dim DtaFilePath As String = IO.Path.Combine(m_WorkDir, DtaFileName)
 
         'Verify file exists
-        If System.IO.File.Exists(DtaFilePath) Then
+        If IO.File.Exists(DtaFilePath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
         Else
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file")
@@ -750,7 +750,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
 #End Region
 
-    Private Sub m_MsMsSpectrumFilter_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles m_MsMsSpectrumFilter.ProgressChanged
+    Private Sub m_MsMsSpectrumFilter_ProgressChanged(taskDescription As String, percentComplete As Single) Handles m_MsMsSpectrumFilter.ProgressChanged
         HandleProgressUpdate(percentComplete)
     End Sub
 

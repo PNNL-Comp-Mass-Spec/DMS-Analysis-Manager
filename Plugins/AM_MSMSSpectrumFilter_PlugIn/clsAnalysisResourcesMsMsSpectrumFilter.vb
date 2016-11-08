@@ -9,8 +9,10 @@ Option Strict On
 ' Copyright 2009, Battelle Memorial Institute
 ' Started January 20, 2009
 
+Imports System.IO
 Imports AnalysisManagerBase
 Imports MSMSSpectrumFilter
+Imports MyEMSLReader
 
 Public Class clsAnalysisResourcesMsMsSpectrumFilter
     Inherits clsAnalysisResources
@@ -52,7 +54,7 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
 
         Dim strMSCollisionModeFilter As String
         Dim strMSCollisionModeMatchType As String
-        Dim blnNeedScanStatsFiles As Boolean = False
+        Dim blnNeedScanStatsFiles = False
 
         strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0")
 
@@ -88,20 +90,20 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
             ' Find and copy the ScanStats files from an existing job rather than copying over the .Raw file
             ' However, if the _ScanStats.txt file does not have column ScanTypeName, then we will need the .raw file
 
-            Dim blnIsFolder As Boolean = False
+            Dim blnIsFolder = False
             Dim strDatasetFileOrFolderPath As String
-            Dim diDatasetFolder As IO.DirectoryInfo
-            Dim blnScanStatsFilesRetrieved As Boolean = False
+            Dim diDatasetFolder As DirectoryInfo
+            Dim blnScanStatsFilesRetrieved = False
 
             strDatasetFileOrFolderPath = FindDatasetFileOrFolder(blnIsFolder)
 
             If Not String.IsNullOrEmpty(strDatasetFileOrFolderPath) And Not strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
 
                 If blnIsFolder Then
-                    diDatasetFolder = New IO.DirectoryInfo(strDatasetFileOrFolderPath)
+                    diDatasetFolder = New DirectoryInfo(strDatasetFileOrFolderPath)
                     diDatasetFolder = diDatasetFolder.Parent
                 Else
-                    Dim fiDatasetFile As IO.FileInfo = New IO.FileInfo(strDatasetFileOrFolderPath)
+                    Dim fiDatasetFile = New FileInfo(strDatasetFileOrFolderPath)
                     diDatasetFolder = fiDatasetFile.Directory
                 End If
 
@@ -110,12 +112,12 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
                 End If
 
             End If
-        
+
             If Not blnScanStatsFilesRetrieved Then
 
                 ' Find the dataset file and either create a StoragePathInfo file or copy it locally
 
-                Dim CreateStoragePathInfoOnly As Boolean = False
+                Dim CreateStoragePathInfoOnly = False
                 Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
 
                 Select Case RawDataType.ToLower
@@ -140,16 +142,16 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
             m_jobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt")
             m_jobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt")
 
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION)
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
+            m_jobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION)
+            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
+            m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION)
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
 
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION)
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION)
+            m_jobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION)
         End If
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -158,18 +160,18 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
 
     End Function
 
-    Protected Function FindExistingScanStatsFile(ByVal strDatasetFolderPath As String) As Boolean
+    Private Function FindExistingScanStatsFile(strDatasetFolderPath As String) As Boolean
 
-        Dim diDatasetFolder As IO.DirectoryInfo = New IO.DirectoryInfo(strDatasetFolderPath)
-        Dim blnFilesFound As Boolean = False
+        Dim diDatasetFolder = New DirectoryInfo(strDatasetFolderPath)
+        Dim blnFilesFound = False
 
         Try
             If Not diDatasetFolder.Exists Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Dataset folder not found: " & strDatasetFolderPath)
             End If
 
-            Dim lstFiles As Generic.List(Of IO.FileInfo)
-            lstFiles = diDatasetFolder.GetFiles(m_DatasetName & "_ScanStats.txt", IO.SearchOption.AllDirectories).ToList
+            Dim lstFiles As List(Of FileInfo)
+            lstFiles = diDatasetFolder.GetFiles(m_DatasetName & "_ScanStats.txt", SearchOption.AllDirectories).ToList
 
             If lstFiles.Count = 0 Then
                 If m_DebugLevel >= 2 Then
@@ -179,15 +181,15 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
             End If
 
             ' Find the newest file in lstFiles
-            Dim lstSortedFiles As Generic.List(Of IO.FileInfo) = (From item In lstFiles Order By item.LastWriteTime Descending).ToList()
+            Dim lstSortedFiles As List(Of FileInfo) = (From item In lstFiles Order By item.LastWriteTime Descending).ToList()
 
-            Dim fiNewestScanStatsFile As IO.FileInfo = lstSortedFiles(0)
+            Dim fiNewestScanStatsFile As FileInfo = lstSortedFiles(0)
 
             ' Copy the ScanStats file locally
-            fiNewestScanStatsFile.CopyTo(IO.Path.Combine(m_WorkingDir, fiNewestScanStatsFile.Name))
+            fiNewestScanStatsFile.CopyTo(Path.Combine(m_WorkingDir, fiNewestScanStatsFile.Name))
 
             ' Read the first line of the file and confirm that the _ScanTypeName column exists
-            Using srScanStatsFile As IO.StreamReader = New IO.StreamReader(New IO.FileStream(fiNewestScanStatsFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+            Using srScanStatsFile = New StreamReader(New FileStream(fiNewestScanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 Dim strLineIn As String
                 strLineIn = srScanStatsFile.ReadLine
 
@@ -200,11 +202,11 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
             End Using
 
             ' Look for the _ScanStatsEx.txt file
-            Dim strScanStatsExPath As String = IO.Path.Combine(fiNewestScanStatsFile.Directory.FullName, IO.Path.GetFileNameWithoutExtension(fiNewestScanStatsFile.Name) & "Ex.txt")
+            Dim strScanStatsExPath As String = Path.Combine(fiNewestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiNewestScanStatsFile.Name) & "Ex.txt")
 
-            If IO.File.Exists(strScanStatsExPath) Then
+            If File.Exists(strScanStatsExPath) Then
                 ' Copy it locally
-                IO.File.Copy(strScanStatsExPath, IO.Path.Combine(m_WorkingDir, IO.Path.GetFileName(strScanStatsExPath)))
+                File.Copy(strScanStatsExPath, Path.Combine(m_WorkingDir, Path.GetFileName(strScanStatsExPath)))
 
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using existing _ScanStats.txt from " & fiNewestScanStatsFile.FullName)
@@ -222,7 +224,7 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FindExistingScanStatsFile", ex)
             Return False
         End Try
-    
+
         Return blnFilesFound
     End Function
 
