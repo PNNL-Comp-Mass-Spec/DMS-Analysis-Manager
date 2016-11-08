@@ -3072,6 +3072,55 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
+    ''' Examine the specified DMS_Temp_Org folder to find the FASTA files and their corresponding .fasta.LastUsed or .hashcheck files
+    ''' </summary>
+    ''' <param name="diOrgDbFolder"></param>
+    ''' <returns>Dictionary of FASTA files, including the last usage date for each</returns>
+    Private Function GetFastaFilesByLastUse(diOrgDbFolder As DirectoryInfo) As Dictionary(Of FileInfo, DateTime)
+
+        ' Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .lastused file)
+        Dim dctFastaFiles = New Dictionary(Of FileInfo, DateTime)
+
+        For Each fiFile In diOrgDbFolder.GetFiles("*.fasta")
+            If Not dctFastaFiles.ContainsKey(fiFile) Then
+                Dim dtLastUsed As DateTime = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc)
+
+                ' Look for a .hashcheck file
+                Dim lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name & "*.hashcheck")
+                If lstHashCheckfiles.Count > 0 Then
+                    dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First.LastWriteTimeUtc)
+                End If
+
+                ' Look for a .LastUsed file
+                Dim lstLastUsedFiles = diOrgDbFolder.GetFiles(fiFile.Name & ".LastUsed")
+                If lstLastUsedFiles.Count > 0 Then
+                    dtLastUsed = DateMax(dtLastUsed, lstLastUsedFiles.First.LastWriteTimeUtc)
+
+                    Try
+                        ' Read the date stored in the file
+                        Using srLastUsedfile = New StreamReader(New FileStream(lstLastUsedFiles.First.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                            If Not srLastUsedfile.EndOfStream Then
+                                Dim strLastUseDate = srLastUsedfile.ReadLine()
+                                Dim dtLastUsedActual As DateTime
+                                If DateTime.TryParse(strLastUseDate, dtLastUsedActual) Then
+                                    dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual)
+                                End If
+                            End If
+                        End Using
+                    Catch ex As Exception
+                        ' Ignore errors here
+                    End Try
+
+                End If
+                dctFastaFiles.Add(fiFile, dtLastUsed)
+            End If
+        Next
+
+        Return dctFastaFiles
+
+    End Function
+
+    ''' <summary>
     ''' Reports the amount of free memory on this computer (in MB)
     ''' </summary>
     ''' <returns>Free memory, in MB</returns>
@@ -4102,7 +4151,7 @@ Public MustInherit Class clsAnalysisResources
     ''' </summary>
     ''' <param name="proteinCollectionInfo">Collection info object</param>
     ''' <returns>Space required, in MB</returns>
-    ''' <remarks>Uses both m_jobParams and m_mgrParams; returns 0 if a problem</remarks>
+    ''' <remarks>Uses both m_jobParams and m_mgrParams; returns 0 if a problem (e.g. the legacy fasta file is not listed in V_Organism_DB_File_Export)</remarks>
     Public Function LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo As clsProteinCollectionInfo) As Double
 
         Try
@@ -4129,7 +4178,15 @@ Public MustInherit Class clsAnalysisResources
             Dim success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, lstResults, "LookupLegacyDBSizeWithIndices")
 
             If Not success OrElse lstResults Is Nothing OrElse lstResults.Count = 0 Then
-                ReportStatus("Could not determine the legacy fasta file's size for for job " & m_JobNum & ", file " & legacyFastaName, 0, True)
+                ' Empty query results
+                Dim statusMessage = "Warning: Could not determine the legacy fasta file's size for job " & m_JobNum & ", file " & legacyFastaName
+                If proteinCollectionInfo.UsingSplitFasta Then
+                    ' Likely the FASTA file has not yet been split
+                    ReportStatus(statusMessage & "; likely the split fasta file has not yet been created", 0, False)
+                Else
+                    ReportStatus(statusMessage, 0, True)
+                End If
+
                 Return 0
             End If
 
@@ -4336,6 +4393,50 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
+    ''' Delete the specified FASTA file and its associated files
+    ''' </summary>
+    ''' <param name="diOrgDbFolder"></param>
+    ''' <param name="fiFileToPurge"></param>
+    ''' <param name="legacyFastaFileBaseName"></param>
+    ''' <returns>Number of bytes deleted</returns>
+    Private Function PurgeFastaFiles(diOrgDbFolder As DirectoryInfo, fiFileToPurge As FileInfo, legacyFastaFileBaseName As String) As Long
+
+        Dim baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name)
+
+        If Not String.IsNullOrWhiteSpace(legacyFastaFileBaseName) AndAlso baseName.StartsWith(legacyFastaFileBaseName) Then
+            ' The current job needs this file; do not delete it
+            Return 0
+        End If
+
+        ' Delete all files associated with this fasta file
+        Dim lstFilesToDelete = New List(Of FileInfo)
+        lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName & ".*"))
+
+        If m_DebugLevel >= 1 Then
+            Dim fileText = String.Format("{0,2} file", lstFilesToDelete.Count)
+            If lstFilesToDelete.Count <> 1 Then
+                fileText &= "s"
+            End If
+            LogDebugMessage("Deleting " & fileText & " associated with " & fiFileToPurge.FullName)
+        End If
+
+        Dim bytesDeleted As Int64 = 0
+
+        Try
+            For Each fiFileToDelete In lstFilesToDelete
+                Dim fileSizeBytes = fiFileToDelete.Length
+                fiFileToDelete.Delete()
+                bytesDeleted += fileSizeBytes
+            Next
+        Catch ex As Exception
+            ReportStatus("Error in PurgeFastaFiles", ex)
+        End Try
+
+        Return bytesDeleted
+
+    End Function
+
+    ''' <summary>
     ''' Purges old fasta files (and related suffix array files) from localOrgDbFolder
     ''' </summary>
     ''' <param name="localOrgDbFolder"></param>
@@ -4365,7 +4466,10 @@ Public MustInherit Class clsAnalysisResources
 
             Dim driveLetter = diOrgDbFolder.FullName.Substring(0, 2)
             If (Not driveLetter.EndsWith(":")) Then
-                ReportStatus("Warning: Orb DB folder path does not have a colon; cannot query drive free space: " & diOrgDbFolder.FullName)
+                ' The folder is not local to this computer
+                ' Look for file MaxDirSize.txt which defines the maximum space that the files can use
+                ' Assuming that file is found, delete the older FASTA files to free up space
+                PurgeFastaFilesIfUsageOverThreshold(diOrgDbFolder, legacyFastaFileBaseName)
                 Exit Sub
             End If
 
@@ -4374,108 +4478,51 @@ Public MustInherit Class clsAnalysisResources
 
             If (percentFreeSpaceAtStart >= freeSpaceThresholdPercent) Then
                 If m_DebugLevel >= 2 Then
-                    Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
-                    ReportStatus("Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) " &
-                                 "is over " & freeSpaceThresholdPercent & "% of the total space; " &
-                                 "purge not required")
+                    Dim freeSpaceGB = clsGlobal.BytesToGB(driveInfo.AvailableFreeSpace)
+                    ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required",
+                                               driveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent))
                 End If
                 Exit Sub
             End If
 
             If m_DebugLevel >= 1 Then
-                Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
-                ReportStatus("Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) " &
-                             "is " & freeSpaceThresholdPercent & "% of the total space; " &
-                             "purge required since less than threshold of " & freeSpaceThresholdPercent & "%")
+                Dim freeSpaceGB = clsGlobal.BytesToGB(driveInfo.AvailableFreeSpace)
+                ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is {2:F0}% of the total space; purge required since less than threshold of {3}%",
+                                           driveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent))
             End If
 
-            ' Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .lastused file)
-            Dim dctFastaFiles = New Dictionary(Of FileInfo, DateTime)
-
-            For Each fiFile In diOrgDbFolder.GetFiles("*.fasta")
-                If Not dctFastaFiles.ContainsKey(fiFile) Then
-                    Dim dtLastUsed As DateTime = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc)
-
-                    ' Look for a .hashcheck file
-                    Dim lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name & "*.hashcheck")
-                    If lstHashCheckfiles.Count > 0 Then
-                        dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First.LastWriteTimeUtc)
-                    End If
-
-                    ' Look for a .LastUsed file
-                    Dim lstLastUsedFiles = diOrgDbFolder.GetFiles(fiFile.Name & ".LastUsed")
-                    If lstLastUsedFiles.Count > 0 Then
-                        dtLastUsed = DateMax(dtLastUsed, lstLastUsedFiles.First.LastWriteTimeUtc)
-
-                        Try
-                            ' Read the date stored in the file
-                            Using srLastUsedfile = New StreamReader(New FileStream(lstLastUsedFiles.First.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                                If Not srLastUsedfile.EndOfStream Then
-                                    Dim strLastUseDate = srLastUsedfile.ReadLine()
-                                    Dim dtLastUsedActual As DateTime
-                                    If DateTime.TryParse(strLastUseDate, dtLastUsedActual) Then
-                                        dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual)
-                                    End If
-                                End If
-                            End Using
-                        Catch ex As Exception
-                            ' Ignore errors here
-                        End Try
-
-                    End If
-                    dctFastaFiles.Add(fiFile, dtLastUsed)
-                End If
-            Next
+            ' Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
+            Dim dctFastaFiles As Dictionary(Of FileInfo, DateTime) = GetFastaFilesByLastUse(diOrgDbFolder)
 
             Dim lstFastaFilesByLastUse = From item In dctFastaFiles Order By item.Value Select item.Key
+            Dim totalBytesPurged As Int64 = 0
 
             For Each fiFileToPurge In lstFastaFilesByLastUse
-                ' Abort this process if the LastUsed date of this file is less than 5 days old
+                ' Abort this process if the LastUsed date of this file is less than 3 days old
                 Dim dtLastUsed As DateTime
                 If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
-                    If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
-                        ReportStatus("All fasta files in " & localOrgDbFolder & " are less than 5 days old; will not purge any more files to free disk space")
+                    If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 3 Then
+                        ReportStatus("All fasta files in " & diOrgDbFolder.FullName & " are less than 3 days old; " &
+                                     "will not purge any more files to free disk space")
                         Exit For
                     End If
                 End If
 
-                Dim baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name)
-
-                If Not String.IsNullOrWhiteSpace(legacyFastaFileBaseName) AndAlso baseName.StartsWith(legacyFastaFileBaseName) Then
-                    ' The current job needs this file; do not delete it
-                    Continue For
-                End If
-
                 ' Delete all files associated with this fasta file
-                Dim lstFilesToDelete = New List(Of FileInfo)
-                lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName & ".*"))
-
-                If m_DebugLevel >= 1 Then
-                    Dim fileText = lstFilesToDelete.Count & " file"
-                    If lstFilesToDelete.Count <> 1 Then
-                        fileText &= "s"
-                    End If
-                    LogDebugMessage("Deleting " & fileText & " associated with " & fiFileToPurge.FullName)
-                End If
-
-                Try
-                    For Each fiFileToDelete In lstFilesToDelete
-                        fiFileToDelete.Delete()
-                    Next
-                Catch ex As Exception
-                    ReportStatus("Error in PurgeFastaFilesIfLowFreeSpace", ex)
-                End Try
+                ' However, do not delete it if the name starts with legacyFastaFileBaseName
+                Dim bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName)
+                totalBytesPurged += bytesDeleted
 
                 ' Re-check the disk free space
                 Dim percentFreeSpace = driveInfo.AvailableFreeSpace / CDbl(driveInfo.TotalSize) * 100
-                Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+                Dim freeSpaceGB = clsGlobal.BytesToGB(driveInfo.AvailableFreeSpace)
 
-                If requiredFreeSpaceMB > 0 AndAlso freeSpaceMB < requiredFreeSpaceMB Then
+                If requiredFreeSpaceMB > 0 AndAlso freeSpaceGB * 1024.0 < requiredFreeSpaceMB Then
                     ' Required free space is known, and we're not yet there
                     ' Keep deleting files
                     If m_DebugLevel >= 2 Then
-                        LogDebugMessage("Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) " &
-                                        "is now " & freeSpaceThresholdPercent & "% of the total space")
+                        LogDebugMessage(String.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space",
+                                                      driveInfo.Name, freeSpaceGB, percentFreeSpace))
                     End If
                 Else
                     ' Either required free space is not known, or we have more than enough free space
@@ -4483,30 +4530,142 @@ Public MustInherit Class clsAnalysisResources
                     If (percentFreeSpace >= freeSpaceThresholdPercent) Then
                         ' Target threshold reached
                         If m_DebugLevel >= 1 Then
-                            LogDebugMessage("Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) " &
-                                            "is now over " & freeSpaceThresholdPercent & "% of the total space")
+                            ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " &
+                                                       "deleted {3:F1} GB of cached files",
+                                                       driveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)))
                         End If
                         Exit Sub
                     ElseIf m_DebugLevel >= 2 Then
                         ' Keep deleting until we reach the target threshold for free space
-                        LogDebugMessage("Free space on " & driveInfo.Name & " (" & freeSpaceMB.ToString("#,##0") & " MB) " &
-                                        "is now " & freeSpaceThresholdPercent & "% of the total space")
+                        LogDebugMessage(String.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space",
+                                                      driveInfo.Name, freeSpaceGB, percentFreeSpace))
                     End If
                 End If
             Next
 
-            If m_DebugLevel >= 1 Then
-                Dim freeSpaceMB = driveInfo.AvailableFreeSpace / 1024.0 / 1024.0
+            ' We have deleted all of the files that can be deleted
+            Dim finalFreeSpaceGB = clsGlobal.BytesToGB(driveInfo.AvailableFreeSpace)
+            If requiredFreeSpaceMB > 0 AndAlso finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB Then
 
-                If requiredFreeSpaceMB > 0 AndAlso freeSpaceMB < requiredFreeSpaceMB Then
-                    ReportStatus("Warning: PurgeFastaFilesIfLowFreeSpace was not able to free up the required space on " & driveInfo.Name &
-                                 " (" & freeSpaceMB.ToString("#,##0") & " MB vs. " & requiredFreeSpaceMB.ToString("#,##0") & " MB required)")
-                End If
-
+                ReportStatus(String.Format("Warning: unable to delete enough files to free up the required space on {0} ({1:F1} GB vs. {2:F1} GB); " &
+                                           "deleted {3:F1} GB of cached files",
+                                           driveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)))
             End If
 
         Catch ex As Exception
             ReportStatus("Error in PurgeFastaFilesIfLowFreeSpace", ex)
+        End Try
+
+    End Sub
+
+    ''' <summary>
+    ''' Use the space usage defined in MaxDirSize.txt to decide if any FASTA files need to be deleted
+    ''' </summary>
+    ''' <param name="diOrgDbFolder">Local organism DB folder with FASTA files</param>
+    ''' <param name="legacyFastaFileBaseName">Base FASTA file name for the current analysis job</param>
+    Private Sub PurgeFastaFilesIfUsageOverThreshold(diOrgDbFolder As DirectoryInfo, legacyFastaFileBaseName As String)
+
+        Try
+            Dim errorSuffix = "; cannot manage drive space usage: " & diOrgDbFolder.FullName
+
+            Dim fiMaxDirSize = New FileInfo(Path.Combine(diOrgDbFolder.FullName, "MaxDirSize.txt"))
+            If Not fiMaxDirSize.Exists Then
+                LogError("Warning: Orb DB folder path does not have a colon and could not find file " & fiMaxDirSize.Name & errorSuffix)
+                Exit Sub
+            End If
+
+            Dim maxSizeGB = 0
+
+            Using reader = New StreamReader(New FileStream(fiMaxDirSize.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine
+                    If String.IsNullOrEmpty(dataLine) OrElse dataLine.StartsWith("#") Then
+                        Continue While
+                    End If
+
+                    Dim lineParts = dataLine.Split("="c)
+                    If lineParts.Count < 2 Then
+                        Continue While
+                    End If
+
+                    If String.Equals(lineParts(0), "MaxSizeGB", StringComparison.InvariantCultureIgnoreCase) Then
+                        If Not Integer.TryParse(lineParts(1), maxSizeGB) Then
+                            LogError("MaxSizeGB line does not contain an integer in " & fiMaxDirSize.FullName & errorSuffix)
+                            Exit Sub
+                        End If
+                        Exit While
+                    End If
+
+                End While
+            End Using
+
+            If maxSizeGB = 0 Then
+                LogError("MaxSizeGB line not found in " & fiMaxDirSize.FullName & errorSuffix)
+                Exit Sub
+            End If
+
+            Dim spaceUsageBytes As Int64 = 0
+
+            For Each fiFile In diOrgDbFolder.GetFiles("*", SearchOption.TopDirectoryOnly)
+                spaceUsageBytes += fiFile.Length
+            Next
+
+            Dim spaceUsageGB = clsGlobal.BytesToGB(spaceUsageBytes)
+            If spaceUsageGB <= maxSizeGB Then
+                ' Space usage is under the threshold
+                Dim statusMessage = String.Format("Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge",
+                                                  diOrgDbFolder.FullName, spaceUsageGB, maxSizeGB)
+                ReportStatus(statusMessage, 3)
+                Exit Sub
+            End If
+
+            ' Space usage is too high; need to purge some files
+            ' Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
+            Dim dctFastaFiles As Dictionary(Of FileInfo, DateTime) = GetFastaFilesByLastUse(diOrgDbFolder)
+
+            Dim lstFastaFilesByLastUse = From item In dctFastaFiles Order By item.Value Select item.Key
+
+            Dim bytesToPurge = CLng(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024)
+            Dim totalBytesPurged As Int64 = 0
+
+            For Each fiFileToPurge In lstFastaFilesByLastUse
+                ' Abort this process if the LastUsed date of this file is less than 5 days old
+                Dim dtLastUsed As DateTime
+                If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
+                    If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
+                        ReportStatus("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
+                                     "will not purge any more files to free disk space")
+                        Exit For
+                    End If
+                End If
+
+                ' Delete all files associated with this fasta file
+                ' However, do not delete it if the name starts with legacyFastaFileBaseName
+                Dim bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName)
+                totalBytesPurged += bytesDeleted
+
+                If totalBytesPurged < bytesToPurge Then
+                    ' Keep deleting files
+                    If m_DebugLevel >= 2 Then
+                        LogDebugMessage(String.Format("Purging FASTA files: {0:F1} / {1:F1} MB deleted",
+                                                      clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)))
+                    End If
+                Else
+                    ' Enough files have been deleted
+                    ReportStatus(String.Format("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
+                                               diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)))
+                    Exit Sub
+                End If
+            Next
+
+            If totalBytesPurged < bytesToPurge Then
+                ReportStatus(String.Format("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " &
+                                           "deleted {2:F1} GB of cached files",
+                                           diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)))
+            End If
+
+        Catch ex As Exception
+            ReportStatus("Error in PurgeFastaFilesIfUsageOverThreshold", ex)
         End Try
 
     End Sub
