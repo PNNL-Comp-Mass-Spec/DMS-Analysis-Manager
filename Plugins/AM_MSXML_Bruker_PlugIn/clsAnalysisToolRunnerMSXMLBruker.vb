@@ -1,4 +1,4 @@
-﻿'*********************************************************************************************************
+'*********************************************************************************************************
 ' Written by Matthew Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 03/30/2011
@@ -27,41 +27,41 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 
 #Region "Methods"
 
-	Protected Const MAX_CSV_FILES As Integer = 50
+    Protected Const MAX_CSV_FILES As Integer = 50
 
-	''' <summary>
-	''' Constructor
-	''' </summary>
-	''' <remarks>Presently not used</remarks>
-	Public Sub New()
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <remarks>Presently not used</remarks>
+    Public Sub New()
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Runs ReadW tool
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
-		Dim eResult As IJobParams.CloseOutType
-		Dim eReturnCode As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Runs ReadW tool
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
+        Dim eResult As IJobParams.CloseOutType
+        Dim eReturnCode As IJobParams.CloseOutType
 
-		' Set this to success for now
-		eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        ' Set this to success for now
+        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-		'Do the base class stuff
-		If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        'Do the base class stuff
+        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Store the CompassXport version info in the database
-		If Not StoreToolVersionInfo() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			If String.IsNullOrEmpty(m_message) Then
-				m_message = "Error determining CompassXport version"
-			End If
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Store the CompassXport version info in the database
+        If Not StoreToolVersionInfo() Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+            If String.IsNullOrEmpty(m_message) Then
+                m_message = "Error determining CompassXport version"
+            End If
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         Dim msXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
         mMSXmlCacheFolder = New DirectoryInfo(msXMLCacheFolderPath)
@@ -71,25 +71,25 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-		Dim processingErrorMessage As String = String.empty
+        Dim processingErrorMessage As String = String.empty
         Dim fiResultsFile As FileInfo = Nothing
 
         eResult = CreateMSXmlFile(fiResultsFile)
 
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Something went wrong
-			' In order to help diagnose things, we will move whatever files were created into the eResult folder, 
-			'  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			If String.IsNullOrEmpty(m_message) Then
-				m_message = "Error running CompassXport"
-			End If
-			processingErrorMessage = String.copy(m_message)
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Something went wrong
+            ' In order to help diagnose things, we will move whatever files were created into the eResult folder, 
+            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If String.IsNullOrEmpty(m_message) Then
+                m_message = "Error running CompassXport"
+            End If
+            processingErrorMessage = String.copy(m_message)
 
-			If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
-				eReturnCode = eResult
-			Else
-				eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                eReturnCode = eResult
+            Else
+                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
         Else
             ' Gzip the .mzML or .mzXML file then copy to the server cache
             eReturnCode = PostProcessMsXmlFile(fiResultsFile)

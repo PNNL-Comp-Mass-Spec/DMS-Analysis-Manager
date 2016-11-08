@@ -58,11 +58,11 @@ Public Class clsAnalysisToolRunnerMultiAlign
         End If
 
         ' Store the MultiAlign version info in the database
-		If Not StoreToolVersionInfo(progLoc) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			m_message = "Error determining MultiAlign version"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not StoreToolVersionInfo(progLoc) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+            m_message = "Error determining MultiAlign version"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         ' Note that MultiAlign will append ".db3" to this filename
         Dim MultiAlignDatabaseName As String = String.Copy(m_Dataset)
@@ -154,13 +154,13 @@ Public Class clsAnalysisToolRunnerMultiAlign
         Dim LogNameFilter As String = m_Dataset & ".db3-log*.txt"
         Try
             'Get the log file name.  There should only be one log file
-			Files = System.IO.Directory.GetFiles(m_WorkDir, LogNameFilter)
+            Files = System.IO.Directory.GetFiles(m_WorkDir, LogNameFilter)
             'go through each log file found.  Again, there should only be one log file
             For Each TmpFile In Files
                 'Check to see if the log file exists.  If so, only rename one of them
-				If Not System.IO.File.Exists(NewFilename) Then
-					My.Computer.FileSystem.RenameFile(TmpFile, NewFilename)
-				End If
+                If Not System.IO.File.Exists(NewFilename) Then
+                    My.Computer.FileSystem.RenameFile(TmpFile, NewFilename)
+                End If
             Next
 
         Catch ex As Exception
@@ -220,41 +220,41 @@ Public Class clsAnalysisToolRunnerMultiAlign
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioMultiAlignProg As System.IO.FileInfo
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
         ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
-		If Not ioMultiAlignProg.Exists Then
-			Try
-				strToolVersionInfo = "Unknown"
-				MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo), blnSaveToolVersionTextFile:=False)
-			Catch ex As Exception
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-				Return False
-			End Try
+        If Not ioMultiAlignProg.Exists Then
+            Try
+                strToolVersionInfo = "Unknown"
+                MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo), blnSaveToolVersionTextFile:=False)
+            Catch ex As Exception
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+                Return False
+            End Try
 
-			Return False
-		End If
+            Return False
+        End If
 
         ' Lookup the version of MultiAlign 
-		blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, ioMultiAlignProg.FullName)
-		If Not blnSuccess Then Return False
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, ioMultiAlignProg.FullName)
+        If Not blnSuccess Then Return False
 
         ' Lookup the version of additional DLLs
-		blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
-		If Not blnSuccess Then Return False
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
+        If Not blnSuccess Then Return False
 
-		blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
-		If Not blnSuccess Then Return False
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
+        If Not blnSuccess Then Return False
 
-		blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignCore.dll"))
-		If Not blnSuccess Then Return False
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignCore.dll"))
+        If Not blnSuccess Then Return False
 
-		blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
-		If Not blnSuccess Then Return False
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
+        If Not blnSuccess Then Return False
 
         ' Store paths to key DLLs in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
@@ -262,7 +262,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
         ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")))
 
         Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False

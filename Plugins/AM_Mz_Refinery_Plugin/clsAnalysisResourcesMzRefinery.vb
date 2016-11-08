@@ -1,10 +1,10 @@
-﻿Option Strict On
+Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsAnalysisResourcesMzRefinery
-	Inherits clsAnalysisResources
+    Inherits clsAnalysisResources
 
 #Region "Methods"
 
@@ -13,24 +13,24 @@ Public Class clsAnalysisResourcesMzRefinery
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-	''' <summary>
-	''' Retrieves files necessary for running MzRefinery
-	''' </summary>
-	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Retrieves files necessary for running MzRefinery
+    ''' </summary>
+    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim currentTask As String = "Initializing"
+        Dim currentTask As String = "Initializing"
 
-		Try
+        Try
 
-			Dim mzRefParamFile = m_jobParams.GetJobParameter("MzRefParamFile", String.Empty)
-			If String.IsNullOrEmpty(mzRefParamFile) Then
-				LogError("MzRefParamFile parameter is empty")
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            Dim mzRefParamFile = m_jobParams.GetJobParameter("MzRefParamFile", String.Empty)
+            If String.IsNullOrEmpty(mzRefParamFile) Then
+                LogError("MzRefParamFile parameter is empty")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			currentTask = "Get Input file"
+            currentTask = "Get Input file"
 
             Dim eResult As IJobParams.CloseOutType
             eResult = GetMsXmlFile()
@@ -76,7 +76,7 @@ Public Class clsAnalysisResourcesMzRefinery
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -85,73 +85,73 @@ Public Class clsAnalysisResourcesMzRefinery
     ''' </summary>
     ''' <returns>True if no errors, false if a problem</returns>
     ''' <remarks>Will retrun True even if existing results are not found</remarks>
-	Private Function FindExistingMSGFPlusResults(ByVal mzRefParamFileName As String) As Boolean
+    Private Function FindExistingMSGFPlusResults(ByVal mzRefParamFileName As String) As Boolean
 
-		Dim resultsFolderName = m_jobParams.GetParam("OutputFolderName")
-		Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")
+        Dim resultsFolderName = m_jobParams.GetParam("OutputFolderName")
+        Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")
 
-		If String.IsNullOrWhiteSpace(resultsFolderName) Then
-			m_message = "Results folder not defined (job parameter OutputFolderName)"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+        If String.IsNullOrWhiteSpace(resultsFolderName) Then
+            m_message = "Results folder not defined (job parameter OutputFolderName)"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
+        End If
 
-		If String.IsNullOrWhiteSpace(transferFolderPath) Then
-			m_message = "Transfer folder not defined (job parameter transferFolderPath)"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+        If String.IsNullOrWhiteSpace(transferFolderPath) Then
+            m_message = "Transfer folder not defined (job parameter transferFolderPath)"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
+        End If
 
-		Dim diTransferFolder = New DirectoryInfo(Path.Combine(transferFolderPath, m_DatasetName, resultsFolderName))
-		If Not diTransferFolder.Exists Then
-			' This is not an error -- it just means there are no existing MSGF+ results to use
-			Return True
-		End If
+        Dim diTransferFolder = New DirectoryInfo(Path.Combine(transferFolderPath, m_DatasetName, resultsFolderName))
+        If Not diTransferFolder.Exists Then
+            ' This is not an error -- it just means there are no existing MSGF+ results to use
+            Return True
+        End If
 
-		' Look for the required files in the transfer folder
-		Dim resultsFileName = m_DatasetName & clsAnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX & ".gz"
-		Dim fiMSGFPlusResults = New FileInfo(Path.Combine(diTransferFolder.FullName, resultsFileName))
+        ' Look for the required files in the transfer folder
+        Dim resultsFileName = m_DatasetName & clsAnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX & ".gz"
+        Dim fiMSGFPlusResults = New FileInfo(Path.Combine(diTransferFolder.FullName, resultsFileName))
 
-		If Not fiMSGFPlusResults.Exists Then
-			' This is not an error -- it just means there are no existing MSGF+ results to use
-			Return True
-		End If
+        If Not fiMSGFPlusResults.Exists Then
+            ' This is not an error -- it just means there are no existing MSGF+ results to use
+            Return True
+        End If
 
-		Dim fiMSGFPlusConsoleOutput = New FileInfo(Path.Combine(diTransferFolder.FullName, "MSGFDB_ConsoleOutput.txt"))
-		If Not fiMSGFPlusResults.Exists Then
-			' This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " & fiMSGFPlusResults.FullName & " but did not find " & fiMSGFPlusConsoleOutput.Name & "; will re-run MSGF+")
-			Return True
-		End If
+        Dim fiMSGFPlusConsoleOutput = New FileInfo(Path.Combine(diTransferFolder.FullName, "MSGFDB_ConsoleOutput.txt"))
+        If Not fiMSGFPlusResults.Exists Then
+            ' This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " & fiMSGFPlusResults.FullName & " but did not find " & fiMSGFPlusConsoleOutput.Name & "; will re-run MSGF+")
+            Return True
+        End If
 
-		Dim fiMzRefParamFile = New FileInfo(Path.Combine(diTransferFolder.FullName, mzRefParamFileName))
-		If Not fiMzRefParamFile.Exists Then
-			' This is unusual; typically if the mzid.gz file exists there should be a MzRefinery parameter file
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " & fiMSGFPlusResults.FullName & " but did not find " & fiMzRefParamFile.Name & "; will re-run MSGF+")
-			Return True
-		End If
+        Dim fiMzRefParamFile = New FileInfo(Path.Combine(diTransferFolder.FullName, mzRefParamFileName))
+        If Not fiMzRefParamFile.Exists Then
+            ' This is unusual; typically if the mzid.gz file exists there should be a MzRefinery parameter file
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " & fiMSGFPlusResults.FullName & " but did not find " & fiMzRefParamFile.Name & "; will re-run MSGF+")
+            Return True
+        End If
 
-		' Compare the remote parameter file and the local one to make sure they match
-		If Not clsGlobal.TextFilesMatch(fiMzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), True) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefinery parameter file in transfer folder does not match the official MzRefinery paramter file; will re-run MSGF+")
-			Return True
-		End If
+        ' Compare the remote parameter file and the local one to make sure they match
+        If Not clsGlobal.TextFilesMatch(fiMzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), True) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefinery parameter file in transfer folder does not match the official MzRefinery paramter file; will re-run MSGF+")
+            Return True
+        End If
 
         ' Existing results found
-		' Copy the MSGF+ results locally
-		Dim localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusResults.Name)
-		fiMSGFPlusResults.CopyTo(localFilePath, True)
+        ' Copy the MSGF+ results locally
+        Dim localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusResults.Name)
+        fiMSGFPlusResults.CopyTo(localFilePath, True)
 
-		m_IonicZipTools.GUnzipFile(localFilePath)
+        m_IonicZipTools.GUnzipFile(localFilePath)
 
-		localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusConsoleOutput.Name)
-		fiMSGFPlusConsoleOutput.CopyTo(localFilePath, True)
+        localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusConsoleOutput.Name)
+        fiMSGFPlusConsoleOutput.CopyTo(localFilePath, True)
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found existing MSGF+ results to use for MzRefinery")
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
 #End Region
 

@@ -12,28 +12,28 @@ Option Strict On
 Imports System.Runtime.Remoting.Lifetime
 
 Public Class clsDecon2LSRemoter
-	Inherits MarshalByRefObject
-	Implements IDisposable
+    Inherits MarshalByRefObject
+    Implements IDisposable
 
-	'*********************************************************************************************************
-	'Provides remotable wrapper around Decon2LS to protect main program from impact of possible future changes
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Provides remotable wrapper around Decon2LS to protect main program from impact of possible future changes
+    '*********************************************************************************************************
 
 #Region "Module variables"
     Dim m_DeconObj As DMSDeconToolsV2.DMSDecon2LSWrapper
-	Dim m_ErrMsg As String = ""
-	Dim m_StillInUse As Boolean = True
+    Dim m_ErrMsg As String = ""
+    Dim m_StillInUse As Boolean = True
 #End Region
 
 #Region "Properties"
-	Public Property DataFile() As String
+    Public Property DataFile() As String
         Get
             Return m_DeconObj.DataFile
         End Get
-		Set(ByVal Value As String)
-			m_DeconObj.DataFile = Value
-		End Set
-	End Property
+        Set(ByVal Value As String)
+            m_DeconObj.DataFile = Value
+        End Set
+    End Property
 
     Public Property DeconFileType() As DeconToolsV2.Readers.FileType
         Get
@@ -44,23 +44,23 @@ Public Class clsDecon2LSRemoter
         End Set
     End Property
 
-	Public Property OutFile() As String
-		Get
-			Return m_DeconObj.OutFile
-		End Get
-		Set(ByVal Value As String)
-			m_DeconObj.OutFile = Value
-		End Set
-	End Property
+    Public Property OutFile() As String
+        Get
+            Return m_DeconObj.OutFile
+        End Get
+        Set(ByVal Value As String)
+            m_DeconObj.OutFile = Value
+        End Set
+    End Property
 
-	Public Property ParamFile() As String
-		Get
-			Return m_DeconObj.ParameterFile
-		End Get
-		Set(ByVal Value As String)
-			m_DeconObj.ParameterFile = Value
-		End Set
-	End Property
+    Public Property ParamFile() As String
+        Get
+            Return m_DeconObj.ParameterFile
+        End Get
+        Set(ByVal Value As String)
+            m_DeconObj.ParameterFile = Value
+        End Set
+    End Property
 
     Public ReadOnly Property PercentDone() As Single
         Get
@@ -74,56 +74,56 @@ Public Class clsDecon2LSRemoter
         End Get
     End Property
 
-	Public ReadOnly Property ErrMsg() As String
-		Get
-			Return m_ErrMsg
-		End Get
-	End Property
+    Public ReadOnly Property ErrMsg() As String
+        Get
+            Return m_ErrMsg
+        End Get
+    End Property
 
-	Public ReadOnly Property CurrentScan() As Integer
-		Get
-			Return m_DeconObj.CurrentScan
-		End Get
-	End Property
+    Public ReadOnly Property CurrentScan() As Integer
+        Get
+            Return m_DeconObj.CurrentScan
+        End Get
+    End Property
 
-	Public ReadOnly Property StillInUse() As Boolean
-		Get
-			Return m_StillInUse
-		End Get
-	End Property
+    Public ReadOnly Property StillInUse() As Boolean
+        Get
+            Return m_StillInUse
+        End Get
+    End Property
 #End Region
 
 #Region "Methods"
-	Public Sub New()
+    Public Sub New()
 
-		'Constructor
-		System.Console.WriteLine(System.DateTime.Now().ToString & ": Instantiating Remote Class")
+        'Constructor
+        System.Console.WriteLine(System.DateTime.Now().ToString & ": Instantiating Remote Class")
         m_DeconObj = New DMSDeconToolsV2.DMSDecon2LSWrapper
 
-	End Sub
+    End Sub
 
-	Public Sub Dispose() Implements IDisposable.Dispose
+    Public Sub Dispose() Implements IDisposable.Dispose
 
-		'Allow calling program to make sure the Decon2LS object is released
-		System.Console.WriteLine(System.DateTime.Now().ToString & ": Disposing Remote Class")
-		m_DeconObj = Nothing
+        'Allow calling program to make sure the Decon2LS object is released
+        System.Console.WriteLine(System.DateTime.Now().ToString & ": Disposing Remote Class")
+        m_DeconObj = Nothing
 
-	End Sub
+    End Sub
 
-	Public Overloads Sub CreateTIC()
+    Public Overloads Sub CreateTIC()
 
-		'Assumes the parameters have already been setup prior to calling this method. NOTE: If ResetState has been called, parameters will be null!
-		'
-		'The Try...Catch loop merely handles any Decon2LS exceptions gracefully and provides a means for the user to find out what happened.
-		'	It's assumed that the calling program will be able to detect that the Decon2LS state is "ERROR", and take appropriate action from there
+        'Assumes the parameters have already been setup prior to calling this method. NOTE: If ResetState has been called, parameters will be null!
+        '
+        'The Try...Catch loop merely handles any Decon2LS exceptions gracefully and provides a means for the user to find out what happened.
+        '	It's assumed that the calling program will be able to detect that the Decon2LS state is "ERROR", and take appropriate action from there
 
-		Try
-			m_DeconObj.CreateTic()
-		Catch ex As System.Exception
-			m_ErrMsg = ex.Message
-		End Try
+        Try
+            m_DeconObj.CreateTic()
+        Catch ex As System.Exception
+            m_ErrMsg = ex.Message
+        End Try
 
-	End Sub
+    End Sub
 
     Public Overloads Sub CreateTIC(ByVal DataFile As String, ByVal FileType As DeconToolsV2.Readers.FileType, _
    ByVal OutFile As String, ByVal ParameterFile As String)
@@ -198,9 +198,9 @@ Public Class clsDecon2LSRemoter
 
     End Sub
 
-	Public Sub ResetState()
+    Public Sub ResetState()
 
-		'Resets the Decon2LS object. Resets internal state to IDLE, stops threaded processes, and sets the parameters to null
+        'Resets the Decon2LS object. Resets internal state to IDLE, stops threaded processes, and sets the parameters to null
         Try
             'Reset the object
             m_DeconObj.ResetState()
@@ -208,23 +208,23 @@ Public Class clsDecon2LSRemoter
             m_ErrMsg = "Error calling m_DeconObj.ResetState: " & ex.Message
         End Try
 
-	End Sub
+    End Sub
 
-	Public Overrides Function InitializeLifetimeService() As Object
+    Public Overrides Function InitializeLifetimeService() As Object
 
-		'Sets remote object lifetime
+        'Sets remote object lifetime
 
-		'Dim lease As ILease = CType(MyBase.InitializeLifetimeService(), ILease)
-		'If lease.CurrentState = LeaseState.Initial Then
-		'	lease.InitialLeaseTime = TimeSpan.FromMinutes(1)
-		'	lease.SponsorshipTimeout = TimeSpan.FromMinutes(2)
-		'	lease.RenewOnCallTime = TimeSpan.FromSeconds(2)
-		'End If
-		'Return lease
+        'Dim lease As ILease = CType(MyBase.InitializeLifetimeService(), ILease)
+        'If lease.CurrentState = LeaseState.Initial Then
+        '	lease.InitialLeaseTime = TimeSpan.FromMinutes(1)
+        '	lease.SponsorshipTimeout = TimeSpan.FromMinutes(2)
+        '	lease.RenewOnCallTime = TimeSpan.FromSeconds(2)
+        'End If
+        'Return lease
 
-		'Attempt to set an infinite object lifetime
-		Return Nothing
-	End Function
+        'Attempt to set an infinite object lifetime
+        Return Nothing
+    End Function
 
 #End Region
 

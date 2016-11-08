@@ -57,21 +57,21 @@ Public Class clsAnalysisToolRunnerDtaSplit
             MyBase.RunTool()
 
             ' Store the AnalysisManager version info in the database
-			If Not StoreToolVersionInfo() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-				m_message = "Error determining DtaSplit version"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If Not StoreToolVersionInfo() Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+                m_message = "Error determining DtaSplit version"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			strCDTAFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
+            strCDTAFile = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
             ' Make sure the _DTA.txt file is valid
-			If Not ValidateCDTAFile() Then
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
-			End If
+            If Not ValidateCDTAFile() Then
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+            End If
 
             Try
-				intSegmentCountToCreate = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0)
+                intSegmentCountToCreate = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0)
                 If intSegmentCountToCreate = 0 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4")
                     intSegmentCountToCreate = 4
@@ -297,28 +297,28 @@ Public Class clsAnalysisToolRunnerDtaSplit
             End If
 
             ' Open the input file
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+            Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
-				Do While srInFile.Peek() > -1
-					strLineIn = srInFile.ReadLine
+                Do While srInFile.Peek() > -1
+                    strLineIn = srInFile.ReadLine
 
-					splitMatch = Me.r_FileSeparator.Match(strLineIn)
-					If splitMatch.Success Then
-						intSpectraCount += 1
-					End If
-				Loop
+                    splitMatch = Me.r_FileSeparator.Match(strLineIn)
+                    If splitMatch.Success Then
+                        intSpectraCount += 1
+                    End If
+                Loop
 
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Spectrum count in source _Dta.txt file: " & intSpectraCount)
-				End If
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Spectrum count in source _Dta.txt file: " & intSpectraCount)
+                End If
 
-			End Using
+            End Using
 
         Catch ex As Exception
-			If strSourceFilePath Is Nothing Then strSourceFilePath = "??"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error counting the number of spectra in '" & strSourceFilePath & "'; " & ex.Message)
-			intSpectraCount = 0
-		End Try
+            If strSourceFilePath Is Nothing Then strSourceFilePath = "??"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error counting the number of spectra in '" & strSourceFilePath & "'; " & ex.Message)
+            intSpectraCount = 0
+        End Try
 
         Return intSpectraCount
 
@@ -357,8 +357,8 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Dim strFileName As String
         Dim strFilePath As String
 
-		strFileName = m_Dataset + "_" + CStr(fileNameCounter) + "_dta.txt"
-		m_jobParams.AddResultFileToKeep(strFileName)
+        strFileName = m_Dataset + "_" + CStr(fileNameCounter) + "_dta.txt"
+        m_jobParams.AddResultFileToKeep(strFileName)
 
         strFilePath = System.IO.Path.Combine(m_WorkDir, strFileName)
 
@@ -417,14 +417,14 @@ Public Class clsAnalysisToolRunnerDtaSplit
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-		' Lookup the version of the AnalysisManagerDtaSplitPlugIn
-		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerDtaSplitPlugIn") Then
-			Return False
-		End If
+        ' Lookup the version of the AnalysisManagerDtaSplitPlugIn
+        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerDtaSplitPlugIn") Then
+            Return False
+        End If
 
-		' Store the path to AnalysisManagerDtaSplitPlugIn.dll in ioToolFiles
+        ' Store the path to AnalysisManagerDtaSplitPlugIn.dll in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(clsGlobal.GetAppFolderPath(), "AnalysisManagerDtaSplitPlugIn.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(clsGlobal.GetAppFolderPath(), "AnalysisManagerDtaSplitPlugIn.dll")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)

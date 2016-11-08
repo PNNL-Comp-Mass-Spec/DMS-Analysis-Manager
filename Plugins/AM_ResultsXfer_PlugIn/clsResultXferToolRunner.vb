@@ -1,4 +1,4 @@
-﻿'*********************************************************************************************************
+'*********************************************************************************************************
 ' Written by Dave Clark for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2008, Battelle Memorial Institute
@@ -15,54 +15,54 @@ Imports System.Threading
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsResultXferToolRunner
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
 #Region "Methods"
-	''' <summary>
-	''' Runs the results transfer tool
-	''' </summary>
-	''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Runs the results transfer tool
+    ''' </summary>
+    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim Result As IJobParams.CloseOutType
+        Dim Result As IJobParams.CloseOutType
 
-		Try
-			'Call base class for initial setup
-			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+        Try
+            'Call base class for initial setup
+            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' Store the AnalysisManager version info in the database
-			If Not StoreToolVersionInfo() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-				m_message = "Error determining AnalysisManager version"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' Store the AnalysisManager version info in the database
+            If Not StoreToolVersionInfo() Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+                m_message = "Error determining AnalysisManager version"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' Transfer the results
-			Result = PerformResultsXfer()
-			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Unknown error calling PerformResultsXfer"
-				End If
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' Transfer the results
+            Result = PerformResultsXfer()
+            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If String.IsNullOrEmpty(m_message) Then
+                    m_message = "Unknown error calling PerformResultsXfer"
+                End If
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			DeleteTransferFolderIfEmpty()
+            DeleteTransferFolderIfEmpty()
 
-			'Stop the job timer
-			m_StopTime = DateTime.UtcNow
+            'Stop the job timer
+            m_StopTime = DateTime.UtcNow
 
-		Catch ex As Exception
-			m_message = "Error in ResultsXferPlugin->RunTool: " & ex.Message
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+        Catch ex As Exception
+            m_message = "Error in ResultsXferPlugin->RunTool: " & ex.Message
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
-		'If we got to here, everything worked, so exit
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        'If we got to here, everything worked, so exit
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
     Protected Function ChangeFolderPathsToLocal(serverName As String, ByRef transferFolderPath As String, ByRef datasetStoragePath As String) As Boolean
 
@@ -452,42 +452,42 @@ Public Class clsResultXferToolRunner
 
     End Function
 
-	''' <summary>
-	''' Stores the tool version info in the database
-	''' </summary>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfo() As Boolean
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
 
-		Dim strToolVersionInfo As String = String.Empty
-		Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
+        Dim strToolVersionInfo As String = String.Empty
+        Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
 
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-		End If
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
 
-		' Lookup the version of the Analysis Manager
-		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerProg") Then
-			Return False
-		End If
+        ' Lookup the version of the Analysis Manager
+        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerProg") Then
+            Return False
+        End If
 
-		' Lookup the version of AnalysisManagerResultsXferPlugin
-		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerResultsXferPlugin") Then
-			Return False
-		End If
+        ' Lookup the version of AnalysisManagerResultsXferPlugin
+        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerResultsXferPlugin") Then
+            Return False
+        End If
 
-		' Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
-		Dim ioToolFiles As New List(Of FileInfo)
-		ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")))
-		ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsXferPlugin.dll")))
+        ' Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
+        Dim ioToolFiles As New List(Of FileInfo)
+        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")))
+        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsXferPlugin.dll")))
 
-		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, False)
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-			Return False
-		End Try
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, False)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
-	End Function
+    End Function
 
 #End Region
 

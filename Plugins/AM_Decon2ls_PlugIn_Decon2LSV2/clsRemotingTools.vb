@@ -17,32 +17,32 @@ Imports AnalysisManagerBase
 
 Public Class clsRemotingTools
 
-	'*********************************************************************************************************
-	'Class to provide tools for operations performed by .Net Remoting. Primary tools are remoting
-	'server startup/shutdown.
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Class to provide tools for operations performed by .Net Remoting. Primary tools are remoting
+    'server startup/shutdown.
+    '*********************************************************************************************************
 
 #Region "Constants"
-	'	Const SVR_CHAN As Integer = 54321
-	Const SVR_FILE_NAME As String = "Decon2LSCAOServer.exe"
-	Const FLAG_FILE_NAME As String = "FlagFile_Svr.txt"
+    '	Const SVR_CHAN As Integer = 54321
+    Const SVR_FILE_NAME As String = "Decon2LSCAOServer.exe"
+    Const FLAG_FILE_NAME As String = "FlagFile_Svr.txt"
 #End Region
 
 #Region "Module variables"
     Protected m_ToolObj As Decon2LSRemoter.clsDecon2LSRemoter    'Remote class for execution of Decon2LS via .Net remoting
-	Protected m_Decon2LSRunner As clsProgRunner
+    Protected m_Decon2LSRunner As clsProgRunner
     Protected m_Channel As System.Runtime.Remoting.Channels.Tcp.TcpClientChannel
     Protected m_DebugLevel As Integer
-	Protected m_ErrMsg As String = ""
-	Protected m_TcpPort As Integer = 0
+    Protected m_ErrMsg As String = ""
+    Protected m_TcpPort As Integer = 0
 #End Region
 
 #Region "Properties"
-	Public ReadOnly Property ErrMsg() As String
-		Get
-			Return m_ErrMsg
-		End Get
-	End Property
+    Public ReadOnly Property ErrMsg() As String
+        Get
+            Return m_ErrMsg
+        End Get
+    End Property
 #End Region
 
 #Region "Methods"
@@ -53,32 +53,32 @@ Public Class clsRemotingTools
 
     End Sub
 
-	Public Function StartSvr() As Boolean
+    Public Function StartSvr() As Boolean
 
         Dim strOutputFolderPath As String
 
-		'Starts the .Net Remoting CAO server
+        'Starts the .Net Remoting CAO server
 
-		If m_DebugLevel > 3 Then
+        If m_DebugLevel > 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.Setup(); initializing Remoting")
         End If
 
-		'Initialize the remoting setup
-		'Register a TCP client channel
+        'Initialize the remoting setup
+        'Register a TCP client channel
         m_Channel = New System.Runtime.Remoting.Channels.Tcp.TcpClientChannel
 
         System.Runtime.Remoting.Channels.ChannelServices.RegisterChannel(m_Channel, False)
 
-		'Register the remote class as a valid type in the client's app domain by passing
-		'the Remote class and its URL (it will be instantiated later)
+        'Register the remote class as a valid type in the client's app domain by passing
+        'the Remote class and its URL (it will be instantiated later)
         Dim MyTypeEntry As System.Runtime.Remoting.ActivatedClientTypeEntry = System.Runtime.Remoting.RemotingConfiguration.IsRemotelyActivatedClientType(GetType(Decon2LSRemoter.clsDecon2LSRemoter))
-		If MyTypeEntry Is Nothing Then
+        If MyTypeEntry Is Nothing Then
             System.Runtime.Remoting.RemotingConfiguration.RegisterActivatedClientType(GetType(Decon2LSRemoter.clsDecon2LSRemoter), "tcp://localhost:" & m_TcpPort.ToString)
-		End If
+        End If
 
-		'Start the remoting service via a ProgRunner
-		Try
-			m_Decon2LSRunner = New clsProgRunner
+        'Start the remoting service via a ProgRunner
+        Try
+            m_Decon2LSRunner = New clsProgRunner
             strOutputFolderPath = System.IO.Path.GetDirectoryName(clsGlobal.AppFilePath)
             If strOutputFolderPath.IndexOf(" ") >= 0 Then
                 strOutputFolderPath = """" & strOutputFolderPath & """"
@@ -96,39 +96,39 @@ Public Class clsRemotingTools
                 .WorkDir = System.IO.Path.GetDirectoryName(clsGlobal.AppFilePath)
                 .NotifyOnException = True
             End With
-			m_Decon2LSRunner.StartAndMonitorProgram()
-			If m_DebugLevel > 3 Then
+            m_Decon2LSRunner.StartAndMonitorProgram()
+            If m_DebugLevel > 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.Setup(); Remoting server started")
             End If
-			Return True
-		Catch Ex As System.Exception
+            Return True
+        Catch Ex As System.Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2LSBase.Setup(); Remoting server startup error: " & Ex.Message & "; " & clsGlobal.GetExceptionStackTrace(Ex))
             Return False
-		End Try
+        End Try
 
-	End Function
+    End Function
 
-	Public Function StopSvr() As Boolean
+    Public Function StopSvr() As Boolean
 
-		'Stops the .Net remoting server
+        'Stops the .Net remoting server
 
-		'Unregister the TCP channel that was used for communication with the remoting server
+        'Unregister the TCP channel that was used for communication with the remoting server
         System.Runtime.Remoting.Channels.ChannelServices.UnregisterChannel(m_Channel)
 
-		'Stop the remoting server process, which releases file lock on raw data file
-		'Stopping server is accomplished by deleting the flag file that was created by the server process
-		Try
+        'Stop the remoting server process, which releases file lock on raw data file
+        'Stopping server is accomplished by deleting the flag file that was created by the server process
+        Try
             System.IO.File.Delete(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(clsGlobal.AppFilePath), FLAG_FILE_NAME))
-		Catch ex As System.Exception
+        Catch ex As System.Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRemotingTools.StopSvr(), Problem deleting remoting server flag file: " & ex.Message)
             Return False
-		End Try
+        End Try
 
-		System.Threading.Thread.Sleep(5000)		'Wait 5 seconds to ensure process has stopped
-		m_Decon2LSRunner.StopMonitoringProgram(False)
-		Return True
+        System.Threading.Thread.Sleep(5000)		'Wait 5 seconds to ensure process has stopped
+        m_Decon2LSRunner.StopMonitoringProgram(False)
+        Return True
 
-	End Function
+    End Function
 
 #End Region
 

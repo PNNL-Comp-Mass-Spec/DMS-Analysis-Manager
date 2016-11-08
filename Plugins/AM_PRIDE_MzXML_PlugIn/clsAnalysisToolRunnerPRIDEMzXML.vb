@@ -40,11 +40,11 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         End If
 
         ' Store the MSDataFileTrimmer version info in the database
-		If Not StoreToolVersionInfo() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			m_message = "Error determining MSDataFileTrimmer version"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not StoreToolVersionInfo() Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+            m_message = "Error determining MSDataFileTrimmer version"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDataFileTrimmer")
@@ -100,8 +100,8 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         System.Threading.Thread.Sleep(500)        ' 500 msec delay
         PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-		' Override the dataset name and transfer folder path so that the results get copied to the correct location
-		MyBase.RedefineAggregationJobDatasetAndTransferFolder()
+        ' Override the dataset name and transfer folder path so that the results get copied to the correct location
+        MyBase.RedefineAggregationJobDatasetAndTransferFolder()
 
         result = MakeResultsFolder()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -167,42 +167,42 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
 
     End Sub
 
-	''' <summary>
-	''' Stores the tool version info in the database
-	''' </summary>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfo() As Boolean
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
 
-		Dim strToolVersionInfo As String = String.Empty
+        Dim strToolVersionInfo As String = String.Empty
 
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-		End If
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
 
-		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")))
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")))
 
-		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-			Return False
-		End Try
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Event handler for CmdRunner.LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    ''' <summary>
+    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
         UpdateStatusFile(PROGRESS_PCT_PRIDEMZXML_RUNNING)
 
         LogProgress("PrideMzXML")
 
-	End Sub
+    End Sub
 
 #End Region
 

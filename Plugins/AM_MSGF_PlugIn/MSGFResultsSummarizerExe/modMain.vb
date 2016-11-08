@@ -1,4 +1,4 @@
-﻿Option Strict On
+Option Strict On
 
 ' This program parses MSGF synopsis file results to summarize the number of identified peptides and proteins
 ' It creates a text result file and posts the results to the DMS database
@@ -19,23 +19,23 @@ Module modMain
     Private Const PROGRAM_DATE As String = "September 30, 2016"
 
     Private mMSGFSynFilePath As String = String.Empty
-	Private mInputFolderPath As String = String.Empty
-	Private mOutputFolderPath As String = String.Empty
+    Private mInputFolderPath As String = String.Empty
+    Private mOutputFolderPath As String = String.Empty
 
-	Private mDatasetName As String = String.Empty
+    Private mDatasetName As String = String.Empty
     Private mContactDatabase As Boolean = True
 
-	Private mJob As Integer = 0
+    Private mJob As Integer = 0
     Private mSaveResultsAsText As Boolean = True
-	Private mPostResultsToDb As Boolean = False
+    Private mPostResultsToDb As Boolean = False
 
-	Public Function Main() As Integer
+    Public Function Main() As Integer
         ' Returns 0 if no error, error code if an error
 
         Dim objParseCommandLine As New clsParseCommandLine
         Dim blnProceed As Boolean
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
         Try
             blnProceed = False
@@ -348,49 +348,49 @@ Module modMain
 
     Private Sub ShowProgramHelp()
 
-		Try
+        Try
 
-			Console.WriteLine("This program parses MSGF synopsis file results to summarize the number of identified peptides and proteins")
-			Console.WriteLine("It creates a text result file and optionally posts the results to the DMS database")
-			Console.WriteLine("Peptides are first filtered on MSGF_SpecProb < 1E-10")
-			Console.WriteLine("They are next filtered on FDR < 1%")
-			Console.WriteLine()
-			Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(Reflection.Assembly.GetExecutingAssembly().Location))
-			Console.WriteLine(" [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName]")
-			Console.WriteLine(" [/Job:JobNumber] [/O:OutputFolderPath] [/NoText] [/DB]")
-			Console.WriteLine()
-			Console.WriteLine("MSGFSynFilePath defines the data file to process, for example QC_Shew_11_06_pt5_c_21Feb12_Sphinx_11-08-09_syn_MSGF.txt")
-			Console.WriteLine("The name of the source file will be auto-determined if the input folder is defined via /Folder")
-			Console.WriteLine()
-			Console.WriteLine("/Folder defines the input folder to process (and also to create the text result file in if /O is not used)")
-			Console.WriteLine()
-			Console.WriteLine("/Dataset defines the dataset name; if /Dataset is not used, then the name will be auto-determined")
-			Console.WriteLine()
-			Console.WriteLine("/Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input folder name")
-			Console.WriteLine()
-			Console.WriteLine("Use /O to define a custom output folder path")
+            Console.WriteLine("This program parses MSGF synopsis file results to summarize the number of identified peptides and proteins")
+            Console.WriteLine("It creates a text result file and optionally posts the results to the DMS database")
+            Console.WriteLine("Peptides are first filtered on MSGF_SpecProb < 1E-10")
+            Console.WriteLine("They are next filtered on FDR < 1%")
+            Console.WriteLine()
+            Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(Reflection.Assembly.GetExecutingAssembly().Location))
+            Console.WriteLine(" [MSGFSynFilePath] [/Folder:InputFolderPath] [/Dataset:DatasetName]")
+            Console.WriteLine(" [/Job:JobNumber] [/O:OutputFolderPath] [/NoText] [/DB]")
+            Console.WriteLine()
+            Console.WriteLine("MSGFSynFilePath defines the data file to process, for example QC_Shew_11_06_pt5_c_21Feb12_Sphinx_11-08-09_syn_MSGF.txt")
+            Console.WriteLine("The name of the source file will be auto-determined if the input folder is defined via /Folder")
+            Console.WriteLine()
+            Console.WriteLine("/Folder defines the input folder to process (and also to create the text result file in if /O is not used)")
+            Console.WriteLine()
+            Console.WriteLine("/Dataset defines the dataset name; if /Dataset is not used, then the name will be auto-determined")
+            Console.WriteLine()
+            Console.WriteLine("/Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input folder name")
+            Console.WriteLine()
+            Console.WriteLine("Use /O to define a custom output folder path")
             Console.WriteLine()
             Console.WriteLine("Use /NoDatabase to indicate that DMS should not be contacted to lookup scan stats for the dataset")
             Console.WriteLine()
-			Console.WriteLine("Use /NoText to specify that a text file not be created")
-			Console.WriteLine("Use /DB to post results to DMS")
-			Console.WriteLine()
-			Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2012")
-			Console.WriteLine("Version: " & GetAppVersion())
-			Console.WriteLine()
+            Console.WriteLine("Use /NoText to specify that a text file not be created")
+            Console.WriteLine("Use /DB to post results to DMS")
+            Console.WriteLine()
+            Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2012")
+            Console.WriteLine("Version: " & GetAppVersion())
+            Console.WriteLine()
 
-			Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
-			Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
-			Console.WriteLine()
+            Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
+            Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
+            Console.WriteLine()
 
-			' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-			Threading.Thread.Sleep(750)
+            ' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+            Threading.Thread.Sleep(750)
 
-		Catch ex As Exception
-			Console.WriteLine("Error displaying the program syntax: " & ex.Message)
-		End Try
+        Catch ex As Exception
+            Console.WriteLine("Error displaying the program syntax: " & ex.Message)
+        End Try
 
-	End Sub
+    End Sub
 
 #Region "Event Handlers"
     ''' <summary>

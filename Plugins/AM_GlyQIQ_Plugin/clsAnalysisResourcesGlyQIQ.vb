@@ -1,4 +1,4 @@
-﻿' Written by Matthew Monroe for the US Department of Energy 
+' Written by Matthew Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 05/29/2014
 '
@@ -10,7 +10,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsAnalysisResourcesGlyQIQ
-	Inherits clsAnalysisResources
+    Inherits clsAnalysisResources
 
     ' Public Const WORKING_PARAMETERS_FOLDER_NAME As String = "WorkingParameters"
     Protected Const LOCKS_FOLDER_NAME As String = "LocksFolder"

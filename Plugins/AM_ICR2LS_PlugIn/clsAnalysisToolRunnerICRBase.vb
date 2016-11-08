@@ -5,7 +5,7 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 
 Public MustInherit Class clsAnalysisToolRunnerICRBase
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
     Public Const ICR2LS_STATE_UNKNOWN As String = "Unknown"
     Public Const ICR2LS_STATE_IDLE As String = "Idle"

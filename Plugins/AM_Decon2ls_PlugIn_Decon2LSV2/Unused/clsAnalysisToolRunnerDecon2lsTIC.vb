@@ -10,21 +10,21 @@ Option Strict On
 '*********************************************************************************************************
 
 Public Class clsAnalysisToolRunnerDecon2lsTIC
-	Inherits clsAnalysisToolRunnerDecon2lsBase
+    Inherits clsAnalysisToolRunnerDecon2lsBase
 
-	'*********************************************************************************************************
-	'Subclass for using Decon2LS to generate TIC files
-	'
-	'Establishes tool type for results folder and calls TIC creation method of Decon2LS
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Subclass for using Decon2LS to generate TIC files
+    '
+    'Establishes tool type for results folder and calls TIC creation method of Decon2LS
+    '*********************************************************************************************************
 
 #Region "Methods"
-	Sub New()
+    Sub New()
 
-		MyBase.New()
-		m_AnalysisType = "TDL"
+        MyBase.New()
+        m_AnalysisType = "TDL"
 
-	End Sub
+    End Sub
 
     Protected Overrides Sub StartDecon2LS(ByRef bw As System.ComponentModel.BackgroundWorker, _
                                           ByVal udtCurrentLoopParams As udtCurrentLoopParamsType)

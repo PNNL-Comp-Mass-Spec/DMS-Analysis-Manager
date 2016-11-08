@@ -10,49 +10,49 @@ Option Strict On
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMSAlign
-	Inherits clsAnalysisResources
+    Inherits clsAnalysisResources
 
-	Public Const MSDECONV_MSALIGN_FILE_SUFFIX As String = "_msdeconv.msalign"
+    Public Const MSDECONV_MSALIGN_FILE_SUFFIX As String = "_msdeconv.msalign"
 
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
         MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim FileToGet As String
+        Dim FileToGet As String
 
-		' Make sure the machine has enough free memory to run MSAlign
-		If Not ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign") Then
-			m_message = "Not enough free memory to run MSAlign"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Make sure the machine has enough free memory to run MSAlign
+        If Not ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign") Then
+            m_message = "Not enough free memory to run MSAlign"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Retrieve param file
-		If Not RetrieveFile( _
-		   m_jobParams.GetParam("ParmFileName"), _
-		   m_jobParams.GetParam("ParmFileStoragePath")) _
-		Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        ' Retrieve param file
+        If Not RetrieveFile( _
+           m_jobParams.GetParam("ParmFileName"), _
+           m_jobParams.GetParam("ParmFileStoragePath")) _
+        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-		' Retrieve Fasta file
-		If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        ' Retrieve Fasta file
+        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-		' Retrieve the MSAlign file
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
-		FileToGet = m_DatasetName & MSDECONV_MSALIGN_FILE_SUFFIX
-		If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-			'Errors were reported in function call, so just return
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
-		m_jobParams.AddResultFileToSkip(FileToGet)
+        ' Retrieve the MSAlign file
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
+        FileToGet = m_DatasetName & MSDECONV_MSALIGN_FILE_SUFFIX
+        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+            'Errors were reported in function call, so just return
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
+        m_jobParams.AddResultFileToSkip(FileToGet)
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
 End Class

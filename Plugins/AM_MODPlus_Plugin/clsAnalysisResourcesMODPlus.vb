@@ -1,4 +1,4 @@
-﻿'*********************************************************************************************************
+'*********************************************************************************************************
 ' Written by Matthew Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 05/12/2015
@@ -11,7 +11,7 @@ Imports System.IO
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMODPlus
-	Inherits clsAnalysisResources
+    Inherits clsAnalysisResources
 
     Friend Const MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY As String = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###"
     Friend Const MINIMUM_PERCENT_DECOY = 25
@@ -21,7 +21,7 @@ Public Class clsAnalysisResourcesMODPlus
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         Dim currentTask = "Initializing"
 
@@ -50,11 +50,11 @@ Public Class clsAnalysisResourcesMODPlus
 
     End Function
 
-	Private Function RetrieveFastaAndParamFile() As Boolean
+    Private Function RetrieveFastaAndParamFile() As Boolean
 
         Dim currentTask = "Initializing"
 
-		Try
+        Try
             Dim proteinCollections = m_jobParams.GetParam("ProteinCollectionList", String.Empty)
             Dim proteinOptions = m_jobParams.GetParam("ProteinOptions", String.Empty)
 
@@ -120,7 +120,7 @@ Public Class clsAnalysisResourcesMODPlus
             Return False
         End Try
 
-	End Function
+    End Function
 
     Private Function FastaHasDecoyProteins() As Boolean
 

@@ -10,307 +10,307 @@ Option Strict On
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerMSAlign
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
-	'*********************************************************************************************************
-	'Class for running MSAlign analysis
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Class for running MSAlign analysis
+    '*********************************************************************************************************
 
 #Region "Constants and Enums"
-	Protected Const MSAlign_CONSOLE_OUTPUT As String = "MSAlign_ConsoleOutput.txt"
-	Protected Const MSAlign_JAR_NAME As String = "MSAlign.jar"
+    Protected Const MSAlign_CONSOLE_OUTPUT As String = "MSAlign_ConsoleOutput.txt"
+    Protected Const MSAlign_JAR_NAME As String = "MSAlign.jar"
 
-	Protected Const PROGRESS_PCT_STARTING As Single = 1
-	Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+    Protected Const PROGRESS_PCT_STARTING As Single = 1
+    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
-	Protected Const RESULT_TABLE_NAME_SUFFIX As String = "_MSAlign_ResultTable.txt"
-	Protected Const RESULT_TABLE_NAME_LEGACY As String = "result_table.txt"
+    Protected Const RESULT_TABLE_NAME_SUFFIX As String = "_MSAlign_ResultTable.txt"
+    Protected Const RESULT_TABLE_NAME_LEGACY As String = "result_table.txt"
 
-	Protected Const RESULT_DETAILS_NAME_SUFFIX As String = "_MSAlign_ResultDetails.txt"
-	Protected Const RESULT_DETAILS_NAME_LEGACY As String = "result.txt"
+    Protected Const RESULT_DETAILS_NAME_SUFFIX As String = "_MSAlign_ResultDetails.txt"
+    Protected Const RESULT_DETAILS_NAME_LEGACY As String = "result.txt"
 
-	' Note that newer versions are assumed to have higher enum values
-	Protected Enum eMSAlignVersionType
-		Unknown = 0
-		v0pt5 = 1
-		v0pt6 = 2
-		v0pt7 = 3
-	End Enum
+    ' Note that newer versions are assumed to have higher enum values
+    Protected Enum eMSAlignVersionType
+        Unknown = 0
+        v0pt5 = 1
+        v0pt6 = 2
+        v0pt7 = 3
+    End Enum
 #End Region
 
 #Region "Structures"
 
-	Protected Structure udtInputPropertyValuesType
-		Public FastaFileName As String
-		Public SpectrumFileName As String
-		Public ResultTableFileName As String
-		Public ResultDetailsFileName As String
-		Public Sub Clear()
-			FastaFileName = String.Empty
-			SpectrumFileName = String.Empty
-			ResultTableFileName = String.Empty
-			ResultDetailsFileName = String.Empty
-		End Sub
-	End Structure
+    Protected Structure udtInputPropertyValuesType
+        Public FastaFileName As String
+        Public SpectrumFileName As String
+        Public ResultTableFileName As String
+        Public ResultDetailsFileName As String
+        Public Sub Clear()
+            FastaFileName = String.Empty
+            SpectrumFileName = String.Empty
+            ResultTableFileName = String.Empty
+            ResultDetailsFileName = String.Empty
+        End Sub
+    End Structure
 
 #End Region
 
 #Region "Module Variables"
 
-	Protected mToolVersionWritten As Boolean
-	Protected mMSAlignVersion As String
+    Protected mToolVersionWritten As Boolean
+    Protected mMSAlignVersion As String
 
-	Protected mMSAlignProgLoc As String
-	Protected mConsoleOutputErrorMsg As String
+    Protected mMSAlignProgLoc As String
+    Protected mConsoleOutputErrorMsg As String
 
-	Protected mMSAlignWorkFolderPath As String
-	Protected mInputPropertyValues As udtInputPropertyValuesType
+    Protected mMSAlignWorkFolderPath As String
+    Protected mInputPropertyValues As udtInputPropertyValuesType
 
-	Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected WithEvents CmdRunner As clsRunDosProgram
 
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Runs MSAlign tool
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
-		Dim CmdStr As String
-		Dim intJavaMemorySize As Integer
-		Dim eMSalignVersion As eMSAlignVersionType
+    ''' <summary>
+    ''' Runs MSAlign tool
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
+        Dim CmdStr As String
+        Dim intJavaMemorySize As Integer
+        Dim eMSalignVersion As eMSAlignVersionType
 
-		Dim result As IJobParams.CloseOutType
-		Dim blnProcessingError As Boolean = False
+        Dim result As IJobParams.CloseOutType
+        Dim blnProcessingError As Boolean = False
 
-		Dim eResult As IJobParams.CloseOutType
-		Dim blnSuccess As Boolean
+        Dim eResult As IJobParams.CloseOutType
+        Dim blnSuccess As Boolean
 
-		Try
-			'Call base class for initial setup
-			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+        Try
+            'Call base class for initial setup
+            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			If m_DebugLevel > 4 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSAlign.RunTool(): Enter")
-			End If
+            If m_DebugLevel > 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSAlign.RunTool(): Enter")
+            End If
 
-			' Verify that program files exist
+            ' Verify that program files exist
 
-			' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
-			' Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-			Dim JavaProgLoc = GetJavaProgLoc()
-			If String.IsNullOrEmpty(JavaProgLoc) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+            ' Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
+            Dim JavaProgLoc = GetJavaProgLoc()
+            If String.IsNullOrEmpty(JavaProgLoc) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' Determine the path to the MSAlign program
-			' Note that 
-			mMSAlignProgLoc = DetermineProgramLocation("MSAlign", "MSAlignProgLoc", System.IO.Path.Combine("jar", MSAlign_JAR_NAME))
+            ' Determine the path to the MSAlign program
+            ' Note that 
+            mMSAlignProgLoc = DetermineProgramLocation("MSAlign", "MSAlignProgLoc", System.IO.Path.Combine("jar", MSAlign_JAR_NAME))
 
-			If String.IsNullOrWhiteSpace(mMSAlignProgLoc) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If String.IsNullOrWhiteSpace(mMSAlignProgLoc) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			eMSalignVersion = eMSAlignVersionType.Unknown
-			If mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.5" & System.IO.Path.DirectorySeparatorChar) Then
-				eMSalignVersion = eMSAlignVersionType.v0pt5
-			ElseIf mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.6.") Then
-				eMSalignVersion = eMSAlignVersionType.v0pt6
-			ElseIf mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.7.") Then
-				eMSalignVersion = eMSAlignVersionType.v0pt7
-			Else
-				' Assume v0.7
-				eMSalignVersion = eMSAlignVersionType.v0pt7
-			End If
+            eMSalignVersion = eMSAlignVersionType.Unknown
+            If mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.5" & System.IO.Path.DirectorySeparatorChar) Then
+                eMSalignVersion = eMSAlignVersionType.v0pt5
+            ElseIf mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.6.") Then
+                eMSalignVersion = eMSAlignVersionType.v0pt6
+            ElseIf mMSAlignProgLoc.Contains(System.IO.Path.DirectorySeparatorChar & "v0.7.") Then
+                eMSalignVersion = eMSAlignVersionType.v0pt7
+            Else
+                ' Assume v0.7
+                eMSalignVersion = eMSAlignVersionType.v0pt7
+            End If
 
-			' Store the MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
-			' (only valid for MSAlign 0.6.2 or newer)
+            ' Store the MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
+            ' (only valid for MSAlign 0.6.2 or newer)
 
-			mToolVersionWritten = False
-			mMSAlignVersion = String.Empty
-			mConsoleOutputErrorMsg = String.Empty
+            mToolVersionWritten = False
+            mMSAlignVersion = String.Empty
+            mConsoleOutputErrorMsg = String.Empty
 
-			' Clear InputProperties parameters
-			mInputPropertyValues.Clear()
-			mMSAlignWorkFolderPath = String.Empty
+            ' Clear InputProperties parameters
+            mInputPropertyValues.Clear()
+            mMSAlignWorkFolderPath = String.Empty
 
-			' Copy the MS Align program files and associated files to the work directory
-			If Not CopyMSAlignProgramFiles(mMSAlignProgLoc, eMSalignVersion) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' Copy the MS Align program files and associated files to the work directory
+            If Not CopyMSAlignProgramFiles(mMSAlignProgLoc, eMSalignVersion) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' Initialize the MSInput folder
-			If Not InitializeMSInputFolder(mMSAlignWorkFolderPath, eMSalignVersion) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' Initialize the MSInput folder
+            If Not InitializeMSInputFolder(mMSAlignWorkFolderPath, eMSalignVersion) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSAlign")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSAlign")
 
-			' Lookup the amount of memory to reserve for Java; default to 2 GB 
-			intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000)
-			If intJavaMemorySize < 512 Then intJavaMemorySize = 512
+            ' Lookup the amount of memory to reserve for Java; default to 2 GB 
+            intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000)
+            If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
-			'Set up and execute a program runner to run MSAlign
-			If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
-				CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -classpath jar\malign.jar;jar\* edu.ucsd.msalign.spec.web.Pipeline .\"
-			Else
-				CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -classpath jar\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\"
-			End If
+            'Set up and execute a program runner to run MSAlign
+            If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
+                CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -classpath jar\malign.jar;jar\* edu.ucsd.msalign.spec.web.Pipeline .\"
+            Else
+                CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -classpath jar\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\"
+            End If
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
-			CmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
+            CmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
 
-			With CmdRunner
-				.CreateNoWindow = True
-				.CacheStandardOutput = False
-				.EchoOutputToConsole = True
+            With CmdRunner
+                .CreateNoWindow = True
+                .CacheStandardOutput = False
+                .EchoOutputToConsole = True
 
-				If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
-					.WriteConsoleOutputToFile = False
-				Else
-					.WriteConsoleOutputToFile = True
-					.ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT)
-				End If
+                If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
+                    .WriteConsoleOutputToFile = False
+                Else
+                    .WriteConsoleOutputToFile = True
+                    .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT)
+                End If
 
-			End With
+            End With
 
-			m_progress = PROGRESS_PCT_STARTING
+            m_progress = PROGRESS_PCT_STARTING
             ResetProgRunnerCpuUsage()
 
             ' Start the program and wait for it to finish
             ' However, while it's running, LoopWaiting will get called via events
-			blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign", True)
+            blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign", True)
 
-			If Not mToolVersionWritten Then
-				If String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-					ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
-				End If
-				mToolVersionWritten = StoreToolVersionInfo()
-			End If
+            If Not mToolVersionWritten Then
+                If String.IsNullOrWhiteSpace(mMSAlignVersion) Then
+                    ParseConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
+                End If
+                mToolVersionWritten = StoreToolVersionInfo()
+            End If
 
-			If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
-			End If
+            If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
+            End If
 
 
-			If Not blnSuccess Then
-				Dim Msg As String
-				Msg = "Error running MSAlign"
-				m_message = clsGlobal.AppendToComment(m_message, Msg)
+            If Not blnSuccess Then
+                Dim Msg As String
+                Msg = "Error running MSAlign"
+                m_message = clsGlobal.AppendToComment(m_message, Msg)
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-				If CmdRunner.ExitCode <> 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
-				Else
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign failed (but exit code is 0)")
-				End If
+                If CmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                Else
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign failed (but exit code is 0)")
+                End If
 
-				blnProcessingError = True
-				eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                blnProcessingError = True
+                eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-			Else
-				' Make sure the output files were created
-				If Not ValidateAndCopyResultFiles(eMSalignVersion) Then
-					blnProcessingError = True
-				End If
+            Else
+                ' Make sure the output files were created
+                If Not ValidateAndCopyResultFiles(eMSalignVersion) Then
+                    blnProcessingError = True
+                End If
 
-				Dim strResultTableFilePath As String
-				strResultTableFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & RESULT_TABLE_NAME_SUFFIX)
+                Dim strResultTableFilePath As String
+                strResultTableFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & RESULT_TABLE_NAME_SUFFIX)
 
-				If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
-					' Add a header to the _ResultTable.txt file
-					AddResultTableHeaderLine(strResultTableFilePath)
-				End If
+                If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
+                    ' Add a header to the _ResultTable.txt file
+                    AddResultTableHeaderLine(strResultTableFilePath)
+                End If
 
-				' Make sure the _ResultTable.txt file is not empty
-				If blnProcessingError Then
-					eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
-				Else
-					If ValidateResultTableFile(strResultTableFilePath) Then
-						eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-					Else
-						eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
-					End If
-				End If
+                ' Make sure the _ResultTable.txt file is not empty
+                If blnProcessingError Then
+                    eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Else
+                    If ValidateResultTableFile(strResultTableFilePath) Then
+                        eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                    Else
+                        eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                    End If
+                End If
 
-				m_StatusTools.UpdateAndWrite(m_progress)
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign Search Complete")
-				End If
+                m_StatusTools.UpdateAndWrite(m_progress)
+                If m_DebugLevel >= 3 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign Search Complete")
+                End If
 
-			End If
+            End If
 
-			m_progress = PROGRESS_PCT_COMPLETE
+            m_progress = PROGRESS_PCT_COMPLETE
 
-			'Stop the job timer
-			m_StopTime = System.DateTime.UtcNow
+            'Stop the job timer
+            m_StopTime = System.DateTime.UtcNow
 
-			'Add the current job data to the summary file
-			If Not UpdateSummaryFile() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-			End If
+            'Add the current job data to the summary file
+            If Not UpdateSummaryFile() Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            End If
 
-			CmdRunner = Nothing
+            CmdRunner = Nothing
 
-			'Make sure objects are released
-			System.Threading.Thread.Sleep(500)        ' 500 msec delay
-			PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            'Make sure objects are released
+            System.Threading.Thread.Sleep(500)        ' 500 msec delay
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-			If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
-				' Trim the console output file to remove the majority of the % finished messages
-				TrimConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
-			End If
+            If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
+                ' Trim the console output file to remove the majority of the % finished messages
+                TrimConsoleOutputFile(System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
+            End If
 
-			If blnProcessingError Then
-				' Move the source files and any results to the Failed Job folder
-				' Useful for debugging MSAlign problems
-				CopyFailedResultsToArchiveFolder()
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If blnProcessingError Then
+                ' Move the source files and any results to the Failed Job folder
+                ' Useful for debugging MSAlign problems
+                CopyFailedResultsToArchiveFolder()
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			result = MakeResultsFolder()
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				'MakeResultsFolder handles posting to local log, so set database error message and exit
-				m_message = "Error making results folder"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            result = MakeResultsFolder()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                'MakeResultsFolder handles posting to local log, so set database error message and exit
+                m_message = "Error making results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			result = MoveResultFiles()
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-				m_message = "Error moving files into results folder"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            result = MoveResultFiles()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                m_message = "Error moving files into results folder"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			result = CopyResultsFolderToServer()
-			If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            result = CopyResultsFolderToServer()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-		Catch ex As Exception
-			m_message = "Error in MSAlignPlugin->RunTool"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End Try
+        Catch ex As Exception
+            m_message = "Error in MSAlignPlugin->RunTool"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End Try
 
-		Return eResult
+        Return eResult
 
-	End Function
+    End Function
 
-	Protected Function AddResultTableHeaderLine(ByVal strSourceFilePath As String) As Boolean
+    Protected Function AddResultTableHeaderLine(ByVal strSourceFilePath As String) As Boolean
 
-		Try
-			If Not System.IO.File.Exists(strSourceFilePath) Then Return False
+        Try
+            If Not System.IO.File.Exists(strSourceFilePath) Then Return False
 
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding header line to MSAlign_ResultTable.txt file")
-			End If
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding header line to MSAlign_ResultTable.txt file")
+            End If
 
             Dim strTargetFilePath As String
             strTargetFilePath = strSourceFilePath & ".tmp"
@@ -360,214 +360,214 @@ Public Class clsAnalysisToolRunnerMSAlign
             Return False
         End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Protected Function CopyFastaCheckResidues(ByVal strSourceFilePath As String, ByVal strTargetFilePath As String) As Boolean
-		Const RESIDUES_PER_LINE As Integer = 60
+    Protected Function CopyFastaCheckResidues(ByVal strSourceFilePath As String, ByVal strTargetFilePath As String) As Boolean
+        Const RESIDUES_PER_LINE As Integer = 60
 
-		Dim oReader As ProteinFileReader.FastaFileReader
-		Dim reInvalidResidues As System.Text.RegularExpressions.Regex
-		Dim strProteinResidues As String
+        Dim oReader As ProteinFileReader.FastaFileReader
+        Dim reInvalidResidues As System.Text.RegularExpressions.Regex
+        Dim strProteinResidues As String
 
-		Dim intIndex As Integer
-		Dim intResidueCount As Integer
-		Dim intLength As Integer
-		Dim intWarningCount As Integer = 0
+        Dim intIndex As Integer
+        Dim intResidueCount As Integer
+        Dim intLength As Integer
+        Dim intWarningCount As Integer = 0
 
-		Try
-			reInvalidResidues = New System.Text.RegularExpressions.Regex("[BJOUXZ]", Text.RegularExpressions.RegexOptions.Compiled)
+        Try
+            reInvalidResidues = New System.Text.RegularExpressions.Regex("[BJOUXZ]", Text.RegularExpressions.RegexOptions.Compiled)
 
-			oReader = New ProteinFileReader.FastaFileReader()
-			If Not oReader.OpenFile(strSourceFilePath) Then
-				m_message = "Error opening fasta file in CopyFastaCheckResidues"
-				Return False
-			End If
+            oReader = New ProteinFileReader.FastaFileReader()
+            If Not oReader.OpenFile(strSourceFilePath) Then
+                m_message = "Error opening fasta file in CopyFastaCheckResidues"
+                Return False
+            End If
 
-			Using swNewFasta As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strTargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-				Do While oReader.ReadNextProteinEntry()
+            Using swNewFasta As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strTargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+                Do While oReader.ReadNextProteinEntry()
 
-					swNewFasta.WriteLine(oReader.ProteinLineStartChar & oReader.HeaderLine)
-					strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-")
+                    swNewFasta.WriteLine(oReader.ProteinLineStartChar & oReader.HeaderLine)
+                    strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-")
 
-					If intWarningCount < 5 AndAlso strProteinResidues.GetHashCode() <> oReader.ProteinSequence.GetHashCode() Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Changed invalid residues to '-' in protein " & oReader.ProteinName)
-						intWarningCount += 1
-					End If
+                    If intWarningCount < 5 AndAlso strProteinResidues.GetHashCode() <> oReader.ProteinSequence.GetHashCode() Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Changed invalid residues to '-' in protein " & oReader.ProteinName)
+                        intWarningCount += 1
+                    End If
 
-					intIndex = 0
-					intResidueCount = strProteinResidues.Length
-					Do While intIndex < strProteinResidues.Length
-						intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex)
-						swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength))
-						intIndex += RESIDUES_PER_LINE
-					Loop
+                    intIndex = 0
+                    intResidueCount = strProteinResidues.Length
+                    Do While intIndex < strProteinResidues.Length
+                        intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex)
+                        swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength))
+                        intIndex += RESIDUES_PER_LINE
+                    Loop
 
-				Loop
-			End Using
+                Loop
+            End Using
 
-			oReader.CloseFile()
+            oReader.CloseFile()
 
-		Catch ex As Exception
-			m_message = "Exception in CopyFastaCheckResidues"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return False
-		End Try
-	
-		Return True
+        Catch ex As Exception
+            m_message = "Exception in CopyFastaCheckResidues"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            Return False
+        End Try
+    
+        Return True
 
-	End Function
+    End Function
 
-	Protected Sub CopyFailedResultsToArchiveFolder()
+    Protected Sub CopyFailedResultsToArchiveFolder()
 
-		Dim result As IJobParams.CloseOutType
+        Dim result As IJobParams.CloseOutType
 
-		Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-		If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
-		clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
 
-		' Bump up the debug level if less than 2
-		If m_DebugLevel < 2 Then m_DebugLevel = 2
+        ' Bump up the debug level if less than 2
+        If m_DebugLevel < 2 Then m_DebugLevel = 2
 
-		' Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-		Dim strFolderPathToArchive As String
-		strFolderPathToArchive = String.Copy(m_WorkDir)
+        ' Try to save whatever files are in the work directory (however, delete the .mzXML file first)
+        Dim strFolderPathToArchive As String
+        strFolderPathToArchive = String.Copy(m_WorkDir)
 
-		Try
-			System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML"))
-		Catch ex As Exception
-			' Ignore errors here
-		End Try
+        Try
+            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML"))
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
 
-		' Make the results folder
-		result = MakeResultsFolder()
-		If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			' Move the result files into the result folder
-			result = MoveResultFiles()
-			If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				' Move was a success; update strFolderPathToArchive
-				strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
-			End If
-		End If
+        ' Make the results folder
+        result = MakeResultsFolder()
+        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            ' Move the result files into the result folder
+            result = MoveResultFiles()
+            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                ' Move was a success; update strFolderPathToArchive
+                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+            End If
+        End If
 
-		' Copy the results folder to the Archive folder
-		Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-		objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+        ' Copy the results folder to the Archive folder
+        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
-	End Sub
+    End Sub
 
-	Private Function CopyMSAlignProgramFiles(ByVal strMSAlignJarFilePath As String, ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
+    Private Function CopyMSAlignProgramFiles(ByVal strMSAlignJarFilePath As String, ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
 
-		Dim fiMSAlignJarFile As System.IO.FileInfo
-		Dim diMSAlignSrc As System.IO.DirectoryInfo
-		Dim diMSAlignWork As System.IO.DirectoryInfo
+        Dim fiMSAlignJarFile As System.IO.FileInfo
+        Dim diMSAlignSrc As System.IO.DirectoryInfo
+        Dim diMSAlignWork As System.IO.DirectoryInfo
 
-		Try
-			fiMSAlignJarFile = New System.IO.FileInfo(strMSAlignJarFilePath)
+        Try
+            fiMSAlignJarFile = New System.IO.FileInfo(strMSAlignJarFilePath)
 
-			If Not fiMSAlignJarFile.Exists Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign .Jar file not found: " & fiMSAlignJarFile.FullName)
-				Return False
-			End If
+            If Not fiMSAlignJarFile.Exists Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign .Jar file not found: " & fiMSAlignJarFile.FullName)
+                Return False
+            End If
 
-			' The source folder is one level up from the .Jar file
-			diMSAlignSrc = New System.IO.DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName)
-			diMSAlignWork = New System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "MSAlign"))
+            ' The source folder is one level up from the .Jar file
+            diMSAlignSrc = New System.IO.DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName)
+            diMSAlignWork = New System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "MSAlign"))
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying MSAlign program file to the Work Directory")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying MSAlign program file to the Work Directory")
 
-			' Make sure the folder doesn't already exit
-			If diMSAlignWork.Exists Then
-				diMSAlignWork.Delete(True)
-				System.Threading.Thread.Sleep(500)
-			End If
+            ' Make sure the folder doesn't already exit
+            If diMSAlignWork.Exists Then
+                diMSAlignWork.Delete(True)
+                System.Threading.Thread.Sleep(500)
+            End If
 
-			' Create the folder
-			diMSAlignWork.Create()
-			mMSAlignWorkFolderPath = diMSAlignWork.FullName
+            ' Create the folder
+            diMSAlignWork.Create()
+            mMSAlignWorkFolderPath = diMSAlignWork.FullName
 
-			' Create the subdirectories
-			diMSAlignWork.CreateSubdirectory("html")
-			diMSAlignWork.CreateSubdirectory("jar")
-			diMSAlignWork.CreateSubdirectory("msinput")
-			diMSAlignWork.CreateSubdirectory("msoutput")
-			diMSAlignWork.CreateSubdirectory("xml")
-			diMSAlignWork.CreateSubdirectory("xsl")
-			If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
-				diMSAlignWork.CreateSubdirectory("etc")
-			End If
+            ' Create the subdirectories
+            diMSAlignWork.CreateSubdirectory("html")
+            diMSAlignWork.CreateSubdirectory("jar")
+            diMSAlignWork.CreateSubdirectory("msinput")
+            diMSAlignWork.CreateSubdirectory("msoutput")
+            diMSAlignWork.CreateSubdirectory("xml")
+            diMSAlignWork.CreateSubdirectory("xsl")
+            If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
+                diMSAlignWork.CreateSubdirectory("etc")
+            End If
 
-			' Copy all files in the jar and xsl folders to the target
-			Dim lstSubfolderNames As New System.Collections.Generic.List(Of String)()
-			lstSubfolderNames.Add("jar")
-			lstSubfolderNames.Add("xsl")
-			If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
-				lstSubfolderNames.Add("etc")
-			End If
+            ' Copy all files in the jar and xsl folders to the target
+            Dim lstSubfolderNames As New System.Collections.Generic.List(Of String)()
+            lstSubfolderNames.Add("jar")
+            lstSubfolderNames.Add("xsl")
+            If eMSalignVersion <> eMSAlignVersionType.v0pt5 Then
+                lstSubfolderNames.Add("etc")
+            End If
 
-			For Each strSubFolder As String In lstSubfolderNames
-				Dim strTargetSubfolder = System.IO.Path.Combine(diMSAlignWork.FullName, strSubFolder)
+            For Each strSubFolder As String In lstSubfolderNames
+                Dim strTargetSubfolder = System.IO.Path.Combine(diMSAlignWork.FullName, strSubFolder)
 
-				Dim diSubfolder As System.IO.DirectoryInfo()
-				diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder)
+                Dim diSubfolder As System.IO.DirectoryInfo()
+                diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder)
 
-				If diSubfolder.Length = 0 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Source MSAlign subfolder not found: " & strTargetSubfolder)
-					Return False
-				End If
+                If diSubfolder.Length = 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Source MSAlign subfolder not found: " & strTargetSubfolder)
+                    Return False
+                End If
 
-				For Each ioFile As System.IO.FileInfo In diSubfolder(0).GetFiles()
-					ioFile.CopyTo(System.IO.Path.Combine(strTargetSubfolder, ioFile.Name))
-				Next
+                For Each ioFile As System.IO.FileInfo In diSubfolder(0).GetFiles()
+                    ioFile.CopyTo(System.IO.Path.Combine(strTargetSubfolder, ioFile.Name))
+                Next
 
-			Next
+            Next
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CopyMSAlignProgramFiles: " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CopyMSAlignProgramFiles: " & ex.Message)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	Protected Function CreateInputPropertiesFile(ByVal strParamFilePath As String, ByVal strMSInputFolderPath As String, eMSalignVersion As eMSAlignVersionType) As Boolean
+    Protected Function CreateInputPropertiesFile(ByVal strParamFilePath As String, ByVal strMSInputFolderPath As String, eMSalignVersion As eMSAlignVersionType) As Boolean
 
-		Const DB_FILENAME_LEGACY As String = "database"
-		Const DB_FILENAME As String = "databaseFileName"
-		Const SPEC_FILENAME As String = "spectrumFileName"
-		Const TABLE_OUTPUT_FILENAME As String = "tableOutputFileName"
-		Const DETAIL_OUTPUT_FILENAME As String = "detailOutputFileName"
+        Const DB_FILENAME_LEGACY As String = "database"
+        Const DB_FILENAME As String = "databaseFileName"
+        Const SPEC_FILENAME As String = "spectrumFileName"
+        Const TABLE_OUTPUT_FILENAME As String = "tableOutputFileName"
+        Const DETAIL_OUTPUT_FILENAME As String = "detailOutputFileName"
 
-		' These key names must be lowercase
-		Const INSTRUMENT_TYPE_KEY As String = "instrument"			' This only applies to v0.5 of MSAlign
-		Const INSTRUMENT_ACTIVATION_TYPE_KEY As String = "activation"
-		Const SEARCH_TYPE_KEY As String = "searchtype"
-		Const CUTOFF_TYPE_KEY As String = "cutofftype"
-		Const CUTOFF_KEY As String = "cutoff"
+        ' These key names must be lowercase
+        Const INSTRUMENT_TYPE_KEY As String = "instrument"			' This only applies to v0.5 of MSAlign
+        Const INSTRUMENT_ACTIVATION_TYPE_KEY As String = "activation"
+        Const SEARCH_TYPE_KEY As String = "searchtype"
+        Const CUTOFF_TYPE_KEY As String = "cutofftype"
+        Const CUTOFF_KEY As String = "cutoff"
 
         Dim strLineIn As String
 
-		Dim intEqualsIndex As Integer
-		Dim strKeyName As String
-		Dim strValue As String
-		Dim dctLegacyKeyMap As System.Collections.Generic.Dictionary(Of String, String)
-		Dim blnEValueCutoffType As Boolean = False
+        Dim intEqualsIndex As Integer
+        Dim strKeyName As String
+        Dim strValue As String
+        Dim dctLegacyKeyMap As System.Collections.Generic.Dictionary(Of String, String)
+        Dim blnEValueCutoffType As Boolean = False
 
-		Try
-			' Initialize the dictionary that maps new names to legacy names
-			' Version 0.5 used the legacy names, e.g. it used "threshold" instead of "eValueThreshold"
-			dctLegacyKeyMap = New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
-			dctLegacyKeyMap.Add("errorTolerance", "fragmentTolerance")
-			dctLegacyKeyMap.Add("eValueThreshold", "threshold")
-			dctLegacyKeyMap.Add("shiftNumber", "shifts")
-			dctLegacyKeyMap.Add("cysteineProtection", "protection")
-			dctLegacyKeyMap.Add("activation", "instrument")
+        Try
+            ' Initialize the dictionary that maps new names to legacy names
+            ' Version 0.5 used the legacy names, e.g. it used "threshold" instead of "eValueThreshold"
+            dctLegacyKeyMap = New System.Collections.Generic.Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+            dctLegacyKeyMap.Add("errorTolerance", "fragmentTolerance")
+            dctLegacyKeyMap.Add("eValueThreshold", "threshold")
+            dctLegacyKeyMap.Add("shiftNumber", "shifts")
+            dctLegacyKeyMap.Add("cysteineProtection", "protection")
+            dctLegacyKeyMap.Add("activation", "instrument")
 
-			' Note: Starting with version 0.7, the "eValueThreshold" parameter was replaced with two new parameters:
-			' cutoffType and cutoff
+            ' Note: Starting with version 0.7, the "eValueThreshold" parameter was replaced with two new parameters:
+            ' cutoffType and cutoff
 
             Dim strOutputFilePath As String = System.IO.Path.Combine(strMSInputFolderPath, "input.properties")
 
@@ -750,114 +750,114 @@ Public Class clsAnalysisToolRunnerMSAlign
             Return False
         End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
 
-	Protected Function InitializeMSInputFolder(ByVal strMSAlignWorkFolderPath As String, ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
+    Protected Function InitializeMSInputFolder(ByVal strMSAlignWorkFolderPath As String, ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
 
-		Dim strMSInputFolderPath As String
-		Dim fiFiles() As System.IO.FileInfo
+        Dim strMSInputFolderPath As String
+        Dim fiFiles() As System.IO.FileInfo
 
-		Try
-			strMSInputFolderPath = System.IO.Path.Combine(strMSAlignWorkFolderPath, "msinput")
-			Dim fiSourceFolder As System.IO.DirectoryInfo
-			fiSourceFolder = New System.IO.DirectoryInfo(m_WorkDir)
+        Try
+            strMSInputFolderPath = System.IO.Path.Combine(strMSAlignWorkFolderPath, "msinput")
+            Dim fiSourceFolder As System.IO.DirectoryInfo
+            fiSourceFolder = New System.IO.DirectoryInfo(m_WorkDir)
 
-			' Copy the .Fasta file into the MSInput folder
-			' MSAlign will crash if any non-standard residues are present (BJOUXZ)
-			' Thus, we will read the source file with a reader and create a new fasta file
+            ' Copy the .Fasta file into the MSInput folder
+            ' MSAlign will crash if any non-standard residues are present (BJOUXZ)
+            ' Thus, we will read the source file with a reader and create a new fasta file
 
-			' Define the path to the fasta file
-			Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
-			Dim strFASTAFilePath As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            ' Define the path to the fasta file
+            Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
+            Dim strFASTAFilePath As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-			Dim fiFastaFile As System.IO.FileInfo = New System.IO.FileInfo(strFASTAFilePath)
+            Dim fiFastaFile As System.IO.FileInfo = New System.IO.FileInfo(strFASTAFilePath)
 
-			If Not fiFastaFile.Exists Then
-				' Fasta file not found
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " & fiFastaFile.FullName)
-				Return False
-			End If
+            If Not fiFastaFile.Exists Then
+                ' Fasta file not found
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " & fiFastaFile.FullName)
+                Return False
+            End If
 
-			mInputPropertyValues.FastaFileName = String.Copy(fiFastaFile.Name)
+            mInputPropertyValues.FastaFileName = String.Copy(fiFastaFile.Name)
 
-			If Not CopyFastaCheckResidues(fiFastaFile.FullName, System.IO.Path.Combine(strMSInputFolderPath, mInputPropertyValues.FastaFileName)) Then
-				If String.IsNullOrEmpty(m_message) Then m_message = "CopyFastaCheckResidues returned false"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return False
-			End If
+            If Not CopyFastaCheckResidues(fiFastaFile.FullName, System.IO.Path.Combine(strMSInputFolderPath, mInputPropertyValues.FastaFileName)) Then
+                If String.IsNullOrEmpty(m_message) Then m_message = "CopyFastaCheckResidues returned false"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                Return False
+            End If
 
-			' Move the _msdeconv.msalign file to the MSInput folder
-			fiFiles = fiSourceFolder.GetFiles("*" & clsAnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX)
-			If fiFiles.Length = 0 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign file not found in work directory")
-				Return False
-			Else
-				If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
-					' Rename the file to input_data when we move it
-					mInputPropertyValues.SpectrumFileName = "input_data"
-				Else
-					mInputPropertyValues.SpectrumFileName = String.Copy(fiFiles(0).Name)
-				End If
-				fiFiles(0).MoveTo(System.IO.Path.Combine(strMSInputFolderPath, mInputPropertyValues.SpectrumFileName))
-			End If
+            ' Move the _msdeconv.msalign file to the MSInput folder
+            fiFiles = fiSourceFolder.GetFiles("*" & clsAnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX)
+            If fiFiles.Length = 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign file not found in work directory")
+                Return False
+            Else
+                If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
+                    ' Rename the file to input_data when we move it
+                    mInputPropertyValues.SpectrumFileName = "input_data"
+                Else
+                    mInputPropertyValues.SpectrumFileName = String.Copy(fiFiles(0).Name)
+                End If
+                fiFiles(0).MoveTo(System.IO.Path.Combine(strMSInputFolderPath, mInputPropertyValues.SpectrumFileName))
+            End If
 
-			Dim strParamFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+            Dim strParamFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
-			If Not CreateInputPropertiesFile(strParamFilePath, strMSInputFolderPath, eMSalignVersion) Then
-				Return False
-			End If
+            If Not CreateInputPropertiesFile(strParamFilePath, strMSInputFolderPath, eMSalignVersion) Then
+                Return False
+            End If
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in InitializeMSInputFolder: " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in InitializeMSInputFolder: " & ex.Message)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
-	''' </summary>
-	''' <param name="strConsoleOutputFilePath"></param>
-	''' <remarks></remarks>
-	Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    ''' <summary>
+    ''' Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
+    ''' </summary>
+    ''' <param name="strConsoleOutputFilePath"></param>
+    ''' <remarks></remarks>
+    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
 
-		' Example Console output (v0.5 does not have console output)
-		'
-		' Initializing indexes...
-		' Processing spectrum scan 660...         0% finished (0 minutes used).
-		' Processing spectrum scan 1329...        1% finished (0 minutes used).
-		' Processing spectrum scan 1649...        1% finished (0 minutes used).
+        ' Example Console output (v0.5 does not have console output)
+        '
+        ' Initializing indexes...
+        ' Processing spectrum scan 660...         0% finished (0 minutes used).
+        ' Processing spectrum scan 1329...        1% finished (0 minutes used).
+        ' Processing spectrum scan 1649...        1% finished (0 minutes used).
 
         Static reExtractPercentFinished As New Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 
         Dim oMatch As Text.RegularExpressions.Match
 
-		Try
-			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
-				If m_DebugLevel >= 4 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-				End If
+        Try
+            If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+                End If
 
-				Exit Sub
-			End If
+                Exit Sub
+            End If
 
-			If m_DebugLevel >= 4 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
-			End If
+            If m_DebugLevel >= 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
+            End If
 
             Dim strLineIn As String
-			Dim intLinesRead As Integer
+            Dim intLinesRead As Integer
 
-			Dim intProgress As Int16
-			Dim intActualProgress As Int16
+            Dim intProgress As Int16
+            Dim intActualProgress As Int16
 
-			mConsoleOutputErrorMsg = String.Empty
-			
+            mConsoleOutputErrorMsg = String.Empty
+            
             Using srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
                 intLinesRead = 0
@@ -914,69 +914,69 @@ Public Class clsAnalysisToolRunnerMSAlign
             End If
         End Try
 
-	End Sub
+    End Sub
 
-	''' <summary>
-	''' Stores the tool version info in the database
-	''' </summary>
-	''' <remarks></remarks>
-	Protected Function StoreToolVersionInfo() As Boolean
+    ''' <summary>
+    ''' Stores the tool version info in the database
+    ''' </summary>
+    ''' <remarks></remarks>
+    Protected Function StoreToolVersionInfo() As Boolean
 
-		Dim strToolVersionInfo As String = String.Empty
+        Dim strToolVersionInfo As String = String.Empty
 
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-		End If
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        End If
 
-		strToolVersionInfo = String.Copy(mMSAlignVersion)
+        strToolVersionInfo = String.Copy(mMSAlignVersion)
 
-		' Store paths to key files in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(mMSAlignProgLoc))
+        ' Store paths to key files in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(mMSAlignProgLoc))
 
-		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-			Return False
-		End Try
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
-	End Function
+    End Function
 
-	''' <summary>
-	''' Reads the console output file and removes the majority of the percent finished messages
-	''' </summary>
-	''' <param name="strConsoleOutputFilePath"></param>
-	''' <remarks></remarks>
-	Private Sub TrimConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    ''' <summary>
+    ''' Reads the console output file and removes the majority of the percent finished messages
+    ''' </summary>
+    ''' <param name="strConsoleOutputFilePath"></param>
+    ''' <remarks></remarks>
+    Private Sub TrimConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
 
-		Static reExtractScan As New System.Text.RegularExpressions.Regex("Processing spectrum scan (\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-		Dim oMatch As System.Text.RegularExpressions.Match
+        Static reExtractScan As New System.Text.RegularExpressions.Regex("Processing spectrum scan (\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+        Dim oMatch As System.Text.RegularExpressions.Match
 
-		Try
-			If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
-				If m_DebugLevel >= 4 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-				End If
+        Try
+            If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+                End If
 
-				Exit Sub
-			End If
+                Exit Sub
+            End If
 
-			If m_DebugLevel >= 4 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Trimming console output file at " & strConsoleOutputFilePath)
-			End If
+            If m_DebugLevel >= 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Trimming console output file at " & strConsoleOutputFilePath)
+            End If
 
             Dim strLineIn As String
-			Dim blnKeepLine As Boolean
+            Dim blnKeepLine As Boolean
 
-			Dim intScanNumber As Integer
-			Dim strMostRecentProgressLine As String = String.Empty
-			Dim strMostRecentProgressLineWritten As String = String.Empty
+            Dim intScanNumber As Integer
+            Dim strMostRecentProgressLine As String = String.Empty
+            Dim strMostRecentProgressLineWritten As String = String.Empty
 
-			Dim intScanNumberOutputThreshold As Integer
+            Dim intScanNumberOutputThreshold As Integer
 
-			Dim strTrimmedFilePath As String
-			strTrimmedFilePath = strConsoleOutputFilePath & ".trimmed"
+            Dim strTrimmedFilePath As String
+            strTrimmedFilePath = strConsoleOutputFilePath & ".trimmed"
 
             Using srInFile = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite)),
                   swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strTrimmedFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
@@ -1032,88 +1032,88 @@ Public Class clsAnalysisToolRunnerMSAlign
             End If
         End Try
 
-	End Sub
+    End Sub
 
-	Protected Function ValidateAndCopyResultFiles(ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
+    Protected Function ValidateAndCopyResultFiles(ByVal eMSalignVersion As eMSAlignVersionType) As Boolean
 
-		Dim strResultsFolderPath As String = System.IO.Path.Combine(mMSAlignWorkFolderPath, "msoutput")
-		Dim lstResultsFilesToMove As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
-		Dim blnProcessingError As Boolean = False
+        Dim strResultsFolderPath As String = System.IO.Path.Combine(mMSAlignWorkFolderPath, "msoutput")
+        Dim lstResultsFilesToMove As System.Collections.Generic.List(Of String) = New System.Collections.Generic.List(Of String)
+        Dim blnProcessingError As Boolean = False
 
-		Try
-			lstResultsFilesToMove.Add(System.IO.Path.Combine(strResultsFolderPath, mInputPropertyValues.ResultTableFileName))
-			lstResultsFilesToMove.Add(System.IO.Path.Combine(strResultsFolderPath, mInputPropertyValues.ResultDetailsFileName))
+        Try
+            lstResultsFilesToMove.Add(System.IO.Path.Combine(strResultsFolderPath, mInputPropertyValues.ResultTableFileName))
+            lstResultsFilesToMove.Add(System.IO.Path.Combine(strResultsFolderPath, mInputPropertyValues.ResultDetailsFileName))
 
-			For Each strResultFilePath As String In lstResultsFilesToMove
-				If Not System.IO.File.Exists(strResultFilePath) Then
-					Dim Msg As String
-					Msg = "MSAlign results file not found (" & System.IO.Path.GetFileName(strResultFilePath) & ")"
+            For Each strResultFilePath As String In lstResultsFilesToMove
+                If Not System.IO.File.Exists(strResultFilePath) Then
+                    Dim Msg As String
+                    Msg = "MSAlign results file not found (" & System.IO.Path.GetFileName(strResultFilePath) & ")"
 
-					If Not blnProcessingError Then
-						' This is the first missing file; update the base-class comment
-						m_message = clsGlobal.AppendToComment(m_message, Msg)
-					End If
+                    If Not blnProcessingError Then
+                        ' This is the first missing file; update the base-class comment
+                        m_message = clsGlobal.AppendToComment(m_message, Msg)
+                    End If
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & strResultFilePath & ")" & ", job " & m_JobNum)
-					blnProcessingError = True
-				Else
-					' Copy the results file to the work directory
-					Dim strSourceFileName As String = System.IO.Path.GetFileName(strResultFilePath)
-					Dim strTargetFileName As String
-					strTargetFileName = String.Copy(strSourceFileName)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & strResultFilePath & ")" & ", job " & m_JobNum)
+                    blnProcessingError = True
+                Else
+                    ' Copy the results file to the work directory
+                    Dim strSourceFileName As String = System.IO.Path.GetFileName(strResultFilePath)
+                    Dim strTargetFileName As String
+                    strTargetFileName = String.Copy(strSourceFileName)
 
-					If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
-						' Rename the file when we copy it
-						Select Case strSourceFileName
-							Case RESULT_TABLE_NAME_LEGACY
-								strTargetFileName = m_Dataset & RESULT_TABLE_NAME_SUFFIX
-							Case RESULT_DETAILS_NAME_LEGACY
-								strTargetFileName = m_Dataset & RESULT_DETAILS_NAME_SUFFIX
-						End Select
-					End If
+                    If eMSalignVersion = eMSAlignVersionType.v0pt5 Then
+                        ' Rename the file when we copy it
+                        Select Case strSourceFileName
+                            Case RESULT_TABLE_NAME_LEGACY
+                                strTargetFileName = m_Dataset & RESULT_TABLE_NAME_SUFFIX
+                            Case RESULT_DETAILS_NAME_LEGACY
+                                strTargetFileName = m_Dataset & RESULT_DETAILS_NAME_SUFFIX
+                        End Select
+                    End If
 
-					System.IO.File.Copy(strResultFilePath, System.IO.Path.Combine(m_WorkDir, strTargetFileName), True)
+                    System.IO.File.Copy(strResultFilePath, System.IO.Path.Combine(m_WorkDir, strTargetFileName), True)
 
-				End If
-			Next
+                End If
+            Next
 
-			' Zip the Html and XML folders
-			ZipMSAlignResultFolder("html")
-			ZipMSAlignResultFolder("XML")
+            ' Zip the Html and XML folders
+            ZipMSAlignResultFolder("html")
+            ZipMSAlignResultFolder("XML")
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateAndCopyResultFiles: " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateAndCopyResultFiles: " & ex.Message)
+            Return False
+        End Try
 
-		If blnProcessingError Then
-			Return False
-		Else
-			Return True
-		End If
+        If blnProcessingError Then
+            Return False
+        Else
+            Return True
+        End If
 
-	End Function
+    End Function
 
-	Protected Function ValidateResultTableFile(ByVal strSourceFilePath As String) As Boolean
+    Protected Function ValidateResultTableFile(ByVal strSourceFilePath As String) As Boolean
 
         Dim strLineIn As String
 
-		Try
-			Dim blnValidFile As Boolean
-			blnValidFile = False
+        Try
+            Dim blnValidFile As Boolean
+            blnValidFile = False
 
-			If Not System.IO.File.Exists(strSourceFilePath) Then
-				If m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_ResultTable.txt file not found: " & strSourceFilePath)
-				End If
-				Return False
-			End If
+            If Not System.IO.File.Exists(strSourceFilePath) Then
+                If m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_ResultTable.txt file not found: " & strSourceFilePath)
+                End If
+                Return False
+            End If
 
-			If m_DebugLevel >= 2 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the MSAlign_ResultTable.txt file is not empty")
-			End If
+            If m_DebugLevel >= 2 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the MSAlign_ResultTable.txt file is not empty")
+            End If
 
-			' Open the input file
+            ' Open the input file
             Using srInFile = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
                 Do While Not srInFile.EndOfStream
@@ -1154,62 +1154,62 @@ Public Class clsAnalysisToolRunnerMSAlign
             Return False
         End Try
 
-		Return True
+        Return True
 
-	End Function
-	
-	Protected Function ZipMSAlignResultFolder(ByVal strFolderName As String) As Boolean
+    End Function
+    
+    Protected Function ZipMSAlignResultFolder(ByVal strFolderName As String) As Boolean
 
-		Dim objZipper As Ionic.Zip.ZipFile
-		Dim strTargetFilePath As String
-		Dim strSourceFolderPath As String
+        Dim objZipper As Ionic.Zip.ZipFile
+        Dim strTargetFilePath As String
+        Dim strSourceFolderPath As String
 
-		Try
-			strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_Results_" & strFolderName.ToUpper() & ".zip")
-			strSourceFolderPath = System.IO.Path.Combine(mMSAlignWorkFolderPath, strFolderName)
+        Try
+            strTargetFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_Results_" & strFolderName.ToUpper() & ".zip")
+            strSourceFolderPath = System.IO.Path.Combine(mMSAlignWorkFolderPath, strFolderName)
 
-			' Confirm that the folder has one or more files or subfolders
-			Dim diSourceFolder As New System.IO.DirectoryInfo(strSourceFolderPath)
-			If diSourceFolder.GetFileSystemInfos.Length = 0 Then
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign results folder is empty; nothing to zip: " & strSourceFolderPath)
-				End If
-				Return False
-			End If
+            ' Confirm that the folder has one or more files or subfolders
+            Dim diSourceFolder As New System.IO.DirectoryInfo(strSourceFolderPath)
+            If diSourceFolder.GetFileSystemInfos.Length = 0 Then
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign results folder is empty; nothing to zip: " & strSourceFolderPath)
+                End If
+                Return False
+            End If
 
-			If m_DebugLevel >= 1 Then
-				Dim strLogMessage As String = "Zipping " & strFolderName.ToUpper() & " folder at " & strSourceFolderPath
+            If m_DebugLevel >= 1 Then
+                Dim strLogMessage As String = "Zipping " & strFolderName.ToUpper() & " folder at " & strSourceFolderPath
 
-				If m_DebugLevel >= 2 Then
-					strLogMessage &= ": " & strTargetFilePath
-				End If
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strLogMessage)
+                If m_DebugLevel >= 2 Then
+                    strLogMessage &= ": " & strTargetFilePath
+                End If
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strLogMessage)
 
-			End If
+            End If
 
-			objZipper = New Ionic.Zip.ZipFile(strTargetFilePath)
-			objZipper.AddDirectory(strSourceFolderPath)
-			objZipper.Save()
-			System.Threading.Thread.Sleep(500)
+            objZipper = New Ionic.Zip.ZipFile(strTargetFilePath)
+            objZipper.AddDirectory(strSourceFolderPath)
+            objZipper.Save()
+            System.Threading.Thread.Sleep(500)
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ZipMSAlignResultFolder: " & ex.Message)
-			Return False
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ZipMSAlignResultFolder: " & ex.Message)
+            Return False
+        End Try
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
 #End Region
 
 #Region "Event Handlers"
 
-	''' <summary>
-	''' Event handler for CmdRunner.LoopWaiting event
-	''' </summary>
-	''' <remarks></remarks>
-	Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    ''' <summary>
+    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
         Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow

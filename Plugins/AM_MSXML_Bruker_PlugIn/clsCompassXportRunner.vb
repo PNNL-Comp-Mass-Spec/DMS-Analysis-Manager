@@ -1,4 +1,4 @@
-﻿'*********************************************************************************************************
+'*********************************************************************************************************
 ' Written by Matthew Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 03/30/2011
@@ -20,7 +20,7 @@ Public Class clsCompassXportRunner
         mzData = 1
         mzML = 2
         JCAMP = 3
-		CSV = 4
+        CSV = 4
     End Enum
 #End Region
 

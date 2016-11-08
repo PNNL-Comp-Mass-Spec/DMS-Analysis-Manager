@@ -1,4 +1,4 @@
-﻿'*********************************************************************************************************
+'*********************************************************************************************************
 ' Written by Matthew Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 07/15/2014
@@ -10,18 +10,18 @@ Option Strict On
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMSPathFinder
-	Inherits clsAnalysisResources
+    Inherits clsAnalysisResources
 
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
         MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		If Not RetrieveFastaAndParamFile() Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
+        If Not RetrieveFastaAndParamFile() Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
         Dim eResult As IJobParams.CloseOutType
 
         eResult = RetrieveProMexFeaturesFile()
@@ -31,15 +31,15 @@ Public Class clsAnalysisResourcesMSPathFinder
 
         eResult = RetrievePBFFile()
 
-		If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			Return eResult
-		End If
+        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return eResult
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	Private Function RetrieveFastaAndParamFile() As Boolean
+    Private Function RetrieveFastaAndParamFile() As Boolean
 
         Dim currentTask = "Initializing"
 

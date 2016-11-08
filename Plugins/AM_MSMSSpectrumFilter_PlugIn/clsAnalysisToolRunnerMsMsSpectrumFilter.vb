@@ -1,4 +1,4 @@
-﻿Option Strict On
+Option Strict On
 
 ' This class was converted to be loaded as a pluggable DLL into the New DMS 
 ' Analysis Tool Manager program.  The new ATM supports the mini-pipeline. It 
@@ -19,13 +19,13 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     Inherits clsAnalysisToolRunnerBase
 
     Protected WithEvents m_MsMsSpectrumFilter As clsMsMsSpectrumFilter
-	Protected m_ErrMsg As String = String.Empty
-	Protected m_SettingsFileName As String = String.Empty			' Handy place to store value so repeated calls to m_JobParams aren't required
+    Protected m_ErrMsg As String = String.Empty
+    Protected m_SettingsFileName As String = String.Empty			' Handy place to store value so repeated calls to m_JobParams aren't required
     Protected m_Results As ISpectraFilter.ProcessResults
-	Protected m_DTATextFileName As String = String.Empty
+    Protected m_DTATextFileName As String = String.Empty
 
     Protected m_thThread As System.Threading.Thread
-	Protected m_FilterStatus As ISpectraFilter.ProcessStatus
+    Protected m_FilterStatus As ISpectraFilter.ProcessStatus
 
 #Region "Methods"
     Public Sub New()
@@ -42,198 +42,198 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         End If
 
         ' Store the MSMSSpectrumFilter version info in the database
-		If Not StoreToolVersionInfo() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			m_message = "Error determining MSMSSpectrumFilter version"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not StoreToolVersionInfo() Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+            m_message = "Error determining MSMSSpectrumFilter version"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_STARTING
+        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_STARTING
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file")
 
         'Verify necessary files are in specified locations
         If Not InitSetup() Then
             m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
+            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Filter the spectra (the process runs in a separate thread)
-		m_FilterStatus = FilterDTATextFile()
+        m_FilterStatus = FilterDTATextFile()
 
-		If m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR Then
-			m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR Then
+            m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering complete")
         End If
 
-		' Zip the filtered _Dta.txt file
-		If m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED Then
-			result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-			m_EvalMessage = "Filtered CDTA file is identical to the original file and was thus not copied to the job results folder"
-		Else
-			result = ZipConcDtaFile()
-		End If
+        ' Zip the filtered _Dta.txt file
+        If m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED Then
+            result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            m_EvalMessage = "Filtered CDTA file is identical to the original file and was thus not copied to the job results folder"
+        Else
+            result = ZipConcDtaFile()
+        End If
 
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		'Stop the job timer
-		m_StopTime = System.DateTime.UtcNow
+        'Stop the job timer
+        m_StopTime = System.DateTime.UtcNow
 
-		'Add the current job data to the summary file
-		If Not UpdateSummaryFile() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-		End If
+        'Add the current job data to the summary file
+        If Not UpdateSummaryFile() Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+        End If
 
-		'Make the results folder
-		If m_DebugLevel > 3 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder")
-		End If
+        'Make the results folder
+        If m_DebugLevel > 3 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder")
+        End If
 
-		result = MakeResultsFolder()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'MakeResultsFolder handles posting to local log, so set database error message and exit
-			m_message = "Error making results folder"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        result = MakeResultsFolder()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'MakeResultsFolder handles posting to local log, so set database error message and exit
+            m_message = "Error making results folder"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		result = MoveResultFiles()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'MoveResultFiles moves the result files to the result folder
-			m_message = "Error making results folder"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        result = MoveResultFiles()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'MoveResultFiles moves the result files to the result folder
+            m_message = "Error making results folder"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		result = CopyResultsFolderToServer()
-		If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-			'TODO: What do we do here?
-			Return result
-		End If
+        result = CopyResultsFolderToServer()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            'TODO: What do we do here?
+            Return result
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	Protected Function CDTAFilesMatch(ByVal strOriginalCDTA As String, ByVal strFilteredCDTA As String) As Boolean
+    Protected Function CDTAFilesMatch(ByVal strOriginalCDTA As String, ByVal strFilteredCDTA As String) As Boolean
 
-		Dim fiOriginalCDTA As IO.FileInfo
-		Dim fiFilteredCDTA As IO.FileInfo
+        Dim fiOriginalCDTA As IO.FileInfo
+        Dim fiFilteredCDTA As IO.FileInfo
 
-		Dim objOriginalCDTA As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass = Nothing
-		Dim objFilteredCDTA As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass = Nothing
+        Dim objOriginalCDTA As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass = Nothing
+        Dim objFilteredCDTA As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass = Nothing
 
-		Try
-			fiFilteredCDTA = New IO.FileInfo(strFilteredCDTA)
-			fiOriginalCDTA = New IO.FileInfo(strOriginalCDTA)
+        Try
+            fiFilteredCDTA = New IO.FileInfo(strFilteredCDTA)
+            fiOriginalCDTA = New IO.FileInfo(strOriginalCDTA)
 
-			' If the file sizes do not agree within 10 bytes, then the files likely do not match (unless we have a unicode; non-unicode issue, which shouldn't be the case)
-			If Math.Abs(fiFilteredCDTA.Length - fiOriginalCDTA.Length) > 10 Then
-				If m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file (" & fiFilteredCDTA.Length & " vs. " & fiOriginalCDTA.Length & "); assuming the files do not match")
-				End If
-				Return False
-			Else
-				If m_DebugLevel >= 2 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Comparing original CDTA file to filtered CDTA file to see if they contain the same spectral data")
-				End If
-			End If
+            ' If the file sizes do not agree within 10 bytes, then the files likely do not match (unless we have a unicode; non-unicode issue, which shouldn't be the case)
+            If Math.Abs(fiFilteredCDTA.Length - fiOriginalCDTA.Length) > 10 Then
+                If m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file (" & fiFilteredCDTA.Length & " vs. " & fiOriginalCDTA.Length & "); assuming the files do not match")
+                End If
+                Return False
+            Else
+                If m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Comparing original CDTA file to filtered CDTA file to see if they contain the same spectral data")
+                End If
+            End If
 
-			' Files are very similar in size; read the spectra data
+            ' Files are very similar in size; read the spectra data
 
-			objFilteredCDTA = New MsMsDataFileReader.clsDtaTextFileReader(False)
-			objOriginalCDTA = New MsMsDataFileReader.clsDtaTextFileReader(False)
+            objFilteredCDTA = New MsMsDataFileReader.clsDtaTextFileReader(False)
+            objOriginalCDTA = New MsMsDataFileReader.clsDtaTextFileReader(False)
 
-			If Not objFilteredCDTA.OpenFile(strFilteredCDTA) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " & strFilteredCDTA)
-				Return False
-			End If
+            If Not objFilteredCDTA.OpenFile(strFilteredCDTA) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " & strFilteredCDTA)
+                Return False
+            End If
 
-			If Not objOriginalCDTA.OpenFile(strOriginalCDTA) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " & strOriginalCDTA)
-				Return False
-			End If
+            If Not objOriginalCDTA.OpenFile(strOriginalCDTA) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " & strOriginalCDTA)
+                Return False
+            End If
 
-			Dim strMSMSDataListFilt() As String = Nothing
-			Dim udtSpectrumHeaderInfoFilt As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-			Dim intMsMsDataCountFilt As Integer
+            Dim strMSMSDataListFilt() As String = Nothing
+            Dim udtSpectrumHeaderInfoFilt As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+            Dim intMsMsDataCountFilt As Integer
 
-			Dim strMSMSDataListOrig() As String = Nothing
-			Dim udtSpectrumHeaderInfoOrig As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-			Dim intMsMsDataCountOrig As Integer
+            Dim strMSMSDataListOrig() As String = Nothing
+            Dim udtSpectrumHeaderInfoOrig As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
+            Dim intMsMsDataCountOrig As Integer
 
-			Dim intOriginalCDTASpectra As Integer = 0
-			Dim intFilteredCDTASpectra As Integer = 0
+            Dim intOriginalCDTASpectra As Integer = 0
+            Dim intFilteredCDTASpectra As Integer = 0
 
-			Do While objOriginalCDTA.ReadNextSpectrum(strMSMSDataListOrig, intMsMsDataCountOrig, udtSpectrumHeaderInfoOrig)
-				intOriginalCDTASpectra += 1
+            Do While objOriginalCDTA.ReadNextSpectrum(strMSMSDataListOrig, intMsMsDataCountOrig, udtSpectrumHeaderInfoOrig)
+                intOriginalCDTASpectra += 1
 
-				If objFilteredCDTA.ReadNextSpectrum(strMSMSDataListFilt, intMsMsDataCountFilt, udtSpectrumHeaderInfoFilt) Then
-					intFilteredCDTASpectra += 1
+                If objFilteredCDTA.ReadNextSpectrum(strMSMSDataListFilt, intMsMsDataCountFilt, udtSpectrumHeaderInfoFilt) Then
+                    intFilteredCDTASpectra += 1
 
-					' If the parent ions differ or the MS/MS spectral data differs, then the files do not match
+                    ' If the parent ions differ or the MS/MS spectral data differs, then the files do not match
 
-					If udtSpectrumHeaderInfoOrig.SpectrumTitle <> udtSpectrumHeaderInfoFilt.SpectrumTitle Then
-						If m_DebugLevel >= 2 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has a different spectrum header vs. spectrum " & intFilteredCDTASpectra & " in the filtered CDTA file; files do not match")
-						End If
-						Return False
-					End If
+                    If udtSpectrumHeaderInfoOrig.SpectrumTitle <> udtSpectrumHeaderInfoFilt.SpectrumTitle Then
+                        If m_DebugLevel >= 2 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has a different spectrum header vs. spectrum " & intFilteredCDTASpectra & " in the filtered CDTA file; files do not match")
+                        End If
+                        Return False
+                    End If
 
-					If intMsMsDataCountOrig <> intMsMsDataCountFilt Then
-						If m_DebugLevel >= 2 Then
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has a different number of ions (" & intMsMsDataCountOrig & " vs. " & intMsMsDataCountFilt & "); files do not match")
-						End If
-						Return False
-					End If
+                    If intMsMsDataCountOrig <> intMsMsDataCountFilt Then
+                        If m_DebugLevel >= 2 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has a different number of ions (" & intMsMsDataCountOrig & " vs. " & intMsMsDataCountFilt & "); files do not match")
+                        End If
+                        Return False
+                    End If
 
-					For intIndex As Integer = 0 To intMsMsDataCountOrig - 1
-						If strMSMSDataListOrig(intIndex).Trim <> strMSMSDataListFilt(intIndex).Trim Then
-							If m_DebugLevel >= 2 Then
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has different ion mass or abundance values; files do not match")
-							End If
-							Return False
-						End If
-					Next
+                    For intIndex As Integer = 0 To intMsMsDataCountOrig - 1
+                        If strMSMSDataListOrig(intIndex).Trim <> strMSMSDataListFilt(intIndex).Trim Then
+                            If m_DebugLevel >= 2 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has different ion mass or abundance values; files do not match")
+                            End If
+                            Return False
+                        End If
+                    Next
 
-				Else
-					' Original CDTA file has more spectra than the filtered one
-					If m_DebugLevel >= 2 Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Original CDTA file has more spectra than the filtered one (" & intOriginalCDTASpectra & " vs. " & intFilteredCDTASpectra & "); files do not match")
-					End If
-					Return False
-				End If
-			Loop
+                Else
+                    ' Original CDTA file has more spectra than the filtered one
+                    If m_DebugLevel >= 2 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Original CDTA file has more spectra than the filtered one (" & intOriginalCDTASpectra & " vs. " & intFilteredCDTASpectra & "); files do not match")
+                    End If
+                    Return False
+                End If
+            Loop
 
-			If objFilteredCDTA.ReadNextSpectrum(strMSMSDataListFilt, intMsMsDataCountFilt, udtSpectrumHeaderInfoFilt) Then
-				' Filtered CDTA file has more spectra than the original one
-				Return False
-			End If
+            If objFilteredCDTA.ReadNextSpectrum(strMSMSDataListFilt, intMsMsDataCountFilt, udtSpectrumHeaderInfoFilt) Then
+                ' Filtered CDTA file has more spectra than the original one
+                Return False
+            End If
 
-			' If we get here, then the files match
-			Return True
+            ' If we get here, then the files match
+            Return True
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CDTAFilesMatch", ex)
-			Return False
-		Finally
-			Try
-				System.Threading.Thread.Sleep(250)
-				If Not objOriginalCDTA Is Nothing Then objOriginalCDTA.CloseFile()
-				If Not objFilteredCDTA Is Nothing Then objFilteredCDTA.CloseFile()
-			Catch ex As Exception
-				' Ignore errors here
-			End Try
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CDTAFilesMatch", ex)
+            Return False
+        Finally
+            Try
+                System.Threading.Thread.Sleep(250)
+                If Not objOriginalCDTA Is Nothing Then objOriginalCDTA.CloseFile()
+                If Not objFilteredCDTA Is Nothing Then objFilteredCDTA.CloseFile()
+            Catch ex As Exception
+                ' Ignore errors here
+            End Try
+        End Try
 
 
-	End Function
+    End Function
 
     Protected Overridable Function CountDtaFiles(ByVal strDTATextFilePath As String) As Integer
         'Returns the number of dta files in the _dta.txt file
@@ -252,31 +252,31 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         Dim intDTACount As Integer
         Dim strLineIn As String
 
-		Dim reFind As System.Text.RegularExpressions.Regex
+        Dim reFind As System.Text.RegularExpressions.Regex
 
         Try
             reFind = New System.Text.RegularExpressions.Regex(DTA_FILENAME_REGEX, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strDTATextFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+            Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strDTATextFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
-				intDTACount = 0
-				Do While srInFile.Peek() >= 0
+                intDTACount = 0
+                Do While srInFile.Peek() >= 0
 
-					strLineIn = srInFile.ReadLine
+                    strLineIn = srInFile.ReadLine
 
-					If Not strLineIn Is Nothing Then
-						If reFind.Match(strLineIn).Success Then
-							intDTACount += 1
-						End If
-					End If
-				Loop
+                    If Not strLineIn Is Nothing Then
+                        If reFind.Match(strLineIn).Success Then
+                            intDTACount += 1
+                        End If
+                    End If
+                Loop
 
-			End Using
+            End Using
 
         Catch ex As Exception
-			LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex)
-			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-		End Try
+            LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex)
+            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
+        End Try
 
         Return intDTACount
 
@@ -329,8 +329,8 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False")
                     End If
 
-					m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-					Return m_FilterStatus
+                    m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
+                    Return m_FilterStatus
                 Else
                     If m_DebugLevel >= 4 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True")
@@ -364,14 +364,14 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             End If
 
             'If we reach here, everything must be good
-			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
+            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
 
         Catch ex As Exception
             LogErrors("FilterDTAFilesInFolder", "Error initializing and running clsMsMsSpectrumFilter", ex)
-			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
+            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
         End Try
 
-		Return m_FilterStatus
+        Return m_FilterStatus
     End Function
 
     Protected Overridable Sub FilterDTATextFileWork()
@@ -380,7 +380,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         Dim strBakFilePath As String
 
         Dim blnSuccess As Boolean
-		Dim blnFilesMatch As Boolean
+        Dim blnFilesMatch As Boolean
 
         Try
 
@@ -388,9 +388,9 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  Spectrum Filter Mode: " & m_MsMsSpectrumFilter.SpectrumFilterMode)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MS Level Filter: " & m_MsMsSpectrumFilter.MSLevelFilter)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ScanTypeFilter: " & m_MsMsSpectrumFilter.ScanTypeFilter & " (match type " & m_MsMsSpectrumFilter.ScanTypeMatchType & ")")
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MSCollisionModeFilter: " & m_MsMsSpectrumFilter.MSCollisionModeFilter & " (match type " & m_MsMsSpectrumFilter.MSCollisionModeMatchType & ")")
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MinimumIonCount: " & m_MsMsSpectrumFilter.MinimumIonCount)
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemovePrecursor: " & m_MsMsSpectrumFilter.IonFilter_RemovePrecursor)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MSCollisionModeFilter: " & m_MsMsSpectrumFilter.MSCollisionModeFilter & " (match type " & m_MsMsSpectrumFilter.MSCollisionModeMatchType & ")")
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MinimumIonCount: " & m_MsMsSpectrumFilter.MinimumIonCount)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemovePrecursor: " & m_MsMsSpectrumFilter.IonFilter_RemovePrecursor)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveChargeReducedPrecursors: " & m_MsMsSpectrumFilter.IonFilter_RemoveChargeReducedPrecursors)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors: " & m_MsMsSpectrumFilter.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors)
             End If
@@ -415,63 +415,63 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
                     ' Sort the report file (this also closes the file)
                     m_MsMsSpectrumFilter.SortSpectrumQualityTextFile()
 
-					strBakFilePath = strInputFilePath & ".bak"
+                    strBakFilePath = strInputFilePath & ".bak"
 
-					If Not System.IO.File.Exists(strBakFilePath) Then
-						LogErrors("FilterDTATextFileWork", "CDTA .Bak file not found", Nothing)
-						m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED
-					End If
+                    If Not System.IO.File.Exists(strBakFilePath) Then
+                        LogErrors("FilterDTATextFileWork", "CDTA .Bak file not found", Nothing)
+                        m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED
+                    End If
 
-					' Compare the new _dta.txt file to the _dta.txt.bak file
-					' If they have the same data, then do not keep the new _dta.txt file
+                    ' Compare the new _dta.txt file to the _dta.txt.bak file
+                    ' If they have the same data, then do not keep the new _dta.txt file
 
-					blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath)
+                    blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath)
 
-					System.Threading.Thread.Sleep(250)
-					PRISM.Processes.clsProgRunner.GarbageCollectNow()
+                    System.Threading.Thread.Sleep(250)
+                    PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-					' Delete the _dta.txt.bak file
-					System.IO.File.Delete(strBakFilePath)
+                    ' Delete the _dta.txt.bak file
+                    System.IO.File.Delete(strBakFilePath)
 
-					If blnfilesmatch Then
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The filtered CDTA file matches the original CDTA file (same number of spectra and same spectral data); the filtered CDTA file will not be retained")
+                    If blnfilesmatch Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The filtered CDTA file matches the original CDTA file (same number of spectra and same spectral data); the filtered CDTA file will not be retained")
 
-						System.IO.File.Delete(strInputFilePath)
+                        System.IO.File.Delete(strInputFilePath)
 
-						m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED
+                        m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED
 
-					Else
-						'Count the number of .Dta files remaining in the _dta.txt file
-						If Not VerifyDtaCreation(strInputFilePath) Then
-							m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED
-						Else
-							m_Results = ISpectraFilter.ProcessResults.SFILT_SUCCESS
-						End If
-					End If
+                    Else
+                        'Count the number of .Dta files remaining in the _dta.txt file
+                        If Not VerifyDtaCreation(strInputFilePath) Then
+                            m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED
+                        Else
+                            m_Results = ISpectraFilter.ProcessResults.SFILT_SUCCESS
+                        End If
+                    End If
 
-					m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
-				Else
-					If m_MsMsSpectrumFilter.AbortProcessing Then
-						LogErrors("FilterDTATextFileWork", "Processing aborted", Nothing)
-						m_Results = ISpectraFilter.ProcessResults.SFILT_ABORTED
-						m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ABORTING
-					Else
-						LogErrors("FilterDTATextFileWork", m_MsMsSpectrumFilter.GetErrorMessage(), Nothing)
-						m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-						m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-					End If
-				End If
+                    m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
+                Else
+                    If m_MsMsSpectrumFilter.AbortProcessing Then
+                        LogErrors("FilterDTATextFileWork", "Processing aborted", Nothing)
+                        m_Results = ISpectraFilter.ProcessResults.SFILT_ABORTED
+                        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ABORTING
+                    Else
+                        LogErrors("FilterDTATextFileWork", m_MsMsSpectrumFilter.GetErrorMessage(), Nothing)
+                        m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
+                        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
+                    End If
+                End If
 
-				m_MsMsSpectrumFilter.CloseLogFileNow()
+                m_MsMsSpectrumFilter.CloseLogFileNow()
 
-			Catch ex As Exception
-				LogErrors("FilterDTATextFileWork", "Error performing tasks after m_MsMsSpectrumFilter.ProcessFilesWildcard completes", ex)
-				m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-			End Try
+            Catch ex As Exception
+                LogErrors("FilterDTATextFileWork", "Error performing tasks after m_MsMsSpectrumFilter.ProcessFilesWildcard completes", ex)
+                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
+            End Try
 
         Catch ex As Exception
             LogErrors("FilterDTATextFileWork", "Error calling m_MsMsSpectrumFilter.ProcessFilesWildcard", ex)
-			m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
+            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
         End Try
 
 
@@ -498,60 +498,60 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             If blnScanStatsFilesExist Then
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "_ScanStats.txt files found for dataset " & m_Dataset)
-				End If
-				Return True
-			End If
+                End If
+                Return True
+            End If
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the _ScanStats.txt files for dataset " & m_Dataset)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the _ScanStats.txt files for dataset " & m_Dataset)
 
-			' Determine the path to the .Raw file
-			strRawFileName = m_Dataset & ".raw"
-			strFinniganRawFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName)
+            ' Determine the path to the .Raw file
+            strRawFileName = m_Dataset & ".raw"
+            strFinniganRawFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName)
 
-			If strFinniganRawFilePath Is Nothing OrElse strFinniganRawFilePath.Length = 0 Then
-				' Unable to resolve the file path
-				m_ErrMsg = "Could not find " & strRawFileName & " or " & strRawFileName & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the dataset folder; unable to generate the ScanStats files"
-				LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
-				Return False
-			End If
+            If strFinniganRawFilePath Is Nothing OrElse strFinniganRawFilePath.Length = 0 Then
+                ' Unable to resolve the file path
+                m_ErrMsg = "Could not find " & strRawFileName & " or " & strRawFileName & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the dataset folder; unable to generate the ScanStats files"
+                LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
+                Return False
+            End If
 
-			' Look for an existing _ScanStats.txt file in a SIC folder below folder with the .Raw file
-			Dim fiRawFile As IO.FileInfo = New IO.FileInfo(strFinniganRawFilePath)
+            ' Look for an existing _ScanStats.txt file in a SIC folder below folder with the .Raw file
+            Dim fiRawFile As IO.FileInfo = New IO.FileInfo(strFinniganRawFilePath)
 
-			If Not fiRawFile.Exists Then
-				' File not found at the specified path
-				m_ErrMsg = "File not found: " & strFinniganRawFilePath & " -- unable to generate the ScanStats files"
-				LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
-				Return False
-			End If
+            If Not fiRawFile.Exists Then
+                ' File not found at the specified path
+                m_ErrMsg = "File not found: " & strFinniganRawFilePath & " -- unable to generate the ScanStats files"
+                LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
+                Return False
+            End If
 
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating _ScanStats.txt file using " & strFinniganRawFilePath)
-			End If
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating _ScanStats.txt file using " & strFinniganRawFilePath)
+            End If
 
-			If Not m_MsMsSpectrumFilter.GenerateFinniganScanStatsFiles(strFinniganRawFilePath, m_WorkDir) Then
-				If m_DebugLevel >= 3 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False")
-				End If
+            If Not m_MsMsSpectrumFilter.GenerateFinniganScanStatsFiles(strFinniganRawFilePath, m_WorkDir) Then
+                If m_DebugLevel >= 3 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False")
+                End If
 
-				m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage()
-				If m_ErrMsg Is Nothing OrElse m_ErrMsg.Length = 0 Then
-					m_ErrMsg = "GenerateFinniganScanStatsFiles returned False; _ScanStats.txt files not generated"
-				End If
+                m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage()
+                If m_ErrMsg Is Nothing OrElse m_ErrMsg.Length = 0 Then
+                    m_ErrMsg = "GenerateFinniganScanStatsFiles returned False; _ScanStats.txt files not generated"
+                End If
 
-				LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
-				blnSuccess = False
-			Else
-				If m_DebugLevel >= 4 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True")
-				End If
-				blnSuccess = True
-			End If
+                LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
+                blnSuccess = False
+            Else
+                If m_DebugLevel >= 4 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True")
+                End If
+                blnSuccess = True
+            End If
 
 
-		Catch ex As Exception
-			LogErrors("GenerateFinniganScanStatsFiles", "Error generating _ScanStats.txt files", ex)
-		End Try
+        Catch ex As Exception
+            LogErrors("GenerateFinniganScanStatsFiles", "Error generating _ScanStats.txt files", ex)
+        End Try
 
         Return blnSuccess
 
@@ -599,7 +599,7 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
 
         'Set settings file name
         'This is the job parameters file that contains the settings information
-		m_SettingsFileName = m_jobParams.GetParam("JobParameters", "genJobParamsFilename")
+        m_SettingsFileName = m_jobParams.GetParam("JobParameters", "genJobParamsFilename")
 
         'Source folder name
         If m_WorkDir = "" Then
@@ -645,25 +645,25 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
     Protected Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-		Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
+        Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-		' Lookup the version of the MSMSSpectrumFilterAM
-		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "MSMSSpectrumFilterAM") Then
-			Return False
-		End If
+        ' Lookup the version of the MSMSSpectrumFilterAM
+        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "MSMSSpectrumFilterAM") Then
+            Return False
+        End If
 
-		' Lookup the version of the MsMsDataFileReader
-		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "MsMsDataFileReader") Then
-			Return False
-		End If
+        ' Lookup the version of the MsMsDataFileReader
+        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "MsMsDataFileReader") Then
+            Return False
+        End If
 
         ' Store the path to MsMsDataFileReader.dll in ioToolFiles
         Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -724,12 +724,12 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
         Dim DtaFilePath As String = System.IO.Path.Combine(m_WorkDir, DtaFileName)
 
         'Verify file exists
-		If System.IO.File.Exists(DtaFilePath) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-		Else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If System.IO.File.Exists(DtaFilePath) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+        Else
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         'Zip the file
         Try

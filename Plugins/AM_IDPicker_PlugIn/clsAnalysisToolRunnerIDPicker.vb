@@ -1,4 +1,4 @@
-﻿Option Strict On
+Option Strict On
 
 Imports AnalysisManagerBase
 
@@ -9,11 +9,11 @@ Imports System.Runtime.InteropServices
 Imports PHRPReader
 
 Public Class clsAnalysisToolRunnerIDPicker
-	Inherits clsAnalysisToolRunnerBase
+    Inherits clsAnalysisToolRunnerBase
 
-	'*********************************************************************************************************
-	'Class for running IDPicker
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Class for running IDPicker
+    '*********************************************************************************************************
 
 #Region "Module Variables"
 
@@ -79,57 +79,57 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 #Region "Methods"
 
-	''' <summary>
-	''' Runs PepXML converter and IDPicker tool
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
+    ''' <summary>
+    ''' Runs PepXML converter and IDPicker tool
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
+    Public Overrides Function RunTool() As IJobParams.CloseOutType
 
-		Dim OrgDbDir As String
-		Dim strFASTAFilePath As String
-		Dim strResultType As String
-		Dim strSynFilePath As String
-		Dim strErrorMessage As String = String.Empty
+        Dim OrgDbDir As String
+        Dim strFASTAFilePath As String
+        Dim strResultType As String
+        Dim strSynFilePath As String
+        Dim strErrorMessage As String = String.Empty
 
         Dim ePHRPResultType As clsPHRPReader.ePeptideHitResultType
 
-		Dim result As IJobParams.CloseOutType
+        Dim result As IJobParams.CloseOutType
 
         ' As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
         Dim blnSkipIDPicker As Boolean = ALWAYS_SKIP_IDPICKER
 
         Dim blnProcessingError = False
 
-		Dim blnSuccess As Boolean
+        Dim blnSuccess As Boolean
 
-		mIDPickerOptions = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
-		mCmdRunnerErrors = New ConcurrentBag(Of String)
-		mCmdRunnerErrorsToIgnore = New ConcurrentBag(Of String)
-		mFilenamesToAddToReportFolder = New List(Of String)
+        mIDPickerOptions = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+        mCmdRunnerErrors = New ConcurrentBag(Of String)
+        mCmdRunnerErrorsToIgnore = New ConcurrentBag(Of String)
+        mFilenamesToAddToReportFolder = New List(Of String)
 
-		Try
-			'Call base class for initial setup
-			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+        Try
+            'Call base class for initial setup
+            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			If m_DebugLevel > 4 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIDPicker.RunTool(): Enter")
-			End If
+            If m_DebugLevel > 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIDPicker.RunTool(): Enter")
+            End If
 
-			m_progress = PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES
+            m_progress = PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES
 
-			' Determine the path to the IDPicker program (idpQonvert); folder will also contain idpAssemble.exe and idpReport.exe
-			Dim progLocQonvert As String
-			progLocQonvert = DetermineProgramLocation("IDPicker", "IDPickerProgLoc", IDPicker_Qonvert)
+            ' Determine the path to the IDPicker program (idpQonvert); folder will also contain idpAssemble.exe and idpReport.exe
+            Dim progLocQonvert As String
+            progLocQonvert = DetermineProgramLocation("IDPicker", "IDPickerProgLoc", IDPicker_Qonvert)
 
-			If String.IsNullOrWhiteSpace(progLocQonvert) Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If String.IsNullOrWhiteSpace(progLocQonvert) Then
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' Determine the result type
-			strResultType = m_jobParams.GetParam("ResultType")
+            ' Determine the result type
+            strResultType = m_jobParams.GetParam("ResultType")
 
             ePHRPResultType = clsPHRPReader.GetPeptideHitResultType(strResultType)
             If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
@@ -137,20 +137,20 @@ Public Class clsAnalysisToolRunnerIDPicker
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-			' Define the path to the synopsis file
+            ' Define the path to the synopsis file
             strSynFilePath = Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset))
 
-			If Not clsAnalysisResources.ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
-				' The synopsis file is empty
-				m_message = strErrorMessage
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
-			End If
+            If Not clsAnalysisResources.ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
+                ' The synopsis file is empty
+                m_message = strErrorMessage
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            End If
 
-			' Define the path to the fasta file
-			OrgDbDir = m_mgrParams.GetParam("orgdbdir")
-			strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            ' Define the path to the fasta file
+            OrgDbDir = m_mgrParams.GetParam("orgdbdir")
+            strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
-			Dim fiFastaFile = New FileInfo(strFASTAFilePath)
+            Dim fiFastaFile = New FileInfo(strFASTAFilePath)
 
             If Not blnSkipIDPicker AndAlso Not fiFastaFile.Exists Then
                 ' Fasta file not found
@@ -167,38 +167,38 @@ Public Class clsAnalysisToolRunnerIDPicker
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
             End If
 
-			' Store the version of IDPicker and PeptideListToXML in the database
-			' Alternatively, if blnSkipIDPicker is true, then just store the version of PeptideListToXML
+            ' Store the version of IDPicker and PeptideListToXML in the database
+            ' Alternatively, if blnSkipIDPicker is true, then just store the version of PeptideListToXML
 
-			' This function updates mPeptideListToXMLExePath and mIDPickerProgramFolder
-			If Not StoreToolVersionInfo(progLocQonvert, blnSkipIDPicker) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-				m_message = "Error determining IDPicker version"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' This function updates mPeptideListToXMLExePath and mIDPickerProgramFolder
+            If Not StoreToolVersionInfo(progLocQonvert, blnSkipIDPicker) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+                m_message = "Error determining IDPicker version"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			' Create the PepXML file
-			blnSuccess = CreatePepXMLFile(fiFastaFile.FullName, strSynFilePath, ePHRPResultType)
-			If Not blnSuccess Then
-				If String.IsNullOrEmpty(m_message) Then
-					m_message = "Error creating PepXML file"
-				End If
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating PepXML file for job " & m_JobNum)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            ' Create the PepXML file
+            blnSuccess = CreatePepXMLFile(fiFastaFile.FullName, strSynFilePath, ePHRPResultType)
+            If Not blnSuccess Then
+                If String.IsNullOrEmpty(m_message) Then
+                    m_message = "Error creating PepXML file"
+                End If
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating PepXML file for job " & m_JobNum)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
-			If blnSkipIDPicker Then
-				' Don't keep this file since we're skipping IDPicker
-				m_jobParams.AddResultFileToSkip("Tool_Version_Info_IDPicker.txt")
+            If blnSkipIDPicker Then
+                ' Don't keep this file since we're skipping IDPicker
+                m_jobParams.AddResultFileToSkip("Tool_Version_Info_IDPicker.txt")
 
-				Dim strParamFileNameLocal As String = m_jobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL)
-				If String.IsNullOrEmpty(strParamFileNameLocal) Then
-					m_jobParams.AddResultFileToSkip(clsAnalysisResourcesIDPicker.DEFAULT_IDPICKER_PARAM_FILE_NAME)
-				Else
-					m_jobParams.AddResultFileToSkip(strParamFileNameLocal)
-				End If
+                Dim strParamFileNameLocal As String = m_jobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL)
+                If String.IsNullOrEmpty(strParamFileNameLocal) Then
+                    m_jobParams.AddResultFileToSkip(clsAnalysisResourcesIDPicker.DEFAULT_IDPICKER_PARAM_FILE_NAME)
+                Else
+                    m_jobParams.AddResultFileToSkip(strParamFileNameLocal)
+                End If
 
-			Else
+            Else
 
                 Dim blnCriticalError = False
 

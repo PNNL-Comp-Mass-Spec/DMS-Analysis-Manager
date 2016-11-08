@@ -15,7 +15,7 @@ Public Class clsAnalysisResourcesMSXMLBruker
 
 #Region "Methods"
     ''' <summary>
-	''' Retrieves files necessary for creating the .mzXML file
+    ''' Retrieves files necessary for creating the .mzXML file
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
@@ -26,19 +26,19 @@ Public Class clsAnalysisResourcesMSXMLBruker
         Dim eRawDataType = GetRawDataType(strRawDataType)
 
         Select Case eRawDataType
-			Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
-				' This dataset type is acceptable
-			Case Else
-				m_message = "Dataset type " & strRawDataType & " is not supported"
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_BRUKER_FT_FOLDER & " or " & RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
+                ' This dataset type is acceptable
+            Case Else
+                m_message = "Dataset type " & strRawDataType & " is not supported"
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_BRUKER_FT_FOLDER & " or " & RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-		End Select
+        End Select
 
-		If Not RetrieveSpectra(strRawDataType) Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not RetrieveSpectra(strRawDataType) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.SingleDataset) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED

@@ -12,32 +12,32 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisToolRunnerOM
     Inherits clsAnalysisToolRunnerBase
 
-	'*********************************************************************************************************
-	'Class for running OMSSA analysis
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Class for running OMSSA analysis
+    '*********************************************************************************************************
 
 #Region "Module Variables"
-	Protected Const PROGRESS_PCT_OMSSA_RUNNING As Single = 5
-	Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
-	Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
+    Protected Const PROGRESS_PCT_OMSSA_RUNNING As Single = 5
+    Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
+    Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
     
-	Protected WithEvents CmdRunner As clsRunDosProgram
-	'--------------------------------------------------------------------------------------------
-	'Future section to monitor OMSSA log file for progress determination
-	'--------------------------------------------------------------------------------------------
-	'Dim WithEvents m_StatFileWatch As FileSystemWatcher
-	'Protected m_XtSetupFile As String = "default_input.xml"
-	'--------------------------------------------------------------------------------------------
-	'End future section
-	'--------------------------------------------------------------------------------------------
+    Protected WithEvents CmdRunner As clsRunDosProgram
+    '--------------------------------------------------------------------------------------------
+    'Future section to monitor OMSSA log file for progress determination
+    '--------------------------------------------------------------------------------------------
+    'Dim WithEvents m_StatFileWatch As FileSystemWatcher
+    'Protected m_XtSetupFile As String = "default_input.xml"
+    '--------------------------------------------------------------------------------------------
+    'End future section
+    '--------------------------------------------------------------------------------------------
 #End Region
 
 #Region "Methods"
-	''' <summary>
-	''' Runs OMSSA tool
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Runs OMSSA tool
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
 
         Dim CmdStr As String
@@ -55,11 +55,11 @@ Public Class clsAnalysisToolRunnerOM
         End If
 
         ' Store the OMSSA version info in the database
-		If Not StoreToolVersionInfo() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			m_message = "Error determining OMSSA version"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not StoreToolVersionInfo() Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+            m_message = "Error determining OMSSA version"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
@@ -314,31 +314,31 @@ Public Class clsAnalysisToolRunnerOM
 
     End Function
 
-	'--------------------------------------------------------------------------------------------
-	'Future section to monitor OMSSA log file for progress determination
-	'--------------------------------------------------------------------------------------------
-	'	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
+    '--------------------------------------------------------------------------------------------
+    'Future section to monitor OMSSA log file for progress determination
+    '--------------------------------------------------------------------------------------------
+    '	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
 
-	''Watches the OMSSA status file and reports changes
+    ''Watches the OMSSA status file and reports changes
 
-	''Setup
-	'm_StatFileWatch = New FileSystemWatcher
-	'With m_StatFileWatch
-	'	.BeginInit()
-	'	.Path = DirToWatch
-	'	.IncludeSubdirectories = False
-	'	.Filter = FileToWatch
-	'	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-	'	.EndInit()
-	'End With
+    ''Setup
+    'm_StatFileWatch = New FileSystemWatcher
+    'With m_StatFileWatch
+    '	.BeginInit()
+    '	.Path = DirToWatch
+    '	.IncludeSubdirectories = False
+    '	.Filter = FileToWatch
+    '	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
+    '	.EndInit()
+    'End With
 
-	''Start monitoring
-	'm_StatFileWatch.EnableRaisingEvents = True
+    ''Start monitoring
+    'm_StatFileWatch.EnableRaisingEvents = True
 
-	'	End Sub
-	'--------------------------------------------------------------------------------------------
-	'End future section
-	'--------------------------------------------------------------------------------------------
+    '	End Sub
+    '--------------------------------------------------------------------------------------------
+    'End future section
+    '--------------------------------------------------------------------------------------------
 #End Region
 
 End Class

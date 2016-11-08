@@ -81,7 +81,7 @@ Public Class clsAnalysisToolRunnerDtaImport
                 Try
                     System.IO.Directory.CreateDirectory(TargetFolderNamePath)
                 Catch ex As Exception
-					m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder on " & System.IO.Path.GetPathRoot(TargetFolderNamePath)) & ": " & ex.Message
+                    m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder on " & System.IO.Path.GetPathRoot(TargetFolderNamePath)) & ": " & ex.Message
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                     'TODO: Handle errors
                 End Try
@@ -91,7 +91,7 @@ Public Class clsAnalysisToolRunnerDtaImport
             TargetFolderNamePath = System.IO.Path.Combine(TargetFolderNamePath, m_jobParams.GetParam("OutputFolderName"))
 
         Catch ex As Exception
-			m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder: " & ex.Message)
+            m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder: " & ex.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             'TODO: Handle errors
         End Try
@@ -107,7 +107,7 @@ Public Class clsAnalysisToolRunnerDtaImport
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
-			m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderNamePath) & " : " & ex.Message)
+            m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderNamePath) & " : " & ex.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 

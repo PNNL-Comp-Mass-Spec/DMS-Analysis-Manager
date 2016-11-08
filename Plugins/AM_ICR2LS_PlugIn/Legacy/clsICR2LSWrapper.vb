@@ -5,11 +5,11 @@ Imports AnalysisManagerBase.clsGlobal
 
 Public Class clsICR2LSWrapper
 
-	Public Enum BRUKERCHK As Short
-		BRUKER_CHK_SER = 3
-		BRUKER_CHK_NOSER = 2
-		BRUKER_CHK_NONE = 1
-	End Enum
+    Public Enum BRUKERCHK As Short
+        BRUKER_CHK_SER = 3
+        BRUKER_CHK_NOSER = 2
+        BRUKER_CHK_NONE = 1
+    End Enum
 
     Public Enum ICR2LSState
         Idle = 1           ' 1

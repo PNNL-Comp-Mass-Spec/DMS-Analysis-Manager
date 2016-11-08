@@ -92,8 +92,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim Result As IJobParams.CloseOutType
         Dim eReturnCode As IJobParams.CloseOutType
 
-		Dim blnProcessingError As Boolean = False
-		Dim blnNoDataInFilteredResults As Boolean = False
+        Dim blnProcessingError As Boolean = False
+        Dim blnNoDataInFilteredResults As Boolean = False
 
         ' We no longer need to index the .Fasta file (since we're no longer using PValue.py with the -a switch or Summary.py
         ''Dim objIndexedDBCreator As New clsCreateInspectIndexedDB
@@ -107,11 +107,11 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             MyBase.RunTool()
 
             ' Store the AnalysisManager version info in the database
-			If Not StoreToolVersionInfo() Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-				m_message = "Error determining Inspect Results Assembly version"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If Not StoreToolVersionInfo() Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+                m_message = "Error determining Inspect Results Assembly version"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
             'Determine if this is a parallelized job
             numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
@@ -154,12 +154,12 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             If Not blnProcessingError Then
                 ' Create the Peptide to Protein map file
-				Result = CreatePeptideToProteinMapping()
-				If Result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
-					blnNoDataInFilteredResults = True
-				ElseIf Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And Result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
-					blnProcessingError = True
-				End If
+                Result = CreatePeptideToProteinMapping()
+                If Result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                    blnNoDataInFilteredResults = True
+                ElseIf Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And Result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                    blnProcessingError = True
+                End If
             End If
 
             m_progress = 100
@@ -214,22 +214,22 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             'If parallelized, then remove multiple Result files from server
             If isParallelized Then
-				If Not MyBase.RemoveNonResultServerFiles() Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting non Result files from directory on server, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-				End If
+                If Not MyBase.RemoveNonResultServerFiles() Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting non Result files from directory on server, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
             End If
 
-			If blnNoDataInFilteredResults Then
-				Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
-			End If
+            If blnNoDataInFilteredResults Then
+                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            End If
 
         Catch ex As Exception
             Dim Msg As String
             Msg = "clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " & _
                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly")
+            m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -539,7 +539,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file")
             End If
 
-			blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
+            blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
 
             mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
 
@@ -628,46 +628,46 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             End If
 
             ' Read the contents of strProteinToPeptideMappingFilePath
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader((New System.IO.FileStream(strInspectParameterFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)))
+            Using srInFile As System.IO.StreamReader = New System.IO.StreamReader((New System.IO.FileStream(strInspectParameterFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)))
 
-				Do While srInFile.Peek <> -1
-					strLineIn = srInFile.ReadLine
+                Do While srInFile.Peek <> -1
+                    strLineIn = srInFile.ReadLine
 
-					strLineIn = strLineIn.Trim
+                    strLineIn = strLineIn.Trim
 
-					If strLineIn.Length > 0 Then
+                    If strLineIn.Length > 0 Then
 
-						If strLineIn.Chars(0) = "#"c Then
-							' Comment line; skip it
-						ElseIf strLineIn.ToLower.StartsWith("mod") Then
-							' Modification definition line
+                        If strLineIn.Chars(0) = "#"c Then
+                            ' Comment line; skip it
+                        ElseIf strLineIn.ToLower.StartsWith("mod") Then
+                            ' Modification definition line
 
-							' Split the line on commas
-							strSplitLine = strLineIn.Split(","c)
+                            ' Split the line on commas
+                            strSplitLine = strLineIn.Split(","c)
 
-							If strSplitLine.Length >= 5 AndAlso strSplitLine(0).ToLower.Trim = "mod" Then
-								If udtModList.Length = 0 Then
-									ReDim udtModList(0)
-								ElseIf intModCount >= udtModList.Length Then
-									ReDim Preserve udtModList(udtModList.Length * 2 - 1)
-								End If
+                            If strSplitLine.Length >= 5 AndAlso strSplitLine(0).ToLower.Trim = "mod" Then
+                                If udtModList.Length = 0 Then
+                                    ReDim udtModList(0)
+                                ElseIf intModCount >= udtModList.Length Then
+                                    ReDim Preserve udtModList(udtModList.Length * 2 - 1)
+                                End If
 
-								With udtModList(intModCount)
-									.ModName = strSplitLine(4)
-									.ModMass = strSplitLine(1)
-									.Residues = strSplitLine(2)
-								End With
+                                With udtModList(intModCount)
+                                    .ModName = strSplitLine(4)
+                                    .ModMass = strSplitLine(1)
+                                    .Residues = strSplitLine(2)
+                                End With
 
-								intModCount += 1
-							End If
-						End If
-					End If
-				Loop
+                                intModCount += 1
+                            End If
+                        End If
+                    End If
+                Loop
 
-				' Shrink udtModList to the appropriate length
-				ReDim Preserve udtModList(intModCount - 1)
+                ' Shrink udtModList to the appropriate length
+                ReDim Preserve udtModList(intModCount - 1)
 
-			End Using
+            End Using
 
         Catch ex As Exception
             m_message = "Error in InspectResultsAssembly->ExtractModInfoFromInspectParamFile"
@@ -838,7 +838,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         ''Dim fastaFilename As String = System.IO.Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
         ''Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
 
-		Dim pythonProgLoc As String = m_mgrParams.GetParam("pythonprogloc")
+        Dim pythonProgLoc As String = m_mgrParams.GetParam("pythonprogloc")
         Dim pthresh As String = ""
 
         Dim blnShuffledDBUsed As Boolean
@@ -847,7 +847,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         blnShuffledDBUsed = ValidateShuffledDBInUse(strInspectResultsInputFilePath)
 
         ' Lookup the p-value to filter on
-		pthresh = m_jobParams.GetJobParameter("InspectPvalueThreshold", "0.1")
+        pthresh = m_jobParams.GetJobParameter("InspectPvalueThreshold", "0.1")
 
         CmdRunner = New clsRunDosProgram(InspectDir)
 
@@ -944,39 +944,39 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <remarks></remarks>
     Protected Function StoreToolVersionInfo() As Boolean
 
-		Dim strToolVersionInfo As String = String.Empty
-		Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
-		Dim blnSuccess As Boolean
+        Dim strToolVersionInfo As String = String.Empty
+        Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
+        Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-		' Lookup the version of the Inspect Results Assembly Plugin
-		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerInspResultsAssemblyPlugIn") Then
-			Return False
-		End If
+        ' Lookup the version of the Inspect Results Assembly Plugin
+        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerInspResultsAssemblyPlugIn") Then
+            Return False
+        End If
 
         ' Store version information for the PeptideToProteinMapEngine and its associated DLLs
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"))
-		If Not blnSuccess Then Return False
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"))
+        If Not blnSuccess Then Return False
 
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "ProteinFileReader.dll"))
-		If Not blnSuccess Then Return False
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "ProteinFileReader.dll"))
+        If Not blnSuccess Then Return False
 
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"))
-		If Not blnSuccess Then Return False
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"))
+        If Not blnSuccess Then Return False
 
-		blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"))
-		If Not blnSuccess Then Return False
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"))
+        If Not blnSuccess Then Return False
 
-		' Store the path to important DLLs in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")))
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")))
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "ProteinFileReader.dll")))
-		' Skip System.Data.SQLite.dll; we don't need to track the file date
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll")))
+        ' Store the path to important DLLs in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "ProteinFileReader.dll")))
+        ' Skip System.Data.SQLite.dll; we don't need to track the file date
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -1183,7 +1183,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Dim chSepChars() As Char = New Char() {ControlChars.Tab}
 
-		blnShuffledDBUsed = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
+        blnShuffledDBUsed = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
 
         If blnShuffledDBUsed Then
             ' Open the _inspect.txt file and make sure proteins exist that start with XXX

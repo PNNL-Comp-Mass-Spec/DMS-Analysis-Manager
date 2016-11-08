@@ -1,48 +1,48 @@
-﻿Option Strict On
+Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
 Imports PHRPReader
 
 Public Class clsAnalysisResourcesSMAQC
-	Inherits clsAnalysisResources
+    Inherits clsAnalysisResources
 
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		' Retrieve the parameter file
-		Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-		Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
+        ' Retrieve the parameter file
+        Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
+        Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
 
-		If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-		End If
+        If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+        End If
 
-		' Retrieve the PHRP files (for the X!Tandem, Sequest, or MSGF+ source job)
-		If Not RetrievePHRPFiles() Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
+        ' Retrieve the PHRP files (for the X!Tandem, Sequest, or MSGF+ source job)
+        If Not RetrievePHRPFiles() Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
 
-		' Retrieve the MASIC ScanStats.txt, ScanStatsEx.txt, and _SICstats.txt files
-		If Not RetrieveMASICFiles() Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
+        ' Retrieve the MASIC ScanStats.txt, ScanStatsEx.txt, and _SICstats.txt files
+        If Not RetrieveMASICFiles() Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
 
-		' Retrieve the LLRC .RData files
-		If Not RetrieveLLRCFiles() Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-		End If
+        ' Retrieve the LLRC .RData files
+        If Not RetrieveLLRCFiles() Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
-	End Function
+    End Function
 
-	Protected Function RetrieveLLRCFiles() As Boolean
+    Protected Function RetrieveLLRCFiles() As Boolean
 
-		Dim strLLRCRunnerProgLoc As String = m_mgrParams.GetParam("LLRCRunnerProgLoc", "\\gigasax\DMS_Programs\LLRCRunner")
+        Dim strLLRCRunnerProgLoc As String = m_mgrParams.GetParam("LLRCRunnerProgLoc", "\\gigasax\DMS_Programs\LLRCRunner")
         Dim lstFilesToCopy = New List(Of String)
 
         lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_ALLDATA)
@@ -151,69 +151,69 @@ Public Class clsAnalysisResourcesSMAQC
 
     End Function
 
-	Protected Function RetrievePHRPFiles() As Boolean
+    Protected Function RetrievePHRPFiles() As Boolean
 
-		Dim lstFileNamesToGet As New List(Of String)
-		Dim ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType
+        Dim lstFileNamesToGet As New List(Of String)
+        Dim ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType
 
-		' The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
-		' For example, for dataset QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45 using Special_Processing of
-		'   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Parm File] = "xtandem_Rnd1PartTryp.xml"}
-		' leads to the input folder being XTM201009211859_Auto625059
+        ' The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
+        ' For example, for dataset QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45 using Special_Processing of
+        '   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Parm File] = "xtandem_Rnd1PartTryp.xml"}
+        ' leads to the input folder being XTM201009211859_Auto625059
 
-		Dim strInputFolder As String
-		strInputFolder = m_jobParams.GetParam("StepParameters", "InputFolderName")
+        Dim strInputFolder As String
+        strInputFolder = m_jobParams.GetParam("StepParameters", "InputFolderName")
 
-		If String.IsNullOrEmpty(strInputFolder) Then
-			m_message = "InputFolder step parameter not found; this is unexpected"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
+        If String.IsNullOrEmpty(strInputFolder) Then
+            m_message = "InputFolder step parameter not found; this is unexpected"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
 
-		End If
+        End If
 
-		If strInputFolder.ToUpper().StartsWith("XTM") Then
-			ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.XTandem
+        If strInputFolder.ToUpper().StartsWith("XTM") Then
+            ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.XTandem
 
-		ElseIf strInputFolder.ToUpper().StartsWith("SEQ") Then
-			ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Sequest
+        ElseIf strInputFolder.ToUpper().StartsWith("SEQ") Then
+            ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Sequest
 
-		ElseIf strInputFolder.ToUpper().StartsWith("MSG") Then
-			ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB
+        ElseIf strInputFolder.ToUpper().StartsWith("MSG") Then
+            ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB
 
-		Else
-			m_message = "InputFolder is not an X!Tandem, Sequest, or MSGF+ folder; it should start with XTM, Seq, or MSG and is auto-determined by the SourceJob SpecialProcessing text"
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-			Return False
-		End If
+        Else
+            m_message = "InputFolder is not an X!Tandem, Sequest, or MSGF+ folder; it should start with XTM, Seq, or MSG and is auto-determined by the SourceJob SpecialProcessing text"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+            Return False
+        End If
 
-		If m_DebugLevel >= 2 Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the PHRP files")
-		End If
+        If m_DebugLevel >= 2 Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the PHRP files")
+        End If
 
 
-		Dim strSynopsisFileName As String
+        Dim strSynopsisFileName As String
 
-		strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, m_DatasetName)
-		lstFileNamesToGet.Add(strSynopsisFileName)
+        strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, m_DatasetName)
+        lstFileNamesToGet.Add(strSynopsisFileName)
 
-		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, m_DatasetName))
-		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, m_DatasetName))
-		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, m_DatasetName))
-		lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, m_DatasetName))
-		lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(strSynopsisFileName))
+        lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, m_DatasetName))
+        lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, m_DatasetName))
+        lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, m_DatasetName))
+        lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, m_DatasetName))
+        lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(strSynopsisFileName))
 
-		For Each FileToGet As String In lstFileNamesToGet
+        For Each FileToGet As String In lstFileNamesToGet
 
-			If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-				'Errors were reported in function call, so just return
-				Return False
-			End If
-			m_jobParams.AddResultFileToSkip(FileToGet)
+            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+                'Errors were reported in function call, so just return
+                Return False
+            End If
+            m_jobParams.AddResultFileToSkip(FileToGet)
 
-		Next
+        Next
 
-		Return True
+        Return True
 
-	End Function
+    End Function
 
 End Class

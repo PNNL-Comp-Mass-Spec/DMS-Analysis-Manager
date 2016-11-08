@@ -10,7 +10,7 @@ Option Strict On
 '*********************************************************************************************************
 
 Public Class clsAnalysisToolRunnerDecon2lsDeIsotope
-	Inherits clsAnalysisToolRunnerDecon2lsBase
+    Inherits clsAnalysisToolRunnerDecon2lsBase
 
     '*********************************************************************************************************
     'Subclass for using Decon2LS to deisotope FTICR and LTQ-FT data
@@ -19,12 +19,12 @@ Public Class clsAnalysisToolRunnerDecon2lsDeIsotope
     '*********************************************************************************************************
 
 #Region "Methods"
-	Sub New()
+    Sub New()
 
-		MyBase.New()
-		m_AnalysisType = "DLS"
+        MyBase.New()
+        m_AnalysisType = "DLS"
 
-	End Sub
+    End Sub
 
     Protected Overrides Sub StartDecon2LS(ByRef bw As System.ComponentModel.BackgroundWorker, _
                                           ByVal udtCurrentLoopParams As udtCurrentLoopParamsType)

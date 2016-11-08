@@ -27,15 +27,15 @@ Public Class clsAnalysisResourcesLCMSFF
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
         ' Retrieve Decon2LS _scans.csv file for this dataset
-		' The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
-		strFileToGet = m_DatasetName & SCANS_FILE_SUFFIX
+        ' The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
+        strFileToGet = m_DatasetName & SCANS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         ' Retrieve Decon2LS _isos.csv files for this dataset
-		strFileToGet = m_DatasetName & ISOS_FILE_SUFFIX
+        strFileToGet = m_DatasetName & ISOS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -49,7 +49,7 @@ Public Class clsAnalysisResourcesLCMSFF
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
-		strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "LCMSFeatureFinder"
+        strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "LCMSFeatureFinder"
         strFFIniFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
         If strFFIniFileStoragePath Is Nothing OrElse strFFIniFileStoragePath.Length = 0 Then
             strFFIniFileStoragePath = "\\gigasax\DMS_Parameter_Files\LCMSFeatureFinder"
@@ -71,24 +71,24 @@ Public Class clsAnalysisResourcesLCMSFF
 
 
             ' IMS data; need to get the .UIMF file
-			If Not RetrieveSpectra(strRawDataType) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			Else
-				If m_DebugLevel >= 1 Then
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved .UIMF file")
-				End If
-			End If
+            If Not RetrieveSpectra(strRawDataType) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Else
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved .UIMF file")
+                End If
+            End If
 
             m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
 
         End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		' Could add an extension of a file to delete, like this:
+        ' Could add an extension of a file to delete, like this:
         ''m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
         ' Customize the LCMSFeatureFinder .Ini file to include the input file path and output folder path
@@ -134,108 +134,108 @@ Public Class clsAnalysisResourcesLCMSFF
         ' In addition, look for an entry for DeconToolsFilterFileName; 
         '  if present, verify that the file exists and copy it locally (so that it will be included in the results folder)
 
-		Dim SrcFilePath As String = Path.Combine(m_WorkingDir, strLCMSFFIniFileName)
-		Dim TargetFilePath As String = Path.Combine(m_WorkingDir, strLCMSFFIniFileName & "_new")
-		Dim IsosFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & ISOS_FILE_SUFFIX)
+        Dim SrcFilePath As String = Path.Combine(m_WorkingDir, strLCMSFFIniFileName)
+        Dim TargetFilePath As String = Path.Combine(m_WorkingDir, strLCMSFFIniFileName & "_new")
+        Dim IsosFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & ISOS_FILE_SUFFIX)
 
-		Dim strLineIn As String
-		Dim strLineInLCase As String
+        Dim strLineIn As String
+        Dim strLineInLCase As String
 
-		Dim blnInputFileDefined As Boolean
-		Dim blnOutputDirectoryDefined As Boolean
+        Dim blnInputFileDefined As Boolean
+        Dim blnOutputDirectoryDefined As Boolean
 
-		blnInputFileDefined = False
-		blnOutputDirectoryDefined = False
-		result = True
+        blnInputFileDefined = False
+        blnOutputDirectoryDefined = False
+        result = True
 
 
-		Try
-			' Create the output file (temporary name ending in "_new"; we'll swap the files later)
-			Using swOutFile As StreamWriter = New StreamWriter(New FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+        Try
+            ' Create the output file (temporary name ending in "_new"; we'll swap the files later)
+            Using swOutFile As StreamWriter = New StreamWriter(New FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-				Try
-					' Open the input file
-					Using srInFile As StreamReader = New StreamReader(New FileStream(SrcFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+                Try
+                    ' Open the input file
+                    Using srInFile As StreamReader = New StreamReader(New FileStream(SrcFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-						Do While srInFile.Peek >= 0
-							strLineIn = srInFile.ReadLine
+                        Do While srInFile.Peek >= 0
+                            strLineIn = srInFile.ReadLine
 
-							If Not strLineIn Is Nothing Then
-								strLineInLCase = strLineIn.ToLower.Trim
+                            If Not strLineIn Is Nothing Then
+                                strLineInLCase = strLineIn.ToLower.Trim
 
-								If strLineInLCase.StartsWith(INPUT_FILENAME_KEY.ToLower) Then
-									' Customize the input file name
-									strLineIn = INPUT_FILENAME_KEY & "=" & IsosFilePath
-									blnInputFileDefined = True
-								End If
+                                If strLineInLCase.StartsWith(INPUT_FILENAME_KEY.ToLower) Then
+                                    ' Customize the input file name
+                                    strLineIn = INPUT_FILENAME_KEY & "=" & IsosFilePath
+                                    blnInputFileDefined = True
+                                End If
 
-								If strLineInLCase.StartsWith(OUTPUT_DIRECTORY_KEY.ToLower) Then
-									' Customize the output directory name
-									strLineIn = OUTPUT_DIRECTORY_KEY & "=" & m_WorkingDir
-									blnOutputDirectoryDefined = True
-								End If
+                                If strLineInLCase.StartsWith(OUTPUT_DIRECTORY_KEY.ToLower) Then
+                                    ' Customize the output directory name
+                                    strLineIn = OUTPUT_DIRECTORY_KEY & "=" & m_WorkingDir
+                                    blnOutputDirectoryDefined = True
+                                End If
 
-								If strLineInLCase.StartsWith(FILTER_FILE_NAME_KEY.ToLower) Then
-									' Copy the file defined by DeconToolsFilterFileName= to the working directory
+                                If strLineInLCase.StartsWith(FILTER_FILE_NAME_KEY.ToLower) Then
+                                    ' Copy the file defined by DeconToolsFilterFileName= to the working directory
 
-									Dim strValue As String
-									strValue = GetValue(strLineIn)
+                                    Dim strValue As String
+                                    strValue = GetValue(strLineIn)
 
-									If Not String.IsNullOrEmpty(strValue) Then
-										Dim fiFileInfo As FileInfo = New FileInfo(strValue)
-										If Not fiFileInfo.Exists Then
-											m_message = "Entry for " & FILTER_FILE_NAME_KEY & " in " & strLCMSFFIniFileName & " points to an invalid file: " & strValue
-											clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-											result = False
-											Exit Do
-										Else
-											' Copy the file locally
-											Dim strTargetFilePath As String = Path.Combine(m_WorkingDir, fiFileInfo.Name)
-											fiFileInfo.CopyTo(strTargetFilePath)
-										End If
-									End If
+                                    If Not String.IsNullOrEmpty(strValue) Then
+                                        Dim fiFileInfo As FileInfo = New FileInfo(strValue)
+                                        If Not fiFileInfo.Exists Then
+                                            m_message = "Entry for " & FILTER_FILE_NAME_KEY & " in " & strLCMSFFIniFileName & " points to an invalid file: " & strValue
+                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                                            result = False
+                                            Exit Do
+                                        Else
+                                            ' Copy the file locally
+                                            Dim strTargetFilePath As String = Path.Combine(m_WorkingDir, fiFileInfo.Name)
+                                            fiFileInfo.CopyTo(strTargetFilePath)
+                                        End If
+                                    End If
 
-								End If
+                                End If
 
-								swOutFile.WriteLine(strLineIn)
-							End If
-						Loop
+                                swOutFile.WriteLine(strLineIn)
+                            End If
+                        Loop
 
-					End Using
+                    End Using
 
-					If Not blnInputFileDefined Then
-						swOutFile.WriteLine(INPUT_FILENAME_KEY & "=" & IsosFilePath)
-					End If
+                    If Not blnInputFileDefined Then
+                        swOutFile.WriteLine(INPUT_FILENAME_KEY & "=" & IsosFilePath)
+                    End If
 
-					If Not blnOutputDirectoryDefined Then
-						swOutFile.WriteLine(OUTPUT_DIRECTORY_KEY & "=" & m_WorkingDir)
-					End If
+                    If Not blnOutputDirectoryDefined Then
+                        swOutFile.WriteLine(OUTPUT_DIRECTORY_KEY & "=" & m_WorkingDir)
+                    End If
 
-				Catch ex As Exception
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" & strLCMSFFIniFileName & "): " & ex.Message)
-					result = False
-				End Try
+                Catch ex As Exception
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" & strLCMSFFIniFileName & "): " & ex.Message)
+                    result = False
+                End Try
 
-			End Using
+            End Using
 
-			' Wait 250 millseconds, then replace the original .Ini file with the new one
-			System.Threading.Thread.Sleep(250)
-			PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            ' Wait 250 millseconds, then replace the original .Ini file with the new one
+            System.Threading.Thread.Sleep(250)
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-			' Delete the input file
-			File.Delete(SrcFilePath)
+            ' Delete the input file
+            File.Delete(SrcFilePath)
 
-			' Wait another 250 milliseconds before renaming the output file
-			System.Threading.Thread.Sleep(50)
-			PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            ' Wait another 250 milliseconds before renaming the output file
+            System.Threading.Thread.Sleep(50)
+            PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-			' Rename the newly created output file to have the name of the input file
-			File.Move(TargetFilePath, SrcFilePath)
+            ' Rename the newly created output file to have the name of the input file
+            File.Move(TargetFilePath, SrcFilePath)
 
-		Catch ex As Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" & strLCMSFFIniFileName & "): " & ex.Message)
-			result = False
-		End Try
+        Catch ex As Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" & strLCMSFFIniFileName & "): " & ex.Message)
+            result = False
+        End Try
 
         Return result
     End Function

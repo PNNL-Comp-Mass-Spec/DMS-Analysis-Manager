@@ -17,14 +17,14 @@ Imports System.Runtime.InteropServices
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerMASICFinnigan
-	Inherits clsAnalysisToolRunnerMASICBase
+    Inherits clsAnalysisToolRunnerMASICBase
 
 #Region "Module Variables"
-	Protected WithEvents mMSXmlCreator As AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator
+    Protected WithEvents mMSXmlCreator As AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator
 #End Region
 
-	Public Sub New()
-	End Sub
+    Public Sub New()
+    End Sub
 
     Public Shared Function NeedToConvertRawToMzXML(fiInputFile As FileInfo) As Boolean
         Const TWO_GB As Long = 1024L * 1024 * 1024 * 2

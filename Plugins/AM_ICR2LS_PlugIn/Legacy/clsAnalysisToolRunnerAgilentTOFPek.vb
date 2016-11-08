@@ -13,7 +13,7 @@ Public MustInherit Class clsAnalysisToolRunnerAgilentTOFPek
 
         Dim ResCode As IJobParams.CloseOutType
         Dim PekRes As Boolean
-		Dim ParamFilePath As String
+        Dim ParamFilePath As String
 
         'Start with base class function to get settings information
         ResCode = MyBase.RunTool()

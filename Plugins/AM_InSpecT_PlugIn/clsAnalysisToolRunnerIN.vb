@@ -65,11 +65,11 @@ Public Class clsAnalysisToolRunnerIN
 
     End Sub
 
-	''' <summary>
-	''' Runs InSpecT tool
-	''' </summary>
-	''' <returns>CloseOutType enum indicating success or failure</returns>
-	''' <remarks></remarks>
+    ''' <summary>
+    ''' Runs InSpecT tool
+    ''' </summary>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
+    ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
 
@@ -96,11 +96,11 @@ Public Class clsAnalysisToolRunnerIN
             OrgDbDir = m_mgrParams.GetParam("orgdbdir")
 
             ' Store the Inspect version info in the database
-			If Not StoreToolVersionInfo(InspectDir) Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-				m_message = "Error determining Inspect version"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-			End If
+            If Not StoreToolVersionInfo(InspectDir) Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+                m_message = "Error determining Inspect version"
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End If
 
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Indexing Fasta file to create .trie file")
@@ -213,7 +213,7 @@ Public Class clsAnalysisToolRunnerIN
         Dim orgDbDir As String
         Dim fastaFilename As String
         Dim dbFilePath As String
-		Dim inputFilename As String
+        Dim inputFilename As String
         Dim strInputSpectra As String
 
         Dim blnUseShuffledDB As Boolean
@@ -222,10 +222,10 @@ Public Class clsAnalysisToolRunnerIN
             ParamFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
             orgDbDir = m_mgrParams.GetParam("orgdbdir")
             fastaFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
-			inputFilename = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
+            inputFilename = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
             strInputSpectra = String.Empty
 
-			blnUseShuffledDB = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
+            blnUseShuffledDB = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
 
             If blnUseShuffledDB Then
                 ' Using shuffled version of the .trie file
@@ -255,12 +255,12 @@ Public Class clsAnalysisToolRunnerIN
 
             swInspectInputFile.WriteLine("#Spectrum file to search; preferred formats are .mzXML and .mgf")
 
-			'The code below was commented out since we are only supporting dta files.
-			''Dim mzXMLFilename As String
-			''mzXMLFilename = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML")
-			''If m_jobParams.GetJobParameter("UseMzXML", False) Then
-			'         '    strInputSpectra = String.Copy(mzXMLFilename)
-			''Else
+            'The code below was commented out since we are only supporting dta files.
+            ''Dim mzXMLFilename As String
+            ''mzXMLFilename = System.IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML")
+            ''If m_jobParams.GetJobParameter("UseMzXML", False) Then
+            '         '    strInputSpectra = String.Copy(mzXMLFilename)
+            ''Else
 
             strInputSpectra = String.Copy(mInspectConcatenatedDtaFilePath)
             'End If
@@ -302,37 +302,37 @@ Public Class clsAnalysisToolRunnerIN
 
     End Function
 
-	' Unused function
-	''Private Function ExtractScanCountValueFromMzXML(ByVal strMZXMLFilename As String) As Integer
+    ' Unused function
+    ''Private Function ExtractScanCountValueFromMzXML(ByVal strMZXMLFilename As String) As Integer
 
-	''    Dim intScanCount As Integer
+    ''    Dim intScanCount As Integer
 
-	''    Dim objMZXmlFile As MSDataFileReader.clsMzXMLFileReader
-	''    Dim objSpectrumInfo As MSDataFileReader.clsSpectrumInfo
+    ''    Dim objMZXmlFile As MSDataFileReader.clsMzXMLFileReader
+    ''    Dim objSpectrumInfo As MSDataFileReader.clsSpectrumInfo
 
-	''    Try
-	''        objMZXmlFile = New MSDataFileReader.clsMzXMLFileReader()
+    ''    Try
+    ''        objMZXmlFile = New MSDataFileReader.clsMzXMLFileReader()
 
-	''        ' Open the file
-	''        objMZXmlFile.OpenFile(strMZXMLFilename)
+    ''        ' Open the file
+    ''        objMZXmlFile.OpenFile(strMZXMLFilename)
 
-	''        ' Read the first spectrum (required to determine the ScanCount)
-	''        If objMZXmlFile.ReadNextSpectrum(objSpectrumInfo) Then
-	''            intScanCount = objMZXmlFile.ScanCount
-	''        End If
+    ''        ' Read the first spectrum (required to determine the ScanCount)
+    ''        If objMZXmlFile.ReadNextSpectrum(objSpectrumInfo) Then
+    ''            intScanCount = objMZXmlFile.ScanCount
+    ''        End If
 
-	''        If Not objMZXmlFile Is Nothing Then
-	''            objMZXmlFile.CloseFile()
-	''        End If
+    ''        If Not objMZXmlFile Is Nothing Then
+    ''            objMZXmlFile.CloseFile()
+    ''        End If
 
-	''    Catch ex As Exception
-	''        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerIN.ExtractScanCountValueFromMzXML, Error determining the scan count in the .mzXML file: " & ex.Message)
-	''        Return 0
-	''    End Try
+    ''    Catch ex As Exception
+    ''        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerIN.ExtractScanCountValueFromMzXML, Error determining the scan count in the .mzXML file: " & ex.Message)
+    ''        Return 0
+    ''    End Try
 
-	''    Return intScanCount
+    ''    Return intScanCount
 
-	''End Function
+    ''End Function
 
     ''' <summary>
     ''' Run -p threshold value
