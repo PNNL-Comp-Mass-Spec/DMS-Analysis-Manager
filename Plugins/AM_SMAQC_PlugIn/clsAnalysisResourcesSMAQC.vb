@@ -40,7 +40,7 @@ Public Class clsAnalysisResourcesSMAQC
 
     End Function
 
-    Protected Function RetrieveLLRCFiles() As Boolean
+    Private Function RetrieveLLRCFiles() As Boolean
 
         Dim strLLRCRunnerProgLoc As String = m_mgrParams.GetParam("LLRCRunnerProgLoc", "\\gigasax\DMS_Programs\LLRCRunner")
         Dim lstFilesToCopy = New List(Of String)
@@ -66,7 +66,7 @@ Public Class clsAnalysisResourcesSMAQC
 
     End Function
 
-    Protected Function RetrieveMASICFiles() As Boolean
+    Private Function RetrieveMASICFiles() As Boolean
 
         Dim createStoragePathInfoFile = False
 
@@ -151,7 +151,7 @@ Public Class clsAnalysisResourcesSMAQC
 
     End Function
 
-    Protected Function RetrievePHRPFiles() As Boolean
+    Private Function RetrievePHRPFiles() As Boolean
 
         Dim lstFileNamesToGet As New List(Of String)
         Dim ePeptideHitResultType As clsPHRPReader.ePeptideHitResultType

@@ -1534,12 +1534,12 @@ Public Class clsMSGFResultsSummarizer
                             End If
                         Next
 
-                        Dim observation = New clsPSMInfo.PSMObservation()
-
-                        observation.Scan = objPSM.ScanNumber
-                        observation.FDR = psmFDR
-                        observation.MSGF = psmMSGF
-                        observation.EValue = psmEValue
+                        Dim observation = New clsPSMInfo.PSMObservation() With {
+                            .Scan = objPSM.ScanNumber,
+                            .FDR = psmFDR,
+                            .MSGF = psmMSGF,
+                            .EValue = psmEValue
+                        }
 
                         psmInfo.AddObservation(observation)
 

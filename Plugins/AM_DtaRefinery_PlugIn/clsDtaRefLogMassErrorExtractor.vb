@@ -198,16 +198,9 @@ Public Class clsDtaRefLogMassErrorExtractor
                 .CommandType = CommandType.StoredProcedure
                 .CommandText = STORE_MASS_ERROR_STATS_SP_NAME
 
-                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-                .Parameters.Add(New SqlParameter("@DatasetID", SqlDbType.Int))
-                .Parameters.Item("@DatasetID").Direction = ParameterDirection.Input
-                .Parameters.Item("@DatasetID").Value = intDatasetID
-
-                .Parameters.Add(New SqlParameter("@ResultsXML", SqlDbType.Xml))
-                .Parameters.Item("@ResultsXML").Direction = ParameterDirection.Input
-                .Parameters.Item("@ResultsXML").Value = strXMLResults
+                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+                .Parameters.Add(New SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID
+                .Parameters.Add(New SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = strXMLResults
             End With
 
 

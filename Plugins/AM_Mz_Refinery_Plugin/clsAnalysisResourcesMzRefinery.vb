@@ -20,7 +20,7 @@ Public Class clsAnalysisResourcesMzRefinery
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim currentTask As String = "Initializing"
+        Dim currentTask = "Initializing"
 
         Try
 

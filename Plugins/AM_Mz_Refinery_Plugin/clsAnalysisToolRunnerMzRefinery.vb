@@ -21,17 +21,17 @@ Public Class clsAnalysisToolRunnerMzRefinery
     Inherits clsAnalysisToolRunnerBase
 
 #Region "Constants and Enums"
-    Protected Const PROGRESS_PCT_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_MZREFINERY_COMPLETE As Single = 97
-    Protected Const PROGRESS_PCT_PLOTS_GENERATED As Single = 98
-    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+    Private Const PROGRESS_PCT_STARTING As Single = 1
+    Private Const PROGRESS_PCT_MZREFINERY_COMPLETE As Single = 97
+    Private Const PROGRESS_PCT_PLOTS_GENERATED As Single = 98
+    Private Const PROGRESS_PCT_COMPLETE As Single = 99
 
-    Protected Const MZ_REFINERY_CONSOLE_OUTPUT As String = "MSConvert_MzRefinery_ConsoleOutput.txt"
-    Protected Const ERROR_CHARTER_CONSOLE_OUTPUT_FILE As String = "PPMErrorCharter_ConsoleOutput.txt"
+    Private Const MZ_REFINERY_CONSOLE_OUTPUT As String = "MSConvert_MzRefinery_ConsoleOutput.txt"
+    Private Const ERROR_CHARTER_CONSOLE_OUTPUT_FILE As String = "PPMErrorCharter_ConsoleOutput.txt"
 
     Public Const MSGFPLUS_MZID_SUFFIX As String = "_msgfplus.mzid"
 
-    Protected Enum eMzRefinerProgRunnerMode
+    Private Enum eMzRefinerProgRunnerMode
         Unknown = 0
         MSGFPlus = 1
         MzRefiner = 2
@@ -41,34 +41,32 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
 #Region "Module Variables"
 
-    Protected mToolVersionWritten As Boolean
+    Private mToolVersionWritten As Boolean
 
-    Protected mConsoleOutputErrorMsg As String
+    Private mConsoleOutputErrorMsg As String
 
-    Protected mMSGFDbProgLoc As String
-    Protected mMSConvertProgLoc As String
-    Protected mPpmErrorCharterProgLoc As String
+    Private mMSGFDbProgLoc As String
+    Private mMSConvertProgLoc As String
+    Private mPpmErrorCharterProgLoc As String
 
-    Protected mMSGFPlusResultsFilePath As String
+    Private mProgRunnerMode As eMzRefinerProgRunnerMode
 
-    Protected mProgRunnerMode As eMzRefinerProgRunnerMode
+    Private mMSGFPlusComplete As Boolean
+    Private mMSGFPlusCompletionTime As DateTime
 
-    Protected mMSGFPlusComplete As Boolean
-    Protected mMSGFPlusCompletionTime As DateTime
+    Private mSkipMzRefinery As Boolean
+    Private m_UnableToUseMzRefinery As Boolean
+    Private m_ForceGeneratePPMErrorPlots As Boolean
 
-    Protected mSkipMzRefinery As Boolean
-    Protected m_UnableToUseMzRefinery As Boolean
-    Protected m_ForceGeneratePPMErrorPlots As Boolean
+    Private mMzRefineryCorrectionMode As String
+    Private mMzRefinerGoodDataPoints As Integer
+    Private mMzRefinerSpecEValueThreshold As Double
 
-    Protected mMzRefineryCorrectionMode As String
-    Protected mMzRefinerGoodDataPoints As Integer
-    Protected mMzRefinerSpecEValueThreshold As Double
+    Private WithEvents mMSGFDBUtils As clsMSGFDBUtils
 
-    Protected WithEvents mMSGFDBUtils As clsMSGFDBUtils
+    Private mMSXmlCacheFolder As DirectoryInfo
 
-    Protected mMSXmlCacheFolder As DirectoryInfo
-
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Private WithEvents CmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -318,7 +316,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
     ''' <param name="fiMSGFPlusResults">Output: MSGF+ results file</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RunMSGFPlus(
+    Private Function RunMSGFPlus(
       javaProgLoc As String,
       msXmlFileExtension As String,
       <Out()> ByRef fiMSGFPlusResults As FileInfo) As IJobParams.CloseOutType
@@ -364,7 +362,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         Dim udtHPCOptions As clsAnalysisResources.udtHPCOptionsType = clsAnalysisResources.GetHPCOptions(m_jobParams, m_MachName)
 
-        Const maxFastaFileSizeMB As Integer = 50
+        Const maxFastaFileSizeMB = 50
 
         ' Initialize the fasta file; truncating it if it is over 50 MB in size
         Dim result = mMSGFDBUtils.InitializeFastaFile(
@@ -461,7 +459,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMSGFDBUtils.ConsoleOutputErrorMsg)
         End If
 
-        Dim blnProcessingError As Boolean = False
+        Dim blnProcessingError = False
 
         If success Then
             If Not mMSGFPlusComplete Then
@@ -526,7 +524,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Function
 
-    Protected Function StartMSGFPlus(javaExePath As String, strSearchEngineName As String, CmdStr As String) As Boolean
+    Private Function StartMSGFPlus(javaExePath As String, strSearchEngineName As String, CmdStr As String) As Boolean
 
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath & " " & CmdStr)
@@ -580,7 +578,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         Return True
     End Function
 
-    Protected Sub CopyFailedResultsToArchiveFolder(msXmlFileExtension As String)
+    Private Sub CopyFailedResultsToArchiveFolder(msXmlFileExtension As String)
 
         Dim result As IJobParams.CloseOutType
 
@@ -627,7 +625,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         mSkipMzRefinery = False
 
         Try
-            Using srParamFile As StreamReader = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srParamFile.EndOfStream
                     Dim strLineIn = srParamFile.ReadLine()
@@ -709,7 +707,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             LogProgress("MzRefinery (unknown step)")
         End If
 
-        
+
     End Sub
 
 
@@ -1003,7 +1001,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Function
 
-    Protected Function StartMzRefinery(fiOriginalMzMLFile As FileInfo, fiMSGFPlusResults As FileInfo) As Boolean
+    Private Function StartMzRefinery(fiOriginalMzMLFile As FileInfo, fiMSGFPlusResults As FileInfo) As Boolean
 
         mConsoleOutputErrorMsg = String.Empty
 
@@ -1058,7 +1056,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         If Not CmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
-            System.Threading.Thread.Sleep(250)
+            Threading.Thread.Sleep(250)
 
             Using swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                 swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
@@ -1148,7 +1146,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Function
 
-    Protected Function StartPpmErrorCharter(fiMSGFPlusResults As FileInfo) As Boolean
+    Private Function StartPpmErrorCharter(fiMSGFPlusResults As FileInfo) As Boolean
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PPMErrorCharter")
 
@@ -1251,7 +1249,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+    Private Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String
 

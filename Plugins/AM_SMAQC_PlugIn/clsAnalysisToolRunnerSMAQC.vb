@@ -3,6 +3,7 @@
 Imports AnalysisManagerBase
 Imports System.Data.SqlClient
 Imports System.IO
+Imports System.Text.RegularExpressions
 
 Public Class clsAnalysisToolRunnerSMAQC
     Inherits clsAnalysisToolRunnerBase
@@ -12,22 +13,22 @@ Public Class clsAnalysisToolRunnerSMAQC
     '*********************************************************************************************************
 
 #Region "Module Variables"
-    Protected Const SMAQC_CONSOLE_OUTPUT As String = "SMAQC_ConsoleOutput.txt"
-    Protected Const PROGRESS_PCT_SMAQC_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES As Single = 5
-    Protected Const PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES As Single = 10
-    Protected Const PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS As Single = 15
-    Protected Const PROGRESS_PCT_SMAQC_SAVING_RESULTS As Single = 88
-    Protected Const PROGRESS_PCT_SMAQC_COMPLETE As Single = 90
-    Protected Const PROGRESS_PCT_RUNNING_LLRC As Single = 95
-    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+    Private Const SMAQC_CONSOLE_OUTPUT As String = "SMAQC_ConsoleOutput.txt"
+    Private Const PROGRESS_PCT_SMAQC_STARTING As Single = 1
+    Private Const PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES As Single = 5
+    Private Const PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES As Single = 10
+    Private Const PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS As Single = 15
+    Private Const PROGRESS_PCT_SMAQC_SAVING_RESULTS As Single = 88
+    Private Const PROGRESS_PCT_SMAQC_COMPLETE As Single = 90
+    Private Const PROGRESS_PCT_RUNNING_LLRC As Single = 95
+    Private Const PROGRESS_PCT_COMPLETE As Single = 99
 
-    Protected Const STORE_SMAQC_RESULTS_SP_NAME As String = "StoreSMAQCResults"
+    Private Const STORE_SMAQC_RESULTS_SP_NAME As String = "StoreSMAQCResults"
 
-    Protected mConsoleOutputErrorMsg As String
-    Protected mDatasetID As Integer = 0
+    Private mConsoleOutputErrorMsg As String
+    Private mDatasetID As Integer = 0
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Private WithEvents CmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Methods"
@@ -38,13 +39,9 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' <remarks></remarks>
     Public Overrides Function RunTool() As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
-        Dim blnProcessingError As Boolean = False
+        Dim blnProcessingError = False
 
         Dim blnSuccess As Boolean
-
-        Dim strParameterFileName As String = String.Empty
-        Dim strParameterFilePath As String = String.Empty
-        Dim ResultsFilePath As String
 
         Try
             'Call base class for initial setup
@@ -75,23 +72,23 @@ Public Class clsAnalysisToolRunnerSMAQC
             mConsoleOutputErrorMsg = String.Empty
 
             ' The parameter file name specifies the name of the .XML file listing the Measurements to run
-            strParameterFileName = m_jobParams.GetParam("parmFileName")
-            strParameterFilePath = Path.Combine(m_WorkDir, strParameterFileName)
+            Dim strParameterFileName = m_jobParams.GetParam("parmFileName")
+            Dim strParameterFilePath = Path.Combine(m_WorkDir, strParameterFileName)
 
             ' Lookup the InstrumentID for this dataset			
-            Dim InstrumentID As Integer = 0
+            Dim InstrumentID = 0
             If Not LookupInstrumentIDFromDB(InstrumentID) Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            ResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & "_SMAQC.txt")
+            Dim resultsFilePath = Path.Combine(m_WorkDir, m_Dataset & "_SMAQC.txt")
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running SMAQC")
 
 
             'Set up and execute a program runner to run SMAQC
             Dim CmdStr = PossiblyQuotePath(m_WorkDir)                       ' Path to folder containing input files
-            CmdStr &= " /O:" & PossiblyQuotePath(ResultsFilePath)           ' Text file to write the results to
+            CmdStr &= " /O:" & PossiblyQuotePath(resultsFilePath)           ' Text file to write the results to
             CmdStr &= " /DB:" & PossiblyQuotePath(m_WorkDir)                ' Folder where SQLite DB will be created
             CmdStr &= " /I:" & InstrumentID.ToString()                      ' Instrument ID
             CmdStr &= " /M:" & PossiblyQuotePath(strParameterFilePath)      ' Path to XML file specifying measurements to run	
@@ -102,15 +99,13 @@ Public Class clsAnalysisToolRunnerSMAQC
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
             End If
 
-            CmdRunner = New clsRunDosProgram(m_WorkDir)
-
-            With CmdRunner
-                .CreateNoWindow = True
-                .CacheStandardOutput = True
-                .EchoOutputToConsole = True
-                .WriteConsoleOutputToFile = True
+            CmdRunner = New clsRunDosProgram(m_WorkDir) With {
+                .CreateNoWindow = True,
+                .CacheStandardOutput = True,
+                .EchoOutputToConsole = True,
+                .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT)
-            End With
+            }
 
             ' We will delete the console output file later since it has the same content as the log file
             m_jobParams.AddResultFileToSkip(SMAQC_CONSOLE_OUTPUT)
@@ -121,7 +116,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
             If Not CmdRunner.WriteConsoleOutputToFile Then
                 ' Write the console output to a text file
-                System.Threading.Thread.Sleep(250)
+                Threading.Thread.Sleep(250)
 
                 Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                 swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
@@ -129,7 +124,7 @@ Public Class clsAnalysisToolRunnerSMAQC
             End If
 
             ' Parse the console output file one more time to check for errors
-            System.Threading.Thread.Sleep(250)
+            Threading.Thread.Sleep(250)
             ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
 
             If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -198,7 +193,7 @@ Public Class clsAnalysisToolRunnerSMAQC
             m_progress = PROGRESS_PCT_COMPLETE
 
             'Stop the job timer
-            m_StopTime = System.DateTime.UtcNow
+            m_StopTime = DateTime.UtcNow
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
@@ -206,7 +201,7 @@ Public Class clsAnalysisToolRunnerSMAQC
             End If
 
             'Make sure objects are released
-            System.Threading.Thread.Sleep(500)         ' 1 second delay
+            Threading.Thread.Sleep(500)         ' 1 second delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -257,7 +252,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' QCDM_2013.09.27.zip requires R 2.x
     ''' We updated to R 3.x in November 2015 and have thus deprecated this method</remarks>
     <Obsolete("No longer used")>
-    Protected Function ComputeLLRC() As Boolean
+    Private Function ComputeLLRC() As Boolean
         Dim blnSuccess As Boolean
 
         Dim lstDatasetIDs = New List(Of Integer)
@@ -305,7 +300,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' <param name="InstrumentID">Output parameter</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function LookupInstrumentIDFromDB(ByRef InstrumentID As Integer) As Boolean
+    Private Function LookupInstrumentIDFromDB(ByRef InstrumentID As Integer) As Boolean
 
         Dim RetryCount As Short = 3
 
@@ -349,12 +344,12 @@ Public Class clsAnalysisToolRunnerSMAQC
                 End Using  'Cn
                 Exit While
 
-            Catch ex As System.Exception
+            Catch ex As Exception
                 RetryCount -= 1S
                 m_message = "clsAnalysisToolRunnerSMAQC.LookupInstrumentIDFromDB; Exception obtaining InstrumentID from the database: " & ex.Message & "; ConnectionString: " & ConnectionString
                 m_message &= ", RetryCount = " & RetryCount.ToString
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                System.Threading.Thread.Sleep(5000)             'Delay for 5 second before trying again
+                Threading.Thread.Sleep(5000)             'Delay for 5 second before trying again
             End Try
         End While
 
@@ -372,7 +367,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
     End Function
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
+    Private Sub CopyFailedResultsToArchiveFolder()
 
         Dim result As IJobParams.CloseOutType
 
@@ -407,7 +402,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
     End Sub
 
-    Protected Function ConvertResultsToXML(ByRef lstResults As List(Of KeyValuePair(Of String, String)), ByRef strXMLResults As String) As Boolean
+    Private Function ConvertResultsToXML(ByRef lstResults As List(Of KeyValuePair(Of String, String)), ByRef strXMLResults As String) As Boolean
 
         ' XML will look like:
 
@@ -428,7 +423,7 @@ Public Class clsAnalysisToolRunnerSMAQC
         ' </SMAQC_Results>
 
 
-        Dim sbXML As New System.Text.StringBuilder
+        Dim sbXML As New Text.StringBuilder
         strXMLResults = String.Empty
 
         Dim strPSMSourceJob As String = m_jobParams.GetParam("SourceJob")
@@ -468,7 +463,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' <param name="ResultsFilePath"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function LoadSMAQCResults(ByVal ResultsFilePath As String) As List(Of KeyValuePair(Of String, String))
+    Private Function LoadSMAQCResults(ResultsFilePath As String) As List(Of KeyValuePair(Of String, String))
 
         ' Typical file contents:
 
@@ -542,7 +537,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output:
         '
@@ -567,9 +562,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
         ' This RegEx matches lines in the form:
         ' 2/13/2012 07:15:42 PM - Searching for Text Files!...
-        Static reMatchTimeStamp As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex("^\d+/\d+/\d+ \d+:\d+:\d+ [AP]M - ", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-
-        Dim reMatch As System.Text.RegularExpressions.Match
+        Static reMatchTimeStamp As Regex = New Regex("^\d+/\d+/\d+ \d+:\d+:\d+ [AP]M - ", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         Try
 
@@ -604,7 +597,7 @@ Public Class clsAnalysisToolRunnerSMAQC
                     If Not String.IsNullOrWhiteSpace(strLineIn) Then
 
                         ' Remove the timestamp from the start of the line (if present)
-                        reMatch = reMatchTimeStamp.Match(strLineIn)
+                        Dim reMatch = reMatchTimeStamp.Match(strLineIn)
                         If reMatch.Success Then
                             strLineIn = strLineIn.Substring(reMatch.Length)
                         End If
@@ -659,14 +652,14 @@ Public Class clsAnalysisToolRunnerSMAQC
 
     End Sub
 
-    Private Function ParseSMAQCParameterFile(ByVal strParameterFilePath As String) As String
+    Private Function ParseSMAQCParameterFile(strParameterFilePath As String) As String
 
         ' If necessary, could parse a parameter file and convert the options in the parameter file to command line arguments
         ' As an example, see function ParseMSGFDBParameterFile in the AnalysisManagerMSGFDBPlugIn project
         Return String.Empty
     End Function
 
-    Protected Function PostSMAQCResultsToDB(ByVal strXMLResults As String) As Boolean
+    Private Function PostSMAQCResultsToDB(strXMLResults As String) As Boolean
 
 
         ' Note that mDatasetID gets populated by LookupInstrumentIDFromDB
@@ -675,10 +668,10 @@ Public Class clsAnalysisToolRunnerSMAQC
 
     End Function
 
-    Protected Function PostSMAQCResultsToDB(ByVal intDatasetID As Integer,
-      ByVal strXMLResults As String) As Boolean
+    Private Function PostSMAQCResultsToDB(intDatasetID As Integer,
+      strXMLResults As String) As Boolean
 
-        Const MAX_RETRY_COUNT As Integer = 3
+        Const MAX_RETRY_COUNT = 3
 
         Dim intStartIndex As Integer
 
@@ -697,7 +690,7 @@ Public Class clsAnalysisToolRunnerSMAQC
             ' This line will look like this:
             '   <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 
-            intStartIndex = strXMLResults.IndexOf("?>")
+            intStartIndex = strXMLResults.IndexOf("?>", StringComparison.Ordinal)
             If intStartIndex > 0 Then
                 strXMLResultsClean = strXMLResults.Substring(intStartIndex + 2).Trim()
             Else
@@ -712,24 +705,16 @@ Public Class clsAnalysisToolRunnerSMAQC
                 .CommandType = CommandType.StoredProcedure
                 .CommandText = STORE_SMAQC_RESULTS_SP_NAME
 
-                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int))
-                .Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
-
-                .Parameters.Add(New SqlParameter("@DatasetID", SqlDbType.Int))
-                .Parameters.Item("@DatasetID").Direction = ParameterDirection.Input
-                .Parameters.Item("@DatasetID").Value = intDatasetID
-
-                .Parameters.Add(New SqlParameter("@ResultsXML", SqlDbType.Xml))
-                .Parameters.Item("@ResultsXML").Direction = ParameterDirection.Input
-                .Parameters.Item("@ResultsXML").Value = strXMLResultsClean
+                .Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+                .Parameters.Add(New SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID
+                .Parameters.Add(New SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = strXMLResultsClean
             End With
 
 
             Dim objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
 
             'Execute the SP (retry the call up to 4 times)
-            Dim ResCode As Integer
-            ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT)
+            Dim ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT)
 
             If ResCode = 0 Then
                 blnSuccess = True
@@ -739,7 +724,7 @@ Public Class clsAnalysisToolRunnerSMAQC
                 blnSuccess = False
             End If
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             m_message = "Exception storing SMAQC Results in database"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
             blnSuccess = False
@@ -755,7 +740,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' <param name="ResultsFilePath">Path to the SMAQC results file</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function ReadAndStoreSMAQCResults(ByVal ResultsFilePath As String) As Boolean
+    Private Function ReadAndStoreSMAQCResults(ResultsFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
         Dim lstResults As List(Of KeyValuePair(Of String, String))
@@ -835,7 +820,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strSMAQCProgLoc As String) As Boolean
+    Private Function StoreToolVersionInfo(strSMAQCProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioSMAQC As FileInfo
@@ -889,12 +874,12 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
 
-        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
+        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         UpdateStatusFile()
 
-        If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = DateTime.UtcNow
 
             ParseConsoleOutputFile(Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT))
 
