@@ -28,7 +28,7 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "November 4, 2016"
+    Public Const PROGRAM_DATE As String = "November 9, 2016"
 
     Private mCodeTestMode As Boolean
     Private mCreateWindowsEventLog As Boolean
@@ -176,7 +176,6 @@ Module modMain
                     intReturnCode = objDMSMain.Main()
 
                 End If
-
 
             End If
 

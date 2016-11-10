@@ -1987,10 +1987,11 @@ Public Class clsMainProcess
 
     End Function
 
+    ''' <summary>
+    ''' Verifies working directory is properly specified and is empty
+    ''' </summary>
+    ''' <returns></returns>
     Private Function ValidateWorkingDir() As Boolean
-
-        ' Verifies working directory is properly specified and is empty
-        Dim msgStr As String
 
         ' Verify working directory is valid
         If Not VerifyWorkDir() Then
@@ -1998,38 +1999,37 @@ Public Class clsMainProcess
         End If
 
         ' Verify the working directory is empty
-        Dim tmpFilArray() As String = Directory.GetFiles(m_WorkDirPath)
-        Dim tmpDirArray() As String = Directory.GetDirectories(m_WorkDirPath)
+        Dim workDir = New DirectoryInfo(m_WorkDirPath)
+        Dim workDirFiles = workDir.GetFiles()
+        Dim workDirFolders = workDir.GetDirectories()
 
-        If (tmpDirArray.Length = 0) And (tmpFilArray.Length = 1) Then
+        If (workDirFolders.Count = 0) And (workDirFiles.Count = 1) Then
             ' If the only file in the working directory is a JobParameters xml file,
             '  then try to delete it, since it's likely left over from a previous job that never actually started
-            Dim strFileToCheck = Path.GetFileName(tmpFilArray(0))
+            Dim firstFile = workDirFiles.First
 
-            If strFileToCheck.StartsWith(clsGlobal.XML_FILENAME_PREFIX) AndAlso
-               strFileToCheck.EndsWith(clsGlobal.XML_FILENAME_EXTENSION) Then
+            If firstFile.Name.StartsWith(clsGlobal.XML_FILENAME_PREFIX) AndAlso
+               firstFile.Name.EndsWith(clsGlobal.XML_FILENAME_EXTENSION) Then
                 Try
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Working directory contains a stray JobParameters file, deleting it: " & tmpFilArray(0))
+                    LogWarning("Working directory contains a stray JobParameters file, deleting it: " & firstFile.FullName)
 
-                    File.Delete(tmpFilArray(0))
+                    firstFile.Delete()
 
                     ' Wait 0.5 second and then refresh tmpFilArray
                     Thread.Sleep(500)
 
                     ' Now obtain a new listing of files
-                    tmpFilArray = Directory.GetFiles(m_WorkDirPath)
+                    If workDir.GetFiles(m_WorkDirPath).Count = 0 Then
+                        ' The directory is now empty
+                        Return True
+                    End If
                 Catch ex As Exception
                     ' Deletion failed
                 End Try
             End If
         End If
 
-        If tmpDirArray.Length = 0 And tmpFilArray.Length = 0 Then
-            ' No problems found
-            Return True
-        End If
-
-        Dim errorCount = tmpFilArray.Count(Function(filePath) Not Files.clsFileTools.IsVimSwapFile(filePath))
+        Dim errorCount = workDirFiles.Count(Function(item) Not Files.clsFileTools.IsVimSwapFile(item.FullName))
 
         If errorCount = 0 Then
             ' No problems found
