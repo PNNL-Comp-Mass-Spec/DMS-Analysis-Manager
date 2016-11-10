@@ -1467,6 +1467,87 @@ Public Class clsMainProcess
         Return False
     End Function
 
+    Private Function LoadCachedLogMessages(messageCacheFile As FileInfo) As Dictionary(Of String, DateTime)
+        Dim cachedMessages = New Dictionary(Of String, DateTime)()
+
+        Dim sepChars As Char() = {ControlChars.Tab}
+
+        Using reader = New StreamReader(New FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            Dim lineCount = 0
+            While Not reader.EndOfStream
+                Dim dataLine = reader.ReadLine()
+                lineCount += 1
+
+                ' Assume that the first line is the header line, which we'll skip
+                If lineCount = 1 OrElse String.IsNullOrWhiteSpace(dataLine) Then
+                    Continue While
+                End If
+
+                Dim lineParts = dataLine.Split(sepChars, 2)
+
+                Dim timeStampText = lineParts(0)
+                Dim message = lineParts(1)
+
+                Dim timeStamp As DateTime
+                If DateTime.TryParse(timeStampText, timeStamp) Then
+                    ' Valid message; store it
+
+                    Dim cachedTimeStamp As DateTime
+                    If cachedMessages.TryGetValue(message, cachedTimeStamp) Then
+                        If timeStamp > cachedTimeStamp Then
+                            cachedMessages(message) = timeStamp
+                        End If
+                    Else
+                        cachedMessages.Add(message, timeStamp)
+                    End If
+
+                End If
+            End While
+        End Using
+
+        Return cachedMessages
+    End Function
+
+    Private Sub LogErrorToDatabasePeriodically(errorMessage As String, logIntervalHours As Integer)
+        Const PERIODIC_LOG_FILE As String = "Periodic_ErrorMessages.txt"
+
+        Try
+            Dim cachedMessages As Dictionary(Of String, DateTime)
+
+            Dim messageCacheFile = New FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), PERIODIC_LOG_FILE))
+
+            If messageCacheFile.Exists Then
+                cachedMessages = LoadCachedLogMessages(messageCacheFile)
+                Thread.Sleep(150)
+            Else
+                cachedMessages = New Dictionary(Of String, DateTime)()
+            End If
+
+            Dim timeStamp As DateTime
+            If cachedMessages.TryGetValue(errorMessage, timeStamp) Then
+                If DateTime.UtcNow.Subtract(timeStamp).TotalHours < logIntervalHours Then
+                    ' Do not log to the database
+                    Return
+                End If
+                cachedMessages(errorMessage) = DateTime.UtcNow
+            Else
+                cachedMessages.Add(errorMessage, DateTime.UtcNow)
+            End If
+
+            LogError(errorMessage, True)
+
+            ' Update the message cache file
+            Using writer = New StreamWriter(New FileStream(messageCacheFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                writer.WriteLine("{0}" & vbTab & "{1}", "TimeStamp", "Message")
+                For Each message In cachedMessages
+                    writer.WriteLine("{0}" & vbTab & "{1}", message.Value.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT), message.Key)
+                Next
+            End Using
+        Catch ex As Exception
+            LogError("Exception in LogErrorToDatabasePeriodically", ex)
+        End Try
+    End Sub
+
     Private Sub PostToEventLog(ErrMsg As String)
         Const EVENT_LOG_NAME = "DMSAnalysisManager"
 
@@ -1597,38 +1678,54 @@ Public Class clsMainProcess
 
     End Function
 
+    ''' <summary>
+    ''' Look for flagFile.txt in the .exe folder
+    ''' Auto clean errors if AutoCleanupManagerErrors is enabled
+    ''' </summary>
+    ''' <returns>True if a flag file exists, false if safe to proceed</returns>
     Private Function StatusFlagFileError() As Boolean
 
         Dim blnMgrCleanupSuccess As Boolean
 
-        If m_MgrErrorCleanup.DetectStatusFlagFile() Then
-
-            Try
-                blnMgrCleanupSuccess = m_MgrErrorCleanup.AutoCleanupManagerErrors(GetManagerErrorCleanupMode(), m_DebugLevel)
-
-            Catch ex As Exception
-
-                LogError("Error calling AutoCleanupManagerErrors, " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
-
-                blnMgrCleanupSuccess = False
-            End Try
-
-            If blnMgrCleanupSuccess Then
-                Dim msg = "Flag file found; automatically cleaned the work directory and deleted the flag file(s)"
-                Console.WriteLine(msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-                ' No error; return false
-                Return False
-            Else
-                ' Error removing flag file; return true
-                Return True
-            End If
-
+        If Not m_MgrErrorCleanup.DetectStatusFlagFile() Then
+            ' No error; return false
+            Return False
         End If
 
-        ' No error; return false
-        Return False
+        Try
+            blnMgrCleanupSuccess = m_MgrErrorCleanup.AutoCleanupManagerErrors(GetManagerErrorCleanupMode(), m_DebugLevel)
+
+        Catch ex As Exception
+
+            LogError("Error calling AutoCleanupManagerErrors, " & ex.Message, ex)
+            m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
+
+            blnMgrCleanupSuccess = False
+        End Try
+
+        If blnMgrCleanupSuccess Then
+            LogWarning("Flag file found; automatically cleaned the work directory and deleted the flag file(s)")
+
+            ' No error; return false
+            Return False
+        End If
+
+        ' Error removing flag file (or manager not set to auto-remove flag files)
+
+        ' Periodically log errors to the database
+        Dim flagFile = New FileInfo(m_MgrErrorCleanup.FlagFilePath)
+        Dim errorMessage As String
+        If (flagFile.Directory Is Nothing) Then
+            errorMessage = "Flag file exists in the manager folder"
+        Else
+            errorMessage = "Flag file exists in folder " + flagFile.Directory.Name
+        End If
+
+        ' Post a log entry to the database every 4 hours
+        LogErrorToDatabasePeriodically(errorMessage, 4)
+
+        ' Return true (indicating a flag file exists)
+        Return True
 
     End Function
 

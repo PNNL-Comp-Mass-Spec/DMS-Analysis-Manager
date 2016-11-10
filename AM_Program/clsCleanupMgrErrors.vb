@@ -29,6 +29,15 @@ Public Class clsCleanupMgrErrors
 
 #End Region
 
+#Region "Properties"
+
+    Public ReadOnly Property FlagFilePath As String
+        Get
+            Return Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
+        End Get
+    End Property
+
+#End Region
 #Region "Class wide Variables"
     Private ReadOnly mInitialized As Boolean = False
 
@@ -41,6 +50,14 @@ Public Class clsCleanupMgrErrors
 
 #End Region
 
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="mgrConfigDBConnectionString"></param>
+    ''' <param name="managerName"></param>
+    ''' <param name="debugLevel"></param>
+    ''' <param name="mgrFolderPath"></param>
+    ''' <param name="workingDirPath"></param>
     Public Sub New(
        mgrConfigDBConnectionString As String,
        managerName As String,
@@ -277,9 +294,9 @@ Public Class clsCleanupMgrErrors
 
         Try
             Dim strPath As String = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME)
-            Using Sw As StreamWriter = New StreamWriter(New FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read))
-                Sw.WriteLine(Date.Now().ToString())
-                Sw.Flush()
+            Using writer = New StreamWriter(New FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read))
+                writer.WriteLine(Date.Now().ToString())
+                writer.Flush()
             End Using
 
         Catch ex As Exception
@@ -295,10 +312,10 @@ Public Class clsCleanupMgrErrors
     Public Sub CreateStatusFlagFile()
 
         Try
-            Dim strPath As String = Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
-            Using Sw As StreamWriter = New StreamWriter(New FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read))
-                Sw.WriteLine(Date.Now().ToString())
-                Sw.Flush()
+            Dim strPath As String = FlagFilePath
+            Using writer = New StreamWriter(New FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read))
+                writer.WriteLine(Date.Now().ToString())
+                writer.Flush()
             End Using
 
         Catch ex As Exception
@@ -369,7 +386,7 @@ Public Class clsCleanupMgrErrors
     Public Function DeleteStatusFlagFile(DebugLevel As Integer) As Boolean
 
         'Deletes the job request control flag file
-        Dim strFlagFilePath As String = Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
+        Dim strFlagFilePath As String = FlagFilePath
 
         Return DeleteFlagFile(strFlagFilePath, DebugLevel)
 
@@ -390,8 +407,6 @@ Public Class clsCleanupMgrErrors
 
     End Function
 
-
-
     ''' <summary>
     ''' Determines if flag file exists in application directory
     ''' </summary>
@@ -400,7 +415,7 @@ Public Class clsCleanupMgrErrors
     Public Function DetectStatusFlagFile() As Boolean
 
         'Returns True if job request control flag file exists
-        Dim TestFile As String = Path.Combine(mMgrFolderPath, FLAG_FILE_NAME)
+        Dim TestFile As String = FlagFilePath
 
         Return File.Exists(TestFile)
 
