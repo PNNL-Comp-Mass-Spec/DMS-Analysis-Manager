@@ -1,10 +1,5 @@
 ﻿Public MustInherit Class clsAnalysisMgrBase
-
-    ''' <summary>
-    ''' 1 to log info messages but not debug messages
-    ''' 2 to log info messages and debug messages
-    ''' </summary>
-    Protected m_DebugLevel As Short = 1
+    Inherits clsLoggerBase
 
     Private m_LastLockQueueWaitTimeLog As DateTime = Date.UtcNow
     Private m_LockQueueWaitTimeStart As DateTime = Date.UtcNow
@@ -62,12 +57,10 @@
     ''' Update m_message with an error message and record the error in the manager's log file
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
-    Public Sub LogError(errorMessage As String)
+    ''' <param name="logToDb">When true, log the message to the database and the local log file</param>
+    Protected Overrides Sub LogError(errorMessage As String, Optional logToDb As Boolean = False)
         m_message = clsGlobal.AppendToComment(m_message, errorMessage)
-        Console.ForegroundColor = ConsoleColor.Red
-        Console.WriteLine(errorMessage)
-        Console.ResetColor()
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
+        MyBase.LogError(errorMessage, logToDb)
     End Sub
 
     ''' <summary>
@@ -75,9 +68,9 @@
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
     ''' <param name="ex">Exception to log</param>
-    Public Sub LogError(errorMessage As String, ex As Exception)
+    Protected Overrides Sub LogError(errorMessage As String, ex As Exception)
         m_message = clsGlobal.AppendToComment(m_message, errorMessage)
-        ReportStatus(errorMessage, ex)
+        MyBase.LogError(errorMessage, ex)
     End Sub
 
     ''' <summary>
@@ -86,70 +79,14 @@
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
     ''' <param name="detailedMessage">Detailed error message</param>
-    Public Sub LogError(errorMessage As String, detailedMessage As String)
-        m_message = clsGlobal.AppendToComment(m_message, errorMessage)
-        Console.ForegroundColor = ConsoleColor.Red
-        If String.IsNullOrEmpty(detailedMessage) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-        Else
+    Protected Overloads Sub LogError(errorMessage As String, detailedMessage As String, Optional logToDb As Boolean = False)
+        Me.LogError(errorMessage, logToDb)
+
+        If Not String.IsNullOrEmpty(detailedMessage) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
-            Console.WriteLine(errorMessage)
             Console.ForegroundColor = ConsoleColor.Magenta
             Console.WriteLine(detailedMessage)
-        End If
-        Console.ResetColor()
-    End Sub
-
-    ''' <summary>
-    ''' Shows information about an exception at the console and in the log file
-    ''' Unlike LogError, does not update m_message
-    ''' </summary>
-    ''' <param name="errorMessage">Error message (do not include ex.message)</param>
-    ''' <param name="ex">Exception</param>
-    Public Sub ReportStatus(errorMessage As String, ex As Exception)
-        Dim formattedError As String
-        If errorMessage.EndsWith(ex.Message) Then
-            formattedError = errorMessage
-        Else
-            formattedError = errorMessage & ": " & ex.Message
-        End If
-        Console.ForegroundColor = ConsoleColor.Red
-        Console.WriteLine(formattedError)
-        Console.ForegroundColor = ConsoleColor.Cyan
-        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
-        Console.ResetColor()
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
-    End Sub
-
-    ''' <summary>
-    ''' Show a status message at the console and optionally include in the log file
-    ''' </summary>
-    ''' <param name="statusMessage">Status message</param>
-    ''' <param name="logFileDebugLevel">
-    ''' Log level for whether to log to disk: 
-    ''' 0 to always log
-    ''' 1 to log if m_DebugLevel is >= 1
-    ''' 2 to log if m_DebugLevel is >= 2
-    ''' 10 to not log to disk
-    ''' </param>
-    ''' <param name="isError">True if this is an error</param>
-    ''' <remarks>Unlike LogError, does not update m_message</remarks>
-    Public Sub ReportStatus(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
-        If isError Then
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine(statusMessage)
             Console.ResetColor()
-        Else
-            Console.WriteLine(statusMessage)
-        End If
-
-        If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
-            If isError Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage)
-            End If
         End If
 
     End Sub

@@ -606,12 +606,12 @@ Public Class clsAnalysisToolRunnerBase
             m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.DELIVERING_RESULTS, 0)
 
             If String.IsNullOrEmpty(m_ResFolderName) Then
-                ' Log this error to the database
+                ' Log this error to the database (the logger will also update the local log file)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
                                      "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
 
-                ' Also log to the local log file (and display at console)
-                LogError("Results folder not defined (job parameter OutputFolderName)")
+                ' Also display at console
+                ReportStatus("Results folder not defined (job parameter OutputFolderName)", 10, True)
 
                 ' Without a source folder; there isn't much we can do
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -625,8 +625,8 @@ Public Class clsAnalysisToolRunnerBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
                                      "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & sourceFolderPath)
 
-                ' Also log to the local log file (and display at console)
-                LogError("Results folder not found")
+                ' Also display at console
+                ReportStatus("Results folder not found", 10, True)
 
                 ' Without a source folder; there isn't much we can do
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -972,7 +972,6 @@ Public Class clsAnalysisToolRunnerBase
                 Dim msg = "Error deleting file, exception ERR3 " & FileNamePath & Err3.Message
                 Console.WriteLine(msg)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 Throw New AMFileNotDeletedException(FileNamePath, Err3.Message)
             End Try
         End While
@@ -1898,14 +1897,12 @@ Public Class clsAnalysisToolRunnerBase
     ''' Optionally update m_EvalMessage
     ''' </summary>
     ''' <param name="warningMessage">Warning message</param>
-    Protected Sub LogWarning(warningMessage As String, Optional updateEvalMessage As Boolean = False)
+    ''' <param name="updateEvalMessage">When true, update m_EvalMessage</param>
+    Protected Overloads Sub LogWarning(warningMessage As String, Optional updateEvalMessage As Boolean = False)
         If updateEvalMessage Then
             m_EvalMessage = warningMessage
         End If
-        Console.ForegroundColor = ConsoleColor.Yellow
-        Console.WriteLine(warningMessage)
-        Console.ResetColor()
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
+        MyBase.LogWarning(warningMessage)
     End Sub
 
     ''' <summary>

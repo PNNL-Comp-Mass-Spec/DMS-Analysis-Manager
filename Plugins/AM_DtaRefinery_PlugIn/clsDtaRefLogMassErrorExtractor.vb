@@ -15,7 +15,7 @@ Public Class clsDtaRefLogMassErrorExtractor
 
     Private ReadOnly m_mgrParams As IMgrParams
     Private ReadOnly m_WorkDir As String
-    Private ReadOnly m_DebugLevel As Integer
+    Private ReadOnly m_DebugLevel As Short
     Private ReadOnly mPostResultsToDB As Boolean
 
     Private mErrorMessage As String
@@ -34,7 +34,7 @@ Public Class clsDtaRefLogMassErrorExtractor
         End Get
     End Property
 
-    Public Sub New(mgrParams As IMgrParams, strWorkDir As String, intDebugLevel As Integer, blnPostResultsToDB As Boolean)
+    Public Sub New(mgrParams As IMgrParams, strWorkDir As String, intDebugLevel As Short, blnPostResultsToDB As Boolean)
 
         m_mgrParams = mgrParams
         m_WorkDir = strWorkDir

@@ -8,6 +8,8 @@ Imports System.Runtime.Versioning
 Imports System.Text.RegularExpressions
 
 Public Class clsCodeTest
+    Inherits clsLoggerBase
+
     'Imports Protein_Exporter
     'Imports Protein_Exporter.ExportProteinCollectionsIFC
 
@@ -27,7 +29,6 @@ Public Class clsCodeTest
 
     Private m_EvalMessage As String
     Private m_EvalCode As Integer
-    Private m_DebugLevel As Integer = 2
 
     Private m_Progress As Single
     Private m_MaxScanInFile As Integer
@@ -54,6 +55,8 @@ Public Class clsCodeTest
         Const CUSTOM_LOG_SOURCE_NAME = "Analysis Manager"
         Const CUSTOM_LOG_NAME = "DMS_AnalysisMgr"
         Const TRACE_MODE_ENABLED = True
+
+        m_DebugLevel = 2
 
         ' Get settings from config file
         Dim lstMgrSettings As Generic.Dictionary(Of String, String)
@@ -207,7 +210,7 @@ Public Class clsCodeTest
         End Try
     End Sub
 
-    Private Function InitializeMgrAndJobParams(intDebugLevel As Integer) As clsAnalysisJob
+    Private Function InitializeMgrAndJobParams(intDebugLevel As Short) As clsAnalysisJob
 
         Dim objJobParams = New clsAnalysisJob(m_mgrParams, intDebugLevel)
 
@@ -227,7 +230,7 @@ Public Class clsCodeTest
 
     Private Function GetCodeTestToolRunner(<Out()> ByRef objJobParams As clsAnalysisJob, <Out()> ByRef myEMSLUtilities As clsMyEMSLUtilities) As clsCodeTestAM
 
-        Const DEBUG_LEVEL = 2
+        Const DEBUG_LEVEL As Short = 2
 
         objJobParams = InitializeMgrAndJobParams(DEBUG_LEVEL)
 
@@ -820,26 +823,29 @@ Public Class clsCodeTest
 
         Dim objToolRunner As clsCodeTestAM = GetCodeTestToolRunner(objJobParams, myEMSLUtilities)
 
-        objJobParams.DebugLevel = 2
+        m_DebugLevel = 2
+        objJobParams.DebugLevel = m_DebugLevel
 
         For debugLevel = 0 To 5
-            objToolRunner.ReportStatus("Test status, debugLevel " & debugLevel, debugLevel, False)
+            ReportStatus("Test status, debugLevel " & debugLevel, debugLevel, False)
         Next
 
         For debugLevel = 0 To 5
-            objToolRunner.ReportStatus("Test error, debugLevel " & debugLevel, debugLevel, True)
+            ReportStatus("Test error, debugLevel " & debugLevel, debugLevel, True)
         Next
 
-        objToolRunner.LogError("Test error, no detailed message")
-        objToolRunner.LogError("Test error", "Detailed message of the error")
+        LogError("Test error, no detailed message")
+
+        ' To test this function, temporarily make it public
+        ' objToolRunner.LogError("Test error", "Detailed message of the error")
 
         Try
             Throw New FileNotFoundException("TestFile.txt")
         Catch ex As Exception
-            objToolRunner.LogError("Test exception", ex)
+            LogError("Test exception", ex)
         End Try
 
-        objToolRunner.ReportStatus("Testing complete")
+        ReportStatus("Testing complete")
     End Sub
 
     Public Sub GetLegacyFastaFileSize()
@@ -1805,14 +1811,14 @@ Public Class clsCodeTest
         Try
             If Not File.Exists(strConsoleOutputFilePath) Then
                 If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+                    ReportStatus("Console output file not found: " & strConsoleOutputFilePath)
                 End If
 
                 Exit Sub
             End If
 
             If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
+                ReportStatus("Parsing file " & strConsoleOutputFilePath)
             End If
 
             ' Value between 0 and 100
@@ -1882,14 +1888,14 @@ Public Class clsCodeTest
 
                 If m_DebugLevel >= 3 OrElse Date.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
                     dtLastProgressWriteTime = Date.UtcNow
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & m_Progress.ToString("0") & "% complete")
+                    ReportStatus(" ... " & m_Progress.ToString("0") & "% complete")
                 End If
             End If
 
         Catch ex As Exception
             ' Ignore errors here
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+                LogError("Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
             End If
         End Try
 
@@ -2098,7 +2104,8 @@ Public Class clsCodeTest
                 ' in "Local Users and Groups" on the machine showing this error.  Alternatively, add the user to the "Administrators" group.  
                 ' In either case, you will need to reboot the computer for the change to take effect
                 If System.DateTime.Now().Hour = 0 And System.DateTime.Now().Minute <= 30 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Memory.[Available MBytes] performance counter (this message is only logged between 12 am and 12:30 am): " & ex.Message)
+                    LogError("Error instantiating the Memory.[Available MBytes] performance counter " &
+                             "(this message is only logged between 12 am and 12:30 am)", ex)
                 End If
             End If
 
@@ -2243,7 +2250,7 @@ Public Class clsCodeTest
 
     End Sub
 
-    Public Function ValidateSequestNodeCount(strLogFilePath As String, blnLogToConsole As Boolean) As Boolean
+    Public Function ValidateSequestNodeCount(strLogFilePath As String) As Boolean
         Const ERROR_CODE_A = 2
         Const ERROR_CODE_B = 4
         Const ERROR_CODE_C = 8
@@ -2292,8 +2299,7 @@ Public Class clsCodeTest
 
             If Not File.Exists(strLogFilePath) Then
                 strProcessingMsg = "Sequest.log file not found; cannot verify the sequest node count"
-                If blnLogToConsole Then Console.WriteLine(strProcessingMsg & ": " & strLogFilePath)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                LogWarning(strProcessingMsg & ": " & strLogFilePath)
                 Return False
             End If
 
@@ -2343,8 +2349,7 @@ Public Class clsCodeTest
                         If Not objMatch Is Nothing AndAlso objMatch.Success Then
                             If Not Integer.TryParse(objMatch.Groups(1).Value, intHostCount) Then
                                 strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file"
-                                If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                                LogWarning(strProcessingMsg)
                             End If
 
                         Else
@@ -2352,8 +2357,7 @@ Public Class clsCodeTest
                             If Not objMatch Is Nothing AndAlso objMatch.Success Then
                                 If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountStarted) Then
                                     strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file"
-                                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                                    LogWarning(strProcessingMsg)
                                 End If
 
                             Else
@@ -2372,8 +2376,7 @@ Public Class clsCodeTest
                                     If Not objMatch Is Nothing AndAlso objMatch.Success Then
                                         If Not Integer.TryParse(objMatch.Groups(1).Value, intNodeCountActive) Then
                                             strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file"
-                                            If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                                            LogWarning(strProcessingMsg)
                                         End If
 
                                     Else
@@ -2409,15 +2412,13 @@ Public Class clsCodeTest
 
                 strProcessingMsg = "HostCount=" & intHostCount & "; NodeCountActive=" & intNodeCountActive
                 If m_DebugLevel >= 1 Then
-                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg)
+                    ReportStatus(strProcessingMsg)
                 End If
                 m_EvalMessage = String.Copy(strProcessingMsg)
 
                 If intNodeCountActive < intNodeCountExpected OrElse intNodeCountExpected = 0 Then
                     strProcessingMsg = "Error: NodeCountActive less than expected value (" & intNodeCountActive & " vs. " & intNodeCountExpected & ")"
-                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+                    LogError(strProcessingMsg)
 
                     ' Update the evaluation message and evaluation code
                     ' These will be used by sub CloseTask in clsAnalysisJob
@@ -2431,8 +2432,7 @@ Public Class clsCodeTest
                 Else
                     If intNodeCountStarted <> intNodeCountActive Then
                         strProcessingMsg = "Warning: NodeCountStarted (" & intNodeCountStarted & ") <> NodeCountActive"
-                        If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                        LogWarning(strProcessingMsg)
                         m_EvalMessage &= "; " & strProcessingMsg
                         m_EvalCode = m_EvalCode Or ERROR_CODE_B
 
@@ -2448,8 +2448,7 @@ Public Class clsCodeTest
                     ' Only record an error here if the number of DTAs processed was at least 2x the number of nodes
                     If intDTACount >= 2 * intNodeCountActive Then
                         strProcessingMsg = "Error: only " & dctHostCounts.Count & " host" & CheckForPlurality(dctHostCounts.Count) & " processed DTAs"
-                        If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+                        LogError(strProcessingMsg)
                         m_EvalMessage &= "; " & strProcessingMsg
                         m_EvalCode = m_EvalCode Or ERROR_CODE_C
                     End If
@@ -2515,8 +2514,7 @@ Public Class clsCodeTest
 
                 If intWarningCount > 0 Then
                     strProcessingMsg = "Warning: " & intWarningCount & " host" & CheckForPlurality(intWarningCount) & " processed fewer than " & sngThresholdRate.ToString("0.0") & " DTAs/node, which is " & LOW_THRESHOLD_MULTIPLIER & " times the median value of " & sngProcessingRateMedian.ToString("0.0")
-                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                    LogWarning(strProcessingMsg)
 
                     m_EvalMessage &= "; " & strProcessingMsg
                     m_EvalCode = m_EvalCode Or ERROR_CODE_D
@@ -2536,8 +2534,7 @@ Public Class clsCodeTest
 
                 If intWarningCount > 0 Then
                     strProcessingMsg = "Warning: " & intWarningCount & " host" & CheckForPlurality(intWarningCount) & " processed more than " & sngThresholdRate.ToString("0.0") & " DTAs/node, which is " & HIGH_THRESHOLD_MULTIPLIER & " times the median value of " & sngProcessingRateMedian.ToString("0.0")
-                    If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg)
+                    LogWarning(strProcessingMsg)
 
                     m_EvalMessage &= "; " & strProcessingMsg
                     m_EvalCode = m_EvalCode Or ERROR_CODE_E
@@ -2561,37 +2558,22 @@ Public Class clsCodeTest
                             " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) &
                             " (" & sngProcessingRate.ToString("0.0") & " DTAs/node)"
 
-                        If blnLogToConsole Then Console.WriteLine(strProcessingMsg)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg)
+                        ReportStatus(strProcessingMsg, 2)
                     Next
 
                 End If
 
             Catch ex As Exception
                 ' Error occurred
-
                 strProcessingMsg = "Error in validating the stats in ValidateSequestNodeCount" & ex.Message
-                If blnLogToConsole Then
-                    Console.WriteLine("====================================================================")
-                    Console.WriteLine(strProcessingMsg)
-                    Console.WriteLine("====================================================================")
-                End If
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+                LogError(strProcessingMsg)
                 Return False
             End Try
 
         Catch ex As Exception
             ' Error occurred
-
             strProcessingMsg = "Error parsing Sequest.log file in ValidateSequestNodeCount" & ex.Message
-            If blnLogToConsole Then
-                Console.WriteLine("====================================================================")
-                Console.WriteLine(strProcessingMsg)
-                Console.WriteLine("====================================================================")
-            End If
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg)
+            LogError(strProcessingMsg)
             Return False
         End Try
 

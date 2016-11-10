@@ -112,7 +112,7 @@ Public Class clsAnalysisJob
     ''' </summary>
     ''' <param name="mgrParams">IMgrParams object containing manager parameters</param>
     ''' <remarks></remarks>
-    Public Sub New(mgrParams As IMgrParams, DebugLvl As Integer)
+    Public Sub New(mgrParams As IMgrParams, DebugLvl As Short)
 
         MyBase.New(mgrParams, DebugLvl)
 

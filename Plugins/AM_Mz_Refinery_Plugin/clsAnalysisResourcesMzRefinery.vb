@@ -85,7 +85,7 @@ Public Class clsAnalysisResourcesMzRefinery
     ''' </summary>
     ''' <returns>True if no errors, false if a problem</returns>
     ''' <remarks>Will retrun True even if existing results are not found</remarks>
-    Private Function FindExistingMSGFPlusResults(ByVal mzRefParamFileName As String) As Boolean
+    Private Function FindExistingMSGFPlusResults(mzRefParamFileName As String) As Boolean
 
         Dim resultsFolderName = m_jobParams.GetParam("OutputFolderName")
         Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")

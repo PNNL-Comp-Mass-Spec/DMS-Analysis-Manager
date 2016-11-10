@@ -20,6 +20,7 @@ Imports PRISM
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsMainProcess
+    Inherits clsLoggerBase
 
 #Region "Constants"
     ' These constants are used to create the Windows Event log (aka the EmergencyLog) that this program rights to
@@ -47,7 +48,6 @@ Public Class clsMainProcess
 
     Private WithEvents m_FileWatcher As FileSystemWatcher
     Private m_ConfigChanged As Boolean
-    Private m_DebugLevel As Integer
 
     Private m_Resource As IAnalysisResources
     Private m_ToolRunner As IToolRunner
@@ -121,7 +121,7 @@ Public Class clsMainProcess
     ''' <returns>TRUE for success, FALSE for failure</returns>
     ''' <remarks></remarks>
     Private Function InitMgr() As Boolean
-        
+
         ' Create a database logger connected to DMS5
         ' Once the initial parameters have been successfully read, 
         ' we remove this logger than make a new one using the connection string read from the Manager Control DB
@@ -219,7 +219,7 @@ Public Class clsMainProcess
         }
 
         ' Get the debug level
-        m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 2)
+        m_DebugLevel = CShort(m_MgrSettings.GetParam("debuglevel", 2))
 
         ' Make sure that the manager name matches the machine name (with a few exceptions)
         If Not hostName.ToLower().StartsWith("emslmq") AndAlso
@@ -331,27 +331,15 @@ Public Class clsMainProcess
                         UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_MC, strManagerDisableReason)
                     End If
 
-                    Dim msg = "Manager inactive: " & strManagerDisableReason
-                    If Me.TraceMode Then
-                        ShowTraceMessage(msg)
-                    Else
-                        Console.WriteLine(msg)
-                        Thread.Sleep(750)
-                    End If
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manager inactive: " & strManagerDisableReason)
+                    ReportStatus("Manager inactive: " & strManagerDisableReason)
+                    Thread.Sleep(750)
                     Exit Sub
                 End If
 
                 Dim MgrUpdateRequired As Boolean = m_MgrSettings.GetParam("ManagerUpdateRequired", False)
                 If MgrUpdateRequired Then
                     Dim msg = "Manager update is required"
-                    If Me.TraceMode Then
-                        ShowTraceMessage(msg & ", closing manager")
-                    Else
-                        Console.WriteLine(msg)
-                    End If
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg)
+                    ReportStatus(msg)
                     m_MgrSettings.AckManagerUpdateRequired()
                     UpdateStatusIdle("Manager update is required")
                     Exit Sub
@@ -364,7 +352,6 @@ Public Class clsMainProcess
                     ' There was a problem deleting non result files with the last job.  Attempt to delete files again
                     If Not m_MgrErrorCleanup.CleanWorkDir() Then
                         If blnOneTaskStarted Then
-                            If Me.TraceMode Then ShowTraceMessage("Error cleaning working directory; closing job step task")
                             LogError("Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job") & "; see folder " & m_WorkDirPath)
                             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
                         Else
@@ -427,7 +414,7 @@ Public Class clsMainProcess
                 ' Do not request a job between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
                 Dim pendingWindowsUpdateMessage As String = String.Empty
                 If clsWindowsUpdateStatus.UpdatesArePending(pendingWindowsUpdateMessage) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, pendingWindowsUpdateMessage)
+                    ReportStatus(pendingWindowsUpdateMessage)
                     UpdateStatusIdle(pendingWindowsUpdateMessage)
                     Exit While
                 End If
@@ -447,7 +434,7 @@ Public Class clsMainProcess
 
                         'No tasks found
                         If m_DebugLevel >= 3 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No analysis jobs found")
+                            ReportStatus("No analysis jobs found")
                         End If
                         blnRequestJobs = False
                         intCriticalMgrErrorCount = 0
@@ -487,15 +474,9 @@ Public Class clsMainProcess
 
                         Catch ex As Exception
                             ' Something went wrong; errors likely were not logged by DoAnalysisJob
-                            If Me.TraceMode Then ShowTraceMessage("Exception in DoAnalysisJob; closing job step task")
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " &
-                                                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                            LogError("clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " & ex.Message, ex)
                             m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
-
-                            Console.WriteLine("Exception thrown by DoAnalysisJob")
-                            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
 
                             ' Set the job state to failed
                             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob")
@@ -522,8 +503,7 @@ Public Class clsMainProcess
                         intSuccessiveDeadLockCount += 1
                         If intSuccessiveDeadLockCount >= 3 Then
                             Dim msg = "Deadlock encountered " & intSuccessiveDeadLockCount.ToString() & " times in a row when requesting a new task; exiting"
-                            Console.WriteLine(msg)
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
+                            LogWarning(msg)
                             blnRequestJobs = False
                         End If
 
@@ -551,9 +531,7 @@ Public Class clsMainProcess
             If LoopCount >= MaxLoopCount Then
                 If blnErrorDeletingFilesFlagFile Then
                     If TasksStartedCount > 0 Then
-                        Dim msg = "Error deleting file with an open file handle; closing manager. Jobs processed: " & TasksStartedCount.ToString()
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg)
-                        Console.WriteLine(msg)
+                        LogWarning("Error deleting file with an open file handle; closing manager. Jobs processed: " & TasksStartedCount.ToString())
                         Thread.Sleep(1500)
                     End If
                 Else
@@ -561,19 +539,19 @@ Public Class clsMainProcess
                         Dim msg = "Maximum number of jobs to analyze has been reached: " & TasksStartedCount.ToString() & " job"
                         If TasksStartedCount <> 1 Then msg &= "s"
                         msg &= "; closing manager"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg)
+                        ReportStatus(msg)
                     End If
                 End If
             End If
 
             If blnOneTaskPerformed Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Analysis complete for all available jobs")
+                ReportStatus("Analysis complete for all available jobs")
             End If
 
             If Me.TraceMode Then ShowTraceMessage("Closing the manager")
             UpdateClose("Closing manager.")
         Catch ex As Exception
-            LogError("clsMainProcess.DoAnalysis(), Error encountered, " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            LogError("clsMainProcess.DoAnalysis(), Error encountered, " & ex.Message, ex)
             m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " & ex.Message, m_MostRecentJobInfo, True)
 
         Finally
@@ -631,21 +609,17 @@ Public Class clsMainProcess
         ' 5/04/2015 12:34:46, Pub-88-3: Started analysis job 1193079, Dataset Lp_PDEC_N-sidG_PD1_1May15_Lynx_15-01-24, Tool Decon2LS_V2, Step 1, INFO,
         ' 5/04/2015 10:54:49, Proto-6_Analysis-1: Started analysis job 1192426, Dataset LewyHNDCGlobFractestrecheck_SRM_HNDC_Frac46_smeagol_05Apr15_w6326a, Tool Results_Transfer (MASIC_Finnigan), Step 2, INFO,
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                             m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName &
-                             ", Tool " & jobToolDescription & ", Process ID " & processID)
+        ReportStatus(m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName &
+                     ", Tool " & jobToolDescription & ", Process ID " & processID)
 
         If m_DebugLevel >= 2 Then
             ' Log the debug level value whenever the debug level is 2 or higher
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Debug level is " & m_DebugLevel.ToString)
+            ReportStatus("Debug level is " & m_DebugLevel.ToString)
         End If
 
         ' Create an object to manage the job resources
         If Not SetResourceObject() Then
-            If Me.TraceMode Then ShowTraceMessage("Unable to set the Resource object; closing job step task")
-            Dim msg = m_MgrName & ": Unable to set the Resource object, job " & jobNum & ", Dataset " & datasetName
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg)
-            LogError(msg)
+            LogError(m_MgrName & ": Unable to set the Resource object, job " & jobNum & ", Dataset " & datasetName, True)
             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Unable to set resource object")
             m_MgrErrorCleanup.CleanWorkDir()
             UpdateStatusIdle("Error encountered: Unable to set resource object")
@@ -654,10 +628,7 @@ Public Class clsMainProcess
 
         ' Create an object to run the analysis tool
         If Not SetToolRunnerObject() Then
-            If Me.TraceMode Then ShowTraceMessage("Unable to set the ToolRunner object; closing job step task")
-            Dim msg = m_MgrName & ": Unable to set the toolRunner object, job " & jobNum & ", Dataset " & datasetName
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg)
-            LogError(msg)
+            LogError(m_MgrName & ": Unable to set the toolRunner object, job " & jobNum & ", Dataset " & datasetName, True)
             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Unable to set tool runner object")
             m_MgrErrorCleanup.CleanWorkDir()
             UpdateStatusIdle("Error encountered: Unable to set tool runner object")
@@ -706,9 +677,7 @@ Public Class clsMainProcess
                 Return False
             End If
         Catch ex As Exception
-            If Me.TraceMode Then ShowTraceMessage("Exception getting resources; closing job step task")
-            LogError("clsMainProcess.DoAnalysisJob(), Getting resources, " &
-                     ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            LogError("clsMainProcess.DoAnalysisJob(), Getting resources, " & ex.Message, ex)
 
             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception getting resources")
 
@@ -747,9 +716,7 @@ Public Class clsMainProcess
                     End If
 
                 Catch ex As Exception
-                    Dim msg = "clsMainProcess.DoAnalysisJob(), Exception examining MostRecentErrorMessage"
-                    Console.WriteLine(msg)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex)
+                    LogError("clsMainProcess.DoAnalysisJob(), Exception examining MostRecentErrorMessage", ex)
                 End Try
 
                 If eToolRunnerResult = IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE Then
@@ -770,14 +737,12 @@ Public Class clsMainProcess
             End If
 
         Catch ex As Exception
-            LogError("clsMainProcess.DoAnalysisJob(), running tool, " &
-                     ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            LogError("clsMainProcess.DoAnalysisJob(), running tool, " & ex.Message, ex)
 
             If ex.Message.Contains(DECON2LS_TCP_ALREADY_REGISTERED_ERROR) Then
                 m_NeedToAbortProcessing = True
             End If
 
-            If Me.TraceMode Then ShowTraceMessage("Exception running tool; closing job step task")
             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception running tool", m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
 
             blnRunToolError = True
@@ -808,10 +773,7 @@ Public Class clsMainProcess
                 End If
 
             Catch ex As Exception
-                Console.WriteLine("Exception cleaning up after RunTool error")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," &
-                                     ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                LogError("clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," & ex.Message, ex)
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
                 Return False
             End Try
@@ -825,13 +787,12 @@ Public Class clsMainProcess
 
             'Close out the job as a success
             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, String.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MgrName & ": Completed job " & jobNum)
+            ReportStatus(m_MgrName & ": Completed job " & jobNum)
 
             UpdateStatusIdle("Completed job " & jobNum & ", step " & stepNum)
 
         Catch ex As Exception
-            LogError("clsMainProcess.DoAnalysisJob(), Close task after normal run," &
-                     ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            LogError("clsMainProcess.DoAnalysisJob(), Close task after normal run," & ex.Message, ex)
             m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
             Return False
         End Try
@@ -849,15 +810,13 @@ Public Class clsMainProcess
                 ' Clean the working directory
                 Try
                     If Not m_MgrErrorCleanup.CleanWorkDir(1) Then
-                        If Me.TraceMode Then ShowTraceMessage("Error cleaning working directory; closing job step task")
                         LogError("Error cleaning working directory, job " & m_AnalysisTask.GetParam("StepParameters", "Job"))
                         m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory")
                         m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile()
                         Return False
                     End If
                 Catch ex As Exception
-                    LogError("clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," &
-                             ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+                    LogError("clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," & ex.Message, ex)
                     m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
                     Return False
                 End Try
@@ -872,7 +831,7 @@ Public Class clsMainProcess
             End If
 
         Catch ex As Exception
-            LogError("clsMainProcess.DoAnalysisJob(), " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            LogError("clsMainProcess.DoAnalysisJob(), " & ex.Message, ex)
             m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " & ex.Message, m_MostRecentJobInfo, True)
             Return False
         End Try
@@ -1257,9 +1216,7 @@ Public Class clsMainProcess
         Catch ex As Exception
             ' Ignore errors here
             Try
-                Dim msg = "Error in DetermineRecentErrorMessages"
-                Console.WriteLine(msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex)
+                LogError("Error in DetermineRecentErrorMessages", ex)
             Catch ex2 As Exception
                 ' Ignore errors logging the error
             End Try
@@ -1493,17 +1450,6 @@ Public Class clsMainProcess
 
     End Function
 
-    ''' <summary>
-    ''' Log an error message (and display at console)
-    ''' </summary>
-    ''' <param name="errorMessage">Error message</param>
-    Private Sub LogError(errorMessage As String)
-        Console.ForegroundColor = ConsoleColor.Red
-        Console.WriteLine(errorMessage)
-        Console.ResetColor()
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-    End Sub
-
     Private Function NeedToAbortProcessing() As Boolean
 
         If m_NeedToAbortProcessing Then
@@ -1563,9 +1509,9 @@ Public Class clsMainProcess
 
             If Me.TraceMode Then ShowTraceMessage("Storing manager settings in m_MgrSettings")
             If Not m_MgrSettings.LoadSettings(lstMgrSettings) Then
-                If m_MgrSettings.ErrMsg <> "" Then
+                If Not String.IsNullOrWhiteSpace(m_MgrSettings.ErrMsg) Then
                     'Manager has been deactivated, so report this
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_MgrSettings.ErrMsg)
+                    ReportStatus(m_MgrSettings.ErrMsg)
                     UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally")
                 Else
                     'Unknown problem reading config file
@@ -1587,7 +1533,6 @@ Public Class clsMainProcess
     Private Sub RemoveTempFiles()
 
         Dim diMgrFolder = New DirectoryInfo(m_MgrFolderPath)
-        Dim msg As String
 
         ' Files starting with the name IgnoreMe are created by log4NET when it is first instantiated 
         ' This name is defined in the RollingFileAppender section of the Logging.config file via this XML:
@@ -1597,8 +1542,7 @@ Public Class clsMainProcess
             Try
                 fiFile.Delete()
             Catch ex As Exception
-                msg = "Error deleting IgnoreMe file: " & fiFile.Name
-                Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex, True))
+                LogError("Error deleting IgnoreMe file: " & fiFile.Name, ex)
             End Try
         Next
 
@@ -1617,8 +1561,7 @@ Public Class clsMainProcess
                     fiFile.Delete()
                 End If
             Catch ex As Exception
-                msg = "Error deleting file: " & fiFile.Name
-                Console.WriteLine(msg & " : " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex, True))
+                LogError("Error deleting file: " & fiFile.Name)
             End Try
         Next
 
@@ -1640,7 +1583,7 @@ Public Class clsMainProcess
         If m_DebugLevel > 0 Then
             strMessage = "Loaded resourcer for StepTool " & stepToolName
             If m_PluginLoader.Message.Length > 0 Then strMessage &= ": " & m_PluginLoader.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+            ReportStatus(strMessage)
         End If
 
         Try
@@ -1702,7 +1645,7 @@ Public Class clsMainProcess
         If m_DebugLevel > 0 Then
             Dim msg = "Loaded tool runner for StepTool " & m_AnalysisTask.GetCurrentJobToolDescription()
             If m_PluginLoader.Message.Length > 0 Then msg &= ": " & m_PluginLoader.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
+            ReportStatus(msg)
         End If
 
         Try
@@ -1755,8 +1698,7 @@ Public Class clsMainProcess
                     msg = m_MgrSettings.ErrMsg
                 End If
 
-                If Me.TraceMode Then ShowTraceMessage(msg) Else Console.WriteLine(msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+                LogError(msg)
 
                 blnSuccess = False
             Else
@@ -1880,14 +1822,14 @@ Public Class clsMainProcess
 
             ' Verify that the working directory exists and that its drive has sufficient free space
             If Not ValidateFreeDiskSpaceWork("Working directory", m_WorkDirPath, workingDirMinFreeSpaceMB, errorMessage, clsLogTools.LoggerTypes.LogDb) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Disabling manager since working directory problem")
+                LogError("Disabling manager since working directory problem")
                 DisableManagerLocally()
                 Return False
             End If
 
             If String.IsNullOrEmpty(transferDir) Then
                 errorMessage = "Transfer directory for the job is empty; cannot continue"
-                
+
                 If DataPackageIdMissing() Then
                     errorMessage &= ". Data package ID cannot be 0 for this job type"
                 End If
@@ -1997,8 +1939,7 @@ Public Class clsMainProcess
             Return True
         End If
 
-        msgStr = "Working directory not empty: " & m_WorkDirPath
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msgStr)
+        LogError("Working directory not empty: " & m_WorkDirPath)
         Return False
 
     End Function

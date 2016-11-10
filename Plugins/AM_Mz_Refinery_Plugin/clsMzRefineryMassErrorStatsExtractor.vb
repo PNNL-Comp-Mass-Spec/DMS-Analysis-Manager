@@ -14,7 +14,7 @@ Public Class clsMzRefineryMassErrorStatsExtractor
 
     Protected m_mgrParams As IMgrParams
     Protected m_WorkDir As String
-    Protected m_DebugLevel As Integer
+    Protected m_DebugLevel As Short
     Protected mPostResultsToDB As Boolean
 
     Protected mErrorMessage As String
@@ -33,7 +33,7 @@ Public Class clsMzRefineryMassErrorStatsExtractor
         End Get
     End Property
 
-    Public Sub New(ByRef mgrParams As IMgrParams, ByVal strWorkDir As String, ByVal intDebugLevel As Integer, ByVal blnPostResultsToDB As Boolean)
+    Public Sub New(ByRef mgrParams As IMgrParams, strWorkDir As String, intDebugLevel As Short, blnPostResultsToDB As Boolean)
 
         m_mgrParams = mgrParams
         m_WorkDir = strWorkDir
@@ -43,7 +43,7 @@ Public Class clsMzRefineryMassErrorStatsExtractor
         mErrorMessage = String.Empty
     End Sub
 
-    Protected Function ConstructXML(ByVal udtMassErrorInfo As udtMassErrorInfoType) As String
+    Protected Function ConstructXML(udtMassErrorInfo As udtMassErrorInfoType) As String
         Dim sbXml = New StringBuilder()
 
         Try
@@ -70,10 +70,10 @@ Public Class clsMzRefineryMassErrorStatsExtractor
     End Function
 
     Public Function ParsePPMErrorCharterOutput(
-      ByVal strDatasetName As String,
-      ByVal intDatasetID As Integer,
-      ByVal intPSMJob As Integer,
-      ByVal ppmErrorCharterConsoleOutputFilePath As String) As Boolean
+      strDatasetName As String,
+      intDatasetID As Integer,
+      intPSMJob As Integer,
+      ppmErrorCharterConsoleOutputFilePath As String) As Boolean
 
         ' Parse the Console Output file to extract the mass error reported in this table
         '
@@ -169,8 +169,8 @@ Public Class clsMzRefineryMassErrorStatsExtractor
     End Function
 
     Protected Function PostMassErrorInfoToDB(
-      ByVal intDatasetID As Integer,
-      ByVal strXMLResults As String) As Boolean
+      intDatasetID As Integer,
+      strXMLResults As String) As Boolean
 
         Const MAX_RETRY_COUNT As Integer = 3
 

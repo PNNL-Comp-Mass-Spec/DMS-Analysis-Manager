@@ -143,6 +143,7 @@
     <Compile Include="clsGlobal.vb" />
     <Compile Include="clsEventNotifier.vb" />
     <Compile Include="clsIonicZipTools.vb" />
+    <Compile Include="clsLoggerBase.vb" />
     <Compile Include="clsLogTools.vb" />
     <Compile Include="clsLogToolsPatternLayout.vb" />
     <Compile Include="clsMemoryUsageLogger.vb" />
