@@ -8,7 +8,11 @@
 
 Option Strict On
 
+Imports System.Collections.Generic
+Imports System.IO
+Imports System.Threading
 Imports AnalysisManagerBase
+Imports PRISM.Processes
 
 ''' <summary>
 ''' Class for running InSpecT analysis
@@ -50,7 +54,7 @@ Public Class clsAnalysisToolRunnerIN
 
     Protected mInspectConsoleOutputFilePath As String
 
-    Protected WithEvents mSearchLogFileWatcher As System.IO.FileSystemWatcher
+    Protected WithEvents mSearchLogFileWatcher As FileSystemWatcher
     Protected m_CloneStepRenum As String
     Protected m_StepNum As String
 
@@ -115,10 +119,10 @@ Public Class clsAnalysisToolRunnerIN
             'Determine if this is a parallelized job
             m_CloneStepRenum = m_jobParams.GetParam("CloneStepRenumberStart")
             m_StepNum = m_jobParams.GetParam("Step")
-            strBaseFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+            strBaseFilePath = Path.Combine(m_WorkDir, m_Dataset)
 
             'Determine if this is parallelized inspect job
-            If System.String.IsNullOrEmpty(m_CloneStepRenum) Then
+            If String.IsNullOrEmpty(m_CloneStepRenum) Then
                 strFileNameAdder = ""
                 strParallelizedText = "non-parallelized"
                 m_isParallelInspect = False
@@ -131,8 +135,8 @@ Public Class clsAnalysisToolRunnerIN
             mInspectConcatenatedDtaFilePath = strBaseFilePath & strFileNameAdder & "_dta.txt"
             mInspectResultsFilePath = strBaseFilePath & strFileNameAdder & "_inspect.txt"
             mInspectErrorFilePath = strBaseFilePath & strFileNameAdder & "_error.txt"
-            mInspectSearchLogFilePath = System.IO.Path.Combine(m_WorkDir, "InspectSearchLog" & strFileNameAdder & ".txt")
-            mInspectConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "InspectConsoleOutput" & strFileNameAdder & ".txt")
+            mInspectSearchLogFilePath = Path.Combine(m_WorkDir, "InspectSearchLog" & strFileNameAdder & ".txt")
+            mInspectConsoleOutputFilePath = Path.Combine(m_WorkDir, "InspectConsoleOutput" & strFileNameAdder & ".txt")
 
             ' Make sure the _DTA.txt file is valid
             If Not ValidateCDTAFile(mInspectConcatenatedDtaFilePath) Then
@@ -140,7 +144,7 @@ Public Class clsAnalysisToolRunnerIN
             End If
 
             If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running " & strParallelizedText & " inspect on " & System.IO.Path.GetFileName(mInspectConcatenatedDtaFilePath))
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Running " & strParallelizedText & " inspect on " & Path.GetFileName(mInspectConcatenatedDtaFilePath))
             End If
 
             result = RunInSpecT(InspectDir)
@@ -159,7 +163,7 @@ Public Class clsAnalysisToolRunnerIN
             End If
 
             'Stop the job timer
-            m_StopTime = System.DateTime.UtcNow
+            m_StopTime = DateTime.UtcNow
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
@@ -167,8 +171,8 @@ Public Class clsAnalysisToolRunnerIN
             End If
 
             'Make sure objects are released
-            System.Threading.Thread.Sleep(500)        ' 500 msec delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            Thread.Sleep(500)        ' 500 msec delay
+            clsProgRunner.GarbageCollectNow()
 
             result = MakeResultsFolder()
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -219,10 +223,10 @@ Public Class clsAnalysisToolRunnerIN
         Dim blnUseShuffledDB As Boolean
 
         Try
-            ParamFilename = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+            ParamFilename = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
             orgDbDir = m_mgrParams.GetParam("orgdbdir")
             fastaFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
-            inputFilename = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
+            inputFilename = Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
             strInputSpectra = String.Empty
 
             blnUseShuffledDB = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
@@ -231,21 +235,21 @@ Public Class clsAnalysisToolRunnerIN
                 ' Using shuffled version of the .trie file
                 ' The Pvalue.py script does much better at computing p-values if a decoy search is performed (i.e. shuffleDB.py is used)
                 ' Note that shuffleDB will add a prefix of XXX to the shuffled protein names
-                dbFilePath = System.IO.Path.GetFileNameWithoutExtension(fastaFilename) & "_shuffle.trie"
+                dbFilePath = Path.GetFileNameWithoutExtension(fastaFilename) & "_shuffle.trie"
             Else
-                dbFilePath = System.IO.Path.GetFileNameWithoutExtension(fastaFilename) & ".trie"
+                dbFilePath = Path.GetFileNameWithoutExtension(fastaFilename) & ".trie"
             End If
 
-            dbFilePath = System.IO.Path.Combine(orgDbDir, dbFilePath)
+            dbFilePath = Path.Combine(orgDbDir, dbFilePath)
 
             'add extra lines to the parameter files
             'the parameter file will become the input file for inspect
-            Dim swInspectInputFile As System.IO.StreamWriter
-            swInspectInputFile = New System.IO.StreamWriter((New System.IO.FileStream(inputFilename, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read)))
+            Dim swInspectInputFile As StreamWriter
+            swInspectInputFile = New StreamWriter((New FileStream(inputFilename, FileMode.Create, FileAccess.Write, FileShare.Read)))
 
             ' Create an instance of StreamReader to read from a file.
-            Dim srInputBase As System.IO.StreamReader
-            srInputBase = New System.IO.StreamReader((New System.IO.FileStream(ParamFilename, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)))
+            Dim srInputBase As StreamReader
+            srInputBase = New StreamReader((New FileStream(ParamFilename, FileMode.Open, FileAccess.Read, FileShare.Read)))
 
             Dim strParamLine As String
 
@@ -353,13 +357,13 @@ Public Class clsAnalysisToolRunnerIN
 
     Private Sub InitializeInspectSearchLogFileWatcher(ByVal strWorkDir As String)
 
-        mSearchLogFileWatcher = New System.IO.FileSystemWatcher()
+        mSearchLogFileWatcher = New FileSystemWatcher()
         With mSearchLogFileWatcher
             .BeginInit()
             .Path = strWorkDir
             .IncludeSubdirectories = False
-            .Filter = System.IO.Path.GetFileName(mInspectSearchLogFilePath)
-            .NotifyFilter = System.IO.NotifyFilters.LastWrite Or System.IO.NotifyFilters.Size
+            .Filter = Path.GetFileName(mInspectSearchLogFilePath)
+            .NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
             .EndInit()
             .EnableRaisingEvents = True
         End With
@@ -375,12 +379,12 @@ Public Class clsAnalysisToolRunnerIN
     ''' <remarks></remarks>
     Protected Function ParseInspectErrorsFile(ByVal m_workdir As String, ByVal errorFilename As String) As Boolean
 
-        Dim srInFile As System.IO.StreamReader
+        Dim srInFile As StreamReader
 
         Dim strInputFilePath As String
         Dim strLineIn As String = String.Empty
 
-        Dim htMessages As System.Collections.Hashtable
+        Dim htMessages As Hashtable
 
         Try
 
@@ -388,28 +392,28 @@ Public Class clsAnalysisToolRunnerIN
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " & errorFilename)
             End If
 
-            strInputFilePath = System.IO.Path.Combine(m_workdir, errorFilename)
+            strInputFilePath = Path.Combine(m_workdir, errorFilename)
 
-            If Not System.IO.File.Exists(strInputFilePath) Then
+            If Not File.Exists(strInputFilePath) Then
                 ' File not found; that means no errors occurred
                 Return True
             Else
-                Dim fi As System.IO.FileInfo
-                fi = New System.IO.FileInfo(errorFilename)
+                Dim fi As FileInfo
+                fi = New FileInfo(errorFilename)
 
                 If fi.Length = 0 Then
                     ' Error file is 0 bytes, which means no errors occurred 
                     ' Delete the file
-                    System.IO.File.Delete(errorFilename)
+                    File.Delete(errorFilename)
                     Return True
                 End If
             End If
 
             ' Initialize htMessages
-            htMessages = New System.Collections.Hashtable
+            htMessages = New Hashtable
 
             ' Read the contents of strInputFilePath
-            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+            srInFile = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
             Do While Not srInFile.EndOfStream
                 strLineIn = srInFile.ReadLine
@@ -450,7 +454,7 @@ Public Class clsAnalysisToolRunnerIN
     ''' <remarks></remarks>
     Private Function RunInSpecT(ByVal InspectDir As String) As IJobParams.CloseOutType
         Dim CmdStr As String
-        Dim ParamFilePath As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+        Dim ParamFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
         Dim blnSuccess As Boolean = False
 
         ' Build the Inspect Input Parameters file
@@ -466,8 +470,8 @@ Public Class clsAnalysisToolRunnerIN
         End If
 
         ' verify that program file exists
-        Dim progLoc As String = System.IO.Path.Combine(InspectDir, INSPECT_EXE_NAME)
-        If Not System.IO.File.Exists(progLoc) Then
+        Dim progLoc As String = Path.Combine(InspectDir, INSPECT_EXE_NAME)
+        If Not File.Exists(progLoc) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Inspect program file: " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -546,10 +550,10 @@ Public Class clsAnalysisToolRunnerIN
         ParseInspectErrorsFile(m_WorkDir, mInspectErrorFilePath)
 
         'even though success is returned, check for the result file
-        If System.IO.File.Exists(mInspectResultsFilePath) Then
+        If File.Exists(mInspectResultsFilePath) Then
             blnSuccess = True
         Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Inspect results file not found; job failed: " & System.IO.Path.GetFileName(mInspectResultsFilePath))
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Inspect results file not found; job failed: " & Path.GetFileName(mInspectResultsFilePath))
             blnSuccess = False
         End If
 
@@ -567,11 +571,11 @@ Public Class clsAnalysisToolRunnerIN
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
         ' Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = DateTime.UtcNow
             UpdateStatusRunning(m_progress, m_DtaCount)
         End If
 
@@ -580,21 +584,18 @@ Public Class clsAnalysisToolRunnerIN
     End Sub
 
     Private Sub ParseInspectSearchLogFile(ByVal strSearchLogFilePath As String)
-        Dim ioFile As System.IO.FileInfo
-        Dim srLogFile As System.IO.StreamReader
-
         Dim strLineIn As String = String.Empty
         Dim strLastEntry As String = String.Empty
         Dim strSplitline() As String
         Dim strProgress As String
 
         Try
-            ioFile = New System.IO.FileInfo(strSearchLogFilePath)
+            Dim ioFile = New FileInfo(strSearchLogFilePath)
             If ioFile.Exists AndAlso ioFile.Length > 0 Then
                 ' Search log file has been updated
                 ' Open the file and read the contents
 
-                srLogFile = New System.IO.StreamReader(New System.IO.FileStream(strSearchLogFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Write))
+                Using srLogFile = New StreamReader(New FileStream(strSearchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write))
 
                     ' Read to the end of the file
                     Do While Not srLogFile.EndOfStream
@@ -653,8 +654,8 @@ Public Class clsAnalysisToolRunnerIN
         End If
 
         ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strInspectFolder, INSPECT_EXE_NAME)))
+        Dim ioToolFiles As New List(Of FileInfo)
+        ioToolFiles.Add(New FileInfo(Path.Combine(strInspectFolder, INSPECT_EXE_NAME)))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -671,7 +672,7 @@ Public Class clsAnalysisToolRunnerIN
     ''' <param name="sender"></param>
     ''' <param name="e"></param>
     ''' <remarks></remarks>
-    Private Sub mSearchLogFileWatcher_Changed(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles mSearchLogFileWatcher.Changed
+    Private Sub mSearchLogFileWatcher_Changed(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mSearchLogFileWatcher.Changed
         ParseInspectSearchLogFile(mInspectSearchLogFilePath)
     End Sub
 

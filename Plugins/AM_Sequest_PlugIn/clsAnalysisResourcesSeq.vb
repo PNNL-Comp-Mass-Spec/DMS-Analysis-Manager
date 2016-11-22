@@ -33,8 +33,8 @@ Public Class clsAnalysisResourcesSeq
 
     Protected Sub ArchiveSequestParamFile()
 
-        Dim strSrcFilePath As String = ""
-        Dim strTargetFolderPath As String = ""
+        Dim strSrcFilePath = ""
+        Dim strTargetFolderPath = ""
 
         Try
             strSrcFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("ParmFileName"))
@@ -91,47 +91,47 @@ Public Class clsAnalysisResourcesSeq
 
             If Not clsGlobal.TextFilesMatch(strSrcFilePath, strTargetFilePath, 4, 0, ignoreWhitespace, lstLineIgnoreRegExSpecs) Then
 
-                    If m_DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest parameter file in archive folder doesn't match parameter file for current job; renaming old file and copying new file to " & strTargetFilePath)
-                    End If
-
-                    ' Files don't match; rename the old file
-                    fiArchivedFile = New FileInfo(strTargetFilePath)
-
-                    strNewNameBase = Path.GetFileNameWithoutExtension(strTargetFilePath) & "_" & fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd")
-                    strNewName = strNewNameBase & Path.GetExtension(strTargetFilePath)
-
-                    ' See if the renamed file exists; if it does, we'll have to tweak the name
-                    intRevisionNumber = 1
-                    Do
-                        strNewPath = Path.Combine(strTargetFolderPath, strNewName)
-                        If Not File.Exists(strNewPath) Then
-                            Exit Do
-                        End If
-
-                        intRevisionNumber += 1
-                        strNewName = strNewNameBase & "_v" & intRevisionNumber.ToString & Path.GetExtension(strTargetFilePath)
-                    Loop
-
-                    If m_DebugLevel >= 2 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Renaming " & strTargetFilePath & " to " & strNewPath)
-                    End If
-
-                    fiArchivedFile.MoveTo(strNewPath)
-
-                    blnNeedToArchiveFile = True
-                End If
-            End If
-
-            If blnNeedToArchiveFile Then
-                ' Copy the new parameter file to the archive
-
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " & strSrcFilePath & " to " & strTargetFilePath)
+                If m_DebugLevel >= 1 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Sequest parameter file in archive folder doesn't match parameter file for current job; renaming old file and copying new file to " & strTargetFilePath)
                 End If
 
-                File.Copy(strSrcFilePath, strTargetFilePath, True)
+                ' Files don't match; rename the old file
+                fiArchivedFile = New FileInfo(strTargetFilePath)
+
+                strNewNameBase = Path.GetFileNameWithoutExtension(strTargetFilePath) & "_" & fiArchivedFile.LastWriteTime.ToString("yyyy-MM-dd")
+                strNewName = strNewNameBase & Path.GetExtension(strTargetFilePath)
+
+                ' See if the renamed file exists; if it does, we'll have to tweak the name
+                intRevisionNumber = 1
+                Do
+                    strNewPath = Path.Combine(strTargetFolderPath, strNewName)
+                    If Not File.Exists(strNewPath) Then
+                        Exit Do
+                    End If
+
+                    intRevisionNumber += 1
+                    strNewName = strNewNameBase & "_v" & intRevisionNumber.ToString & Path.GetExtension(strTargetFilePath)
+                Loop
+
+                If m_DebugLevel >= 2 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Renaming " & strTargetFilePath & " to " & strNewPath)
+                End If
+
+                fiArchivedFile.MoveTo(strNewPath)
+
+                blnNeedToArchiveFile = True
             End If
+        End If
+
+        If blnNeedToArchiveFile Then
+            ' Copy the new parameter file to the archive
+
+            If m_DebugLevel >= 4 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " & strSrcFilePath & " to " & strTargetFilePath)
+            End If
+
+            File.Copy(strSrcFilePath, strTargetFilePath, True)
+        End If
 
     End Sub
 
@@ -434,7 +434,7 @@ Public Class clsAnalysisResourcesSeq
         End If
 
         If intNodeCountFailed > 0 Then
-            Const MINIMUM_NODE_SUCCESS_PCT As Integer = 75
+            Const MINIMUM_NODE_SUCCESS_PCT = 75
             Dim dblNodeCountSuccessPct As Double
             dblNodeCountSuccessPct = (intNodeCountProcessed - intNodeCountFailed) / intNodeCountProcessed * 100
 
@@ -495,7 +495,7 @@ Public Class clsAnalysisResourcesSeq
         Dim Separators() As String = {" "}
 
         Try
-            Using srHostFile As StreamReader = New StreamReader(New FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srHostFile = New StreamReader(New FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While Not srHostFile.EndOfStream
                     'Read the line from the file and check to see if it contains a node IP address. 
@@ -529,7 +529,7 @@ Public Class clsAnalysisResourcesSeq
 
     Private Function VerifyFilesMatchSizeAndDate(ByVal FileA As String, ByVal FileB As String) As Boolean
 
-        Const DETAILED_LOG_THRESHOLD As Integer = 3
+        Const DETAILED_LOG_THRESHOLD = 3
 
         Dim blnFilesMatch As Boolean
         Dim ioFileA As FileInfo

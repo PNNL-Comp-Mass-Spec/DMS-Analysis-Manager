@@ -657,29 +657,28 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
                 Do While Not srInFile.EndOfStream()
                     strLineIn = srInFile.ReadLine()
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                        ' Update progress if the line starts with one of the expected phrases
-                        For Each oItem As KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
-                            If strLineIn.StartsWith(oItem.Key) Then
-                                If intEffectiveProgress < oItem.Value Then
-                                    intEffectiveProgress = oItem.Value
-                                End If
+                    ' Update progress if the line starts with one of the expected phrases
+                    For Each oItem As KeyValuePair(Of String, Integer) In mConsoleOutputProgressMap
+                        If strLineIn.StartsWith(oItem.Key) Then
+                            If intEffectiveProgress < oItem.Value Then
+                                intEffectiveProgress = oItem.Value
                             End If
-                        Next
+                        End If
+                    Next
 
-                        If intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES OrElse intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES Then
-                            oMatch = reSubProgress.Match(strLineIn)
-                            If oMatch.Success Then
-                                If Integer.TryParse(oMatch.Groups(1).Value, intSubProgressCount) Then
-                                    If Integer.TryParse(oMatch.Groups(2).Value, intSubProgressCountTotal) Then
-                                        dblSubProgressAddon = intSubProgressCount / CDbl(intSubProgressCountTotal)
-                                    End If
+                    If intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES OrElse intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES Then
+                        oMatch = reSubProgress.Match(strLineIn)
+                        If oMatch.Success Then
+                            If Integer.TryParse(oMatch.Groups(1).Value, intSubProgressCount) Then
+                                If Integer.TryParse(oMatch.Groups(2).Value, intSubProgressCountTotal) Then
+                                    dblSubProgressAddon = intSubProgressCount / CDbl(intSubProgressCountTotal)
                                 End If
                             End If
                         End If
-
                     End If
+
                 Loop
 
             End Using
@@ -715,16 +714,9 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     ''' <remarks></remarks>
     Private Function ParseLipidMapSearchParameterFile(strParameterFilePath As String) As String
 
-        Dim sbOptions As StringBuilder
-        Dim strLineIn As String
-
-        Dim strKey As String
-        Dim strValue As String
-        Dim blnValue As Boolean
-
         Dim dctParamNames As Dictionary(Of String, String)
 
-        sbOptions = New StringBuilder(500)
+        Dim sbOptions = New StringBuilder(500)
 
         Try
 

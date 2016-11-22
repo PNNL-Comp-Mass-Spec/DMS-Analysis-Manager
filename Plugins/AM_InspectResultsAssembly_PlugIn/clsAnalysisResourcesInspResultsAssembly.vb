@@ -23,7 +23,7 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 
         Dim transferFolderName As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_DatasetName)
         Dim zippedResultName As String = m_DatasetName & "_inspect.zip"
-        Const searchLogResultName As String = "InspectSearchLog.txt"
+        Const searchLogResultName = "InspectSearchLog.txt"
 
         transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"))
 
@@ -102,7 +102,7 @@ Public Class clsAnalysisResourcesInspResultsAssembly
         Dim transferFolderName As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName)
         Dim dtaFilename As String
 
-        Dim intFileCopyCount As Integer = 0
+        Dim intFileCopyCount = 0
         Dim intLogFileIndex As Integer
 
         transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"))

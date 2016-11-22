@@ -8,6 +8,8 @@
 
 Option Strict On
 
+Imports System.IO
+Imports System.Threading
 Imports AnalysisManagerBase
 
 Public Class clsCreateInspectIndexedDB
@@ -17,11 +19,11 @@ Public Class clsCreateInspectIndexedDB
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function CreateIndexedDbFiles(ByRef mgrParams As IMgrParams, _
-                                         ByRef jobParams As IJobParams, _
-                                         ByVal DebugLevel As Integer, _
-                                         ByVal JobNum As String, _
-                                         ByVal InspectDir As String, _
+    Public Function CreateIndexedDbFiles(ByRef mgrParams As IMgrParams,
+                                         ByRef jobParams As IJobParams,
+                                         ByVal DebugLevel As Integer,
+                                         ByVal JobNum As String,
+                                         ByVal InspectDir As String,
                                          ByVal OrgDbDir As String) As IJobParams.CloseOutType
 
         Const MAX_WAITTIME_HOURS As Single = 1.0
@@ -47,7 +49,7 @@ Public Class clsCreateInspectIndexedDB
         Dim pythonProgLoc As String
         Dim blnUseShuffledDB As Boolean
 
-        Dim fi As System.IO.FileInfo
+        Dim fi As FileInfo
         Dim createTime As DateTime
         Dim durationTime As TimeSpan
         Dim currentTime As DateTime
@@ -65,11 +67,11 @@ Public Class clsCreateInspectIndexedDB
                 sngMaxWaitTimeHours = MAX_WAITTIME_PREVENT_REPEATS
             End If
 
-            strDBFileNameInput = System.IO.Path.Combine(OrgDbDir, jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            strDBFileNameInput = Path.Combine(OrgDbDir, jobParams.GetParam("PeptideSearch", "generatedFastaName"))
             blnUseShuffledDB = jobParams.GetJobParameter("InspectUsesShuffledDB", False)
 
-            strOutputNameBase = System.IO.Path.GetFileNameWithoutExtension(strDBFileNameInput)
-            dbTrieFilenameBeforeShuffle = System.IO.Path.Combine(OrgDbDir, strOutputNameBase & ".trie")
+            strOutputNameBase = Path.GetFileNameWithoutExtension(strDBFileNameInput)
+            dbTrieFilenameBeforeShuffle = Path.Combine(OrgDbDir, strOutputNameBase & ".trie")
 
             If blnUseShuffledDB Then
                 ' Will create the .trie file using PrepDB.py, then shuffle it using shuffleDB.py
@@ -78,38 +80,38 @@ Public Class clsCreateInspectIndexedDB
                 strOutputNameBase &= "_shuffle"
             End If
 
-            dbLockFilename = System.IO.Path.Combine(OrgDbDir, strOutputNameBase & "_trie.lock")
-            dbTrieFilename = System.IO.Path.Combine(OrgDbDir, strOutputNameBase & ".trie")
+            dbLockFilename = Path.Combine(OrgDbDir, strOutputNameBase & "_trie.lock")
+            dbTrieFilename = Path.Combine(OrgDbDir, strOutputNameBase & ".trie")
 
             pythonProgLoc = mgrParams.GetParam("pythonprogloc")
 
-            objPrepDB = New clsRunDosProgram(InspectDir & System.IO.Path.DirectorySeparatorChar)
+            objPrepDB = New clsRunDosProgram(InspectDir & Path.DirectorySeparatorChar)
 
             ' Check to see if another Analysis Manager is already creating the indexed db files
-            If System.IO.File.Exists(dbLockFilename) Then
+            If File.Exists(dbLockFilename) Then
                 If DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file found: " & dbLockFilename & "; waiting for file to be removed by other manager generating .trie file " & System.IO.Path.GetFileName(dbTrieFilename))
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file found: " & dbLockFilename & "; waiting for file to be removed by other manager generating .trie file " & Path.GetFileName(dbTrieFilename))
                 End If
 
                 ' Lock file found; wait up to sngMaxWaitTimeHours hours
                 fi = My.Computer.FileSystem.GetFileInfo(dbLockFilename)
                 createTime = fi.CreationTimeUtc
-                currentTime = System.DateTime.UtcNow
+                currentTime = DateTime.UtcNow
                 durationTime = currentTime - createTime
-                While System.IO.File.Exists(dbLockFilename) And durationTime.Hours < sngMaxWaitTimeHours
+                While File.Exists(dbLockFilename) And durationTime.Hours < sngMaxWaitTimeHours
                     ' Sleep for 2 seconds
-                    System.Threading.Thread.Sleep(2000)
+                    Thread.Sleep(2000)
 
                     ' Update the current time and elapsed duration
-                    currentTime = System.DateTime.UtcNow
+                    currentTime = DateTime.UtcNow
                     durationTime = currentTime - createTime
                 End While
 
                 'If the duration time has exceeded sngMaxWaitTimeHours, then delete the lock file and try again with this manager
                 If durationTime.Hours > sngMaxWaitTimeHours Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Waited over " & sngMaxWaitTimeHours.ToString("0.0") & " hour(s) for lock file: " & dbLockFilename & " to be deleted, but it is still present; deleting the file now and continuing")
-                    If System.IO.File.Exists(dbLockFilename) Then
-                        System.IO.File.Delete(dbLockFilename)
+                    If File.Exists(dbLockFilename) Then
+                        File.Delete(dbLockFilename)
                     End If
                 End If
 
@@ -118,26 +120,26 @@ Public Class clsCreateInspectIndexedDB
             ' If lock file existed, the index files should now be created
             ' Check for one of the index files in case this is the first time or there was a problem with 
             ' another manager creating it.
-            If Not System.IO.File.Exists(dbTrieFilename) Then
+            If Not File.Exists(dbTrieFilename) Then
                 ' Try to create the index files for fasta file strDBFileNameInput
 
                 ' Verify that python program file exists
-                If Not System.IO.File.Exists(pythonProgLoc) Then
+                If Not File.Exists(pythonProgLoc) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find python.exe program file: " & pythonProgLoc)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 ' Verify that the PrepDB python script exists
-                Dim PrebDBScriptPath As String = System.IO.Path.Combine(InspectDir, PREPDB_SCRIPT)
-                If Not System.IO.File.Exists(PrebDBScriptPath) Then
+                Dim PrebDBScriptPath As String = Path.Combine(InspectDir, PREPDB_SCRIPT)
+                If Not File.Exists(PrebDBScriptPath) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find PrepDB script: " & PrebDBScriptPath)
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 ' Verify that the ShuffleDB python script exists
-                Dim ShuffleDBScriptPath As String = System.IO.Path.Combine(InspectDir, SHUFFLEDB_SCRIPT)
+                Dim ShuffleDBScriptPath As String = Path.Combine(InspectDir, SHUFFLEDB_SCRIPT)
                 If blnUseShuffledDB Then
-                    If Not System.IO.File.Exists(ShuffleDBScriptPath) Then
+                    If Not File.Exists(ShuffleDBScriptPath) Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find ShuffleDB script: " & ShuffleDBScriptPath)
                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                     End If
@@ -175,7 +177,7 @@ Public Class clsCreateInspectIndexedDB
 
                 If blnUseShuffledDB Then
                     'Set up and execute a program runner to run ShuffleDB_seed.py
-                    objShuffleDB = New clsRunDosProgram(InspectDir & System.IO.Path.DirectorySeparatorChar)
+                    objShuffleDB = New clsRunDosProgram(InspectDir & Path.DirectorySeparatorChar)
 
                     CmdStr = " " & ShuffleDBScriptPath & " -r " & dbTrieFilenameBeforeShuffle & " -w " & dbTrieFilename
 
@@ -207,8 +209,8 @@ Public Class clsCreateInspectIndexedDB
                 End If
 
                 ' Delete the lock file
-                If System.IO.File.Exists(dbLockFilename) Then
-                    System.IO.File.Delete(dbLockFilename)
+                If File.Exists(dbLockFilename) Then
+                    File.Delete(dbLockFilename)
                 End If
             End If
 
@@ -229,7 +231,7 @@ Public Class clsCreateInspectIndexedDB
     Protected Function CreateLockFile(ByVal strLockFilePath As String) As Boolean
 
         Try
-            Dim sw As System.IO.StreamWriter = New System.IO.StreamWriter(strLockFilePath)
+            Dim sw As StreamWriter = New StreamWriter(strLockFilePath)
 
             ' Add Date and time to the file.
             sw.WriteLine(DateTime.Now)

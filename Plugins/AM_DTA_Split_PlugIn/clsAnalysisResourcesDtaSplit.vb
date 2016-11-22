@@ -1,6 +1,7 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports MyEMSLReader
 
 Public Class clsAnalysisResourcesDtaSplit
     Inherits clsAnalysisResources
@@ -21,12 +22,12 @@ Public Class clsAnalysisResourcesDtaSplit
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Add all the extensions of the files to delete after run
-        m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
+        m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
         m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
 
         'All finished

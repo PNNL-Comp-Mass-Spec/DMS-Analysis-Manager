@@ -11,6 +11,11 @@ Option Strict On
 Imports AnalysisManagerBase
 Imports System.Text.RegularExpressions
 Imports System.Collections.Generic
+Imports System.IO
+Imports System.Text
+Imports System.Threading
+Imports System.Timers
+Imports PRISM.Processes
 
 ''' <summary>
 ''' Overrides Sequest tool runner to provide cluster-specific methods
@@ -45,34 +50,34 @@ Public Class clsAnalysisToolRunnerSeqCluster
 #End Region
 #Region "Module Variables"
 
-    Protected WithEvents mOutFileWatcher As New System.IO.FileSystemWatcher
-    Protected WithEvents mOutFileAppenderTimer As System.Timers.Timer
+    Protected WithEvents mOutFileWatcher As New FileSystemWatcher
+    Protected WithEvents mOutFileAppenderTimer As Timers.Timer
 
     ' The following holds the file names of out files that have been created
     ' Every OUT_FILE_APPEND_INTERVAL_SECONDS, will look for candidates older than OUT_FILE_APPEND_HOLDOFF_SECONDS 
     ' For each, will append the data to the _out.txt.tmp file, delete the corresponding DTA file, and remove from mOutFileCandidates
-    Protected mOutFileCandidates As Queue(Of KeyValuePair(Of String, System.DateTime)) = New Queue(Of KeyValuePair(Of String, System.DateTime))
-    Protected mOutFileCandidateInfo As Dictionary(Of String, System.DateTime) = New Dictionary(Of String, System.DateTime)
+    Protected mOutFileCandidates As Queue(Of KeyValuePair(Of String, DateTime)) = New Queue(Of KeyValuePair(Of String, DateTime))
+    Protected mOutFileCandidateInfo As Dictionary(Of String, DateTime) = New Dictionary(Of String, DateTime)
 
-    Protected mLastOutFileStoreTime As System.DateTime
+    Protected mLastOutFileStoreTime As DateTime
     Protected mSequestAppearsStalled As Boolean
     Protected mAbortSinceSequestIsStalled As Boolean
 
     Protected mSequestVersionInfoStored As Boolean
 
     Protected mTempJobParamsCopied As Boolean
-    Protected mLastTempFileCopyTime As System.DateTime
+    Protected mLastTempFileCopyTime As DateTime
     Protected mTransferFolderPath As String
 
-    Protected mLastOutFileCountTime As System.DateTime = System.DateTime.UtcNow
-    Protected mLastActiveNodeQueryTime As System.DateTime = System.DateTime.UtcNow
+    Protected mLastOutFileCountTime As DateTime = DateTime.UtcNow
+    Protected mLastActiveNodeQueryTime As DateTime = DateTime.UtcNow
 
-    Protected mLastActiveNodeLogTime As System.DateTime
+    Protected mLastActiveNodeLogTime As DateTime
 
     Protected mResetPVM As Boolean
     Protected mNodeCountSpawnErrorOccurences As Integer
     Protected mNodeCountActiveErrorOccurences As Integer
-    Protected mLastSequestStartTime As System.DateTime
+    Protected mLastSequestStartTime As DateTime
 
     Protected WithEvents m_CmdRunner As clsRunDosProgram
     Protected WithEvents m_UtilityRunner As clsRunDosProgram
@@ -82,7 +87,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
     Protected m_ErrMsg As String = ""
 
     ' This dictionary tracks the most recent time each node was observed via PVM command "ps -a"
-    Protected mSequestNodes As New Dictionary(Of String, System.DateTime)
+    Protected mSequestNodes As New Dictionary(Of String, DateTime)
 
     Protected mSequestLogNodesFound As Boolean
     Protected mSequestNodesSpawned As Integer
@@ -90,11 +95,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     Protected mSequestNodeProcessingStats As udtSequestNodeProcessingStats
 
-    Protected mSequestSearchStartTime As System.DateTime
-    Protected mSequestSearchEndTime As System.DateTime
+    Protected mSequestSearchStartTime As DateTime
+    Protected mSequestSearchEndTime As DateTime
 
-    Protected m_ActiveNodeRegEx As System.Text.RegularExpressions.Regex = _
-      New System.Text.RegularExpressions.Regex("\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+sequest.+slave.*", _
+    Protected m_ActiveNodeRegEx As Regex =
+      New Regex("\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+sequest.+slave.*",
       RegexOptions.IgnoreCase Or RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
 #End Region
@@ -113,7 +118,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         Dim OutFiles() As String
         Dim ProgLoc As String
 
-        Dim diWorkDir As System.IO.DirectoryInfo
+        Dim diWorkDir As DirectoryInfo
 
         Dim intDTACountRemaining As Integer
         Dim blnSuccess As Boolean
@@ -129,15 +134,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
         mSequestVersionInfoStored = False
         mTempJobParamsCopied = False
 
-        mLastTempFileCopyTime = System.DateTime.UtcNow
-        mLastActiveNodeLogTime = System.DateTime.UtcNow
-        mLastOutFileStoreTime = System.DateTime.UtcNow
+        mLastTempFileCopyTime = DateTime.UtcNow
+        mLastActiveNodeLogTime = DateTime.UtcNow
+        mLastOutFileStoreTime = DateTime.UtcNow
         mSequestAppearsStalled = False
         mAbortSinceSequestIsStalled = False
 
         mTransferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath")
-        mTransferFolderPath = System.IO.Path.Combine(mTransferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
-        mTransferFolderPath = System.IO.Path.Combine(mTransferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))
+        mTransferFolderPath = Path.Combine(mTransferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
+        mTransferFolderPath = Path.Combine(mTransferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))
 
         ' Initialize the out file watcher
         With mOutFileWatcher
@@ -145,23 +150,23 @@ Public Class clsAnalysisToolRunnerSeqCluster
             .Path = m_WorkDir
             .IncludeSubdirectories = False
             .Filter = "*.out"
-            .NotifyFilter = System.IO.NotifyFilters.FileName
+            .NotifyFilter = NotifyFilters.FileName
             .EndInit()
             .EnableRaisingEvents = True
         End With
 
         ProgLoc = m_mgrParams.GetParam("seqprogloc")
-        If Not System.IO.File.Exists(ProgLoc) Then
+        If Not File.Exists(ProgLoc) Then
             m_message = "Sequest .Exe not found"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & ProgLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Initialize the Out File Appender timer
-        mOutFileAppenderTimer = New System.Timers.Timer(OUT_FILE_APPEND_INTERVAL_SECONDS * 1000)
+        mOutFileAppenderTimer = New Timers.Timer(OUT_FILE_APPEND_INTERVAL_SECONDS * 1000)
         mOutFileAppenderTimer.Start()
 
-        diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+        diWorkDir = New DirectoryInfo(m_WorkDir)
 
         If diWorkDir.GetFiles("sequest*.log*").Length > 0 Then
             ' Parse any sequest.log files present in the work directory to determine the number of spectra already processed
@@ -170,7 +175,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         mNodeCountSpawnErrorOccurences = 0
         mNodeCountActiveErrorOccurences = 0
-        mLastSequestStartTime = System.DateTime.UtcNow
+        mLastSequestStartTime = DateTime.UtcNow
 
         mIgnoreNodeCountActiveErrors = m_jobParams.GetJobParameter("IgnoreSequestNodeCountActiveErrors", False)
 
@@ -180,11 +185,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
             mSequestLogNodesFound = False
             mSequestNodesSpawned = 0
             mResetPVM = False
-            mSequestSearchStartTime = System.DateTime.UtcNow
-            mSequestSearchEndTime = System.DateTime.UtcNow
+            mSequestSearchStartTime = DateTime.UtcNow
+            mSequestSearchEndTime = DateTime.UtcNow
 
-            mLastOutFileCountTime = System.DateTime.UtcNow
-            mLastActiveNodeQueryTime = System.DateTime.UtcNow
+            mLastOutFileCountTime = DateTime.UtcNow
+            mLastActiveNodeQueryTime = DateTime.UtcNow
 
             m_CmdRunner = New clsRunDosProgram(m_WorkDir)
 
@@ -195,10 +200,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
             End If
 
             ' Run Sequest to generate OUT files
-            mLastSequestStartTime = System.DateTime.UtcNow
+            mLastSequestStartTime = DateTime.UtcNow
             blnSuccess = m_CmdRunner.RunProgram(ProgLoc, CmdStr, "Seq", True)
 
-            mSequestSearchEndTime = System.DateTime.UtcNow
+            mSequestSearchEndTime = DateTime.UtcNow
 
             If blnSuccess And Not mResetPVM And Not mAbortSinceSequestIsStalled Then
                 intDTACountRemaining = 0
@@ -215,7 +220,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
                     blnSuccess = False
                     If mNodeCountSpawnErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS And mNodeCountActiveErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS Then
-                        Dim intMaxPVMResetAttempts As Integer = 4
+                        Dim intMaxPVMResetAttempts = 4
 
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Resetting PVM in MakeOUTFiles")
                         blnSuccess = ResetPVMWithRetry(intMaxPVMResetAttempts)
@@ -257,8 +262,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
         mOutFileAppenderTimer.Stop()
 
         ' Make sure objects are released
-        System.Threading.Thread.Sleep(5000)		 ' 5 second delay
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
+        Thread.Sleep(5000)       ' 5 second delay
+        clsProgRunner.GarbageCollectNow()
 
         UpdateSequestNodeProcessingStats(False)
 
@@ -267,7 +272,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Verifying out file creation")
         End If
 
-        OutFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.out")
+        OutFiles = Directory.GetFiles(m_WorkDir, "*.out")
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Outfile count: " & (OutFiles.Length + mTotalOutFileCount).ToString("#,##0") & " files")
         End If
@@ -288,12 +293,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
             blnProcessingError = True
         End If
 
-        Dim intIterationsRemaining As Integer = 3
+        Dim intIterationsRemaining = 3
         Do
             ' Process the remaining .Out files in mOutFileCandidates
             If Not ProcessCandidateOutFiles(True) Then
                 ' Wait 5 seconds, then try again (up to 3 times)
-                System.Threading.Thread.Sleep(5000)
+                Thread.Sleep(5000)
             End If
 
             intIterationsRemaining -= 1
@@ -329,17 +334,17 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' </summary>
     ''' <remarks></remarks>
     Protected Sub m_CmdRunner_LoopWaiting() Handles m_CmdRunner.LoopWaiting
-        Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
+        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
         ' Compute the progress by comparing the number of .Out files to the number of .Dta files 
         ' (only count the files every 15 seconds)
-        If System.DateTime.UtcNow.Subtract(mLastOutFileCountTime).TotalSeconds >= 15 Then
-            mLastOutFileCountTime = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(mLastOutFileCountTime).TotalSeconds >= 15 Then
+            mLastOutFileCountTime = DateTime.UtcNow
             CalculateNewStatus()
         End If
 
-        If System.DateTime.UtcNow.Subtract(mLastActiveNodeQueryTime).TotalSeconds >= 120 Then
-            mLastActiveNodeQueryTime = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(mLastActiveNodeQueryTime).TotalSeconds >= 120 Then
+            mLastActiveNodeQueryTime = DateTime.UtcNow
 
             ' Verify that nodes are still analyzing .dta files
             ' This procedure will set mResetPVM to True if less than 50% of the nodes are creating .Out files
@@ -350,8 +355,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End If
 
         ' Update the status file (limit the updates to every 5 seconds)
-        If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
+            dtLastStatusUpdate = DateTime.UtcNow
             UpdateStatusRunning(m_progress, m_DtaCount)
         End If
 
@@ -383,12 +388,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
     End Sub
 
     Protected Sub CacheNewOutFiles()
-        Dim diWorkDir As System.IO.DirectoryInfo
+        Dim diWorkDir As DirectoryInfo
 
         Try
-            diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+            diWorkDir = New DirectoryInfo(m_WorkDir)
 
-            For Each fiFile As System.IO.FileInfo In diWorkDir.GetFiles("*.out", IO.SearchOption.TopDirectoryOnly)
+            For Each fiFile As FileInfo In diWorkDir.GetFiles("*.out", SearchOption.TopDirectoryOnly)
                 HandleOutFileChange(fiFile.Name)
             Next
 
@@ -399,14 +404,14 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     Protected Sub CheckForStalledSequest()
 
-        Const SEQUEST_STALLED_WAIT_TIME_MINUTES As Integer = 30
+        Const SEQUEST_STALLED_WAIT_TIME_MINUTES = 30
 
         Try
-            Dim dblMinutesSinceLastOutFileStored As Double = System.DateTime.UtcNow.Subtract(mLastOutFileStoreTime).TotalMinutes
+            Dim dblMinutesSinceLastOutFileStored As Double = DateTime.UtcNow.Subtract(mLastOutFileStoreTime).TotalMinutes
 
             If dblMinutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES Then
 
-                Dim blnResetPVM As Boolean = False
+                Dim blnResetPVM = False
 
                 If mSequestAppearsStalled Then
                     If dblMinutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES * 2 Then
@@ -417,13 +422,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
                         If intDTAsRemaining <= CInt(m_DtaCount * 0.999) Then
 
                             ' Just a handful of DTA files remain; assume they're corrupt
-                            Dim diWorkDir As System.IO.DirectoryInfo
-                            diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+                            Dim diWorkDir As DirectoryInfo
+                            diWorkDir = New DirectoryInfo(m_WorkDir)
 
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest is stalled, and " & intDTAsRemaining & " .DTA file" & CheckForPlurality(intDTAsRemaining) & " remain; assuming they are corrupt and deleting them")
                             m_EvalMessage = "Sequest is stalled, but only " & intDTAsRemaining & " .DTA file" & CheckForPlurality(intDTAsRemaining) & " remain"
 
-                            For Each fiFile As IO.FileInfo In diWorkDir.GetFiles("*.dta", System.IO.SearchOption.TopDirectoryOnly).ToList()
+                            For Each fiFile As FileInfo In diWorkDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly).ToList()
                                 fiFile.Delete()
                             Next
 
@@ -470,16 +475,16 @@ Public Class clsAnalysisToolRunnerSeqCluster
         Dim strTargetFilePath As String
 
         Try
-            strSourceFilePath = System.IO.Path.Combine(m_WorkDir, strSourceFileName)
-            strTargetFilePath = System.IO.Path.Combine(mTransferFolderPath, strTargetFileName)
+            strSourceFilePath = Path.Combine(m_WorkDir, strSourceFileName)
+            strTargetFilePath = Path.Combine(mTransferFolderPath, strTargetFileName)
 
-            If System.IO.File.Exists(strSourceFilePath) Then
+            If File.Exists(strSourceFilePath) Then
 
-                If Not System.IO.Directory.Exists(mTransferFolderPath) Then
-                    System.IO.Directory.CreateDirectory(mTransferFolderPath)
+                If Not Directory.Exists(mTransferFolderPath) Then
+                    Directory.CreateDirectory(mTransferFolderPath)
                 End If
 
-                System.IO.File.Copy(strSourceFilePath, strTargetFilePath, True)
+                File.Copy(strSourceFilePath, strTargetFilePath, True)
 
                 If blnAddToListOfServerFilesToDelete Then
                     m_jobParams.AddServerFileToDelete(strTargetFilePath)
@@ -506,7 +511,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
     Protected Function GetIntegerFromSeqLogFileString(ByVal InpFileStr As String, ByVal RegexStr As String) As Integer
 
-        Dim RetVal As Integer = 0
+        Dim RetVal = 0
         Dim TmpStr As String
 
         Try
@@ -534,10 +539,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     Protected Function GetNodeNamesFromSequestLog(ByVal strLogFilePath As String) As Boolean
 
-        Dim reReceivedReadyMsg As System.Text.RegularExpressions.Regex
-        Dim reSpawnedSlaveProcesses As System.Text.RegularExpressions.Regex
+        Dim reReceivedReadyMsg As Regex
+        Dim reSpawnedSlaveProcesses As Regex
 
-        Dim reMatch As System.Text.RegularExpressions.Match
+        Dim reMatch As Match
 
         Dim strLineIn As String
         Dim strHostName As String
@@ -546,7 +551,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         Try
 
-            If Not System.IO.File.Exists(strLogFilePath) Then
+            If Not File.Exists(strLogFilePath) Then
                 Return False
             End If
 
@@ -555,11 +560,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
             End If
 
             ' Initialize the RegEx objects
-            reReceivedReadyMsg = New System.Text.RegularExpressions.Regex("received ready messsage from (.+)\(", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
-            reSpawnedSlaveProcesses = New System.Text.RegularExpressions.Regex("Spawned (\d+) slave processes", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
+            reReceivedReadyMsg = New Regex("received ready messsage from (.+)\(", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
+            reSpawnedSlaveProcesses = New Regex("Spawned (\d+) slave processes", RegexOptions.Compiled Or RegexOptions.IgnoreCase Or RegexOptions.Singleline)
 
             mSequestNodesSpawned = 0
-            Using srLogFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+            Using srLogFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 ' Read each line from the input file
                 Do While Not srLogFile.EndOfStream
@@ -625,7 +630,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Did not find 'Spawned xx slave processes' in the sequest.log file; node names not yet determined")
                 End If
 
-                If System.DateTime.UtcNow.Subtract(mLastSequestStartTime).TotalMinutes > 15 Then
+                If DateTime.UtcNow.Subtract(mLastSequestStartTime).TotalMinutes > 15 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Over 15 minutes have elapsed since sequest.exe was called; aborting since node names could not be determined")
 
                     mNodeCountSpawnErrorOccurences += 1
@@ -657,12 +662,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         Try
             'Find the specified substring in the input file string
-            TmpStr = System.Text.RegularExpressions.Regex.Match(InpFileStr, RegexStr, System.Text.RegularExpressions.RegexOptions.IgnoreCase Or _
-              System.Text.RegularExpressions.RegexOptions.Multiline).Value
+            TmpStr = Regex.Match(InpFileStr, RegexStr, RegexOptions.IgnoreCase Or
+              RegexOptions.Multiline).Value
             If TmpStr = "" Then Return 0.0
 
             'Find the item count in the substring
-            RetVal = CSng(System.Text.RegularExpressions.Regex.Match(TmpStr, "\d+\.\d+").Value)
+            RetVal = CSng(Regex.Match(TmpStr, "\d+\.\d+").Value)
             Return RetVal
         Catch ex As Exception
             m_ErrMsg = ex.Message
@@ -714,8 +719,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 End If
 
                 If Not mOutFileCandidateInfo.ContainsKey(OutFileName) Then
-                    Dim dtQueueTime As System.DateTime = System.DateTime.UtcNow
-                    Dim objEntry As New KeyValuePair(Of String, System.DateTime)(OutFileName, dtQueueTime)
+                    Dim dtQueueTime As DateTime = DateTime.UtcNow
+                    Dim objEntry As New KeyValuePair(Of String, DateTime)(OutFileName, dtQueueTime)
 
                     mOutFileCandidates.Enqueue(objEntry)
                     mOutFileCandidateInfo.Add(OutFileName, dtQueueTime)
@@ -742,7 +747,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
             If m_UtilityRunner Is Nothing Then
                 m_UtilityRunner = New clsRunDosProgram(strWorkDir)
             Else
-                If m_UtilityRunner.State <> PRISM.Processes.clsProgRunner.States.NotMonitoring Then
+                If m_UtilityRunner.State <> clsProgRunner.States.NotMonitoring Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot re-initialize the UtilityRunner to perform task " & strTaskName & " since already running task " & mUtilityRunnerTaskName)
                     Return False
                 End If
@@ -769,17 +774,17 @@ Public Class clsAnalysisToolRunnerSeqCluster
         Dim blnSuccess As Boolean
         Dim blnAppendSuccess As Boolean
 
-        Dim objEntry As KeyValuePair(Of String, System.DateTime)
+        Dim objEntry As KeyValuePair(Of String, DateTime)
 
-        Dim intItemsProcessed As Integer = 0
+        Dim intItemsProcessed = 0
 
         ' Examine mOutFileHandlerInUse; if greater then zero, then exit the sub
-        If System.Threading.Interlocked.Read(mOutFileHandlerInUse) > 0 Then
+        If Interlocked.Read(mOutFileHandlerInUse) > 0 Then
             Return False
         End If
 
         Try
-            System.Threading.Interlocked.Increment(mOutFileHandlerInUse)
+            Interlocked.Increment(mOutFileHandlerInUse)
 
             If m_DebugLevel >= 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Examining out file creation dates (Candidate Count = " & mOutFileCandidates.Count & ")")
@@ -798,28 +803,28 @@ Public Class clsAnalysisToolRunnerSeqCluster
             End If
 
             If String.IsNullOrEmpty(mTempConcatenatedOutFilePath) Then
-                mTempConcatenatedOutFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_out.txt.tmp")
+                mTempConcatenatedOutFilePath = Path.Combine(m_WorkDir, m_Dataset & "_out.txt.tmp")
             End If
 
             If mOutFileCandidates.Count > 0 Then
                 ' Examine the time associated with the next item that would be dequeued
                 objEntry = mOutFileCandidates.Peek()
-                If blnProcessAllRemainingFiles OrElse System.DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS Then
+                If blnProcessAllRemainingFiles OrElse DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS Then
 
                     ' Open the _out.txt.tmp file
-                    Using swTargetFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(mTempConcatenatedOutFilePath, IO.FileMode.Append, IO.FileAccess.Write, IO.FileShare.Read))
+                    Using swTargetFile = New StreamWriter(New FileStream(mTempConcatenatedOutFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
 
                         intItemsProcessed = 0
-                        Do While mOutFileCandidates.Count > 0 AndAlso blnAppendSuccess AndAlso (blnProcessAllRemainingFiles OrElse System.DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS)
+                        Do While mOutFileCandidates.Count > 0 AndAlso blnAppendSuccess AndAlso (blnProcessAllRemainingFiles OrElse DateTime.UtcNow.Subtract(objEntry.Value).TotalSeconds >= OUT_FILE_APPEND_HOLDOFF_SECONDS)
 
                             ' Entry is old enough (or blnProcessAllRemainingFiles=True); pop it off the queue
                             objEntry = mOutFileCandidates.Dequeue()
                             intItemsProcessed += 1
 
                             Try
-                                Dim fiOutFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, objEntry.Key))
+                                Dim fiOutFile = New FileInfo(Path.Combine(m_WorkDir, objEntry.Key))
                                 AppendOutFile(fiOutFile, swTargetFile)
-                                mLastOutFileStoreTime = System.DateTime.UtcNow()
+                                mLastOutFileStoreTime = DateTime.UtcNow()
                                 mSequestAppearsStalled = False
                             Catch ex As Exception
                                 Console.WriteLine("Warning, exception appending out file: " & ex.Message)
@@ -843,7 +848,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Appended " & intItemsProcessed & " .out file" & CheckForPlurality(intItemsProcessed) & " to the _out.txt.tmp file; " & mOutFileCandidates.Count & " out file" & CheckForPlurality(mOutFileCandidates.Count) & " remain in the queue")
                 End If
 
-                If blnProcessAllRemainingFiles OrElse System.DateTime.UtcNow.Subtract(mLastTempFileCopyTime).TotalSeconds >= TEMP_FILE_COPY_INTERVAL_SECONDS Then
+                If blnProcessAllRemainingFiles OrElse DateTime.UtcNow.Subtract(mLastTempFileCopyTime).TotalSeconds >= TEMP_FILE_COPY_INTERVAL_SECONDS Then
                     If Not mTempJobParamsCopied Then
                         strSourceFileName = "JobParameters_" & m_JobNum & ".xml"
                         blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName & ".tmp", True)
@@ -861,7 +866,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
                     If intItemsProcessed > 0 Then
                         ' Copy the _out.txt.tmp file
-                        strSourceFileName = System.IO.Path.GetFileName(mTempConcatenatedOutFilePath)
+                        strSourceFileName = Path.GetFileName(mTempConcatenatedOutFilePath)
                         blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName, True)
                     End If
 
@@ -869,7 +874,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
                     strSourceFileName = "sequest.log"
                     blnSuccess = CopyFileToTransferFolder(strSourceFileName, strSourceFileName & ".tmp", True)
 
-                    mLastTempFileCopyTime = System.DateTime.UtcNow
+                    mLastTempFileCopyTime = DateTime.UtcNow
 
                 End If
 
@@ -882,7 +887,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         Finally
             ' Make sure mOutFileHandlerInUse is now zero
             Dim lngZero As Long = 0
-            System.Threading.Interlocked.Exchange(mOutFileHandlerInUse, lngZero)
+            Interlocked.Exchange(mOutFileHandlerInUse, lngZero)
         End Try
 
         Return blnAppendSuccess
@@ -890,15 +895,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
     End Function
 
     Protected Sub RenameSequestLogFile()
-        Dim fiFileInfo As System.IO.FileInfo
-        Dim strNewName As String = "??"
+        Dim fiFileInfo As FileInfo
+        Dim strNewName = "??"
 
         Try
-            fiFileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, "sequest.log"))
+            fiFileInfo = New FileInfo(Path.Combine(m_WorkDir, "sequest.log"))
 
             If fiFileInfo.Exists Then
-                strNewName = System.IO.Path.GetFileNameWithoutExtension(fiFileInfo.Name) & "_" & fiFileInfo.LastWriteTime.ToString("yyyyMMdd_HHmm") & ".log"
-                fiFileInfo.MoveTo(System.IO.Path.Combine(m_WorkDir, strNewName))
+                strNewName = Path.GetFileNameWithoutExtension(fiFileInfo.Name) & "_" & fiFileInfo.LastWriteTime.ToString("yyyyMMdd_HHmm") & ".log"
+                fiFileInfo.MoveTo(Path.Combine(m_WorkDir, strNewName))
 
                 ' Copy the renamed sequest.log file to the transfer directory
                 CopyFileToTransferFolder(strNewName, strNewName, False)
@@ -939,8 +944,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     Protected Function ResetPVM() As Boolean
 
-        Dim PVMProgFolder As String		' Folder with PVM
-        Dim ExePath As String			' Full path to PVM exe
+        Dim PVMProgFolder As String     ' Folder with PVM
+        Dim ExePath As String           ' Full path to PVM exe
 
         Dim blnSuccess As Boolean
 
@@ -951,8 +956,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 Return False
             End If
 
-            ExePath = System.IO.Path.Combine(PVMProgFolder, "pvm.exe")
-            If Not System.IO.File.Exists(ExePath) Then
+            ExePath = Path.Combine(PVMProgFolder, "pvm.exe")
+            If Not File.Exists(ExePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PVM not found: " & ExePath)
                 Return False
             End If
@@ -980,7 +985,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
             End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, " ... PVM restarted")
-            mLastActiveNodeQueryTime = System.DateTime.UtcNow
+            mLastActiveNodeQueryTime = DateTime.UtcNow
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ResetPVM: " & ex.Message)
@@ -998,8 +1003,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         Try
 
-            strBatchFilePath = System.IO.Path.Combine(PVMProgFolder, "HaltPVM.bat")
-            If Not System.IO.File.Exists(strBatchFilePath) Then
+            strBatchFilePath = Path.Combine(PVMProgFolder, "HaltPVM.bat")
+            If Not File.Exists(strBatchFilePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " & strBatchFilePath)
                 Return False
             End If
@@ -1009,12 +1014,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
             End If
 
-            Dim strTaskName As String = "HaltPVM"
+            Dim strTaskName = "HaltPVM"
             If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
                 Return False
             End If
 
-            Dim intMaxRuntimeSeconds As Integer = 90
+            Dim intMaxRuntimeSeconds = 90
             blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, False, intMaxRuntimeSeconds)
 
             If Not blnSuccess Then
@@ -1028,7 +1033,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End Try
 
         ' Wait 5 seconds
-        System.Threading.Thread.Sleep(5000)
+        Thread.Sleep(5000)
 
         Return True
 
@@ -1041,8 +1046,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         Try
 
-            strBatchFilePath = System.IO.Path.Combine(PVMProgFolder, "wipe_temp.bat")
-            If Not System.IO.File.Exists(strBatchFilePath) Then
+            strBatchFilePath = Path.Combine(PVMProgFolder, "wipe_temp.bat")
+            If Not File.Exists(strBatchFilePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " & strBatchFilePath)
                 Return False
             End If
@@ -1052,12 +1057,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
             End If
 
-            Dim strTaskName As String = "WipeTemp"
+            Dim strTaskName = "WipeTemp"
             If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
                 Return False
             End If
 
-            Dim intMaxRuntimeSeconds As Integer = 120
+            Dim intMaxRuntimeSeconds = 120
             blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True, intMaxRuntimeSeconds)
 
             If Not blnSuccess Then
@@ -1071,7 +1076,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End Try
 
         ' Wait 5 seconds
-        System.Threading.Thread.Sleep(5000)
+        Thread.Sleep(5000)
 
         Return True
 
@@ -1092,8 +1097,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
             ' QuitNow.txt should have this line:
             ' quit
 
-            strBatchFilePath = System.IO.Path.Combine(PVMProgFolder, "StartPVM.bat")
-            If Not System.IO.File.Exists(strBatchFilePath) Then
+            strBatchFilePath = Path.Combine(PVMProgFolder, "StartPVM.bat")
+            If Not File.Exists(strBatchFilePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " & strBatchFilePath)
                 Return False
             End If
@@ -1103,12 +1108,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
             End If
 
-            Dim strTaskName As String = "StartPVM"
+            Dim strTaskName = "StartPVM"
             If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
                 Return False
             End If
 
-            Dim intMaxRuntimeSeconds As Integer = 120
+            Dim intMaxRuntimeSeconds = 120
             blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True, intMaxRuntimeSeconds)
 
             If Not blnSuccess Then
@@ -1122,7 +1127,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End Try
 
         ' Wait 5 seconds
-        System.Threading.Thread.Sleep(5000)
+        Thread.Sleep(5000)
 
         Return True
 
@@ -1135,8 +1140,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         Try
 
-            strBatchFilePath = System.IO.Path.Combine(PVMProgFolder, "AddHosts.bat")
-            If Not System.IO.File.Exists(strBatchFilePath) Then
+            strBatchFilePath = Path.Combine(PVMProgFolder, "AddHosts.bat")
+            If Not File.Exists(strBatchFilePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " & strBatchFilePath)
                 Return False
             End If
@@ -1146,12 +1151,12 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
             End If
 
-            Dim strTaskName As String = "AddHosts"
+            Dim strTaskName = "AddHosts"
             If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
                 Return False
             End If
 
-            Dim intMaxRuntimeSeconds As Integer = 120
+            Dim intMaxRuntimeSeconds = 120
             blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True, intMaxRuntimeSeconds)
 
             If Not blnSuccess Then
@@ -1165,7 +1170,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End Try
 
         ' Wait 5 seconds
-        System.Threading.Thread.Sleep(5000)
+        Thread.Sleep(5000)
 
         Return True
 
@@ -1174,15 +1179,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
     Protected Sub UpdateSequestNodeProcessingStats(ByVal blnProcessAllSequestLogFiles As Boolean)
 
         If blnProcessAllSequestLogFiles Then
-            Dim diWorkDir As System.IO.DirectoryInfo
-            diWorkDir = New System.IO.DirectoryInfo(m_WorkDir)
+            Dim diWorkDir As DirectoryInfo
+            diWorkDir = New DirectoryInfo(m_WorkDir)
 
-            For Each fiFile As System.IO.FileInfo In diWorkDir.GetFiles("sequest*.log*")
+            For Each fiFile As FileInfo In diWorkDir.GetFiles("sequest*.log*")
                 UpdateSequestNodeProcessingStatsOneFile(fiFile.FullName)
             Next
 
         Else
-            UpdateSequestNodeProcessingStatsOneFile(System.IO.Path.Combine(m_WorkDir, "sequest.log"))
+            UpdateSequestNodeProcessingStatsOneFile(Path.Combine(m_WorkDir, "sequest.log"))
         End If
     End Sub
 
@@ -1197,7 +1202,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         Dim intDTAsSearched As Integer
 
         ' Verify sequest.log file exists
-        If Not System.IO.File.Exists(SeqLogFilePath) Then
+        If Not File.Exists(SeqLogFilePath) Then
             If m_DebugLevel >= 2 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Sequest log file not found, cannot update Node Processing Stats")
                 Exit Sub
@@ -1205,13 +1210,13 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End If
 
         ' Read the sequest.log file
-        Dim sbContents As System.Text.StringBuilder = New System.Text.StringBuilder
+        Dim sbContents = New StringBuilder
         Dim strLineIn As String
         intDTAsSearched = 0
 
         Try
 
-            Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(SeqLogFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(SeqLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
 
@@ -1234,7 +1239,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         ' Node machine count
         NumNodeMachines = GetIntegerFromSeqLogFileString(strFileContents, "starting the sequest task on\s+\d+\s+node")
         If NumNodeMachines = 0 Then
-            Dim Msg As String = "UpdateNodeStats: node machine count line not found"
+            Dim Msg = "UpdateNodeStats: node machine count line not found"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
         ElseIf NumNodeMachines < 0 Then
             Dim Msg As String = "UpdateNodeStats: Exception retrieving node machine count: " & m_ErrMsg
@@ -1248,7 +1253,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         ' Sequest process count
         NumSlaveProcesses = GetIntegerFromSeqLogFileString(strFileContents, "Spawned\s+\d+\s+slave processes")
         If NumSlaveProcesses = 0 Then
-            Dim Msg As String = "UpdateNodeStats: slave process count line not found"
+            Dim Msg = "UpdateNodeStats: slave process count line not found"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
         ElseIf NumSlaveProcesses < 0 Then
             Dim Msg As String = "UpdateNodeStats: Exception retrieving slave process count: " & m_ErrMsg
@@ -1293,16 +1298,16 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' <remarks></remarks>
     Protected Sub ValidateProcessorsAreActive()
 
-        Dim PVMProgFolder As String		' Folder with PVM
+        Dim PVMProgFolder As String     ' Folder with PVM
         Dim strBatchFilePath As String
 
         Dim strActiveNodesFilePath As String
         Dim strLineIn As String
 
         Dim strNodeName As String
-        Dim dtLastFinishTime As System.DateTime
+        Dim dtLastFinishTime As DateTime
 
-        Dim reMatch As System.Text.RegularExpressions.Match
+        Dim reMatch As Match
 
         Dim intNodeCountCurrent As Integer
         Dim intNodeCountActive As Integer
@@ -1314,7 +1319,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 ' Parse the Sequest.Log file to determine the names of the spawned nodes
 
                 Dim strLogFilePath As String
-                strLogFilePath = System.IO.Path.Combine(m_WorkDir, "sequest.log")
+                strLogFilePath = Path.Combine(m_WorkDir, "sequest.log")
 
                 mSequestLogNodesFound = GetNodeNamesFromSequestLog(strLogFilePath)
 
@@ -1331,31 +1336,31 @@ Public Class clsAnalysisToolRunnerSeqCluster
                 Exit Sub
             End If
 
-            strBatchFilePath = System.IO.Path.Combine(PVMProgFolder, "CheckActiveNodes.bat")
-            If Not System.IO.File.Exists(strBatchFilePath) Then
+            strBatchFilePath = Path.Combine(PVMProgFolder, "CheckActiveNodes.bat")
+            If Not File.Exists(strBatchFilePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " & strBatchFilePath)
                 Exit Sub
             End If
 
-            strActiveNodesFilePath = System.IO.Path.Combine(m_WorkDir, "ActiveNodesOutput.tmp")
+            strActiveNodesFilePath = Path.Combine(m_WorkDir, "ActiveNodesOutput.tmp")
 
             If m_DebugLevel >= 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "     " & strBatchFilePath)
             End If
 
-            Dim strTaskName As String = "CheckActiveNodes"
+            Dim strTaskName = "CheckActiveNodes"
             If Not InitializeUtilityRunner(strTaskName, PVMProgFolder) Then
                 Exit Sub
             End If
 
-            Dim intMaxRuntimeSeconds As Integer = 60
+            Dim intMaxRuntimeSeconds = 60
             blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, True, intMaxRuntimeSeconds)
 
             If Not blnSuccess Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "UtilityRunner returned False for " & strBatchFilePath)
             End If
 
-            If Not System.IO.File.Exists(strActiveNodesFilePath) Then
+            If Not File.Exists(strActiveNodesFilePath) Then
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Warning, ActiveNodes files not found: " & strActiveNodesFilePath)
                 End If
@@ -1365,7 +1370,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
             ' Parse the ActiveNodesOutput.tmp file
             intNodeCountCurrent = 0
-            Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strActiveNodesFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+            Using srInFile = New StreamReader(New FileStream(strActiveNodesFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
@@ -1378,9 +1383,9 @@ Public Class clsAnalysisToolRunnerSeqCluster
                         strNodeName = reMatch.Groups("node").Value
 
                         If mSequestNodes.TryGetValue(strNodeName, dtLastFinishTime) Then
-                            mSequestNodes(strNodeName) = System.DateTime.UtcNow
+                            mSequestNodes(strNodeName) = DateTime.UtcNow
                         Else
-                            mSequestNodes.Add(strNodeName, System.DateTime.UtcNow)
+                            mSequestNodes.Add(strNodeName, DateTime.UtcNow)
                         End If
 
                         intNodeCountCurrent += 1
@@ -1390,16 +1395,16 @@ Public Class clsAnalysisToolRunnerSeqCluster
             End Using
 
             ' Log the number of active nodes every 10 minutes
-            If m_DebugLevel >= 4 OrElse System.DateTime.UtcNow.Subtract(mLastActiveNodeLogTime).TotalSeconds >= 600 Then
+            If m_DebugLevel >= 4 OrElse DateTime.UtcNow.Subtract(mLastActiveNodeLogTime).TotalSeconds >= 600 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & intNodeCountCurrent & " / " & mSequestNodesSpawned & " Sequest nodes are active; median processing time = " & ComputeMedianProcessingTime().ToString("0.0") & " seconds/spectrum; " & m_progress.ToString("0.0") & "% complete")
-                mLastActiveNodeLogTime = System.DateTime.UtcNow
+                mLastActiveNodeLogTime = DateTime.UtcNow
             End If
 
 
             ' Look for nodes that have been missing for at least 5 minutes
             intNodeCountActive = 0
             For Each objItem As KeyValuePair(Of String, DateTime) In mSequestNodes
-                If System.DateTime.UtcNow.Subtract(objItem.Value).TotalMinutes <= STALE_NODE_THRESHOLD_MINUTES Then
+                If DateTime.UtcNow.Subtract(objItem.Value).TotalMinutes <= STALE_NODE_THRESHOLD_MINUTES Then
                     intNodeCountActive += 1
                 End If
             Next
@@ -1425,15 +1430,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Sub
 
-    Protected Sub mOutFileWatcher_Created(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles mOutFileWatcher.Created
+    Protected Sub mOutFileWatcher_Created(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mOutFileWatcher.Created
         HandleOutFileChange(e.Name)
     End Sub
 
-    Protected Sub mOutFileWatcher_Changed(ByVal sender As Object, ByVal e As System.IO.FileSystemEventArgs) Handles mOutFileWatcher.Changed
+    Protected Sub mOutFileWatcher_Changed(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mOutFileWatcher.Changed
         HandleOutFileChange(e.Name)
     End Sub
 
-    Protected Sub mOutFileAppenderTime_Elapsed(ByVal sender As Object, ByVal e As System.Timers.ElapsedEventArgs) Handles mOutFileAppenderTimer.Elapsed
+    Protected Sub mOutFileAppenderTime_Elapsed(ByVal sender As Object, ByVal e As ElapsedEventArgs) Handles mOutFileAppenderTimer.Elapsed
         ProcessCandidateOutFiles(False)
         CheckForStalledSequest()
     End Sub

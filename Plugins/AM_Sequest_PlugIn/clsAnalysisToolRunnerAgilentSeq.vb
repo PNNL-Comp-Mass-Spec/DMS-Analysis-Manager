@@ -1,5 +1,6 @@
 Option Strict On
 
+Imports System.IO
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerAgilentSeq
@@ -13,12 +14,12 @@ Public Class clsAnalysisToolRunnerAgilentSeq
 
         Try
             'Delete the .mgf file
-            FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.mgf")
+            FoundFiles = Directory.GetFiles(m_WorkDir, "*.mgf")
             For Each MyFile In FoundFiles
                 DeleteFileWithRetries(MyFile)
             Next
             'Delete the .cdf file, if present
-            FoundFiles = System.IO.Directory.GetFiles(m_WorkDir, "*.cdf")
+            FoundFiles = Directory.GetFiles(m_WorkDir, "*.cdf")
             For Each MyFile In FoundFiles
                 DeleteFileWithRetries(MyFile)
             Next

@@ -10,6 +10,8 @@ Option Strict On
 Imports AnalysisManagerBase
 Imports System.Collections.Generic
 Imports System.IO
+Imports System.Threading
+Imports PRISM.Processes
 
 Public Class clsAnalysisToolRunnerLCMSFF
     Inherits clsAnalysisToolRunnerBase
@@ -86,7 +88,7 @@ Public Class clsAnalysisToolRunnerLCMSFF
         End If
 
         'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+        m_StopTime = DateTime.UtcNow
         m_progress = PROGRESS_PCT_FEATURE_FINDER_DONE
 
         'Add the current job data to the summary file
@@ -95,8 +97,8 @@ Public Class clsAnalysisToolRunnerLCMSFF
         End If
 
         'Make sure objects are released
-        System.Threading.Thread.Sleep(500)         ' 1 second delay
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
+        Thread.Sleep(500)         ' 1 second delay
+        clsProgRunner.GarbageCollectNow()
 
         If Not blnSuccess Then
             ' Move the source files and any results to the Failed Job folder

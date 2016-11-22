@@ -1,7 +1,9 @@
 
 Option Strict On
 
+Imports System.IO
 Imports AnalysisManagerBase
+Imports MyEMSLReader
 
 Public Class clsAnalysisResourcesIN
     Inherits clsAnalysisResources
@@ -16,7 +18,7 @@ Public Class clsAnalysisResourcesIN
 #Region "Methods"
 
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
+        MyBase.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
@@ -70,7 +72,7 @@ Public Class clsAnalysisResourcesIN
         stepNum = m_jobParams.GetParam("Step")
 
         'Determine if this is parallelized inspect job
-        If System.String.IsNullOrEmpty(CloneStepRenum) Then
+        If String.IsNullOrEmpty(CloneStepRenum) Then
             DtaResultFileName = m_DatasetName & "_dta.zip"
         Else
             parallelZipNum = CInt(stepNum) - CInt(CloneStepRenum) + 1
@@ -90,7 +92,7 @@ Public Class clsAnalysisResourcesIN
         End If
 
         If DtaResultFolderName.StartsWith(MYEMSL_PATH_FLAG) Then
-            If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL")
                 End If
@@ -111,10 +113,10 @@ Public Class clsAnalysisResourcesIN
         ' Check to see if the job is parallelized
         '  If it is parallelized, we do not need to unzip the concatenated DTA file (since it is already unzipped)
         '  If not parallelized, then we do need to unzip
-        If Not isParallelized OrElse IO.Path.GetExtension(DtaResultFileName).ToLower = ".zip" Then
+        If Not isParallelized OrElse Path.GetExtension(DtaResultFileName).ToLower = ".zip" Then
             'Unzip concatenated DTA file
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file")
-            If UnzipFileStart(IO.Path.Combine(m_WorkingDir, DtaResultFileName), m_WorkingDir, "clsAnalysisResourcesIN.RetrieveDtaFiles", False) Then
+            If UnzipFileStart(Path.Combine(m_WorkingDir, DtaResultFileName), m_WorkingDir, "clsAnalysisResourcesIN.RetrieveDtaFiles", False) Then
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped")
                 End If

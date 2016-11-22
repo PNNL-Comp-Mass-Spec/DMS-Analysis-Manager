@@ -9,6 +9,9 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports System.Threading
+Imports MyEMSLReader
+Imports PRISM.Processes
 
 Public Class clsAnalysisResourcesLCMSFF
     Inherits clsAnalysisResources
@@ -63,7 +66,7 @@ Public Class clsAnalysisResourcesLCMSFF
 
         Dim strRawDataType As String
         strRawDataType = m_jobParams.GetParam("RawDataType")
-        If strRawDataType.ToLower = clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES Then
+        If strRawDataType.ToLower = RAW_DATA_TYPE_DOT_UIMF_FILES Then
 
             If m_DebugLevel >= 2 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving .UIMF file")
@@ -80,11 +83,11 @@ Public Class clsAnalysisResourcesLCMSFF
                 End If
             End If
 
-            m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
+            m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION)
 
         End If
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -151,11 +154,11 @@ Public Class clsAnalysisResourcesLCMSFF
 
         Try
             ' Create the output file (temporary name ending in "_new"; we'll swap the files later)
-            Using swOutFile As StreamWriter = New StreamWriter(New FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+            Using swOutFile As StreamWriter = New StreamWriter(New FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 Try
                     ' Open the input file
-                    Using srInFile As StreamReader = New StreamReader(New FileStream(SrcFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+                    Using srInFile As StreamReader = New StreamReader(New FileStream(SrcFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                         Do While Not srInFile.EndOfStream
                             strLineIn = srInFile.ReadLine
@@ -220,15 +223,15 @@ Public Class clsAnalysisResourcesLCMSFF
             End Using
 
             ' Wait 250 millseconds, then replace the original .Ini file with the new one
-            System.Threading.Thread.Sleep(250)
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            Thread.Sleep(250)
+            clsProgRunner.GarbageCollectNow()
 
             ' Delete the input file
             File.Delete(SrcFilePath)
 
             ' Wait another 250 milliseconds before renaming the output file
-            System.Threading.Thread.Sleep(50)
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            Thread.Sleep(50)
+            clsProgRunner.GarbageCollectNow()
 
             ' Rename the newly created output file to have the name of the input file
             File.Move(TargetFilePath, SrcFilePath)

@@ -8,7 +8,11 @@
 
 Option Strict On
 
+Imports System.IO
+Imports System.Threading
 Imports AnalysisManagerBase
+Imports PeptideToProteinMapEngine
+Imports PRISM.Processes
 
 ''' <summary>
 ''' Class for running Inspect Results Assembler
@@ -58,7 +62,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     Protected mInspectSearchLogFilePath As String = "InspectSearchLog.txt"      ' This value gets updated in function RunInSpecT
 
-    Private WithEvents mPeptideToProteinMapper As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
+    Private WithEvents mPeptideToProteinMapper As clsPeptideToProteinMapEngine
 
     ' mPercentCompleteStartLevels is an array that lists the percent complete value to report 
     '  at the start of each of the various processing steps performed in this procedure
@@ -87,13 +91,13 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim numClonedSteps As String
         Dim intNumResultFiles As Integer
 
-        Dim isParallelized As Boolean = False
+        Dim isParallelized = False
 
         Dim Result As IJobParams.CloseOutType
         Dim eReturnCode As IJobParams.CloseOutType
 
-        Dim blnProcessingError As Boolean = False
-        Dim blnNoDataInFilteredResults As Boolean = False
+        Dim blnProcessingError = False
+        Dim blnNoDataInFilteredResults = False
 
         ' We no longer need to index the .Fasta file (since we're no longer using PValue.py with the -a switch or Summary.py
         ''Dim objIndexedDBCreator As New clsCreateInspectIndexedDB
@@ -166,7 +170,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             UpdateStatusRunning()
 
             'Stop the job timer
-            m_StopTime = System.DateTime.UtcNow
+            m_StopTime = DateTime.UtcNow
 
             If blnProcessingError Then
                 ' Something went wrong
@@ -181,8 +185,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             End If
 
             'Make sure objects are released
-            System.Threading.Thread.Sleep(500)        ' 500 msec delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            Thread.Sleep(500)        ' 500 msec delay
+            clsProgRunner.GarbageCollectNow()
 
             Result = MakeResultsFolder()
             If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -200,8 +204,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
                 ' Try to save whatever files were moved into the results folder
-                Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+                Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -226,7 +230,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Catch ex As Exception
             Dim Msg As String
-            Msg = "clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " & _
+            Msg = "clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " &
                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly")
@@ -256,7 +260,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     Private Function AssembleResults(ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
-        Dim strFileName As String = ""
+        Dim strFileName = ""
 
         Try
             If m_DebugLevel >= 3 Then
@@ -333,17 +337,17 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
 
-    Private Function AssembleFiles(ByVal strCombinedFileName As String, _
-                                   ByVal resFileType As ResultFileType, _
+    Private Function AssembleFiles(ByVal strCombinedFileName As String,
+                                   ByVal resFileType As ResultFileType,
                                    ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
 
-        Dim tr As System.IO.StreamReader = Nothing
-        Dim tw As System.IO.StreamWriter
+        Dim tr As StreamReader = Nothing
+        Dim tw As StreamWriter
 
         Dim s As String
         Dim DatasetName As String
         Dim fileNameCounter As Integer
-        Dim InspectResultsFile As String = ""
+        Dim InspectResultsFile = ""
         Dim intLinesRead As Integer
 
         Dim blnFilesContainHeaderLine As Boolean
@@ -357,7 +361,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Try
             DatasetName = m_Dataset
 
-            tw = CreateNewExportFile(System.IO.Path.Combine(m_WorkDir, strCombinedFileName))
+            tw = CreateNewExportFile(Path.Combine(m_WorkDir, strCombinedFileName))
             If tw Is Nothing Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -394,10 +398,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                         Exit For
                 End Select
 
-                If System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, InspectResultsFile)) Then
+                If File.Exists(Path.Combine(m_WorkDir, InspectResultsFile)) Then
                     intLinesRead = 0
 
-                    tr = New System.IO.StreamReader(New System.IO.FileStream(System.IO.Path.Combine(m_WorkDir, InspectResultsFile), System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+                    tr = New StreamReader(New FileStream(Path.Combine(m_WorkDir, InspectResultsFile), FileMode.Open, FileAccess.Read, FileShare.Read))
                     s = tr.ReadLine
 
                     Do While s IsNot Nothing
@@ -431,7 +435,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                                     intTabIndex = s.IndexOf(ControlChars.Tab)
                                     If intTabIndex > 0 Then
                                         ' Note: .LastIndexOf will start at index intTabIndex and search backword until the first match is found (this is a bit counter-intuitive, but that's what it does)
-                                        intSlashIndex = s.LastIndexOf(System.IO.Path.DirectorySeparatorChar, intTabIndex)
+                                        intSlashIndex = s.LastIndexOf(Path.DirectorySeparatorChar, intTabIndex)
                                         If intSlashIndex > 0 Then
                                             s = s.Substring(intSlashIndex + 1)
                                         End If
@@ -472,16 +476,16 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Function
 
-    Private Function CreateNewExportFile(ByVal exportFilePath As String) As System.IO.StreamWriter
-        Dim ef As System.IO.StreamWriter
+    Private Function CreateNewExportFile(ByVal exportFilePath As String) As StreamWriter
+        Dim ef As StreamWriter
 
-        If System.IO.File.Exists(exportFilePath) Then
+        If File.Exists(exportFilePath) Then
             'post error to log
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists (" & exportFilePath & "); this is unexpected")
             Return Nothing
         End If
 
-        ef = New System.IO.StreamWriter(New System.IO.FileStream(exportFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+        ef = New StreamWriter(New FileStream(exportFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
         Return ef
 
     End Function
@@ -491,7 +495,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
 
         ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-        Dim dbFilename As String = System.IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+        Dim dbFilename As String = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
         Dim strInputFilePath As String
 
         Dim blnIgnorePeptideToProteinMapperErrors As Boolean
@@ -499,15 +503,15 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping))
 
-        strInputFilePath = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
+        strInputFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName)
 
         Try
             ' Validate that the input file has at least one entry; if not, then no point in continuing
-            Dim srInFile As System.IO.StreamReader
+            Dim srInFile As StreamReader
             Dim strLineIn As String
             Dim intLinesRead As Integer
 
-            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+            srInFile = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
             intLinesRead = 0
             Do While Not srInFile.EndOfStream AndAlso intLinesRead < 10
@@ -528,7 +532,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             m_message = "Error validating Inspect results file contents in InspectResultsAssembly->CreatePeptideToProteinMapping"
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & _
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " &
                 m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
@@ -541,12 +545,12 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
 
-            mPeptideToProteinMapper = New PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
+            mPeptideToProteinMapper = New clsPeptideToProteinMapEngine
 
             With mPeptideToProteinMapper
                 .DeleteInspectTempFiles = True
                 .IgnoreILDifferences = False
-                .InspectParameterFilePath = System.IO.Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
+                .InspectParameterFilePath = Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
 
                 If m_DebugLevel > 2 Then
                     .LogMessagesToFile = True
@@ -557,9 +561,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
                 .MatchPeptidePrefixAndSuffixToProtein = False
                 .OutputProteinSequence = False
-                .PeptideInputFileFormat = PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.InspectResultsFile
+                .PeptideInputFileFormat = clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.InspectResultsFile
                 .PeptideFileSkipFirstLine = False
-                .ProteinInputFilePath = System.IO.Path.Combine(OrgDbDir, dbFilename)
+                .ProteinInputFilePath = Path.Combine(OrgDbDir, dbFilename)
                 .SaveProteinToPeptideMappingFile = True
                 .SearchAllProteinsForPeptideSequence = True
                 .SearchAllProteinsSkipCoverageComputationSteps = True
@@ -589,7 +593,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             m_message = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping"
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " & _
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " &
                 m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
 
             If blnIgnorePeptideToProteinMapperErrors Then
@@ -628,7 +632,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             End If
 
             ' Read the contents of strProteinToPeptideMappingFilePath
-            Using srInFile As System.IO.StreamReader = New System.IO.StreamReader((New System.IO.FileStream(strInspectParameterFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)))
+            Using srInFile = New StreamReader((New FileStream(strInspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
 
                 Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
@@ -675,7 +679,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Catch ex As Exception
             m_message = "Error in InspectResultsAssembly->ExtractModInfoFromInspectParamFile"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False       
+            Return False
         End Try
 
         Return True
@@ -691,8 +695,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Dim eResult As IJobParams.CloseOutType
 
-        Dim strInspectResultsFilePath As String = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX)
+        Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
+        Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX)
 
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
 
@@ -712,8 +716,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Dim eResult As IJobParams.CloseOutType
 
-        Dim strInspectResultsFilePath As String = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
+        Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
+        Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
 
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
 
@@ -739,24 +743,24 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Sub
 
-    Private Function RenameAndZipInspectFile(ByVal strSourceFilePath As String, _
-                                             ByVal strZipFilePath As String, _
+    Private Function RenameAndZipInspectFile(ByVal strSourceFilePath As String,
+                                             ByVal strZipFilePath As String,
                                              ByVal blnDeleteSourceAfterZip As Boolean) As Boolean
 
-        Dim fiFileInfo As System.IO.FileInfo
+        Dim fiFileInfo As FileInfo
         Dim strTargetFilePath As String
         Dim blnSuccess As Boolean
 
         ' Zip up file specified by strSourceFilePath
         ' Rename to _inspect.txt before zipping
-        fiFileInfo = New System.IO.FileInfo(strSourceFilePath)
+        fiFileInfo = New FileInfo(strSourceFilePath)
 
         If Not fiFileInfo.Exists Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Inspect results file not found; nothing to zip: " & fiFileInfo.FullName)
             Return False
         End If
 
-        strTargetFilePath = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
+        strTargetFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName)
         If m_DebugLevel >= 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Renaming " & fiFileInfo.FullName & " to " & strTargetFilePath)
         End If
@@ -766,7 +770,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         blnSuccess = MyBase.ZipFile(fiFileInfo.FullName, blnDeleteSourceAfterZip, strZipFilePath)
 
-        m_jobParams.AddResultFileToKeep(System.IO.Path.GetFileName(strZipFilePath))
+        m_jobParams.AddResultFileToKeep(Path.GetFileName(strZipFilePath))
 
         Return blnSuccess
 
@@ -782,8 +786,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Dim eResult As IJobParams.CloseOutType
 
-        Dim strInspectResultsFilePath As String = System.IO.Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
+        Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
+        Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
 
         UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
 
@@ -794,11 +798,11 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Make sure the filtered inspect results file is not zero-length
             ' Also, log some stats on the size of the filtered file vs. the original one
 
-            Dim fiOriginalFile As System.IO.FileInfo
-            Dim fiRescoredFile As System.IO.FileInfo
+            Dim fiOriginalFile As FileInfo
+            Dim fiRescoredFile As FileInfo
 
-            fiRescoredFile = New System.IO.FileInfo(strFilteredFilePath)
-            fiOriginalFile = New System.IO.FileInfo(strInspectResultsFilePath)
+            fiRescoredFile = New FileInfo(strFilteredFilePath)
+            fiOriginalFile = New FileInfo(strInspectResultsFilePath)
 
             If Not fiRescoredFile.Exists Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Rescored Inspect Results file not found: " & fiRescoredFile.FullName)
@@ -825,16 +829,16 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Function
 
-    Private Function RunpValue(ByVal strInspectResultsInputFilePath As String, _
-                               ByVal strOutputFilePath As String, _
-                               ByVal blnCreateImageFiles As Boolean, _
+    Private Function RunpValue(ByVal strInspectResultsInputFilePath As String,
+                               ByVal strOutputFilePath As String,
+                               ByVal blnCreateImageFiles As Boolean,
                                ByVal blnTopHitOnly As Boolean) As IJobParams.CloseOutType
 
         Dim CmdRunner As clsRunDosProgram
         Dim CmdStr As String
 
         Dim InspectDir As String = m_mgrParams.GetParam("inspectdir")
-        Dim pvalDistributionFilename As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_PValueDistribution.txt")
+        Dim pvalDistributionFilename As String = Path.Combine(m_WorkDir, m_Dataset & "_PValueDistribution.txt")
 
         ' The following code is only required if you use the -a and -d switches
         ''Dim orgDbDir As String = m_mgrParams.GetParam("orgdbdir")
@@ -842,7 +846,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         ''Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
 
         Dim pythonProgLoc As String = m_mgrParams.GetParam("pythonprogloc")
-        Dim pthresh As String = ""
+        Dim pthresh = ""
 
         Dim blnShuffledDBUsed As Boolean
 
@@ -860,20 +864,20 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         ' verify that python program file exists
         Dim progLoc As String = pythonProgLoc
-        If Not System.IO.File.Exists(progLoc) Then
+        If Not File.Exists(progLoc) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find python.exe program file: " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' verify that PValue python script exists
-        Dim pvalueScriptPath As String = System.IO.Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT)
-        If Not System.IO.File.Exists(pvalueScriptPath) Then
+        Dim pvalueScriptPath As String = Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT)
+        If Not File.Exists(pvalueScriptPath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find PValue script: " & pvalueScriptPath)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Possibly required: Update the PTMods.txt file in InspectDir to contain the modification details, as defined in inspect_input.txt
-        UpdatePTModsFile(InspectDir, System.IO.Path.Combine(m_WorkDir, "inspect_input.txt"))
+        UpdatePTModsFile(InspectDir, Path.Combine(m_WorkDir, "inspect_input.txt"))
 
         'Set up and execute a program runner to run PVALUE_MINLENGTH5_SCRIPT.py
         ' Note that PVALUE_MINLENGTH5_SCRIPT.py is nearly identical to PValue.py but it retains peptides with 5 amino acids (default is 7)
@@ -891,9 +895,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         ' -a means to perform protein selection (sort of like protein prophet, but not very good, according to Sam Payne)
         ' -d .trie file to use (only used if -a is enabled)
 
-        CmdStr = " " & pvalueScriptPath & _
-                 " -r " & strInspectResultsInputFilePath & _
-                 " -w " & strOutputFilePath & _
+        CmdStr = " " & pvalueScriptPath &
+                 " -r " & strInspectResultsInputFilePath &
+                 " -w " & strOutputFilePath &
                  " -s " & pvalDistributionFilename
 
         If blnCreateImageFiles Then
@@ -925,7 +929,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "PValue_ConsoleOutput.txt")
+            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "PValue_ConsoleOutput.txt")
         End With
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "PValue", False) Then
@@ -934,7 +938,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         If CmdRunner.ExitCode <> 0 Then
             ' Note: Log the non-zero exit code as an error, but return CLOSEOUT_SUCCESS anyway
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, System.IO.Path.GetFileName(pvalueScriptPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Path.GetFileName(pvalueScriptPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
         End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -961,25 +965,25 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         End If
 
         ' Store version information for the PeptideToProteinMapEngine and its associated DLLs
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"))
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"))
         If Not blnSuccess Then Return False
 
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "ProteinFileReader.dll"))
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinFileReader.dll"))
         If Not blnSuccess Then Return False
 
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"))
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"))
         If Not blnSuccess Then Return False
 
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, System.IO.Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"))
+        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"))
         If Not blnSuccess Then Return False
 
         ' Store the path to important DLLs in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")))
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")))
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "ProteinFileReader.dll")))
+        Dim ioToolFiles As New List(Of FileInfo)
+        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")))
+        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")))
+        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "ProteinFileReader.dll")))
         ' Skip System.Data.SQLite.dll; we don't need to track the file date
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll")))
+        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
@@ -999,8 +1003,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <remarks></remarks>
     Private Function UpdatePTModsFile(ByVal strInspectDir As String, ByVal strInspectParameterFilePath As String) As Boolean
 
-        Dim srInFile As System.IO.StreamReader
-        Dim swOutFile As System.IO.StreamWriter
+        Dim srInFile As StreamReader
+        Dim swOutFile As StreamWriter
 
         Dim intIndex As Integer
 
@@ -1038,18 +1042,18 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                     ' While reading, will create a new file with any required updates
                     ' In case two managers are doing this simultaneously, we'll put a unique string in strPTModsFilePathNew
 
-                    strPTModsFilePath = System.IO.Path.Combine(strInspectDir, "PTMods.txt")
+                    strPTModsFilePath = Path.Combine(strInspectDir, "PTMods.txt")
                     strPTModsFilePathNew = strPTModsFilePath & ".Job" & m_JobNum & ".tmp"
 
                     If m_DebugLevel > 4 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " & strPTModsFilePath)
                     End If
-                    srInFile = New System.IO.StreamReader(New System.IO.FileStream(strPTModsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+                    srInFile = New StreamReader(New FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                     If m_DebugLevel > 4 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " & strPTModsFilePathNew)
                     End If
-                    swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strPTModsFilePathNew, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+                    swOutFile = New StreamWriter(New FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                     blnDifferenceFound = False
                     Do While Not srInFile.EndOfStream
@@ -1135,25 +1139,25 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
                     If blnDifferenceFound Then
                         ' Wait 500 msec, then replace PTMods.txt with strPTModsFilePathNew
-                        System.Threading.Thread.Sleep(500)
+                        Thread.Sleep(500)
 
                         Try
                             strPTModsFilePathOld = strPTModsFilePath & ".old"
-                            If System.IO.File.Exists(strPTModsFilePathOld) Then
-                                System.IO.File.Delete(strPTModsFilePathOld)
+                            If File.Exists(strPTModsFilePathOld) Then
+                                File.Delete(strPTModsFilePathOld)
                             End If
 
-                            System.IO.File.Move(strPTModsFilePath, strPTModsFilePathOld)
-                            System.IO.File.Move(strPTModsFilePathNew, strPTModsFilePath)
+                            File.Move(strPTModsFilePath, strPTModsFilePathOld)
+                            File.Move(strPTModsFilePathNew, strPTModsFilePath)
                         Catch ex As Exception
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, Error swapping in the new PTMods.txt file : " & m_JobNum & "; " & ex.Message)
                             Return False
                         End Try
                     Else
                         ' No difference was found; delete the .tmp file
-                        System.Threading.Thread.Sleep(500)
+                        Thread.Sleep(500)
                         Try
-                            System.IO.File.Delete(strPTModsFilePathNew)
+                            File.Delete(strPTModsFilePathNew)
                         Catch ex As Exception
                             ' Ignore errors here
                         End Try
@@ -1173,7 +1177,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     End Function
 
     Private Function ValidateShuffledDBInUse(ByVal strInspectResultsPath As String) As Boolean
-        Dim srInspectResults As System.IO.StreamReader
+        Dim srInspectResults As StreamReader
         Dim intLinesRead As Integer
 
         Dim strLineIn As String = String.Empty
@@ -1184,7 +1188,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
         Dim blnShuffledDBUsed As Boolean
 
-        Dim chSepChars() As Char = New Char() {ControlChars.Tab}
+        Dim chSepChars = New Char() {ControlChars.Tab}
 
         blnShuffledDBUsed = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
 
@@ -1193,7 +1197,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' If not, change blnShuffledDBUsed back to false
 
             Try
-                srInspectResults = New System.IO.StreamReader(New System.IO.FileStream(strInspectResultsPath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+                srInspectResults = New StreamReader(New FileStream(strInspectResultsPath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
                 intDecoyProteinCount = 0
@@ -1261,8 +1265,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Zip up the _inspect.txt file into _inspect_all.zip
             ' Rename to _inspect.txt before zipping
             ' Delete the _inspect.txt file after zipping
-            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX), _
-                                                 System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_all.zip"), _
+            blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX),
+                                                 Path.Combine(m_WorkDir, m_Dataset & "_inspect_all.zip"),
                                                  True)
 
             If Not blnSuccess Then
@@ -1273,8 +1277,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Zip up the _inspect_fht.txt file into _inspect_fht.zip
             ' Rename to _inspect.txt before zipping
             ' Delete the _inspect.txt file after zipping
-            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX), _
-                                                 System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect_fht.zip"), _
+            blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX),
+                                                 Path.Combine(m_WorkDir, m_Dataset & "_inspect_fht.zip"),
                                                  True)
 
             If Not blnSuccess Then
@@ -1285,8 +1289,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Zip up the _inspect_filtered.txt file into _inspect.zip
             ' Rename to _inspect.txt before zipping
             ' Do not delete the _inspect.txt file after zipping since it is used in function CreatePeptideToProteinMapping
-            blnSuccess = RenameAndZipInspectFile(System.IO.Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX), _
-                                     System.IO.Path.Combine(m_WorkDir, m_Dataset & "_inspect.zip"), _
+            blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX),
+                                     Path.Combine(m_WorkDir, m_Dataset & "_inspect.zip"),
                                      False)
 
             If Not blnSuccess Then
@@ -1320,7 +1324,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         sngPercentCompleteEffective = sngStartPercent + CSng(percentComplete / 100.0 * (sngEndPercent - sngStartPercent))
 
         UpdateStatusFile(sngPercentCompleteEffective)
-      
+
         LogProgress("Mapping peptides to proteins", 3)
 
     End Sub
