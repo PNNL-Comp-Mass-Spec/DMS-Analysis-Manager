@@ -115,6 +115,7 @@ Public Class clsRunDosProgram
     ''' <summary>
     ''' When true, the program name and command line arguments will be added to the top of the console output file
     ''' </summary>
+    ''' <remarks>Defaults to true</remarks>
     Public Property ConsoleOutputFileIncludesCommandLine As Boolean = True
 
     ''' <summary>
@@ -223,7 +224,10 @@ Public Class clsRunDosProgram
     ''' Define the path to the file using property ConsoleOutputFilePath; if not defined, the file
     ''' will be created in the WorkDir (though, if WorkDir is blank, then will be created in the folder with the Program we're running)
     ''' </summary>
-    ''' <remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
+    ''' <remarks>
+    ''' Defaults to false
+    ''' If this is true, no window will be shown, even if CreateNoWindow=False
+    ''' </remarks>
     Public Property WriteConsoleOutputToFile As Boolean = False
 
 #End Region
@@ -342,6 +346,7 @@ Public Class clsRunDosProgram
             .EchoOutputToConsole = EchoOutputToConsole,
             .WriteConsoleOutputToFile = WriteConsoleOutputToFile,
             .ConsoleOutputFilePath = ConsoleOutputFilePath,
+            .ConsoleOutputFileIncludesCommandLine = ConsoleOutputFileIncludesCommandLine
         }
 
         If DebugLevel >= 4 Then
