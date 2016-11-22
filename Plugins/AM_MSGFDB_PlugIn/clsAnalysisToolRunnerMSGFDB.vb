@@ -161,7 +161,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     m_message = "MSGF+ _dirty.gz file found; this indicates a processing error"
                     blnProcessingError = True
                 Else
-                    result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name, javaProgLoc, udtHPCOptions)
+                    result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name, udtHPCOptions)
                     If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                         If String.IsNullOrEmpty(m_message) Then
                             m_message = "Unknown error post-processing the MSGF+ results"
@@ -1092,13 +1092,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' Convert the .mzid file to a TSV file and create the PeptideToProtein map file
     ''' </summary>
     ''' <param name="resultsFileName"></param>
-    ''' <param name="javaProgLoc"></param>
     ''' <param name="udtHPCOptions"></param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>Assumes that the calling function has verified that resultsFileName exists</remarks>
     Private Function PostProcessMSGFDBResults(
       resultsFileName As String,
-      javaProgLoc As String,
       udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
         Dim currentTask = "Starting"
