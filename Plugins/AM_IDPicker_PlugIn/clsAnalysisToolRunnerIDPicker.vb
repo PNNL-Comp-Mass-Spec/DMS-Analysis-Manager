@@ -2,7 +2,6 @@ Option Strict On
 
 Imports AnalysisManagerBase
 
-Imports System.Collections.Generic
 Imports System.Collections.Concurrent
 Imports System.IO
 Imports System.Runtime.InteropServices
@@ -19,58 +18,58 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     Public Const ALWAYS_SKIP_IDPICKER = True
 
-    Protected Const PEPXML_CONSOLE_OUTPUT As String = "PepXML_ConsoleOutput.txt"
+    Private Const PEPXML_CONSOLE_OUTPUT As String = "PepXML_ConsoleOutput.txt"
 
-    Protected Const IPD_Qonvert_CONSOLE_OUTPUT As String = "IDPicker_Qonvert_ConsoleOutput.txt"
-    Protected Const IPD_Assemble_CONSOLE_OUTPUT As String = "IDPicker_Assemble_ConsoleOutput.txt"
-    Protected Const IPD_Report_CONSOLE_OUTPUT As String = "IDPicker_Report_ConsoleOutput.txt"
+    Private Const IPD_Qonvert_CONSOLE_OUTPUT As String = "IDPicker_Qonvert_ConsoleOutput.txt"
+    Private Const IPD_Assemble_CONSOLE_OUTPUT As String = "IDPicker_Assemble_ConsoleOutput.txt"
+    Private Const IPD_Report_CONSOLE_OUTPUT As String = "IDPicker_Report_ConsoleOutput.txt"
 
-    Protected Const IDPicker_Qonvert As String = "idpQonvert.exe"
-    Protected Const IDPicker_Assemble As String = "idpAssemble.exe"
-    Protected Const IDPicker_Report As String = "idpReport.exe"
-    Protected Const IDPicker_GUI As String = "IdPickerGui.exe"
+    Private Const IDPicker_Qonvert As String = "idpQonvert.exe"
+    Private Const IDPicker_Assemble As String = "idpAssemble.exe"
+    Private Const IDPicker_Report As String = "idpReport.exe"
+    Private Const IDPicker_GUI As String = "IdPickerGui.exe"
 
-    Protected Const ASSEMBLE_GROUPING_FILENAME As String = "Assemble.txt"
-    Protected Const ASSEMBLE_OUTPUT_FILENAME As String = "IDPicker_AssembledResults.xml"
+    Private Const ASSEMBLE_GROUPING_FILENAME As String = "Assemble.txt"
+    Private Const ASSEMBLE_OUTPUT_FILENAME As String = "IDPicker_AssembledResults.xml"
 
-    Protected Const MSGFDB_DECOY_PROTEIN_PREFIX As String = "REV_"
-    Protected Const MSGFPLUS_DECOY_PROTEIN_PREFIX As String = "XXX_"
+    Private Const MSGFDB_DECOY_PROTEIN_PREFIX As String = "REV_"
+    Private Const MSGFPLUS_DECOY_PROTEIN_PREFIX As String = "XXX_"
 
-    Protected Const PEPTIDE_LIST_TO_XML_EXE As String = "PeptideListToXML.exe"
+    Private Const PEPTIDE_LIST_TO_XML_EXE As String = "PeptideListToXML.exe"
 
-    Protected Const PROGRESS_PCT_IDPicker_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES As Single = 5
-    Protected Const PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE As Single = 10
-    Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert As Single = 20
-    Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble As Single = 60
-    Protected Const PROGRESS_PCT_IDPicker_RUNNING_IDPReport As Single = 70
-    Protected Const PROGRESS_PCT_IDPicker_COMPLETE As Single = 95
-    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+    Private Const PROGRESS_PCT_IDPicker_STARTING As Single = 1
+    Private Const PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES As Single = 5
+    Private Const PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE As Single = 10
+    Private Const PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert As Single = 20
+    Private Const PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble As Single = 60
+    Private Const PROGRESS_PCT_IDPicker_RUNNING_IDPReport As Single = 70
+    Private Const PROGRESS_PCT_IDPicker_COMPLETE As Single = 95
+    Private Const PROGRESS_PCT_COMPLETE As Single = 99
 
-    Protected mIDPickerProgramFolder As String = String.Empty
-    Protected mIDPickerParamFileNameLocal As String = String.Empty
+    Private mIDPickerProgramFolder As String = String.Empty
+    Private mIDPickerParamFileNameLocal As String = String.Empty
 
-    Protected mPeptideListToXMLExePath As String = String.Empty
-    Protected mPepXMLFilePath As String = String.Empty
-    Protected mIdpXMLFilePath As String = String.Empty
-    Protected mIdpAssembleFilePath As String = String.Empty
+    Private mPeptideListToXMLExePath As String = String.Empty
+    Private mPepXMLFilePath As String = String.Empty
+    Private mIdpXMLFilePath As String = String.Empty
+    Private mIdpAssembleFilePath As String = String.Empty
 
-    Protected mIDPickerOptions As Dictionary(Of String, String)
+    Private mIDPickerOptions As Dictionary(Of String, String)
 
     ' This variable holds the name of the program that is currently running via CmdRunner
-    Protected mCmdRunnerDescription As String = String.Empty
+    Private mCmdRunnerDescription As String = String.Empty
 
     ' This list tracks the error messages reported by CmdRunner
-    Protected mCmdRunnerErrors As ConcurrentBag(Of String)
+    Private mCmdRunnerErrors As ConcurrentBag(Of String)
 
     ' This list tracks error message text that we look for when considering whether or not to ignore an error message
-    Protected mCmdRunnerErrorsToIgnore As ConcurrentBag(Of String)
+    Private mCmdRunnerErrorsToIgnore As ConcurrentBag(Of String)
 
     ' This list tracks files that we want to include in the zipped up IDPicker report folder
-    Protected mFilenamesToAddToReportFolder As List(Of String)
-    Protected mBatchFilesMoved As Boolean
+    Private mFilenamesToAddToReportFolder As List(Of String)
+    Private mBatchFilesMoved As Boolean
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Private WithEvents CmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Structures"
@@ -284,7 +283,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function RunIDPickerWrapper(
+    Private Function RunIDPickerWrapper(
         ePHRPResultType As clsPHRPReader.ePeptideHitResultType,
         strSynFilePath As String,
         fastaFilePath As String,
@@ -361,7 +360,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
+    Private Sub CopyFailedResultsToArchiveFolder()
 
         Dim result As IJobParams.CloseOutType
 
@@ -402,7 +401,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
     ''' <returns>The new argument list</returns>
     ''' <remarks></remarks>
-    Protected Function AppendArgument(CmdArgs As String, ArgumentName As String, ValueIfMissing As String) As String
+    Private Function AppendArgument(CmdArgs As String, ArgumentName As String, ValueIfMissing As String) As String
         Const AppendIfMissing = True
         Return AppendArgument(CmdArgs, ArgumentName, ArgumentName, ValueIfMissing, AppendIfMissing)
     End Function
@@ -417,7 +416,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
     ''' <returns>The new argument list</returns>
     ''' <remarks></remarks>
-    Protected Function AppendArgument(CmdArgs As String, OptionName As String, ArgumentName As String, ValueIfMissing As String) As String
+    Private Function AppendArgument(CmdArgs As String, OptionName As String, ArgumentName As String, ValueIfMissing As String) As String
         Const AppendIfMissing = True
         Return AppendArgument(CmdArgs, OptionName, ArgumentName, ValueIfMissing, AppendIfMissing)
     End Function
@@ -432,7 +431,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="AppendIfMissing">If True, then append the argument using ValueIfMissing if not found in mIDPickerOptions; if false, and not found, then does not append the argument</param>
     ''' <returns>The new argument list</returns>
     ''' <remarks></remarks>
-    Protected Function AppendArgument(CmdArgs As String, OptionName As String, ArgumentName As String, ValueIfMissing As String, AppendIfMissing As Boolean) As String
+    Private Function AppendArgument(CmdArgs As String, OptionName As String, ArgumentName As String, ValueIfMissing As String, AppendIfMissing As Boolean) As String
         Dim strValue As String = String.Empty
         Dim blnIsMissing As Boolean
         Dim blnAppendParam As Boolean
@@ -462,7 +461,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function CreateAssembleFile(strAssembleFilePath As String) As Boolean
+    Private Function CreateAssembleFile(strAssembleFilePath As String) As Boolean
 
         Dim strDatasetLabel As String
 
@@ -486,7 +485,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Sub ClearConcurrentBag(ByRef oBag As ConcurrentBag(Of String))
+    Private Sub ClearConcurrentBag(ByRef oBag As ConcurrentBag(Of String))
         Dim item As String = String.Empty
         Do While Not oBag.IsEmpty
             oBag.TryTake(item)
@@ -499,7 +498,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="strFileName"></param>
     ''' <param name="strReportFolderPath"></param>
     ''' <remarks></remarks>
-    Protected Sub CopyFileIntoReportFolder(strFileName As String, strReportFolderPath As String)
+    Private Sub CopyFileIntoReportFolder(strFileName As String, strReportFolderPath As String)
         Dim ioSourceFile As FileInfo
 
         Try
@@ -516,7 +515,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Sub
 
-    Protected Function CreatePepXMLFile(strFastaFilePath As String, strSynFilePath As String, ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+    Private Function CreatePepXMLFile(strFastaFilePath As String, strSynFilePath As String, ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
         Dim strParamFileName As String
 
@@ -586,7 +585,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="strDecoyPrefix"></param>
     ''' <returns>True if success; false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function DetermineDecoyProteinPrefix(strFastaFilePath As String, ByRef strDecoyPrefix As String) As Boolean
+    Private Function DetermineDecoyProteinPrefix(strFastaFilePath As String, ByRef strDecoyPrefix As String) As Boolean
 
         Dim lstReversedProteinPrefixes As SortedSet(Of String)
         Dim lstPrefixStats As Dictionary(Of String, Integer)
@@ -668,7 +667,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function IgnoreError(strErrorMessage As String) As Boolean
+    Private Function IgnoreError(strErrorMessage As String) As Boolean
         Dim blnIgnore = False
 
         For Each strIgnoreText As String In mCmdRunnerErrorsToIgnore
@@ -681,13 +680,7 @@ Public Class clsAnalysisToolRunnerIDPicker
         Return blnIgnore
     End Function
 
-    Protected Function LoadIDPickerOptions() As Boolean
-
-        Dim strParameterFilePath As String
-
-        Dim strLineIn As String
-        Dim strKey As String
-        Dim strValue As String
+    Private Function LoadIDPickerOptions() As Boolean
 
         Try
             mIDPickerParamFileNameLocal = m_jobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL)
@@ -696,7 +689,7 @@ Public Class clsAnalysisToolRunnerIDPicker
                 Return False
             End If
 
-            strParameterFilePath = Path.Combine(m_WorkDir, mIDPickerParamFileNameLocal)
+            Dim strParameterFilePath = Path.Combine(m_WorkDir, mIDPickerParamFileNameLocal)
 
             Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
@@ -753,7 +746,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function LookForDecoyProteinsInMSGFDBResults(strSynFilePath As String, eResultType As clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
+    Private Function LookForDecoyProteinsInMSGFDBResults(strSynFilePath As String, eResultType As clsPHRPReader.ePeptideHitResultType, ByRef strDecoyPrefix As String) As Boolean
 
         Dim lstPrefixesToCheck As List(Of String)
 
@@ -794,7 +787,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Function MoveFilesIntoIDPickerSubfolder() As IJobParams.CloseOutType
+    Private Function MoveFilesIntoIDPickerSubfolder() As IJobParams.CloseOutType
 
         Dim diSourceFolder As DirectoryInfo
         Dim diTargetFolder As DirectoryInfo
@@ -867,7 +860,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Protected Sub ParseConsoleOutputFileForErrors(strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFileForErrors(strConsoleOutputFilePath As String)
 
         Dim strLineIn As String
         Dim blnUnhandledException As Boolean
@@ -917,7 +910,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RunAssemble() As Boolean
+    Private Function RunAssemble() As Boolean
 
         Dim strAssembleFilePath As String
         Dim progLoc As String
@@ -985,7 +978,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="strDecoyPrefix"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RunQonvert(strFASTAFilePath As String, strDecoyPrefix As String, ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
+    Private Function RunQonvert(strFASTAFilePath As String, strDecoyPrefix As String, ePHRPResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
 
         Dim progLoc As String
         Dim CmdStr As String
@@ -1048,7 +1041,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RunReport() As Boolean
+    Private Function RunReport() As Boolean
         Dim strOutputFolderName As String
         Dim progLoc As String
         Const intMaxRuntimeMinutes = 60
@@ -1166,7 +1159,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' <param name="strConsoleOutputFileName">If empty, then does not create a console output file</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RunProgramWork(strProgramDescription As String, strExePath As String, CmdStr As String, strConsoleOutputFileName As String, blnCaptureConsoleOutputViaDosRedirection As Boolean, intMaxRuntimeMinutes As Integer) As Boolean
+    Private Function RunProgramWork(strProgramDescription As String, strExePath As String, CmdStr As String, strConsoleOutputFileName As String, blnCaptureConsoleOutputViaDosRedirection As Boolean, intMaxRuntimeMinutes As Integer) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -1278,7 +1271,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(strIDPickerProgLoc As String, blnSkipIDPicker As Boolean) As Boolean
+    Private Function StoreToolVersionInfo(strIDPickerProgLoc As String, blnSkipIDPicker As Boolean) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim strExePath As String

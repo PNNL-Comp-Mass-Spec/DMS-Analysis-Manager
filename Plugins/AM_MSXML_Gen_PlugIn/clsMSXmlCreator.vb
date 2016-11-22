@@ -16,15 +16,15 @@ Public Class clsMSXMLCreator
 
 #Region "Classwide variables"
 
-    Protected ReadOnly mMSXmlGeneratorAppPath As String
-    Protected ReadOnly m_jobParams As IJobParams
-    Protected ReadOnly m_WorkDir As String
-    Protected m_Dataset As String
-    Protected ReadOnly m_DebugLevel As Short
+    Private ReadOnly mMSXmlGeneratorAppPath As String
+    Private ReadOnly m_jobParams As IJobParams
+    Private ReadOnly m_WorkDir As String
+    Private m_Dataset As String
+    Private ReadOnly m_DebugLevel As Short
 
-    Protected m_ErrorMessage As String
+    Private m_ErrorMessage As String
 
-    Protected WithEvents mMSXmlGen As clsMSXmlGen
+    Private WithEvents mMSXmlGen As clsMSXmlGen
 
     Public Event DebugEvent(msg As String)
     Public Event ErrorEvent(msg As String)
@@ -251,15 +251,15 @@ Public Class clsMSXMLCreator
         Return True
     End Function
 
-    Protected Sub ReportDebugInfo(msg As String)
+    Private Sub ReportDebugInfo(msg As String)
         RaiseEvent DebugEvent(msg)
     End Sub
 
-    Protected Sub ReportError(msg As String)
+    Private Sub ReportError(msg As String)
         RaiseEvent ErrorEvent(msg)
     End Sub
 
-    Protected Sub ReportWarning(msg As String)
+    Private Sub ReportWarning(msg As String)
         RaiseEvent WarningEvent(msg)
     End Sub
 

@@ -21,13 +21,13 @@ Public Class clsMSXmlGenMSConvert
     ''' Number of data points to keep when centroiding
     ''' </summary>
     ''' <remarks>0 to keep default (500); -1 to keep all</remarks>
-    Protected mCentroidPeakCountToRetain As Integer
+    Private mCentroidPeakCountToRetain As Integer
 
     ''' <summary>
     ''' Custom arguments that will override the auto-defined arguments
     ''' </summary>
     ''' <remarks></remarks>
-    Protected ReadOnly mCustomMSConvertArguments As String
+    Private ReadOnly mCustomMSConvertArguments As String
 
     Protected Overrides ReadOnly Property ProgramName As String
         Get

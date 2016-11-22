@@ -24,13 +24,13 @@ Public Class clsAnalysisToolRunnerMSXMLGen
 
 #Region "Module Variables"
 
-    Protected Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 5
+    Private Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 5
 
-    Protected mMSXmlGeneratorAppPath As String = String.Empty
+    Private mMSXmlGeneratorAppPath As String = String.Empty
 
-    Protected mMSXmlOutputFileType As clsAnalysisResources.MSXMLOutputTypeConstants
+    Private mMSXmlOutputFileType As clsAnalysisResources.MSXMLOutputTypeConstants
 
-    Protected mMSXmlCacheFolder As DirectoryInfo
+    Private mMSXmlCacheFolder As DirectoryInfo
 
 #End Region
 
@@ -576,7 +576,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
+    Private Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
 

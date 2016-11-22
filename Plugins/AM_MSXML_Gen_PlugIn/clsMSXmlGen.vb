@@ -15,12 +15,12 @@ Public MustInherit Class clsMSXmlGen
 
     Protected ReadOnly mWorkDir As String
     Protected ReadOnly mProgramPath As String
-    Protected ReadOnly mDatasetName As String
+    Private ReadOnly mDatasetName As String
     Protected ReadOnly mRawDataType As clsAnalysisResources.eRawDataTypeConstants
-    Protected mSourceFilePath As String = String.Empty
+    Private mSourceFilePath As String = String.Empty
     Protected mOutputFileName As String = String.Empty
 
-    Protected ReadOnly mOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
+    Private ReadOnly mOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
 
     Protected ReadOnly mCentroidMS1 As Boolean
     Protected ReadOnly mCentroidMS2 As Boolean
@@ -28,9 +28,9 @@ Public MustInherit Class clsMSXmlGen
     ' When true, then return an error if the progrunner returns a non-zero exit code
     Protected mUseProgRunnerResultCode As Boolean
 
-    Protected mErrorMessage As String = String.Empty
+    Private mErrorMessage As String = String.Empty
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Private WithEvents CmdRunner As clsRunDosProgram
 
     Public Event ProgRunnerStarting(commandLine As String)
     Public Event LoopWaiting()
@@ -286,7 +286,7 @@ Public MustInherit Class clsMSXmlGen
 
     Protected MustOverride Function SetupTool() As Boolean
 
-    Protected Function ValidateMsXmlFile(eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
+    Private Function ValidateMsXmlFile(eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
                                          outputFilePath As String) As Boolean
         ' Open the .mzXML or .mzML file and look for </mzXML> or </indexedmzML> at the end of the file
 

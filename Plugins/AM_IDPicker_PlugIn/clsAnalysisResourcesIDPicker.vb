@@ -10,10 +10,10 @@ Public Class clsAnalysisResourcesIDPicker
     Public Const IDPICKER_PARAM_FILENAME_LOCAL As String = "IDPickerParamFileLocal"
     Public Const DEFAULT_IDPICKER_PARAM_FILE_NAME As String = "IDPicker_Defaults.txt"
 
-    Protected mSynopsisFileIsEmpty As Boolean
+    Private mSynopsisFileIsEmpty As Boolean
 
     ' This dictionary holds any filenames that we need to rename after copying locally
-    Protected mInputFileRenames As Dictionary(Of String, String)
+    Private mInputFileRenames As Dictionary(Of String, String)
 
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
         MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
@@ -149,7 +149,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <param name="eReturnCode">Return code</param>
     ''' <returns>True if success, otherwise false</returns>
     ''' <remarks></remarks>
-    Protected Function GetInputFiles(strDatasetName As String, strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
+    Private Function GetInputFiles(strDatasetName As String, strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
 
         ' This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
         Dim lstFileNamesToGet As SortedList(Of String, Boolean)
@@ -275,7 +275,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RetrieveIDPickerParamFile() As Boolean
+    Private Function RetrieveIDPickerParamFile() As Boolean
 
         Dim strIDPickerParamFileName As String = m_jobParams.GetParam("IDPickerParamFile")
         Dim strIDPickerParamFilePath As String
@@ -304,7 +304,7 @@ Public Class clsAnalysisResourcesIDPicker
 
     End Function
 
-    Protected Function RetrieveMASICFilesWrapper() As IJobParams.CloseOutType
+    Private Function RetrieveMASICFilesWrapper() As IJobParams.CloseOutType
 
         Dim retrievalAttempts = 0
 
@@ -338,7 +338,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <param name="strDatasetName"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RetrieveMASICFiles(strDatasetName As String) As Boolean
+    Private Function RetrieveMASICFiles(strDatasetName As String) As Boolean
 
         If Not RetrieveScanStatsFiles(False) Then
             ' _ScanStats.txt file not found
@@ -366,7 +366,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <param name="strDatasetName">Dataset name</param>
     ''' <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
     ''' <remarks></remarks>
-    Protected Function GetPHRPFileNames(eResultType As clsPHRPReader.ePeptideHitResultType, strDatasetName As String) As SortedList(Of String, Boolean)
+    Private Function GetPHRPFileNames(eResultType As clsPHRPReader.ePeptideHitResultType, strDatasetName As String) As SortedList(Of String, Boolean)
 
         Dim lstFileNamesToGet As SortedList(Of String, Boolean)
         lstFileNamesToGet = New SortedList(Of String, Boolean)

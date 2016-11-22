@@ -19,20 +19,20 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
     '*********************************************************************************************************
 
 #Region "Constants and Enums"
-    Protected Const DECON_PEAK_DETECTOR_EXE_NAME As String = "HammerOrDeconSimplePeakDetector.exe"
+    Private Const DECON_PEAK_DETECTOR_EXE_NAME As String = "HammerOrDeconSimplePeakDetector.exe"
 
-    Protected Const DECON_PEAK_DETECTOR_CONSOLE_OUTPUT As String = "DeconPeakDetector_ConsoleOutput.txt"
+    Private Const DECON_PEAK_DETECTOR_CONSOLE_OUTPUT As String = "DeconPeakDetector_ConsoleOutput.txt"
 
-    Protected Const PROGRESS_PCT_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+    Private Const PROGRESS_PCT_STARTING As Single = 1
+    Private Const PROGRESS_PCT_COMPLETE As Single = 99
 
 #End Region
 
 #Region "Module Variables"
 
-    Protected mConsoleOutputErrorMsg As String
+    Private mConsoleOutputErrorMsg As String
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Private WithEvents CmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -108,7 +108,7 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
             End If
 
             'Make sure objects are released
-            Threading.Thread.Sleep(500)		' 500 msec delay
+            Threading.Thread.Sleep(500)     ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             If Not blnSuccess Then
@@ -150,7 +150,7 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output
         '
@@ -216,7 +216,7 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
 
     End Sub
 
-    Protected Function RunDeconPeakDetector(ByVal strPeakDetectorProgLoc As String) As Boolean
+    Private Function RunDeconPeakDetector(strPeakDetectorProgLoc As String) As Boolean
 
         Dim CmdStr As String
         Dim blnSuccess As Boolean
@@ -289,12 +289,12 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
         Return True
 
     End Function
-    
+
     ''' <summary>
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strPeakDetectorPath As String) As Boolean
+    Private Function StoreToolVersionInfo(strPeakDetectorPath As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
 
