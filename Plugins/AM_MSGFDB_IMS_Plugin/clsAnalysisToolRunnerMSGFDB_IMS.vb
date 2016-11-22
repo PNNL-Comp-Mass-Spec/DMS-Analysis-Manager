@@ -429,36 +429,37 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
                 intLinesRead = 0
-                Do While srInFile.Peek() >= 0
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        intTabIndex = strLineIn.IndexOf(ControlChars.Tab)
-                        If intTabIndex > -1 And intTabIndex < strLineIn.Length - 1 Then
-                            strLineIn = strLineIn.Substring(intTabIndex + 1)
-                        End If
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                        ' Update progress if the line starts with one of the expected phrases
-                        If strLineIn.StartsWith("Loading MS Peaks") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_LOADING_MS_PEAKS Then
-                                sngEffectiveProgress = PROGRESS_PCT_LOADING_MS_PEAKS
-                            End If
-
-                        ElseIf strLineIn.StartsWith("Loading MS Features") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_LOADING_FEATURES Then
-                                sngEffectiveProgress = PROGRESS_PCT_LOADING_FEATURES
-                            End If
-
-                        ElseIf strLineIn.StartsWith("Running MSGF-DB") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_RUNNING_MSGFDB Then
-                                sngEffectiveProgress = PROGRESS_PCT_RUNNING_MSGFDB
-                            End If
-
-                        ElseIf strLineIn.ToLower().StartsWith("error") Then
-                            mIonMobilityMsMsConsoleOutputErrorMsg = String.Copy(strLineIn)
-                        End If
+                    intTabIndex = strLineIn.IndexOf(ControlChars.Tab)
+                    If intTabIndex > -1 And intTabIndex < strLineIn.Length - 1 Then
+                        strLineIn = strLineIn.Substring(intTabIndex + 1)
                     End If
+
+                    ' Update progress if the line starts with one of the expected phrases
+                    If strLineIn.StartsWith("Loading MS Peaks") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_LOADING_MS_PEAKS Then
+                            sngEffectiveProgress = PROGRESS_PCT_LOADING_MS_PEAKS
+                        End If
+
+                    ElseIf strLineIn.StartsWith("Loading MS Features") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_LOADING_FEATURES Then
+                            sngEffectiveProgress = PROGRESS_PCT_LOADING_FEATURES
+                        End If
+
+                    ElseIf strLineIn.StartsWith("Running MSGF-DB") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_RUNNING_MSGFDB Then
+                            sngEffectiveProgress = PROGRESS_PCT_RUNNING_MSGFDB
+                        End If
+
+                    ElseIf strLineIn.ToLower().StartsWith("error") Then
+                        mIonMobilityMsMsConsoleOutputErrorMsg = String.Copy(strLineIn)
+                    End If
+
                 Loop
 
             End Using

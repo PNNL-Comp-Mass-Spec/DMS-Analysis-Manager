@@ -157,48 +157,49 @@ Public Class clsAnalysisResourcesLCMSFF
                     ' Open the input file
                     Using srInFile As StreamReader = New StreamReader(New FileStream(SrcFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
-                        Do While srInFile.Peek >= 0
+                        Do While Not srInFile.EndOfStream
                             strLineIn = srInFile.ReadLine
 
-                            If Not strLineIn Is Nothing Then
-                                strLineInLCase = strLineIn.ToLower.Trim
+                            If strLineIn Is Nothing Then Continue Do
 
-                                If strLineInLCase.StartsWith(INPUT_FILENAME_KEY.ToLower) Then
-                                    ' Customize the input file name
-                                    strLineIn = INPUT_FILENAME_KEY & "=" & IsosFilePath
-                                    blnInputFileDefined = True
-                                End If
+                            strLineInLCase = strLineIn.ToLower().Trim()
 
-                                If strLineInLCase.StartsWith(OUTPUT_DIRECTORY_KEY.ToLower) Then
-                                    ' Customize the output directory name
-                                    strLineIn = OUTPUT_DIRECTORY_KEY & "=" & m_WorkingDir
-                                    blnOutputDirectoryDefined = True
-                                End If
-
-                                If strLineInLCase.StartsWith(FILTER_FILE_NAME_KEY.ToLower) Then
-                                    ' Copy the file defined by DeconToolsFilterFileName= to the working directory
-
-                                    Dim strValue As String
-                                    strValue = GetValue(strLineIn)
-
-                                    If Not String.IsNullOrEmpty(strValue) Then
-                                        Dim fiFileInfo As FileInfo = New FileInfo(strValue)
-                                        If Not fiFileInfo.Exists Then
-                                            m_message = "Entry for " & FILTER_FILE_NAME_KEY & " in " & strLCMSFFIniFileName & " points to an invalid file: " & strValue
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                                            result = False
-                                            Exit Do
-                                        Else
-                                            ' Copy the file locally
-                                            Dim strTargetFilePath As String = Path.Combine(m_WorkingDir, fiFileInfo.Name)
-                                            fiFileInfo.CopyTo(strTargetFilePath)
-                                        End If
-                                    End If
-
-                                End If
-
-                                swOutFile.WriteLine(strLineIn)
+                            If strLineInLCase.StartsWith(INPUT_FILENAME_KEY.ToLower) Then
+                                ' Customize the input file name
+                                strLineIn = INPUT_FILENAME_KEY & "=" & IsosFilePath
+                                blnInputFileDefined = True
                             End If
+
+                            If strLineInLCase.StartsWith(OUTPUT_DIRECTORY_KEY.ToLower) Then
+                                ' Customize the output directory name
+                                strLineIn = OUTPUT_DIRECTORY_KEY & "=" & m_WorkingDir
+                                blnOutputDirectoryDefined = True
+                            End If
+
+                            If strLineInLCase.StartsWith(FILTER_FILE_NAME_KEY.ToLower) Then
+                                ' Copy the file defined by DeconToolsFilterFileName= to the working directory
+
+                                Dim strValue As String
+                                strValue = GetValue(strLineIn)
+
+                                If Not String.IsNullOrEmpty(strValue) Then
+                                    Dim fiFileInfo As FileInfo = New FileInfo(strValue)
+                                    If Not fiFileInfo.Exists Then
+                                        m_message = "Entry for " & FILTER_FILE_NAME_KEY & " in " & strLCMSFFIniFileName & " points to an invalid file: " & strValue
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                                        result = False
+                                        Exit Do
+                                    Else
+                                        ' Copy the file locally
+                                        Dim strTargetFilePath As String = Path.Combine(m_WorkingDir, fiFileInfo.Name)
+                                        fiFileInfo.CopyTo(strTargetFilePath)
+                                    End If
+                                End If
+
+                            End If
+
+                            swOutFile.WriteLine(strLineIn)
+
                         Loop
 
                     End Using

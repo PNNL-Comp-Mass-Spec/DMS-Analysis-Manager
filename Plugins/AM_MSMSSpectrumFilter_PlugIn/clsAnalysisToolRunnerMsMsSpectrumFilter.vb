@@ -258,11 +258,11 @@ Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
             Using srInFile = New IO.StreamReader(New IO.FileStream(strDTATextFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
 
                 intDTACount = 0
-                Do While srInFile.Peek() >= 0
+                Do While Not srInFile.EndOfStream
 
                     strLineIn = srInFile.ReadLine
 
-                    If Not strLineIn Is Nothing Then
+                    If Not String.IsNullOrEmpty(strLineIn) Then
                         If reFind.Match(strLineIn).Success Then
                             intDTACount += 1
                         End If

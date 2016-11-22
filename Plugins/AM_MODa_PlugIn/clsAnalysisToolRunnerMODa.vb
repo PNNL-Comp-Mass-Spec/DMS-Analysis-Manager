@@ -360,62 +360,62 @@ Public Class clsAnalysisToolRunnerMODa
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
-                Do While srInFile.Peek() >= 0
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                        Dim strLineInLCase = strLineIn.ToLower()
+                    Dim strLineInLCase = strLineIn.ToLower()
 
-                        If intLinesRead < 6 AndAlso String.IsNullOrEmpty(strMODaVersionAndDate) AndAlso strLineInLCase.StartsWith("moda") Then
-                            strMODaVersionAndDate = String.Copy(strLineIn)
-                            Continue Do
+                    If intLinesRead < 6 AndAlso String.IsNullOrEmpty(strMODaVersionAndDate) AndAlso strLineInLCase.StartsWith("moda") Then
+                        strMODaVersionAndDate = String.Copy(strLineIn)
+                        Continue Do
+                    End If
+
+                    If intLinesRead < 6 AndAlso strLineInLCase.StartsWith("release date") Then
+                        strMODaVersionAndDate &= ", " & strLineIn
+                        Continue Do
+                    End If
+
+                    If strLineInLCase.StartsWith("abnormal termination") Then
+                        If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            mConsoleOutputErrorMsg = "Error running MODa:"
+                        End If
+                        mConsoleOutputErrorMsg &= "; " & strLineIn
+                        Continue Do
+                    End If
+
+                    If strLineInLCase.Contains("failed to read msms spectra file") Then
+                        If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            mConsoleOutputErrorMsg = "Error running MODa:"
+                        End If
+                        mConsoleOutputErrorMsg &= "; Fasta file not found"
+                        Continue Do
+                    End If
+
+                    If strLineInLCase.Contains("exception") AndAlso strLineInLCase.StartsWith("java") Then
+                        If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            mConsoleOutputErrorMsg = "Error running MODa:"
+                        End If
+                        mConsoleOutputErrorMsg &= "; " & strLineIn
+                        Continue Do
+                    End If
+
+                    oMatch = reExtractScan.Match(strLineIn)
+                    If oMatch.Success Then
+
+                        If Int32.TryParse(oMatch.Groups(1).Value, intValue) Then
+                            intScansProcessed = intValue
                         End If
 
-                        If intLinesRead < 6 AndAlso strLineInLCase.StartsWith("release date") Then
-                            strMODaVersionAndDate &= ", " & strLineIn
-                            Continue Do
-                        End If
-
-                        If strLineInLCase.StartsWith("abnormal termination") Then
-                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                mConsoleOutputErrorMsg = "Error running MODa:"
-                            End If
-                            mConsoleOutputErrorMsg &= "; " & strLineIn
-                            Continue Do
-                        End If
-
-                        If strLineInLCase.Contains("failed to read msms spectra file") Then
-                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                mConsoleOutputErrorMsg = "Error running MODa:"
-                            End If
-                            mConsoleOutputErrorMsg &= "; Fasta file not found"
-                            Continue Do
-                        End If
-
-                        If strLineInLCase.Contains("exception") AndAlso strLineInLCase.StartsWith("java") Then
-                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                mConsoleOutputErrorMsg = "Error running MODa:"
-                            End If
-                            mConsoleOutputErrorMsg &= "; " & strLineIn
-                            Continue Do
-                        End If
-
-                        oMatch = reExtractScan.Match(strLineIn)
-                        If oMatch.Success Then
-
-                            If Int32.TryParse(oMatch.Groups(1).Value, intValue) Then
-                                intScansProcessed = intValue
-                            End If
-
-                            If intTotalScans = 0 Then
-                                If Int32.TryParse(oMatch.Groups(2).Value, intValue) Then
-                                    intTotalScans = intValue
-                                End If
+                        If intTotalScans = 0 Then
+                            If Int32.TryParse(oMatch.Groups(2).Value, intValue) Then
+                                intTotalScans = intValue
                             End If
                         End If
                     End If
+
                 Loop
 
             End Using
@@ -502,7 +502,7 @@ Public Class clsAnalysisToolRunnerMODa
                 Using swOutFile = New StreamWriter(New FileStream(fiTrimmedFilePath.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                     intScanNumberOutputThreshold = 0
-                    Do While srInFile.Peek() >= 0
+                    Do While Not srInFile.EndOfStream
                         Dim strLineIn = srInFile.ReadLine()
                         Dim blnKeepLine = True
 
@@ -560,7 +560,7 @@ Public Class clsAnalysisToolRunnerMODa
 
                 Using swOutFile = New StreamWriter(New FileStream(fiTempParamFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                    Do While srInFile.Peek > -1
+                    Do While Not srInFile.EndOfStream
                         Dim strLineIn = srInFile.ReadLine()
 
                         If strLineIn.TrimStart().StartsWith("#") OrElse String.IsNullOrWhiteSpace(strLineIn) Then

@@ -330,58 +330,61 @@ Public Class clsAnalysisToolRunnerXT
             srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
             intLinesRead = 0
-            Do While srInFile.Peek() >= 0
+            Do While Not srInFile.EndOfStream
                 strLineIn = srInFile.ReadLine()
                 intLinesRead += 1
 
-                If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                    If intLinesRead = 1 Then
-                        ' The first line is the X!Tandem version
+                If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                        If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mXTandemVersion) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "X!Tandem version: " & strLineIn)
-                        End If
+                If intLinesRead <= 3 AndAlso String.IsNullOrEmpty(mXTandemVersion) AndAlso strLineIn.StartsWith("X!") Then
+                    ' Originally the first line was the X!Tandem version
+                    ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                    ' The third line is the X!Tandem version
 
-                        mXTandemVersion = String.Copy(strLineIn)
+                    If m_DebugLevel >= 2 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "X!Tandem version: " & strLineIn)
+                    End If
 
-                    Else
+                    mXTandemVersion = String.Copy(strLineIn)
 
-                        ' Update progress if the line starts with one of the expected phrases
-                        If strLineIn.StartsWith("Loading spectra") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA
+                Else
 
-                        ElseIf strLineIn.StartsWith("Computing models") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS
+                    ' Update progress if the line starts with one of the expected phrases
+                    If strLineIn.StartsWith("Loading spectra") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA
 
-                        ElseIf strLineIn.StartsWith("Model refinement") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT
+                    ElseIf strLineIn.StartsWith("Computing models") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS
 
-                        ElseIf strLineIn.StartsWith("	partial cleavage") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE
+                    ElseIf strLineIn.StartsWith("Model refinement") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT
 
-                        ElseIf strLineIn.StartsWith("	unanticipated cleavage") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE
+                    ElseIf strLineIn.StartsWith("	partial cleavage") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE
 
-                        ElseIf strLineIn.StartsWith("	finishing refinement ") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING
+                    ElseIf strLineIn.StartsWith("	unanticipated cleavage") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE
 
-                        ElseIf strLineIn.StartsWith("Merging results") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS
+                    ElseIf strLineIn.StartsWith("	finishing refinement ") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING
 
-                        ElseIf strLineIn.StartsWith("Creating report") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_CREATING_REPORT
+                    ElseIf strLineIn.StartsWith("Merging results") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS
 
-                        ElseIf strLineIn.StartsWith("Estimated false positives") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_COMPLETE
+                    ElseIf strLineIn.StartsWith("Creating report") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_CREATING_REPORT
 
-                        ElseIf strLineIn.StartsWith("Valid models") Then
-                            reMatch = reExtraceValue.Match(strLineIn)
-                            If reMatch.Success Then
-                                Integer.TryParse(reMatch.Groups(1).Value, mXTandemResultsCount)
-                            End If
+                    ElseIf strLineIn.StartsWith("Estimated false positives") Then
+                        m_progress = PROGRESS_PCT_XTANDEM_COMPLETE
+
+                    ElseIf strLineIn.StartsWith("Valid models") Then
+                        reMatch = reExtraceValue.Match(strLineIn)
+                        If reMatch.Success Then
+                            Integer.TryParse(reMatch.Groups(1).Value, mXTandemResultsCount)
                         End If
                     End If
                 End If
+
             Loop
 
             srInFile.Close()

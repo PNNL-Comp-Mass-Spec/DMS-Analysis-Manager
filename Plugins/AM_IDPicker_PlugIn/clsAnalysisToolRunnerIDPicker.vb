@@ -700,33 +700,35 @@ Public Class clsAnalysisToolRunnerIDPicker
 
             Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srParamFile.Peek > -1
-                    strLineIn = srParamFile.ReadLine()
-                    strKey = String.Empty
-                    strValue = String.Empty
+                Do While Not srParamFile.EndOfStream
+                    Dim strLineIn = srParamFile.ReadLine()
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        strLineIn = strLineIn.Trim()
+                    If String.IsNullOrWhiteSpace(strLineIn) Then
+                        Continue Do
+                    End If
 
-                        If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
+                    strLineIn = strLineIn.Trim()
 
-                            Dim intCharIndex As Integer
-                            intCharIndex = strLineIn.IndexOf("="c)
-                            If intCharIndex > 0 Then
-                                strKey = strLineIn.Substring(0, intCharIndex).Trim()
-                                If intCharIndex < strLineIn.Length - 1 Then
-                                    strValue = strLineIn.Substring(intCharIndex + 1).Trim()
-                                Else
-                                    strValue = String.Empty
-                                End If
-                            End If
+                    If strLineIn.StartsWith("#") OrElse Not strLineIn.Contains("="c) Then
+                        Continue Do
+                    End If
 
-                            intCharIndex = strValue.IndexOf("#"c)
-                            If intCharIndex >= 0 Then
-                                strValue = strValue.Substring(0, intCharIndex)
-                            End If
+                    Dim strKey = String.Empty
+                    Dim strValue = String.Empty
+
+                    Dim intCharIndex = strLineIn.IndexOf("="c)
+                    If intCharIndex > 0 Then
+                        strKey = strLineIn.Substring(0, intCharIndex).Trim()
+                        If intCharIndex < strLineIn.Length - 1 Then
+                            strValue = strLineIn.Substring(intCharIndex + 1).Trim()
+                        Else
+                            strValue = String.Empty
                         End If
+                    End If
 
+                    intCharIndex = strValue.IndexOf("#"c)
+                    If intCharIndex >= 0 Then
+                        strValue = strValue.Substring(0, intCharIndex)
                     End If
 
                     If Not String.IsNullOrWhiteSpace(strKey) Then
@@ -875,26 +877,27 @@ Public Class clsAnalysisToolRunnerIDPicker
             If File.Exists(strConsoleOutputFilePath) Then
                 Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                    While srInFile.Peek > -1
+                    While Not srInFile.EndOfStream
                         strLineIn = srInFile.ReadLine
 
-                        If Not String.IsNullOrEmpty(strLineIn) Then
-                            If blnUnhandledException Then
-                                If String.IsNullOrEmpty(strExceptionText) Then
-                                    strExceptionText = String.Copy(strLineIn)
-                                Else
-                                    strExceptionText = ";" & strLineIn
-                                End If
+                        If String.IsNullOrEmpty(strLineIn) Then Continue While
 
-                            ElseIf strLineIn.StartsWith("Error:") Then
-                                If Not IgnoreError(strLineIn) Then
-                                    mCmdRunnerErrors.Add(strLineIn)
-                                End If
-                            ElseIf strLineIn.StartsWith("Unhandled Exception") Then
-                                mCmdRunnerErrors.Add(strLineIn)
-                                blnUnhandledException = True
+                        If blnUnhandledException Then
+                            If String.IsNullOrEmpty(strExceptionText) Then
+                                strExceptionText = String.Copy(strLineIn)
+                            Else
+                                strExceptionText = ";" & strLineIn
                             End If
+
+                        ElseIf strLineIn.StartsWith("Error:") Then
+                            If Not IgnoreError(strLineIn) Then
+                                mCmdRunnerErrors.Add(strLineIn)
+                            End If
+                        ElseIf strLineIn.StartsWith("Unhandled Exception") Then
+                            mCmdRunnerErrors.Add(strLineIn)
+                            blnUnhandledException = True
                         End If
+
                     End While
                 End Using
 

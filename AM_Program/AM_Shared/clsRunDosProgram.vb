@@ -18,21 +18,13 @@ Public Class clsRunDosProgram
     '*********************************************************************************************************
 
 #Region "Module variables"
-    Private m_CreateNoWindow As Boolean = True
+
     Private m_MonitorInterval As Integer = 2000  'msec
     Private m_MaxRuntimeSeconds As Integer = 0
 
-    Private m_WorkDir As String
-    Private m_DebugLevel As Integer = 0
     Private m_ExitCode As Integer = 0
 
-    Private m_CacheStandardOutput As Boolean = False
-    Private m_EchoOutputToConsole As Boolean = True
-
     Private m_CachedConsoleErrors As String = String.Empty
-
-    Private m_WriteConsoleOutputToFile As Boolean = False
-    Private m_ConsoleOutputFilePath As String = String.Empty
 
     Private m_AbortProgramNow As Boolean
     Private m_AbortProgramPostLogEntry As Boolean
@@ -118,14 +110,12 @@ Public Class clsRunDosProgram
     ''' Will also fire event ConsoleOutputEvent as new text is written to the console
     ''' </summary>
     ''' <remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
-    Public Property CacheStandardOutput() As Boolean
-        Get
-            Return m_CacheStandardOutput
-        End Get
-        Set(value As Boolean)
-            m_CacheStandardOutput = value
-        End Set
-    End Property
+    Public Property CacheStandardOutput As Boolean = False
+
+    ''' <summary>
+    ''' When true, the program name and command line arguments will be added to the top of the console output file
+    ''' </summary>
+    Public Property ConsoleOutputFileIncludesCommandLine As Boolean = True
 
     ''' <summary>
     ''' File path to which the console output will be written if WriteConsoleOutputToFile is true
@@ -134,53 +124,24 @@ Public Class clsRunDosProgram
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Property ConsoleOutputFilePath() As String
-        Get
-            Return m_ConsoleOutputFilePath
-        End Get
-        Set(value As String)
-            If value Is Nothing Then value = String.Empty
-            m_ConsoleOutputFilePath = value
-        End Set
-    End Property
+    Public Property ConsoleOutputFilePath As String = String.Empty
 
     ''' <summary>
     ''' Determine if window should be displayed.
     ''' Will be forced to True if CacheStandardOutput = True
     ''' </summary>
-    Public Property CreateNoWindow() As Boolean
-        Get
-            Return m_CreateNoWindow
-        End Get
-        Set(Value As Boolean)
-            m_CreateNoWindow = Value
-        End Set
-    End Property
+    Public Property CreateNoWindow As Boolean = True
 
     ''' <summary>
     ''' Debug level for logging
     ''' </summary>
-    Public Property DebugLevel() As Integer
-        Get
-            Return m_DebugLevel
-        End Get
-        Set(Value As Integer)
-            m_DebugLevel = Value
-        End Set
-    End Property
+    Public Property DebugLevel As Integer = 0
 
     ''' <summary>
     ''' When true, then echoes, in real time, text written to the Console by the external program 
     ''' Ignored if CreateNoWindow = False
     ''' </summary>
-    Public Property EchoOutputToConsole() As Boolean
-        Get
-            Return m_EchoOutputToConsole
-        End Get
-        Set(value As Boolean)
-            m_EchoOutputToConsole = value
-        End Set
-    End Property
+    Public Property EchoOutputToConsole As Boolean = True
 
     ''' <summary>
     ''' Exit code when process completes.
@@ -205,7 +166,7 @@ Public Class clsRunDosProgram
     ''' How often (milliseconds) internal monitoring thread checks status of external program
     ''' Minimum allowed value is 250 milliseconds
     ''' </summary>
-    Public Property MonitorInterval() As Integer     'msec
+    Public Property MonitorInterval() As Integer 'msec
         Get
             Return m_MonitorInterval
         End Get
@@ -226,7 +187,6 @@ Public Class clsRunDosProgram
             Else
                 Return m_ProgRunner.PID
             End If
-
         End Get
     End Property
 

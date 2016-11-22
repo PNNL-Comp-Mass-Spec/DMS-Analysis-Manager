@@ -501,29 +501,28 @@ Public Class clsAnalysisToolRunnerSMAQC
 
         Using srInFile = New StreamReader(New FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-            Do While srInFile.Peek() > -1
+            Do While Not srInFile.EndOfStream
                 strLineIn = srInFile.ReadLine()
 
-                If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                    If Not blnMeasurementsFound Then
-                        If strLineIn.StartsWith("[Data]") Then
-                            blnMeasurementsFound = True
-                        End If
-                    ElseIf Not blnHeadersFound Then
-                        If strLineIn.StartsWith("Dataset") Then
-                            blnHeadersFound = True
-                        End If
-                    Else
-                        ' This is a measurement result line
-                        strSplitLine = strLineIn.Split(","c)
-
-                        If Not strSplitLine Is Nothing AndAlso strSplitLine.Length >= 3 Then
-                            lstResults.Add(New KeyValuePair(Of String, String)(strSplitLine(1).Trim(), strSplitLine(2).Trim()))
-                        End If
+                If Not blnMeasurementsFound Then
+                    If strLineIn.StartsWith("[Data]") Then
+                        blnMeasurementsFound = True
                     End If
+                ElseIf Not blnHeadersFound Then
+                    If strLineIn.StartsWith("Dataset") Then
+                        blnHeadersFound = True
+                    End If
+                Else
+                    ' This is a measurement result line
+                    strSplitLine = strLineIn.Split(","c)
 
+                    If Not strSplitLine Is Nothing AndAlso strSplitLine.Length >= 3 Then
+                        lstResults.Add(New KeyValuePair(Of String, String)(strSplitLine(1).Trim(), strSplitLine(2).Trim()))
+                    End If
                 End If
+
             Loop
 
         End Using

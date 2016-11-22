@@ -661,7 +661,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 using (var srInfoFile = new StreamReader(new FileStream(strStoragePathInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    if (srInfoFile.Peek() > -1)
+                    if (!srInfoFile.EndOfStream)
                     {
                         strSourceFilePath = srInfoFile.ReadLine();
                     }

@@ -733,60 +733,63 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
             Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srParamFile.Peek > -1
-                    strLineIn = srParamFile.ReadLine()
-                    strKey = String.Empty
-                    strValue = String.Empty
+                Do While Not srParamFile.EndOfStream
+                    Dim strLineIn = srParamFile.ReadLine()
+                    Dim strKey = String.Empty
+                    Dim strValue = String.Empty
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        strLineIn = strLineIn.Trim()
+                    If String.IsNullOrWhiteSpace(strLineIn) Then
+                        Continue Do
+                    End If
 
-                        If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
+                    strLineIn = strLineIn.Trim()
 
-                            Dim intCharIndex As Integer
-                            intCharIndex = strLineIn.IndexOf("="c)
-                            If intCharIndex > 0 Then
-                                strKey = strLineIn.Substring(0, intCharIndex).Trim()
-                                If intCharIndex < strLineIn.Length - 1 Then
-                                    strValue = strLineIn.Substring(intCharIndex + 1).Trim()
-                                Else
-                                    strValue = String.Empty
-                                End If
+                    If Not strLineIn.StartsWith("#") AndAlso strLineIn.Contains("="c) Then
+
+                        Dim intCharIndex As Integer
+                        intCharIndex = strLineIn.IndexOf("="c)
+                        If intCharIndex > 0 Then
+                            strKey = strLineIn.Substring(0, intCharIndex).Trim()
+                            If intCharIndex < strLineIn.Length - 1 Then
+                                strValue = strLineIn.Substring(intCharIndex + 1).Trim()
+                            Else
+                                strValue = String.Empty
+                            End If
+                        End If
+                    End If
+
+                    If String.IsNullOrWhiteSpace(strKey) Then Continue Do
+
+                    Dim strArgumentSwitch As String = String.Empty
+
+                    ' Check whether strKey is one of the standard keys defined in dctParamNames
+                    If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
+                        sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
+
+                    ElseIf strKey.ToLower() = "adducts" Then
+                        sbOptions.Append(" -adducts " & """" & strValue & """")
+
+                    ElseIf strKey.ToLower() = "noscangroups" Then
+                        Dim blnValue As Boolean
+                        If Boolean.TryParse(strValue, blnValue) Then
+                            If blnValue Then
+                                sbOptions.Append(" -NoScanGroups")
                             End If
                         End If
 
+                    Else
+                        ' Ignore the option
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                             "Unrecognized setting in the LipidMaps parameter file: " & strKey)
                     End If
 
-                    If Not String.IsNullOrWhiteSpace(strKey) Then
-
-                        Dim strArgumentSwitch As String = String.Empty
-
-                        ' Check whether strKey is one of the standard keys defined in dctParamNames
-                        If dctParamNames.TryGetValue(strKey, strArgumentSwitch) Then
-                            sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
-
-                        ElseIf strKey.ToLower() = "adducts" Then
-                            sbOptions.Append(" -adducts " & """" & strValue & """")
-
-                        ElseIf strKey.ToLower() = "noscangroups" Then
-                            If Boolean.TryParse(strValue, blnValue) Then
-                                If blnValue Then
-                                    sbOptions.Append(" -NoScanGroups")
-                                End If
-                            End If
-
-                        Else
-                            ' Ignore the option
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unrecognized setting in the LipidMaps parameter file: " & strKey)
-                        End If
-
-                    End If
                 Loop
 
             End Using
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception reading LipidMaps parameter file: " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Exception reading LipidMaps parameter file: " & ex.Message)
             Return String.Empty
         End Try
 

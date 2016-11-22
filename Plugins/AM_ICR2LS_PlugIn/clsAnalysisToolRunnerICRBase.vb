@@ -261,7 +261,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
                 ' Read the file
                 srInFile = New StreamReader(New FileStream(strStatusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                Do While srInFile.Peek() >= 0
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
 
                     intCharIndex = strLineIn.IndexOf("="c)

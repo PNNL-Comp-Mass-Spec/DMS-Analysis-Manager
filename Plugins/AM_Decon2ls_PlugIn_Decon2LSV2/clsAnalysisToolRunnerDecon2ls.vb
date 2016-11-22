@@ -331,24 +331,24 @@ Public Class clsAnalysisToolRunnerDecon2ls
             If File.Exists(IsosFilePath) Then
                 srInFile = New StreamReader(New FileStream(IsosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                Do While srInFile.Peek >= 0
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine
 
-                    If Not String.IsNullOrEmpty(strLineIn) Then
+                    If String.IsNullOrEmpty(strLineIn) Then Continue Do
 
-                        If blnHeaderLineProcessed Then
-                            ' This is a data line
-                            If blnCountTotalDataLines Then
-                                intDataLineCount += 1
-                            Else
-                                intDataLineCount = 1
-                                Exit Do
-                            End If
-
+                    If blnHeaderLineProcessed Then
+                        ' This is a data line
+                        If blnCountTotalDataLines Then
+                            intDataLineCount += 1
                         Else
-                            blnHeaderLineProcessed = True
+                            intDataLineCount = 1
+                            Exit Do
                         End If
+
+                    Else
+                        blnHeaderLineProcessed = True
                     End If
+
                 Loop
 
                 srInFile.Close()
@@ -856,53 +856,53 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
                 Using srInFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                    Do While srInFile.Peek >= 0
+                    Do While Not srInFile.EndOfStream
                         strLineIn = srInFile.ReadLine
 
-                        If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                            intCharIndex = strLineIn.ToLower().IndexOf("finished file processing", StringComparison.Ordinal)
-                            If intCharIndex >= 0 Then
+                        If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                                blnDateValid = False
-                                If intCharIndex > 1 Then
-                                    ' Parse out the date from strLineIn
-                                    If DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
-                                        blnDateValid = True
-                                    Else
-                                        ' Unable to parse out the date
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim & "'; will use file modification date as the processing finish time")
-                                    End If
+                        intCharIndex = strLineIn.ToLower().IndexOf("finished file processing", StringComparison.Ordinal)
+                        If intCharIndex >= 0 Then
+
+                            blnDateValid = False
+                            If intCharIndex > 1 Then
+                                ' Parse out the date from strLineIn
+                                If DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
+                                    blnDateValid = True
+                                Else
+                                    ' Unable to parse out the date
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim & "'; will use file modification date as the processing finish time")
                                 End If
-
-                                If Not blnDateValid Then
-                                    fiFileInfo = New FileInfo(strLogFilePath)
-                                    dtFinishTime = fiFileInfo.LastWriteTime
-                                End If
-
-                                If m_DebugLevel >= 3 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconTools log file reports 'finished file processing' at " & dtFinishTime.ToString())
-                                End If
-
-                                blnFinishedProcessing = True
-                                Exit Do
                             End If
 
-                            intCharIndex = strLineIn.ToLower.IndexOf("scan/frame", StringComparison.Ordinal)
-                            If intCharIndex >= 0 Then
-                                strScanFrameLine = strLineIn.Substring(intCharIndex)
+                            If Not blnDateValid Then
+                                fiFileInfo = New FileInfo(strLogFilePath)
+                                dtFinishTime = fiFileInfo.LastWriteTime
                             End If
 
-                            intCharIndex = strLineIn.IndexOf("ERROR THROWN", StringComparison.Ordinal)
-                            If intCharIndex > 0 Then
-                                ' An exception was reported in the log file; treat this as a fatal error
-                                m_message = "Error thrown by DeconTools"
-
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeconTools reports " & strLineIn.Substring(intCharIndex))
-                                mDeconToolsExceptionThrown = True
-
+                            If m_DebugLevel >= 3 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconTools log file reports 'finished file processing' at " & dtFinishTime.ToString())
                             End If
+
+                            blnFinishedProcessing = True
+                            Exit Do
+                        End If
+
+                        intCharIndex = strLineIn.ToLower.IndexOf("scan/frame", StringComparison.Ordinal)
+                        If intCharIndex >= 0 Then
+                            strScanFrameLine = strLineIn.Substring(intCharIndex)
+                        End If
+
+                        intCharIndex = strLineIn.IndexOf("ERROR THROWN", StringComparison.Ordinal)
+                        If intCharIndex > 0 Then
+                            ' An exception was reported in the log file; treat this as a fatal error
+                            m_message = "Error thrown by DeconTools"
+
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeconTools reports " & strLineIn.Substring(intCharIndex))
+                            mDeconToolsExceptionThrown = True
 
                         End If
+
                     Loop
 
                 End Using

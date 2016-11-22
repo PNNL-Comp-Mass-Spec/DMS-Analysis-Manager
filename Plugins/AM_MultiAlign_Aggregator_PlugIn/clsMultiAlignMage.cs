@@ -590,7 +590,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 srInFile = new System.IO.StreamReader(new System.IO.FileStream(strLogFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite));
 
                 intLinesRead = 0;
-                while (srInFile.Peek() > -1)
+                while (!srInFile.EndOfStream)
                 {
                     strLineIn = srInFile.ReadLine();
                     intLinesRead += 1;

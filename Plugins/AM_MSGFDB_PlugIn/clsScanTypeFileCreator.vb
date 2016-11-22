@@ -88,65 +88,66 @@ Public Class clsScanTypeFileCreator
                 Dim scanFilterColIndex = 8
 
                 Dim linesRead = 0
-                Do While srScanStatsExFile.Peek > -1
+                Do While Not srScanStatsExFile.EndOfStream
                     Dim dataLine = srScanStatsExFile.ReadLine()
-                    If Not String.IsNullOrWhiteSpace(dataLine) Then
-                        linesRead += 1
-                        Dim dataColumns = dataLine.Split(ControlChars.Tab)
+                    If String.IsNullOrWhiteSpace(dataLine) Then Continue Do
 
-                        Dim firstColumnIsNumber = FirstColumnIsInteger(dataColumns)
+                    linesRead += 1
+                    Dim dataColumns = dataLine.Split(ControlChars.Tab)
 
-                        If linesRead = 1 AndAlso dataColumns.Length > 0 AndAlso Not firstColumnIsNumber Then
-                            ' This is a header line; define the column mapping
+                    Dim firstColumnIsNumber = FirstColumnIsInteger(dataColumns)
 
-                            Const IS_CASE_SENSITIVE = False
-                            Dim lstHeaderNames = New List(Of String) From {"ScanNumber", "Collision Mode", "Scan Filter Text"}
+                    If linesRead = 1 AndAlso dataColumns.Length > 0 AndAlso Not firstColumnIsNumber Then
+                        ' This is a header line; define the column mapping
 
-                            ' Keys in this dictionary are column names, values are the 0-based column index
-                            Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, lstHeaderNames, IS_CASE_SENSITIVE)
+                        Const IS_CASE_SENSITIVE = False
+                        Dim lstHeaderNames = New List(Of String) From {"ScanNumber", "Collision Mode", "Scan Filter Text"}
 
-                            scanNumberColIndex = dctHeaderMapping("ScanNumber")
-                            collisionModeColIndex = dctHeaderMapping("Collision Mode")
-                            scanFilterColIndex = dctHeaderMapping("Scan Filter Text")
-                            Continue Do
-                        End If
+                        ' Keys in this dictionary are column names, values are the 0-based column index
+                        Dim dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, lstHeaderNames, IS_CASE_SENSITIVE)
 
-                        ' Parse out the values
-
-                        Dim scanNumber As Integer
-                        If TryGetValueInt(dataColumns, scanNumberColIndex, scanNumber) Then
-                            Dim strCollisionMode = String.Empty
-                            Dim storeData = False
-
-                            If TryGetValueStr(dataColumns, collisionModeColIndex, strCollisionMode) Then
-                                storeData = True
-                            Else
-                                Dim filterText = String.Empty
-                                If TryGetValueStr(dataColumns, scanFilterColIndex, filterText) Then
-
-                                    filterText = dataColumns(scanFilterColIndex)
-
-                                    ' Parse the filter text to determine scan type
-                                    strCollisionMode = XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(filterText)
-
-                                    storeData = True
-                                End If
-                            End If
-
-                            If storeData Then
-                                If String.IsNullOrEmpty(strCollisionMode) Then
-                                    strCollisionMode = "MS"
-                                ElseIf strCollisionMode = "0" Then
-                                    strCollisionMode = "MS"
-                                End If
-
-                                If Not mScanTypeMap.ContainsKey(scanNumber) Then
-                                    mScanTypeMap.Add(scanNumber, strCollisionMode)
-                                End If
-                            End If
-
-                        End If
+                        scanNumberColIndex = dctHeaderMapping("ScanNumber")
+                        collisionModeColIndex = dctHeaderMapping("Collision Mode")
+                        scanFilterColIndex = dctHeaderMapping("Scan Filter Text")
+                        Continue Do
                     End If
+
+                    ' Parse out the values
+
+                    Dim scanNumber As Integer
+                    If TryGetValueInt(dataColumns, scanNumberColIndex, scanNumber) Then
+                        Dim strCollisionMode = String.Empty
+                        Dim storeData = False
+
+                        If TryGetValueStr(dataColumns, collisionModeColIndex, strCollisionMode) Then
+                            storeData = True
+                        Else
+                            Dim filterText = String.Empty
+                            If TryGetValueStr(dataColumns, scanFilterColIndex, filterText) Then
+
+                                filterText = dataColumns(scanFilterColIndex)
+
+                                ' Parse the filter text to determine scan type
+                                strCollisionMode = XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(filterText)
+
+                                storeData = True
+                            End If
+                        End If
+
+                        If storeData Then
+                            If String.IsNullOrEmpty(strCollisionMode) Then
+                                strCollisionMode = "MS"
+                            ElseIf strCollisionMode = "0" Then
+                                strCollisionMode = "MS"
+                            End If
+
+                            If Not mScanTypeMap.ContainsKey(scanNumber) Then
+                                mScanTypeMap.Add(scanNumber, strCollisionMode)
+                            End If
+                        End If
+
+                    End If
+
                 Loop
 
             End Using
@@ -198,7 +199,7 @@ Public Class clsScanTypeFileCreator
                     Dim scanStatsExLoaded = False
 
                     Dim linesRead = 0
-                    Do While srScanStatsFile.Peek > -1
+                    Do While Not srScanStatsFile.EndOfStream
                         Dim dataLine = srScanStatsFile.ReadLine()
                         If String.IsNullOrWhiteSpace(dataLine) Then
                             Continue Do

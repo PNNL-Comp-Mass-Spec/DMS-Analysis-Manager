@@ -76,20 +76,21 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             srInFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
             intErrorCount = 0
-            Do While srInFile.Peek >= 0
+            Do While Not srInFile.EndOfStream
                 strLineIn = srInFile.ReadLine()
 
-                If Not strLineIn Is Nothing Then
-                    If strLineIn.ToLower.Contains("error") Then
-                        If intErrorCount = 0 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Errors found in the MASIC Log File for job " & m_JobNum)
-                        End If
+                If String.IsNullOrEmpty(strLineIn) Then Continue Do
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " & strLineIn)
-
-                        intErrorCount += 1
+                If strLineIn.ToLower().Contains("error") Then
+                    If intErrorCount = 0 Then
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Errors found in the MASIC Log File for job " & m_JobNum)
                     End If
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " & strLineIn)
+
+                    intErrorCount += 1
                 End If
+
             Loop
 
             srInFile.Close()

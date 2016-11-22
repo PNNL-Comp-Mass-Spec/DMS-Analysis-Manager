@@ -792,7 +792,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
                 ' Pass the path to the first out file created
                 objEntry = mOutFileCandidates.Peek()
-                If StoreToolVersionInfo(System.IO.Path.Combine(m_WorkDir, objEntry.Key)) Then
+                If StoreToolVersionInfo(Path.Combine(m_WorkDir, objEntry.Key)) Then
                     mSequestVersionInfoStored = True
                 End If
             End If

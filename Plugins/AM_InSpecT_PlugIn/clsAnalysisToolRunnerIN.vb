@@ -411,20 +411,21 @@ Public Class clsAnalysisToolRunnerIN
             ' Read the contents of strInputFilePath
             srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
 
-            Do While srInFile.Peek <> -1
+            Do While Not srInFile.EndOfStream
                 strLineIn = srInFile.ReadLine
 
-                If Not strLineIn Is Nothing Then
-                    strLineIn = strLineIn.Trim
+                If strLineIn Is Nothing Then Continue Do
 
-                    If strLineIn.Length > 0 Then
-                        If Not htMessages.Contains(strLineIn) Then
-                            htMessages.Add(strLineIn, 1)
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Inspect warning/error: " & strLineIn)
-                        End If
+                strLineIn = strLineIn.Trim
+
+                If strLineIn.Length > 0 Then
+                    If Not htMessages.Contains(strLineIn) Then
+                        htMessages.Add(strLineIn, 1)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Inspect warning/error: " & strLineIn)
                     End If
-
                 End If
+
+
             Loop
 
             Console.WriteLine()
@@ -595,15 +596,16 @@ Public Class clsAnalysisToolRunnerIN
 
                 srLogFile = New System.IO.StreamReader(New System.IO.FileStream(strSearchLogFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Write))
 
-                ' Read to the end of the file
-                Do While srLogFile.Peek >= 0
-                    strLineIn = srLogFile.ReadLine()
+                    ' Read to the end of the file
+                    Do While Not srLogFile.EndOfStream
+                        strLineIn = srLogFile.ReadLine()
 
-                    If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
-                        strLastEntry = String.Copy(strLineIn)
-                    End If
-                Loop
-                srLogFile.Close()
+                        If Not String.IsNullOrEmpty(strLineIn) Then
+                            strLastEntry = String.Copy(strLineIn)
+                        End If
+                    Loop
+
+                End Using
 
                 If Not strLastEntry Is Nothing AndAlso strLastEntry.Length > 0 Then
 

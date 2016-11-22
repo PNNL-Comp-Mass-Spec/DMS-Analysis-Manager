@@ -510,7 +510,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             srInFile = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
 
             intLinesRead = 0
-            Do While srInFile.Peek >= 0 AndAlso intLinesRead < 10
+            Do While Not srInFile.EndOfStream AndAlso intLinesRead < 10
                 strLineIn = srInFile.ReadLine()
                 If Not String.IsNullOrEmpty(strLineIn) Then
                     intLinesRead += 1
@@ -630,38 +630,41 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Read the contents of strProteinToPeptideMappingFilePath
             Using srInFile As System.IO.StreamReader = New System.IO.StreamReader((New System.IO.FileStream(strInspectParameterFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)))
 
-                Do While srInFile.Peek <> -1
-                    strLineIn = srInFile.ReadLine
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
 
-                    strLineIn = strLineIn.Trim
+                    strLineIn = strLineIn.Trim()
 
-                    If strLineIn.Length > 0 Then
+                    If String.IsNullOrEmpty(strLineIn) Then Continue Do
 
-                        If strLineIn.Chars(0) = "#"c Then
-                            ' Comment line; skip it
-                        ElseIf strLineIn.ToLower.StartsWith("mod") Then
-                            ' Modification definition line
+                    If strLineIn.Chars(0) = "#"c Then
+                        ' Comment line; skip it
+                        Continue Do
+                    End If
 
-                            ' Split the line on commas
-                            strSplitLine = strLineIn.Split(","c)
+                    If strLineIn.ToLower.StartsWith("mod") Then
+                        ' Modification definition line
 
-                            If strSplitLine.Length >= 5 AndAlso strSplitLine(0).ToLower.Trim = "mod" Then
-                                If udtModList.Length = 0 Then
-                                    ReDim udtModList(0)
-                                ElseIf intModCount >= udtModList.Length Then
-                                    ReDim Preserve udtModList(udtModList.Length * 2 - 1)
-                                End If
+                        ' Split the line on commas
+                        strSplitLine = strLineIn.Split(","c)
 
-                                With udtModList(intModCount)
-                                    .ModName = strSplitLine(4)
-                                    .ModMass = strSplitLine(1)
-                                    .Residues = strSplitLine(2)
-                                End With
-
-                                intModCount += 1
+                        If strSplitLine.Length >= 5 AndAlso strSplitLine(0).ToLower.Trim = "mod" Then
+                            If udtModList.Length = 0 Then
+                                ReDim udtModList(0)
+                            ElseIf intModCount >= udtModList.Length Then
+                                ReDim Preserve udtModList(udtModList.Length * 2 - 1)
                             End If
+
+                            With udtModList(intModCount)
+                                .ModName = strSplitLine(4)
+                                .ModMass = strSplitLine(1)
+                                .Residues = strSplitLine(2)
+                            End With
+
+                            intModCount += 1
                         End If
                     End If
+
                 Loop
 
                 ' Shrink udtModList to the appropriate length
@@ -1049,11 +1052,11 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                     swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strPTModsFilePathNew, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read))
 
                     blnDifferenceFound = False
-                    Do While srInFile.Peek <> -1
-                        strLineIn = srInFile.ReadLine
-                        strLineIn = strLineIn.Trim
+                    Do While Not srInFile.EndOfStream
+                        strLineIn = srInFile.ReadLine()
+                        strLineIn = strLineIn.Trim()
 
-                        If strLineIn.Length > 0 Then
+                        If Not String.IsNullOrEmpty(strLineIn) Then
 
                             If strLineIn.Chars(0) = "#"c Then
                                 ' Comment line; skip it
@@ -1196,25 +1199,26 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 intDecoyProteinCount = 0
                 intNormalProteinCount = 0
 
-                Do While srInspectResults.Peek >= 0
+                Do While Not srInspectResults.EndOfStream
                     strLineIn = srInspectResults.ReadLine
                     intLinesRead += 1
 
-                    If Not strLineIn Is Nothing Then
-                        ' Protein info should be stored in the fourth column (index=3)
-                        strSplitLine = strLineIn.Split(chSepChars, 5)
+                    If String.IsNullOrEmpty(strLineIn) Then Continue Do
 
-                        If intLinesRead = 1 Then
-                            ' Verify that strSplitLine(3) is "Protein"
-                            If Not strSplitLine(3).ToLower.StartsWith("protein") Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "The fourth column in the Inspect results file does not start with 'Protein'; this is unexpected")
-                            End If
+                    ' Protein info should be stored in the fourth column (index=3)
+                    strSplitLine = strLineIn.Split(chSepChars, 5)
+
+                    If intLinesRead = 1 Then
+                        ' Verify that strSplitLine(3) is "Protein"
+                        If Not strSplitLine(3).ToLower.StartsWith("protein") Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                    "The fourth column in the Inspect results file does not start with 'Protein'; this is unexpected")
+                        End If
+                    Else
+                        If strSplitLine(3).StartsWith("XXX") Then
+                            intDecoyProteinCount += 1
                         Else
-                            If strSplitLine(3).StartsWith("XXX") Then
-                                intDecoyProteinCount += 1
-                            Else
-                                intNormalProteinCount += 1
-                            End If
+                            intNormalProteinCount += 1
                         End If
                     End If
 

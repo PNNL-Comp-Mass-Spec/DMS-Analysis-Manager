@@ -186,18 +186,17 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
 
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                Do While srInFile.Peek() >= 0
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                        Dim reMatch As Match = reProgress.match(strLineIn)
+                    Dim reMatch As Match = reProgress.Match(strLineIn)
 
-                        If reMatch.Success Then
-                            peakDetectProgress = Int32.Parse(reMatch.Groups("Progress").Value)
-                        End If
-
+                    If reMatch.Success Then
+                        peakDetectProgress = Int32.Parse(reMatch.Groups("Progress").Value)
                     End If
+
                 Loop
 
             End Using

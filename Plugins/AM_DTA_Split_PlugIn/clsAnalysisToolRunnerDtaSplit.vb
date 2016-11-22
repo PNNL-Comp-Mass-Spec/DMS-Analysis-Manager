@@ -224,7 +224,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
             intSpectraCountRead = 0
             lngBytesRead = 0
 
-            Do While srInFile.Peek() >= 0
+            Do While Not srInFile.EndOfStream
                 strLineIn = srInFile.ReadLine
 
                 ' Increment the bytes read counter
@@ -250,8 +250,8 @@ Public Class clsAnalysisToolRunnerDtaSplit
                     intSpectraCountBySegment(intSplitFileNum) += 1
                 End If
 
-                If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
-                    dtLastStatusUpdate = System.DateTime.UtcNow
+                If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS Then
+                    dtLastStatusUpdate = DateTime.UtcNow
                     sngPercentComplete = (lngBytesRead / CSng(srInFile.BaseStream.Length) * 100)
                     UpdateStatusRunning(sngPercentComplete, intSpectraCountRead)
                 End If
@@ -297,9 +297,9 @@ Public Class clsAnalysisToolRunnerDtaSplit
             End If
 
             ' Open the input file
-            Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strSourceFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srInFile.Peek() > -1
+                Do While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine
 
                     splitMatch = Me.r_FileSeparator.Match(strLineIn)

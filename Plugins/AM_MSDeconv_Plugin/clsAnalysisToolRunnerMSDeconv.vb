@@ -566,7 +566,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
             swOutFile = New StreamWriter(New FileStream(strTrimmedFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
             intScanNumberOutputThreshold = 0
-            Do While srInFile.Peek() >= 0
+            Do While Not srInFile.EndOfStream
                 strLineIn = srInFile.ReadLine()
                 blnKeepLine = True
 
