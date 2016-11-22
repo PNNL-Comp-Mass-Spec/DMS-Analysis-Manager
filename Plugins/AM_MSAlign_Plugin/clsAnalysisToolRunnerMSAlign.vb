@@ -866,9 +866,11 @@ Public Class clsAnalysisToolRunnerMSAlign
                     intLinesRead += 1
 
                     If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        If intLinesRead = 1 Then
-                            ' Parse out the MSAlign version
-                            If strLineIn.ToLower.Contains("align") Then
+                        If intLinesRead <= 3 Then
+                            ' Originally the first line was the MSAlign version
+                            ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                            ' The third line is the MSAlign version
+                            If String.IsNullOrEmpty(mMSAlignVersion) AndAlso strLineIn.ToLower.Contains("ms-align") Then
                                 If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSAlignVersion) Then
                                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign version: " & strLineIn)
                                 End If

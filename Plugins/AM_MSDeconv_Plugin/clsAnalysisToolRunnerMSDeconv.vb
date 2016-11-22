@@ -258,6 +258,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
         ' Example Console output:
         '
+        ' MS-Deconv 0.8.0.7199 2012-01-16
         ' ********* parameters begin **********
         ' output file format:    msalign
         ' data type:             centroided
@@ -308,9 +309,11 @@ Public Class clsAnalysisToolRunnerMSDeconv
                     intLinesRead += 1
 
                     If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        If intLinesRead = 1 Then
-                            ' Parse out the MSDeconv version
-                            If strLineIn.ToLower.Contains("deconv") Then
+                        If intLinesRead <= 3 Then
+                        	' Originally the first line was the MS-Deconv version
+                        	' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                        	' The third line is the MSDeconv version
+                            If strLineIn.ToLower.Contains("ms-deconv") Then
                                 If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSDeconvVersion) Then
                                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSDeconv version: " & strLineIn)
                                 End If

@@ -157,7 +157,7 @@ Public Class clsMSGFRunner
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Note: we will store the MSGF version info in the database after the first line is written to file MSGF_ConsoleOutput.txt
+        ' Note: we will store the MSGF version info in the database after the program version is written to file MSGF_ConsoleOutput.txt
         mToolVersionWritten = False
         mMSGFVersion = String.Empty
         mConsoleOutputErrorMsg = String.Empty
@@ -2127,6 +2127,10 @@ Public Class clsMSGFRunner
     ''' <remarks></remarks>
     Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
+        ' Example console output
+        ' MSGF v7097 (12/29/2011)
+        ' MS-GF complete (total elapsed time: 507.68 sec)
+
         Try
 
             If Not File.Exists(strConsoleOutputFilePath) Then
@@ -2155,12 +2159,13 @@ Public Class clsMSGFRunner
                     intLinesRead += 1
 
                     If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        If intLinesRead = 1 Then
-                            ' The first line is the MSGF version
+                        If intLinesRead <= 3 AndAlso String.IsNullOrWhiteSpace(mMSGFVersion) AndAlso strLineIn.StartsWith("MSGF v") Then
+                            ' Originally the first line was the MSGF version
+                            ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                            ' The third line is the MSGF version
 
-                            If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFVersion) Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                     "MSGF version: " & strLineIn)
+                            If m_DebugLevel >= 2 Then
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF version: " & strLineIn)
                             End If
 
                             mMSGFVersion = String.Copy(strLineIn)

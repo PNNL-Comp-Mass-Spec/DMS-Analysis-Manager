@@ -1591,9 +1591,12 @@ Public Class clsMSGFDBUtils
 
                     Dim strLineInLcase = strLineIn.ToLower()
 
-                    If intLinesRead = 1 Then
-                        ' The first line is the MSGFDB version
+                    If intLinesRead <= 3 Then
+                        ' Originally the first line was the MS-GF+ version
+                        ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                        ' The third line is the MS-GF+ version
                         If strLineInLcase.Contains("gfdb") OrElse strLineInLcase.Contains("ms-gf+") Then
+                        If String.IsNullOrWhiteSpace(mMSGFDbVersion) AndAlso (strLineInLcase.Contains("gfdb") OrElse strLineInLcase.Contains("ms-gf+")) Then
                             If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
                                 ReportMessage("MS-GF+ version: " & strLineIn)
                             End If
