@@ -1152,6 +1152,23 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             End If
 
+            ' Examine the MSGF+ TSV file to see if it's empty
+            Using reader = New StreamReader(New FileStream(Path.Combine(m_WorkDir, msgfPlusResultsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                Dim dataLines = 0
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine()
+                    If String.IsNullOrWhiteSpace(dataLine) Then
+                        Continue While
+                    End If
+                    dataLines += 1
+                End While
+
+                If dataLines <= 1 Then
+                    LogWarning("MSGF+ did not identify any peptides (TSV file is empty)", True)
+                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                End If
+            End Using
+
             ' Create the Peptide to Protein map file
             ' ToDo: If udtHPCOptions.UsingPIC = True, then run this on PIC by calling 64-bit PeptideToProteinMapper.exe
 
