@@ -184,7 +184,7 @@ Public Class clsMSGFDBUtils
     End Sub
 
     ''' <summary>
-    ''' Update strArgumentSwitch and strValue if using the MS-GFDB syntax yet should be using the MSGF+ syntax (or vice versa)
+    ''' Update strArgumentSwitch and strValue if using the MS-GFDB syntax yet should be using the MS-GF+ syntax (or vice versa)
     ''' </summary>
     ''' <param name="blnMSGFPlus"></param>
     ''' <param name="strArgumentSwitch"></param>
@@ -196,7 +196,7 @@ Public Class clsMSGFDBUtils
         Dim intCharIndex As Integer
 
         If blnMSGFPlus Then
-            ' MSGF+
+            ' MS-GF+
 
             If clsGlobal.IsMatch(strArgumentSwitch, "nnet") Then
                 ' Auto-switch to ntt
@@ -230,7 +230,7 @@ Public Class clsMSGFDBUtils
                 End If
 
             ElseIf clsGlobal.IsMatch(strArgumentSwitch, "showDecoy") Then
-                ' Not valid for MSGF+; skip it
+                ' Not valid for MS-GF+; skip it
                 strArgumentSwitch = String.Empty
             End If
 
@@ -421,10 +421,10 @@ Public Class clsMSGFDBUtils
     End Function
 
     ''' <summary>
-    ''' Convert a .mzid file to a tab-delimited text file (.tsv) using MSGFDB.jar
+    ''' Convert a .mzid file to a tab-delimited text file (.tsv) using MSGFPlus.jar
     ''' </summary>
     ''' <param name="javaProgLoc">Full path to Java</param>
-    ''' <param name="msgfDbProgLoc">Folder with MSGFDB.jar</param>
+    ''' <param name="msgfDbProgLoc">Folder with MSGFPlusjar</param>
     ''' <param name="strDatasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
     ''' <param name="strMZIDFileName">.mzid file name (assumed to be in the work directory)</param>
     ''' <returns>TSV file path, or an empty string if an error</returns>
@@ -463,7 +463,7 @@ Public Class clsMSGFDBUtils
             End Using
 
             If Not String.Equals(lastLine.Trim(), "</MzIdentML>", StringComparison.InvariantCulture) Then
-                ReportError("The .mzid file created by MSGF+ does not end with XML tag MzIdentML")
+                ReportError("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML")
                 Return String.Empty
             End If
 
@@ -631,13 +631,13 @@ Public Class clsMSGFDBUtils
 
             Dim fiInputFile = New FileInfo(strInputFilePath)
             If Not fiInputFile.Exists Then
-                msg = "MSGF+ TSV results file not found"
+                msg = "MS-GF+ TSV results file not found"
                 ReportError(msg, msg & ", job " & m_JobNum & "; " & strInputFilePath)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             If fiInputFile.Length = 0 Then
-                msg = "MSGF+ TSV results file is empty"
+                msg = "MS-GF+ TSV results file is empty"
                 ReportError(msg, msg & ", job " & m_JobNum & "; " & strInputFilePath)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
@@ -664,7 +664,7 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
 
-            msg = "Error validating MSGF+ results file contents in CreatePeptideToProteinMapping"
+            msg = "Error validating MS-GF+ results file contents in CreatePeptideToProteinMapping"
             ReportError(msg, msg & ", job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
@@ -990,7 +990,7 @@ Public Class clsMSGFDBUtils
 
     Private Function GetMSFGDBParameterNames() As Dictionary(Of String, String)
 
-        ' Keys are the parameter name in the MSGF+ parameter file
+        ' Keys are the parameter name in the MS-GF+ parameter file
         ' Values are the command line switch name
         Dim dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
@@ -1009,9 +1009,9 @@ Public Class clsMSGFDBUtils
 
         dctParamNames.Add("EnzymeID", "e")
         dctParamNames.Add("C13", "c13")                 ' Used by MS-GFDB
-        dctParamNames.Add("IsotopeError", "ti")         ' Used by MSGF+
+        dctParamNames.Add("IsotopeError", "ti")         ' Used by MS-GF+
         dctParamNames.Add("NNET", "nnet")               ' Used by MS-GFDB
-        dctParamNames.Add("NTT", "ntt")                 ' Used by MSGF+
+        dctParamNames.Add("NTT", "ntt")                 ' Used by MS-GF+
         dctParamNames.Add("minLength", "minLength")
         dctParamNames.Add("maxLength", "maxLength")
         dctParamNames.Add("minCharge", "minCharge")     ' Only used if the spectrum file doesn't have charge information
@@ -1039,7 +1039,7 @@ Public Class clsMSGFDBUtils
 
     Public Shared Function GetSearchEngineName(blnMSGFPlus As Boolean) As String
         If blnMSGFPlus Then
-            Return "MSGF+"
+            Return "MS-GF+"
         Else
             Return "MS-GFDB"
         End If
@@ -1432,7 +1432,7 @@ Public Class clsMSGFDBUtils
     End Function
 
     ''' <summary>
-    ''' Parse the MSGFPlus console output file to determine the MSGF+ version and to track the search progress
+    ''' Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
     ''' </summary>
     ''' <returns>Percent Complete (value between 0 and 100)</returns>
     ''' <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
@@ -1441,7 +1441,7 @@ Public Class clsMSGFDBUtils
     End Function
 
     ''' <summary>
-    ''' Parse the MSGFPlus console output file to determine the MSGF+ version and to track the search progress
+    ''' Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
     ''' </summary>
     ''' <returns>Percent Complete (value between 0 and 100)</returns>
     ''' <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
@@ -1566,7 +1566,7 @@ Public Class clsMSGFDBUtils
             Dim strLineIn As String
             Dim intLinesRead As Integer
 
-            ' This is the total threads that MSGF+ reports that it is using
+            ' This is the total threads that MS-GF+ reports that it is using
             Dim totalThreadCount As Short = 0
 
             Dim totalTasks = 0
@@ -1595,14 +1595,14 @@ Public Class clsMSGFDBUtils
                         ' The first line is the MSGFDB version
                         If strLineInLcase.Contains("gfdb") OrElse strLineInLcase.Contains("ms-gf+") Then
                             If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
-                                ReportMessage("MSGFDB version: " & strLineIn)
+                                ReportMessage("MS-GF+ version: " & strLineIn)
                             End If
 
                             mMSGFDbVersion = String.Copy(strLineIn)
                         Else
                             If strLineInLcase.Contains("error") Then
                                 If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                    mConsoleOutputErrorMsg = "Error running MSGFDB: "
+                                    mConsoleOutputErrorMsg = "Error running MS-GF+: "
                                 End If
                                 If Not mConsoleOutputErrorMsg.Contains(strLineIn) Then
                                     mConsoleOutputErrorMsg &= "; " & strLineIn
@@ -1650,7 +1650,7 @@ Public Class clsMSGFDBUtils
                         End If
 
                     ElseIf strLineIn.StartsWith("Spectrum") Then
-                        ' Extract out the number of spectra that MSGF+ will actually search
+                        ' Extract out the number of spectra that MS-GF+ will actually search
 
                         Dim oMatch = reSpectraSearched.Match(strLineIn)
 
@@ -1663,7 +1663,7 @@ Public Class clsMSGFDBUtils
                             sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
                         End If
 
-                    ElseIf strLineIn.StartsWith("MS-GFDB complete") OrElse strLineIn.StartsWith("MS-GF+ complete") Then
+                    ElseIf strLineIn.StartsWith("MS-GF+ complete") OrElse strLineIn.StartsWith("MS-GF+ complete") Then
                         If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
                             sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
                         End If
@@ -1679,7 +1679,7 @@ Public Class clsMSGFDBUtils
                         Dim taskNumber = Integer.Parse(reMatch.Groups("TaskNumber").Value)
 
                         If completedTasks.Contains(taskNumber) Then
-                            ReportWarning("MSGF+ reported that task " & taskNumber & " completed more than once")
+                            ReportWarning("MS-GF+ reported that task " & taskNumber & " completed more than once")
                         Else
                             completedTasks.Add(taskNumber)
                         End If
@@ -1719,10 +1719,10 @@ Public Class clsMSGFDBUtils
     End Function
 
     ''' <summary>
-    ''' Parses the static modifications, dynamic modifications, and custom amino acid information to create the MSGFDB Mods file
+    ''' Parses the static modifications, dynamic modifications, and custom amino acid information to create the MS-GF+ Mods file
     ''' </summary>
     ''' <param name="strParameterFilePath">Full path to the MSGF parameter file; will create file MSGFDB_Mods.txt in the same folder</param>
-    ''' <param name="sbOptions">String builder of command line arguments to pass to MSGFDB</param>
+    ''' <param name="sbOptions">String builder of command line arguments to pass to MS-GF+</param>
     ''' <param name="intNumMods">Max Number of Modifications per peptide</param>
     ''' <param name="lstStaticMods">List of Static Mods</param>
     ''' <param name="lstDynamicMods">List of Dynamic Mods</param>
@@ -1752,7 +1752,7 @@ Public Class clsMSGFDBUtils
 
             Using swModFile = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                swModFile.WriteLine("# This file is used to specify modifications for MSGFDB")
+                swModFile.WriteLine("# This file is used to specify modifications for MS-GF+")
                 swModFile.WriteLine()
                 swModFile.WriteLine("# Max Number of Modifications per peptide")
                 swModFile.WriteLine("# If this value is large, the search will be slow")
@@ -1816,7 +1816,7 @@ Public Class clsMSGFDBUtils
             blnSuccess = True
 
         Catch ex As Exception
-            mErrorMessage = "Exception creating MSGFDB Mods file"
+            mErrorMessage = "Exception creating MS-GF+ Mods file"
             ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
             blnSuccess = False
         End Try
@@ -1851,15 +1851,15 @@ Public Class clsMSGFDBUtils
     End Function
 
     ''' <summary>
-    ''' Read the MSGFDB options file and convert the options to command line switches
+    ''' Read the MS-GF+ options file and convert the options to command line switches
     ''' </summary>
     ''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
     ''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
     ''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
     ''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
     ''' <param name="instrumentGroup">DMS Instrument Group name</param>
-    ''' <param name="strParameterFilePath">Full path to the MSGF+ parameter file to use</param>
-    ''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
+    ''' <param name="strParameterFilePath">Full path to the MS-GF+ parameter file to use</param>
+    ''' <param name="strMSGFDbCmdLineOptions">Output: MS-GF+ command line arguments</param>
     ''' <returns>Options string if success; empty string if an error</returns>
     ''' <remarks></remarks>
     Public Function ParseMSGFDBParameterFile(
@@ -1883,16 +1883,16 @@ Public Class clsMSGFDBUtils
     End Function
 
     ''' <summary>
-    ''' Read the MSGFDB options file and convert the options to command line switches
+    ''' Read the MS-GF+ options file and convert the options to command line switches
     ''' </summary>
     ''' <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
     ''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
     ''' <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
     ''' <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
     ''' <param name="instrumentGroup">DMS Instrument Group name</param>
-    ''' <param name="strParameterFilePath">Full path to the MSGF+ parameter file to use</param>
-    ''' <param name="overrideParams">Parameters to override settings in the MSGF+ parameter file</param>
-    ''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
+    ''' <param name="strParameterFilePath">Full path to the MS-GF+ parameter file to use</param>
+    ''' <param name="overrideParams">Parameters to override settings in the MS-GF+ parameter file</param>
+    ''' <param name="strMSGFDbCmdLineOptions">Output: MS-GF+ command line arguments</param>
     ''' <returns>Options string if success; empty string if an error</returns>
     ''' <remarks></remarks>
     Public Function ParseMSGFDBParameterFile(
@@ -1948,7 +1948,7 @@ Public Class clsMSGFDBUtils
         sbOptions = New Text.StringBuilder(500)
 
         ' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
-        ' Alternatively, if running MSGF+, this is set to true if TDA=1
+        ' Alternatively, if running MS-GF+, this is set to true if TDA=1
         mResultsIncludeAutoAddedDecoyPeptides = False
 
         Try
@@ -1995,7 +1995,7 @@ Public Class clsMSGFDBUtils
                                             strValue = "3"
                                         Case "UVPD"
                                             ' Previously, with MS-GFDB, fragmentationType 4 meant Merge ETD and CID
-                                            ' Now with MSGF+, fragmentationType 4 means UVPD
+                                            ' Now with MS-GF+, fragmentationType 4 means UVPD
                                             strValue = "4"
                                         Case Else
                                             ' Invalid string
@@ -2082,7 +2082,7 @@ Public Class clsMSGFDBUtils
                         ElseIf clsGlobal.IsMatch(kvSetting.Key, "uniformAAProb") Then
 
                             If mMSGFPlus Then
-                                ' Not valid for MSGF+; skip it
+                                ' Not valid for MS-GF+; skip it
                             Else
 
                                 If String.IsNullOrWhiteSpace(strValue) OrElse clsGlobal.IsMatch(strValue, "auto") Then
@@ -2095,7 +2095,7 @@ Public Class clsMSGFDBUtils
                                     If Integer.TryParse(strValue, intValue) Then
                                         sbOptions.Append(" -uniformAAProb " & intValue)
                                     Else
-                                        mErrorMessage = "Invalid value for uniformAAProb in MSGFDB parameter file"
+                                        mErrorMessage = "Invalid value for uniformAAProb in MS-GF+ parameter file"
                                         ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
                                         srParamFile.Close()
                                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -2105,12 +2105,12 @@ Public Class clsMSGFDBUtils
 
                         ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumThreads") Then
                             If String.IsNullOrWhiteSpace(strValue) OrElse clsGlobal.IsMatch(strValue, "all") Then
-                                ' Do not append -thread to the command line; MSGFDB will use all available cores by default
+                                ' Do not append -thread to the command line; MS-GF+ will use all available cores by default
                             Else
                                 If Integer.TryParse(strValue, intParamFileThreadCount) Then
                                     ' intParamFileThreadCount now has the thread count
                                 Else
-                                    ReportWarning("Invalid value for NumThreads in MSGFDB parameter file: " & strLineIn)
+                                    ReportWarning("Invalid value for NumThreads in MS-GF+ parameter file: " & strLineIn)
                                 End If
                             End If
 
@@ -2119,7 +2119,7 @@ Public Class clsMSGFDBUtils
                             If Integer.TryParse(strValue, intValue) Then
                                 intNumMods = intValue
                             Else
-                                mErrorMessage = "Invalid value for NumMods in MSGFDB parameter file"
+                                mErrorMessage = "Invalid value for NumMods in MS-GF+ parameter file"
                                 ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
                                 srParamFile.Close()
                                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -2155,7 +2155,7 @@ Public Class clsMSGFDBUtils
 
             If blnTDA Then
                 If mMSGFPlus Then
-                    ' Parameter file contains TDA=1 and we're running MSGF+
+                    ' Parameter file contains TDA=1 and we're running MS-GF+
                     mResultsIncludeAutoAddedDecoyPeptides = True
                 ElseIf blnShowDecoy Then
                     ' Parameter file contains both TDA=1 and showDecoy=1
@@ -2169,7 +2169,7 @@ Public Class clsMSGFDBUtils
             End If
 
         Catch ex As Exception
-            mErrorMessage = "Exception reading MSGFDB parameter file"
+            mErrorMessage = "Exception reading MS-GF+ parameter file"
             ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
@@ -2195,14 +2195,14 @@ Public Class clsMSGFDBUtils
         End If
 
         If udtHPCOptions.UsingHPC Then
-            ' Do not define the thread count when running on HPC; MSGF+ should use all 16 cores (or all 32 cores)
+            ' Do not define the thread count when running on HPC; MS-GF+ should use all 16 cores (or all 32 cores)
             If intParamFileThreadCount > 0 Then intParamFileThreadCount = 0
 
             ReportMessage("Running on HPC; " & strSearchEngineName & " will use all available cores")
 
         ElseIf intParamFileThreadCount <= 0 OrElse limitCoreUsage Then
             ' Set intParamFileThreadCount to the number of cores on this computer
-            ' However, do not exceed 8 cores because this can actually slow down MSGF+ due to context switching
+            ' However, do not exceed 8 cores because this can actually slow down MS-GF+ due to context switching
             ' Furthermore, Java will restrict all of the threads to a single NUMA node, and we don't want too many threads on a single node
 
             Dim coreCount = GetCoreCount()
@@ -2215,11 +2215,11 @@ Public Class clsMSGFDBUtils
                     intParamFileThreadCount = maxAllowedCores
                 End If
             Else
-                ' Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MSGF+ would actually use intParamFileThreadCount+1 cores
-                ' Starting with version v10072, MSGF+ actually uses all the cores, so we started using intParamFileThreadCount = coreCount
+                ' Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MS-GF+ would actually use intParamFileThreadCount+1 cores
+                ' Starting with version v10072, MS-GF+ actually uses all the cores, so we started using intParamFileThreadCount = coreCount
 
-                ' Then, in April 2015, we started running two copies of MSGF+ simultaneously on machines with > 4 cores because even if we tell MSGF+ to use all the cores, we saw a lot of idle time
-                ' When two simultaneous copies of MSGF+ are running the CPUs get a bit overtaxed, so we're now using this logic:
+                ' Then, in April 2015, we started running two copies of MS-GF+ simultaneously on machines with > 4 cores because even if we tell MS-GF+ to use all the cores, we saw a lot of idle time
+                ' When two simultaneous copies of MS-GF+ are running the CPUs get a bit overtaxed, so we're now using this logic:
 
                 If coreCount > 4 Then
                     intParamFileThreadCount = coreCount - 1
@@ -2233,7 +2233,7 @@ Public Class clsMSGFDBUtils
                 ReportMessage("The system has " & coreCount & " cores; " & strSearchEngineName & " will use 8 cores (bumped down from " & intParamFileThreadCount & " to avoid overloading a single NUMA node)")
                 intParamFileThreadCount = 8
             Else
-                ' Example message: The system has 8 cores; MSGF+ will use 7 cores")
+                ' Example message: The system has 8 cores; MS-GF+ will use 7 cores")
                 ReportMessage("The system has " & coreCount & " cores; " & strSearchEngineName & " will use " & intParamFileThreadCount & " cores")
             End If
         End If
@@ -2248,18 +2248,18 @@ Public Class clsMSGFDBUtils
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Prior to MSGF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
+        ' Prior to MS-GF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
         ' However, v9284 now auto-selects the correct protocol based on the spectrum type and the dynamic modifications
         ' Options for -protocol are 0=NoProtocol (Default), 1=Phosphorylation, 2=iTRAQ, 3=iTRAQPhospho
         '
         ' As of March 23, 2015, if the user is searching for Phospho mods with TMT labeling enabled, 
-        ' then MSGF+ will use a model trained for TMT peptides (without phospho)
+        ' then MS-GF+ will use a model trained for TMT peptides (without phospho)
         ' In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to sbOptions having "-protocol 1")
 
 
         strMSGFDbCmdLineOptions = sbOptions.ToString()
 
-        ' By default, MSGF+ filters out spectra with fewer than 20 data points
+        ' By default, MS-GF+ filters out spectra with fewer than 20 data points
         ' Override this threshold to 5 data points
         If strMSGFDbCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.CurrentCultureIgnoreCase) < 0 Then
             strMSGFDbCmdLineOptions &= " -minNumPeaks 5"
@@ -2315,7 +2315,7 @@ Public Class clsMSGFDBUtils
             ' If high res MS2, then Instrument Group is typically VelosOrbi, or LTQ_FT
 
             ' Count the number of High res CID or ETD spectra
-            ' Count HCD spectra separately since MSGF+ has a special scoring model for HCD spectra
+            ' Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
 
             Dim lstLowResMSn As Dictionary(Of Integer, String) = Nothing
             Dim lstHighResMSn As Dictionary(Of Integer, String) = Nothing
@@ -2555,7 +2555,7 @@ Public Class clsMSGFDBUtils
                    elementSymbol <> "S" Then
 
                     mErrorMessage = "Invalid element " & elementSymbol & " in the custom amino acid empirical formula " & strModClean & "; " &
-                                    "MSGF+ only supports C, H, N, O, and S"
+                                    "MS-GF+ only supports C, H, N, O, and S"
                     ReportError(mErrorMessage)
                     Return False
                 End If
@@ -2649,7 +2649,7 @@ Public Class clsMSGFDBUtils
 
         'Dim strValue As String
 
-        '' Default to using MSGF+
+        '' Default to using MS-GF+
         'Dim blnUseLegacyMSGFDB As Boolean = False
 
         'strValue = jobParams.GetJobParameter("UseLegacyMSGFDB", String.Empty)
@@ -2674,7 +2674,7 @@ Public Class clsMSGFDBUtils
         '	End If
 
         '	If String.IsNullOrEmpty(strValue) Then
-        '		' Default to using MSGF+
+        '		' Default to using MS-GF+
         '		blnUseLegacyMSGFDB = False
         '	End If
         'End If
@@ -2772,7 +2772,7 @@ Public Class clsMSGFDBUtils
 
 
     ''' <summary>
-    ''' Zips MSGFDB Output File (creating a .gz file)
+    ''' Zips MS-GF+ Output File (creating a .gz file)
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
@@ -2783,7 +2783,7 @@ Public Class clsMSGFDBUtils
 
             tmpFilePath = Path.Combine(m_WorkDir, fileName)
             If Not File.Exists(tmpFilePath) Then
-                ReportError("MSGF+ results file not found: " & fileName)
+                ReportError("MS-GF+ results file not found: " & fileName)
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
             End If
 
