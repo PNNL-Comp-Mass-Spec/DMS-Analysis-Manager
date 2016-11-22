@@ -96,7 +96,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 case "PeptideAtlas":
                     success = DoPeptideAtlasOperation();
                     break;
-                // FUTURE: code for other repositories to go here someday
+                    // FUTURE: code for other repositories to go here someday
             }
 
             if (success)
@@ -142,7 +142,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
             if (_bIncludeMSGFPlusResults)
             {
                 // find any MSGFPlus jobs in data package and copy their first hits files to appropriate cache subfolder
-                _mgr.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "MSGFPlus", "*_msgfdb_fht.txt;*_msgfdb_fht_MSGF.txt", "MSGFPlus_Results", "Job");
+                _mgr.GetItemsToRepoPkg(
+                    "DataPkgJobsQueryTemplate",
+                    "MSGFPlus",
+                    "*_msgfplus_fht.txt;*_msgfplus_fht_MSGF.txt;*_msgfdb_fht.txt;*_msgfdb_fht_MSGF.txt",
+                    "MSGFPlus_Results", "Job");
+
                 dataPkgJobCountMatch = _mgr.DataPackageItems.Rows.Count();
                 dataPkgFileCountMatch = _mgr.AssociatedFiles.Rows.Count();
 
@@ -463,7 +468,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete file " + filePath + ": " + ex.Message);
             }
         }
-      
+
         protected bool ProcessDataset(
             clsAnalysisResults objAnalysisResults,
             clsMSXMLCreator objMSXmlCreator,

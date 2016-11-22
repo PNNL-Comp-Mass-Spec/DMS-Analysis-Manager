@@ -55,9 +55,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 FindMissingMzXmlFiles(lstAllJobs);
             }
 
-            
+
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
-                
+
         }
 
         #endregion // Member_Functions
@@ -294,7 +294,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                             break;
                         }
                     }
-                    
+
                     if (!matchFound && !lstDatasets.Contains(udtJob.Dataset))
                     {
                         lstDatasets.Add(udtJob.Dataset);
