@@ -215,14 +215,7 @@ Public Class clsRunDosProgram
     ''' <summary>
     ''' Working directory for process execution.
     ''' </summary>
-    Public Property WorkDir() As String
-        Get
-            Return m_WorkDir
-        End Get
-        Set(Value As String)
-            m_WorkDir = Value
-        End Set
-    End Property
+    Public Property WorkDir As String
 
     ''' <summary>
     ''' When true then will write the standard output to a file in real-time
@@ -231,17 +224,12 @@ Public Class clsRunDosProgram
     ''' will be created in the WorkDir (though, if WorkDir is blank, then will be created in the folder with the Program we're running)
     ''' </summary>
     ''' <remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
-    Public Property WriteConsoleOutputToFile() As Boolean
-        Get
-            Return m_WriteConsoleOutputToFile
-        End Get
-        Set(value As Boolean)
-            m_WriteConsoleOutputToFile = value
-        End Set
-    End Property
+    Public Property WriteConsoleOutputToFile As Boolean = False
+
 #End Region
 
 #Region "Methods"
+
     ''' <summary>
     ''' Constructor
     ''' </summary>
@@ -249,8 +237,7 @@ Public Class clsRunDosProgram
     ''' <remarks></remarks>
     Sub New(WorkDir As String)
 
-        m_WorkDir = WorkDir
-
+        Me.WorkDir = WorkDir
     End Sub
 
     ''' <summary>
@@ -296,38 +283,37 @@ Public Class clsRunDosProgram
             End Try
 
         End If
-
     End Function
 
     ''' <summary>
     ''' Runs a program and waits for it to exit
     ''' </summary>
-    ''' <param name="ProgNameLoc">The path to the program to run</param>
-    ''' <param name="CmdLine">The arguments to pass to the program, for example /N=35</param>
+    ''' <param name="progNameLoc">The path to the program to run</param>
+    ''' <param name="cmdLine">The arguments to pass to the program, for example /N=35</param>
     ''' <param name="ProgName">The name of the program to use for the Window title</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>Ignores the result code reported by the program</remarks>
-    Public Function RunProgram(ProgNameLoc As String, CmdLine As String, ProgName As String) As Boolean
+    Public Function RunProgram(progNameLoc As String, cmdLine As String, progName As String) As Boolean
         Const useResCode As Boolean = False
-        Return RunProgram(ProgNameLoc, CmdLine, ProgName, useResCode)
+        Return RunProgram(progNameLoc, cmdLine, progName, useResCode)
     End Function
 
-    Public Function RunProgram(ProgNameLoc As String, CmdLine As String, ProgName As String, UseResCode As Boolean) As Boolean
+    Public Function RunProgram(progNameLoc As String, cmdLine As String, progName As String, useResCode As Boolean) As Boolean
         Const maxRuntime As Integer = 0
-        Return RunProgram(ProgNameLoc, CmdLine, ProgName, UseResCode, maxRuntime)
+        Return RunProgram(progNameLoc, cmdLine, progName, useResCode, maxRuntime)
     End Function
 
     ''' <summary>
     ''' Runs a program and waits for it to exit
     ''' </summary>
-    ''' <param name="ProgNameLoc">The path to the program to run</param>
-    ''' <param name="CmdLine">The arguments to pass to the program, for example /N=35</param>
-    ''' <param name="ProgName">The name of the program to use for the Window title</param>
-    ''' <param name="UseResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
-    ''' <param name="MaxSeconds">If a positive number, then program execution will be aborted if the runtime exceeds MaxSeconds</param>
+    ''' <param name="progNameLoc">The path to the program to run</param>
+    ''' <param name="cmdLine">The arguments to pass to the program, for example /N=35</param>
+    ''' <param name="progName">The name of the program to use for the Window title</param>
+    ''' <param name="useResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
+    ''' <param name="maxRuntime">If a positive number, then program execution will be aborted if the runtime exceeds maxRuntime seconds</param>
     ''' <returns>True if success, false if an error</returns>
-    ''' <remarks>MaxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
-    Public Function RunProgram(ProgNameLoc As String, CmdLine As String, ProgName As String, UseResCode As Boolean, MaxSeconds As Integer) As Boolean
+    ''' <remarks>maxRuntime will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
+    Public Function RunProgram(progNameLoc As String, cmdLine As String, progName As String, useResCode As Boolean, maxRuntime As Integer) As Boolean
 
         Dim dtStartTime As DateTime
         Dim blnRuntimeExceeded As Boolean
@@ -336,29 +322,29 @@ Public Class clsRunDosProgram
         ' Require a minimum monitoring interval of 250 mseconds
         If m_MonitorInterval < 250 Then m_MonitorInterval = 250
 
-        If MaxSeconds > 0 AndAlso MaxSeconds < 15 Then
-            MaxSeconds = 15
+        If maxRuntime > 0 AndAlso maxRuntime < 15 Then
+            maxRuntime = 15
         End If
-        m_MaxRuntimeSeconds = MaxSeconds
+        m_MaxRuntimeSeconds = maxRuntime
 
         ' Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
         ' Also necessary to avoid problems caching the console output
         m_ProgRunner = New clsProgRunner() With {
-            .Arguments = CmdLine,
-            .CreateNoWindow = m_CreateNoWindow,
+            .Arguments = cmdLine,
+            .CreateNoWindow = CreateNoWindow,
             .MonitoringInterval = m_MonitorInterval,
-            .Name = ProgName,
-            .Program = ProgNameLoc,
+            .Name = progName,
+            .Program = progNameLoc,
             .Repeat = False,
             .RepeatHoldOffTime = 0,
-            .WorkDir = m_WorkDir,
-            .CacheStandardOutput = m_CacheStandardOutput,
-            .EchoOutputToConsole = m_EchoOutputToConsole,
-            .WriteConsoleOutputToFile = m_WriteConsoleOutputToFile,
-            .ConsoleOutputFilePath = m_ConsoleOutputFilePath
+            .WorkDir = WorkDir,
+            .CacheStandardOutput = CacheStandardOutput,
+            .EchoOutputToConsole = EchoOutputToConsole,
+            .WriteConsoleOutputToFile = WriteConsoleOutputToFile,
+            .ConsoleOutputFilePath = ConsoleOutputFilePath,
         }
 
-        If m_DebugLevel >= 4 Then
+        If DebugLevel >= 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Arguments = " & m_ProgRunner.Arguments)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Program = " & m_ProgRunner.Program)
         End If
@@ -417,7 +403,7 @@ Public Class clsRunDosProgram
             clsProgRunner.ClearCachedPerformanceCounterForProcessID(cachedProcessID)
 
         Catch ex As Exception
-            Dim msg = "Exception running DOS program " & ProgNameLoc
+            Dim msg = "Exception running DOS program " & progNameLoc
             Console.WriteLine(msg & "; " & clsGlobal.GetExceptionStackTrace(ex))
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex)
             m_ProgRunner = Nothing
@@ -428,9 +414,9 @@ Public Class clsRunDosProgram
         m_ExitCode = m_ProgRunner.ExitCode
         m_ProgRunner = Nothing
 
-        If (UseResCode And m_ExitCode <> 0) Then
+        If (useResCode And m_ExitCode <> 0) Then
             If (m_AbortProgramNow AndAlso m_AbortProgramPostLogEntry) OrElse Not m_AbortProgramNow Then
-                Dim msg = "  ProgRunner.ExitCode = " & m_ExitCode.ToString & " for Program = " & ProgNameLoc
+                Dim msg = "  ProgRunner.ExitCode = " & m_ExitCode.ToString & " for Program = " & progNameLoc
                 Console.WriteLine(msg)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             End If
@@ -442,8 +428,8 @@ Public Class clsRunDosProgram
         Else
             Return True
         End If
-
     End Function
+
 #End Region
 
     Private Sub ProgRunner_ConsoleErrorEvent(NewText As String) Handles m_ProgRunner.ConsoleErrorEvent
@@ -463,7 +449,6 @@ Public Class clsRunDosProgram
     Private Sub ProgRunner_ProgChanged(obj As PRISM.Processes.clsProgRunner) Handles m_ProgRunner.ProgChanged
         ' This event is ignored by this class
     End Sub
-
 End Class
 
 
