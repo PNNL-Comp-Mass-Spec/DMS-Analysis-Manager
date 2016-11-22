@@ -593,47 +593,47 @@ Public Class clsAnalysisToolRunnerSMAQC
                     strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                        ' Remove the timestamp from the start of the line (if present)
-                        Dim reMatch = reMatchTimeStamp.Match(strLineIn)
-                        If reMatch.Success Then
-                            strLineIn = strLineIn.Substring(reMatch.Length)
+                    ' Remove the timestamp from the start of the line (if present)
+                    Dim reMatch = reMatchTimeStamp.Match(strLineIn)
+                    If reMatch.Success Then
+                        strLineIn = strLineIn.Substring(reMatch.Length)
+                    End If
+
+                    ' Update progress if the line starts with one of the expected phrases
+                    If strLineIn.StartsWith("Searching for Text Files") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES Then
+                            sngEffectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES
                         End If
 
-                        ' Update progress if the line starts with one of the expected phrases
-                        If strLineIn.StartsWith("Searching for Text Files") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES Then
-                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES
-                            End If
+                    ElseIf strLineIn.StartsWith("Parsing and Inserting Data") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES Then
+                            sngEffectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES
+                        End If
 
-                        ElseIf strLineIn.StartsWith("Parsing and Inserting Data") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES Then
-                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES
-                            End If
+                    ElseIf strLineIn.StartsWith("Now running Measurements") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS Then
+                            sngEffectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS
+                        End If
 
-                        ElseIf strLineIn.StartsWith("Now running Measurements") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS Then
-                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS
-                            End If
+                    ElseIf strLineIn.StartsWith("Saving Scan Results") Then
+                        If sngEffectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS Then
+                            sngEffectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS
+                        End If
 
-                        ElseIf strLineIn.StartsWith("Saving Scan Results") Then
-                            If sngEffectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS Then
-                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS
-                            End If
+                    ElseIf strLineIn.StartsWith("Scan output has been saved") Then
+                        ' Ignore this line
 
-                        ElseIf strLineIn.StartsWith("Scan output has been saved") Then
-                            ' Ignore this line
+                    ElseIf strLineIn.StartsWith("SMAQC analysis complete") Then
+                        ' Ignore this line
 
-                        ElseIf strLineIn.StartsWith("SMAQC analysis complete") Then
-                            ' Ignore this line
-
-                        ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                            If strLineIn.ToLower.Contains("error") Then
-                                mConsoleOutputErrorMsg &= "; " & strLineIn
-                            End If
+                    ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                        If strLineIn.ToLower.Contains("error") Then
+                            mConsoleOutputErrorMsg &= "; " & strLineIn
                         End If
                     End If
+
                 Loop
 
             End Using

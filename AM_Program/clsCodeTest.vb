@@ -1833,48 +1833,49 @@ Public Class clsCodeTest
                 Do While Not srInFile.EndOfStream
                     Dim strLineIn = srInFile.ReadLine()
 
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
+                    If String.IsNullOrWhiteSpace(strLineIn) Then
+                        Continue Do
+                    End If
 
-                        Dim strLineInLCase = strLineIn.ToLower()
+                    Dim strLineInLCase = strLineIn.ToLower()
 
-                        If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
-                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                mConsoleOutputErrorMsg = "Error running MSPathFinder:"
-                            End If
-                            mConsoleOutputErrorMsg &= "; " & strLineIn
+                    If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
+                        If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
+                            mConsoleOutputErrorMsg = "Error running MSPathFinder:"
+                        End If
+                        mConsoleOutputErrorMsg &= "; " & strLineIn
+                        Continue Do
+
+                    ElseIf strLineIn.StartsWith("Searching the target database") Then
+                        progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
+
+                    ElseIf strLineIn.StartsWith("Searching the decoy database") Then
+                        progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
+                        searchingDecoyDB = True
+
+                    Else
+                        Dim oMatch As Match = reCheckProgress.Match(strLineIn)
+                        If oMatch.Success Then
+                            Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
                             Continue Do
+                        End If
 
-                        ElseIf strLineIn.StartsWith("Searching the target database") Then
-                            progressComplete = PROGRESS_PCT_SEARCHING_TARGET_DB
-
-                        ElseIf strLineIn.StartsWith("Searching the decoy database") Then
-                            progressComplete = PROGRESS_PCT_SEARCHING_DECOY_DB
-                            searchingDecoyDB = True
-
-                        Else
-                            Dim oMatch As Match = reCheckProgress.Match(strLineIn)
-                            If oMatch.Success Then
-                                Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
-                                Continue Do
-                            End If
-
-                            oMatch = reProcessingProteins.Match(strLineIn)
-                            If oMatch.Success Then
-                                Dim proteinsSearched As Integer
-                                If Integer.TryParse(oMatch.Groups(1).ToString(), proteinsSearched) Then
-                                    If searchingDecoyDB Then
-                                        decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
-                                    Else
-                                        targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
-                                    End If
+                        oMatch = reProcessingProteins.Match(strLineIn)
+                        If oMatch.Success Then
+                            Dim proteinsSearched As Integer
+                            If Integer.TryParse(oMatch.Groups(1).ToString(), proteinsSearched) Then
+                                If searchingDecoyDB Then
+                                    decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
+                                Else
+                                    targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
                                 End If
-
-                                Continue Do
                             End If
 
+                            Continue Do
                         End If
 
                     End If
+
                 Loop
 
             End Using
@@ -1913,9 +1914,7 @@ Public Class clsCodeTest
 
         strWorkDir = Path.GetDirectoryName(strAppPath)
 
-        Dim objProgRunner As clsRunDosProgram
-
-        objProgRunner = New clsRunDosProgram(strWorkDir) With {
+        Dim objProgRunner = New clsRunDosProgram(strWorkDir) With {
             .CacheStandardOutput = True,
             .CreateNoWindow = True,
             .EchoOutputToConsole = True,
