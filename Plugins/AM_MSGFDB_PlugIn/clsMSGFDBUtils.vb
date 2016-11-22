@@ -365,29 +365,18 @@ Public Class clsMSGFDBUtils
             End If
 
             ' Make sure the mzid file ends with XML tag </MzIdentML>
-            ' Also make sure there is at least one result
             Dim lastLine = String.Empty
             Using reader = New StreamReader(New FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 While Not reader.EndOfStream
                     Dim dataLine = reader.ReadLine()
                     If Not String.IsNullOrWhiteSpace(dataLine) Then
-                        If dataLine.TrimStart().StartsWith("<SequenceCollection") Then
-                            ' Start of the sequence collection
-                            If dataLine.TrimEnd().EndsWith("/>") Then
-                                ' Empty sequence collection
-                                ' MSGF+ did not report any results
-                                ReportError("MSGF+ results file has no peptide identifications",
-                                            "MSGF+ results file has no peptide identifications (SequenceCollection Is empty)")
-                                Return String.Empty
-                            End If
-                        End If
                         lastLine = dataLine
                     End If
                 End While
             End Using
 
-            If Not String.Equals(lastLine.Trim(), "</MzIdentML>", StringComparison.InvariantCulture) Then
-                ReportError("The .mzid file created by MSGF+ does not end with XML tag MzIdentML")
+            If Not lastLine.Trim().EndsWith("</MzIdentML>", StringComparison.InvariantCulture) Then
+                ReportError("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML")
                 Return String.Empty
             End If
 
