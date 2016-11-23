@@ -71,7 +71,7 @@ Public Class clsMSGFDBUtils
     Private ReadOnly m_DebugLevel As Short
 
     Private ReadOnly mMSGFPlus As Boolean
-    Private mMSGFDbVersion As String = String.Empty
+    Private mMSGFPlusVersion As String = String.Empty
     Private mErrorMessage As String = String.Empty
     Private mConsoleOutputErrorMsg As String = String.Empty
 
@@ -109,9 +109,9 @@ Public Class clsMSGFDBUtils
         End Get
     End Property
 
-    Public ReadOnly Property MSGFDbVersion As String
+    Public ReadOnly Property MSGFPlusVersion As String
         Get
-            Return mMSGFDbVersion
+            Return mMSGFPlusVersion
         End Get
     End Property
 
@@ -172,7 +172,7 @@ Public Class clsMSGFDBUtils
         m_DebugLevel = intDebugLevel
 
         mMSGFPlus = blnMSGFPlus
-        mMSGFDbVersion = String.Empty
+        mMSGFPlusVersion = String.Empty
         mConsoleOutputErrorMsg = String.Empty
         mContinuumSpectraSkipped = 0
         mSpectraSearched = 0
@@ -1442,8 +1442,8 @@ Public Class clsMSGFDBUtils
     ''' </summary>
     ''' <returns>Percent Complete (value between 0 and 100)</returns>
     ''' <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
-    Public Function ParseMSGFDBConsoleOutputFile() As Single
-        Return ParseMSGFDBConsoleOutputFile(m_WorkDir)
+    Public Function ParseMSGFPlusConsoleOutputFile() As Single
+        Return ParseMSGFPlusConsoleOutputFile(m_WorkDir)
     End Function
 
     ''' <summary>
@@ -1451,7 +1451,7 @@ Public Class clsMSGFDBUtils
     ''' </summary>
     ''' <returns>Percent Complete (value between 0 and 96)</returns>
     ''' <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
-    Public Function ParseMSGFDBConsoleOutputFile(workingDirectory As String) As Single
+    Public Function ParseMSGFPlusConsoleOutputFile(workingDirectory As String) As Single
 
         ' Example Console output:
         '
@@ -1606,7 +1606,7 @@ Public Class clsMSGFDBUtils
                                 ReportMessage("MS-GF+ version: " & strLineIn)
                             End If
 
-                            mMSGFDbVersion = String.Copy(strLineIn)
+                            mMSGFPlusVersion = String.Copy(strLineIn)
                         Else
                             If strLineInLcase.Contains("error") Then
                                 If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -1844,7 +1844,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
     ''' <returns>Options string if success; empty string if an error</returns>
     ''' <remarks></remarks>
-    Public Function ParseMSGFDBParameterFile(
+    Public Function ParseMSGFPlusParameterFile(
       fastaFileSizeKB As Single,
       fastaFileIsDecoy As Boolean,
       strAssumedScanType As String,
@@ -1855,7 +1855,7 @@ Public Class clsMSGFDBUtils
 
         Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
-        Return ParseMSGFDBParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, udtHPCOptions, strMSGFDbCmdLineOptions)
+        Return ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, udtHPCOptions, strMSGFDbCmdLineOptions)
     End Function
 
     ''' <summary>
@@ -1870,7 +1870,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="strMSGFDbCmdLineOptions">Output: MS-GF+ command line arguments</param>
     ''' <returns>Options string if success; empty string if an error</returns>
     ''' <remarks></remarks>
-    Public Function ParseMSGFDBParameterFile(
+    Public Function ParseMSGFPlusParameterFile(
       fastaFileSizeKB As Single,
       fastaFileIsDecoy As Boolean,
       strAssumedScanType As String,
@@ -1882,7 +1882,7 @@ Public Class clsMSGFDBUtils
 
         Dim overrideParams = New Dictionary(Of String, String)
 
-        Return ParseMSGFDBParameterFile(
+        Return ParseMSGFPlusParameterFile(
            fastaFileSizeKB, fastaFileIsDecoy,
            strAssumedScanType, strScanTypeFilePath,
            instrumentGroup, strParameterFilePath,
@@ -1903,7 +1903,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="strMSGFDbCmdLineOptions">Output: MS-GF+ command line arguments</param>
     ''' <returns>Options string if success; empty string if an error</returns>
     ''' <remarks></remarks>
-    Public Function ParseMSGFDBParameterFile(
+    Public Function ParseMSGFPlusParameterFile(
       fastaFileSizeKB As Single,
       fastaFileIsDecoy As Boolean,
       strAssumedScanType As String,
@@ -1940,7 +1940,7 @@ Public Class clsMSGFDBUtils
         strMSGFDbCmdLineOptions = String.Empty
 
         If Not File.Exists(strParameterFilePath) Then
-            ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
+            ReportError("Parameter file Not found", "Parameter file Not found:  " & strParameterFilePath)
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 

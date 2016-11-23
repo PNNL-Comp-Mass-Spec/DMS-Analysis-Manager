@@ -45,7 +45,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     Private mConsoleOutputErrorMsg As String
 
-    Private mMSGFDbProgLoc As String
+    Private mMSGFPlusProgLoc As String
     Private mMSConvertProgLoc As String
     Private mPpmErrorCharterProgLoc As String
 
@@ -328,18 +328,18 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         ' Determine the path to MSGF+
         ' The manager parameter is MSGFDbProgLoc because originally the software was named MSGFDB (aka MS-GFDB)
-        mMSGFDbProgLoc = DetermineProgramLocation("MSGFPlus", "MSGFDbProgLoc", strMSGFJarfile)
+        mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlus", "MSGFDbProgLoc", strMSGFJarfile)
 
-        If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
+        If String.IsNullOrWhiteSpace(mMSGFPlusProgLoc) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Note: we will store the MSGF+ version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
+        ' Note: we will store the MSGF+ version info in the database after the first line is written to file MSGFPlus_ConsoleOutput.txt
         mToolVersionWritten = False
 
         mMSGFPlusComplete = False
 
-        ' These two variables are required for the call to ParseMSGFDBParameterFile
+        ' These two variables are required for the call to ParseMSGFPlusParameterFile
         ' They are blank because the source file is a mzML file, and that file includes scan type information
         Dim strScanTypeFilePath As String = String.Empty
         Dim strAssumedScanType As String = String.Empty
@@ -353,7 +353,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         ' Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
         Dim strParameterFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetJobParameter("MzRefParamFile", String.Empty))
         Dim javaExePath = String.Copy(javaProgLoc)
-        Dim msgfdbJarFilePath = String.Copy(mMSGFDbProgLoc)
+        Dim msgfplusJarFilePath = String.Copy(mMSGFPlusProgLoc)
 
         Dim fastaFilePath As String = String.Empty
         Dim fastaFileSizeKB As Single
@@ -365,7 +365,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         ' Initialize the fasta file; truncating it if it is over 50 MB in size
         Dim result = mMSGFDBUtils.InitializeFastaFile(
-          javaExePath, msgfdbJarFilePath,
+          javaExePath, msgfplusJarFilePath,
           fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath,
           strParameterFilePath, udtHPCOptions, maxFastaFileSizeMB)
 
@@ -376,7 +376,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
 
         ' Read the MSGF+ Parameter File
-        Dim strMSGFDbCmdLineOptions = String.Empty
+        Dim strMSGFPlusCmdLineOptions = String.Empty
 
         Dim overrideParams = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
 
@@ -387,15 +387,15 @@ Public Class clsAnalysisToolRunnerMzRefinery
             End If
         End If
 
-        result = mMSGFDBUtils.ParseMSGFDBParameterFile(
+        result = mMSGFDBUtils.ParseMSGFPlusParameterFile(
             fastaFileSizeKB, fastaFileIsDecoy,
             strAssumedScanType, strScanTypeFilePath,
             strInstrumentGroup, strParameterFilePath,
-            udtHPCOptions, overrideParams, strMSGFDbCmdLineOptions)
+            udtHPCOptions, overrideParams, strMSGFPlusCmdLineOptions)
 
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
-        ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
+        ElseIf String.IsNullOrEmpty(strMSGFPlusCmdLineOptions) Then
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Problem parsing MzRef parameter file to extract MGSF+ options"
             End If
@@ -421,7 +421,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
         'Set up and execute a program runner to run MSGF+
-        Dim cmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfdbJarFilePath
+        Dim cmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -jar " & msgfplusJarFilePath
 
         ' Define the input file, output file, and fasta file
         cmdStr &= " -s " & m_Dataset & msXmlFileExtension
@@ -430,7 +430,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         cmdStr &= " -d " & PossiblyQuotePath(fastaFilePath)
 
         ' Append the remaining options loaded from the parameter file
-        cmdStr &= " " & strMSGFDbCmdLineOptions
+        cmdStr &= " " & strMSGFPlusCmdLineOptions
 
         ' Make sure the machine has enough free memory to run MSGF+
         Dim blnLogFreeMemoryOnSuccess = Not m_DebugLevel < 1
@@ -448,7 +448,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         End If
 
         If Not mToolVersionWritten Then
-            If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
+            If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion) Then
                 ParseMSGFPlusConsoleOutputFile(m_WorkDir)
             End If
             mToolVersionWritten = StoreToolVersionInfo()
@@ -671,7 +671,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         If mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus Then
 
             ParseMSGFPlusConsoleOutputFile(m_WorkDir)
-            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
+            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion) Then
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
@@ -718,7 +718,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         Try
             If Not mMSGFDBUtils Is Nothing Then
-                Dim msgfPlusProgress = mMSGFDBUtils.ParseMSGFDBConsoleOutputFile(workingDirectory)
+                Dim msgfPlusProgress = mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory)
                 UpdateProgress(msgfPlusProgress)
             End If
 
@@ -1256,11 +1256,11 @@ Public Class clsAnalysisToolRunnerMzRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        strToolVersionInfo = String.Copy(mMSGFDBUtils.MSGFDbVersion)
+        strToolVersionInfo = String.Copy(mMSGFDBUtils.MSGFPlusVersion)
 
         ' Store paths to key files in ioToolFiles
         Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(mMSGFDbProgLoc))
+        ioToolFiles.Add(New FileInfo(mMSGFPlusProgLoc))
         ioToolFiles.Add(New FileInfo(mMSConvertProgLoc))
         ioToolFiles.Add(New FileInfo(mPpmErrorCharterProgLoc))
 

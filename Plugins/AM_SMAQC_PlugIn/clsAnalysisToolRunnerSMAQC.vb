@@ -654,7 +654,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     Private Function ParseSMAQCParameterFile(strParameterFilePath As String) As String
 
         ' If necessary, could parse a parameter file and convert the options in the parameter file to command line arguments
-        ' As an example, see function ParseMSGFDBParameterFile in the AnalysisManagerMSGFDBPlugIn project
+        ' As an example, see function ParseMSGFPlusParameterFile in the AnalysisManagerMSGFDBPlugIn project
         Return String.Empty
     End Function
 

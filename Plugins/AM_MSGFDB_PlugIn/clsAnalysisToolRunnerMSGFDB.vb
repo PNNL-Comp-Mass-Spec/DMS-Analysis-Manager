@@ -363,7 +363,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         ' Read the MSGFDB Parameter File
         Dim strMSGFDbCmdLineOptions As String = String.Empty
 
-        result = mMSGFDBUtils.ParseMSGFDBParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
+        result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             ' Immediately exit the plugin; results and console output files will not be saved
             Return result
@@ -470,7 +470,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End If
 
         If Not mToolVersionWritten Then
-            If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
+            If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion) Then
                 ParseConsoleOutputFile(mWorkingDirectoryInUse)
             End If
             mToolVersionWritten = StoreToolVersionInfo()
@@ -531,7 +531,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 While Date.UtcNow.Subtract(waitStartTime).TotalSeconds < 45
 
                     Threading.Thread.Sleep(5000)
-                    mMSGFDBUtils.ParseMSGFDBConsoleOutputFile(mWorkingDirectoryInUse)
+                    mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(mWorkingDirectoryInUse)
 
                     If mMSGFDBUtils.TaskCountCompleted = mMSGFDBUtils.TaskCountTotal Then
                         Exit While
@@ -987,7 +987,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             dtLastConsoleOutputParse = Date.UtcNow
 
             ParseConsoleOutputFile(mWorkingDirectoryInUse)
-            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
+            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion) Then
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
@@ -1067,7 +1067,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Try
             If Not mMSGFDBUtils Is Nothing Then
-                sngMSGFBProgress = mMSGFDBUtils.ParseMSGFDBConsoleOutputFile(workingDirectory)
+                sngMSGFBProgress = mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory)
             End If
 
             If m_progress < sngMSGFBProgress Then
@@ -1200,7 +1200,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         ReportStatus("Determining tool version info", 2)
 
-        strToolVersionInfo = String.Copy(mMSGFDBUtils.MSGFDbVersion)
+        strToolVersionInfo = String.Copy(mMSGFDBUtils.MSGFPlusVersion)
 
         ' Store paths to key files in ioToolFiles
         Dim ioToolFiles As New List(Of FileInfo)

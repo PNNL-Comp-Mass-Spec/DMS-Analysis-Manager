@@ -117,7 +117,7 @@ Public Class clsAnalysisResourcesMzRefinery
             Return True
         End If
 
-        Dim fiMSGFPlusConsoleOutput = New FileInfo(Path.Combine(diTransferFolder.FullName, "MSGFDB_ConsoleOutput.txt"))
+        Dim fiMSGFPlusConsoleOutput = New FileInfo(Path.Combine(diTransferFolder.FullName, "MSGFPlus_ConsoleOutput.txt"))
         If Not fiMSGFPlusResults.Exists Then
             ' This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " & fiMSGFPlusResults.FullName & " but did not find " & fiMSGFPlusConsoleOutput.Name & "; will re-run MSGF+")
