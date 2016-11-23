@@ -7302,6 +7302,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
     Protected Function RetrieveOrgDB(LocalOrgDBFolder As String, udtHPCOptions As udtHPCOptionsType) As Boolean
 
+        Console.WriteLine()
         If m_DebugLevel >= 3 Then
             ReportStatus("Obtaining org db file")
         End If

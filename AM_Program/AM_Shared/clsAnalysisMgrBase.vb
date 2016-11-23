@@ -96,12 +96,13 @@
         m_LockQueueWaitTimeStart = Date.UtcNow
     End Sub
 
-
 #Region "Event Handlers"
 
     Private Sub m_FileTools_DebugEvent(currentTask As String, taskDetail As String)
         If m_DebugLevel >= 1 Then
-            Console.WriteLine(currentTask & "; " & taskDetail)
+            Console.WriteLine("  " & currentTask)
+            Console.WriteLine("   " & taskDetail)
+
             If m_DebugLevel >= 2 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask & "; " & taskDetail)
             Else
@@ -112,8 +113,10 @@
 
     Private Sub m_FileTools_WarningEvent(warningMessage As String, warningDetail As String)
         If m_DebugLevel >= 1 Then
+            Console.WriteLine(warningMessage)
+            Console.WriteLine("  " & warningDetail)
+
             Dim msg As String
-            Console.WriteLine(warningMessage & "; " & warningDetail)
             If m_DebugLevel >= 2 Then
                 msg = warningMessage & "; " & warningDetail
             Else
