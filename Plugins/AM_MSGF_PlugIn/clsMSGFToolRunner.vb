@@ -824,11 +824,11 @@ Public Class clsMSGFRunner
         Dim objMSGFInputCreator As New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir)
         Dim blnSuccess As Boolean
 
-        If Not CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()) Then
+        If Not CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()) Then
             Return False
         End If
 
-        If Not CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_FHT.ToLower()) Then
+        If Not CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_FHT.ToLower()) Then
             Return False
         End If
 
@@ -839,17 +839,24 @@ Public Class clsMSGFRunner
         Return blnSuccess
     End Function
 
-    Private Function CreateMSGFResultsFromMSGFDBResults(objMSGFInputCreator As clsMSGFInputCreatorMSGFDB,
-                                                        strSynOrFHT As String) As Boolean
+    Private Function CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator As clsMSGFInputCreatorMSGFDB,
+                                                          strSynOrFHT As String) As Boolean
 
-        Dim strSourceFilePath As String
-        Dim blnSuccess As Boolean
+        Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus_" & strSynOrFHT & ".txt")
 
-        strSourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_" & strSynOrFHT & ".txt")
-        blnSuccess = objMSGFInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(strSourceFilePath, strSynOrFHT)
+        If Not File.Exists(sourceFilePath) Then
+            Dim sourceFilePathAlternate = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_" & strSynOrFHT & ".txt")
+            If Not File.Exists(sourceFilePathAlternate) Then
+                m_message = "Input file not found: " & Path.GetFileName(sourceFilePath)
+                Return False
+            End If
+            sourceFilePath = sourceFilePathAlternate
+        End If
 
-        If Not blnSuccess Then
-            m_message = "Error creating MSGF file for " & Path.GetFileName(strSourceFilePath)
+        Dim success = objMSGFInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(sourceFilePath, strSynOrFHT)
+
+        If Not success Then
+            m_message = "Error creating MSGF file for " & Path.GetFileName(sourceFilePath)
             If Not String.IsNullOrEmpty(objMSGFInputCreator.ErrorMessage) Then
                 m_message &= ": " & objMSGFInputCreator.ErrorMessage
             End If

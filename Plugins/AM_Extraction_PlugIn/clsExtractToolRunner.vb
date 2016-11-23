@@ -128,10 +128,10 @@ Public Class clsExtractToolRunner
                     strCurrentAction = "running peptide hits result processor for Inspect"
                     eResult = RunPhrpForInSpecT()
 
-                Case clsAnalysisResources.RESULT_TYPE_MSGFDB
+                Case clsAnalysisResources.RESULT_TYPE_MSGFPLUS
                     ' Run PHRP
                     strCurrentAction = "running peptide hits result processor for MSGF+"
-                    eResult = RunPhrpForMSGFDB()
+                    eResult = RunPhrpForMSGFPlus()
 
                 Case clsAnalysisResources.RESULT_TYPE_MSALIGN
                     ' Run PHRP
@@ -256,7 +256,7 @@ Public Class clsExtractToolRunner
                 Return eResult
             End If
 
-            ' Everything succeeded; now delete the _msgfdb.tsv file from the server
+            ' Everything succeeded; now delete the _msgfplus.tsv file from the server
             ' For SplitFasta files there will be multiple tsv files to delete, plus the individual ConsoleOutput.txt files (all tracked with m_jobParams.ServerFilesToDelete)
             RemoveNonResultServerFiles()
 
@@ -467,8 +467,13 @@ Public Class clsExtractToolRunner
 
             Dim strMZIDFileName = m_Dataset & "_msgfplus" & suffixToAdd & ".mzid"
             If Not File.Exists(Path.Combine(m_WorkDir, strMZIDFileName)) Then
-                LogError(strMZIDFileName & " file not found")
-                Return String.Empty
+                Dim strMZIDFileNameAlternate = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strMZIDFileName, "Dataset_msgfdb.txt")
+                If File.Exists(Path.Combine(m_WorkDir, strMZIDFileNameAlternate)) Then
+                    strMZIDFileName = strMZIDFileNameAlternate
+                Else
+                    LogError(strMZIDFileName & " file not found")
+                    Return String.Empty
+                End If
             End If
 
             ' Determine the path to the MzidToTsvConverter
@@ -563,7 +568,7 @@ Public Class clsExtractToolRunner
         lstFilterPassingPeptides = New SortedSet(Of String)
         Try
 
-            Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.tsv")
+            Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus.tsv")
 
             ' Keys in this dictionary are column names, values are the 0-based column index
             Dim dctHeaderMapping = New Dictionary(Of String, Integer)
@@ -586,7 +591,7 @@ Public Class clsExtractToolRunner
                 ' ReSharper disable once UseImplicitlyTypedVariableEvident
                 For iteration As Integer = 1 To numberOfClonedSteps
 
-                    Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & ".tsv")
+                    Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus_Part" & iteration & ".tsv")
                     Dim linesRead = 0
 
                     If m_DebugLevel >= 2 Then
@@ -727,9 +732,9 @@ Public Class clsExtractToolRunner
       lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
 
         Try
-            Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_PepToProtMap.txt")
+            Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus_PepToProtMap.txt")
 
-            Dim fiTempFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_PepToProtMap.tmp"))
+            Dim fiTempFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfplus_PepToProtMap.tmp"))
             m_jobParams.AddResultFileToSkip(fiTempFile.Name)
 
             Dim totalLinesProcessed As Long = 0
@@ -745,7 +750,7 @@ Public Class clsExtractToolRunner
                 ' ReSharper disable once UseImplicitlyTypedVariableEvident
                 For iteration As Integer = 1 To numberOfClonedSteps
 
-                    Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_Part" & iteration & "_PepToProtMap.txt")
+                    Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus_Part" & iteration & "_PepToProtMap.txt")
                     Dim linesRead = 0
 
                     If m_DebugLevel >= 2 Then
@@ -1201,15 +1206,12 @@ Public Class clsExtractToolRunner
 
     End Function
 
-    Private Function RunPhrpForMSGFDB() As IJobParams.CloseOutType
+    Private Function RunPhrpForMSGFPlus() As IJobParams.CloseOutType
 
         Dim currentStep = "Initializing"
         Dim eResult As IJobParams.CloseOutType
 
         Dim msg As String
-
-        Dim CreateMSGFDBFirstHitsFile As Boolean
-        Dim CreateMSGFDBSynopsisFile As Boolean
 
         Dim strTargetFilePath As String
         Dim strSynFilePath As String
@@ -1220,21 +1222,21 @@ Public Class clsExtractToolRunner
 
             ' Run the processor
             If m_DebugLevel > 3 Then
-                msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Starting PHRP"
+                msg = "clsExtractToolRunner.RunPhrpForMSGFPlus(); Starting PHRP"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
             End If
 
             Try
                 ' The goal:
-                '   Create the _fht.txt and _syn.txt files from the _msgfdb.txt file (which should already have been unzipped from the _msgfdb.zip file)
-                '   or from the _msgfdb.tsv file
+                '   Create the _fht.txt and _syn.txt files from the _msgfplus.txt file (which should already have been unzipped from the _msgfplus.zip file)
+                '   or from the _msgfplus.tsv file
 
                 currentStep = "Determining results file type based on the results file name"
 
                 Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
                 Dim numberOfClonedSteps = 1
 
-                strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt")
+                strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus.txt")
                 If Not File.Exists(strTargetFilePath) Then
                     ' Processing MSGF+ results, work with .tsv files
 
@@ -1254,7 +1256,16 @@ Public Class clsExtractToolRunner
                             suffixToAdd = String.Empty
                         End If
 
-                        strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb" & suffixToAdd & ".tsv")
+                        Dim toolNameTag = "_msgfplus"
+                        strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & toolNameTag & suffixToAdd & ".tsv")
+
+                        If Not File.Exists(strTargetFilePath) Then
+                            Dim strTargetFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strTargetFilePath, "Dataset_msgfdb.txt")
+                            If File.Exists(strTargetFilePathAlt) Then
+                                strTargetFilePath = strTargetFilePathAlt
+                                toolNameTag = "_msgfdb"
+                            End If
+                        End If
 
                         If Not File.Exists(strTargetFilePath) Then
                             ' Need to create the .tsv file
@@ -1267,7 +1278,7 @@ Public Class clsExtractToolRunner
 
                         End If
 
-                        Dim strPeptoProtMapFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb" & suffixToAdd & "_PepToProtMap.txt")
+                        Dim strPeptoProtMapFilePath = Path.Combine(m_WorkDir, m_Dataset & toolNameTag & suffixToAdd & "_PepToProtMap.txt")
 
                         If Not File.Exists(strPeptoProtMapFilePath) Then
                             Dim skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", False)
@@ -1311,18 +1322,18 @@ Public Class clsExtractToolRunner
                             Return eResult
                         End If
 
-                        strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.tsv")
+                        strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus.tsv")
                     End If
 
                 End If
 
-                strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_syn.txt")
+                strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus_syn.txt")
 
-                ' Create the Synopsis and First Hits files using the _msgfdb.txt file
-                CreateMSGFDBFirstHitsFile = True
-                CreateMSGFDBSynopsisFile = True
+                ' Create the Synopsis and First Hits files using the _msgfplus.txt file
+                Dim createMSGFPlusFirstHitsFile = True
+                Dim createMSGFPlusSynopsisFile = True
 
-                eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateMSGFDBFirstHitsFile, CreateMSGFDBSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFDB)
+                eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, createMSGFPlusFirstHitsFile, createMSGFPlusSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFPLUS)
 
                 If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
                     msg = "Error running PHRP"
@@ -1332,12 +1343,12 @@ Public Class clsExtractToolRunner
                 End If
 
                 If splitFastaEnabled Then
-                    ' Zip the MSGFDB_ConsoleOutput files
+                    ' Zip the MSGFPlus_ConsoleOutput files
                     ZipConsoleOutputFiles()
 
                 Else
                     Try
-                        ' Delete the _msgfdb.txt or _msgfdb.tsv file
+                        ' Delete the _msgfplus.txt or _msgfplus.tsv file
                         File.Delete(strTargetFilePath)
                     Catch ex As Exception
                         ' Ignore errors here
@@ -1345,7 +1356,7 @@ Public Class clsExtractToolRunner
                 End If
 
             Catch ex As Exception
-                msg = "clsExtractToolRunner.RunPhrpForMSGFDB(); Exception running PHRP: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
+                msg = "clsExtractToolRunner.RunPhrpForMSGFPlus(); Exception running PHRP: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -1360,7 +1371,7 @@ Public Class clsExtractToolRunner
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMSGFDB at step " & currentStep, ex)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMSGFPlus at step " & currentStep, ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -1448,15 +1459,21 @@ Public Class clsExtractToolRunner
         Dim diConsoleOutputFiles = New DirectoryInfo(Path.Combine(diWorkingDirectory.FullName, "ConsoleOutputFiles"))
         diConsoleOutputFiles.Create()
 
-        For Each fiFile As FileInfo In diWorkingDirectory.GetFiles("MSGFDB_ConsoleOutput_Part*.txt")
+        For Each fiFile As FileInfo In diWorkingDirectory.GetFiles("MSGFPlus_ConsoleOutput_Part*.txt")
             Dim targetPath = Path.Combine(diConsoleOutputFiles.FullName, fiFile.Name)
             fiFile.MoveTo(targetPath)
             consoleOutputFiles.Add(fiFile.Name)
         Next
 
-        Dim zippedConsoleOutputFilePath = Path.Combine(diWorkingDirectory.FullName, "MSGFDB_ConsoleOutput_Files.zip")
+        If consoleOutputFiles.Count = 0 Then
+            LogError("MSGF+ Console output files not found")
+            Return
+        End If
+
+        Dim zippedConsoleOutputFilePath = Path.Combine(diWorkingDirectory.FullName, "MSGFPlus_ConsoleOutput_Files.zip")
         If Not m_IonicZipTools.ZipDirectory(diConsoleOutputFiles.FullName, zippedConsoleOutputFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Problem zipping the ConsoleOutput files; will not delete the separate copies from the transfer folder")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Problem zipping the ConsoleOutput files; will not delete the separate copies from the transfer folder")
             Return
         End If
 

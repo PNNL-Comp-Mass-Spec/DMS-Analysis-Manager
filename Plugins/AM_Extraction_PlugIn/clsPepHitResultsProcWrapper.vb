@@ -78,35 +78,36 @@ Public Class clsPepHitResultsProcWrapper
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ExtractDataFromResults(PeptideSearchResultsFileName As String, FastaFilePath As String, ResultType As String) As IJobParams.CloseOutType
+    Public Function ExtractDataFromResults(peptideSearchResultsFileName As String, fastaFilePath As String, resultType As String) As IJobParams.CloseOutType
         '  Let the DLL auto-determines the input filename, based on the dataset name
-        Return ExtractDataFromResults(PeptideSearchResultsFileName, True, True, FastaFilePath, ResultType)
+        Return ExtractDataFromResults(peptideSearchResultsFileName, True, True, fastaFilePath, resultType)
     End Function
 
     ''' <summary>
-    ''' Converts Sequest, X!Tandem, Inspect, MSGDB, MSAlign, MODa, or MODPlus output file to a flat file
+    ''' Converts Sequest, X!Tandem, Inspect, MSGF+, MSAlign, MODa, or MODPlus output file to a flat file
     ''' </summary>
     ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ExtractDataFromResults(PeptideSearchResultsFileName As String,
-      CreateFirstHitsFile As Boolean,
-      CreateSynopsisFile As Boolean,
-      FastaFilePath As String,
-      ResultType As String) As IJobParams.CloseOutType
+    Public Function ExtractDataFromResults(
+      peptideSearchResultsFileName As String,
+      createFirstHitsFile As Boolean,
+      createSynopsisFile As Boolean,
+      fastaFilePath As String,
+      resultType As String) As IJobParams.CloseOutType
 
         Dim ModDefsFileName As String
         Dim ParamFileName As String = m_JobParams.GetParam("ParmFileName")
 
         Dim ioInputFile As FileInfo
 
-        Dim CmdStr As String
+        Dim cmdStr As String
         Dim blnSuccess As Boolean
 
         Try
             m_Progress = 0
             m_ErrMsg = String.Empty
 
-            If String.IsNullOrWhiteSpace(PeptideSearchResultsFileName) Then
+            If String.IsNullOrWhiteSpace(peptideSearchResultsFileName) Then
                 m_ErrMsg = "PeptideSearchResultsFileName is empty; unable to continue"
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
@@ -114,7 +115,7 @@ Public Class clsPepHitResultsProcWrapper
             ' Define the modification definitions file name
             ModDefsFileName = Path.GetFileNameWithoutExtension(ParamFileName) & clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX
 
-            ioInputFile = New FileInfo(PeptideSearchResultsFileName)
+            ioInputFile = New FileInfo(peptideSearchResultsFileName)
             m_PHRPConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt")
 
             Dim progLoc As String = m_MgrParams.GetParam("PHRPProgLoc")
@@ -130,7 +131,7 @@ Public Class clsPepHitResultsProcWrapper
             ' Note: 
             '   /SynPvalue is only used when processing Inspect files
             '   /SynProb is only used for MODa and MODPlus results
-            CmdStr = ioInputFile.FullName &
+            cmdStr = ioInputFile.FullName &
             " /O:" & ioInputFile.DirectoryName &
             " /M:" & ModDefsFileName &
             " /T:" & clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME &
@@ -138,23 +139,23 @@ Public Class clsPepHitResultsProcWrapper
             " /SynPvalue:0.2 " &
             " /SynProb:0.05 "
 
-            CmdStr &= " /L:" & Path.Combine(ioInputFile.DirectoryName, PHRP_LOG_FILE_NAME)
+            cmdStr &= " /L:" & Path.Combine(ioInputFile.DirectoryName, PHRP_LOG_FILE_NAME)
 
             Dim blnSkipProteinMods = m_JobParams.GetJobParameter("SkipProteinMods", False)
             If Not blnSkipProteinMods Then
-                CmdStr &= " /ProteinMods"
+                cmdStr &= " /ProteinMods"
             End If
 
-            If Not String.IsNullOrEmpty(FastaFilePath) Then
+            If Not String.IsNullOrEmpty(fastaFilePath) Then
                 ' Note that FastaFilePath will likely be empty if job parameter SkipProteinMods is true
-                CmdStr &= " /F:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(FastaFilePath)
+                cmdStr &= " /F:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(fastaFilePath)
             End If
 
             ' Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
             ' Thus, we only need to use these switches if either of these should be false
-            If Not CreateFirstHitsFile Or Not CreateSynopsisFile Then
-                CmdStr &= " /InsFHT:" & CreateFirstHitsFile.ToString()
-                CmdStr &= " /InsSyn:" & CreateSynopsisFile.ToString()
+            If Not createFirstHitsFile Or Not createSynopsisFile Then
+                cmdStr &= " /InsFHT:" & createFirstHitsFile.ToString()
+                cmdStr &= " /InsSyn:" & createSynopsisFile.ToString()
             End If
 
             ' PHRP defaults to use /MSGFPlusSpecEValue:5E-7  and  /MSGFPlusEValue:0.75
@@ -163,11 +164,11 @@ Public Class clsPepHitResultsProcWrapper
             Dim msgfPlusEValue = m_JobParams.GetJobParameter("MSGFPlusEValue", "")
 
             If Not String.IsNullOrEmpty(msgfPlusSpecEValue) Then
-                CmdStr &= " /MSGFPlusSpecEValue:" & msgfPlusSpecEValue
+                cmdStr &= " /MSGFPlusSpecEValue:" & msgfPlusSpecEValue
             End If
 
             If Not String.IsNullOrEmpty(msgfPlusEValue) Then
-                CmdStr &= " /MSGFPlusEValue:" & msgfPlusEValue
+                cmdStr &= " /MSGFPlusEValue:" & msgfPlusEValue
             End If
 
             If m_DebugLevel >= 1 Then
@@ -235,7 +236,7 @@ Public Class clsPepHitResultsProcWrapper
                 Dim lstFilesToCheck As List(Of String)
                 lstFilesToCheck = New List(Of String)
 
-                If CreateFirstHitsFile And Not CreateSynopsisFile Then
+                If createFirstHitsFile And Not createSynopsisFile Then
                     ' We're processing Inspect data, and PHRP simply created the _fht.txt file
                     ' Thus, only look for the first-hits file
                     lstFilesToCheck.Add("_fht.txt")
@@ -247,13 +248,13 @@ Public Class clsPepHitResultsProcWrapper
                     lstFilesToCheck.Add("_ModDetails.txt")
 
                     If Not blnSkipProteinMods Then
-                        If Not String.IsNullOrEmpty(FastaFilePath) Then
+                        If Not String.IsNullOrEmpty(fastaFilePath) Then
                             Dim strWarningMessage As String = String.Empty
 
-                            If PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(FastaFilePath, strWarningMessage) Then
+                            If PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, strWarningMessage) Then
                                 lstFilesToCheck.Add("_ProteinMods.txt")
                             End If
-                        ElseIf ResultType = clsAnalysisResources.RESULT_TYPE_MSGFDB Then
+                        ElseIf resultType = clsAnalysisResources.RESULT_TYPE_MSGFPLUS Then
                             lstFilesToCheck.Add("_ProteinMods.txt")
                         End If
                     End If

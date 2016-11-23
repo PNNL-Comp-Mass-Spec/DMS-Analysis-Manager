@@ -15,7 +15,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
         ' Lookup the file processing options, for example:
         ' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
-        ' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_fht.txt,MSGFPlus:_dta.zip,masic_finnigan:_ScanStatsEx.txt
+        ' MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_fht.txt,MSGFPlus:_dta.zip,masic_finnigan:_ScanStatsEx.txt
 
         Dim fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(","c).ToList()
 

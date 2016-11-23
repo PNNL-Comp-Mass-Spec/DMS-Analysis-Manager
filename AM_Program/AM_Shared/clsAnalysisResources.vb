@@ -92,7 +92,7 @@ Public MustInherit Class clsAnalysisResources
     Public Const RESULT_TYPE_SEQUEST As String = "Peptide_Hit"
     Public Const RESULT_TYPE_XTANDEM As String = "XT_Peptide_Hit"
     Public Const RESULT_TYPE_INSPECT As String = "IN_Peptide_Hit"
-    Public Const RESULT_TYPE_MSGFDB As String = "MSG_Peptide_Hit"           ' Used for MSGFDB and MSGF+
+    Public Const RESULT_TYPE_MSGFPLUS As String = "MSG_Peptide_Hit"           ' Used for MSGFDB and MSGF+
     Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
     Public Const RESULT_TYPE_MODA As String = "MODa_Peptide_Hit"
     Public Const RESULT_TYPE_MODPLUS As String = "MODPlus_Peptide_Hit"
@@ -1385,14 +1385,15 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
     Protected Function FindAndRetrieveMiscFiles(
-     FileName As String,
-     Unzip As Boolean,
-     SearchArchivedDatasetFolder As Boolean,
-     <Out()> ByRef sourceFolderPath As String) As Boolean
+      FileName As String,
+      Unzip As Boolean,
+      SearchArchivedDatasetFolder As Boolean,
+      <Out()> ByRef sourceFolderPath As String) As Boolean
 
         Const CreateStoragePathInfoFile = False
 
         ' Look for the file in the various folders
+        ' A message will be logged if the file is not found
         sourceFolderPath = FindDataFile(FileName, SearchArchivedDatasetFolder)
 
         ' Exit if file was not found
@@ -1419,6 +1420,47 @@ Public MustInherit Class clsAnalysisResources
             If m_DebugLevel >= 1 Then
                 ReportStatus("Unzipped file " + FileName)
             End If
+        End If
+
+        Return True
+
+    End Function
+
+    ' ReSharper disable once UnusedMember.Global
+    ''' <summary>
+    ''' Search for the specified PHRP file and copy it to the work directory
+    ''' If the filename contains _msgfplus and the file is not found, auto looks for the _msgfdb version of the file
+    ''' </summary>
+    ''' <param name="fileToGet">File to find; if the file is found with an alternative name, this variable is updated with the new name</param>
+    ''' <param name="synopsisFileName">Synopsis file name, if known</param>
+    ''' <param name="addToResultFileSkipList">If true, add the filename to the list of files to skip copying to the result folder</param>
+    ''' <returns>True if success, false if not found</returns>
+    ''' <remarks>Used by the IDPicker and MSGF plugins</remarks>    
+    Protected Function FindAndRetrievePHRPDataFile(
+      ByRef fileToGet As String,
+      synopsisFileName As String,
+      Optional addToResultFileSkipList As Boolean = True) As Boolean
+
+        Dim blnSuccess = FindAndRetrieveMiscFiles(fileToGet, False)
+
+        If Not blnSuccess AndAlso fileToGet.ToLower().Contains("msgfplus") Then
+            If String.IsNullOrEmpty(synopsisFileName) Then synopsisFileName = "Dataset_msgfdb.txt"
+            Dim alternativeName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToGet, synopsisFileName)
+
+            If Not String.Equals(alternativeName, fileToGet) Then
+                blnSuccess = FindAndRetrieveMiscFiles(alternativeName, False)
+                If blnSuccess Then
+                    fileToGet = alternativeName
+                End If
+            End If
+        End If
+
+        If Not blnSuccess Then
+            Return False
+        End If
+
+        If addToResultFileSkipList Then
+            m_jobParams.AddResultFileToSkip(fileToGet)
         End If
 
         Return True
@@ -4823,8 +4865,8 @@ Public MustInherit Class clsAnalysisResources
     ''' File processing options, examples:
     ''' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,sequest:_syn_ModSummary.txt:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
     ''' sequest:_syn.txt,sequest:_syn_MSGF.txt,sequest:_fht.txt,sequest:_fht_MSGF.txt,sequest:_dta.zip,sequest:_syn_ModSummary.txt
-    ''' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_fht.txt,MSGFPlus:_dta.zip,MSGFPlus:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt,masic_finnigan:_ReporterIons.txt:copy
-    ''' MSGFPlus:_msgfdb_syn.txt,MSGFPlus:_msgfdb_syn_ModSummary.txt,MSGFPlus:_dta.zip
+    ''' MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_fht.txt,MSGFPlus:_dta.zip,MSGFPlus:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt,masic_finnigan:_ReporterIons.txt:copy
+    ''' MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_syn_ModSummary.txt,MSGFPlus:_dta.zip
     ''' </param>
     ''' <param name="fileRetrievalMode">Used by plugins to indicate the types of files that are required (in case fileSpecList is not configured correctly for a given data package job)</param>
     ''' <returns>True if success, false if a problem</returns>
@@ -4881,8 +4923,8 @@ Public MustInherit Class clsAnalysisResources
                             If dataPkgJob.Value.Tool.ToLower().StartsWith("msgf") Then
                                 ' MSGF+
                                 fileSpecListCurrent = New List(Of String) From {
-                                    "MSGFPlus:_msgfdb_syn.txt",
-                                    "MSGFPlus:_msgfdb_syn_ModSummary.txt",
+                                    "MSGFPlus:_msgfplus_syn.txt",
+                                    "MSGFPlus:_msgfplus_syn_ModSummary.txt",
                                     "MSGFPlus:_dta.zip"}
 
                             End If
@@ -4941,6 +4983,28 @@ Public MustInherit Class clsAnalysisResources
                             sourceFolderPath = String.Empty
                         Else
                             sourceFolderPath = FindDataFile(sourceFileName)
+
+                            If String.IsNullOrEmpty(sourceFolderPath) Then
+                                ' Source file not found
+
+                                Dim alternateSourceFileName As String = String.Empty
+
+                                If sourceFileName.StartsWith("_msgfdb") Then
+                                    ' Auto-look for the _msgfplus version of this file
+                                    alternateSourceFileName = "_msgfplus" & sourceFileName.Substring("_msgfdb".Length)
+                                ElseIf sourceFileName.StartsWith("_msgfplus") Then
+                                    ' Auto-look for the _msgfdb version of this file
+                                    alternateSourceFileName = "_msgfdb" & sourceFileName.Substring("_msgfplus".Length)
+                                End If
+
+                                If Not String.IsNullOrEmpty(alternateSourceFileName) Then
+                                    sourceFolderPath = FindDataFile(alternateSourceFileName)
+                                    If Not String.IsNullOrEmpty(sourceFolderPath) Then
+                                        sourceFileName = alternateSourceFileName
+                                    End If
+                                End If
+                            End If
+
                         End If
 
                         If String.IsNullOrEmpty(sourceFolderPath) Then
@@ -5612,14 +5676,20 @@ Public MustInherit Class clsAnalysisResources
                     For Each sourceFile In lstFilesToGet
 
                         sourceFilename = sourceFile.Key
+                        Dim fileRequired = sourceFile.Value
 
                         ' Typically only use FindDataFile() for the first file in lstFilesToGet; we will assume the other files are in that folder
                         ' However, if the file resides in MyEMSL then we need to call FindDataFile for every new file because FindDataFile will append the MyEMSL File ID for each file
                         If String.IsNullOrEmpty(sourceFolderPath) OrElse sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
                             sourceFolderPath = FindDataFile(sourceFilename)
+
+                            If String.IsNullOrEmpty(sourceFolderPath) Then
+                                Dim alternateFileName As String = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt")
+                                sourceFolderPath = FindDataFile(alternateFileName)
+                            End If
                         End If
 
-                        If Not sourceFile.Value Then
+                        If Not fileRequired Then
                             ' It's OK if this file doesn't exist, we'll just log a debug message
                             eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG
                         Else
@@ -5628,9 +5698,13 @@ Public MustInherit Class clsAnalysisResources
                         End If
 
                         If udtOptions.CreateJobPathFiles And Not sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                            Dim strSourceFilePath As String = Path.Combine(sourceFolderPath, sourceFilename)
-                            If File.Exists(strSourceFilePath) Then
-                                swJobInfoFile.WriteLine(strSourceFilePath)
+                            Dim sourceFilePath As String = Path.Combine(sourceFolderPath, sourceFilename)
+                            Dim alternateFileNamelternateFileName As String = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt")
+
+                            If File.Exists(sourceFilePath) Then
+                                swJobInfoFile.WriteLine(sourceFilePath)
+                            ElseIf File.Exists(alternateFileNamelternateFileName) Then
+                                swJobInfoFile.WriteLine(alternateFileNamelternateFileName)
                             Else
                                 If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
                                     m_message = "Required PHRP file not found: " & sourceFilename
@@ -5638,7 +5712,7 @@ Public MustInherit Class clsAnalysisResources
                                         m_message &= "; Confirm job used MSGF+ and not MSGFDB"
                                     End If
                                     If m_DebugLevel >= 1 Then
-                                        ReportStatus("Required PHRP file not found: " & strSourceFilePath, 0, True)
+                                        ReportStatus("Required PHRP file not found: " & sourceFilePath, 0, True)
                                     End If
                                     Return False
                                 End If
@@ -5647,6 +5721,14 @@ Public MustInherit Class clsAnalysisResources
                         Else
                             ' Note for files in MyEMSL, this call will simply add the file to the download queue; use ProcessMyEMSLDownloadQueue() to retrieve the file
                             blnFileCopied = CopyFileToWorkDir(sourceFilename, sourceFolderPath, LocalFolderPath, eLogMsgTypeIfNotFound)
+
+                            If Not blnFileCopied Then
+                                Dim alternateFileName As String = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt")
+                                blnFileCopied = CopyFileToWorkDir(alternateFileName, sourceFolderPath, LocalFolderPath, eLogMsgTypeIfNotFound)
+                                If blnFileCopied Then
+                                    sourceFilename = alternateFileName
+                                End If
+                            End If
 
                             If Not blnFileCopied Then
 

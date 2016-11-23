@@ -13,6 +13,7 @@ Imports System.Linq
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
+Imports PHRPReader
 
 Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     Inherits clsAnalysisToolRunnerBase
@@ -526,8 +527,8 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         End If
 
         If udtJobMetadata.ToolName.ToLower().StartsWith("msgfplus") Then
-            fhtfile = udtJobMetadata.Dataset & "_msgfdb_fht.txt"
-            synFile = udtJobMetadata.Dataset & "_msgfdb_syn.txt"
+            fhtfile = udtJobMetadata.Dataset & "_msgfplus_fht.txt"
+            synFile = udtJobMetadata.Dataset & "_msgfplus_syn.txt"
             udtJobMetadata.ToolNameForAScore = "msgfplus"
         End If
 
@@ -540,6 +541,22 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         udtJobMetadata.SynopsisFilePath = Path.Combine(jobFolder.FullName, synFile)
 
         Dim success As Boolean
+
+        If Not File.Exists(udtJobMetadata.FirstHitsFilePath) Then
+            Dim fhtFileAlternate = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(udtJobMetadata.FirstHitsFilePath, "Dataset_msgfdb.txt")
+            If File.Exists(fhtFileAlternate) Then
+                udtJobMetadata.FirstHitsFilePath = fhtFileAlternate
+                fhtfile = Path.GetFileName(fhtFileAlternate)
+            End If
+        End If
+
+        If Not File.Exists(udtJobMetadata.SynopsisFilePath) Then
+            Dim synFileAlternate = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(udtJobMetadata.SynopsisFilePath, "Dataset_msgfdb.txt")
+            If File.Exists(synFileAlternate) Then
+                udtJobMetadata.SynopsisFilePath = synFileAlternate
+                synFile = Path.GetFileName(synFileAlternate)
+            End If
+        End If
 
         If File.Exists(udtJobMetadata.FirstHitsFilePath) Then
             CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, fhtfile)
@@ -562,7 +579,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         End If
 
         If String.IsNullOrWhiteSpace(udtJobMetadata.FirstHitsFilePath) AndAlso String.IsNullOrWhiteSpace(udtJobMetadata.SynopsisFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Did not find a synopsis or first hits file for job " & udtJobMetadata.Job)
+            LogWarning("Did not find a synopsis or first hits file for job " & udtJobMetadata.Job)
             Return False
         End If
 
@@ -652,7 +669,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         '
         ' Fragment Type:  HCD
         ' Mass Tolerance: 0.05 Da
-        ' Caching data in E:\DMS_WorkDir\Job1153717\HarrisMS_batch2_Ppp_A4-2_22Dec14_Frodo_14-12-07_msgfdb_syn.txt
+        ' Caching data in E:\DMS_WorkDir\Job1153717\HarrisMS_batch2_Ppp_A4-2_22Dec14_Frodo_14-12-07_msgfplus_syn.txt
         ' Computing AScore values and Writing results to E:\DMS_WorkDir
         ' Modifications for Dataset: HarrisMS_batch2_Ppp_A4-2_22Dec14_Frodo_14-12-07
         ' 	Static,   57.021465 on C

@@ -310,10 +310,10 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
                     If Not String.IsNullOrWhiteSpace(strLineIn) Then
                         If intLinesRead <= 3 Then
-                        	' Originally the first line was the MS-Deconv version
-                        	' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                        	' The third line is the MSDeconv version
-                            If strLineIn.ToLower.Contains("ms-deconv") Then
+                            ' Originally the first line was the MS-Deconv version
+                            ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                            ' The third line is the MSDeconv version
+                            If String.IsNullOrEmpty(mMSDeconvVersion) AndAlso strLineIn.ToLower.Contains("ms-deconv") Then
                                 If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSDeconvVersion) Then
                                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSDeconv version: " & strLineIn)
                                 End If

@@ -9,6 +9,7 @@
 Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Runtime.InteropServices
+Imports PHRPReader
 
 ''' <summary>
 ''' Manages retrieval of all files needed for data extraction
@@ -115,7 +116,7 @@ Public Class clsAnalysisResourcesExtraction
                 Case RESULT_TYPE_INSPECT
                     eResult = GetInspectFiles()
 
-                Case RESULT_TYPE_MSGFDB
+                Case RESULT_TYPE_MSGFPLUS
                     eResult = GetMSGFPlusFiles(createPepToProtMapFile)
 
                 Case RESULT_TYPE_MSALIGN
@@ -340,29 +341,42 @@ Public Class clsAnalysisResourcesExtraction
             currentStep = "Determining results file type based on the results file name"
             blnUseLegacyMSGFDB = False
 
-            SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus" & suffixToAdd & ".mzid.gz", True, False)
-            If String.IsNullOrEmpty(SourceFolderPath) Then
-                ' File not found
-                SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus" & suffixToAdd & ".zip", True, False)
-                If String.IsNullOrEmpty(SourceFolderPath) Then
-                    ' File not found
-                    SourceFolderPath = FindDataFile(m_DatasetName & "_msgfdb" & suffixToAdd & ".zip", True, False)
-                    If String.IsNullOrEmpty(SourceFolderPath) Then
-                        ' File not found; log a warning
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the _msgfplus.mzid.gz, _msgfplus.zip file, or the _msgfdb.zip file; assuming we're running MSGF+")
-                        mzidSuffix = ".mzid.gz"
-                    Else
-                        ' File Found
-                        blnUseLegacyMSGFDB = True
-                        mzidSuffix = ".zip"
-                    End If
-                Else
-                    ' Running MSGF+ with zipped results
-                    mzidSuffix = ".zip"
-                End If
-            Else
+            Dim fileToFind = m_DatasetName & "_msgfplus" & suffixToAdd & ".mzid.gz"
+            SourceFolderPath = FindDataFile(fileToFind, True, False)
+            If Not String.IsNullOrEmpty(SourceFolderPath) Then
                 ' Running MSGF+ with gzipped results
                 mzidSuffix = ".mzid.gz"
+            Else
+
+                ' File not found; look for _msgfdb.mzid.gz
+                Dim fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToFind, "Dataset_msgfdb.txt")
+                SourceFolderPath = FindDataFile(fileToGetAlternative, True, False)
+
+                If Not String.IsNullOrEmpty(SourceFolderPath) Then
+                    ' Running MSGF+ with gzipped results
+                    mzidSuffix = ".mzid.gz"
+                Else
+
+                    ' File not found; look for a .zip file
+                    SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus" & suffixToAdd & ".zip", True, False)
+                    If Not String.IsNullOrEmpty(SourceFolderPath) Then
+                        ' Running MSGF+ with zipped results
+                        mzidSuffix = ".zip"
+                    Else
+
+                        ' File not found; try _msgfdb
+                        SourceFolderPath = FindDataFile(m_DatasetName & "_msgfdb" & suffixToAdd & ".zip", True, False)
+                        If Not String.IsNullOrEmpty(SourceFolderPath) Then
+                            ' File Found
+                            blnUseLegacyMSGFDB = True
+                            mzidSuffix = ".zip"
+                        Else
+                            ' File not found; log a warning
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Could not find the _msgfplus.mzid.gz, _msgfplus.zip file, or the _msgfdb.zip file; assuming we're running MSGF+")
+                            mzidSuffix = ".mzid.gz"
+                        End If
+                    End If
+                End If
             End If
 
             ' ReSharper disable once UseImplicitlyTypedVariableEvident
@@ -388,10 +402,17 @@ Public Class clsAnalysisResourcesExtraction
                 Else
                     strBaseName = m_DatasetName & "_msgfplus" & suffixToAdd
 
-                    fileToGet = m_DatasetName & "_msgfdb" & suffixToAdd & ".tsv"
+                    fileToGet = m_DatasetName & "_msgfplus" & suffixToAdd & ".tsv"
                     currentStep = "Retrieving " & fileToGet
 
                     SourceFolderPath = FindDataFile(fileToGet, False, False)
+                    If String.IsNullOrEmpty(SourceFolderPath) Then
+                        Dim fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToGet, "Dataset_msgfdb.txt")
+                        SourceFolderPath = FindDataFile(fileToGetAlternative, False, False)
+                        If Not String.IsNullOrEmpty(SourceFolderPath) Then
+                            fileToGet = fileToGetAlternative
+                        End If
+                    End If
 
                     If Not String.IsNullOrEmpty(SourceFolderPath) Then
 
@@ -399,8 +420,7 @@ Public Class clsAnalysisResourcesExtraction
                             ' Examine the date of the TSV file
                             ' If less than 4 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
 
-                            Dim fiTSVFile As FileInfo
-                            fiTSVFile = New FileInfo(Path.Combine(SourceFolderPath, fileToGet))
+                            Dim fiTSVFile = New FileInfo(Path.Combine(SourceFolderPath, fileToGet))
                             If Date.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4 Then
                                 ' File is recent; grab it
                                 If Not CopyFileToWorkDir(fileToGet, SourceFolderPath, m_WorkingDir) Then
@@ -430,20 +450,24 @@ Public Class clsAnalysisResourcesExtraction
 
                 ' Manually add several files to skip
                 If splitFastaEnabled Then
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb_Part" & iteration & ".txt")
+                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus_Part" & iteration & ".txt")
                     m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus_Part" & iteration & ".mzid")
+                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus_Part" & iteration & ".tsv")
+                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb_Part" & iteration & ".txt")
                     m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb_Part" & iteration & ".tsv")
                 Else
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.txt")
+                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.txt")
                     m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.mzid")
+                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.tsv")
+                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.txt")
                     m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.tsv")
                 End If
 
                 ' Get the peptide to protein mapping file
-                fileToGet = m_DatasetName & "_msgfdb" & suffixToAdd & "_PepToProtMap.txt"
+                fileToGet = m_DatasetName & "_msgfplus" & suffixToAdd & "_PepToProtMap.txt"
                 currentStep = "Retrieving " & fileToGet
 
-                If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+                If Not FindAndRetrievePHRPDataFile(fileToGet, "") Then
                     ' Errors were reported in function call
 
                     ' See if IgnorePeptideToProteinMapError=True
@@ -471,7 +495,7 @@ Public Class clsAnalysisResourcesExtraction
                 If splitFastaEnabled Then
                     ' Retrieve the _ConsoleOutput file
 
-                    fileToGet = "MSGFDB_ConsoleOutput" & suffixToAdd & ".txt"
+                    fileToGet = "MSGFPlus_ConsoleOutput" & suffixToAdd & ".txt"
                     currentStep = "Retrieving " & fileToGet
 
                     If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
@@ -678,7 +702,7 @@ Public Class clsAnalysisResourcesExtraction
 
             Dim strToolNameForScript As String = m_jobParams.GetJobParameter("ToolName", String.Empty)
             If eResultType = PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB And strToolNameForScript = "MSGFPlus_IMS" Then
-                ' PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFDB.txt"
+                ' PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                 ' However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
                 ' We'll copy the current file locally, then rename it to the expected name
                 strToolVersionFileNewName = String.Copy(strToolVersionFile)
@@ -691,6 +715,16 @@ Public Class clsAnalysisResourcesExtraction
                 m_PendingFileRenames.Add(strToolVersionFile, strToolVersionFileNewName)
 
                 strToolVersionFile = strToolVersionFileNewName
+            ElseIf Not blnSuccess Then
+                If strToolVersionFile.ToLower().Contains("msgfplus") Then
+                    Dim strToolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt"
+                    blnSuccess = FindAndRetrieveMiscFiles(strToolVersionFileLegacy, False, False)
+                    If blnSuccess Then
+                        ' Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
+                        m_PendingFileRenames.Add(strToolVersionFileLegacy, strToolVersionFile)
+                        m_jobParams.AddResultFileToSkip(strToolVersionFileLegacy)
+                    End If
+                End If
             End If
 
             m_jobParams.AddResultFileToSkip(strToolVersionFile)

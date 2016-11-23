@@ -2591,11 +2591,6 @@ Public Class clsAnalysisToolRunnerBase
 
         Try
             Dim strStepToolName = m_jobParams.GetParam("StepTool")
-            If strStepToolName.ToLower().StartsWith("msgfplus") Then
-                ' For backwards compatibility, need to make sure the file does not start with "MSGFPlus" 
-                strStepToolName = clsGlobal.ReplaceIgnoreCase(strStepToolName, "MSGFPlus", "MSGFDB")
-            End If
-
             Dim strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" & strStepToolName & ".txt")
 
             Using swToolVersionFile = New StreamWriter(New FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))

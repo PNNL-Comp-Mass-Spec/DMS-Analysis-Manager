@@ -327,9 +327,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
         fiMSGFPlusResults = Nothing
 
         ' Determine the path to MSGF+
-        ' It is important that you pass "MSGFDB" to this function because the 
-        ' PeptideHitResultsProcessor (and possibly other software) expects the Tool Version file to be named Tool_Version_Info_MSGFDB.txt
-        mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", strMSGFJarfile)
+        ' The manager parameter is MSGFDbProgLoc because originally the software was named MSGFDB (aka MS-GFDB)
+        mMSGFDbProgLoc = DetermineProgramLocation("MSGFPlus", "MSGFDbProgLoc", strMSGFJarfile)
 
         If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -497,7 +496,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         End If
 
         If mMSGFPlusComplete Then
-            m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
+            m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE
             m_StatusTools.UpdateAndWrite(m_progress)
             If m_DebugLevel >= 3 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF+ Search Complete")
@@ -538,10 +537,10 @@ Public Class clsAnalysisToolRunnerMzRefinery
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
+            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
         End With
 
-        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
+        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_STARTING
 
         mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus
 
@@ -678,7 +677,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
             LogProgress("MSGF+ for MzRefinery")
 
-            If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE Then
+            If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE Then
                 If Not mMSGFPlusComplete Then
                     mMSGFPlusComplete = True
                     mMSGFPlusCompletionTime = Date.UtcNow
@@ -686,7 +685,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
                     If Date.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
                         ' MSGF+ is stuck at 96% complete and has been that way for 5 minutes
                         ' Java is likely frozen and thus the process should be aborted
-                        Dim warningMessage = "MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE.ToString("0") & "% complete for 5 minutes; aborting since Java appears frozen"
+                        Dim warningMessage = "MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") & "% complete for 5 minutes; aborting since Java appears frozen"
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
 
                         ' Bump up mMSGFPlusCompletionTime by one hour
@@ -1045,7 +1044,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
             .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT)
         End With
 
-        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
+        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE
 
         mProgRunnerMode = eMzRefinerProgRunnerMode.MzRefiner
 

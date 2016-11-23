@@ -58,9 +58,9 @@ Public Class clsAnalysisResourcesMSGFDB
 
                 End If
             Else
-                ' Make sure the machine has enough free memory to run MSGFDB
+                ' Make sure the machine has enough free memory to run MSGF+
                 currentTask = "ValidateFreeMemorySize"
-                If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGFDB", False) Then
+                If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGF+", False) Then
                     m_message = "Not enough free memory to run MSGFDB"
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If

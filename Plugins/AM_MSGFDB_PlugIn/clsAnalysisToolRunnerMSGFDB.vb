@@ -31,12 +31,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     Private mToolVersionWritten As Boolean
 
-    ' Path to MSGFDB.jar or MSGFPlus.jar
+    ' Path to MSGFPlus.jar
     Private mMSGFDbProgLoc As String
 
     Private mMSGFDbProgLocHPC As String
 
-    Private mMSGFPlus As Boolean
+    ' We always use MSGF+ now
+    Private Const mMSGFPlus = True
 
     Private mResultsIncludeAutoAddedDecoyPeptides As Boolean = False
 
@@ -128,7 +129,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     m_message = "Unknown error running MSGF+"
                 End If
 
-                ' If the MSGFDB_ConsoleOutput.txt file or the .mzid file exist, we want to move them to the failed results folder
+                ' If the MSGFPlus_ConsoleOutput.txt file or the .mzid file exist, we want to move them to the failed results folder
                 fiMSGFPlusResults.Refresh()
 
                 Dim diWorkingDirectory As DirectoryInfo
@@ -139,7 +140,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     diWorkingDirectory = New DirectoryInfo(mWorkingDirectoryInUse)
                 End If
 
-                Dim fiConsoleOutputFile = diWorkingDirectory.GetFiles(clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
+                Dim fiConsoleOutputFile = diWorkingDirectory.GetFiles(clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
 
                 If Not fiMSGFPlusResults.Exists And fiConsoleOutputFile.Count = 0 Then
                     Return result
@@ -283,22 +284,16 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim strMSGFJarfile As String
 
-        mMSGFPlus = True
         strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME
 
-        If mMSGFPlus Then
-            fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfplus.mzid"))
-        Else
-            fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfdb.txt"))
-        End If
+        fiMSGFPlusResults = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_msgfplus.mzid"))
 
         blnProcessingError = False
         blnTooManySkippedSpectra = False
 
-        ' Determine the path to MSGFDB (or MSGF+)
-        ' It is important that you pass "MSGFDB" to this function, even if mMSGFPlus = True
-        ' The reason?  The PeptideHitResultsProcessor (and possibly other software) expects the Tool Version file to be named Tool_Version_Info_MSGFDB.txt
-        mMSGFDbProgLoc = DetermineProgramLocation("MSGFDB", "MSGFDbProgLoc", strMSGFJarfile)
+        ' Determine the path to MSGF+
+        ' The manager parameter is MSGFDbProgLoc because originally the software was named MSGFDB (aka MS-GFDB)
+        mMSGFDbProgLoc = DetermineProgramLocation("MSGFPlus", "MSGFDbProgLoc", strMSGFJarfile)
 
         If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
             ' Returning CLOSEOUT_FAILED will cause the plugin to immediately exit; results and console output files will not be saved
@@ -312,7 +307,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             VerifyHPCMSGFDb(udtHPCOptions)
         End If
 
-        ' Note: we will store the MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
+        ' Note: we will store the MSGF+ version info in the database after the first line is written to file MSGFPlus_ConsoleOutput.txt
         mToolVersionWritten = False
 
 #If EnableHPC = "True" Then
@@ -588,7 +583,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE
+        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE
         m_StatusTools.UpdateAndWrite(m_progress)
         ReportStatus("MSGF+ Search Complete", 3)
 
@@ -694,7 +689,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End If
 
         hpcJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath
-        hpcJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
+        hpcJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
         hpcJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
         hpcJobInfo.TaskParameters.FailJobOnFailure = True
 
@@ -706,7 +701,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         If mMSGFPlus Then
             Dim mzidToTSVTask = New HPC_Connector.ParametersTask("MZID_To_TSV")
-            Dim tsvFileName = m_Dataset & clsMSGFDBUtils.MSGFDB_TSV_SUFFIX
+            Dim tsvFileName = m_Dataset & clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX
             Const tsvConversionJavaMemorySizeMB = 4000
 
             Dim cmdStrConvertToTSV = clsMSGFDBUtils.GetMZIDtoTSVCommandLine(resultsFileName, tsvFileName, udtHPCOptions.WorkDirPath, msgfdbJarFilePath, tsvConversionJavaMemorySizeMB)
@@ -786,11 +781,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
             SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir)
 
             ' Rename the Tool_Version_Info file
-            Dim fiToolVersionInfo = New FileInfo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFDB_HPC.txt"))
+            Dim fiToolVersionInfo = New FileInfo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFPLUS_HPC.txt"))
             If Not fiToolVersionInfo.Exists Then
                 LogWarning("ToolVersionInfo file not found; this will lead to problems with IDPicker: " & fiToolVersionInfo.FullName)
             Else
-                fiToolVersionInfo.MoveTo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFDB.txt"))
+                fiToolVersionInfo.MoveTo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFPlus.txt"))
             End If
         End If
 
@@ -810,10 +805,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
             .CacheStandardOutput = True,
             .EchoOutputToConsole = True,
             .WriteConsoleOutputToFile = True,
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFDB_CONSOLE_OUTPUT_FILE)
+            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
         }
 
-        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_STARTING
+        m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_STARTING
         ResetProgRunnerCpuUsage()
 
         ' Start the program and wait for it to finish
@@ -834,7 +829,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim blnConversionRequired = True
 
-        Dim strTSVFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsMSGFDBUtils.MSGFDB_TSV_SUFFIX)
+        Dim strTSVFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX)
 
         If udtHPCOptions.UsingHPC Then
             ' The TSV file should have already been created by the HPC job, then copied locally via SynchronizeFolders
@@ -1000,7 +995,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             LogProgress("MSGF+")
 
-            If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE - Single.Epsilon Then
+            If m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE - Single.Epsilon Then
                 If Not mMSGFPlusComplete Then
                     mMSGFPlusComplete = True
                     mMSGFPlusCompletionTime = Date.UtcNow
@@ -1008,7 +1003,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     If Date.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5 Then
                         ' MSGF+ is stuck at 96% complete and has been that way for 5 minutes
                         ' Java is likely frozen and thus the process should be aborted
-                        LogWarning("MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_COMPLETE.ToString("0") & "% complete for 5 minutes; " &
+                        LogWarning("MSGF+ has been stuck at " & clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") & "% complete for 5 minutes; " &
                                    "aborting since Java appears frozen")
 
                         ' Bump up mMSGFPlusCompletionTime by one hour
@@ -1089,7 +1084,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     End Sub
 
     ''' <summary>
-    ''' Convert the .mzid file to a TSV file and create the PeptideToProtein map file
+    ''' Convert the .mzid file to a TSV file and create the PeptideToProtein map file (Dataset_msgfplus_PepToProtMap.txt)
     ''' </summary>
     ''' <param name="resultsFileName"></param>
     ''' <param name="udtHPCOptions"></param>
@@ -1110,8 +1105,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 currentTask = "Calling ParallelMSGFPlusRenameFile for " & resultsFileName
                 resultsFileName = ParallelMSGFPlusRenameFile(resultsFileName)
 
-                currentTask = "Calling ParallelMSGFPlusRenameFile for MSGFDB_ConsoleOutput.txt"
-                ParallelMSGFPlusRenameFile("MSGFDB_ConsoleOutput.txt")
+                currentTask = "Calling ParallelMSGFPlusRenameFile for MSGFPlus_ConsoleOutput.txt"
+                ParallelMSGFPlusRenameFile("MSGFPlus_ConsoleOutput.txt")
             End If
 
             ' Gzip the output file
@@ -1132,7 +1127,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 ' If running on HPC this should have already happened, but we need to call ConvertMZIDToTSV() anyway to possibly rename the .tsv file
 
                 currentTask = "Calling ConvertMZIDToTSV"
-                UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV)
+                UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_CONVERT_MZID_TO_TSV)
                 msgfPlusResultsFileName = ConvertMZIDToTSV(resultsFileName, udtHPCOptions)
 
                 If String.IsNullOrEmpty(msgfPlusResultsFileName) Then
@@ -1159,6 +1154,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                         Continue While
                     End If
                     dataLines += 1
+                    If dataLines > 2 Then Exit While
                 End While
 
                 If dataLines <= 1 Then
@@ -1167,10 +1163,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 End If
             End Using
 
-            ' Create the Peptide to Protein map file
+            ' Create the Peptide to Protein map file, Dataset_msgfplus_PepToProtMap.txt
             ' ToDo: If udtHPCOptions.UsingPIC = True, then run this on PIC by calling 64-bit PeptideToProteinMapper.exe
 
-            UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
+            UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS)
 
             Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
 

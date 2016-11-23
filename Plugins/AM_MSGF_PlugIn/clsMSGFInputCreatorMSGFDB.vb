@@ -118,7 +118,7 @@ Public Class clsMSGFInputCreatorMSGFDB
     ''' Reads a MSGFDB FHT or SYN file and creates the corresponding _syn_MSGF.txt or _fht_MSGF.txt file
     ''' using the MSGFDB_SpecProb values for the MSGF score
     ''' </summary>
-    ''' <param name="strSourceFilePath"></param>
+    ''' <param name="strSourceFilePath">_msgfplus_fht.txt or _msgfplus_syn.txt file</param>
     ''' <param name="strSourceFileDescription"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>

@@ -138,6 +138,12 @@ Public Class clsAnalysisToolRunnerIDPicker
 
             ' Define the path to the synopsis file
             strSynFilePath = Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset))
+            If Not File.Exists(strSynFilePath) Then
+                Dim alternateFilePath = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strSynFilePath, "Dataset_msgfdb.txt")
+                If File.Exists(alternateFilePath) Then
+                    strSynFilePath = alternateFilePath
+                End If
+            End If
 
             If Not clsAnalysisResources.ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
                 ' The synopsis file is empty

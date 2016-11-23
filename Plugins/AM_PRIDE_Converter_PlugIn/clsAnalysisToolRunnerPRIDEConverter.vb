@@ -999,32 +999,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Const MSGF_SPECPROB_NOTDEFINED = 10
         Const PVALUE_NOTDEFINED = 10
 
-        Dim dctBestMatchByScan As Dictionary(Of Integer, KeyValuePair(Of Double, String))
-        Dim dctBestMatchByScanScoreValues As Dictionary(Of Integer, udtPseudoMSGFDataType)
-
-        Dim strMzXMLFilename As String
-
-        Dim strSynopsisFileName As String
-        Dim strSynopsisFilePath As String
-        Dim strSynopsisFilePathAlt As String
-
         Dim strPseudoMsgfFilePath As String
-
-        Dim strTotalPRMScore As String
-        Dim strPValue As String
-        Dim strDeltaScore As String
-        Dim strDeltaScoreOther As String
-
-        Dim dblMSGFSpecProb As Double
-        Dim dblFDR As Double
-        Dim dblPepFDR As Double
-        Dim dblPValue As Double
-
-        Dim dblScoreForCurrentMatch As Double
-
-        Dim blnValidPSM As Boolean
-        Dim blnNewScanNumber As Boolean
-        Dim blnThresholdChecked As Boolean
 
         Dim blnFDRValuesArePresent = False
         Dim blnPepFDRValuesArePresent = False
@@ -1050,11 +1025,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             '
             ' The keys in each of dctBestMatchByScan and dctBestMatchByScanScoreValues are scan numbers
             ' The value for dctBestMatchByScan is a KeyValue pair where the key is the score for this match
-            dctBestMatchByScan = New Dictionary(Of Integer, KeyValuePair(Of Double, String))
-            dctBestMatchByScanScoreValues = New Dictionary(Of Integer, udtPseudoMSGFDataType)
+            Dim dctBestMatchByScan = New Dictionary(Of Integer, KeyValuePair(Of Double, String))
+            Dim dctBestMatchByScanScoreValues = New Dictionary(Of Integer, udtPseudoMSGFDataType)
 
-
-            strMzXMLFilename = strDataset & ".mzXML"
+            Dim strMzXMLFilename = strDataset & ".mzXML"
 
             ' Determine the correct capitalization for the mzXML file
             Dim diWorkdir = New DirectoryInfo(m_WorkDir)
@@ -1066,16 +1040,28 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 ' mzXML file not found; don't worry about this right now (it's possible that CreateMSGFReportFilesOnly = True)
             End If
 
-            strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset)
+            Dim strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset)
 
-            strSynopsisFilePath = Path.Combine(m_WorkDir, strSynopsisFileName)
+            Dim strSynopsisFilePath = Path.Combine(m_WorkDir, strSynopsisFileName)
+
+            If Not File.Exists(strSynopsisFilePath) Then
+                Dim strSynopsisFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strSynopsisFilePath, "Dataset_msgfdb.txt")
+                If File.Exists(strSynopsisFilePathAlt) Then
+                    strSynopsisFilePath = strSynopsisFilePathAlt
+                End If
+            End If
 
             ' Check whether PHRP files with a prefix of "Job12345_" exist
             ' This prefix is added by RetrieveDataPackagePeptideHitJobPHRPFiles if multiple peptide_hit jobs are included for the same dataset
-            strSynopsisFilePathAlt = Path.Combine(m_WorkDir, "Job" & dataPkgJob.Job & "_" & strSynopsisFileName)
+            Dim strSynopsisFilePathWithJob = Path.Combine(m_WorkDir, "Job" & dataPkgJob.Job & "_" & strSynopsisFileName)
 
-            If File.Exists(strSynopsisFilePathAlt) Then
-                strSynopsisFilePath = String.Copy(strSynopsisFilePathAlt)
+            If File.Exists(strSynopsisFilePathWithJob) Then
+                strSynopsisFilePath = String.Copy(strSynopsisFilePathWithJob)
+            ElseIf Not File.Exists(strSynopsisFilePath) Then
+                Dim strSynopsisFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strSynopsisFilePathWithJob, "Dataset_msgfdb.txt")
+                If File.Exists(strSynopsisFilePathAlt) Then
+                    strSynopsisFilePath = strSynopsisFilePathAlt
+                End If
             End If
 
             Using objReader = New clsPHRPReader(strSynopsisFilePath, dataPkgJob.PeptideHitResultType, True, True)
@@ -1085,14 +1071,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 ' Read the data, filtering on either PepFDR or FDR if defined, or MSGF_SpecProb if PepFDR and/or FDR are not available
                 While objReader.MoveNext()
 
-                    blnValidPSM = True
-                    blnThresholdChecked = False
+                    Dim blnValidPSM = True
+                    Dim blnThresholdChecked = False
 
-                    dblMSGFSpecProb = MSGF_SPECPROB_NOTDEFINED
-                    dblFDR = -1
-                    dblPepFDR = -1
-                    dblPValue = PVALUE_NOTDEFINED
-                    dblScoreForCurrentMatch = 100
+                    Dim dblMSGFSpecProb = CDbl(MSGF_SPECPROB_NOTDEFINED)
+                    Dim dblFDR = CDbl(-1)
+                    Dim dblPepFDR = CDbl(-1)
+                    Dim dblPValue = CDbl(PVALUE_NOTDEFINED)
+                    Dim dblScoreForCurrentMatch = CDbl(100)
 
                     ' Determine MSGFSpecProb; store 10 if we don't find a valid number
                     If Not Double.TryParse(objReader.CurrentPSM.MSGFSpecProb, dblMSGFSpecProb) Then
@@ -1262,10 +1248,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     If blnValidPSM Then
 
                         ' These fields are used to hold different scores depending on the search engine
-                        strTotalPRMScore = "0"
-                        strPValue = "0"
-                        strDeltaScore = "0"
-                        strDeltaScoreOther = "0"
+                        Dim strTotalPRMScore = "0"
+                        Dim strPValue = "0"
+                        Dim strDeltaScore = "0"
+                        Dim strDeltaScoreOther = "0"
 
                         Select Case dataPkgJob.PeptideHitResultType
                             Case clsPHRPReader.ePeptideHitResultType.Sequest
@@ -1317,6 +1303,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                         ' Add or update dctBestMatchByScan and dctBestMatchByScanScoreValues
                         Dim kvBestMatchForScan As KeyValuePair(Of Double, String) = Nothing
+                        Dim blnNewScanNumber As Boolean
 
                         If dctBestMatchByScan.TryGetValue(objReader.CurrentPSM.ScanNumber, kvBestMatchForScan) Then
                             If dblScoreForCurrentMatch >= kvBestMatchForScan.Key Then

@@ -8,14 +8,14 @@ Imports System.Text.RegularExpressions
 Public Class clsMSGFDBUtils
 
 #Region "Constants"
-    Public Const PROGRESS_PCT_MSGFDB_STARTING As Single = 1
-    Public Const PROGRESS_PCT_MSGFDB_LOADING_DATABASE As Single = 2
-    Public Const PROGRESS_PCT_MSGFDB_READING_SPECTRA As Single = 3
-    Public Const PROGRESS_PCT_MSGFDB_THREADS_SPAWNED As Single = 4
-    Public Const PROGRESS_PCT_MSGFDB_COMPUTING_FDRS As Single = 95
-    Public Const PROGRESS_PCT_MSGFDB_COMPLETE As Single = 96
-    Public Const PROGRESS_PCT_MSGFDB_CONVERT_MZID_TO_TSV As Single = 97
-    Public Const PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS As Single = 98
+    Public Const PROGRESS_PCT_MSGFPLUS_STARTING As Single = 1
+    Public Const PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE As Single = 2
+    Public Const PROGRESS_PCT_MSGFPLUS_READING_SPECTRA As Single = 3
+    Public Const PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED As Single = 4
+    Public Const PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS As Single = 95
+    Public Const PROGRESS_PCT_MSGFPLUS_COMPLETE As Single = 96
+    Public Const PROGRESS_PCT_MSGFPLUS_CONVERT_MZID_TO_TSV As Single = 97
+    Public Const PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS As Single = 98
     Public Const PROGRESS_PCT_COMPLETE As Single = 99
 
     Private Enum eThreadProgressSteps
@@ -38,20 +38,20 @@ Public Class clsMSGFDBUtils
     Private Const THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES As Single = 50
     Private Const THREAD_PROGRESS_PCT_COMPLETE As Single = 100
 
-    Private Const MSGFDB_OPTION_TDA As String = "TDA"
-    Private Const MSGFDB_OPTION_SHOWDECOY As String = "showDecoy"
-    Private Const MSGFDB_OPTION_FRAGMENTATION_METHOD As String = "FragmentationMethodID"
-    Private Const MSGFDB_OPTION_INSTRUMENT_ID As String = "InstrumentID"
+    Private Const MSGFPLUS_OPTION_TDA As String = "TDA"
+    Private Const MSGFPLUS_OPTION_SHOWDECOY As String = "showDecoy"
+    Private Const MSGFPLUS_OPTION_FRAGMENTATION_METHOD As String = "FragmentationMethodID"
+    Private Const MSGFPLUS_OPTION_INSTRUMENT_ID As String = "InstrumentID"
 
-    Public Const MSGFDB_TSV_SUFFIX As String = "_msgfdb.tsv"
+    Public Const MSGFPLUS_TSV_SUFFIX As String = "_msgfplus.tsv"
 
     ' Obsolete setting: Old MS-GFDB program
     'Public Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
 
     Public Const MSGFPLUS_JAR_NAME As String = "MSGFPlus.jar"
-    Public Const MSGFDB_CONSOLE_OUTPUT_FILE As String = "MSGFDB_ConsoleOutput.txt"
+    Public Const MSGFPLUS_CONSOLE_OUTPUT_FILE As String = "MSGFPlus_ConsoleOutput.txt"
 
-    Public Const MOD_FILE_NAME As String = "MSGFDB_Mods.txt"
+    Public Const MOD_FILE_NAME As String = "MSGFPlus_Mods.txt"
 
 #End Region
 
@@ -351,9 +351,8 @@ Public Class clsMSGFDBUtils
       mzidFileName As String) As String
 
         Try
-            ' Note that this file needs to be _msgfdb.tsv, not _msgfplus.tsv
-            ' The reason is that we want the PeptideToProtein Map file to be named Dataset_msgfdb_PepToProtMap.txt for compatibility with PHRPReader
-            Dim tsvFileName = datasetName & MSGFDB_TSV_SUFFIX
+            ' In November 2016, this file was renamed from Dataset_msgfdb.tsv to Dataset_msgfplus.tsv
+            Dim tsvFileName = datasetName & MSGFPLUS_TSV_SUFFIX
             Dim strTSVFilePath = Path.Combine(m_WorkDir, tsvFileName)
 
             ' Examine the size of the .mzid file
@@ -439,9 +438,8 @@ Public Class clsMSGFDBUtils
         Dim strTSVFilePath As String
 
         Try
-            ' Note that this file needs to be _msgfdb.tsv, not _msgfplus.tsv
-            ' The reason is that we want the PeptideToProtein Map file to be named Dataset_msgfdb_PepToProtMap.txt for compatibility with PHRPReader
-            Dim tsvFileName = strDatasetName & MSGFDB_TSV_SUFFIX
+            ' In November 2016, this file was renamed from Dataset_msgfdb.tsv to Dataset_msgfplus.tsv
+            Dim tsvFileName = strDatasetName & MSGFPLUS_TSV_SUFFIX
             strTSVFilePath = Path.Combine(m_WorkDir, tsvFileName)
 
             ' Examine the size of the .mzid file
@@ -605,6 +603,14 @@ Public Class clsMSGFDBUtils
 
     End Function
 
+    ''' <summary>
+    ''' Create file Dataset_msgfplus_PepToProtMap.txt
+    ''' </summary>
+    ''' <param name="ResultsFileName"></param>
+    ''' <param name="blnResultsIncludeAutoAddedDecoyPeptides"></param>
+    ''' <param name="localOrgDbFolder"></param>
+    ''' <param name="ePeptideInputFileFormat"></param>
+    ''' <returns></returns>
     Public Function CreatePeptideToProteinMapping(
       ResultsFileName As String,
       blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
@@ -995,17 +1001,17 @@ Public Class clsMSGFDBUtils
         Dim dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
         dctParamNames.Add("PMTolerance", "t")
-        dctParamNames.Add(MSGFDB_OPTION_TDA, "tda")
-        dctParamNames.Add(MSGFDB_OPTION_SHOWDECOY, "showDecoy")
+        dctParamNames.Add(MSGFPLUS_OPTION_TDA, "tda")
+        dctParamNames.Add(MSGFPLUS_OPTION_SHOWDECOY, "showDecoy")
 
         ' This setting is nearly always set to 0 since we create a _ScanType.txt file that specifies the type of each scan 
         ' (thus, the value in the parameter file is ignored); the exception, when it is UVPD (mode 4)
-        dctParamNames.Add(MSGFDB_OPTION_FRAGMENTATION_METHOD, "m")
+        dctParamNames.Add(MSGFPLUS_OPTION_FRAGMENTATION_METHOD, "m")
 
         ' This setting is auto-updated based on the instrument class for this dataset, 
         ' plus also the scan types listed In the _ScanType.txt file 
         ' (thus, the value in the parameter file Is typically ignored)
-        dctParamNames.Add(MSGFDB_OPTION_INSTRUMENT_ID, "inst")
+        dctParamNames.Add(MSGFPLUS_OPTION_INSTRUMENT_ID, "inst")
 
         dctParamNames.Add("EnzymeID", "e")
         dctParamNames.Add("C13", "c13")                 ' Used by MS-GFDB
@@ -1443,7 +1449,7 @@ Public Class clsMSGFDBUtils
     ''' <summary>
     ''' Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
     ''' </summary>
-    ''' <returns>Percent Complete (value between 0 and 100)</returns>
+    ''' <returns>Percent Complete (value between 0 and 96)</returns>
     ''' <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
     Public Function ParseMSGFDBConsoleOutputFile(workingDirectory As String) As Single
 
@@ -1550,7 +1556,7 @@ Public Class clsMSGFDBUtils
 
         Try
 
-            strConsoleOutputFilePath = Path.Combine(workingDirectory, MSGFDB_CONSOLE_OUTPUT_FILE)
+            strConsoleOutputFilePath = Path.Combine(workingDirectory, MSGFPLUS_CONSOLE_OUTPUT_FILE)
             If Not File.Exists(strConsoleOutputFilePath) Then
                 If m_DebugLevel >= 4 Then
                     ReportMessage("Console output file not found: " & strConsoleOutputFilePath)
@@ -1576,7 +1582,7 @@ Public Class clsMSGFDBUtils
 
             mConsoleOutputErrorMsg = String.Empty
 
-            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_STARTING
+            sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_STARTING
             mContinuumSpectraSkipped = 0
             mSpectraSearched = 0
 
@@ -1595,7 +1601,6 @@ Public Class clsMSGFDBUtils
                         ' Originally the first line was the MS-GF+ version
                         ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                         ' The third line is the MS-GF+ version
-                        If strLineInLcase.Contains("gfdb") OrElse strLineInLcase.Contains("ms-gf+") Then
                         If String.IsNullOrWhiteSpace(mMSGFDbVersion) AndAlso (strLineInLcase.Contains("gfdb") OrElse strLineInLcase.Contains("ms-gf+")) Then
                             If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
                                 ReportMessage("MS-GF+ version: " & strLineIn)
@@ -1622,13 +1627,13 @@ Public Class clsMSGFDBUtils
                             mContinuumSpectraSkipped += 1
                         End If
                     ElseIf strLineIn.StartsWith("Loading database files") Then
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_LOADING_DATABASE Then
-                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_LOADING_DATABASE
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE
                         End If
 
                     ElseIf strLineIn.StartsWith("Reading spectra") Then
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_READING_SPECTRA Then
-                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_READING_SPECTRA
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_READING_SPECTRA Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_READING_SPECTRA
                         End If
                     ElseIf strLineIn.StartsWith("Using") Then
 
@@ -1638,8 +1643,8 @@ Public Class clsMSGFDBUtils
                         If oThreadMatch.Success Then
                             Short.TryParse(oThreadMatch.Groups("ThreadCount").Value, totalThreadCount)
 
-                            If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_THREADS_SPAWNED Then
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFDB_THREADS_SPAWNED
+                            If sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED Then
+                                sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED
                             End If
 
                         End If
@@ -1662,13 +1667,13 @@ Public Class clsMSGFDBUtils
                         End If
 
                     ElseIf strLineIn.StartsWith("Computing EFDRs") OrElse strLineIn.StartsWith("Computing q-values") Then
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPUTING_FDRS Then
-                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPUTING_FDRS
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS
                         End If
 
                     ElseIf strLineIn.StartsWith("MS-GF+ complete") OrElse strLineIn.StartsWith("MS-GF+ complete") Then
-                        If sngEffectiveProgress < PROGRESS_PCT_MSGFDB_COMPLETE Then
-                            sngEffectiveProgress = PROGRESS_PCT_MSGFDB_COMPLETE
+                        If sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPLETE Then
+                            sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPLETE
                         End If
 
                     ElseIf String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -1707,7 +1712,7 @@ Public Class clsMSGFDBUtils
             mTaskCountCompleted = completedTasks.Count
 
             If percentCompleteAllTasks > 0 Then
-                sngEffectiveProgress = percentCompleteAllTasks * (PROGRESS_PCT_MSGFDB_COMPUTING_FDRS - PROGRESS_PCT_MSGFDB_THREADS_SPAWNED) / 100.0!
+                sngEffectiveProgress = percentCompleteAllTasks * PROGRESS_PCT_MSGFPLUS_COMPLETE / 100.0!
             End If
 
         Catch ex As Exception
@@ -1724,7 +1729,7 @@ Public Class clsMSGFDBUtils
     ''' <summary>
     ''' Parses the static modifications, dynamic modifications, and custom amino acid information to create the MS-GF+ Mods file
     ''' </summary>
-    ''' <param name="strParameterFilePath">Full path to the MSGF parameter file; will create file MSGFDB_Mods.txt in the same folder</param>
+    ''' <param name="strParameterFilePath">Full path to the MSGF parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
     ''' <param name="sbOptions">String builder of command line arguments to pass to MS-GF+</param>
     ''' <param name="intNumMods">Max Number of Modifications per peptide</param>
     ''' <param name="lstStaticMods">List of Static Mods</param>
@@ -1976,7 +1981,7 @@ Public Class clsMSGFDBUtils
                         ' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
                         If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
 
-                            If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+                            If clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD) Then
 
                                 If String.IsNullOrWhiteSpace(strValue) AndAlso Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
                                     ' No setting for FragmentationMethodID, and a ScanType file was created
@@ -2012,7 +2017,7 @@ Public Class clsMSGFDBUtils
                                     ReportMessage("Using Fragmentation method -m " & strValue)
                                 End If
 
-                            ElseIf clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_INSTRUMENT_ID) Then
+                            ElseIf clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_INSTRUMENT_ID) Then
 
                                 If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
 
@@ -2055,7 +2060,7 @@ Public Class clsMSGFDBUtils
                             End If
 
                             If String.IsNullOrEmpty(strArgumentSwitch) Then
-                                If m_DebugLevel >= 1 And Not clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFDB_OPTION_SHOWDECOY) Then
+                                If m_DebugLevel >= 1 And Not clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFPLUS_OPTION_SHOWDECOY) Then
                                     ReportWarning("Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
                                 End If
                             ElseIf String.IsNullOrEmpty(strValue) Then
@@ -2143,7 +2148,7 @@ Public Class clsMSGFDBUtils
                             End If
                         End If
 
-                        'If clsGlobal.IsMatch(kvSetting.Key, MSGFDB_OPTION_FRAGMENTATION_METHOD) Then
+                        'If clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD) Then
                         '	If Integer.TryParse(strValue, intValue) Then
                         '		If intValue = 3 Then
                         '			blnHCD = True

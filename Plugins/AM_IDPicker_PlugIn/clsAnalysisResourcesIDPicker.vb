@@ -107,7 +107,6 @@ Public Class clsAnalysisResourcesIDPicker
             If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-
         If blnSplitFasta Then
             ' Restore the setting for SplitFasta
             m_jobParams.SetParam("SplitFasta", "True")
@@ -187,29 +186,44 @@ Public Class clsAnalysisResourcesIDPicker
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the " & eResultType.ToString & " files")
         End If
 
-        Dim synFileName As String
-        synFileName = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName)
+        Dim synFileNameExpected = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName)
+        Dim synFilePath = String.Empty
 
         For Each kvEntry As KeyValuePair(Of String, Boolean) In lstFileNamesToGet
 
-            If Not FindAndRetrieveMiscFiles(kvEntry.Key, False) Then
+            Dim fileToGet = String.Copy(kvEntry.Key)
+            Dim fileRequired = kvEntry.Value
+
+            ' Note that the contents of fileToGet will be updated by FindAndRetrievePHRPDataFile if we're looking for a _msgfplus file but we find a _msgfdb file
+            Dim success = FindAndRetrievePHRPDataFile(fileToGet, synFilePath)
+
+            If Not success AndAlso eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB AndAlso
+               fileToGet.Contains(Path.GetFileName(clsPHRPReader.GetToolVersionInfoFilename(eResultType))) Then
+                Dim strToolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt"
+                success = FindAndRetrieveMiscFiles(strToolVersionFileLegacy, False, False)
+                If success Then
+                    ' Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
+                    File.Move(Path.Combine(m_WorkingDir, strToolVersionFileLegacy), Path.Combine(m_WorkingDir, fileToGet))
+                End If
+            End If
+
+            If Not success Then
                 ' File not found; is it required?
-                If kvEntry.Value Then
+                If fileRequired Then
                     'Errors were reported in function call, so just return
                     eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                     Return False
                 End If
             End If
 
-            m_jobParams.AddResultFileToSkip(kvEntry.Key)
+            m_jobParams.AddResultFileToSkip(fileToGet)
 
-            If kvEntry.Key = synFileName Then
+            If kvEntry.Key = synFileNameExpected Then
                 ' Check whether the synopsis file is empty
-                Dim strSynFilePath As String
-                strSynFilePath = Path.Combine(m_WorkingDir, synFileName)
+                synFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(fileToGet))
 
                 Dim strErrorMessage As String = String.Empty
-                If Not ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
+                If Not ValidateFileHasData(synFilePath, "Synopsis file", strErrorMessage) Then
                     ' The synopsis file is empty
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
 
@@ -220,10 +234,6 @@ Public Class clsAnalysisResourcesIDPicker
             End If
 
         Next
-
-        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return False
-        End If
 
         If eResultType = clsPHRPReader.ePeptideHitResultType.XTandem Then
             ' X!Tandem requires a few additional parameter files
@@ -368,11 +378,9 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <remarks></remarks>
     Private Function GetPHRPFileNames(eResultType As clsPHRPReader.ePeptideHitResultType, strDatasetName As String) As SortedList(Of String, Boolean)
 
-        Dim lstFileNamesToGet As SortedList(Of String, Boolean)
-        lstFileNamesToGet = New SortedList(Of String, Boolean)
+        Dim lstFileNamesToGet = New SortedList(Of String, Boolean)
 
-        Dim synFileName As String
-        synFileName = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName)
+        Dim synFileName = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName)
 
         lstFileNamesToGet.Add(synFileName, True)
         lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(eResultType, strDatasetName), False)
@@ -388,8 +396,8 @@ Public Class clsAnalysisResourcesIDPicker
 
         Dim strToolVersionFile As String = clsPHRPReader.GetToolVersionInfoFilename(eResultType)
         Dim strToolNameForScript As String = m_jobParams.GetJobParameter("ToolName", "")
-        If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB And strToolNameForScript = "MSGFPlus_IMS" Then
-            ' PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFDB.txt"
+        If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB AndAlso strToolNameForScript = "MSGFPlus_IMS" Then
+            ' PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
             ' However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
             ' We'll copy the current file locally, then rename it to the expected name
             Const strOriginalName = "Tool_Version_Info_MSGFPlus_IMS.txt"
