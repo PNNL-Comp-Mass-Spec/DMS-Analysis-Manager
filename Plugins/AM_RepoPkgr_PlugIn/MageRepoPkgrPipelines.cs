@@ -72,7 +72,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// </summary>
         /// <param name="queryTmpltName">Name of query template to use to get items from data package</param>
         /// <param name="filter">value to filter query on (ignore if blank)</param>
-        /// <param name="fileNameSelector">Mage file filter to select specific files to copy</param>
+        /// <param name="fileNameSelector">Mage file filter to select specific files to copy (semi-colon delimited list of file matching patterns)</param>
         /// <param name="outputSubfolderName">Subfolder in repo package cache folder to copy files into</param>
         /// <param name="prefixCol">Name of column to use as prefix for output file name (ignore if blank)</param>
         public void GetItemsToRepoPkg(string queryTmpltName, string filter, string fileNameSelector, string outputSubfolderName, string prefixCol)
@@ -91,7 +91,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// and then copy the files to the given subfolder in the repo cache 
         /// (include metadata file (based on data package items) as well)
         /// </summary>
-        /// <param name="fileNameSelector">Mage file filter to select specific files to copy</param>
+        /// <param name="fileNameSelector">Mage file filter to select specific files to copy (semi-colon delimited list of file matching patterns)</param>
         /// <param name="outputSubfolderName">Subfolder in repo package cache folder to copy files into</param>
         /// <param name="prefixCol">Name of column to use as prefix for output file name (ignore if blank)</param>
         public void GetFilesToRepoPkg(string fileNameSelector, string outputSubfolderName, string prefixCol)
@@ -179,7 +179,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// the given set of input folders for files matching the given selector pattern
         /// </summary>
         /// <param name="searchList">SimpleSink object holding list of folders to search (plus optional metadata)</param>
-        /// <param name="fileNameSelector">Pattern to use to select files</param>
+        /// <param name="fileNameSelector">Pattern to use to select files (semi-colon delimited list of file matching patterns)</param>
         /// <returns></returns>
         private SimpleSink GetFileSearchResults(SimpleSink searchList, string fileNameSelector)
         {

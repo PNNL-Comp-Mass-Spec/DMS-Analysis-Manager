@@ -141,7 +141,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             if (_bIncludeMSGFPlusResults)
             {
-                // find any MSGFPlus jobs in data package and copy their first hits files to appropriate cache subfolder
+                // Find any MSGFPlus jobs in data package and copy their first hits files to appropriate cache subfolder
+                // Note that prior to November 2016 the filenames had _msgfdb_fht; they now have _msgfplus_fht
                 _mgr.GetItemsToRepoPkg(
                     "DataPkgJobsQueryTemplate",
                     "MSGFPlus",
