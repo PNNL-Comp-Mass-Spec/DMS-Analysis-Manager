@@ -1601,8 +1601,8 @@ Public Class clsMSGFDBUtils
                         ' Originally the first line was the MS-GF+ version
                         ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                         ' The third line is the MS-GF+ version
-                        If String.IsNullOrWhiteSpace(mMSGFDbVersion) AndAlso (strLineInLcase.Contains("gfdb") OrElse strLineInLcase.Contains("ms-gf+")) Then
-                            If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFDbVersion) Then
+                        If String.IsNullOrWhiteSpace(mMSGFPlusVersion) AndAlso (strLineIn.StartsWith("MS-GF+ Release")) Then
+                            If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFPlusVersion) Then
                                 ReportMessage("MS-GF+ version: " & strLineIn)
                             End If
 
