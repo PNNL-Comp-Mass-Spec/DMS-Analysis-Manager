@@ -120,11 +120,13 @@ Public Class clsAnalysisToolRunnerIDPicker
             m_progress = PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES
 
             ' Determine the path to the IDPicker program (idpQonvert); folder will also contain idpAssemble.exe and idpReport.exe
-            Dim progLocQonvert As String
-            progLocQonvert = DetermineProgramLocation("IDPicker", "IDPickerProgLoc", IDPicker_Qonvert)
+            Dim progLocQonvert As String = String.Empty
+            If Not blnSkipIDPicker Then
+                progLocQonvert = DetermineProgramLocation("IDPicker", "IDPickerProgLoc", IDPicker_Qonvert)
 
-            If String.IsNullOrWhiteSpace(progLocQonvert) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                If String.IsNullOrWhiteSpace(progLocQonvert) Then
+                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                End If
             End If
 
             ' Determine the result type
