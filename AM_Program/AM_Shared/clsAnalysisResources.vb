@@ -6752,12 +6752,24 @@ Public MustInherit Class clsAnalysisResources
             LogDebugMessage("Copying MASIC results file: " + fiSourceFile.FullName)
         End If
 
-        If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, MaxCopyAttempts) Then
-            Dim blnIgnoreFile As Boolean
-            blnIgnoreFile = SafeToIgnore(fiSourceFile.Name, lstNonCriticalFileSuffixes)
+        Dim blnIgnoreFile = SafeToIgnore(fiSourceFile.Name, lstNonCriticalFileSuffixes)
 
-            If Not blnIgnoreFile Then
-                m_message = strFileToFind + " not found at " + fiSourceFile.Directory.FullName
+        Dim eLogMsgTypeIfNotFound As clsLogTools.LogLevels
+        If blnIgnoreFile Then
+            eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG
+        Else
+            eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR
+        End If
+
+        Dim success = CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName,
+                                        m_WorkingDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly, MaxCopyAttempts)
+        If Not success Then
+            If blnIgnoreFile Then
+                If m_DebugLevel >= 3 Then
+                    LogDebugMessage("  File not found; this is not a problem")
+                End If
+            Else
+                LogError(strFileToFind + " not found at " + fiSourceFile.Directory.FullName)
                 Return False
             End If
         End If
