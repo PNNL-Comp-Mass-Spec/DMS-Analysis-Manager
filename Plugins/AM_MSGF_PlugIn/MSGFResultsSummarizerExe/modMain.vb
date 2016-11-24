@@ -16,7 +16,7 @@ Imports System.IO
 Imports MSGFResultsSummarizer
 
 Module modMain
-    Private Const PROGRAM_DATE As String = "November 10, 2016"
+    Private Const PROGRAM_DATE As String = "November 23, 2016"
 
     Private mMSGFSynFilePath As String = String.Empty
     Private mInputFolderPath As String = String.Empty

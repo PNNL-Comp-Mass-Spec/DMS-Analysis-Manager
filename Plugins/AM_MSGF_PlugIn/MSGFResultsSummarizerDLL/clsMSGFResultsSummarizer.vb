@@ -793,7 +793,7 @@ Public Class clsMSGFResultsSummarizer
                 ' MTS scrambled proteins                'scrambled[_]%'
                 ' X!Tandem decoy proteins               '%[:]reversed'
                 ' Inspect reversed/scrambled proteins   'xxx.%'
-                ' MSGFDB (aka MSGF+) reversed proteins  'rev[_]%'
+                ' MSGF+ reversed proteins  'rev[_]%'
 
                 If strProtein.StartsWith("reversed_") OrElse
                    strProtein.StartsWith("scrambled_") OrElse
