@@ -319,7 +319,7 @@ Public Class clsLogTools
         ' Layout.ConversionPattern="%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline"
 
         Dim layout = New CustomPatternLayout()
-        layout.ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline %stack"
+        layout.ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline%stack"
 
         layout.ActivateOptions()
 
