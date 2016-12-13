@@ -18,12 +18,7 @@ Public Class clsMSGFDBUtils
     Public Const PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS As Single = 98
     Public Const PROGRESS_PCT_COMPLETE As Single = 99
 
-    Private Enum eThreadProgressSteps
-        PreprocessingSpectra = 0
-        DatabaseSearch = 1
-        ComputingSpectralProbabilities = 2
-        Complete = 3
-    End Enum
+    Private Const MZIDToTSV_CONSOLE_OUTPUT_FILE = "MzIDToTsv_ConsoleOutput.txt"
 
     Private Enum eModDefinitionParts
         EmpiricalFormulaOrMass = 0
@@ -32,11 +27,6 @@ Public Class clsMSGFDBUtils
         Position = 3            ' For CustomAA definitions this field is essentially ignored
         Name = 4
     End Enum
-
-    Private Const THREAD_PROGRESS_PCT_PREPROCESSING_SPECTRA As Single = 0
-    Private Const THREAD_PROGRESS_PCT_DATABASE_SEARCH As Single = 5
-    Private Const THREAD_PROGRESS_PCT_COMPUTING_SPECTRAL_PROBABILITIES As Single = 50
-    Private Const THREAD_PROGRESS_PCT_COMPLETE As Single = 100
 
     Private Const MSGFPLUS_OPTION_TDA As String = "TDA"
     Private Const MSGFPLUS_OPTION_SHOWDECOY As String = "showDecoy"
@@ -278,6 +268,59 @@ Public Class clsMSGFDBUtils
 
     End Sub
 
+    ''' <summary>
+    ''' Append one or more lines from the start of sourceFile to the end of targetFile
+    ''' </summary>
+    ''' <param name="workDir"></param>
+    ''' <param name="sourceFile"></param>
+    ''' <param name="targetFile"></param>
+    ''' <param name="headerLinesToAppend">Number of lines to append</param>
+    Private Sub AppendConsoleOutputHeader(workDir As String, sourceFile As String, targetFile As String, headerLinesToAppend As Integer)
+
+        Try
+            Dim sourceFilePath = Path.Combine(workDir, sourceFile)
+            Dim targetFilePath = Path.Combine(workDir, targetFile)
+
+            If Not File.Exists(sourceFilePath) Then
+                ReportWarning("Source file not found in AppendConsoleOutputHeader: " + sourceFilePath)
+                Return
+            End If
+
+            If Not File.Exists(targetFilePath) Then
+                ReportWarning("Target file not found in AppendConsoleOutputHeader: " + targetFilePath)
+                Return
+            End If
+
+            Using srReader = New StreamReader(New FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)),
+                  swWriter = New StreamWriter(New FileStream(targetFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+
+                Dim linesRead = 0
+                Dim separatorAdded = False
+
+                While linesRead < headerLinesToAppend AndAlso Not srReader.EndOfStream
+                    Dim dataLine = srReader.ReadLine()
+                    linesRead += 1
+
+                    If String.IsNullOrEmpty(dataLine) Then Continue While
+
+                    If Not separatorAdded Then
+                        swWriter.WriteLine(New String("-"c, 80))
+                        separatorAdded = True
+                    End If
+
+                    swWriter.WriteLine(dataLine)
+
+                End While
+
+            End Using
+
+
+        Catch ex As Exception
+            ReportError("Error in clsMSGFDBUtils->AppendConsoleOutputHeader", "Error in clsMSGFDBUtils->AppendConsoleOutputHeader: " & ex.Message)
+        End Try
+
+    End Sub
+
     Private Function CanDetermineInstIdFromInstGroup(instrumentGroup As String, <Out> ByRef instrumentIDNew As String, <Out> ByRef autoSwitchReason As String) As Boolean
 
         ' Thermo Instruments
@@ -391,7 +434,7 @@ Public Class clsMSGFDBUtils
                 .CacheStandardOutput = True,
                 .EchoOutputToConsole = True,
                 .WriteConsoleOutputToFile = True,
-                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
+                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
             }
 
             ' This process is typically quite fast, so we do not track CPU usage
@@ -401,6 +444,11 @@ Public Class clsMSGFDBUtils
                 ReportError("MzidToTsvConverter.exe returned an error code converting the .mzid file To a .tsv file: " & objCreateTSV.ExitCode)
                 Return String.Empty
             Else
+                ' The conversion succeeded
+
+                ' Append the first line from the console output file to the end of the MSGFPlus console output file
+                AppendConsoleOutputHeader(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1)
+
                 Try
                     ' Delete the console output file
                     File.Delete(objCreateTSV.ConsoleOutputFilePath)
@@ -497,7 +545,7 @@ Public Class clsMSGFDBUtils
                 .CacheStandardOutput = True,
                 .EchoOutputToConsole = True,
                 .WriteConsoleOutputToFile = True,
-                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzIDToTsv_ConsoleOutput.txt")
+                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
             }
 
             ' This process is typically quite fast, so we do not track CPU usage
@@ -507,6 +555,11 @@ Public Class clsMSGFDBUtils
                 ReportError("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
                 Return String.Empty
             Else
+                ' The conversion succeeded
+
+                ' Append the first line from the console output file to the end of the MSGFPlus console output file
+                AppendConsoleOutputHeader(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1)
+
                 Try
                     ' Delete the console output file
                     File.Delete(objCreateTSV.ConsoleOutputFilePath)
