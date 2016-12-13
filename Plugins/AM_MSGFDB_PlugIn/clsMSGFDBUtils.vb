@@ -1819,6 +1819,24 @@ Public Class clsMSGFDBUtils
                 swModFile.WriteLine("# If this value is large, the search will be slow")
                 swModFile.WriteLine("NumMods=" & intNumMods)
 
+                If lstCustomAminoAcids.Count > 0 Then
+                    ' Custom Amino Acid definitions need to be listed before static or dynamic modifications
+                    swModFile.WriteLine()
+                    swModFile.WriteLine("# Custom Amino Acids")
+
+                    For Each strCustomAADef In lstCustomAminoAcids
+                        Dim strCustomAADefClean = String.Empty
+
+                        If ParseMSGFDbValidateMod(strCustomAADef, strCustomAADefClean) Then
+                            If MisleadingModDef(strCustomAADef, strCustomAADefClean, "Custom AA", "custom", "opt") Then Return False
+                            If MisleadingModDef(strCustomAADef, strCustomAADefClean, "Custom AA", "custom", "fix") Then Return False
+                            swModFile.WriteLine(strCustomAADefClean)
+                        Else
+                            Return False
+                        End If
+                    Next
+                End If
+
                 swModFile.WriteLine()
                 swModFile.WriteLine("# Static mods")
                 If lstStaticMods.Count = 0 Then
@@ -1849,23 +1867,6 @@ Public Class clsMSGFDBUtils
                             If MisleadingModDef(strDynamicMod, strModClean, "Dynamic mod", "opt", "fix") Then Return False
                             If MisleadingModDef(strDynamicMod, strModClean, "Dynamic mod", "opt", "custom") Then Return False
                             swModFile.WriteLine(strModClean)
-                        Else
-                            Return False
-                        End If
-                    Next
-                End If
-
-                If lstCustomAminoAcids.Count > 0 Then
-                    swModFile.WriteLine()
-                    swModFile.WriteLine("# Custom Amino Acids")
-
-                    For Each strCustomAADef As String In lstCustomAminoAcids
-                        Dim strCustomAADefClean As String = String.Empty
-
-                        If ParseMSGFDbValidateMod(strCustomAADef, strCustomAADefClean) Then
-                            If MisleadingModDef(strCustomAADef, strCustomAADefClean, "Custom AA", "custom", "opt") Then Return False
-                            If MisleadingModDef(strCustomAADef, strCustomAADefClean, "Custom AA", "custom", "fix") Then Return False
-                            swModFile.WriteLine(strCustomAADefClean)
                         Else
                             Return False
                         End If
