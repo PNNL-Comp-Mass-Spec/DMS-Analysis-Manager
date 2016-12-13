@@ -539,7 +539,7 @@ Public Class clsMSGFDBUtils
       workingDirectory As String,
       mzidToTsvConverterProgLoc As String) As String
 
-        Dim cmdStr As String =
+        Dim cmdStr =
             " -mzid:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) &
             " -tsv:" & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) &
             " -unroll" &
@@ -580,7 +580,7 @@ Public Class clsMSGFDBUtils
       ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
 
         Const blnResultsIncludeAutoAddedDecoyPeptides = False
-        Dim localOrgDbFolder As String = m_mgrParams.GetParam("orgdbdir")
+        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
         Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat)
 
     End Function
@@ -589,7 +589,7 @@ Public Class clsMSGFDBUtils
       ResultsFileName As String,
       blnResultsIncludeAutoAddedDecoyPeptides As Boolean) As IJobParams.CloseOutType
 
-        Dim localOrgDbFolder As String = m_mgrParams.GetParam("orgdbdir")
+        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
         Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
 
     End Function
@@ -618,7 +618,7 @@ Public Class clsMSGFDBUtils
       ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
 
         ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-        Dim dbFilename As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
+        Dim dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
         Dim strInputFilePath As String
         Dim strFastaFilePath As String
 
@@ -1129,7 +1129,7 @@ Public Class clsMSGFDBUtils
         Dim result As IJobParams.CloseOutType
         Dim oRand = New Random()
 
-        Dim strMgrName As String = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
+        Dim strMgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
         Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
         Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
 
@@ -1263,8 +1263,8 @@ Public Class clsMSGFDBUtils
         ' Either copy them from Gigasax (or Proto-7) or re-create them
         ' 
         Dim indexIteration = 0
-        Dim strMSGFPlusIndexFilesFolderPath As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", "\\gigasax\MSGFPlus_Index_Files")
-        Dim strMSGFPlusIndexFilesFolderPathLegacyDB As String = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\proto-7\MSGFPlus_Index_Files")
+        Dim strMSGFPlusIndexFilesFolderPath = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", "\\gigasax\MSGFPlus_Index_Files")
+        Dim strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\proto-7\MSGFPlus_Index_Files")
 
         While indexIteration <= 2
 
@@ -1319,8 +1319,8 @@ Public Class clsMSGFDBUtils
       <Out()> ByRef lstOther As Dictionary(Of Integer, String)) As Boolean
 
         Dim strLineIn As String
-        Dim intScanNumberColIndex As Integer = -1
-        Dim intScanTypeNameColIndex As Integer = -1
+        Dim intScanNumberColIndex = -1
+        Dim intScanTypeNameColIndex = -1
 
         lstLowResMSn = New Dictionary(Of Integer, String)
         lstHighResMSn = New Dictionary(Of Integer, String)
@@ -1771,8 +1771,8 @@ Public Class clsMSGFDBUtils
                 If lstStaticMods.Count = 0 Then
                     swModFile.WriteLine("# None")
                 Else
-                    For Each strStaticMod As String In lstStaticMods
-                        Dim strModClean As String = String.Empty
+                    For Each strStaticMod In lstStaticMods
+                        Dim strModClean = String.Empty
 
                         If ParseMSGFDbValidateMod(strStaticMod, strModClean) Then
                             If MisleadingModDef(strStaticMod, strModClean, "Static mod", "fix", "opt") Then Return False
@@ -1789,8 +1789,8 @@ Public Class clsMSGFDBUtils
                 If lstDynamicMods.Count = 0 Then
                     swModFile.WriteLine("# None")
                 Else
-                    For Each strDynamicMod As String In lstDynamicMods
-                        Dim strModClean As String = String.Empty
+                    For Each strDynamicMod In lstDynamicMods
+                        Dim strModClean = String.Empty
 
                         If ParseMSGFDbValidateMod(strDynamicMod, strModClean) Then
                             If MisleadingModDef(strDynamicMod, strModClean, "Dynamic mod", "opt", "fix") Then Return False
@@ -1973,9 +1973,9 @@ Public Class clsMSGFDBUtils
 
                     If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
 
-                        Dim strValue As String = kvSetting.Value
+                        Dim strValue = kvSetting.Value
 
-                        Dim strArgumentSwitch As String = String.Empty
+                        Dim strArgumentSwitch = String.Empty
                         Dim strArgumentSwitchOriginal As String
 
                         ' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
@@ -2027,8 +2027,8 @@ Public Class clsMSGFDBUtils
                                     End If
 
                                 ElseIf Not String.IsNullOrWhiteSpace(instrumentGroup) Then
-                                    Dim instrumentIDNew As String = String.Empty
-                                    Dim autoSwitchReason As String = String.Empty
+                                    Dim instrumentIDNew = String.Empty
+                                    Dim autoSwitchReason = String.Empty
 
                                     If Not CanDetermineInstIdFromInstGroup(instrumentGroup, instrumentIDNew, autoSwitchReason) Then
                                         Dim datasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
@@ -2052,7 +2052,7 @@ Public Class clsMSGFDBUtils
 
                             AdjustSwitchesForMSGFPlus(mMSGFPlus, strArgumentSwitch, strValue)
 
-                            Dim valueOverride As String = String.Empty
+                            Dim valueOverride = String.Empty
                             If overrideParams.TryGetValue(strArgumentSwitch, valueOverride) Then
                                 ReportMessage("Overriding switch " & strArgumentSwitch & " to use -" & strArgumentSwitch & " " & valueOverride &
                                                                                      " instead of -" & strArgumentSwitch & " " & strValue)
@@ -2264,7 +2264,6 @@ Public Class clsMSGFDBUtils
         ' then MS-GF+ will use a model trained for TMT peptides (without phospho)
         ' In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to sbOptions having "-protocol 1")
 
-
         strMSGFDbCmdLineOptions = sbOptions.ToString()
 
         ' By default, MS-GF+ filters out spectra with fewer than 20 data points
@@ -2310,8 +2309,8 @@ Public Class clsMSGFDBUtils
 
         If String.IsNullOrEmpty(instrumentGroup) Then instrumentGroup = "#Undefined#"
 
-        Dim instrumentIDNew As String = String.Empty
-        Dim autoSwitchReason As String = String.Empty
+        Dim instrumentIDNew = String.Empty
+        Dim autoSwitchReason = String.Empty
 
         If Not CanDetermineInstIdFromInstGroup(instrumentGroup, instrumentIDNew, autoSwitchReason) Then
 
@@ -2417,7 +2416,7 @@ Public Class clsMSGFDBUtils
                 Return False
             End If
 
-            Dim connectionString As String = m_mgrParams.GetParam("connectionstring")
+            Dim connectionString = m_mgrParams.GetParam("connectionstring")
 
             Dim sqlStr = New Text.StringBuilder
 
@@ -2491,7 +2490,7 @@ Public Class clsMSGFDBUtils
         Dim intPoundIndex As Integer
         Dim strSplitMod() As String
 
-        Dim strComment As String = String.Empty
+        Dim strComment = String.Empty
 
         strModClean = String.Empty
 
@@ -2621,7 +2620,7 @@ Public Class clsMSGFDBUtils
       strValue As String,
       strParameterName As String) As Boolean
 
-        Dim strCommandLineSwitchName As String = strParameterName
+        Dim strCommandLineSwitchName = strParameterName
 
         Return ParseMSFDBParamLine(sbOptions, strKeyName, strValue, strParameterName, strCommandLineSwitchName)
 
@@ -2805,8 +2804,8 @@ Public Class clsMSGFDBUtils
             m_jobParams.AddResultFileToSkip(fileName)
 
         Catch ex As Exception
-            Dim Msg As String = "clsAnalysisToolRunnerMSGFDB.ZipOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-            ReportError("Error zipping output files", Msg)
+            Dim msg = "clsAnalysisToolRunnerMSGFDB.ZipOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
+            ReportError("Error zipping output files", msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 

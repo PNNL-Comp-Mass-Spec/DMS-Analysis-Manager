@@ -94,7 +94,7 @@ Public Class clsAnalysisResourcesMSGFDB
             End If
 
             ' The ToolName job parameter holds the name of the job script we are executing
-            Dim strScriptName As String = m_jobParams.GetParam("ToolName")
+            Dim strScriptName = m_jobParams.GetParam("ToolName")
             Dim eResult As IJobParams.CloseOutType
 
             If strScriptName.ToLower().Contains("mzxml") OrElse strScriptName.ToLower().Contains("msgfplus_bruker") Then
@@ -207,7 +207,7 @@ Public Class clsAnalysisResourcesMSGFDB
         If blnSuccess Then
             ' Open the ScanStats file and read the header line to see if column ScanTypeName is present
             ' Also confirm that there are MSn spectra labeled as HCD, CID, or ETD
-            Dim strScanStatsOrExFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+            Dim strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
 
             Dim blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsOrExFilePath)
 
@@ -254,7 +254,7 @@ Public Class clsAnalysisResourcesMSGFDB
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Dim strScanStatsFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+        Dim strScanStatsFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
         Dim detailedScanTypesDefinedNewFile = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath)
 
         If Not detailedScanTypesDefinedNewFile Then

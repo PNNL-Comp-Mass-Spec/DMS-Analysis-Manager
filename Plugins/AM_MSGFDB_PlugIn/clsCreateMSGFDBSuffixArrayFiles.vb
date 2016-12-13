@@ -154,7 +154,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
             ' Copy each file in lstFilesToCopy (overwrite existing files)
             Dim oFileTools As PRISM.Files.clsFileTools
-            Dim strManager As String = GetPseudoManagerName()
+            Dim strManager = GetPseudoManagerName()
 
             Dim filesCopied = 0
             Dim dtLastStatusUpdate = Date.UtcNow
@@ -239,8 +239,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
       strRemoteIndexFolderPath As String,
       intDebugLevel As Integer) As Boolean
 
-        Dim strErrorMessage As String = String.Empty
-        Dim strManager As String = GetPseudoManagerName()
+        Dim strErrorMessage = String.Empty
+        Dim strManager = GetPseudoManagerName()
         Const createIndexFileForExistingFiles = False
 
         Dim success = CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel, strManager, createIndexFileForExistingFiles, strErrorMessage)
@@ -340,7 +340,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 Using swOutFile = New StreamWriter(New FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                    For Each entry As String In lstFileInfo
+                    For Each entry In lstFileInfo
                         swOutFile.WriteLine(entry)
                     Next
 
@@ -502,8 +502,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
             If Not blnReindexingRequired Then
 
-                Dim strExistingFiles As String = String.Empty
-                Dim strMissingFiles As String = String.Empty
+                Dim strExistingFiles = String.Empty
+                Dim strMissingFiles = String.Empty
 
                 strCurrentTask = "Validating that expected files exist"
                 Dim lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName, lstFilesToFind, strExistingFiles, strMissingFiles)
@@ -646,7 +646,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
       dbSarrayFilename As String,
       udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
 
-        Dim strCurrentTask As String = String.Empty
+        Dim strCurrentTask = String.Empty
 
         Try
 
@@ -729,7 +729,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             ' Delete any existing index files (BuildSA throws an error if they exist)
             strCurrentTask = "Delete any existing files"
 
-            Dim strOutputNameBase As String = Path.GetFileNameWithoutExtension(fiFastaFile.Name)
+            Dim strOutputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name)
 
             Dim lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName, New List(Of String), String.Empty, String.Empty)
 
@@ -764,12 +764,12 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 ReportMessage(JavaProgLoc & " " & CmdStr)
             End If
 
-            Dim consoleOutputFilePath As String = String.Empty
+            Dim consoleOutputFilePath = String.Empty
 
             If udtHPCOptions.UsingHPC Then
 
 #If EnableHPC = "True" Then
-                Dim jobName As String = "BuildSA_" & fiFastaFile.Name
+                Dim jobName = "BuildSA_" & fiFastaFile.Name
                 Const taskName = "BuildSA"
 
                 Dim buildSAJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName)
@@ -986,7 +986,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
         Dim reExtractNum = New Regex("^ID_(\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
         Dim reMatch As Match
 
-        Dim strRemoteIndexFolderPath As String = String.Empty
+        Dim strRemoteIndexFolderPath = String.Empty
 
         ' DMS-generated fasta files will have a name of the form ID_003949_3D6802EE.fasta
         ' Parse out the number (003949 in this case)
@@ -1028,8 +1028,8 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
       strFolderPathToSearch As String,
       lstFilesToFind As List(Of String)) As List(Of FileInfo)
 
-        Dim strExistingFiles As String = String.Empty
-        Dim strMissingFiles As String = String.Empty
+        Dim strExistingFiles = String.Empty
+        Dim strMissingFiles = String.Empty
 
         Return FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, strFolderPathToSearch, lstFilesToFind, strExistingFiles, strMissingFiles)
 
@@ -1103,7 +1103,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         For Each strSuffix In lstFilesToFind
 
-            Dim strFileNameToFind As String = strOutputNameBase & strSuffix
+            Dim strFileNameToFind = strOutputNameBase & strSuffix
 
             Dim fiFileToFind = New FileInfo(Path.Combine(strFolderPathToSearch, strFileNameToFind))
 

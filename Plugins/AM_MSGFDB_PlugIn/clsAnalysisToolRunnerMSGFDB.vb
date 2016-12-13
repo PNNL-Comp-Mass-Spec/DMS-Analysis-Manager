@@ -317,8 +317,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
         mMSGFPlusComplete = False
 
         Dim eInputFileFormat = eInputFileFormatTypes.Unknown
-        Dim strScanTypeFilePath As String = String.Empty
-        Dim strAssumedScanType As String = String.Empty
+        Dim strScanTypeFilePath = String.Empty
+        Dim strAssumedScanType = String.Empty
 
         Dim result = DetermineAssumedScanType(strAssumedScanType, eInputFileFormat, strScanTypeFilePath)
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -331,7 +331,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         ' Get the FASTA file and index it if necessary
         ' Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-        Dim strParameterFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
+        Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
         Dim javaExePath = String.Copy(javaProgLoc)
         Dim msgfdbJarFilePath = String.Copy(mMSGFDbProgLoc)
 
@@ -344,7 +344,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             msgfdbJarFilePath = mMSGFDbProgLocHPC
         End If
 
-        Dim fastaFilePath As String = String.Empty
+        Dim fastaFilePath = String.Empty
         Dim fastaFileSizeKB As Single
         Dim fastaFileIsDecoy As Boolean
 
@@ -358,10 +358,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Return result
         End If
 
-        Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
+        Dim strInstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
 
         ' Read the MSGFDB Parameter File
-        Dim strMSGFDbCmdLineOptions As String = String.Empty
+        Dim strMSGFDbCmdLineOptions = String.Empty
 
         result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
@@ -569,7 +569,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
         Else
             If mMSGFDBUtils.TaskCountCompleted > 0 Then
-                Dim msg As String = String.Copy(m_message)
+                Dim msg = String.Copy(m_message)
                 If String.IsNullOrWhiteSpace(msg) Then
                     msg = "MSGF+ processing failed"
                 End If
@@ -656,7 +656,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim jobStep = m_jobParams.GetJobParameter("StepParameters", "Step", 1)
 
-        Dim jobName As String = "MSGF+_Job" & m_JobNum & "_Step" & jobStep
+        Dim jobName = "MSGF+_Job" & m_JobNum & "_Step" & jobStep
 
         Dim hpcJobInfo = New HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName:="MSGF+")
 
@@ -718,7 +718,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
 
             mzidToTSVTask.WorkDirectory = udtHPCOptions.WorkDirPath
-            mzidToTSVTask.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MzIDToTsv_ConsoleOutput.txt")
+            mzidToTSVTask.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, MZIDToTSV_CONSOLE_OUTPUT_FILE)
             mzidToTSVTask.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
             mzidToTSVTask.FailJobOnFailure = True
 
@@ -829,7 +829,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim blnConversionRequired = True
 
-        Dim strTSVFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX)
+        Dim strTSVFilePath = Path.Combine(m_WorkDir, m_Dataset & clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX)
 
         If udtHPCOptions.UsingHPC Then
             ' The TSV file should have already been created by the HPC job, then copied locally via SynchronizeFolders
@@ -877,7 +877,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     Private Sub CopyFailedResultsToArchiveFolder()
 
-        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        Dim strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
         LogWarning("Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
