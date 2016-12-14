@@ -59,19 +59,20 @@ Public Class clsAnalysisResourcesMASIC
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            ' Examine the size of the .Raw file
-            Dim fiInputFile As New FileInfo(strInputFilePath)
+            ' Deprecated in December 2016
+            '' Examine the size of the .Raw file
+            'Dim fiInputFile As New FileInfo(strInputFilePath)
 
-            If clsAnalysisToolRunnerMASICFinnigan.NeedToConvertRawToMzXML(fiInputFile) Then
+            'If clsAnalysisToolRunnerMASICFinnigan.NeedToConvertRawToMzXML(fiInputFile) Then
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating the ScanStats files from the .Raw file since it is over 2 GB (and MASIC will therefore process a .mzXML file)")
+            '    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating the ScanStats files from the .Raw file since it is over 2 GB (and MASIC will therefore process a .mzXML file)")
 
-                If Not GenerateScanStatsFile(deleteRawDataFile:=False) Then
-                    ' Error message should already have been logged and stored in m_message
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
+            '    If Not GenerateScanStatsFile(deleteRawDataFile:=False) Then
+            '        ' Error message should already have been logged and stored in m_message
+            '        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            '    End If
 
-            End If
+            'End If
         End If
 
         ' Add additional extensions to delete after the tool finishes

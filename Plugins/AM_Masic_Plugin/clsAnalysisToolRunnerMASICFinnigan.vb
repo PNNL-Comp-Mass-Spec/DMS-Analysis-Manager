@@ -26,6 +26,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
     Public Sub New()
     End Sub
 
+    <Obsolete("No longer necessary")>
     Public Shared Function NeedToConvertRawToMzXML(fiInputFile As FileInfo) As Boolean
         Const TWO_GB As Long = 1024L * 1024 * 1024 * 2
 
@@ -72,27 +73,29 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
             ValidateParameterFile(strParameterFilePath)
         End If
 
-        Dim strScanStatsFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.SCAN_STATS_FILE_SUFFIX)
-        Dim strScanStatsExFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX)
+        ' Deprecated in December 2016
+        'Dim strScanStatsFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.SCAN_STATS_FILE_SUFFIX)
+        'Dim strScanStatsExFilePath As String = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX)
 
-        Dim fiScanStatsOverrideFile As FileInfo = Nothing
-        Dim fiScanStatsExOverrideFile As FileInfo = Nothing
+        'Dim fiScanStatsOverrideFile As FileInfo = Nothing
+        'Dim fiScanStatsExOverrideFile As FileInfo = Nothing
 
-        Dim blnConvertRawToMzXML = NeedToConvertRawToMzXML(fiInputFile)
-        Dim eCloseout As IJobParams.CloseOutType
+        'Dim blnConvertRawToMzXML = NeedToConvertRawToMzXML(fiInputFile)
+        'Dim eCloseout As IJobParams.CloseOutType
 
-        If blnConvertRawToMzXML Then
-            eCloseout = StartConvertRawToMzXML(fiInputFile, strScanStatsFilePath, strScanStatsExFilePath, fiScanStatsOverrideFile, fiScanStatsExOverrideFile, strInputFilePath)
-            If eCloseout <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return eCloseout
-            End If
-        End If
+        'If blnConvertRawToMzXML Then
+        '    eCloseout = StartConvertRawToMzXML(fiInputFile, strScanStatsFilePath, strScanStatsExFilePath, fiScanStatsOverrideFile, fiScanStatsExOverrideFile, strInputFilePath)
+        '    If eCloseout <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        '        Return eCloseout
+        '    End If
+        'End If
 
-        eCloseout = MyBase.StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath)
+        Dim eCloseout = MyBase.StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath)
 
-        If eCloseout = IJobParams.CloseOutType.CLOSEOUT_SUCCESS AndAlso blnConvertRawToMzXML Then
-            eCloseout = ReplaceScanStatsFiles(strScanStatsFilePath, strScanStatsExFilePath, fiScanStatsOverrideFile, fiScanStatsExOverrideFile)
-        End If
+        ' Deprecated in December 2016
+        'If eCloseout = IJobParams.CloseOutType.CLOSEOUT_SUCCESS AndAlso blnConvertRawToMzXML Then
+        '    eCloseout = ReplaceScanStatsFiles(strScanStatsFilePath, strScanStatsExFilePath, fiScanStatsOverrideFile, fiScanStatsExOverrideFile)
+        'End If
 
         Return eCloseout
 
@@ -196,6 +199,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
 
     End Function
 
+    <Obsolete("No longer used")>
     Private Function StartConvertRawToMzXML(
      fiInputFile As FileInfo,
      strScanStatsFilePath As String,
