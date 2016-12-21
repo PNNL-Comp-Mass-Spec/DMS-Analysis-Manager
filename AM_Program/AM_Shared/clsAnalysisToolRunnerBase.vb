@@ -580,8 +580,8 @@ Public Class clsAnalysisToolRunnerBase
     ''' <summary>
     ''' Copies the files from the results folder to the transfer folder on the server
     ''' </summary>
-    ''' <param name="transferFolderPath">Transfer folder path to use
-    ''' e.g. \\proto-6\DMS3_Xfer\DatasetName or 
+    ''' <param name="transferFolderPath">Base transfer folder path to use
+    ''' e.g. \\proto-6\DMS3_Xfer\ or 
     ''' \\protoapps\PeptideAtlas_Staging\1000_DataPackageName</param>
     ''' <returns>CloseOutType.CLOSEOUT_SUCCESS on success</returns>
     ''' <remarks></remarks>
@@ -834,8 +834,9 @@ Public Class clsAnalysisToolRunnerBase
     ''' Determines the path to the remote transfer folder
     ''' Creates the folder if it does not exist
     ''' </summary>
+    ''' <param name="objAnalysisResults">Analysis results object</param>
+    ''' <param name="transferFolderPath">Base transfer folder path, e.g. \\proto-11\DMS3_Xfer\</param>
     ''' <returns>The full path to the remote transfer folder; an empty string if an error</returns>
-    ''' <remarks></remarks>
     Protected Function CreateRemoteTransferFolder(objAnalysisResults As clsAnalysisResults, transferFolderPath As String) As String
 
         If String.IsNullOrEmpty(m_ResFolderName) Then
@@ -852,8 +853,8 @@ Public Class clsAnalysisToolRunnerBase
             Return String.Empty
         End Try
 
-        'Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
-        ' First make sure "DatasetNum" is defined
+        ' Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
+        ' First make sure "DatasetFolderName" or "DatasetNum" is defined
         If String.IsNullOrEmpty(m_Dataset) Then
             LogError("Dataset name is undefined, job " & m_jobParams.GetParam("StepParameters", "Job"))
             m_message = "Dataset name is undefined"
@@ -866,8 +867,10 @@ Public Class clsAnalysisToolRunnerBase
             ' Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
             strRemoteTransferFolderPath = String.Copy(transferFolderPath)
         Else
-            ' Append the dataset name to the transfer folder path
-            strRemoteTransferFolderPath = Path.Combine(transferFolderPath, m_Dataset)
+            ' Append the dataset folder name to the transfer folder path
+            Dim datasetFolderName = m_jobParams.GetParam("StepParameters", "DatasetFolderName")
+            If String.IsNullOrWhiteSpace(datasetFolderName) Then datasetFolderName = m_Dataset
+            strRemoteTransferFolderPath = Path.Combine(transferFolderPath, datasetFolderName)
         End If
 
         ' Create the target folder if it doesn't exist
@@ -1586,10 +1589,10 @@ Public Class clsAnalysisToolRunnerBase
     End Function
 
     ''' <summary>
-    ''' Lookup the transfer folder path
+    ''' Lookup the base transfer folder path
     ''' </summary>
     ''' <returns></returns>
-    ''' <remarks>For example, \\proto-7\DMS3_XFER\QC_Shew_13_06_500ng_Col1_C_18Jan15_Tiger_14-11-10\ </remarks>
+    ''' <remarks>For example, \\proto-7\DMS3_XFER\</remarks>
     Protected Function GetTransferFolderPath() As String
 
         Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")
