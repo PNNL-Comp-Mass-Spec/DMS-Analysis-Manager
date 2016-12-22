@@ -234,7 +234,9 @@ Public Class clsAnalysisToolRunnerMSPathFinder
         dctParamNames.Add("PMTolerance", "t")
         dctParamNames.Add("FragTolerance", "f")
         dctParamNames.Add("SearchMode", "m")
+        dctParamNames.Add("ActivationMethod", "act")
         dctParamNames.Add("TDA", "tda")
+
         dctParamNames.Add("minLength", "minLength")
         dctParamNames.Add("maxLength", "maxLength")
 
