@@ -4989,12 +4989,12 @@ Public MustInherit Class clsAnalysisResources
 
                                 Dim alternateSourceFileName As String = String.Empty
 
-                                If sourceFileName.StartsWith("_msgfdb") Then
+                                If sourceFileName.ToLower().Contains("_msgfdb") Then
                                     ' Auto-look for the _msgfplus version of this file
-                                    alternateSourceFileName = "_msgfplus" & sourceFileName.Substring("_msgfdb".Length)
-                                ElseIf sourceFileName.StartsWith("_msgfplus") Then
+                                    alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfdb", "_msgfplus")
+                                ElseIf sourceFileName.ToLower().Contains("_msgfplus") Then
                                     ' Auto-look for the _msgfdb version of this file
-                                    alternateSourceFileName = "_msgfdb" & sourceFileName.Substring("_msgfplus".Length)
+                                    alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfplus", "_msgfdb")
                                 End If
 
                                 If Not String.IsNullOrEmpty(alternateSourceFileName) Then
