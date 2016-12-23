@@ -55,7 +55,9 @@ namespace AnalysisManager_Mage_PlugIn
         protected void GetExtractionParametersFromJobParameters()
         {
             ExtractionParms = new ExtractionType();
-            ResultsDestination = new DestinationType();
+
+            var containerPath = System.IO.Path.Combine(WorkingDirPath, ResultsDBFileName);
+            ResultsDestination = new DestinationType(DestinationType.Types.SQLite_Output.ToString(), containerPath, "t_results");
 
             // extraction and filtering parameters
             var extractionType = RequireJobParam("ExtractionType"); // "MSGF+ Synopsis All Proteins" or "Sequest First Hits"
@@ -73,10 +75,6 @@ namespace AnalysisManager_Mage_PlugIn
             ExtractionParms.ResultFilterSetID = GetJobParam("ResultFilterSetID", "All Pass");
             ExtractionParms.MSGFCutoff = GetJobParam("MSGFCutoff", "All Pass");
 
-            // ouput parameters
-            ResultsDestination.Type = DestinationType.Types.SQLite_Output;
-            ResultsDestination.ContainerPath = System.IO.Path.Combine(WorkingDirPath, ResultsDBFileName);
-            ResultsDestination.Name = "t_results";
         }
 
         /// <summary>
