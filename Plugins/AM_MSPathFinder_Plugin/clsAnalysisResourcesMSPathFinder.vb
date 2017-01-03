@@ -7,6 +7,7 @@
 
 Option Strict On
 
+Imports System.IO
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMSPathFinder
@@ -35,7 +36,70 @@ Public Class clsAnalysisResourcesMSPathFinder
             Return eResult
         End If
 
+        ' Look for existing .tsv result files
+        ' These typically will not exist, but may exist if a search was interrupted before it finished
+        If Not RetrieveExistingSearchResults() Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    ''' <summary>
+    ''' Look for existing .tsv result files
+    ''' These will only exist if a search was interrupted before it finished
+    ''' The files will be in a subfolder below DMS_FailedResults and will need to have been manually copied to the transfer folder for this job
+    ''' </summary>
+    ''' <returns>True if success (even if no files were found); false if an error</returns>
+    Private Function RetrieveExistingSearchResults() As Boolean
+
+        Dim fileSuffixes = New List(Of String) From {"_IcDecoy.tsv", "_IcTarget.tsv", "_IcTda.tsv"}
+
+        Try
+            Dim transferFolderPathBase = m_jobParams.GetParam("transferFolderPath")
+            If String.IsNullOrEmpty(transferFolderPathBase) Then
+                ' Transfer folder parameter is empty; abort the search for result files 
+                ' This error will be properly dealt with elsewhere
+                Return False
+            End If
+
+            ' Append the dataset folder name to the transfer folder path
+            Dim datasetFolderName = m_jobParams.GetParam("StepParameters", "DatasetFolderName")
+            If String.IsNullOrWhiteSpace(datasetFolderName) Then datasetFolderName = m_DatasetName
+
+            Dim resultFolderName = m_jobParams.GetParam("OutputFolderName")
+            If String.IsNullOrEmpty(resultFolderName) Then
+                'Output folder parameter is empty; abort the search for result files 
+                Return False
+            End If
+
+            Dim transferFolderPath = Path.Combine(transferFolderPathBase, datasetFolderName, resultFolderName)
+
+            For Each suffix In fileSuffixes
+
+                Dim sourceFile = New FileInfo(Path.Combine(transferFolderPath, m_DatasetName & suffix))
+
+                If Not sourceFile.Exists Then
+                    ' File not found; move on to the next file
+                    Continue For
+                End If
+
+                ' Copy the file
+                If Not CopyFileToWorkDir(sourceFile.Name, transferFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+                    ' Error copying; move on to the next file
+                    Continue For
+                End If
+
+            Next
+
+        Catch ex As Exception
+            m_message = "Exception in RetrieveExistingSearchResults: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
+
+        Return True
 
     End Function
 
