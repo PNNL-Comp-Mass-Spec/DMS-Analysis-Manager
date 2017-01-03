@@ -1354,47 +1354,78 @@ Public MustInherit Class clsAnalysisResources
     ''' <summary>
     ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
     ''' </summary>
-    ''' <param name="FileName">Name of file to be retrieved</param>
-    ''' <param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+    ''' <param name="fileName">Name of file to be retrieved</param>
+    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function FindAndRetrieveMiscFiles(FileName As String, Unzip As Boolean) As Boolean
-        Const SearchArchivedDatasetFolder = True
-        Return FindAndRetrieveMiscFiles(FileName, Unzip, SearchArchivedDatasetFolder)
+    ''' <remarks>Logs an error if the file is not found</remarks>
+    Protected Function FindAndRetrieveMiscFiles(fileName As String, unzip As Boolean) As Boolean
+        Return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder:=True)
     End Function
 
     ''' <summary>
     ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
     ''' </summary>
-    ''' <param name="FileName">Name of file to be retrieved</param>
-    ''' <param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+    ''' <param name="fileName">Name of file to be retrieved</param>
+    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function FindAndRetrieveMiscFiles(FileName As String, Unzip As Boolean, SearchArchivedDatasetFolder As Boolean) As Boolean
-        Return FindAndRetrieveMiscFiles(FileName, Unzip, SearchArchivedDatasetFolder, "")
+    ''' <remarks>Logs an error if the file is not found</remarks>
+    Protected Function FindAndRetrieveMiscFiles(fileName As String, unzip As Boolean, searchArchivedDatasetFolder As Boolean) As Boolean
+        Return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, "")
     End Function
 
     ''' <summary>
     ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
     ''' </summary>
-    ''' <param name="FileName">Name of file to be retrieved</param>
-    ''' <param name="Unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+    ''' <param name="fileName">Name of file to be retrieved</param>
+    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks></remarks>
+    Protected Function FindAndRetrieveMiscFiles(fileName As String, unzip As Boolean, searchArchivedDatasetFolder As Boolean, logFileNotFound As Boolean) As Boolean
+        Return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, "", logFileNotFound)
+    End Function
+
+    ''' <summary>
+    ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+    ''' </summary>
+    ''' <param name="fileName">Name of file to be retrieved</param>
+    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
     ''' <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
+    ''' <returns>TRUE for success; FALSE for failure</returns>
+    ''' <remarks>Logs an error if the file is not found</remarks>
+    Protected Function FindAndRetrieveMiscFiles(
+      fileName As String,
+      unzip As Boolean,
+      searchArchivedDatasetFolder As Boolean,
+      <Out()> ByRef sourceFolderPath As String) As Boolean
+
+        Return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, sourceFolderPath, logFileNotFound:=True)
+    End Function
+
+    ''' <summary>
+    ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+    ''' </summary>
+    ''' <param name="fileName">Name of file to be retrieved</param>
+    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+    ''' <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
+    ''' <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
     Protected Function FindAndRetrieveMiscFiles(
-      FileName As String,
-      Unzip As Boolean,
-      SearchArchivedDatasetFolder As Boolean,
-      <Out()> ByRef sourceFolderPath As String) As Boolean
+      fileName As String,
+      unzip As Boolean,
+      searchArchivedDatasetFolder As Boolean,
+      <Out()> ByRef sourceFolderPath As String,
+      logFileNotFound As Boolean) As Boolean
 
         Const CreateStoragePathInfoFile = False
 
         ' Look for the file in the various folders
         ' A message will be logged if the file is not found
-        sourceFolderPath = FindDataFile(FileName, SearchArchivedDatasetFolder)
+        sourceFolderPath = FindDataFile(fileName, searchArchivedDatasetFolder, logFileNotFound)
 
         ' Exit if file was not found
         If String.IsNullOrEmpty(sourceFolderPath) Then
