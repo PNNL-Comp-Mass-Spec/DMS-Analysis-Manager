@@ -23,22 +23,22 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     Inherits clsAnalysisToolRunnerBase
 
 #Region "Constants and Enums"
-    Protected Const MSPATHFINDER_CONSOLE_OUTPUT As String = "MSPathFinder_ConsoleOutput.txt"
+    Private Const MSPATHFINDER_CONSOLE_OUTPUT As String = "MSPathFinder_ConsoleOutput.txt"
 
-    Protected Const PROGRESS_PCT_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_GENERATING_SEQUENCE_TAGS As Single = 2
-    Protected Const PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB As Single = 3
-    Protected Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 7
-    Protected Const PROGRESS_PCT_CALCULATING_TARGET_EVALUES = 40
-    Protected Const PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB As Single = 50
-    Protected Const PROGRESS_PCT_SEARCHING_DECOY_DB As Single = 54
-    Protected Const PROGRESS_PCT_CALCULATING_DECOY_EVALUES As Single = 85
-    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+    Private Const PROGRESS_PCT_STARTING As Single = 1
+    Private Const PROGRESS_PCT_GENERATING_SEQUENCE_TAGS As Single = 2
+    Private Const PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB As Single = 3
+    Private Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 7
+    Private Const PROGRESS_PCT_CALCULATING_TARGET_EVALUES = 40
+    Private Const PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB As Single = 50
+    Private Const PROGRESS_PCT_SEARCHING_DECOY_DB As Single = 54
+    Private Const PROGRESS_PCT_CALCULATING_DECOY_EVALUES As Single = 85
+    Private Const PROGRESS_PCT_COMPLETE As Single = 99
 
-    'Protected Const MSPathFinder_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.txt"
-    'Protected Const MSPathFinder_FILTERED_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.id.txt"
+    'Private Const MSPathFinder_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.txt"
+    'Private Const MSPathFinder_FILTERED_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.id.txt"
 
-    Protected Enum MSPathFinderSearchStage
+    Private Enum MSPathFinderSearchStage
         Start = 0
         GeneratingSequenceTags = 1
         TagBasedSearchingTargetDB = 2
@@ -53,14 +53,12 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
 #Region "Module Variables"
 
-    Protected mConsoleOutputErrorMsg As String
+    Private mConsoleOutputErrorMsg As String
 
-    Protected mMSPathFinderResultsFilePath As String
+    Private m_filteredPromexFeatures As Integer = 0
+    Private m_unfilteredPromexFeatures As Integer = 0
 
-    Protected m_filteredPromexFeatures As Integer = 0
-    Protected m_unfilteredPromexFeatures As Integer = 0
-
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Private WithEvents CmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -188,9 +186,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
     End Function
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
-
-        Dim result As IJobParams.CloseOutType
+    Private Sub CopyFailedResultsToArchiveFolder()
 
         Dim strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -211,7 +207,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
         End Try
 
         ' Make the results folder
-        result = MakeResultsFolder()
+        Dim result = MakeResultsFolder()
         If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
@@ -227,9 +223,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
     End Sub
 
-    Protected Function GetMSPathFinderParameterNames() As Dictionary(Of String, String)
-        Dim dctParamNames As Dictionary(Of String, String)
-        dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
+    Private Function GetMSPathFinderParameterNames() As Dictionary(Of String, String)
+        Dim dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
 
         dctParamNames.Add("PMTolerance", "t")
         dctParamNames.Add("FragTolerance", "f")
@@ -267,10 +262,10 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
         ' Define the path to the fasta file
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
-        Dim FastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+        Dim fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
 
         Dim fiFastaFile As FileInfo
-        fiFastaFile = New FileInfo(FastaFilePath)
+        fiFastaFile = New FileInfo(fastaFilePath)
 
         If Not fiFastaFile.Exists Then
             ' Fasta file not found
@@ -611,7 +606,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' <param name="lstDynamicMods">List of Dynamic Mods</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
-    Protected Function ParseMSPathFinderModifications(
+    Private Function ParseMSPathFinderModifications(
      strParameterFilePath As String,
      sbOptions As StringBuilder,
      intNumMods As Integer,
@@ -810,7 +805,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
     ''' <returns>True if valid; false if invalid</returns>
     ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-    Protected Function ParseMSPathFinderValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
+    Private Function ParseMSPathFinderValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
 
         Dim intPoundIndex As Integer
         Dim strSplitMod() As String
@@ -921,7 +916,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
     End Function
 
-    Protected Function StartMSPathFinder(progLoc As String, fastaFileIsDecoy As Boolean, <Out()> ByRef tdaEnabled As Boolean) As Boolean
+    Private Function StartMSPathFinder(progLoc As String, fastaFileIsDecoy As Boolean, <Out()> ByRef tdaEnabled As Boolean) As Boolean
 
         Dim CmdStr As String
         Dim success As Boolean
@@ -1039,7 +1034,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(strProgLoc As String) As Boolean
+    Private Function StoreToolVersionInfo(strProgLoc As String) As Boolean
 
         Dim strToolVersionInfo = String.Empty
         Dim blnSuccess As Boolean

@@ -78,7 +78,7 @@ Public Class clsAnalysisResourcesMSPathFinder
 
     End Function
 
-    Protected Function RetrievePBFFile() As IJobParams.CloseOutType
+    Private Function RetrievePBFFile() As IJobParams.CloseOutType
 
         Const PBF_GEN_FOLDER_PREFIX = "PBF_GEN"
 
@@ -146,12 +146,12 @@ Public Class clsAnalysisResourcesMSPathFinder
 
     End Function
 
-    Protected Function RetrieveProMexFeaturesFile() As IJobParams.CloseOutType
+    Private Function RetrieveProMexFeaturesFile() As IJobParams.CloseOutType
 
         Try
-            Dim FileToGet = m_DatasetName & DOT_MS1FT_EXTENSION
+            Dim fileToGet = m_DatasetName & DOT_MS1FT_EXTENSION
 
-            If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+            If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
                 'Errors were reported in function call, so just return
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
