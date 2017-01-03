@@ -1265,43 +1265,43 @@ Public MustInherit Class clsAnalysisResources
     ''' <summary>
     ''' Test for file existence with a retry loop in case of temporary glitch
     ''' </summary>
-    ''' <param name="FileName"></param>
+    ''' <param name="fileName"></param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function FileExistsWithRetry(FileName As String, eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
+    Private Function FileExistsWithRetry(fileName As String, eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
-        Return FileExistsWithRetry(FileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS, eLogMsgTypeIfNotFound)
+        Return FileExistsWithRetry(fileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS, eLogMsgTypeIfNotFound)
 
     End Function
 
     ''' <summary>
     ''' Test for file existence with a retry loop in case of temporary glitch
     ''' </summary>
-    ''' <param name="FileName"></param>
-    ''' <param name="RetryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
+    ''' <param name="fileName"></param>
+    ''' <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <returns></returns>
+    ''' <returns>True if the file exists, otherwise false</returns>
     ''' <remarks></remarks>
-    Private Function FileExistsWithRetry(FileName As String, RetryHoldoffSeconds As Integer, eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
+    Private Function FileExistsWithRetry(fileName As String, retryHoldoffSeconds As Integer, eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
 
         Const MAX_ATTEMPTS = 3
-        Return FileExistsWithRetry(FileName, RetryHoldoffSeconds, eLogMsgTypeIfNotFound, MAX_ATTEMPTS)
+        Return FileExistsWithRetry(fileName, retryHoldoffSeconds, eLogMsgTypeIfNotFound, MAX_ATTEMPTS)
 
     End Function
 
     ''' <summary>
     ''' Test for file existence with a retry loop in case of temporary glitch
     ''' </summary>
-    ''' <param name="FileName"></param>
-    ''' <param name="RetryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
+    ''' <param name="fileName"></param>
+    ''' <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <param name="maxAttempts">Maximum number of attempts</param>
-    ''' <returns></returns>
+    ''' <returns>True if the file exists, otherwise false</returns>
     ''' <remarks></remarks>
     Private Function FileExistsWithRetry(
-      FileName As String,
-      RetryHoldoffSeconds As Integer,
+      fileName As String,
+      retryHoldoffSeconds As Integer,
       eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
       maxAttempts As Integer) As Boolean
 
@@ -1309,17 +1309,17 @@ Public MustInherit Class clsAnalysisResources
         If maxAttempts > 10 Then maxAttempts = 10
         Dim retryCount = maxAttempts
 
-        If RetryHoldoffSeconds <= 0 Then RetryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS
-        If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
+        If retryHoldoffSeconds <= 0 Then retryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS
+        If retryHoldoffSeconds > 600 Then retryHoldoffSeconds = 600
 
         While retryCount > 0
-            If File.Exists(FileName) Then
+            If File.Exists(fileName) Then
                 Return True
             Else
                 If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
                     ' Only log each failed attempt to find the file if eLogMsgTypeIfNotFound = ILogger.logMsgType.logError
                     ' Otherwise, we won't log each failed attempt
-                    Dim errMsg As String = "File " + FileName + " not found. Retry count = " + retryCount.ToString
+                    Dim errMsg As String = "File " + fileName + " not found. Retry count = " + retryCount.ToString
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, errMsg)
                     If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
                         ReportStatus(errMsg, 0, True)
@@ -1327,7 +1327,7 @@ Public MustInherit Class clsAnalysisResources
                 End If
                 retryCount -= 1
                 If retryCount > 0 Then
-                    Thread.Sleep(New TimeSpan(0, 0, RetryHoldoffSeconds))     'Wait RetryHoldoffSeconds seconds before retrying
+                    Thread.Sleep(New TimeSpan(0, 0, retryHoldoffSeconds))     'Wait RetryHoldoffSeconds seconds before retrying
                 End If
             End If
         End While
@@ -1335,9 +1335,9 @@ Public MustInherit Class clsAnalysisResources
         ' If we got to here, there were too many failures
         If retryCount < 1 Then
             If maxAttempts = 1 Then
-                m_message = "File not found: " & FileName
+                m_message = "File not found: " & fileName
             Else
-                m_message = "File not be found after " & maxAttempts & " tries: " & FileName
+                m_message = "File not be found after " & maxAttempts & " tries: " & fileName
             End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
@@ -1408,17 +1408,17 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         ' Copy the file
-        If Not CopyFileToWorkDir(FileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile) Then
+        If Not CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile) Then
             Return False
         End If
 
-        'Return or unzip file, as specified
-        If Not Unzip Then Return True
+        ' Check whether unzipping was requested
+        If Not unzip Then Return True
 
-        ReportStatus("Unzipping file " + FileName)
-        If UnzipFileStart(Path.Combine(m_WorkingDir, FileName), m_WorkingDir, "FindAndRetrieveMiscFiles", False) Then
+        ReportStatus("Unzipping file " + fileName)
+        If UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "FindAndRetrieveMiscFiles", False) Then
             If m_DebugLevel >= 1 Then
-                ReportStatus("Unzipped file " + FileName)
+                ReportStatus("Unzipped file " + fileName)
             End If
         End If
 
@@ -1470,30 +1470,30 @@ Public MustInherit Class clsAnalysisResources
     ''' <summary>
     ''' Finds the server or archive folder where specified file is located
     ''' </summary>
-    ''' <param name="FileToFind">Name of the file to search for</param>
+    ''' <param name="fileToFind">Name of the file to search for</param>
     ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
     ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function FindDataFile(FileToFind As String) As String
-        Return FindDataFile(FileToFind, SearchArchivedDatasetFolder:=True)
+    Protected Function FindDataFile(fileToFind As String) As String
+        Return FindDataFile(fileToFind, searchArchivedDatasetFolder:=True)
     End Function
 
     ''' <summary>
     ''' Finds the server or archive folder where specified file is located
     ''' </summary>
     ''' <param name="FileToFind">Name of the file to search for</param>
-    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
     ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
     ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function FindDataFile(FileToFind As String, SearchArchivedDatasetFolder As Boolean) As String
-        Return FindDataFile(FileToFind, SearchArchivedDatasetFolder, logFileNotFound:=True)
+    Protected Function FindDataFile(fileToFind As String, searchArchivedDatasetFolder As Boolean) As String
+        Return FindDataFile(fileToFind, searchArchivedDatasetFolder, logFileNotFound:=True)
     End Function
 
     ''' <summary>
     ''' Finds the server or archive folder where specified file is located
     ''' </summary>
-    ''' <param name="FileToFind">Name of the file to search for</param>
-    ''' <param name="SearchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched (m_AuroraAvailable and MyEMSLAvailable take precedence)</param>
-    ''' <param name="LogFileNotFound">True if an error should be logged when a file is not found</param>
+    ''' <param name="fileToFind">Name of the file to search for</param>
+    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched (m_AuroraAvailable and MyEMSLAvailable take precedence)</param>
+    ''' <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
     ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
     ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
     Protected Function FindDataFile(fileToFind As String, searchArchivedDatasetFolder As Boolean, logFileNotFound As Boolean) As String
@@ -1533,14 +1533,17 @@ Public MustInherit Class clsAnalysisResources
 
                 If Not String.IsNullOrEmpty(strParentFolderPath) Then
                     If Not String.IsNullOrEmpty(strInputFolderName) Then
-                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))   ' Parent Folder \ Dataset Folder \ Input folder
+                        ' Parent Folder \ Dataset Folder \ Input folder
+                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))
                     End If
 
                     For Each strSharedFolderName As String In sharedResultFolderNames
-                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))  ' Parent Folder \ Dataset Folder \  Shared results folder
+                        ' Parent Folder \ Dataset Folder \  Shared results folder
+                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))
                     Next
 
-                    foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, String.Empty))             ' Parent Folder \ Dataset Folder
+                    ' Parent Folder \ Dataset Folder
+                    foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, String.Empty))
                 End If
 
             Next
@@ -8389,6 +8392,7 @@ Public MustInherit Class clsAnalysisResources
         LogDebugMessage(" ... " & spectraProcessed & " spectra parsed in the _dta.txt file")
     End Sub
 #End Region
+
 End Class
 
 
