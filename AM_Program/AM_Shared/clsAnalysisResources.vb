@@ -369,6 +369,22 @@ Public MustInherit Class clsAnalysisResources
 
     End Function
 
+    ''' <summary>
+    ''' Gets resources required by all step tools
+    ''' </summary>
+    ''' <returns>True if success, false if an error</returns>
+    Protected Function GetSharedResources() As IJobParams.CloseOutType
+
+        Dim success = GetExistingJobParametersFile()
+
+        If success Then
+            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Else
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
+
+    End Function
+
     Public Sub SetOption(resourceOption As clsGlobal.eAnalysisResourceOptions, enabled As Boolean) Implements IAnalysisResources.SetOption
         If m_ResourceOptions Is Nothing Then
             m_ResourceOptions = New Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
@@ -527,6 +543,7 @@ Public MustInherit Class clsAnalysisResources
         Return strLockFilePath
 
     End Function
+
 
     ''' <summary>
     ''' Delete the lock file for the correspond data file
@@ -3148,6 +3165,48 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
+    ''' Look for a JobParameters file from the previous job step
+    ''' If found, copy to the working directory
+    ''' </summary>
+    ''' <returns>True if success, false if an error</returns>
+    Private Function GetExistingJobParametersFile() As Boolean
+
+        Try
+            Dim stepNum = m_jobParams.GetJobParameter("StepParameters", "Step", 1)
+            If stepNum = 1 Then
+                ' This is the first step; nothing to retrieve
+                Return True
+            End If
+
+            Dim transferFolderPath = GetTransferFolderPathForJobStep(useInputFolder:=True)
+            If String.IsNullOrEmpty(transferFolderPath) Then
+                ' Transfer folder parameter is empty; nothing to retrieve
+            End If
+
+            Dim jobParametersFilename = "JobParameters_" & m_JobNum & ".xml"
+            Dim sourceFile = New FileInfo(Path.Combine(transferFolderPath, jobParametersFilename))
+
+            If Not sourceFile.Exists Then
+                ' File not found; nothing to copy
+                Return True
+            End If
+
+            ' Copy the file
+            If Not CopyFileToWorkDir(sourceFile.Name, transferFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
+                ' Error copying; silently ignore
+            End If
+
+            Return True
+
+        Catch ex As Exception
+            m_message = "Exception in GetExistingJobParametersFile: " & ex.Message
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            Return False
+        End Try
+
+    End Function
+
+    ''' <summary>
     ''' Examine the specified DMS_Temp_Org folder to find the FASTA files and their corresponding .fasta.LastUsed or .hashcheck files
     ''' </summary>
     ''' <param name="diOrgDbFolder"></param>
@@ -3840,6 +3899,42 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         Return stepNumber - cloneStepRenumStart + 1
+
+    End Function
+
+    ''' <summary>
+    ''' Get the input or output transfer folder path specific to this job step
+    ''' </summary>
+    ''' <param name="useInputFolder">True to use "InputFolderName", False to use "OutputFolderName"</param>
+    ''' <returns></returns>
+    Protected Function GetTransferFolderPathForJobStep(useInputFolder As Boolean) As String
+
+        Dim transferFolderPathBase = m_jobParams.GetParam("transferFolderPath")
+        If String.IsNullOrEmpty(transferFolderPathBase) Then
+            ' Transfer folder parameter is empty; return an empty string
+            Return String.Empty
+        End If
+
+        ' Append the dataset folder name to the transfer folder path
+        Dim datasetFolderName = m_jobParams.GetParam("StepParameters", "DatasetFolderName")
+        If String.IsNullOrWhiteSpace(datasetFolderName) Then datasetFolderName = m_DatasetName
+
+        Dim folderName As String
+
+        If useInputFolder Then
+            folderName = m_jobParams.GetParam("InputFolderName")
+        Else
+            folderName = m_jobParams.GetParam("OutputFolderName")
+        End If
+
+        If String.IsNullOrEmpty(folderName) Then
+            ' Input (or outuput) folder parameter is empty; return an empty string
+            Return String.Empty
+        End If
+
+        Dim transferFolderPath = Path.Combine(transferFolderPathBase, datasetFolderName, folderName)
+
+        Return transferFolderPath
 
     End Function
 
