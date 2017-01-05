@@ -12,6 +12,7 @@ Imports System.Data.SqlClient
 Imports System.IO
 Imports System.Xml
 Imports System.Text
+Imports System.Xml.Linq
 
 ''' <summary>
 ''' Provides DB access and tools for one analysis job
@@ -437,6 +438,10 @@ Public Class clsAnalysisJob
 
     End Function
 
+    Public Shared Function JobParametersFilename(jobNum As Integer) As String
+        Return JobParametersFilename(jobNum.ToString())
+    End Function
+
     Public Shared Function JobParametersFilename(jobNum As String) As String
         Return clsGlobal.XML_FILENAME_PREFIX & jobNum & "." & clsGlobal.XML_FILENAME_EXTENSION
     End Function
@@ -580,33 +585,88 @@ Public Class clsAnalysisJob
 
     End Sub
 
-    Private Function RemoveXmlSection(paramXml As String, sectionName As String) As String
+    ''' <summary>
+    ''' Filter the job parameters in paramXml to remove extra items from section sectionName
+    ''' </summary>
+    ''' <param name="paramXml">Job Parameters XML to filter</param>
+    ''' <param name="sectionName">SectionName to match</param>
+    ''' <param name="paramNamesToIgnore">
+    ''' Keys are parameter names to ignore
+    ''' Values are another parameter name that must be present if we're going to ignore the given parameter
+    ''' </param>
+    ''' <param name="paramsToAddAsAttribute">
+    ''' Parameters to convert to an attribute at the section level
+    ''' Keys are the parameter name to match, Values are the new attribute name to add
+    ''' </param>
+    ''' <returns>Updated XML, as a string</returns>
+    Private Function FilterXmlSection(
+      paramXml As String,
+      sectionName As String,
+      paramNamesToIgnore As Dictionary(Of String, String),
+      paramsToAddAsAttribute As Dictionary(Of String, String)) As String
 
         Try
+            ' Note that XDocument supersedes XmlDocument and can often be easier to use since XDocument is LINQ-based
+            Dim doc As XDocument = XDocument.Parse(paramXml)
 
-            Dim doc = New XmlDocument()
+            Dim sections = doc.Elements("sections").Elements("section")
+            For Each section In sections
+                If Not section.HasAttributes Then Continue For
 
-            doc.LoadXml(paramXml)
+                Dim nameAttrib = section.Attribute("name")
+                If nameAttrib Is Nothing Then Continue For
 
-            Dim lstSections = doc.GetElementsByTagName("section")
+                If Not nameAttrib.Value = sectionName Then Continue For
 
-            Dim intindex = 0
-            While intindex < lstSections.Count
+                Dim parameterItems = section.Elements("item").ToList()
 
-                Dim section As XmlNode = lstSections(intindex)
+                ' Construct a list of the parameter names in this section
+                Dim paramNames = (From item In parameterItems Where item.HasAttributes
+                                  Select itemKey = item.Attribute("key")
+                                  Where itemKey IsNot Nothing
+                                  Select itemKey.Value).ToList()
 
-                Dim removeNode = (From item As XmlAttribute In section.Attributes.Cast(Of XmlAttribute)()
-                                  Where item.Name = "name" And item.Value = sectionName
-                                  Select item).ToList().Any()
+                Dim paramsToRemove = New List(Of XElement)
+                Dim attributesToAdd = New Dictionary(Of String, String)
 
-                If removeNode Then
-                    section.ParentNode.RemoveChild(section)
-                Else
-                    intindex += 1
-                End If
-            End While
+                For Each paramItem In parameterItems
+                    If Not paramItem.HasAttributes Then Continue For
 
-            Dim sbOutput = New StringBuilder
+                    Dim paramName = paramItem.Attribute("key")
+                    If paramName Is Nothing Then Continue For
+
+                    If paramNamesToIgnore.ContainsKey(paramName.Value) Then
+                        Dim requiredParameter = paramNamesToIgnore(paramName.Value)
+                        If String.IsNullOrEmpty(requiredParameter) OrElse paramNames.Contains(requiredParameter) Then
+                            ' Remove this parameter from this section
+                            paramsToRemove.Add(paramItem)
+                        End If
+                    End If
+
+                    If paramsToAddAsAttribute.ContainsKey(paramName.Value) Then
+                        Dim attribName = paramsToAddAsAttribute(paramName.Value)
+                        If String.IsNullOrEmpty(attribName) Then attribName = paramName.Value
+
+                        Dim paramValue = paramItem.Attribute("value")
+                        If paramValue Is Nothing Then
+                            attributesToAdd.Add(attribName, String.Empty)
+                        Else
+                            attributesToAdd.Add(attribName, paramValue.Value)
+                        End If
+
+                    End If
+                Next
+
+                For Each paramItem In paramsToRemove
+                    paramItem.Remove()
+                Next
+
+                For Each attribItem In attributesToAdd
+                    section.SetAttributeValue(attribItem.Key, attribItem.Value)
+                Next
+            Next
+
+            Dim sbOutput = New StringBuilder()
 
             Dim settings = New XmlWriterSettings()
             settings.Indent = True
@@ -622,7 +682,7 @@ Public Class clsAnalysisJob
             Return filteredXML
 
         Catch ex As Exception
-            LogError("Error in RemoveXmlSection", ex)
+            LogError("Error in FilterXmlSection", ex)
             Return paramXml
         End Try
 
@@ -759,25 +819,39 @@ Public Class clsAnalysisJob
     ''' <summary>
     ''' Saves job Parameters to an XML File
     ''' </summary>
-    ''' <param name="WorkDir">Full path to work directory</param>
-    ''' <param name="paramXml">Contains the xml for all the job parameters</param>
-    ''' <param name="jobNum">Contains the job number</param>
-    ''' <remarks>Skipped if the debug level is less than 4</remarks>
-    Private Sub SaveJobParameters(WorkDir As String, paramXml As String, jobNum As Integer)
+    ''' <param name="workDir">Full path to work directory</param>
+    ''' <param name="jobParamsXML">Contains the xml for all the job parameters</param>
+    ''' <param name="jobNum">Job number</param>
+    ''' <remarks></remarks>
+    Private Sub SaveJobParameters(
+      workDir As String,
+      jobParamsXML As String,
+      jobNum As Integer)
 
         Dim xmlParameterFilePath = String.Empty
 
         Try
-            xmlParameterFilename = JobParametersFilename(jobNum.ToString())
-            xmlParameterFilePath = Path.Combine(WorkDir, xmlParameterFilename)
+            Dim xmlParameterFilename = JobParametersFilename(jobNum.ToString())
+            xmlParameterFilePath = Path.Combine(workDir, xmlParameterFilename)
 
-            Dim filteredXML As String
-            If m_DebugLevel < 4 Then
-                ' Remove the StepParameters section from the XML; that section changes with each job step and we don't need to write it out to disk
-                filteredXML = RemoveXmlSection(paramXml, "StepParameters")
-            Else
-                filteredXML = paramXml
-            End If
+            Dim xmlParameterFile = New FileInfo(xmlParameterFilePath)
+
+            ' Keys are parameter names to ignore
+            ' Values are another parameter name that must be present if we're going to ignore the given parameter
+            Dim paramNamesToIgnore = New Dictionary(Of String, String)
+            paramNamesToIgnore.Add("SharedResultsFolders", "")
+            paramNamesToIgnore.Add("CPU_Load", "")
+            paramNamesToIgnore.Add("Job", "")
+            paramNamesToIgnore.Add("Step", "")
+            paramNamesToIgnore.Add("StepInputFolderName", "InputFolderName")
+            paramNamesToIgnore.Add("StepOutputFolderName", "OutputFolderName")
+
+            Dim paramsToAddAsAttribute = New Dictionary(Of String, String)
+            paramsToAddAsAttribute.Add("Step", "step")
+
+            ' Remove extra parameters from the StepParameters section that we don't want to include in the XML
+            ' Also update the section to have an attribute that is the step number
+            Dim filteredXML = FilterXmlSection(jobParamsXML, "StepParameters", paramNamesToIgnore, paramsToAddAsAttribute)
 
             Dim xmlWriter As New clsFormattedXMLWriter
             xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFile.FullName)
