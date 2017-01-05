@@ -33,12 +33,34 @@ Public Class clsAnalysisJob
     Protected m_JobId As Integer
     Protected m_TaskWasClosed As Boolean
 
-    Protected m_ResultFilesToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)              ' List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
-    Protected m_ResultFileExtensionsToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)     ' List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder; comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip: If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
-    Protected m_ResultFilesToKeep As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)              ' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
-    Protected m_ServerFilesToDelete As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)            ' List of file path to delete from the storage server (must be full file paths)
+    ''' <summary>
+    ''' List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
+    ''' </summary>
+    Protected m_ResultFilesToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
 
-    Protected m_DatasetInfoList As New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)         ' List of dataset names and dataset IDs
+    ''' <summary>
+    ''' List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder
+    ''' </summary>
+    ''' <remarks>
+    ''' Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip: 
+    ''' If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
+    ''' </remarks>
+    Protected m_ResultFileExtensionsToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+
+    ''' <summary>
+    ''' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
+    ''' </summary>
+    Protected m_ResultFilesToKeep As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+
+    ''' <summary>
+    ''' List of file path to delete from the storage server (must be full file paths)
+    ''' </summary>
+    Protected m_ServerFilesToDelete As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+
+    ''' <summary>
+    ''' List of dataset names and dataset IDs
+    ''' </summary>
+    Protected m_DatasetInfoList As New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
 #End Region
 
@@ -613,10 +635,10 @@ Public Class clsAnalysisJob
     ''' <remarks></remarks>
     Public Overrides Function RequestTask() As RequestTaskResult Implements IJobParams.RequestTask
 
-        Dim RetVal As RequestTaskResult
+        Dim retVal As RequestTaskResult
 
-        RetVal = RequestAnalysisJob()
-        Select Case RetVal
+        retVal = RequestAnalysisJob()
+        Select Case retVal
             Case RequestTaskResult.NoTaskFound
                 m_TaskWasAssigned = False
             Case RequestTaskResult.TaskFound
@@ -624,7 +646,7 @@ Public Class clsAnalysisJob
             Case Else
                 m_TaskWasAssigned = False
         End Select
-        Return RetVal
+        Return retVal
 
     End Function
 
@@ -635,9 +657,7 @@ Public Class clsAnalysisJob
     ''' <remarks></remarks>
     Private Function RequestAnalysisJob() As RequestTaskResult
 
-        Dim Outcome As RequestTaskResult
-        Dim RetVal As Integer
-        Dim paramXml As String
+        Dim taskResult As RequestTaskResult
 
         Dim strProductVersion As String = clsGlobal.GetAssemblyVersion()
         If strProductVersion Is Nothing Then strProductVersion = "??"
@@ -665,16 +685,16 @@ Public Class clsAnalysisJob
             End If
 
             ' Execute the SP
-            RetVal = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 1)
+            Dim retVal = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 1)
 
-            Select Case RetVal
+            Select Case retVal
                 Case RET_VAL_OK
                     'No errors found in SP call, so see if any step tasks were found
                     m_JobId = CInt(myCmd.Parameters("@jobNumber").Value)
-                    paramXml = CStr(myCmd.Parameters("@parameters").Value)
+                    Dim jobParamsXML = CStr(myCmd.Parameters("@parameters").Value)
 
                     'Step task was found; get the data for it
-                    Dim dctParameters As IEnumerable(Of udtParameterInfoType) = FillParamDictXml(paramXml)
+                    Dim dctParameters As List(Of udtParameterInfoType) = FillParamDictXml(jobParamsXML).ToList()
 
                     If dctParameters IsNot Nothing Then
 
@@ -682,35 +702,35 @@ Public Class clsAnalysisJob
                             SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value)
                         Next
 
-                        SaveJobParameters(m_MgrParams.GetParam("WorkDir"), paramXml, m_JobId)
-                        Outcome = RequestTaskResult.TaskFound
+                        SaveJobParameters(m_MgrParams.GetParam("WorkDir"), jobParamsXML, m_JobId)
+                        taskResult = RequestTaskResult.TaskFound
                     Else
                         'There was an error
                         LogError("clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data")
-                        Outcome = RequestTaskResult.ResultError
+                        taskResult = RequestTaskResult.ResultError
                     End If
                 Case RET_VAL_TASK_NOT_AVAILABLE
                     'No jobs found
-                    Outcome = RequestTaskResult.NoTaskFound
+                    taskResult = RequestTaskResult.NoTaskFound
                 Case RET_VAL_EXCESSIVE_RETRIES
                     ' Too many retries
-                    Outcome = RequestTaskResult.TooManyRetries
+                    taskResult = RequestTaskResult.TooManyRetries
                 Case RET_VAL_DEADLOCK
                     ' Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-                    Outcome = RequestTaskResult.Deadlock
+                    taskResult = RequestTaskResult.Deadlock
                 Case Else
                     'There was an SP error
-                    LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " & RetVal.ToString &
+                    LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " & retVal.ToString &
                         "; Msg text = " & CStr(myCmd.Parameters("@message").Value))
-                    Outcome = RequestTaskResult.ResultError
+                    taskResult = RequestTaskResult.ResultError
             End Select
 
         Catch ex As Exception
             LogError("Exception requesting analysis job", ex)
-            Outcome = RequestTaskResult.ResultError
+            taskResult = RequestTaskResult.ResultError
         End Try
 
-        Return Outcome
+        Return taskResult
 
     End Function
 
@@ -745,9 +765,7 @@ Public Class clsAnalysisJob
     ''' <remarks>Skipped if the debug level is less than 4</remarks>
     Private Sub SaveJobParameters(WorkDir As String, paramXml As String, jobNum As Integer)
 
-        Dim xmlWriter As New clsFormattedXMLWriter
-        Dim xmlParameterFilename As String
-        Dim xmlParameterFilePath As String = String.Empty
+        Dim xmlParameterFilePath = String.Empty
 
         Try
             xmlParameterFilename = JobParametersFilename(jobNum.ToString())
@@ -761,16 +779,17 @@ Public Class clsAnalysisJob
                 filteredXML = paramXml
             End If
 
-            xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFilePath)
+            Dim xmlWriter As New clsFormattedXMLWriter
+            xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFile.FullName)
 
-            If Not AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename) Then Return
+            AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename)
 
-            Dim Msg As String = "Job Parameters successfully saved to file: " & xmlParameterFilePath
+            Dim msg As String = "Job Parameters successfully saved to file: " & xmlParameterFile.FullName
 
             ' Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
-            clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFilePath, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5)
+            clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5)
 
-            ReportStatus(Msg, clsLogTools.LogLevels.DEBUG)
+            ReportStatus(msg, clsLogTools.LogLevels.DEBUG)
 
         Catch ex As Exception
             LogError("Exception saving analysis job parameters to " & xmlParameterFilePath, ex)

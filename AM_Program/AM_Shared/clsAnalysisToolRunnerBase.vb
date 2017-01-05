@@ -731,6 +731,7 @@ Public Class clsAnalysisToolRunnerBase
                         If objSourceFile.Length <> objTargetFile.Length OrElse objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc Then
                             strMessage = "File in transfer folder on server will be overwritten by newer file in results folder: " & objSourceFile.Name & "; new file date (UTC): " & objSourceFile.LastWriteTimeUtc.ToString() & "; old file date (UTC): " & objTargetFile.LastWriteTimeUtc.ToString()
 
+                            ' Log a warning, though not if the file is JobParameters_1394245.xml since we update that file after each job step
                             If objSourceFile.Name <> clsAnalysisJob.JobParametersFilename(m_JobNum) Then
                                 LogWarning(strMessage)
                             End If

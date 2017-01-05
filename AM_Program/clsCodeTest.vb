@@ -1325,10 +1325,10 @@ Public Class clsCodeTest
     ''' <returns>True if success; false if an error</returns>
     Public Function CheckETDModeEnabledXTandem(strParamFilePath As String, <Out()> ByRef blnEtdMode As Boolean) As Boolean
 
-        Dim objParamFile As System.Xml.XmlDocument
+        Dim objParamFile As Xml.XmlDocument
 
-        Dim objSelectedNodes As System.Xml.XmlNodeList = Nothing
-        Dim objAttributeNode As System.Xml.XmlNode
+        Dim objSelectedNodes As Xml.XmlNodeList = Nothing
+        Dim objAttributeNode As Xml.XmlNode
 
         Dim intSettingIndex As Integer
         Dim intMatchIndex As Integer
@@ -1342,7 +1342,7 @@ Public Class clsCodeTest
             '   <note type="input" label="scoring, c ions">yes</note>
             '   <note type="input" label="scoring, z ions">yes</note>
 
-            objParamFile = New System.Xml.XmlDocument
+            objParamFile = New Xml.XmlDocument
             objParamFile.PreserveWhitespace = True
             objParamFile.Load(strParamFilePath)
 

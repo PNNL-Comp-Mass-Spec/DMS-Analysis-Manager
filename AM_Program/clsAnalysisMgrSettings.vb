@@ -602,7 +602,7 @@ Public Class clsAnalysisMgrSettings
         End If
 
         Try
-            'Select the eleement containing the value for the specified key containing the key
+            'Select the element containing the value for the specified key containing the key
             Dim myElement As XmlElement = CType(myNode.SelectSingleNode(String.Format("//setting[@name='{0}']/value", key)), XmlElement)
             If myElement IsNot Nothing Then
                 'Set key to specified value

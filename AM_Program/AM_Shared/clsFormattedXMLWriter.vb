@@ -36,7 +36,7 @@ Public Class clsFormattedXMLWriter
         Dim objXMLDoc As XmlDocument
         Dim swOutfile As XmlTextWriter
 
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
 
         m_ErrMsg = ""
 

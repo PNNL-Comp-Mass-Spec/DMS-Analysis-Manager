@@ -141,36 +141,39 @@ Public MustInherit Class clsDBTask
     ''' <remarks></remarks>
     Public MustOverride Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String, EvalCode As Integer, EvalMessage As String)
 
-    Protected Function FillParamDictXml(InpXml As String) As IEnumerable(Of udtParameterInfoType)
+    Protected Function FillParamDictXml(jobParamsXML As String) As IEnumerable(Of udtParameterInfoType)
 
         Try
             ' Read XML string into XPathDocument object 
             ' and set up navigation objects to traverse it
 
-            Dim xReader As XmlReader = New XmlTextReader(New StringReader(InpXml))
-            Dim xdoc As New XPathDocument(xReader)
-            Dim xpn As XPathNavigator = xdoc.CreateNavigator()
-            Dim nodes As XPathNodeIterator = xpn.Select("//item")
+            Using xReader As XmlReader = New XmlTextReader(New StringReader(jobParamsXML))
 
-            Dim dctParameters As New List(Of udtParameterInfoType)
-            Dim udtParamInfo As udtParameterInfoType
+                Dim xdoc As New XPathDocument(xReader)
+                Dim xpn As XPathNavigator = xdoc.CreateNavigator()
+                Dim nodes As XPathNodeIterator = xpn.Select("//item")
 
-            ' Traverse the parsed XML document and extract the key and value for each item
-            While nodes.MoveNext()
-                ' Extract section, key, and value from XML element and append entry to dctParameterInfo
-                udtParamInfo.ParamName = nodes.Current.GetAttribute("key", "")
-                udtParamInfo.Value = nodes.Current.GetAttribute("value", "")
+                Dim dctParameters As New List(Of udtParameterInfoType)
+                Dim udtParamInfo As udtParameterInfoType
 
-                ' Extract the section name for the current item and dump it to output
-                Dim nav2 As XPathNavigator = nodes.Current.Clone
-                nav2.MoveToParent()
-                udtParamInfo.Section = nav2.GetAttribute("name", "")
+                ' Traverse the parsed XML document and extract the key and value for each item
+                While nodes.MoveNext()
+                    ' Extract section, key, and value from XML element and append entry to dctParameterInfo
+                    udtParamInfo.ParamName = nodes.Current.GetAttribute("key", "")
+                    udtParamInfo.Value = nodes.Current.GetAttribute("value", "")
 
-                dctParameters.Add(udtParamInfo)
+                    ' Extract the section name for the current item and dump it to output
+                    Dim nav2 As XPathNavigator = nodes.Current.Clone
+                    nav2.MoveToParent()
+                    udtParamInfo.Section = nav2.GetAttribute("name", "")
 
-            End While
+                    dctParameters.Add(udtParamInfo)
 
-            Return dctParameters
+                End While
+
+                Return dctParameters
+
+            End Using
 
         Catch ex As Exception
             LogError("clsDBTask.FillParamDict(), exception filling dictionary", ex)
