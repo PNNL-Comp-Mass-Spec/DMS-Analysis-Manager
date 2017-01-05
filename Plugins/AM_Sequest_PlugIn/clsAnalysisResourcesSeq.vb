@@ -306,11 +306,14 @@ Public Class clsAnalysisResourcesSeq
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim LocOrgDBFolder As String
-        Dim eExistingOutFileResult As IJobParams.CloseOutType
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         ' Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
-        LocOrgDBFolder = m_mgrParams.GetParam("orgdbdir")
+        Dim LocOrgDBFolder = m_mgrParams.GetParam("orgdbdir")
         If Not RetrieveOrgDB(LocOrgDBFolder) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         ' Retrieve param file
@@ -323,7 +326,7 @@ Public Class clsAnalysisResourcesSeq
 
         ' Look for an existing _out.txt.tmp file in the transfer folder on the storage server
         ' If one exists, and if the parameter file and settings file associated with the file match the ones in the work folder, then copy it locally
-        eExistingOutFileResult = CheckForExistingConcatenatedOutFile()
+        Dim eExistingOutFileResult = CheckForExistingConcatenatedOutFile()
 
         If eExistingOutFileResult = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
             If String.IsNullOrEmpty(m_message) Then

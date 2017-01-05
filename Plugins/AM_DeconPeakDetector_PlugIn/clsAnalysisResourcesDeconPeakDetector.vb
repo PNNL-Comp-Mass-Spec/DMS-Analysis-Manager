@@ -1,4 +1,4 @@
-﻿'*********************************************************************************************************
+'*********************************************************************************************************
 ' Written by Matthew Monroe for the US Department of Energy 
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 05/23/2014
@@ -11,39 +11,45 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsAnalysisResourcesDeconPeakDetector
-	Inherits clsAnalysisResources
-	
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Inherits clsAnalysisResources
+    
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		Dim strRawDataType As String = m_jobParams.GetJobParameter("RawDataType", "")
-		
-		' Retrieve the peak detector parameter file
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
-		Dim peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "")
-		Dim paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
+        Dim strRawDataType As String = m_jobParams.GetJobParameter("RawDataType", "")
+        
+        ' Retrieve the peak detector parameter file
 
-		paramFileStoragePath = Path.Combine(paramFileStoragePath, "PeakDetection")
+        Dim peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "")
+        Dim paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
 
-		If Not RetrieveFile(peakDetectorParamFileName, paramFileStoragePath) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        paramFileStoragePath = Path.Combine(paramFileStoragePath, "PeakDetection")
 
-		' Retrieve the instrument data file
-		If Not RetrieveSpectra(strRawDataType) Then
-			If String.IsNullOrEmpty(m_message) Then
-				m_message = "Error retrieving instrument data file"
-			End If
+        If Not RetrieveFile(peakDetectorParamFileName, paramFileStoragePath) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Retrieve the instrument data file
+        If Not RetrieveSpectra(strRawDataType) Then
+            If String.IsNullOrEmpty(m_message) Then
+                m_message = "Error retrieving instrument data file"
+            End If
 
-		If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message)
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
-	End Function
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
 
 End Class

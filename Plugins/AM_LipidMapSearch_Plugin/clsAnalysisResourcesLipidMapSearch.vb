@@ -11,6 +11,12 @@ Public Class clsAnalysisResourcesLipidMapSearch
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         ' Retrieve the parameter file
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
         Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")

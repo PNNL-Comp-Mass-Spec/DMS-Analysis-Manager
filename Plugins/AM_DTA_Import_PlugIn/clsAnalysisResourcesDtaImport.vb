@@ -14,15 +14,19 @@ Public Class clsAnalysisResourcesDtaImport
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim result As IJobParams.CloseOutType
-        'There are really no resources to get, so just clear the list of files to delete or keep and validate zip file
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
+        ' There are really no resources to get, so just clear the list of files to delete or keep and validate zip file
         result = ValidateDTA()
         If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
-        'All finished
+        ' All finished
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
 
     End Function

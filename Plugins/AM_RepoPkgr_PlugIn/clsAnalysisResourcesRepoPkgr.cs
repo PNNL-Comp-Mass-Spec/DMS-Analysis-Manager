@@ -24,6 +24,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <returns></returns>
         public override IJobParams.CloseOutType GetResources()
         {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
+
             var localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
             // get fasta file(s) for jobs in data package and copy to local organism database working directory

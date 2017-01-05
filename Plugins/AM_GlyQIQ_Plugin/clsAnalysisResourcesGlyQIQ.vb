@@ -41,6 +41,12 @@ Public Class clsAnalysisResourcesGlyQIQ
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         mGlyQIQParams = New udtGlyQIQParams()
 
         Dim coreCountText = m_jobParams.GetJobParameter("GlyQ-IQ", "Cores", "All")

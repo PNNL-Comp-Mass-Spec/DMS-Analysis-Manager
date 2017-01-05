@@ -8,7 +8,9 @@ namespace AnalysisManager_Mage_PlugIn
 
         public override IJobParams.CloseOutType GetResources()
         {
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            return result;
         }
     }
 }

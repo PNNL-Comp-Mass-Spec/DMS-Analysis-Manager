@@ -17,12 +17,19 @@ namespace AnalysisManager_IDM_Plugin
 
             try
             {
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                var result = GetSharedResources();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+
                 if (m_DebugLevel >= 1)
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
                 }
 
-                string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
+                var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
 
                 if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
                 {

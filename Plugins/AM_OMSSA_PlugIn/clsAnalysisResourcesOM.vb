@@ -18,8 +18,11 @@ Public Class clsAnalysisResourcesOM
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim strErrorMessage As String = String.Empty
-        Dim blnSuccess As Boolean
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -30,25 +33,25 @@ Public Class clsAnalysisResourcesOM
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
         'Retrieve param file
-        If Not RetrieveFile( _
-          m_jobParams.GetParam("ParmFileName"), _
+        If Not RetrieveFile(
+          m_jobParams.GetParam("ParmFileName"),
           m_jobParams.GetParam("ParmFileStoragePath")) _
         Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         'convert the .fasta file to OMSSA format using formatdb.exe
-        blnSuccess = ConvertOMSSAFastaFile()
-        If Not blnSuccess Then
-            Const Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format."
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+        Dim success = ConvertOMSSAFastaFile()
+        If Not success Then
+            Const msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format."
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Retrieve settings files aka default file that will have values overwritten by parameter file values
         'Stored in same location as parameter file
         '         m_jobParams.GetParam("SettingsFileName"), _
-        If Not RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, _
-         m_jobParams.GetParam("ParmFileStoragePath")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, m_jobParams.GetParam("ParmFileStoragePath")) Then
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
         m_JobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE)
 
         ' Retrieve the _DTA.txt file
@@ -58,8 +61,8 @@ Public Class clsAnalysisResourcesOM
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        blnSuccess = ConvertDtaToXml()
-        If Not blnSuccess Then
+        success = ConvertDtaToXml()
+        If Not success Then
             Const Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -72,11 +75,12 @@ Public Class clsAnalysisResourcesOM
         m_jobParams.AddResultFileExtensionToSkip(m_DatasetName & ".xml")
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-        blnSuccess = MakeInputFile(strErrorMessage)
+        Dim errorMessage As String = String.Empty
+        success = MakeInputFile(errorMessage)
 
-        If Not blnSuccess Then
-            Dim Msg As String = "clsAnalysisResourcesOM.GetResources(), failed making input file: " & strErrorMessage
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+        If Not success Then
+            Dim msg As String = "clsAnalysisResourcesOM.GetResources(), failed making input file: " & errorMessage
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -85,7 +89,6 @@ Public Class clsAnalysisResourcesOM
     End Function
 
     Protected Function ConvertOMSSAFastaFile() As Boolean
-        Dim CmdStr As String
 
         Try
             ' set up formatdb.exe to reference the organsim DB file (fasta)
@@ -110,13 +113,13 @@ Public Class clsAnalysisResourcesOM
 
             'Set up and execute a program runner to run FormatDb.exe
             'formatdb.exe -i C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
-            CmdStr = "-i" & Path.Combine(LocalOrgDBFolder, OrgDBName) & " -p T -o T"
+            dim cmdStr = "-i" & Path.Combine(LocalOrgDBFolder, OrgDBName) & " -p T -o T"
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting FormatDb: " & progLoc & " " & CmdStr)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting FormatDb: " & progLoc & " " & cmdStr)
             End If
 
-            If Not CmdRunner.RunProgram(progLoc, CmdStr, "FormatDb", True) Then
+            If Not CmdRunner.RunProgram(progLoc, cmdStr, "FormatDb", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running FormatDb for fasta file " & OrgDBName)
                 Return False
             End If

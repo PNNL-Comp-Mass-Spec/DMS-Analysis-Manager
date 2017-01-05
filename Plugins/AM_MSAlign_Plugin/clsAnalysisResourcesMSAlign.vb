@@ -21,7 +21,11 @@ Public Class clsAnalysisResourcesMSAlign
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim FileToGet As String
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         ' Make sure the machine has enough free memory to run MSAlign
         If Not ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign") Then
@@ -40,12 +44,12 @@ Public Class clsAnalysisResourcesMSAlign
 
         ' Retrieve the MSAlign file
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
-        FileToGet = m_DatasetName & MSDECONV_MSALIGN_FILE_SUFFIX
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
+        Dim fileToGet = m_DatasetName & MSDECONV_MSALIGN_FILE_SUFFIX
+        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
+        m_jobParams.AddResultFileToSkip(fileToGet)
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED

@@ -18,16 +18,17 @@ Public Class clsAnalysisResourcesXT
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim result As Boolean
-        Dim strWorkDir As String
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         ' XTandem just copies its parameter file from the central repository
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
-
-        strWorkDir = m_mgrParams.GetParam("workdir")
 
         'Retrieve param file
         If Not RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")) Then
@@ -59,27 +60,27 @@ Public Class clsAnalysisResourcesXT
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
 
-        If Not ValidateDTATextFileSize(strWorkDir, m_DatasetName & "_dta.txt") Then
+        If Not ValidateDTATextFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
-        If Not result Then
+        Dim success = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir)
+        If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
-        If Not result Then
+        success = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir)
+        If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), strWorkDir)
-        If Not result Then
+        success = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir)
+        If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -90,16 +91,16 @@ Public Class clsAnalysisResourcesXT
         End If
 
         ' set up taxonomy file to reference the organism DB file (fasta)
-        result = MakeTaxonomyFile()
-        If Not result Then
+        success = MakeTaxonomyFile()
+        If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed making taxonomy file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-        result = MakeInputFile()
-        If Not result Then
+        success = MakeInputFile()
+        If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed making input file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED

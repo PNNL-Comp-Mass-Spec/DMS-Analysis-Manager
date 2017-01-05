@@ -10,14 +10,14 @@ Option Strict On
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesDataImport
-	Inherits clsAnalysisResources
+    Inherits clsAnalysisResources
 
-	Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-		' No resources are required for the DataImport tool
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        Return result
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-	End Function
+    End Function
 
 End Class

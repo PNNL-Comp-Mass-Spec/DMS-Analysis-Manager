@@ -15,6 +15,12 @@ namespace AnalysisManager_Cyclops_PlugIn
             try
             {
 
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                var result = GetSharedResources();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+                    return result;
+                }
+
                 if (m_DebugLevel >= 1)
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");

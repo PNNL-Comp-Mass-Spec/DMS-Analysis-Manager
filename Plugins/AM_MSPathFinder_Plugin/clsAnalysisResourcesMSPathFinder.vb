@@ -20,20 +20,25 @@ Public Class clsAnalysisResourcesMSPathFinder
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         If Not RetrieveFastaAndParamFile() Then
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
-        Dim eResult As IJobParams.CloseOutType
 
-        eResult = RetrieveProMexFeaturesFile()
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return eResult
+        result = RetrieveProMexFeaturesFile()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
         End If
 
-        eResult = RetrievePBFFile()
+        result = RetrievePBFFile()
 
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return eResult
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
         End If
 
         ' Look for existing .tsv result files
@@ -57,24 +62,13 @@ Public Class clsAnalysisResourcesMSPathFinder
         Dim fileSuffixes = New List(Of String) From {"_IcDecoy.tsv", "_IcTarget.tsv", "_IcTda.tsv"}
 
         Try
-            Dim transferFolderPathBase = m_jobParams.GetParam("transferFolderPath")
-            If String.IsNullOrEmpty(transferFolderPathBase) Then
+
+            Dim transferFolderPath = GetTransferFolderPathForJobStep(useInputFolder:=False)
+
+            If String.IsNullOrEmpty(transferFolderPath) Then
                 ' Transfer folder parameter is empty; abort the search for result files 
                 ' This error will be properly dealt with elsewhere
-                Return False
             End If
-
-            ' Append the dataset folder name to the transfer folder path
-            Dim datasetFolderName = m_jobParams.GetParam("StepParameters", "DatasetFolderName")
-            If String.IsNullOrWhiteSpace(datasetFolderName) Then datasetFolderName = m_DatasetName
-
-            Dim resultFolderName = m_jobParams.GetParam("OutputFolderName")
-            If String.IsNullOrEmpty(resultFolderName) Then
-                'Output folder parameter is empty; abort the search for result files 
-                Return False
-            End If
-
-            Dim transferFolderPath = Path.Combine(transferFolderPathBase, datasetFolderName, resultFolderName)
 
             For Each suffix In fileSuffixes
 

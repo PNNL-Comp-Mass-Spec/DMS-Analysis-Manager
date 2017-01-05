@@ -19,6 +19,14 @@ Public Class clsAnalysisResourcesMSXMLGen
 
         Try
 
+            currentTask = "Retrieve shared resources"
+
+            ' Retrieve shared resources, including the JobParameters file from the previous job step
+            Dim result = GetSharedResources()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return result
+            End If
+
             currentTask = "Determine RawDataType"
 
             Dim toolName = m_jobParams.GetParam("ToolName")

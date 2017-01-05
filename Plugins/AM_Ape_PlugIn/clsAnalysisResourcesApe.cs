@@ -9,8 +9,13 @@ namespace AnalysisManager_Ape_PlugIn
 
         public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
         {
-            bool blnSuccess = true;
-            blnSuccess = RunApeGetResources();
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+                return result;
+            }
+
+            var blnSuccess = RunApeGetResources();
 
             if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 

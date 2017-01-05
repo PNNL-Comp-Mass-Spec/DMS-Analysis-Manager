@@ -25,6 +25,12 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
         If Not RetrieveDtaFiles() Then
@@ -47,23 +53,15 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
         '  b) The .Raw file
         '
 
-        Dim strMSLevelFilter As String
+        Dim strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0")
 
-        Dim strScanTypeFilter As String
-        Dim strScanTypeMatchType As String
+        Dim strScanTypeFilter = m_jobParams.GetJobParameter("ScanTypeFilter", "")
+        Dim strScanTypeMatchType = m_jobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
 
-        Dim strMSCollisionModeFilter As String
-        Dim strMSCollisionModeMatchType As String
+        Dim strMSCollisionModeFilter = m_jobParams.GetJobParameter("MSCollisionModeFilter", "")
+        Dim strMSCollisionModeMatchType = m_jobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
+
         Dim blnNeedScanStatsFiles = False
-
-        strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0")
-
-        strScanTypeFilter = m_jobParams.GetJobParameter("ScanTypeFilter", "")
-        strScanTypeMatchType = m_jobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
-
-        strMSCollisionModeFilter = m_jobParams.GetJobParameter("MSCollisionModeFilter", "")
-        strMSCollisionModeMatchType = m_jobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
-
 
         If Not strMSLevelFilter Is Nothing AndAlso strMSLevelFilter.Length > 0 AndAlso strMSLevelFilter <> "0" Then
             If m_DebugLevel >= 1 Then

@@ -28,6 +28,13 @@ Public Class clsAnalysisResourcesMSGFDB
         Dim currentTask = "Initializing"
 
         Try
+            currentTask = "Retrieve shared resources"
+
+            ' Retrieve shared resources, including the JobParameters file from the previous job step
+            Dim result = GetSharedResources()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return result
+            End If
 
             currentTask = "GetHPCOptions"
 
@@ -95,34 +102,33 @@ Public Class clsAnalysisResourcesMSGFDB
 
             ' The ToolName job parameter holds the name of the job script we are executing
             Dim strScriptName = m_jobParams.GetParam("ToolName")
-            Dim eResult As IJobParams.CloseOutType
 
             If strScriptName.ToLower().Contains("mzxml") OrElse strScriptName.ToLower().Contains("msgfplus_bruker") Then
                 currentTask = "Get mzXML file"
-                eResult = GetMzXMLFile()
+                result = GetMzXMLFile()
 
             ElseIf strScriptName.ToLower().Contains("mzml") Then
                 currentTask = "Get mzML file"
-                eResult = GetMzMLFile()
+                result = GetMzMLFile()
 
             Else
                 currentTask = "RetrieveDtaFiles"
-                eResult = GetCDTAFile()
+                result = GetCDTAFile()
 
-                If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                     currentTask = "GetMasicFiles"
-                    eResult = GetMasicFiles()
+                    result = GetMasicFiles()
                 End If
 
-                If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                     currentTask = "ValidateCDTAFile"
-                    eResult = ValidateCDTAFile()
+                    result = ValidateCDTAFile()
                 End If
 
             End If
 
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return eResult
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return result
             End If
 
             currentTask = "Add extensions to skip"

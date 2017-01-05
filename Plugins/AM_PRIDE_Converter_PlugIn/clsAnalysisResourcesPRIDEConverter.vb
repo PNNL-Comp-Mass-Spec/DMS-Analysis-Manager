@@ -1,4 +1,4 @@
-﻿Option Strict On
+Option Strict On
 
 Imports AnalysisManagerBase
 
@@ -19,6 +19,12 @@ Public Class clsAnalysisResourcesPRIDEConverter
     Public Const PX_SUBMISSION_FILE_SUFFIX As String = ".px"
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
+
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         Dim lstDataPackagePeptideHitJobs = New List(Of clsDataPackageJobInfo)
 

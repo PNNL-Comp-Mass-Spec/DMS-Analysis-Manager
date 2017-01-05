@@ -24,6 +24,11 @@ Public Class clsAnalysisResourcesMzRefinery
 
         Try
 
+            currentTask = "Retrieve shared resources"
+
+            ' Retrieve shared resources, including the JobParameters file from the previous job step
+            GetSharedResources()
+
             Dim mzRefParamFile = m_jobParams.GetJobParameter("MzRefParamFile", String.Empty)
             If String.IsNullOrEmpty(mzRefParamFile) Then
                 LogError("MzRefParamFile parameter is empty")

@@ -13,6 +13,12 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         ' Lookup the file processing options, for example:
         ' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
         ' MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_fht.txt,MSGFPlus:_dta.zip,masic_finnigan:_ScanStatsEx.txt

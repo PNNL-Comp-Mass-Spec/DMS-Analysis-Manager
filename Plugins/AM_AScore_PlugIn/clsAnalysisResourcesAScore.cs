@@ -12,6 +12,13 @@ namespace AnalysisManager_AScore_PlugIn
 
         public override IJobParams.CloseOutType GetResources()
         {
+
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+                return result;
+            }
+        
             // WARNING: AScore accesses the files over the network, retrieving the files using Mage
             //          If the files have been purged, they may not be accessible 
             //          (Mage supports retrieving files from Aurora or MyEmsl, 

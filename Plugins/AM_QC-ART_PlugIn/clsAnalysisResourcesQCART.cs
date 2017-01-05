@@ -62,6 +62,15 @@ namespace AnalysisManagerQCARTPlugin
 
             try
             {
+                currentTask = "Retrieve shared resources";
+
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                var result = GetSharedResources();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
                 var paramFileName = m_jobParams.GetParam("ParmFileName");

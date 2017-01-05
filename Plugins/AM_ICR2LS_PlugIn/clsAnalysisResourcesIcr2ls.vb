@@ -8,6 +8,13 @@ Public Class clsAnalysisResourcesIcr2ls
 
 #Region "Methods"
     Public Overrides Function GetResources() As IJobParams.CloseOutType
+
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         ' Retrieve param file
         If Not RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED

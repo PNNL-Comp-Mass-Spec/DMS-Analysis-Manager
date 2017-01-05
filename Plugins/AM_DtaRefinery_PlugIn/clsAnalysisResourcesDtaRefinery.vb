@@ -20,7 +20,11 @@ Public Class clsAnalysisResourcesDtaRefinery
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim result As Boolean
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         'Retrieve Fasta file
         If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -117,10 +121,10 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         ' Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         Dim strErrorMessage As String = Nothing
-        result = UpdateParameterFile(strErrorMessage)
-        If Not result Then
-            Dim Msg As String = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " & strErrorMessage
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
+        Dim success = UpdateParameterFile(strErrorMessage)
+        If Not success Then
+            Dim msg As String = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " & strErrorMessage
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 

@@ -22,7 +22,11 @@ Public Class clsAnalysisResourcesIDPicker
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         ' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
@@ -45,9 +49,9 @@ Public Class clsAnalysisResourcesIDPicker
         Dim blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
         ' Retrieve the PSM result files, PHRP files, and MSGF file
-        If Not GetInputFiles(m_DatasetName, strParamFileName, eReturnCode) Then
-            If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-            Return eReturnCode
+        If Not GetInputFiles(m_DatasetName, strParamFileName, result) Then
+            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then result = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return result
         End If
 
         If mSynopsisFileIsEmpty Then

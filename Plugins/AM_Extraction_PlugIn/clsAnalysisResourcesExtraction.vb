@@ -49,6 +49,12 @@ Public Class clsAnalysisResourcesExtraction
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         ' Set this to true for now
         ' It will be changed to False if processing Inspect results and the _PepToProtMap.txt file is successfully retrieved
         mRetrieveOrganismDB = True

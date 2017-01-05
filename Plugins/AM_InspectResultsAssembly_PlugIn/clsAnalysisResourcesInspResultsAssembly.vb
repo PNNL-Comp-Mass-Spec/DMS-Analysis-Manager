@@ -19,6 +19,13 @@ Public Class clsAnalysisResourcesInspResultsAssembly
     ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
+
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         Dim numClonedSteps As String
 
         Dim transferFolderName As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_DatasetName)
@@ -42,7 +49,7 @@ Public Class clsAnalysisResourcesInspResultsAssembly
         End If
 
         numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
-        If [String].IsNullOrEmpty(numClonedSteps) Then
+        If String.IsNullOrEmpty(numClonedSteps) Then
             ' This is not a parallelized job
             ' Retrieve the zipped Inspect result file
             If Not RetrieveFile(zippedResultName, transferFolderName) Then

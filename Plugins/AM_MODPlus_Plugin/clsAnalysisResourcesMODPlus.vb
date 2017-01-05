@@ -26,6 +26,15 @@ Public Class clsAnalysisResourcesMODPlus
         Dim currentTask = "Initializing"
 
         Try
+
+            currentTask = "Retrieve shared resources"
+    
+            ' Retrieve shared resources, including the JobParameters file from the previous job step
+            Dim result = GetSharedResources()
+            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                Return result
+            End If
+
             currentTask = "Retrieve Fasta and param file"
             If Not RetrieveFastaAndParamFile() Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND

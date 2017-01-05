@@ -21,17 +21,17 @@ Public Class clsAnalysisResourcesLCMSFF
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim result As Boolean
-        Dim strFileToGet As String
-        Dim strLCMSFFIniFileName As String
-        Dim strFFIniFileStoragePath As String
-        Dim strParamFileStoragePathKeyName As String
-
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
+
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         ' Retrieve Decon2LS _scans.csv file for this dataset
         ' The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
-        strFileToGet = m_DatasetName & SCANS_FILE_SUFFIX
+        Dim strFileToGet = m_DatasetName & SCANS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
@@ -46,14 +46,14 @@ Public Class clsAnalysisResourcesLCMSFF
         m_jobParams.AddResultFileToSkip(strFileToGet)
 
         ' Retrieve the LCMSFeatureFinder .Ini file specified for this job
-        strLCMSFFIniFileName = m_jobParams.GetParam("LCMSFeatureFinderIniFile")
+        Dim strLCMSFFIniFileName = m_jobParams.GetParam("LCMSFeatureFinderIniFile")
         If strLCMSFFIniFileName Is Nothing OrElse strLCMSFFIniFileName.Length = 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue")
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
-        strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "LCMSFeatureFinder"
-        strFFIniFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
+        Dim strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "LCMSFeatureFinder"
+        Dim strFFIniFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
         If strFFIniFileStoragePath Is Nothing OrElse strFFIniFileStoragePath.Length = 0 Then
             strFFIniFileStoragePath = "\\gigasax\DMS_Parameter_Files\LCMSFeatureFinder"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strFFIniFileStoragePath)
@@ -95,8 +95,8 @@ Public Class clsAnalysisResourcesLCMSFF
         ''m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
         ' Customize the LCMSFeatureFinder .Ini file to include the input file path and output folder path
-        result = UpdateFeatureFinderIniFile(strLCMSFFIniFileName)
-        If Not result Then
+        Dim success = UpdateFeatureFinderIniFile(strLCMSFFIniFileName)
+        If Not success Then
             Dim Msg As String = "clsAnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " & strLCMSFFIniFileName
             If String.IsNullOrEmpty(m_message) Then
                 m_message = Msg

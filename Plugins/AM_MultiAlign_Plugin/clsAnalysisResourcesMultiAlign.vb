@@ -15,51 +15,51 @@ Public Class clsAnalysisResourcesMultiAlign
 
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim strFileToGet As String
-        Dim strMAParamFileName As String
-        Dim strMAParameterFileStoragePath As String
-        Dim strParamFileStoragePathKeyName As String
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
-        Dim SplitString As String()
-        Dim FileNameExt As String()
         Dim strInputFileExtension As String = String.Empty
 
-        SplitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
-        For Each row As String In SplitString
-            FileNameExt = row.Split(":"c)
-            If FileNameExt.Length < 3 Then
+        Dim splitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
+
+        For Each row As String In splitString
+            Dim fileNameExt = row.Split(":"c)
+            If fileNameExt.Length < 3 Then
                 Throw New InvalidOperationException("Malformed target job specification; must have three columns separated by two colons: " & row)
             End If
-            If FileNameExt(2) = "nocopy" Then
-                m_JobParams.AddResultFileExtensionToSkip(FileNameExt(1))
+            If fileNameExt(2) = "nocopy" Then
+                m_jobParams.AddResultFileExtensionToSkip(fileNameExt(1))
             End If
-            strInputFileExtension = FileNameExt(1)
+            strInputFileExtension = fileNameExt(1)
         Next
 
         ' Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
-        strFileToGet = m_DatasetName & strInputFileExtension
-        If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
+        Dim fileToGet = m_DatasetName & strInputFileExtension
+        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the MultiAlign Parameter .xml file specified for this job
-        strMAParamFileName = m_jobParams.GetParam("ParmFileName")
-        If strMAParamFileName Is Nothing OrElse strMAParamFileName.Length = 0 Then
+        Dim multialignParamFileName = m_jobParams.GetParam("ParmFileName")
+        If multialignParamFileName Is Nothing OrElse multialignParamFileName.Length = 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MultiAlign ParmFileName not defined in the settings for this job; unable to continue")
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
-        strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "MultiAlign"
-        strMAParameterFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
-        If strMAParameterFileStoragePath Is Nothing OrElse strMAParameterFileStoragePath.Length = 0 Then
-            strMAParameterFileStoragePath = "\\gigasax\DMS_Parameter_Files\MultiAlign"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strMAParameterFileStoragePath)
+        Dim paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "MultiAlign"
+        Dim multialignParameterFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName)
+        If multialignParameterFileStoragePath Is Nothing OrElse multialignParameterFileStoragePath.Length = 0 Then
+            multialignParameterFileStoragePath = "\\gigasax\DMS_Parameter_Files\MultiAlign"
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & paramFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & multialignParameterFileStoragePath)
         End If
 
-        If Not CopyFileToWorkDir(strMAParamFileName, strMAParameterFileStoragePath, m_WorkingDir) Then
+        If Not CopyFileToWorkDir(multialignParamFileName, multialignParameterFileStoragePath, m_WorkingDir) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -69,10 +69,9 @@ Public Class clsAnalysisResourcesMultiAlign
         End If
 
         ' Build the MultiAlign input text file
-        Dim blnSuccess As Boolean
-        blnSuccess = BuildMultiAlignInputTextFile(strInputFileExtension)
+        Dim success = BuildMultiAlignInputTextFile(strInputFileExtension)
 
-        If Not blnSuccess Then
+        If Not success Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If

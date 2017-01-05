@@ -23,15 +23,20 @@ Public Class clsDtaGenResources
 #Region "Methods"
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
+
         Dim strRawDataType As String = m_jobParams.GetJobParameter("RawDataType", "")
         Dim blnMGFInstrumentData As Boolean = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
-        Dim eDtaGeneratorType As clsDtaGenToolRunner.eDTAGeneratorConstants
         Dim strErrorMessage As String = String.Empty
 
         Dim zippedDTAFilePath As String = String.Empty
 
-        eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(m_jobParams, strErrorMessage)
+        Dim eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(m_jobParams, strErrorMessage)
         If eDtaGeneratorType = clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown Then
             If String.IsNullOrEmpty(strErrorMessage) Then
                 m_message = "GetDTAGeneratorInfo reported an Unknown DTAGenerator type"

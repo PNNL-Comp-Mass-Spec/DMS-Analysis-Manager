@@ -41,7 +41,11 @@ Public Class clsAnalysisResourcesMSGF
     ''' <remarks></remarks>
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
-        Dim eResult As IJobParams.CloseOutType
+        ' Retrieve shared resources, including the JobParameters file from the previous job step
+        Dim result = GetSharedResources()
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            Return result
+        End If
 
         m_PendingFileRenames = New Dictionary(Of String, String)
 
@@ -58,8 +62,8 @@ Public Class clsAnalysisResourcesMSGF
         End If
 
         'Get analysis results files
-        eResult = GetInputFiles(m_jobParams.GetParam("ResultType"))
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        result = GetInputFiles(m_jobParams.GetParam("ResultType"))
+        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 

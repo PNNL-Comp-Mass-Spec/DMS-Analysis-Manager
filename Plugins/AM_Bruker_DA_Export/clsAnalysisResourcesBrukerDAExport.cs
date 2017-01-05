@@ -20,6 +20,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
             try
             {
+                currentTask = "Retrieve shared resources";
+                
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                var result = GetSharedResources();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+                    return result;
+                }
+
                 // Retrieve the export script
                 currentTask = "Get parameter BrukerSpectraExportScriptFile";
                 var exportScriptName = m_jobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
