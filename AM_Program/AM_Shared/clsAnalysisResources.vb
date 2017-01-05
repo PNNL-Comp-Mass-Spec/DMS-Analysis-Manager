@@ -13,6 +13,8 @@ Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
 Imports System.Threading
+Imports System.Xml
+Imports System.Xml.Linq
 Imports MyEMSLReader
 Imports ParamFileGenerator.MakeParams
 
@@ -3166,7 +3168,7 @@ Public MustInherit Class clsAnalysisResources
 
     ''' <summary>
     ''' Look for a JobParameters file from the previous job step
-    ''' If found, copy to the working directory
+    ''' If found, copy to the working directory, naming in JobParameters_JobNum_PreviousStep.xml
     ''' </summary>
     ''' <returns>True if success, false if an error</returns>
     Private Function GetExistingJobParametersFile() As Boolean
@@ -3183,7 +3185,8 @@ Public MustInherit Class clsAnalysisResources
                 ' Transfer folder parameter is empty; nothing to retrieve
             End If
 
-            Dim jobParametersFilename = "JobParameters_" & m_JobNum & ".xml"
+            ' Construct the filename, for example JobParameters_1394245.xml
+            Dim jobParametersFilename = clsAnalysisJob.JobParametersFilename(m_JobNum)
             Dim sourceFile = New FileInfo(Path.Combine(transferFolderPath, jobParametersFilename))
 
             If Not sourceFile.Exists Then
@@ -3191,12 +3194,42 @@ Public MustInherit Class clsAnalysisResources
                 Return True
             End If
 
-            ' Copy the file
-            If Not CopyFileToWorkDir(sourceFile.Name, transferFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-                ' Error copying; silently ignore
+            ' Copy the file, renaming to avoid a naming collision
+            Dim destFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(sourceFile.Name) & "_PreviousStep.xml")
+            If CopyFileWithRetry(sourceFile.FullName, destFilePath, overwrite:=True, maxCopyAttempts:=3) Then
+                If m_DebugLevel > 3 Then
+                    LogDebugMessage("GetExistingJobParametersFile, File copied:  " + sourceFile.FullName)
+                End If
+            Else
+                LogError("Error in GetExistingJobParametersFile copying file " + sourceFile.FullName)
+                ' Return false
             End If
 
-            Return True
+
+            Dim sourceJobParamXMLFile = New FileInfo(destFilePath)
+
+            Dim masterJobParamXMLFile = New FileInfo(Path.Combine(m_WorkingDir, clsAnalysisJob.JobParametersFilename(m_JobNum)))
+
+            If Not sourceJobParamXMLFile.Exists Then
+                ' The file wasn't copied
+                LogError("Job Parameters file from the previous job step was not found at " & sourceJobParamXMLFile.FullName)
+                Return False
+            End If
+
+            If Not masterJobParamXMLFile.Exists Then
+                ' The JobParameters XML file was not found
+                LogError("Job Parameters file not found at " & masterJobParamXMLFile.FullName)
+                Return False
+            End If
+
+            ' Update the JobParameters XML file that was created by this job step to include the information from the previous job steps
+            Dim success = MergeJobParamXMLStepParameters(sourceJobParamXMLFile.FullName, masterJobParamXMLFile.FullName)
+
+            If success Then
+                m_jobParams.AddResultFileToSkip(sourceJobParamXMLFile.Name)
+            End If
+
+            Return success
 
         Catch ex As Exception
             m_message = "Exception in GetExistingJobParametersFile: " & ex.Message
@@ -3903,6 +3936,38 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
+    ''' Read a JobParameters XML file to find the sections named "StepParameters"
+    ''' </summary>
+    ''' <param name="doc">XDocument to scan</param>
+    ''' <returns>Dictionary where keys are the step number and values are the XElement node with the step parameters for the given step</returns>
+    Private Function GetStepParametersSections(doc As XDocument) As Dictionary(Of Integer, XElement)
+
+        Dim stepNumToParamsMap = New Dictionary(Of Integer, XElement)
+
+        Dim stepParamSections = doc.Elements("sections").Elements("section").ToList()
+        For Each section In stepParamSections
+            If Not section.HasAttributes Then Continue For
+
+            Dim nameAttrib = section.Attribute("name")
+            If nameAttrib Is Nothing Then Continue For
+
+            If Not String.Equals(nameAttrib.Value, "StepParameters") Then Continue For
+
+            Dim stepAttrib = section.Attribute("step")
+            If stepAttrib Is Nothing Then Continue For
+
+            Dim stepNumber As Integer
+            If Integer.TryParse(stepAttrib.Value, stepNumber) Then
+                ' Add or update the XML for this section
+                stepNumToParamsMap(stepNumber) = section
+            End If
+
+        Next
+
+        Return stepNumToParamsMap
+    End Function
+
+    ''' <summary>
     ''' Get the input or output transfer folder path specific to this job step
     ''' </summary>
     ''' <param name="useInputFolder">True to use "InputFolderName", False to use "OutputFolderName"</param>
@@ -4376,6 +4441,76 @@ Public MustInherit Class clsAnalysisResources
         Catch ex As Exception
             ReportStatus("Error in LookupLegacyDBSizeWithIndices", ex)
             Return 0
+        End Try
+
+    End Function
+
+    ''' <summary>
+    ''' Look for StepParameter section entries in the source file and insert them into the master file
+    ''' If the master file already has information on the given job step, information for that step is not copied from the source
+    ''' This is because the master file is assumed to be newer than the source file
+    ''' </summary>
+    ''' <param name="sourceJobParamXMLFilePath"></param>
+    ''' <param name="masterJobParamXMLFilePath"></param>
+    ''' <returns></returns>
+    Private Function MergeJobParamXMLStepParameters(sourceJobParamXMLFilePath As String, masterJobParamXMLFilePath As String) As Boolean
+
+        Try
+
+            Dim sourceDoc As XDocument = XDocument.Load(sourceJobParamXMLFilePath)
+
+            Dim masterDoc As XDocument = XDocument.Load(masterJobParamXMLFilePath)
+
+            ' Keys in the stepParamsSections dictionaries are step numbers 
+            ' Values are the XElement node with the step parameters for the given step
+
+            Dim stepParamSectionsSource = GetStepParametersSections(sourceDoc)
+
+            Dim stepParamSectionsMaster = GetStepParametersSections(masterDoc)
+
+            Dim stepParamSectionsMerged = New Dictionary(Of Integer, XElement)
+
+            ' Initialize stepParamSectionsMerged using stepParamSectionsMaster
+            For Each section In stepParamSectionsMaster
+                stepParamSectionsMerged.Add(section.Key, section.Value)
+            Next
+
+            ' Add missing steps to stepParamSectionsMerged
+            For Each section In stepParamSectionsSource
+                If Not stepParamSectionsMerged.ContainsKey(section.Key) Then
+                    stepParamSectionsMerged.Add(section.Key, section.Value)
+                End If
+            Next
+
+            ' Remove the StepParameter items from the master, then add in the merged items
+            For Each section In stepParamSectionsMaster
+                section.Value.Remove()
+            Next
+
+            Dim sectionsNode = masterDoc.Elements("sections").First()
+
+            For Each section In From item In stepParamSectionsMerged Order By item.Key Select item.Value
+                sectionsNode.Add(section)
+            Next
+
+            Dim settings = New XmlWriterSettings()
+            settings.Indent = True
+            settings.IndentChars = "  "
+            settings.OmitXmlDeclaration = True
+
+            Using fileWriter = New StreamWriter(New FileStream(masterJobParamXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+
+                Using writer As XmlWriter = XmlWriter.Create(fileWriter, settings)
+                    masterDoc.Save(writer)
+                End Using
+
+            End Using
+
+            Return True
+
+        Catch ex As Exception
+            LogError("Error in MergeJobParamXMLStepParameters", ex)
+            Return False
         End Try
 
     End Function
@@ -8062,7 +8197,7 @@ Public MustInherit Class clsAnalysisResources
       callingFunctionName As String,
       forceExternalZipProgramUse As Boolean) As Boolean
 
-        Dim strUnzipperName As String = "??"
+        Dim strUnzipperName = "??"
 
         Try
             If String.IsNullOrEmpty(callingFunctionName) Then
