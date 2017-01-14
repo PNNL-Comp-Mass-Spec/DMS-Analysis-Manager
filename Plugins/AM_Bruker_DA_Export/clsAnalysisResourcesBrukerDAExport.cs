@@ -6,6 +6,9 @@
 *****************************************************************/
 
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerBrukerDAExportPlugin
@@ -99,15 +102,75 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     base.DisableMyEMSLSearch();
                 }
 
+                // Delete any _1.mcf or _1.mcf_idx files (or similar)
+                // The presence of those files can cause the Bruker DataAnalysis application to crash
+                // especially if those files were created with a newer build of DataAnalysis
+                // We observed this in January 2017 with Build 378 on Pub-88 vs. Build 384 on the instrument
+                var searchSpecList = new List<string>
+                {
+                    "*_1.mcf",
+                    "*_2.mcf",
+                    "*_3.mcf",
+                    "*_4.mcf",
+                    "*_1.mcf_idx",
+                    "*_2.mcf_idx",
+                    "*_3.mcf_idx",
+                    "*_4.mcf_idx",
+                    "*.mcf_idx-journal",
+                    "LockInfo",
+                    "SyncHelper",
+                    "ProjectCreationHelper"
+                    // Possibly also add "Storage.mcf_idx"
+                };
+
+                currentTask = "Delete extra files";
+
+                var workDirFolder = new DirectoryInfo(m_WorkingDir);
+                var deleteAttemptCount = 0;
+                var deleteSuccessCount = 0;
+
+                foreach (var searchSpec in searchSpecList)
+                {
+                    var fileList = workDirFolder.GetFiles(searchSpec, SearchOption.AllDirectories);
+                    foreach (var file in fileList)
+                    {
+                        deleteAttemptCount++;
+                        try
+                        {
+                            file.Delete();
+                            deleteSuccessCount++;
+                        }
+                        catch (Exception ex2)
+                        {
+                            LogError("Exception deleting file " + file.FullName, ex2);
+                            m_message = string.Empty;
+                        }
+                        
+                    }
+                }
+
+                if (deleteAttemptCount <= 0)
+                    return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+
+                if (deleteSuccessCount == deleteAttemptCount)
+                {
+                    if (deleteSuccessCount == 1)
+                        LogDebugMessage("Deleted 1 extra file in the working directory");
+                    else
+                        LogDebugMessage($"Deleted {deleteSuccessCount} extra files in the working directory");
+                }
+                else
+                {
+                    LogDebugMessage(
+                        $"Deleted extra files in the working directory: {deleteSuccessCount} of {deleteAttemptCount} successfully deleted");
+                }
+
                 return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
             }
             catch (Exception ex)
             {
-                m_message = "Exception in GetResources: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
-
+                LogError("Exception in GetResources (task = " + currentTask + ")", ex);
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
             }
 
