@@ -4206,12 +4206,13 @@ Public MustInherit Class clsAnalysisResources
 
     End Function
 
-    Private Sub LogDebugMessage(debugMessage As String)
+    ' ReSharper disable once MemberCanBePrivate.Global
+    Protected Sub LogDebugMessage(debugMessage As String)
         Console.WriteLine(debugMessage)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, debugMessage)
     End Sub
 
-    Private Shared Sub LogDebugMessage(debugMessage As String, statusTools As IStatusFile)
+    Protected Shared Sub LogDebugMessage(debugMessage As String, statusTools As IStatusFile)
         Console.WriteLine(debugMessage)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, debugMessage)
 
