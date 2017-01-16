@@ -3,6 +3,7 @@
 Imports AnalysisManagerBase
 Imports System.Collections.Generic
 Imports System.IO
+Imports System.Runtime.InteropServices
 
 Public Class clsMGFConverter
 
@@ -121,7 +122,7 @@ Public Class clsMGFConverter
 
     End Function
 
-    Private Function GetCVParams(ByRef objXMLReader As Xml.XmlTextReader, strCurrentElementName As String) As Dictionary(Of String, String)
+    Private Function GetCVParams(objXMLReader As Xml.XmlTextReader, strCurrentElementName As String) As Dictionary(Of String, String)
 
         Dim lstCVParams = New Dictionary(Of String, String)()
         Dim strAccession As String
@@ -148,7 +149,10 @@ Public Class clsMGFConverter
 
     End Function
 
-    Private Function ParseMzMLFile(strMzMLFilePath As String, ByRef blnAutoNumberScans As Boolean, lstSpectrumIDToScanNumber As Dictionary(Of String, udtScanInfoType)) As Boolean
+    Private Function ParseMzMLFile(
+      strMzMLFilePath As String,
+      <Out()> ByRef blnAutoNumberScans As Boolean,
+      lstSpectrumIDToScanNumber As Dictionary(Of String, udtScanInfoType)) As Boolean
 
         Dim strSpectrumID As String = String.Empty
 
@@ -229,7 +233,7 @@ Public Class clsMGFConverter
 
     End Function
 
-    Private Function XMLTextReaderGetAttributeValue(ByRef objXMLReader As Xml.XmlTextReader, strAttributeName As String, strValueIfMissing As String) As String
+    Private Function XMLTextReaderGetAttributeValue(objXMLReader As Xml.XmlTextReader, strAttributeName As String, strValueIfMissing As String) As String
         objXMLReader.MoveToAttribute(strAttributeName)
         If objXMLReader.ReadAttributeValue() Then
             Return objXMLReader.Value
@@ -238,7 +242,7 @@ Public Class clsMGFConverter
         End If
     End Function
 
-    Private Function XMLTextReaderGetInnerText(ByRef objXMLReader As Xml.XmlTextReader) As String
+    Private Function XMLTextReaderGetInnerText(objXMLReader As Xml.XmlTextReader) As String
         Dim strValue As String = String.Empty
         Dim blnSuccess As Boolean
 
@@ -256,7 +260,7 @@ Public Class clsMGFConverter
         Return strValue
     End Function
 
-    Private Sub XMLTextReaderSkipWhitespace(ByRef objXMLReader As Xml.XmlTextReader)
+    Private Sub XMLTextReaderSkipWhitespace(objXMLReader As Xml.XmlTextReader)
         If objXMLReader.NodeType = Xml.XmlNodeType.Whitespace Then
             ' Whitspace; read the next node
             objXMLReader.Read()

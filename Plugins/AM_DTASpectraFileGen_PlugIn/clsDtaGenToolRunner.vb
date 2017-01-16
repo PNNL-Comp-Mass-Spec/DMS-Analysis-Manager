@@ -185,12 +185,15 @@ Public Class clsDtaGenToolRunner
 
     End Function
 
-    Public Shared Function GetDTAGeneratorInfo(oJobParams As IJobParams, ByRef strErrorMessage As String) As eDTAGeneratorConstants
+    Public Shared Function GetDTAGeneratorInfo(oJobParams As IJobParams, <Out()> ByRef strErrorMessage As String) As eDTAGeneratorConstants
         Dim blnConcatenateDTAs As Boolean
         Return GetDTAGeneratorInfo(oJobParams, blnConcatenateDTAs, strErrorMessage)
     End Function
 
-    Public Shared Function GetDTAGeneratorInfo(oJobParams As IJobParams, ByRef blnConcatenateDTAs As Boolean, ByRef strErrorMessage As String) As eDTAGeneratorConstants
+    Public Shared Function GetDTAGeneratorInfo(
+      oJobParams As IJobParams,
+      <Out()> ByRef blnConcatenateDTAs As Boolean,
+      <Out()> ByRef strErrorMessage As String) As eDTAGeneratorConstants
 
         Dim strDTAGenerator As String = oJobParams.GetJobParameter("DtaGenerator", "")
         Dim strRawDataType As String = oJobParams.GetJobParameter("RawDataType", "")
