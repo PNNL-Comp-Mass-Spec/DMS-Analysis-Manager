@@ -1002,17 +1002,26 @@ Public Class clsDtaGenToolRunner
         ioToolFiles.Add(fiDtaGenerator)
 
         If eDtaGenerator = eDTAGeneratorConstants.DeconConsole OrElse eDtaGenerator = eDTAGeneratorConstants.DeconMSn Then
-            ' Lookup the version of the DeconConsole application
+            ' Lookup the version of the DeconConsole or DeconMSn application
             Dim strDllPath As String
 
             Dim blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, fiDtaGenerator.FullName)
             If Not blnSuccess Then Return False
 
             If eDtaGenerator = eDTAGeneratorConstants.DeconMSn Then
-                ' Legacy DeconMSn
-                strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconMSnEngine.dll")
-                ioToolFiles.Add(New FileInfo(strDllPath))
-                blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
+                ' DeconMSn
+                Dim deconEngineV2File = New FileInfo(Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll"))
+                If deconEngineV2File.Exists Then
+                    ' C# version of DeconMSn (released in January 2017)
+                    strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll")
+                    ioToolFiles.Add(New FileInfo(strDllPath))
+                    blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
+                Else
+                    strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconMSnEngine.dll")
+                    ioToolFiles.Add(New FileInfo(strDllPath))
+                    blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
+                End If
+
                 If Not blnSuccess Then Return False
 
             ElseIf eDtaGenerator = eDTAGeneratorConstants.DeconConsole Then
