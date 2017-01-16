@@ -39,9 +39,9 @@ Public Class clsDtaGenResources
         Dim eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(m_jobParams, strErrorMessage)
         If eDtaGeneratorType = clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown Then
             If String.IsNullOrEmpty(strErrorMessage) Then
-                m_message = "GetDTAGeneratorInfo reported an Unknown DTAGenerator type"
+                LogError("GetDTAGeneratorInfo reported an Unknown DTAGenerator type")
             Else
-                m_message = strErrorMessage
+                LogError(strErrorMessage)
             End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
@@ -56,8 +56,7 @@ Public Class clsDtaGenResources
         If blnMGFInstrumentData Then
             Dim strFileToFind As String = m_DatasetName & DOT_MGF_EXTENSION
             If Not FindAndRetrieveMiscFiles(strFileToFind, False) Then
-                m_message = "Instrument data not found: " & strFileToFind
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
+                LogError("Instrument data not found: " & strFileToFind)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             Else
                 m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
@@ -66,10 +65,8 @@ Public Class clsDtaGenResources
             'Get input data file
             If Not RetrieveSpectra(strRawDataType) Then
                 If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Error retrieving instrument data file"
+                    LogError("Error retrieving instrument data file")
                 End If
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -165,11 +162,10 @@ Public Class clsDtaGenResources
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strParamFileStoragePath)
             End If
 
-            Dim strParamFileName As String
-            strParamFileName = m_jobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", String.Empty)
+            Dim strParamFileName = m_jobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", String.Empty)
 
             If String.IsNullOrEmpty(strParamFileName) Then
-                m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DeconMSn_ParamFile")
+                LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DeconMSn_ParamFile"))
                 Return False
             End If
 

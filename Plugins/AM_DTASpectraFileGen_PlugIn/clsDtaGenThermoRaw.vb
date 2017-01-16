@@ -308,7 +308,6 @@ Public Class clsDtaGenThermoRaw
         ' Makes DTA files using extract_msn.exe or DeconMSn.exe
         ' Warning: do not centroid spectra using DeconMSn since the masses reported when centroiding are not properly calibrated and thus could be off by 0.3 m/z or more
 
-        ' DAC debugging
         Thread.CurrentThread.Name = "MakeDTAFiles"
 
         If m_DebugLevel >= 1 Then
@@ -538,7 +537,6 @@ Public Class clsDtaGenThermoRaw
             mDeconMSnProgressWatcher.EnableRaisingEvents = False
         End If
 
-        ' DAC debugging
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " _
               & Thread.CurrentThread.Name)
