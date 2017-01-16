@@ -160,7 +160,10 @@ Public Class clsDtaGenToolRunner
                 spectraGen = New clsDtaGenMSConvert()
 
             Case eDTAGeneratorConstants.DeconConsole
-                spectraGen = New clsDtaGenDeconConsole()
+                LogError("DeconConsole is obsolete and should no longer be used")
+                Return eDTAGeneratorConstants.Unknown
+
+                ' spectraGen = New clsDtaGenDeconConsole()
 
             Case eDTAGeneratorConstants.ExtractMSn, eDTAGeneratorConstants.DeconMSn
                 spectraGen = New clsDtaGenThermoRaw()
@@ -1013,7 +1016,7 @@ Public Class clsDtaGenToolRunner
                 If Not blnSuccess Then Return False
 
             ElseIf eDtaGenerator = eDTAGeneratorConstants.DeconConsole Then
-                ' DeconConsole re-implementation of DeconMSn
+                ' DeconConsole re-implementation of DeconMSn (obsolete, superseded by C# version of DeconMSn that uses DeconEngineV2.dll)
 
                 ' Lookup the version of the DeconTools Backend (in the DeconTools folder)
                 ' In addition, add it to ioToolFiles

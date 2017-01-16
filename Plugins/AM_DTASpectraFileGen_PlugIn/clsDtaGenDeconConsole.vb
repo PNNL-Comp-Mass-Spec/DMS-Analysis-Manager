@@ -6,7 +6,10 @@
 ' Uses DeconConsole.exe to create a .MGF file from a .Raw file or .mzXML file or .mzML file
 ' Next, converts the .MGF file to a _DTA.txt file
 '
-' Note that DeconConsole is the re-implementation of the legacy DeconMSn program (and is thus DeconMSn v3)
+' Note that DeconConsole was the re-implementation of the legacy DeconMSn program (using C#)
+' DeconConsole was superseded by the C#-based DeconMSn developed by Bryson Gibbons in December 2016
+' We replaced the C++ based DeconMSn.exe with the C# based version after showing that results were identical
+'
 '*********************************************************************************************************
 
 Option Strict On
@@ -16,6 +19,7 @@ Imports System.Collections.Generic
 Imports System.IO
 Imports System.Runtime.InteropServices
 
+<Obsolete("This class is longer used")>
 Public Class clsDtaGenDeconConsole
     Inherits clsDtaGenThermoRaw
 
