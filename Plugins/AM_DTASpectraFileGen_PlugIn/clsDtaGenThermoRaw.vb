@@ -25,6 +25,8 @@ Public Class clsDtaGenThermoRaw
 #Region "Constants"
     Private Const USE_THREADING As Boolean = True
     Protected Const DEFAULT_SCAN_STOP As Integer = 999999
+
+    Private Const CONSOLE_OUTPUT_FILENAME = "DeconMSn_ConsoleOutput.txt"
 #End Region
 
 #Region "Module variables"
@@ -270,7 +272,7 @@ Public Class clsDtaGenThermoRaw
             End If
         End If
 
-        ' Remove any files with non-standard file names (extract_msn bug)
+        ' Remove any files with non-standard file names (extract_msn artifact)
         If Not DeleteNonDosFiles() Then
             If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
                 m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
@@ -287,6 +289,9 @@ Public Class clsDtaGenThermoRaw
             If Not VerifyDtaCreation() Then
                 m_Results = ISpectraFileProcessor.ProcessResults.SF_NO_FILES_CREATED
             Else
+                ' Processing succeded
+                ' We don't need to keep the console output file long-term
+                m_JobParams.AddResultFileToSkip(CONSOLE_OUTPUT_FILENAME)
                 m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
             End If
 
@@ -479,11 +484,10 @@ Public Class clsDtaGenThermoRaw
                             .CacheStandardOutput = True
                             .EchoOutputToConsole = True
 
-                            .WriteConsoleOutputToFile = False
-                            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "DeconMSn_ConsoleOutput.txt")
+                            .WriteConsoleOutputToFile = True
+                            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, CONSOLE_OUTPUT_FILENAME)
 
-                            ' Need to set the working directory as the same folder as DeconMSn; otherwise, may crash
-                            .WorkDir = Path.GetDirectoryName(m_DtaToolNameLoc)
+                            .WorkDir = m_WorkDir
                         End If
 
                     End With
@@ -499,8 +503,8 @@ Public Class clsDtaGenThermoRaw
                     End If
 
                     If m_DebugLevel >= 2 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " _
-                         & Thread.CurrentThread.Name)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                             "clsDtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " & Thread.CurrentThread.Name)
                     End If
 
                     ' Update loopy parameters
@@ -544,11 +548,13 @@ Public Class clsDtaGenThermoRaw
 
         ' We got this far, everything must have worked
         If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-            LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING")
+            LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles",
+                                Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING")
             Return False
 
         ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-            LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR ")
+            LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles",
+                                Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR ")
             Return False
 
         Else
