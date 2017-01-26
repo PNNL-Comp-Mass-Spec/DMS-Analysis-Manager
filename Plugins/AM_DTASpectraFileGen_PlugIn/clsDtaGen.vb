@@ -198,19 +198,20 @@ Public MustInherit Class clsDtaGen
 
     Protected Function DeleteNonDosFiles() As Boolean
 
-        ' extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters. This
-        '	function removes those files
+        ' extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters. 
+        ' This function removes those files
 
-        Dim WorkDir As New DirectoryInfo(m_WorkDir)
-        Dim TestFile As FileInfo
-        Const TestStr As String = ".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$"
+        Dim workDir As New DirectoryInfo(m_WorkDir)
 
-        For Each TestFile In WorkDir.GetFiles
-            If Not Regex.IsMatch(TestFile.Extension, TestStr, RegexOptions.IgnoreCase) Then
+        Dim reValidFiles = New Regex(".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
+
+        For Each dataFile In workDir.GetFiles
+            Dim reMatch = reValidFiles.Match(dataFile.Extension)
+            If Not reMatch.Success Then
                 Try
-                    TestFile.Delete()
-                Catch err As Exception
-                    m_ErrMsg = "Error removing non-DOS files"
+                    dataFile.Delete()
+                Catch ex As Exception
+                    m_ErrMsg = "Error removing non-DOS files: " & ex.Message
                     Return False
                 End Try
             End If
