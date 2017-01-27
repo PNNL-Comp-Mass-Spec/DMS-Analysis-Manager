@@ -1,7 +1,7 @@
  
 Stats for AM_Program 
 
-github.com/AlDanial/cloc v 1.72  T=0.29 s (40.9 files/s, 25926.5 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.25 s (48.0 files/s, 30452.6 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ SUM:                            12           1860           1448           4300
  
 Stats for AM_Shared 
 
-github.com/AlDanial/cloc v 1.72  T=0.14 s (313.0 files/s, 173934.8 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.14 s (320.3 files/s, 177983.8 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ SUM:                            44           5057           5689          13704
   
 Stats for Plugins\AM_Ape_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (211.1 files/s, 30768.6 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (205.8 files/s, 30002.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ SUM:                             9            266            172            874
   
 Stats for Plugins\AM_AScore_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (185.5 files/s, 41484.8 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.05 s (170.4 files/s, 38111.6 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ SUM:                             8            342            350           1097
   
 Stats for Plugins\AM_Bruker_DA_Export  
 
-github.com/AlDanial/cloc v 1.72  T=0.06 s (86.0 files/s, 18405.4 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.06 s (90.1 files/s, 19278.9 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ SUM:                             5            208            123            739
   
 Stats for Plugins\AM_Cyclops_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (79.7 files/s, 14923.8 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (80.8 files/s, 15142.2 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ SUM:                             3            109             77            376
   
 Stats for Plugins\AM_DataImport_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (103.1 files/s, 12787.1 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.03 s (101.1 files/s, 12530.4 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ SUM:                             3             85             67            220
   
 Stats for Plugins\AM_Decon2ls_PlugIn_Decon2LSV2  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (248.3 files/s, 59042.6 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (262.4 files/s, 62395.8 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ SUM:                            11            614            466           1536
   
 Stats for Plugins\AM_DeconPeakDetector_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (79.8 files/s, 11787.2 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (73.6 files/s, 10873.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ SUM:                             3            120             79            244
   
 Stats for Plugins\AM_DtaRefinery_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (183.7 files/s, 48750.9 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.03 s (181.3 files/s, 48126.6 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ SUM:                             5            318            193            816
   
 Stats for Plugins\AM_DTASpectraFileGen_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.05 s (193.8 files/s, 76080.7 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.06 s (176.3 files/s, 69211.1 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ SUM:                            10            912            558           2456
   
 Stats for Plugins\AM_DTA_Import_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (140.6 files/s, 11484.1 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (145.7 files/s, 11897.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -135,7 +135,7 @@ SUM:                             3             57             61            127
   
 Stats for Plugins\AM_DTA_Split_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (77.0 files/s, 13324.1 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (75.0 files/s, 12972.5 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ SUM:                             3            124             94            301
   
 Stats for Plugins\AM_Extraction_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.07 s (118.3 files/s, 64059.5 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.07 s (113.6 files/s, 61501.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -157,7 +157,7 @@ SUM:                             8           1020            604           2707
   
 Stats for Plugins\AM_GlyQIQ_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.10 s (70.0 files/s, 27850.8 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.10 s (72.6 files/s, 28877.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ SUM:                             7            658            340           1788
   
 Stats for Plugins\AM_ICR2LS_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.06 s (239.1 files/s, 50697.0 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.05 s (262.7 files/s, 55699.4 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -180,7 +180,7 @@ SUM:                            14            632            422           1914
   
 Stats for Plugins\AM_IDM_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (84.7 files/s, 10562.6 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (81.9 files/s, 10210.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ SUM:                             3             72             62            240
   
 Stats for Plugins\AM_IDPicker_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (85.6 files/s, 53606.0 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.03 s (107.1 files/s, 67076.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -202,7 +202,7 @@ SUM:                             3            453            254           1172
   
 Stats for Plugins\AM_InspectResultsAssembly_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (162.5 files/s, 70192.8 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.03 s (154.2 files/s, 66617.9 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ SUM:                             4            397            280           1051
   
 Stats for Plugins\AM_InSpecT_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (181.5 files/s, 49900.3 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.03 s (152.2 files/s, 41863.1 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -224,7 +224,7 @@ SUM:                             4            239            220            641
   
 Stats for Plugins\AM_LCMSFeatureFinder_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (196.9 files/s, 27367.4 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (188.2 files/s, 26157.4 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -236,7 +236,7 @@ SUM:                             4            125             92            339
   
 Stats for Plugins\AM_LipidMapSearch_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (115.8 files/s, 46854.7 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (137.6 files/s, 55693.5 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ SUM:                             3            305            183            726
   
 Stats for Plugins\AM_Mage_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.05 s (266.6 files/s, 44724.2 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.05 s (274.2 files/s, 46002.2 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ SUM:                            14            382            422           1545
   
 Stats for Plugins\AM_Masic_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (188.2 files/s, 40264.7 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (201.5 files/s, 43117.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -271,7 +271,7 @@ Stats for Plugins\AM_MaxQuant_PlugIn
   
 Stats for Plugins\AM_MetaboliteDetector_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (85.4 files/s, 16330.4 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.03 s (86.5 files/s, 16542.7 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -282,7 +282,7 @@ SUM:                             3            119             84            371
   
 Stats for Plugins\AM_MODa_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (78.7 files/s, 22055.5 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (69.8 files/s, 19561.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -293,7 +293,7 @@ SUM:                             3            211            140            490
   
 Stats for Plugins\AM_MODPlus_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (118.9 files/s, 45746.4 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (118.2 files/s, 45452.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -304,7 +304,7 @@ SUM:                             5            480            289           1154
   
 Stats for Plugins\AM_MSAlign_Histone_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (113.4 files/s, 52228.0 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (124.4 files/s, 57304.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -315,7 +315,7 @@ SUM:                             3            348            183            851
   
 Stats for Plugins\AM_MSAlign_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (121.3 files/s, 53989.3 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (125.1 files/s, 55655.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -326,7 +326,7 @@ SUM:                             3            306            165            864
   
 Stats for Plugins\AM_MSAlign_Quant_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (132.7 files/s, 31630.3 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (149.0 files/s, 35503.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -337,7 +337,7 @@ SUM:                             3            174            118            423
   
 Stats for Plugins\AM_MSDeconv_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (161.1 files/s, 42970.4 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (185.3 files/s, 49432.5 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -350,7 +350,7 @@ Stats for Plugins\AM_MSGFDB_IMS_Plugin
   
 Stats for Plugins\AM_MSGFDB_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.10 s (100.2 files/s, 74362.9 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.09 s (107.2 files/s, 79520.7 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -362,7 +362,7 @@ SUM:                            10           1628           1141           4649
   
 Stats for Plugins\AM_MSGF_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.08 s (192.5 files/s, 85141.6 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.07 s (200.7 files/s, 88794.6 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -373,7 +373,7 @@ SUM:                            15           1474           1079           4082
   
 Stats for Plugins\AM_MSMSSpectrumFilter_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (136.0 files/s, 46325.9 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (121.9 files/s, 41536.2 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -384,7 +384,7 @@ SUM:                             3            241            142            639
   
 Stats for Plugins\AM_MSPathFinder_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (117.9 files/s, 53861.8 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (126.7 files/s, 57913.9 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -395,7 +395,7 @@ SUM:                             3            325            255            791
   
 Stats for Plugins\AM_MSXML_Bruker_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (172.1 files/s, 28950.0 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (169.3 files/s, 28482.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ SUM:                             4            148            115            410
   
 Stats for Plugins\AM_MSXML_Gen_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.05 s (164.0 files/s, 47790.7 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.05 s (174.1 files/s, 50726.2 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -417,7 +417,7 @@ SUM:                             9            627            327           1669
   
 Stats for Plugins\AM_MultiAlign_Aggregator_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.05 s (81.7 files/s, 28691.2 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (94.4 files/s, 33123.4 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -428,7 +428,7 @@ SUM:                             4            276            190            938
   
 Stats for Plugins\AM_MultiAlign_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (146.2 files/s, 21785.7 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (143.7 files/s, 21412.2 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -439,7 +439,7 @@ SUM:                             3            110             85            252
   
 Stats for Plugins\AM_Mz_Refinery_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (150.2 files/s, 65587.6 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.03 s (152.8 files/s, 66735.1 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -450,7 +450,7 @@ SUM:                             4            438            257           1052
   
 Stats for Plugins\AM_NOMSI  
 
-github.com/AlDanial/cloc v 1.72  T=0.06 s (51.3 files/s, 15925.9 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.05 s (57.5 files/s, 17876.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -461,7 +461,7 @@ SUM:                             3            184            107            641
   
 Stats for Plugins\AM_OMSSA_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (137.6 files/s, 42207.8 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (136.7 files/s, 41909.8 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -472,7 +472,7 @@ SUM:                             3            223            188            509
   
 Stats for Plugins\AM_PBFSpectraFileGen_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (150.3 files/s, 31959.1 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (146.6 files/s, 31179.7 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -483,7 +483,7 @@ SUM:                             3            168            105            365
   
 Stats for Plugins\AM_Phospho_FDR_Aggregator_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (109.1 files/s, 46360.2 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (124.7 files/s, 53016.7 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -494,7 +494,7 @@ SUM:                             3            335            160            780
   
 Stats for Plugins\AM_PRIDE_Converter_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (164.4 files/s, 119711.1 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (169.5 files/s, 123384.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -505,7 +505,7 @@ SUM:                             7           1231            584           3281
   
 Stats for Plugins\AM_PRIDE_MzXML_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (134.1 files/s, 12965.0 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (155.7 files/s, 15052.5 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -516,7 +516,7 @@ SUM:                             3             76             59            155
   
 Stats for Plugins\AM_ProMex_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.04 s (71.7 files/s, 21467.3 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.04 s (80.3 files/s, 24030.6 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -527,7 +527,7 @@ SUM:                             3            241            145            512
   
 Stats for Plugins\AM_ProSightPC_Quant_Plugin  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (121.2 files/s, 28554.1 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (137.2 files/s, 32343.8 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -538,7 +538,7 @@ SUM:                             3            171            103            433
   
 Stats for Plugins\AM_QC-ART_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.05 s (182.0 files/s, 59242.2 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.05 s (181.3 files/s, 59006.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -551,7 +551,7 @@ SUM:                             9            572            627           1730
   
 Stats for Plugins\AM_RepoPkgr_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.06 s (103.0 files/s, 30691.7 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.07 s (90.0 files/s, 26813.9 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -562,7 +562,7 @@ SUM:                             6            298            315           1175
   
 Stats for Plugins\AM_ResultsCleanup_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (154.9 files/s, 14667.2 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (126.5 files/s, 11976.6 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -573,7 +573,7 @@ SUM:                             3             61             53            170
   
 Stats for Plugins\AM_ResultsXfer_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (151.4 files/s, 28310.6 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (132.9 files/s, 24852.7 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -584,7 +584,7 @@ SUM:                             3            115            105            341
   
 Stats for Plugins\AM_Sequest_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.03 s (143.6 files/s, 99623.6 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.03 s (146.5 files/s, 101584.9 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -595,7 +595,7 @@ SUM:                             5            802            467           2199
   
 Stats for Plugins\AM_SMAQC_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (123.2 files/s, 47234.1 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (136.3 files/s, 52241.4 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -606,7 +606,7 @@ SUM:                             3            297            191            662
   
 Stats for Plugins\AM_XTandem_PlugIn  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (134.5 files/s, 36620.3 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (148.3 files/s, 40395.5 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -617,7 +617,7 @@ SUM:                             3            183            123            511
   
 Stats for Plugins\_Trash  
 
-github.com/AlDanial/cloc v 1.72  T=0.02 s (139.3 files/s, 33712.7 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.02 s (158.0 files/s, 38228.6 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -628,7 +628,7 @@ SUM:                             3            170            122            434
   
 Stats for Plugins\_Unused  
 
-github.com/AlDanial/cloc v 1.72  T=0.11 s (232.4 files/s, 66384.1 lines/s)
+github.com/AlDanial/cloc v 1.72  T=0.11 s (231.4 files/s, 66101.1 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
