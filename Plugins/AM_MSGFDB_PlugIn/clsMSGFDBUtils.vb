@@ -1506,7 +1506,7 @@ Public Class clsMSGFDBUtils
     ''' <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
     Public Function ParseMSGFPlusConsoleOutputFile(workingDirectory As String) As Single
 
-        ' Example Console output:
+        ' Example Console output (verbose mode):
         '
         ' MS-GF+ Release (v2016.01.20) (1/20/2016)
         ' Loading database files...
@@ -1576,6 +1576,39 @@ Public Class clsMSGFDBUtils
         ' MS-GF+ complete (total elapsed time: 3730.61 sec)
 
 
+        ' Example Console output (compact mode, default starting 2017 January 30):
+        ' MS-GF+ Release (v2017.01.27) (27 Jan 2017)
+        ' Loading database files...
+        ' Loading database finished (elapsed time: 0.61 sec)
+        ' Reading spectra...
+        ' Ignoring 0 profile spectra.
+        ' Ignoring 0 spectra having less than 5 peaks.
+        ' Reading spectra finished (elapsed time: 15.54 sec)
+        ' Using 7 threads.
+        ' Search Parameters:
+        ' 	PrecursorMassTolerance: 20.0ppm
+        ' 	IsotopeError: -1,2
+        ' Spectrum 0-27672 (total: 27673)
+        ' Splitting work into 21 tasks.
+        ' Search progress: 0 / 21 tasks, 0.00%		0.02 seconds elapsed
+        ' Loading built-in param file: HCD_HighRes_Tryp.param
+        ' Search progress: 0 / 21 tasks, 13.99%		1.00 minutes elapsed
+        ' Search progress: 0 / 21 tasks, 27.11%		2.00 minutes elapsed
+        ' Search progress: 0 / 21 tasks, 29.41%		3.00 minutes elapsed
+        ' Search progress: 0 / 21 tasks, 30.38%		3.38 minutes elapsed
+        ' Search progress: 1 / 21 tasks, 31.66%		3.65 minutes elapsed
+        ' Search progress: 2 / 21 tasks, 32.87%		3.81 minutes elapsed
+        ' Search progress: 3 / 21 tasks, 34.45%		4.00 minutes elapsed
+        ' Search progress: 3 / 21 tasks, 34.89%		4.02 minutes elapsed
+        ' Search progress: 20 / 21 tasks, 100.00%		17.25 minutes elapsed
+        ' Search progress: 21 / 21 tasks, 100.00%		17.25 minutes elapsed
+        ' Computing q-values...
+        ' Computing q-values finished (elapsed time: 0.16 sec)
+        ' Writing results...
+        ' Writing results finished (elapsed time: 22.71 sec)
+        ' MS-GF+ complete (total elapsed time: 1073.62 sec)
+
+
         ' ReSharper disable once UseImplicitlyTypedVariableEvident
         Static reExtractThreadCount As Regex = New Regex("Using (?<ThreadCount>\d+) threads",
           RegexOptions.Compiled Or
@@ -1597,7 +1630,7 @@ Public Class clsMSGFDBUtils
           RegexOptions.IgnoreCase)
 
         ' ReSharper disable once UseImplicitlyTypedVariableEvident
-        Static rePercentComplete As Regex = New Regex("Search progress: \d+ / \d+ tasks, (?<PercentComplete>[0-9.]+)%",
+        Static rePercentComplete As Regex = New Regex("Search progress: (?<TasksComplete>\d+) / \d+ tasks?, (?<PercentComplete>[0-9.]+)%",
           RegexOptions.Compiled Or
           RegexOptions.IgnoreCase)
 
@@ -1606,7 +1639,7 @@ Public Class clsMSGFDBUtils
 
         Dim sngEffectiveProgress As Single = 0
         Dim percentCompleteAllTasks As Single = 0
-
+        Dim tasksCompleteViaSearchProgress = 0
         Try
 
             strConsoleOutputFilePath = Path.Combine(workingDirectory, MSGFPLUS_CONSOLE_OUTPUT_FILE)
@@ -1749,6 +1782,12 @@ Public Class clsMSGFDBUtils
 
                     Dim reProgressMatch = rePercentComplete.Match(strLineIn)
                     If reProgressMatch.Success Then
+                        Dim newTasksComplete = Integer.Parse(reProgressMatch.Groups("TasksComplete").Value)
+
+                        If newTasksComplete > tasksCompleteViaSearchProgress Then
+                            tasksCompleteViaSearchProgress = newTasksComplete
+                        End If
+
                         Dim newPercentComplete = Single.Parse(reProgressMatch.Groups("PercentComplete").Value)
                         If newPercentComplete > percentCompleteAllTasks Then
                             percentCompleteAllTasks = newPercentComplete
@@ -1763,6 +1802,9 @@ Public Class clsMSGFDBUtils
 
             mTaskCountTotal = totalTasks
             mTaskCountCompleted = completedTasks.Count
+            If mTaskCountCompleted = 0 And tasksCompleteViaSearchProgress > 0 Then
+                mTaskCountCompleted = tasksCompleteViaSearchProgress
+            End If
 
             If percentCompleteAllTasks > 0 Then
                 sngEffectiveProgress = percentCompleteAllTasks * PROGRESS_PCT_MSGFPLUS_COMPLETE / 100.0!
