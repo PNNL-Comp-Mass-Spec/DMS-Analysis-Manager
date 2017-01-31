@@ -25,6 +25,8 @@ Public Class clsAnalysisToolRunnerSMAQC
 
     Private Const STORE_SMAQC_RESULTS_SP_NAME As String = "StoreSMAQCResults"
 
+    Friend Const LLRC_ENABLED = False
+
     Private mConsoleOutputErrorMsg As String
     Private mDatasetID As Integer = 0
 
@@ -259,6 +261,8 @@ Public Class clsAnalysisToolRunnerSMAQC
 
         Dim intDatasetID As Integer
         intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1)
+
+        If Not LLRC_ENABLED Then Throw New Exception("LLRC is disabled -- do not call this function")
 
         If intDatasetID < 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Job parameter DatasetID is missing; cannot compute LLRC")
@@ -846,9 +850,11 @@ Public Class clsAnalysisToolRunnerSMAQC
         blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, ioSMAQC.FullName)
         If Not blnSuccess Then Return False
 
-        ' Lookup the version of LLRC
-        blnSuccess = MyBase.StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "LLRC")
-        If Not blnSuccess Then Return False
+        If LLRC_ENABLED Then
+            ' Lookup the version of LLRC
+            blnSuccess = MyBase.StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "LLRC")
+            If Not blnSuccess Then Return False
+        End If
 
         ' Store paths to key DLLs in ioToolFiles
         Dim ioToolFiles = New List(Of FileInfo)

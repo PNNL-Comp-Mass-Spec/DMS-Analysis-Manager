@@ -50,6 +50,8 @@ Public Class clsAnalysisResourcesSMAQC
     <Obsolete("No longer used")>
     Private Function RetrieveLLRCFiles() As Boolean
 
+        If Not clsAnalysisToolRunnerSMAQC.LLRC_ENABLED Then Throw New Exception("LLRC is disabled -- do not call this function")
+
         Dim strLLRCRunnerProgLoc As String = m_mgrParams.GetParam("LLRCRunnerProgLoc", "\\gigasax\DMS_Programs\LLRCRunner")
         Dim lstFilesToCopy = New List(Of String)
 
