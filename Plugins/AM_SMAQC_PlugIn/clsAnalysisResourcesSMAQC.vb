@@ -33,10 +33,11 @@ Public Class clsAnalysisResourcesSMAQC
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
+        ' In use from June 2013 through November 12, 2015
         ' Retrieve the LLRC .RData files
-        If Not RetrieveLLRCFiles() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-        End If
+        'If Not RetrieveLLRCFiles() Then
+        '    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        'End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -46,6 +47,7 @@ Public Class clsAnalysisResourcesSMAQC
 
     End Function
 
+    <Obsolete("No longer used")>
     Private Function RetrieveLLRCFiles() As Boolean
 
         Dim strLLRCRunnerProgLoc As String = m_mgrParams.GetParam("LLRCRunnerProgLoc", "\\gigasax\DMS_Programs\LLRCRunner")
