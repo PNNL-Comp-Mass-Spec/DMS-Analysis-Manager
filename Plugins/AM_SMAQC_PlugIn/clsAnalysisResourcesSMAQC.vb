@@ -83,6 +83,7 @@ Public Class clsAnalysisResourcesSMAQC
         m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)        ' _ScanStats.txt
         m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)     ' _ScanStatsEx.txt
         m_jobParams.AddResultFileExtensionToSkip("_SICstats.txt")
+        m_jobParams.AddResultFileExtensionToSkip(REPORTERIONS_FILE_SUFFIX)
 
         Dim lstNonCriticalFileSuffixes As List(Of String)
         lstNonCriticalFileSuffixes = New List(Of String) From {SCAN_STATS_EX_FILE_SUFFIX, REPORTERIONS_FILE_SUFFIX}
