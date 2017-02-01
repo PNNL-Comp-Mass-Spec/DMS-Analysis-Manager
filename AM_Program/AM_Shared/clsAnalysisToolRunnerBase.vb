@@ -202,8 +202,7 @@ Public Class clsAnalysisToolRunnerBase
             m_MyEMSLUtilities = myEMSLUtilities
         End If
 
-        AddHandler m_MyEMSLUtilities.ErrorEvent, AddressOf m_MyEMSLUtilities_ErrorEvent
-        AddHandler m_MyEMSLUtilities.WarningEvent, AddressOf m_MyEMSLUtilities_WarningEvent
+        RegisterEvents(m_MyEMSLUtilities)
 
         m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
         m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription()
@@ -3753,16 +3752,36 @@ Public Class clsAnalysisToolRunnerBase
         ReportStatus("SortUtility Warning: " & e.Message)
     End Sub
 
-    Private Sub m_MyEMSLUtilities_ErrorEvent(strMessage As String)
-        LogError(strMessage)
+#End Region
+
+
+#Region "clsEventNotifier events"
+
+    Protected Sub RegisterEvents(oProcessingClass As clsEventNotifier)
+        AddHandler oProcessingClass.StatusEvent, AddressOf StatusEventHandler
+        AddHandler oProcessingClass.ErrorEvent, AddressOf ErrorEventHandler
+        AddHandler oProcessingClass.WarningEvent, AddressOf WarningEventHandler
+        AddHandler oProcessingClass.ProgressUpdate, AddressOf ProgressUpdateHandler
     End Sub
 
-    Private Sub m_MyEMSLUtilities_WarningEvent(strMessage As String)
-        ReportStatus("MyEMSL Warning: " & strMessage)
+    Private Sub StatusEventHandler(statusMessage As String)
+        ReportStatus(statusMessage)
+    End Sub
+
+    Private Sub ErrorEventHandler(errorMessage As String, ex As Exception)
+        LogError(errorMessage, ex)
+    End Sub
+
+    Private Sub WarningEventHandler(warningMessage As String)
+        LogWarning(warningMessage)
+    End Sub
+
+    Private Sub ProgressUpdateHandler(progressMessage As String, percentComplete As Single)
+        m_StatusTools.CurrentOperation = progressMessage
+        m_StatusTools.UpdateAndWrite(percentComplete)
     End Sub
 
 #End Region
-
 End Class
 
 

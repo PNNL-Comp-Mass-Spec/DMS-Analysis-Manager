@@ -32,7 +32,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
         ' Check whether we are only creating the .msgf files
         Dim blnCreateMSGFReportFilesOnly As Boolean = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", False)
-        Dim udtOptions As udtDataPackageRetrievalOptionsType
+        Dim udtOptions As clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType
 
         udtOptions.CreateJobPathFiles = True
 

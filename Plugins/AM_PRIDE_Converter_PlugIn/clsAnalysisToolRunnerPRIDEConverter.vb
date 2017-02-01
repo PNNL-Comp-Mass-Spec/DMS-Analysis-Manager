@@ -2527,7 +2527,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         m_jobParams.AddResultFileToSkip("PRIDEConverter_Version.txt")
 
         Dim diWorkDir = New DirectoryInfo(m_WorkDir)
-        For Each fiFile In diWorkDir.GetFiles(clsAnalysisResources.JOB_INFO_FILE_PREFIX & "*.txt")
+        For Each fiFile In diWorkDir.GetFiles(clsDataPackageFileHandler.JOB_INFO_FILE_PREFIX & "*.txt")
             m_jobParams.AddResultFileToSkip(fiFile.Name)
         Next
 
@@ -3292,7 +3292,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         Try
 
-            strJobInfoFilePath = clsAnalysisResources.GetJobInfoFilePath(intJob, m_WorkDir)
+            strJobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(intJob, m_WorkDir)
 
             If Not File.Exists(strJobInfoFilePath) Then
                 ' Assume all of the files already exist

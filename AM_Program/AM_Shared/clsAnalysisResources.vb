@@ -7,7 +7,6 @@
 
 Option Strict On
 
-Imports System.Data.SqlClient
 Imports PHRPReader
 Imports System.IO
 Imports System.Runtime.InteropServices
@@ -145,8 +144,6 @@ Public MustInherit Class clsAnalysisResources
     Public Const JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP As String = "PackedParam_JobSettingsFileMap"
     Public Const JOB_PARAM_DICTIONARY_JOB_TOOL_MAP As String = "PackedParam_JobToolNameMap"
 
-    Public Const JOB_INFO_FILE_PREFIX As String = "JobInfoFile_Job"
-
     ' This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
     Public Const SPECTRA_ARE_NOT_CENTROIDED As String = "None of the spectra are centroided; unable to process"
 
@@ -179,52 +176,6 @@ Public MustInherit Class clsAnalysisResources
 #End Region
 
 #Region "Structures"
-
-    Public Structure udtDataPackageRetrievalOptionsType
-        ''' <summary>
-        ''' Set to true to create a text file for each job listing the full path to the files that would be retrieved for that job
-        ''' Example filename: FilePathInfo_Job950000.txt
-        ''' </summary>
-        ''' <remarks>No files are actually retrieved when this is set to True</remarks>
-        Public CreateJobPathFiles As Boolean
-
-        ''' <summary>
-        ''' Set to true to obtain the mzXML file for the dataset associated with this job
-        ''' </summary>
-        ''' <remarks>If the .mzXML file does not exist, then retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
-        Public RetrieveMzXMLFile As Boolean
-
-        ''' <summary>
-        ''' Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
-        ''' </summary>
-        ''' <remarks></remarks>
-        Public RetrieveDTAFiles As Boolean
-
-        ''' <summary>
-        ''' Set to True to obtain MSGF+ .mzID files
-        ''' </summary>
-        ''' <remarks></remarks>
-        Public RetrieveMZidFiles As Boolean
-
-        ''' <summary>
-        ''' Set to True to obtain .pepXML files (typically stored as _pepXML.zip)
-        ''' </summary>
-        ''' <remarks></remarks>
-        Public RetrievePepXMLFiles As Boolean
-
-        ''' <summary>
-        ''' Set to True to obtain the _syn.txt file and related PHRP files
-        ''' </summary>
-        ''' <remarks></remarks>
-        Public RetrievePHRPFiles As Boolean
-
-        ''' <summary>
-        ''' When True, assume that the instrument file (e.g. .raw file) exists in the dataset storage folder
-        ''' and do not search in MyEMSL or in the archive for the file
-        ''' </summary>
-        ''' <remarks>Even if the instrument file has been purged from the storage folder, still report "success" when searching for the instrument file</remarks>
-        Public AssumeInstrumentDataUnpurged As Boolean
-    End Structure
 
     Public Structure udtHPCOptionsType
         Public HeadNode As String
@@ -260,22 +211,35 @@ Public MustInherit Class clsAnalysisResources
     Protected WithEvents m_SplitFastaFileUtility As clsSplitFastaFileUtilities
 
     Protected m_SplitFastaLastUpdateTime As DateTime
-    Protected m_SplitFastaLastPercentComplete As Integer
+    Protected m_SplitFastaLastPercentComplete As Single
 
     Protected m_MyEMSLUtilities As clsMyEMSLUtilities
-
-    Private Shared mLastJobParameterFromHistoryLookup As DateTime = Date.UtcNow
 
     Private m_ResourceOptions As Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
 
     Private m_AuroraAvailable As Boolean
     Private m_MyEmslAvailable As Boolean
 
+    Private mCachedDatasetAndJobInfo As clsDataPackageJobInfo
+    Private mCachedDatasetAndJobInfoIsDefined As Boolean
+
     Public WithEvents mSpectraTypeClassifier As SpectraTypeClassifier.clsSpectrumTypeClassifier
 
 #End Region
 
 #Region "Properties"
+
+    Public ReadOnly Property DatasetName As String
+        Get
+            Return m_DatasetName
+        End Get
+    End Property
+
+    Public ReadOnly Property DebugLevel As Short
+        Get
+            Return m_DebugLevel
+        End Get
+    End Property
 
     Public ReadOnly Property MyEMSLAvailable() As Boolean
         Get
@@ -291,6 +255,13 @@ Public MustInherit Class clsAnalysisResources
             Return m_message
         End Get
     End Property
+
+    Public ReadOnly Property WorkDir() As String
+        Get
+            Return m_WorkingDir
+        End Get
+    End Property
+
 #End Region
 
 #Region "Methods"
@@ -309,7 +280,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="mgrParams">Manager parameter object</param>
     ''' <param name="jobParams">Job parameter object</param>
     ''' <param name="statusTools">Object for status reporting</param>
-    ''' <param name="myEMSLUtilities">MyEMSL download Utilities</param>
+    ''' <param name="myEMSLUtilities">MyEMSL download Utilities (can be nothing)</param>
     ''' <remarks></remarks>
     Public Overridable Sub Setup(
       mgrParams As IMgrParams,
@@ -343,8 +314,7 @@ Public MustInherit Class clsAnalysisResources
             m_MyEMSLUtilities = myEMSLUtilities
         End If
 
-        AddHandler m_MyEMSLUtilities.ErrorEvent, AddressOf m_MyEMSLUtilities_ErrorEvent
-        AddHandler m_MyEMSLUtilities.WarningEvent, AddressOf m_MyEMSLUtilities_WarningEvent
+        RegisterEvents(m_MyEMSLUtilities)
 
         m_ResourceOptions = New Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, False)
@@ -400,31 +370,6 @@ Public MustInherit Class clsAnalysisResources
 
     End Sub
 
-    Private Sub AddMzIdFilesToFind(
-      datasetName As String,
-      splitFastaResultID As Integer,
-      zipFileCandidates As List(Of String),
-      gzipFileCandidates As List(Of String),
-      lstFilesToGet As SortedList(Of String, Boolean))
-
-        Dim zipFile As String
-        Dim gZipFile As String
-
-        If splitFastaResultID > 0 Then
-            zipFile = datasetName & "_msgfplus_Part" & splitFastaResultID & ".zip"
-            gZipFile = datasetName & "_msgfplus_Part" & splitFastaResultID & ".mzid.gz"
-        Else
-            zipFile = datasetName & "_msgfplus.zip"
-            gZipFile = datasetName & "_msgfplus.mzid.gz"
-        End If
-
-        zipFileCandidates.Add(zipFile)
-        gzipFileCandidates.Add(gZipFile)
-        lstFilesToGet.Add(zipFile, False)
-        lstFilesToGet.Add(gZipFile, False)
-
-    End Sub
-
     ''' <summary>
     ''' Add a folder or file path to a list of paths to examine
     ''' </summary>
@@ -437,6 +382,24 @@ Public MustInherit Class clsAnalysisResources
     End Sub
 
     ''' <summary>
+    ''' Add a filename extension to not move to the results folder
+    ''' </summary>
+    ''' <param name="Extension"></param>
+    ''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
+    Public Sub AddResultFileExtensionToSkip(extension As String)
+        m_jobParams.AddResultFileExtensionToSkip(extension)
+    End Sub
+
+    ''' <summary>
+    ''' Add a filename to not move to the results folder
+    ''' </summary>
+    ''' <param name="sourceFilename"></param>
+    ''' <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
+    Public Sub AddResultFileToSkip(sourceFilename As String)
+        m_jobParams.AddResultFileToSkip(sourceFilename)
+    End Sub
+
+    ''' <summary>
     ''' Appends file specified file path to the JobInfo file for the given Job
     ''' </summary>
     ''' <param name="intJob"></param>
@@ -444,11 +407,35 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks></remarks>
     Protected Sub AppendToJobInfoFile(intJob As Integer, strFilePath As String)
 
-        Dim strJobInfoFilePath As String = GetJobInfoFilePath(intJob)
+        Dim strJobInfoFilePath As String = clsDataPackageFileHandler.GetJobInfoFilePath(intJob, m_WorkingDir)
 
         Using swJobInfoFile = New StreamWriter(New FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
             swJobInfoFile.WriteLine(strFilePath)
         End Using
+
+    End Sub
+
+    Public Sub CacheCurrentDataAndJobInfo()
+        If mCachedDatasetAndJobInfoIsDefined Then
+            Throw New Exception("Call RestoreCachedDataAndJobInfo before calling CacheCurrentDataAndJobInfo again")
+        End If
+
+        ' Cache the current dataset and job info
+        mCachedDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
+        mCachedDatasetAndJobInfoIsDefined = True
+
+    End Sub
+
+    Public Sub RestoreCachedDataAndJobInfo()
+
+        If Not mCachedDatasetAndJobInfoIsDefined Then
+            Throw New Exception("Programming error: RestoreCachedDataAndJobInfo called but mCachedDatasetAndJobInfoIsDefined is false")
+        End If
+
+        ' Restore the dataset and job info for this aggregation job
+        OverrideCurrentDatasetAndJobInfo(mCachedDatasetAndJobInfo)
+
+        mCachedDatasetAndJobInfoIsDefined = False
 
     End Sub
 
@@ -708,7 +695,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(
+    Public Function CopyFileToWorkDir(
       sourceFileName As String,
       sourceFolderPath As String,
       targetFolderPath As String,
@@ -1523,7 +1510,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="fileToFind">Name of the file to search for</param>
     ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
     ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function FindDataFile(fileToFind As String) As String
+    Public Function FindDataFile(fileToFind As String) As String
         Return FindDataFile(fileToFind, searchArchivedDatasetFolder:=True)
     End Function
 
@@ -1749,7 +1736,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>The full path to the dataset file or folder</returns>
     ''' <remarks>When assumeUnpurged is true, this function returns the expected path 
     ''' to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-    Protected Function FindDatasetFileOrFolder(<Out()> ByRef blnIsFolder As Boolean, Optional assumeUnpurged As Boolean = False) As String
+    Public Function FindDatasetFileOrFolder(<Out()> ByRef blnIsFolder As Boolean, assumeUnpurged As Boolean) As String
         Return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, blnIsFolder, assumeUnpurged:=assumeUnpurged)
     End Function
 
@@ -2048,7 +2035,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
     ''' <returns>Full path to the file, if found; empty string if no match</returns>
     ''' <remarks>Supports both gzipped mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-    Protected Function FindMZXmlFile(<Out()> ByRef strHashcheckFilePath As String) As String
+    Public Function FindMZXmlFile(<Out()> ByRef strHashcheckFilePath As String) As String
 
         ' First look in the MsXML cache folder
         Dim strMatchingFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzXML, strHashcheckFilePath)
@@ -3361,14 +3348,6 @@ Public MustInherit Class clsAnalysisResources
 
     End Function
 
-    Protected Function GetJobInfoFilePath(intJob As Integer) As String
-        Return GetJobInfoFilePath(intJob, m_WorkingDir)
-    End Function
-
-    Public Shared Function GetJobInfoFilePath(intJob As Integer, strWorkDirPath As String) As String
-        Return Path.Combine(strWorkDirPath, JOB_INFO_FILE_PREFIX & intJob & ".txt")
-    End Function
-
     ''' <summary>
     ''' Converts the given timespan to the total days, hours, minutes, or seconds as a string
     ''' </summary>
@@ -4273,115 +4252,6 @@ Public MustInherit Class clsAnalysisResources
 
     End Function
 
-    ''' <summary>
-    ''' Retrieve the job parameters from the pipeline database for the given analysis job
-    ''' The analysis job must have completed successfully, since the parameters 
-    ''' are retrieved from tables T_Jobs_History, T_Job_Steps_History, and T_Job_Parameters_History
-    ''' </summary>
-    ''' <param name="brokerConnection">DMS_Pipline database connection (must already be open)</param>
-    ''' <param name="jobNumber">Job number</param>
-    ''' <param name="jobParameters">Output parameter: Dictionary of job parameters where keys are parameter names (section names are ignored)</param>
-    ''' <returns>True if success; false if an error</returns>
-    ''' <remarks>This procedure is used by clsAnalysisToolRunnerPRIDEConverter</remarks>
-    Private Shared Function LookupJobParametersFromHistory(
-      brokerConnection As SqlConnection,
-      jobNumber As Integer,
-      <Out()> ByRef jobParameters As Dictionary(Of String, String),
-      <Out()> ByRef errorMsg As String) As Boolean
-
-        Const RETRY_COUNT = 3
-        Const TIMEOUT_SECONDS = 30
-
-        jobParameters = New Dictionary(Of String, String)(StringComparison.InvariantCultureIgnoreCase)
-        errorMsg = String.Empty
-
-        ' Throttle the calls to this function to avoid overloading the database for data packages with hundreds of jobs
-        While Date.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50
-            Thread.Sleep(25)
-        End While
-
-        mLastJobParameterFromHistoryLookup = Date.UtcNow
-
-        Try
-
-            Dim myCmd = New SqlCommand("GetJobStepParamsAsTableUseHistory") With {
-                .CommandType = CommandType.StoredProcedure,
-                .Connection = brokerConnection,
-                .CommandTimeout = TIMEOUT_SECONDS
-            }
-
-            myCmd.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
-            myCmd.Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int)).Value = jobNumber
-            myCmd.Parameters.Add(New SqlParameter("@stepNumber", SqlDbType.Int)).Value = 1
-
-            ' Execute the SP
-
-            Dim resultSet As DataTable = Nothing
-            Dim retryCount = RETRY_COUNT
-            Dim success = False
-
-            While retryCount > 0 And Not success
-                Try
-                    Using Da = New SqlDataAdapter(myCmd)
-                        Using Ds = New DataSet
-                            Da.Fill(Ds)
-                            resultSet = Ds.Tables(0)
-                        End Using
-                    End Using
-
-                    success = True
-                Catch ex As Exception
-                    retryCount -= 1S
-                    Dim msg = "Exception running stored procedure " & myCmd.CommandText & ": " + ex.Message + "; RetryCount = " + retryCount.ToString
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-                    Console.WriteLine(msg)
-
-                    Thread.Sleep(5000)              ' Delay for 5 second before trying again
-                End Try
-            End While
-
-            If Not success Then
-                errorMsg = "Unable to retrieve job parameters from history for job " & jobNumber
-                Return False
-            End If
-
-            ' Verify at least one row returned
-            If resultSet.Rows.Count < 1 Then
-                ' No data was returned
-                ' Log an error
-
-                errorMsg = "Historical parameters were not found for job " & jobNumber
-                Return False
-            End If
-
-            For Each curRow As DataRow In resultSet.Rows
-                ' Dim section = clsGlobal.DbCStr(curRow(0))
-                Dim parameter = clsGlobal.DbCStr(curRow(1))
-                Dim value = clsGlobal.DbCStr(curRow(2))
-
-                If jobParameters.ContainsKey(parameter) Then
-                    Dim msg = "Job " & jobNumber & " has multiple values for parameter " & parameter & "; only using the first occurrence"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-                    Console.WriteLine(msg)
-                Else
-                    jobParameters.Add(parameter, value)
-                End If
-            Next
-
-            resultSet.Dispose()
-
-            Return True
-
-        Catch ex As Exception
-            errorMsg = "Exception retrieving parameters from history for job " & jobNumber
-            Dim detailedMsg = "Exception retrieving parameters from history for job " & jobNumber & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMsg)
-            Console.WriteLine(detailedMsg)
-            Return False
-        End Try
-
-    End Function
 
     ''' <summary>
     ''' Estimate the amount of disk space required for the FASTA file associated with this analysis job
@@ -4536,7 +4406,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="dataPkgJob"></param>
     ''' <returns></returns>
     ''' <remarks> Does not override the job number</remarks>
-    Protected Function OverrideCurrentDatasetAndJobInfo(dataPkgJob As clsDataPackageJobInfo) As Boolean
+    Public Function OverrideCurrentDatasetAndJobInfo(dataPkgJob As clsDataPackageJobInfo) As Boolean
 
         Dim blnAggregationJob = False
 
@@ -4688,7 +4558,22 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
-    ''' Download any
+    ''' Download any queued files from MyEMSL
+    ''' </summary>
+    ''' <returns></returns>
+    Public Function ProcessMyEMSLDownloadQueue() As Boolean
+        If m_MyEMSLUtilities.FilesToDownload.Count > 0 Then
+            If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(
+                    m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+                Return False
+            End If
+        End If
+
+        Return True
+    End Function
+
+    ''' <summary>
+    ''' Download any queued files from MyEMSL
     ''' </summary>
     ''' <param name="downloadFolderPath"></param>
     ''' <param name="folderLayout"></param>
@@ -5004,25 +4889,6 @@ Public MustInherit Class clsAnalysisResources
         End Try
 
     End Sub
-
-    Protected Function RenameDuplicatePHRPFile(SourceFolderPath As String, SourceFilename As String, TargetFolderPath As String, strPrefixToAdd As String, intJob As Integer) As Boolean
-        Try
-            Dim fiFileToRename = New FileInfo(Path.Combine(SourceFolderPath, SourceFilename))
-            Dim strFilePathWithPrefix As String = Path.Combine(TargetFolderPath, strPrefixToAdd & fiFileToRename.Name)
-
-            Thread.Sleep(100)
-            fiFileToRename.MoveTo(strFilePathWithPrefix)
-
-            m_jobParams.AddResultFileToSkip(Path.GetFileName(strFilePathWithPrefix))
-
-        Catch ex As Exception
-            LogError("Exception renaming PHRP file " & SourceFilename & " for job " & intJob & " (data package has multiple jobs for the same dataset)", ex)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
 
     ''' <summary>
     ''' Looks for the specified file in the given folder
@@ -5563,185 +5429,6 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
-    ''' Lookup the Peptide Hit jobs associated with the current job
-    ''' </summary>
-    ''' <param name="DataPackageID">Data package ID</param>
-    ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer) As List(Of clsDataPackageJobInfo)
-
-        Dim lstAdditionalJobs = New List(Of clsDataPackageJobInfo)
-        Return RetrieveDataPackagePeptideHitJobInfo(DataPackageID, lstAdditionalJobs)
-
-    End Function
-
-    ''' <summary>
-    ''' Lookup the Peptide Hit jobs associated with the current job
-    ''' </summary>
-    ''' <param name="DataPackageID">Data package ID</param>
-    ''' <param name="lstAdditionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
-    ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDataPackagePeptideHitJobInfo(
-      <Out()> ByRef DataPackageID As Integer,
-      <Out()> ByRef lstAdditionalJobs As List(Of clsDataPackageJobInfo)) As List(Of clsDataPackageJobInfo)
-
-        ' Gigasax.DMS_Pipeline
-        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
-
-        DataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1)
-
-        If DataPackageID < 0 Then
-            LogError("DataPackageID is not defined for this analysis job")
-            lstAdditionalJobs = New List(Of clsDataPackageJobInfo)
-            Return New List(Of clsDataPackageJobInfo)
-        Else
-            Dim errorMsg As String = String.Empty
-            Dim lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, DataPackageID, lstAdditionalJobs, errorMsg)
-
-            If Not String.IsNullOrWhiteSpace(errorMsg) Then
-                LogError(errorMsg)
-            End If
-
-            Return lstDataPackagePeptideHitJobs
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Lookup the Peptide Hit jobs associated with the current job
-    ''' </summary>
-    ''' <param name="connectionString">Connection string to the DMS_Pipeline database</param>
-    ''' <param name="dataPackageID">Data package ID</param>
-    ''' <param name="errorMsg">Output: error message</param>
-    ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
-    ''' <remarks></remarks>
-    Public Shared Function RetrieveDataPackagePeptideHitJobInfo(
-       connectionString As String,
-       dataPackageID As Integer,
-       <Out()> errorMsg As String) As List(Of clsDataPackageJobInfo)
-
-        Dim lstAdditionalJobs = New List(Of clsDataPackageJobInfo)
-        Return RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, lstAdditionalJobs, errorMsg)
-
-    End Function
-
-    ''' <summary>
-    ''' Lookup the Peptide Hit jobs associated with the current job
-    ''' </summary>
-    ''' <param name="connectionString">Connection string to the DMS_Pipeline database</param>
-    ''' <param name="dataPackageID">Data package ID</param>
-    ''' <param name="lstAdditionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
-    ''' <param name="errorMsg">Output: error message</param>
-    ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
-    ''' <remarks></remarks>
-    Public Shared Function RetrieveDataPackagePeptideHitJobInfo(
-      connectionString As String,
-      dataPackageID As Integer,
-      <Out()> ByRef lstAdditionalJobs As List(Of clsDataPackageJobInfo),
-      <Out()> ByRef errorMsg As String) As List(Of clsDataPackageJobInfo)
-
-        Dim lstDataPackagePeptideHitJobs As List(Of clsDataPackageJobInfo)
-        Dim dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo)
-
-        ' This list tracks the info for the Peptide Hit jobs (e.g. MSGF+ or Sequest) associated with this aggregation job's data package
-        lstDataPackagePeptideHitJobs = New List(Of clsDataPackageJobInfo)
-        errorMsg = String.Empty
-
-        ' This list tracks the info for the non Peptide Hit jobs (e.g. DeconTools or MASIC) associated with this aggregation job's data package
-        lstAdditionalJobs = New List(Of clsDataPackageJobInfo)
-
-        ' This dictionary will track the jobs associated with this aggregation job's data package
-        ' Key is job number, value is an instance of clsDataPackageJobInfo
-        dctDataPackageJobs = New Dictionary(Of Integer, clsDataPackageJobInfo)
-
-        Try
-            If Not LoadDataPackageJobInfo(connectionString, dataPackageID, dctDataPackageJobs) Then
-                errorMsg = "Error looking up datasets and jobs using LoadDataPackageJobInfo"
-                Return lstDataPackagePeptideHitJobs
-            End If
-        Catch ex As Exception
-            errorMsg = "Exception calling LoadDataPackageJobInfo: " & ex.Message
-            Return lstDataPackagePeptideHitJobs
-        End Try
-
-        Try
-            For Each kvItem As KeyValuePair(Of Integer, clsDataPackageJobInfo) In dctDataPackageJobs
-
-                If kvItem.Value.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
-                    lstAdditionalJobs.Add(kvItem.Value)
-                Else
-                    ' Cache this job info in lstDataPackagePeptideHitJobs
-                    lstDataPackagePeptideHitJobs.Add(kvItem.Value)
-                End If
-
-            Next
-
-        Catch ex As Exception
-            errorMsg = "Exception determining data package jobs for this aggregation job (RetrieveDataPackagePeptideHitJobInfo): " & ex.Message
-        End Try
-
-        Try
-            ' Look for any SplitFasta jobs
-            ' If present, we need to determine the value for job parameter NumberOfClonedSteps
-
-            Dim splitFastaJobs = (From dataPkgJob In lstDataPackagePeptideHitJobs
-                                  Where dataPkgJob.Tool.ToLower().Contains("splitfasta")
-                                  Select dataPkgJob).ToList()
-
-            If splitFastaJobs.Count > 0 Then
-
-                Dim lastStatusTime = Date.UtcNow
-                Dim statusIntervalSeconds = 4
-                Dim jobsProcessed = 0
-
-                Using brokerConnection = New SqlConnection(connectionString)
-                    brokerConnection.Open()
-
-                    For Each dataPkgJob In splitFastaJobs
-
-                        Dim dataPkgJobParameters As Dictionary(Of String, String) = Nothing
-
-                        Dim success = LookupJobParametersFromHistory(brokerConnection, dataPkgJob.Job, dataPkgJobParameters, errorMsg)
-
-                        If Not success Then
-                            Return New List(Of clsDataPackageJobInfo)
-                        End If
-
-                        Dim numberOfClonedSteps As String = Nothing
-                        If dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", numberOfClonedSteps) Then
-                            Dim clonedStepCount = CInt(numberOfClonedSteps)
-                            dataPkgJob.NumberOfClonedSteps = clonedStepCount
-                        End If
-
-                        jobsProcessed += 1
-
-                        If Date.UtcNow.Subtract(lastStatusTime).TotalSeconds >= statusIntervalSeconds Then
-                            Dim pctComplete = jobsProcessed / splitFastaJobs.Count * 100
-                            LogDebugMessage("Retrieving job parameters from history for SplitFasta jobs; " & pctComplete.ToString("0") & "% complete", Nothing)
-
-                            lastStatusTime = Date.UtcNow
-
-                            ' Double the status interval, allowing for a maximum of 30 seconds
-                            statusIntervalSeconds = Math.Min(30, statusIntervalSeconds * 2)
-
-                        End If
-                    Next
-                End Using
-
-            End If
-
-
-        Catch ex As Exception
-            errorMsg = "Exception calling LookupJobParametersFromHistory (RetrieveDataPackagePeptideHitJobInfo): " & ex.Message
-            Return New List(Of clsDataPackageJobInfo)
-        End Try
-
-        Return lstDataPackagePeptideHitJobs
-
-    End Function
-
-    ''' <summary>
     ''' Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
     ''' Also creates a batch file that can be manually run to retrieve the instrument data files
     ''' </summary>
@@ -5750,7 +5437,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Protected Function RetrieveDataPackagePeptideHitJobPHRPFiles(
-      udtOptions As udtDataPackageRetrievalOptionsType,
+      udtOptions As clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType,
       ByRef lstDataPackagePeptideHitJobs As List(Of clsDataPackageJobInfo)) As Boolean
 
         Const progressPercentAtStart As Single = 0
@@ -5769,616 +5456,21 @@ Public MustInherit Class clsAnalysisResources
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Protected Function RetrieveDataPackagePeptideHitJobPHRPFiles(
-      udtOptions As udtDataPackageRetrievalOptionsType,
+      udtOptions As clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType,
       <Out()> ByRef lstDataPackagePeptideHitJobs As List(Of clsDataPackageJobInfo),
       progressPercentAtStart As Single,
       progressPercentAtFinish As Single) As Boolean
 
-        Dim sourceFolderPath = "??"
-        Dim sourceFilename = "??"
-        Dim dataPackageID = 0
+        ' Gigasax.DMS_Pipeline
+        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
 
-        Dim blnFileCopied As Boolean
-        Dim blnSuccess As Boolean
+        Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
 
-        ' The keys in this dictionary are data package job info entries; the values are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
-        ' The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
-        ' This information is used by RetrieveDataPackageMzXMLFiles when copying files locally
-        Dim dctInstrumentDataToRetrieve As Dictionary(Of clsDataPackageJobInfo, KeyValuePair(Of String, String))
+        Dim dataPackageFileHander = New clsDataPackageFileHandler(connectionString, dataPackageID, Me)
+        RegisterEvents(dataPackageFileHander)
 
-        ' Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Folder\Dataset.raw Dataset.raw"
-        ' Note that we're explicitly defining the target filename to make sure the case of the letters matches the dataset name's case
-        Dim dctRawFileRetrievalCommands = New Dictionary(Of Integer, String)
-
-        ' Keys in this dictionary are dataset name, values are the full path to the instrument data file for the dataset
-        ' This information is stored in packed job parameter JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS
-        Dim dctDatasetRawFilePaths = New Dictionary(Of String, String)
-
-        ' This list tracks the info for the jobs associated with this aggregation job's data package
-        lstDataPackagePeptideHitJobs = New List(Of clsDataPackageJobInfo)
-
-        ' This dictionary tracks the datasets associated with this aggregation job's data package
-        Dim dctDataPackageDatasets As Dictionary(Of Integer, clsDataPackageDatasetInfo) = Nothing
-
-        Try
-            Dim success = LoadDataPackageDatasetInfo(dctDataPackageDatasets)
-
-            If Not success OrElse dctDataPackageDatasets.Count = 0 Then
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Did not find any datasets associated with this job's data package ID (" & dataPackageID & ")"
-                End If
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
-                Console.WriteLine(m_message)
-                Return False
-            End If
-
-        Catch ex As Exception
-            LogError("Exception calling LoadDataPackageDatasetInfo", ex)
-            Return False
-        End Try
-
-        ' The keys in this dictionary are data package job info entries; the values KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
-        ' The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
-        dctInstrumentDataToRetrieve = New Dictionary(Of clsDataPackageJobInfo, KeyValuePair(Of String, String))
-
-        ' This list tracks analysis jobs that are not PeptideHit jobs
-        Dim lstAdditionalJobs As List(Of clsDataPackageJobInfo) = Nothing
-
-        Try
-            lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(dataPackageID, lstAdditionalJobs)
-
-            If lstDataPackagePeptideHitJobs.Count = 0 Then
-                ' Did not find any peptide hit jobs associated with this job's data package ID
-                ' This is atypical, but is allowed
-            End If
-
-        Catch ex As Exception
-            ReportStatus("Exception calling RetrieveDataPackagePeptideHitJobInfo", ex)
-            Return False
-        End Try
-
-        Try
-
-            ' Make sure the MyEMSL download queue is empty
-            If m_MyEMSLUtilities.FilesToDownload.Count > 0 Then
-                If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                    Return False
-                End If
-            End If
-
-            ' Cache the current dataset and job info
-            Dim currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
-
-            Dim intJobsProcessed = 0
-
-            For Each dataPkgJob As clsDataPackageJobInfo In lstDataPackagePeptideHitJobs
-
-                If Not OverrideCurrentDatasetAndJobInfo(dataPkgJob) Then
-                    ' Error message has already been logged
-                    Return False
-                End If
-
-                If dataPkgJob.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
-                    Dim msg = "PeptideHit ResultType not recognized for job " & dataPkgJob.Job & ": " & dataPkgJob.ResultType.ToString()
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-                    Console.WriteLine(msg)
-                Else
-
-                    ' Keys in this list are filenames; values are True if the file is required and False if not required
-                    Dim lstFilesToGet = New SortedList(Of String, Boolean)
-                    Dim LocalFolderPath As String
-                    Dim lstPendingFileRenames = New List(Of String)
-                    Dim strSynopsisFileName As String
-                    Dim strSynopsisMSGFFileName As String
-                    Dim eLogMsgTypeIfNotFound As clsLogTools.LogLevels
-
-                    ' These two variables track filenames that should be decompressed if they were copied locally
-                    Dim zipFileCandidates = New List(Of String)
-                    Dim gzipFileCandidates = New List(Of String)
-
-                    ' This tracks the _pepXML.zip filename, which will be unzipped if it was found
-                    Dim zippedPepXmlFile = String.Empty
-
-                    Dim blnPrefixRequired As Boolean
-
-                    strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset)
-                    strSynopsisMSGFFileName = clsPHRPReader.GetMSGFFileName(strSynopsisFileName)
-
-                    If udtOptions.RetrievePHRPFiles Then
-                        lstFilesToGet.Add(strSynopsisFileName, True)
-
-                        lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), True)
-                        lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), True)
-                        lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), True)
-                        lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), True)
-
-                        lstFilesToGet.Add(strSynopsisMSGFFileName, False)
-                    End If
-
-                    If udtOptions.RetrieveMZidFiles AndAlso dataPkgJob.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-                        ' Retrieve MSGF+ .mzID files
-                        ' They will either be stored as .zip files or as .gz files
-
-                        If dataPkgJob.NumberOfClonedSteps > 0 Then
-                            For splitFastaResultID = 1 To dataPkgJob.NumberOfClonedSteps
-                                AddMzIdFilesToFind(m_DatasetName, splitFastaResultID, zipFileCandidates, gzipFileCandidates, lstFilesToGet)
-                            Next
-                        Else
-                            AddMzIdFilesToFind(m_DatasetName, 0, zipFileCandidates, gzipFileCandidates, lstFilesToGet)
-                        End If
-
-                    End If
-
-                    If udtOptions.RetrievePepXMLFiles AndAlso dataPkgJob.PeptideHitResultType <> clsPHRPReader.ePeptideHitResultType.Unknown Then
-                        ' Retrieve .pepXML files, which are stored as _pepXML.zip files
-                        zippedPepXmlFile = m_DatasetName & "_pepXML.zip"
-                        lstFilesToGet.Add(zippedPepXmlFile, False)
-                    End If
-
-                    sourceFolderPath = String.Empty
-
-                    ' Check whether a synopsis file by this name has already been copied locally
-                    ' If it has, then we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
-                    If Not udtOptions.CreateJobPathFiles AndAlso File.Exists(Path.Combine(m_WorkingDir, strSynopsisFileName)) Then
-                        blnPrefixRequired = True
-
-                        LocalFolderPath = Path.Combine(m_WorkingDir, "FileRename")
-                        If Not Directory.Exists(LocalFolderPath) Then
-                            Directory.CreateDirectory(LocalFolderPath)
-                        End If
-
-                    Else
-                        blnPrefixRequired = False
-                        LocalFolderPath = String.Copy(m_WorkingDir)
-                    End If
-
-                    Dim swJobInfoFile As StreamWriter = Nothing
-                    If udtOptions.CreateJobPathFiles Then
-                        Dim strJobInfoFilePath As String = GetJobInfoFilePath(dataPkgJob.Job)
-                        swJobInfoFile = New StreamWriter(New FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
-                    End If
-
-                    For Each sourceFile In lstFilesToGet
-
-                        sourceFilename = sourceFile.Key
-                        Dim fileRequired = sourceFile.Value
-
-                        ' Typically only use FindDataFile() for the first file in lstFilesToGet; we will assume the other files are in that folder
-                        ' However, if the file resides in MyEMSL then we need to call FindDataFile for every new file because FindDataFile will append the MyEMSL File ID for each file
-                        If String.IsNullOrEmpty(sourceFolderPath) OrElse sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                            sourceFolderPath = FindDataFile(sourceFilename)
-
-                            If String.IsNullOrEmpty(sourceFolderPath) Then
-                                Dim alternateFileName As String = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt")
-                                sourceFolderPath = FindDataFile(alternateFileName)
-                            End If
-                        End If
-
-                        If Not fileRequired Then
-                            ' It's OK if this file doesn't exist, we'll just log a debug message
-                            eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG
-                        Else
-                            ' This file must exist; log an error if it's not found
-                            eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR
-                        End If
-
-                        If udtOptions.CreateJobPathFiles And Not sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                            Dim sourceFilePath As String = Path.Combine(sourceFolderPath, sourceFilename)
-                            Dim alternateFileNamelternateFileName As String = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt")
-
-                            If File.Exists(sourceFilePath) Then
-                                swJobInfoFile.WriteLine(sourceFilePath)
-                            ElseIf File.Exists(alternateFileNamelternateFileName) Then
-                                swJobInfoFile.WriteLine(alternateFileNamelternateFileName)
-                            Else
-                                If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
-                                    m_message = "Required PHRP file not found: " & sourceFilename
-                                    If sourceFilename.ToLower().EndsWith("_msgfplus.zip") Or sourceFilename.ToLower().EndsWith("_msgfplus.mzid.gz") Then
-                                        m_message &= "; Confirm job used MSGF+ and not MSGFDB"
-                                    End If
-                                    If m_DebugLevel >= 1 Then
-                                        ReportStatus("Required PHRP file not found: " & sourceFilePath, 0, True)
-                                    End If
-                                    Return False
-                                End If
-                            End If
-
-                        Else
-                            ' Note for files in MyEMSL, this call will simply add the file to the download queue; use ProcessMyEMSLDownloadQueue() to retrieve the file
-                            blnFileCopied = CopyFileToWorkDir(sourceFilename, sourceFolderPath, LocalFolderPath, eLogMsgTypeIfNotFound)
-
-                            If Not blnFileCopied Then
-                                Dim alternateFileName As String = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt")
-                                blnFileCopied = CopyFileToWorkDir(alternateFileName, sourceFolderPath, LocalFolderPath, eLogMsgTypeIfNotFound)
-                                If blnFileCopied Then
-                                    sourceFilename = alternateFileName
-                                End If
-                            End If
-
-                            If Not blnFileCopied Then
-
-                                If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
-                                    LogError("CopyFileToWorkDir returned False for " + sourceFilename + " using folder " + sourceFolderPath)
-                                    Return False
-                                End If
-
-                            Else
-                                If m_DebugLevel > 1 Then
-                                    ReportStatus("Copied " + sourceFilename + " from folder " + sourceFolderPath)
-                                End If
-
-                                If blnPrefixRequired Then
-                                    lstPendingFileRenames.Add(sourceFilename)
-                                Else
-                                    m_jobParams.AddResultFileToSkip(sourceFilename)
-                                End If
-                            End If
-                        End If
-
-                    Next sourceFile     ' in lstFilesToGet
-
-                    If m_MyEMSLUtilities.FilesToDownload.Count > 0 Then
-                        ' Some of the files were found in MyEMSL; download them now
-                        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(LocalFolderPath, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                            Return False
-                        End If
-                    End If
-
-                    ' Now perform any required file renames
-                    For Each sourceFilename In lstPendingFileRenames
-                        If Not RenameDuplicatePHRPFile(LocalFolderPath, sourceFilename, m_WorkingDir, "Job" & dataPkgJob.Job.ToString() & "_", dataPkgJob.Job) Then
-                            Return False
-                        End If
-                    Next
-
-                    If udtOptions.RetrieveDTAFiles Then
-                        If udtOptions.CreateJobPathFiles Then
-                            ' Find the CDTA file
-                            Dim strErrorMessage As String = String.Empty
-                            Dim sourceConcatenatedDTAFilePath As String = FindCDTAFile(strErrorMessage)
-
-                            If String.IsNullOrEmpty(sourceConcatenatedDTAFilePath) Then
-                                LogError(strErrorMessage)
-                                Return False
-                            Else
-                                swJobInfoFile.WriteLine(sourceConcatenatedDTAFilePath)
-                            End If
-                        Else
-                            If Not RetrieveDtaFiles() Then
-                                'Errors were reported in function call, so just return
-                                Return False
-                            End If
-                        End If
-                    End If
-
-                    If udtOptions.CreateJobPathFiles Then
-                        swJobInfoFile.Close()
-                    Else
-                        ' Unzip any mzid files that were found
-                        If zipFileCandidates.Count > 0 OrElse gzipFileCandidates.Count > 0 Then
-
-                            Dim matchFound = False
-                            For Each gzipCandidate In gzipFileCandidates
-                                Dim fiFileToUnzip = New FileInfo(Path.Combine(m_WorkingDir, gzipCandidate))
-                                If fiFileToUnzip.Exists Then
-                                    m_IonicZipTools.GUnzipFile(fiFileToUnzip.FullName)
-                                    matchFound = True
-                                    Exit For
-                                End If
-                            Next
-
-                            If Not matchFound Then
-                                For Each zipCandidate In zipFileCandidates
-                                    Dim fiFileToUnzip = New FileInfo(Path.Combine(m_WorkingDir, zipCandidate))
-                                    If fiFileToUnzip.Exists Then
-                                        m_IonicZipTools.UnzipFile(fiFileToUnzip.FullName)
-                                        matchFound = True
-                                        Exit For
-                                    End If
-                                Next
-                            End If
-
-                            If Not matchFound Then
-                                LogError("Could not find either the _msgfplus.zip file or the _msgfplus.mzid.gz file for dataset")
-                                Return False
-                            End If
-
-                            If blnPrefixRequired Then
-                                If Not RenameDuplicatePHRPFile(m_WorkingDir, m_DatasetName & "_msgfplus.mzid", m_WorkingDir, "Job" & dataPkgJob.Job.ToString() & "_", dataPkgJob.Job) Then
-                                    Return False
-                                End If
-                            End If
-
-                        End If
-
-                        If Not String.IsNullOrWhiteSpace(zippedPepXmlFile) Then
-                            ' Unzip _pepXML.zip if it exists
-                            Dim fiFileToUnzip = New FileInfo(Path.Combine(m_WorkingDir, zippedPepXmlFile))
-                            If fiFileToUnzip.Exists Then
-                                m_IonicZipTools.UnzipFile(fiFileToUnzip.FullName)
-                            End If
-                        End If
-                    End If
-
-                End If
-
-                ' Find the instrument data file or folder if a new dataset
-                If Not dctRawFileRetrievalCommands.ContainsKey(dataPkgJob.DatasetID) Then
-                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
-                        Return False
-                    End If
-                End If
-
-                intJobsProcessed += 1
-                Dim sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(progressPercentAtStart, progressPercentAtFinish, intJobsProcessed, lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count)
-                If Not m_StatusTools Is Nothing Then
-                    m_StatusTools.CurrentOperation = "RetrieveDataPackagePeptideHitJobPHRPFiles (PeptideHit Jobs)"
-                    m_StatusTools.UpdateAndWrite(sngProgress)
-                End If
-
-            Next     ' dataPkgJob in lstDataPackagePeptideHitJobs
-
-            ' Now process the additional jobs to retrieve the instrument data for each one
-            For Each dataPkgJob In lstAdditionalJobs
-
-                ' Find the instrument data file or folder if a new dataset
-                If Not dctRawFileRetrievalCommands.ContainsKey(dataPkgJob.DatasetID) Then
-                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
-                        Return False
-                    End If
-                End If
-
-                intJobsProcessed += 1
-                Dim sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(progressPercentAtStart, progressPercentAtFinish, intJobsProcessed, lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count)
-                If Not m_StatusTools Is Nothing Then
-                    m_StatusTools.CurrentOperation = "RetrieveDataPackagePeptideHitJobPHRPFiles (Additional Jobs)"
-                    m_StatusTools.UpdateAndWrite(sngProgress)
-                End If
-
-            Next        ' in lstAdditionalJobs
-
-            ' Look for any datasets that are associated with this data package yet have no jobs
-            For Each datasetItem In dctDataPackageDatasets
-                If Not dctRawFileRetrievalCommands.ContainsKey(datasetItem.Key) Then
-
-                    Dim dataPkgJob = GetPseudoDataPackageJobInfo(datasetItem.Value)
-                    dataPkgJob.ResultsFolderName = "Undefined_Folder"
-
-                    If Not OverrideCurrentDatasetAndJobInfo(dataPkgJob) Then
-                        ' Error message has already been logged
-                        Return False
-                    End If
-
-                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
-                        Return False
-                    End If
-                End If
-            Next
-
-            If dctRawFileRetrievalCommands.Count = 0 Then
-                m_message = "Did not find any datasets associated with this job's data package ID (" & dataPackageID & ")"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_message)
-                Console.WriteLine(m_message)
-                Return False
-            End If
-
-            ' Restore the dataset and job info for this aggregation job
-            OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo)
-
-            If dctRawFileRetrievalCommands.Count > 0 Then
-                ' Create a batch file with commands for retrieve the dataset files
-                Dim strBatchFilePath As String
-                strBatchFilePath = Path.Combine(m_WorkingDir, "RetrieveInstrumentData.bat")
-                Using swOutfile = New StreamWriter(New FileStream(strBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                    For Each item As String In dctRawFileRetrievalCommands.Values
-                        swOutfile.WriteLine(item)
-                    Next
-                End Using
-
-                ' Store the dataset paths in a Packed Job Parameter
-                StorePackedJobParameterDictionary(dctDatasetRawFilePaths, JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS)
-
-            End If
-
-            If udtOptions.RetrieveMzXMLFile Then
-                ' All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
-                ' If udtOptions.CreateJobPathFiles = True then we will create StoragePathInfo files
-                blnSuccess = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions)
-            Else
-                blnSuccess = True
-            End If
-
-        Catch ex As Exception
-            ReportStatus("RetrieveDataPackagePeptideHitJobPHRPFiles; Exception during copy of file: " + sourceFilename + " from folder " + sourceFolderPath, ex)
-            blnSuccess = False
-        End Try
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Look for the .mzXML and/or .raw file
-    ''' </summary>
-    ''' <param name="dataPkgJob"></param>
-    ''' <param name="udtOptions"></param>
-    ''' <param name="dctRawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in a batch file)</param>
-    ''' <param name="dctInstrumentDataToRetrieve">Instrument files that need to be copied locally so that an mzXML file can be made</param>
-    ''' <param name="dctDatasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function RetrieveDataPackageInstrumentFile(
-      dataPkgJob As clsDataPackageJobInfo,
-      udtOptions As udtDataPackageRetrievalOptionsType,
-      dctRawFileRetrievalCommands As IDictionary(Of Integer, String),
-      dctInstrumentDataToRetrieve As IDictionary(Of clsDataPackageJobInfo, KeyValuePair(Of String, String)),
-      dctDatasetRawFilePaths As IDictionary(Of String, String)) As Boolean
-
-        If udtOptions.RetrieveMzXMLFile Then
-            ' See if a .mzXML file already exists for this dataset
-            Dim mzXMLFilePath As String
-            Dim hashcheckFilePath As String = String.Empty
-
-            mzXMLFilePath = FindMZXmlFile(hashcheckFilePath)
-
-            If String.IsNullOrEmpty(mzXMLFilePath) Then
-                ' mzXML file not found
-                If dataPkgJob.RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
-                    ' Will need to retrieve the .Raw file for this dataset
-                    dctInstrumentDataToRetrieve.Add(dataPkgJob, New KeyValuePair(Of String, String)(String.Empty, String.Empty))
-                ElseIf udtOptions.RetrieveMzXMLFile Then
-                    LogError("mzXML file not found for dataset " & dataPkgJob.Dataset &
-                             " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file")
-                    Return False
-                End If
-            Else
-                dctInstrumentDataToRetrieve.Add(dataPkgJob, New KeyValuePair(Of String, String)(mzXMLFilePath, hashcheckFilePath))
-            End If
-        End If
-
-        Dim blnIsFolder = False
-        Dim rawFilePath = FindDatasetFileOrFolder(blnIsFolder, udtOptions.AssumeInstrumentDataUnpurged)
-
-        If Not String.IsNullOrEmpty(rawFilePath) Then
-
-            Dim strCopyCommand As String
-            If blnIsFolder Then
-                strCopyCommand = "copy " & rawFilePath & " .\" & Path.GetFileName(rawFilePath) & " /S /I"
-            Else
-                ' Make sure the case of the filename matches the case of the dataset name
-                ' Also, make sure the extension is lowercase
-                strCopyCommand = "copy " & rawFilePath & " " & dataPkgJob.Dataset & Path.GetExtension(rawFilePath).ToLower()
-            End If
-            dctRawFileRetrievalCommands.Add(dataPkgJob.DatasetID, strCopyCommand)
-            dctDatasetRawFilePaths.Add(dataPkgJob.Dataset, rawFilePath)
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieve the .mzXML files for the jobs in dctInstrumentDataToRetrieve
-    ''' </summary>
-    ''' <param name="dctInstrumentDataToRetrieve">The keys in this dictionary are JobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any); the KeyValuePair will have empty strings if the .Raw file needs to be retrieved</param>
-    ''' <param name="udtOptions">File retrieval options</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks>If udtOptions.CreateJobPathFiles is True, then will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
-    Protected Function RetrieveDataPackageMzXMLFiles(
-      dctInstrumentDataToRetrieve As Dictionary(Of clsDataPackageJobInfo, KeyValuePair(Of String, String)),
-      udtOptions As udtDataPackageRetrievalOptionsType) As Boolean
-
-        Dim blnSuccess As Boolean
-        Dim createStoragePathInfoOnly As Boolean
-
-        Dim intCurrentJob = 0
-
-        Try
-
-            ' Make sure we don't move the .Raw, .mzXML, .mzML or .gz files into the results folder
-            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)             ' .Raw file
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)           ' .mzXML file
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION)            ' .mzML file
-            m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)              ' .gz file
-
-            If udtOptions.CreateJobPathFiles Then
-                createStoragePathInfoOnly = True
-            Else
-                createStoragePathInfoOnly = False
-            End If
-
-            Dim lstDatasetsProcessed = New SortedSet(Of String)
-
-            ' Cache the current dataset and job info
-            Dim currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
-
-            Dim dtLastProgressUpdate = Date.UtcNow
-            Dim datasetsProcessed = 0
-            Dim datasetsToProcess = dctInstrumentDataToRetrieve.Count
-
-            ' Retrieve the instrument data
-            ' Note that RetrieveMZXmlFileUsingSourceFile will add MyEMSL files to the download queue
-            For Each kvItem In dctInstrumentDataToRetrieve
-
-                ' The key in kvMzXMLFileInfo is the path to the .mzXML or .mzML file
-                ' The value in kvMzXMLFileInfo is the path to the .hashcheck file
-                Dim kvMzXMLFileInfo As KeyValuePair(Of String, String) = kvItem.Value
-                Dim strMzXMLFilePath As String = kvMzXMLFileInfo.Key
-                Dim strHashcheckFilePath As String = kvMzXMLFileInfo.Value
-
-                intCurrentJob = kvItem.Key.Job
-
-                If Not lstDatasetsProcessed.Contains(kvItem.Key.Dataset) Then
-
-                    If Not OverrideCurrentDatasetAndJobInfo(kvItem.Key) Then
-                        ' Error message has already been logged
-                        Return False
-                    End If
-
-                    If String.IsNullOrEmpty(strMzXMLFilePath) Then
-                        ' The .mzXML or .mzML file was not found; we will need to obtain the .Raw file
-                        blnSuccess = False
-                    Else
-                        ' mzXML or .mzML file exists; either retrieve it or create a StoragePathInfo file
-                        blnSuccess = RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, strMzXMLFilePath, strHashcheckFilePath)
-                    End If
-
-                    If blnSuccess Then
-                        ' .mzXML or .mzML file found and copied locally
-                        Dim msXmlFileExtension = String.Empty
-
-                        If strMzXMLFilePath.ToLower().EndsWith(DOT_GZ_EXTENSION) Then
-                            msXmlFileExtension = Path.GetExtension(strMzXMLFilePath.Substring(0, strMzXMLFilePath.Length - 3))
-                        Else
-                            msXmlFileExtension = Path.GetExtension(strMzXMLFilePath)
-                        End If
-
-                        If m_DebugLevel >= 1 Then
-                            If udtOptions.CreateJobPathFiles Then
-                                LogDebugMessage(msXmlFileExtension & " file found for job " & intCurrentJob & " at " & strMzXMLFilePath)
-                            Else
-                                LogDebugMessage("Copied " & msXmlFileExtension & " file for job " & intCurrentJob & " from " & strMzXMLFilePath)
-                            End If
-
-                        End If
-                    Else
-                        ' .mzXML file not found (or problem adding to the MyEMSL download queue)
-                        ' Find or retrieve the .Raw file, which can be used to create the .mzXML file (the plugin will actually perform the work of converting the file; as an example, see the MSGF plugin)
-
-                        If Not RetrieveSpectra(kvItem.Key.RawDataType, createStoragePathInfoOnly, maxAttempts:=1) Then
-                            LogError("Error occurred retrieving instrument data file for job " & intCurrentJob)
-                            Return False
-                        End If
-
-                    End If
-
-                    lstDatasetsProcessed.Add(kvItem.Key.Dataset)
-                End If
-
-                datasetsProcessed += 1
-
-                ' Compute a % complete value between 0 and 2%
-                Dim percentComplete = CSng(datasetsProcessed) / datasetsToProcess * 2
-                m_StatusTools.UpdateAndWrite(percentComplete)
-
-                If (Date.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30) Then
-
-                    dtLastProgressUpdate = Date.UtcNow
-
-                    LogDebugMessage("Retrieving mzXML files: " & datasetsProcessed & " / " & datasetsToProcess & " datasets")
-                End If
-
-            Next kvItem
-
-            ' Restore the dataset and job info for this aggregation job
-            OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo)
-
-            blnSuccess = True
-
-        Catch ex As Exception
-            ReportStatus("RetrieveDataPackageMzXMLFiles; Exception retrieving mzXML file or .Raw file for job " & intCurrentJob, ex)
-            blnSuccess = False
-        End Try
+        Dim blnSuccess = dataPackageFileHander.RetrieveDataPackagePeptideHitJobPHRPFiles(
+            udtOptions, lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish)
 
         Return blnSuccess
 
@@ -6557,7 +5649,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="HashcheckFilePath"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly As Boolean, sourceFilePath As String, hashcheckFilePath As String) As Boolean
+    Public Function RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly As Boolean, sourceFilePath As String, hashcheckFilePath As String) As Boolean
 
         Dim fiSourceFile As FileInfo
 
@@ -7073,7 +6165,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="maxAttempts">Maximum number of attempts</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Function RetrieveSpectra(RawDataType As String, createStoragePathInfoOnly As Boolean, maxAttempts As Integer) As Boolean
+    Public Function RetrieveSpectra(RawDataType As String, createStoragePathInfoOnly As Boolean, maxAttempts As Integer) As Boolean
 
         Dim blnSuccess = False
         Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
@@ -7844,7 +6936,7 @@ Public MustInherit Class clsAnalysisResources
     ''' </summary>
     ''' <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
     ''' <remarks></remarks>
-    Protected Function FindCDTAFile(<Out()> ByRef strErrorMessage As String) As String
+    Public Function FindCDTAFile(<Out()> ByRef strErrorMessage As String) As String
 
         strErrorMessage = String.Empty
 
@@ -8157,7 +7249,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="dctItems">Dictionary items to store as a packed job parameter</param>
     ''' <param name="strParameterName">Packed job parameter name</param>
     ''' <remarks></remarks>
-    Protected Sub StorePackedJobParameterDictionary(dctItems As Dictionary(Of String, String), strParameterName As String)
+    Public Sub StorePackedJobParameterDictionary(dctItems As Dictionary(Of String, String), strParameterName As String)
 
         Dim lstItems = New List(Of String)
 
@@ -8283,6 +7375,20 @@ Public MustInherit Class clsAnalysisResources
         End Try
 
     End Function
+
+    ''' <summary>
+    ''' Update m_message, which is logged in the pipeline job steps table when the job step finishes
+    ''' </summary>
+    ''' <param name="statusMessage">New status message</param>
+    ''' <param name="appendToExisting">True to append to m_message; false to overwrite it</param>
+    Public Sub UpdateStatusMessage(statusMessage As String, Optional appendToExisting As Boolean = False)
+
+        If appendToExisting Then
+            clsGlobal.AppendToComment(m_message, statusMessage)
+        Else
+            m_message = statusMessage
+        End If
+    End Sub
 
     ''' <summary>
     ''' Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
@@ -8552,8 +7658,8 @@ Public MustInherit Class clsAnalysisResources
         LogError(errorMessage)
     End Sub
 
-    Private Sub m_CDTAUtilities_InfoEvent(strMessage As String, DebugLevel As Integer) Handles m_CDTAUtilities.InfoEvent
-        If m_DebugLevel >= DebugLevel Then
+    Private Sub m_CDTAUtilities_InfoEvent(strMessage As String, intDebugLevel As Integer) Handles m_CDTAUtilities.InfoEvent
+        If m_DebugLevel >= intDebugLevel Then
             ReportStatus(strMessage)
         End If
     End Sub
@@ -8602,16 +7708,16 @@ Public MustInherit Class clsAnalysisResources
         End If
     End Sub
 
-    Private Sub m_SplitFastaFileUtility_ErrorEvent(strMessage As String) Handles m_SplitFastaFileUtility.ErrorEvent
-        ReportStatus(strMessage, 0, True)
+    Private Sub m_SplitFastaFileUtility_ErrorEvent(errorMessage As String, ex As Exception) Handles m_SplitFastaFileUtility.ErrorEvent
+        LogError(errorMessage, ex)
     End Sub
 
-    Private Sub m_SplitFastaFileUtility_ProgressUpdate(progressMessage As String, percentComplete As Integer) Handles m_SplitFastaFileUtility.ProgressUpdate
+    Private Sub m_SplitFastaFileUtility_ProgressUpdate(progressMessage As String, percentComplete As Single) Handles m_SplitFastaFileUtility.ProgressUpdate
 
         If m_DebugLevel >= 1 Then
             If m_DebugLevel = 1 AndAlso Date.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 OrElse
                m_DebugLevel > 1 AndAlso Date.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 OrElse
-               percentComplete = 100 And m_SplitFastaLastPercentComplete < 100 Then
+               percentComplete >= 100 And m_SplitFastaLastPercentComplete < 100 Then
 
                 m_SplitFastaLastUpdateTime = Date.UtcNow
                 m_SplitFastaLastPercentComplete = percentComplete
@@ -8632,15 +7738,30 @@ Public MustInherit Class clsAnalysisResources
 
 #End Region
 
-#Region "MyEMSL Event Handlers"
+#Region "clsEventNotifier events"
 
-    Private Sub m_MyEMSLUtilities_ErrorEvent(strMessage As String)
-        LogError(m_message)
+    Protected Sub RegisterEvents(oProcessingClass As clsEventNotifier)
+        AddHandler oProcessingClass.StatusEvent, AddressOf StatusEventHandler
+        AddHandler oProcessingClass.ErrorEvent, AddressOf ErrorEventHandler
+        AddHandler oProcessingClass.WarningEvent, AddressOf WarningEventHandler
+        AddHandler oProcessingClass.ProgressUpdate, AddressOf ProgressUpdateHandler
     End Sub
 
-    Private Sub m_MyEMSLUtilities_WarningEvent(strMessage As String)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
-        Console.WriteLine(strMessage)
+    Private Sub StatusEventHandler(statusMessage As String)
+        ReportStatus(statusMessage)
+    End Sub
+
+    Private Sub ErrorEventHandler(errorMessage As String, ex As Exception)
+        LogError(errorMessage, ex)
+    End Sub
+
+    Private Sub WarningEventHandler(warningMessage As String)
+        LogWarning(warningMessage)
+    End Sub
+
+    Private Sub ProgressUpdateHandler(progressMessage As String, percentComplete As Single)
+        m_StatusTools.CurrentOperation = progressMessage
+        m_StatusTools.UpdateAndWrite(percentComplete)
     End Sub
 
 #End Region

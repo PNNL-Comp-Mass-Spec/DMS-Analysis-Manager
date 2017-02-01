@@ -135,6 +135,8 @@
     <Compile Include="clsCDTAUtilities.vb" />
     <Compile Include="clsConcatToolWrapper.vb" />
     <Compile Include="clsDataPackageDatasetInfo.vb" />
+    <Compile Include="clsDataPackageFileHandler.vb" />
+    <Compile Include="clsDataPackageInfoLoader.vb" />
     <Compile Include="clsDataPackageJobInfo.vb" />
     <Compile Include="clsDBStatusLogger.vb" />
     <Compile Include="clsDBTask.vb" />

@@ -33,13 +33,17 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             var localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
-            // get fasta file(s) for jobs in data package and copy to local organism database working directory
-            int dataPkgId;
+            // Gigasax.DMS_Pipeline
+            var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+
+            var dataPkgId = m_jobParams.GetJobParameter("DataPackageID", -1);
 
             // This list will track non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
             List<clsDataPackageJobInfo> lstAdditionalJobs;
 
-            var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out dataPkgId, out lstAdditionalJobs);
+            var dataPackageInfoLoader = new clsDataPackageInfoLoader(connectionString, dataPkgId);
+
+            var lstDataPackagePeptideHitJobs = dataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(out lstAdditionalJobs);
             var success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
 
             if (!success)
@@ -47,7 +51,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             var includeMzXmlFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
-            success = FindInstrumentDataFiles(lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
+            success = FindInstrumentDataFiles(dataPackageInfoLoader, lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
             if (!success)
                 return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
@@ -72,6 +76,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         #region Code_Adapted_From_Pride_Plugin
 
         private bool FindInstrumentDataFiles(
+            clsDataPackageInfoLoader dataPackageInfoLoader,
             IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs,
             IEnumerable<clsDataPackageJobInfo> lstAdditionalJobs,
             bool includeMzXmlFiles)
@@ -244,13 +249,15 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Store the dataset RawDataTypes in a Packed Job Parameter
             StorePackedJobParameterDictionary(dctDatasetRawDataTypes, JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
 
-            var udtOptions = new udtDataPackageRetrievalOptionsType
+            var udtOptions = new clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType
             {
                 CreateJobPathFiles = true,
                 RetrieveMzXMLFile = true
             };
 
-            var success = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
+            var dataPackgeFileHandler = new clsDataPackageFileHandler(dataPackageInfoLoader.ConnectionString, dataPackageInfoLoader.DataPackageID, this);
+
+            var success = dataPackgeFileHandler.RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
 
             return success;
 
