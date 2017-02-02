@@ -39,7 +39,7 @@ Public Class clsExtractToolRunner
     Protected WithEvents m_PeptideProphet As clsPeptideProphetWrapper
     Protected WithEvents m_PHRP As clsPepHitResultsProcWrapper
 
-    Protected WithEvents mMSGFDBUtils As clsMSGFDBUtils
+    Protected mMSGFDBUtils As clsMSGFDBUtils
     Protected mMSGFDBUtilsError As Boolean
 
     Protected mGeneratedFastaFilePath As String
@@ -489,6 +489,12 @@ Public Class clsExtractToolRunner
 
             ' Initialize mMSGFDBUtils
             mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
+            RegisterEvents(mMSGFDBUtils)
+
+            ' Attach an additional handler for the ErrorEvent
+            ' This additional handler sets mMSGFDBUtilsError to true
+            AddHandler mMSGFDBUtils.ErrorEvent, AddressOf mMSGFDBUtils_ErrorEvent
+
             mMSGFDBUtilsError = False
 
             Dim strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName)
@@ -536,6 +542,11 @@ Public Class clsExtractToolRunner
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
         If mMSGFDBUtils Is Nothing Then
             mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum.ToString(), m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
+            RegisterEvents(mMSGFDBUtils)
+
+            ' Attach an additional handler for the ErrorEvent
+            ' This additional handler sets mMSGFDBUtilsError to true
+            AddHandler mMSGFDBUtils.ErrorEvent, AddressOf mMSGFDBUtils_ErrorEvent
         End If
 
         mMSGFDBUtilsError = False
@@ -2214,13 +2225,8 @@ Public Class clsExtractToolRunner
         End If
     End Sub
 
-    Private Sub mMSGFDBUtils_ErrorEvent(errorMsg As String, detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
-        LogError("Error in MSGFDBUtils: " & errorMsg, detailedMessage)
+    Private Sub mMSGFDBUtils_ErrorEvent(errorMsg As String, ex As Exception)
         mMSGFDBUtilsError = True
-    End Sub
-
-    Private Sub mMSGFDBUtils_WarningEvent(warningMsg As String) Handles mMSGFDBUtils.WarningEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Warning in MSGFDBUtils: " & warningMsg)
     End Sub
 
     ''' <summary>

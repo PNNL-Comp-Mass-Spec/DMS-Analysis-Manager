@@ -62,7 +62,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
     Private mMzRefinerGoodDataPoints As Integer
     Private mMzRefinerSpecEValueThreshold As Double
 
-    Private WithEvents mMSGFDBUtils As clsMSGFDBUtils
+    Private mMSGFDBUtils As clsMSGFDBUtils
 
     Private mMSXmlCacheFolder As DirectoryInfo
 
@@ -346,6 +346,9 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
         ' Initialize mMSGFDBUtils
         mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus:=True)
+        RegisterEvents(mMSGFDBUtils)
+
+        AddHandler mMSGFDBUtils.IgnorePreviousErrorEvent, AddressOf mMSGFDBUtils_IgnorePreviousErrorEvent
 
         ' Get the FASTA file and index it if necessary
         ' Note: if the fasta file is over 50 MB in size, then only use the first 50 MB
@@ -1312,26 +1315,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     End Sub
 
-    Private Sub mMSGFDBUtils_ErrorEvent(errorMessage As String, detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
-        m_message = String.Copy(errorMessage)
-        If String.IsNullOrEmpty(detailedMessage) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-        Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
-        End If
-
-    End Sub
-
-    Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent() Handles mMSGFDBUtils.IgnorePreviousErrorEvent
+    Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent()
         m_message = String.Empty
-    End Sub
-
-    Private Sub mMSGFDBUtils_MessageEvent(messageText As String) Handles mMSGFDBUtils.MessageEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, messageText)
-    End Sub
-
-    Private Sub mMSGFDBUtils_WarningEvent(warningMessage As String) Handles mMSGFDBUtils.WarningEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
     End Sub
 
 #End Region

@@ -50,7 +50,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     Private mMSGFPlusComplete As Boolean
     Private mMSGFPlusCompletionTime As DateTime
 
-    Private WithEvents mMSGFDBUtils As clsMSGFDBUtils
+    Private mMSGFDBUtils As clsMSGFDBUtils
 
     Private mCmdRunner As clsRunDosProgram
 
@@ -328,6 +328,9 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         ' Initialize mMSGFDBUtils
         mMSGFDBUtils = New clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
+        RegisterEvents(mMSGFDBUtils)
+
+        AddHandler mMSGFDBUtils.IgnorePreviousErrorEvent, AddressOf mMSGFDBUtils_IgnorePreviousErrorEvent
 
         ' Get the FASTA file and index it if necessary
         ' Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
@@ -1267,24 +1270,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
         MonitorProgress()
     End Sub
 
-    Private Sub mMSGFDBUtils_ErrorEvent(errorMessage As String, detailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
-        If String.IsNullOrEmpty(detailedMessage) Then
-            LogError(errorMessage)
-        Else
-            LogError(errorMessage, detailedMessage)
-        End If
-    End Sub
-
-    Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent() Handles mMSGFDBUtils.IgnorePreviousErrorEvent
+    Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent()
         m_message = String.Empty
-    End Sub
-
-    Private Sub mMSGFDBUtils_MessageEvent(messageText As String) Handles mMSGFDBUtils.MessageEvent
-        ReportStatus(messageText)
-    End Sub
-
-    Private Sub mMSGFDBUtils_WarningEvent(warningMessage As String) Handles mMSGFDBUtils.WarningEvent
-        LogWarning(warningMessage)
     End Sub
 
 #If EnableHPC = "True" Then

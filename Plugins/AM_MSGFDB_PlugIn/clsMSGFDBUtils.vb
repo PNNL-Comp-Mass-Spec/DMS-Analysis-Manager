@@ -6,6 +6,7 @@ Imports System.Net
 Imports System.Text.RegularExpressions
 
 Public Class clsMSGFDBUtils
+    Inherits clsEventNotifier
 
 #Region "Constants"
     Public Const PROGRESS_PCT_MSGFPLUS_STARTING As Single = 1
@@ -46,10 +47,7 @@ Public Class clsMSGFDBUtils
 #End Region
 
 #Region "Events"
-    Public Event ErrorEvent(message As String, detailedMessage As String)
     Public Event IgnorePreviousErrorEvent()
-    Public Event MessageEvent(message As String)
-    Public Event WarningEvent(message As String)
 #End Region
 
 #Region "Module Variables"
@@ -282,12 +280,12 @@ Public Class clsMSGFDBUtils
             Dim targetFilePath = Path.Combine(workDir, targetFile)
 
             If Not File.Exists(sourceFilePath) Then
-                ReportWarning("Source file not found in AppendConsoleOutputHeader: " + sourceFilePath)
+                OnWarningEvent("Source file not found in AppendConsoleOutputHeader: " + sourceFilePath)
                 Return
             End If
 
             If Not File.Exists(targetFilePath) Then
-                ReportWarning("Target file not found in AppendConsoleOutputHeader: " + targetFilePath)
+                OnWarningEvent("Target file not found in AppendConsoleOutputHeader: " + targetFilePath)
                 Return
             End If
 
@@ -316,7 +314,7 @@ Public Class clsMSGFDBUtils
 
 
         Catch ex As Exception
-            ReportError("Error in clsMSGFDBUtils->AppendConsoleOutputHeader", "Error in clsMSGFDBUtils->AppendConsoleOutputHeader: " & ex.Message)
+            OnErrorEvent("Error in clsMSGFDBUtils->AppendConsoleOutputHeader", ex)
         End Try
 
     End Sub
@@ -372,7 +370,7 @@ Public Class clsMSGFDBUtils
                         strInstIDDescription = "Q-Exactive"
                 End Select
 
-                ReportMessage("Auto-updating instrument ID from " & instrumentIDCurrent & " to " & instrumentIDNew & " (" & strInstIDDescription & ") " & autoSwitchReason)
+                OnStatusEvent("Auto-updating instrument ID from " & instrumentIDCurrent & " to " & instrumentIDNew & " (" & strInstIDDescription & ") " & autoSwitchReason)
             End If
 
             instrumentIDCurrent = instrumentIDNew
@@ -401,8 +399,7 @@ Public Class clsMSGFDBUtils
             ' Examine the size of the .mzid file
             Dim fiMzidFile = New FileInfo(Path.Combine(m_WorkDir, mzidFileName))
             If Not fiMzidFile.Exists Then
-                ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV (file not found)",
-                            "Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
+                OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
                 Return String.Empty
             End If
 
@@ -418,7 +415,7 @@ Public Class clsMSGFDBUtils
             End Using
 
             If Not lastLine.Trim().EndsWith("</MzIdentML>", StringComparison.InvariantCulture) Then
-                ReportError("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML")
+                OnErrorEvent("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML")
                 Return String.Empty
             End If
 
@@ -426,7 +423,7 @@ Public Class clsMSGFDBUtils
             Dim cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, mzidToTsvConverterProgLoc)
 
             If m_DebugLevel >= 1 Then
-                ReportMessage(mzidToTsvConverterProgLoc & " " & cmdStr)
+                OnStatusEvent(mzidToTsvConverterProgLoc & " " & cmdStr)
             End If
 
             Dim objCreateTSV = New clsRunDosProgram(m_WorkDir) With {
@@ -442,7 +439,7 @@ Public Class clsMSGFDBUtils
             Dim blnSuccess = objCreateTSV.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", True)
 
             If Not blnSuccess Then
-                ReportError("MzidToTsvConverter.exe returned an error code converting the .mzid file To a .tsv file: " & objCreateTSV.ExitCode)
+                OnErrorEvent("MzidToTsvConverter.exe returned an error code converting the .mzid file To a .tsv file: " & objCreateTSV.ExitCode)
                 Return String.Empty
             Else
                 ' The conversion succeeded
@@ -461,7 +458,7 @@ Public Class clsMSGFDBUtils
 
             Return strTSVFilePath
         Catch ex As Exception
-            ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV", "Error in clsMSGFDBUtils->ConvertMZIDToTSV: " & ex.Message)
+            OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV", ex)
             Return String.Empty
         End Try
 
@@ -494,7 +491,7 @@ Public Class clsMSGFDBUtils
             ' Examine the size of the .mzid file
             Dim fiMzidFile = New FileInfo(Path.Combine(m_WorkDir, strMZIDFileName))
             If Not fiMzidFile.Exists Then
-                ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV (file not found)", "Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
+                OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " & fiMzidFile.FullName)
                 Return String.Empty
             End If
 
@@ -510,7 +507,7 @@ Public Class clsMSGFDBUtils
             End Using
 
             If Not String.Equals(lastLine.Trim(), "</MzIdentML>", StringComparison.InvariantCulture) Then
-                ReportError("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML")
+                OnErrorEvent("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML")
                 Return String.Empty
             End If
 
@@ -533,12 +530,12 @@ Public Class clsMSGFDBUtils
             Const LOG_FREE_MEMORY_ON_SUCCESS = False
 
             If Not clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MzIDToTsv", LOG_FREE_MEMORY_ON_SUCCESS) Then
-                ReportError("Not enough free memory to run the MzIDToTsv module in MSGFPlus")
+                OnErrorEvent("Not enough free memory to run the MzIDToTsv module in MSGFPlus")
                 Return String.Empty
             End If
 
             If m_DebugLevel >= 1 Then
-                ReportMessage(javaProgLoc & " " & cmdStr)
+                OnStatusEvent(javaProgLoc & " " & cmdStr)
             End If
 
             Dim objCreateTSV = New clsRunDosProgram(m_WorkDir) With {
@@ -554,7 +551,7 @@ Public Class clsMSGFDBUtils
             Dim blnSuccess = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", True)
 
             If Not blnSuccess Then
-                ReportError("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
+                OnErrorEvent("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " & objCreateTSV.ExitCode)
                 Return String.Empty
             Else
                 ' The conversion succeeded
@@ -572,7 +569,7 @@ Public Class clsMSGFDBUtils
             End If
 
         Catch ex As Exception
-            ReportError("Error in clsMSGFDBUtils->ConvertMZIDToTSV", "Error in clsMSGFDBUtils->ConvertMZIDToTSV: " & ex.Message)
+            OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV", ex)
             Return String.Empty
         End Try
 
@@ -692,14 +689,14 @@ Public Class clsMSGFDBUtils
 
             Dim fiInputFile = New FileInfo(strInputFilePath)
             If Not fiInputFile.Exists Then
-                msg = "MS-GF+ TSV results file not found"
-                ReportError(msg, msg & ", job " & m_JobNum & "; " & strInputFilePath)
+                msg = "MS-GF+ TSV results file not found: " + strInputFilePath
+                OnErrorEvent(msg)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
             If fiInputFile.Length = 0 Then
                 msg = "MS-GF+ TSV results file is empty"
-                ReportError(msg, msg & ", job " & m_JobNum & "; " & strInputFilePath)
+                OnErrorEvent(msg)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -718,7 +715,7 @@ Public Class clsMSGFDBUtils
             If intLinesRead <= 1 Then
                 ' File is empty or only contains a header line
                 msg = "No results above threshold"
-                ReportError(msg, msg & "; " & GetSearchEngineName() & " results file is empty")
+                OnErrorEvent(msg)
 
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
             End If
@@ -726,7 +723,7 @@ Public Class clsMSGFDBUtils
         Catch ex As Exception
 
             msg = "Error validating MS-GF+ results file contents in CreatePeptideToProteinMapping"
-            ReportError(msg, msg & ", job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            OnErrorEvent(msg, ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         End Try
@@ -740,7 +737,7 @@ Public Class clsMSGFDBUtils
                 If String.IsNullOrEmpty(mErrorMessage) Then
                     mErrorMessage = "Error creating a decoy version of the fasta file"
                 End If
-                ReportError(mErrorMessage)
+                OnErrorEvent(mErrorMessage)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -749,7 +746,7 @@ Public Class clsMSGFDBUtils
 
         Try
             If m_DebugLevel >= 1 Then
-                ReportMessage("Creating peptide to protein map file")
+                OnStatusEvent("Creating peptide to protein map file")
             End If
 
             blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
@@ -788,27 +785,27 @@ Public Class clsMSGFDBUtils
 
             If blnSuccess Then
                 If Not File.Exists(strResultsFilePath) Then
-                    ReportError("Peptide to protein mapping file was not created", "Peptide to protein mapping file was not created: " & strResultsFilePath)
+                    OnErrorEvent("Peptide to protein mapping file was not created")
                     blnSuccess = False
                 Else
                     If m_DebugLevel >= 2 Then
-                        ReportMessage("Peptide to protein mapping complete")
+                        OnStatusEvent("Peptide to protein mapping complete")
                     End If
 
                     blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
                 End If
             Else
                 If mPeptideToProteinMapper.GetErrorMessage.Length = 0 AndAlso mPeptideToProteinMapper.StatusMessage.ToLower().Contains("error") Then
-                    ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.StatusMessage)
+                    OnErrorEvent("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.StatusMessage)
                 Else
-                    ReportError("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
+                    OnErrorEvent("Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
                     If mPeptideToProteinMapper.StatusMessage.Length > 0 Then
-                        ReportError("clsPeptideToProteinMapEngine status: " & mPeptideToProteinMapper.StatusMessage)
+                        OnErrorEvent("clsPeptideToProteinMapEngine status: " & mPeptideToProteinMapper.StatusMessage)
                     End If
                 End If
 
                 If blnIgnorePeptideToProteinMapperErrors Then
-                    ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+                    OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
 
                     If File.Exists(strResultsFilePath) Then
                         blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors)
@@ -817,17 +814,16 @@ Public Class clsMSGFDBUtils
                     End If
 
                 Else
-                    ReportError("Error in CreatePeptideToProteinMapping")
+                    OnErrorEvent("Error in CreatePeptideToProteinMapping")
                     blnSuccess = False
                 End If
             End If
 
         Catch ex As Exception
-            msg = "Exception in CreatePeptideToProteinMapping"
-            ReportError(msg, "CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            OnErrorEvent("Exception in CreatePeptideToProteinMapping", ex)
 
             If blnIgnorePeptideToProteinMapperErrors Then
-                ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+                OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             Else
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -863,13 +859,13 @@ Public Class clsMSGFDBUtils
                 Dim hashCheckError = String.Empty
                 If clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, hashCheckError) Then
                     ' The trimmed fasta file is valid
-                    ReportMessage("Using existing trimmed fasta: " & fiTrimmedFasta.Name)
+                    OnStatusEvent("Using existing trimmed fasta: " & fiTrimmedFasta.Name)
                     Return fiTrimmedFasta.FullName
                 End If
 
             End If
 
-            ReportMessage("Creating trimmed fasta: " & fiTrimmedFasta.Name)
+            OnStatusEvent("Creating trimmed fasta: " & fiTrimmedFasta.Name)
 
             ' Construct the list of required contaminant proteins
             Dim contaminantUtility = New clsFastaContaminantUtility()
@@ -923,7 +919,7 @@ Public Class clsMSGFDBUtils
 
             End Using
 
-            ReportMessage("Trimmed fasta created using " & proteinCount & " proteins; creating the hashcheck file")
+            OnStatusEvent("Trimmed fasta created using " & proteinCount & " proteins; creating the hashcheck file")
 
             clsGlobal.CreateHashcheckFile(fiTrimmedFasta.FullName, True)
             Dim trimmedFastaFilePath = fiTrimmedFasta.FullName
@@ -931,7 +927,7 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
             mErrorMessage = "Exception trimming fasta file to " & maxFastaFileSizeMB & " MB"
-            ReportError(mErrorMessage, "CreateTrimmedFasta, " & mErrorMessage & ": " & ex.Message)
+            OnErrorEvent(mErrorMessage, ex)
             Return String.Empty
         End Try
 
@@ -987,7 +983,7 @@ Public Class clsMSGFDBUtils
             strDecoyFastaFilePath = Path.Combine(strOutputDirectoryPath, Path.GetFileNameWithoutExtension(ioSourceFile.Name) & "_decoy.fasta")
 
             If m_DebugLevel >= 2 Then
-                ReportMessage("Creating decoy fasta file at " & strDecoyFastaFilePath)
+                OnStatusEvent("Creating decoy fasta file at " & strDecoyFastaFilePath)
             End If
 
             objFastaFileReader = New ProteinFileReader.FastaFileReader() With {
@@ -996,7 +992,7 @@ Public Class clsMSGFDBUtils
             }
 
             If Not objFastaFileReader.OpenFile(strInputFilePath) Then
-                ReportError("Error reading fasta file with ProteinFileReader to create decoy file")
+                OnErrorEvent("Error reading fasta file with ProteinFileReader to create decoy file")
                 Return String.Empty
             End If
 
@@ -1028,9 +1024,7 @@ Public Class clsMSGFDBUtils
             objFastaFileReader.CloseFile()
 
         Catch ex As Exception
-            Dim msg As String
-            msg = "Exception creating decoy fasta file"
-            ReportError(msg, "GenerateDecoyFastaFile, " & msg & ": " & ex.Message)
+            OnErrorEvent("Exception creating decoy fasta file", ex)
             Return String.Empty
         End Try
 
@@ -1116,7 +1110,7 @@ Public Class clsMSGFDBUtils
         Dim kvSetting As KeyValuePair(Of String, String)
 
         If Not File.Exists(strParameterFilePath) Then
-            ReportError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
+            OnErrorEvent("Parameter file not found: " & strParameterFilePath)
             Return strValueIfNotFound
         End If
 
@@ -1138,7 +1132,7 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
             mErrorMessage = "Exception reading MSGFDB parameter file"
-            ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+            OnErrorEvent(mErrorMessage, ex)
         End Try
 
         Return strValueIfNotFound
@@ -1209,7 +1203,7 @@ Public Class clsMSGFDBUtils
 
         If Not fiFastaFile.Exists Then
             ' Fasta file not found
-            ReportError("Fasta file not found: " & fiFastaFile.Name, "Fasta file not found: " & fiFastaFile.FullName)
+            OnErrorEvent("Fasta file not found: " & fiFastaFile.FullName)
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
@@ -1243,7 +1237,7 @@ Public Class clsMSGFDBUtils
 
             Dim tdaValue As Integer
             If Not Integer.TryParse(strTDASetting, tdaValue) Then
-                ReportError("TDA value is not numeric: " & strTDASetting)
+                OnErrorEvent("TDA value is not numeric: " & strTDASetting)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -1255,7 +1249,7 @@ Public Class clsMSGFDBUtils
 
                     fastaFileIsDecoy = True
                     If m_DebugLevel >= 1 Then
-                        ReportMessage("Processing large FASTA file with forward-only search; auto switching to -tda 0")
+                        OnStatusEvent("Processing large FASTA file with forward-only search; auto switching to -tda 0")
                     End If
 
                 ElseIf strMSGFDBParameterFilePath.ToLower().EndsWith("_NoDecoy.txt".ToLower()) Then
@@ -1264,7 +1258,7 @@ Public Class clsMSGFDBUtils
 
                     fastaFileIsDecoy = True
                     If m_DebugLevel >= 1 Then
-                        ReportMessage("Using NoDecoy parameter file with TDA=0; auto switching to -tda 0")
+                        OnStatusEvent("Using NoDecoy parameter file with TDA=0; auto switching to -tda 0")
                     End If
 
                 End If
@@ -1274,7 +1268,7 @@ Public Class clsMSGFDBUtils
 
         If maxFastaFileSizeMB > 0 AndAlso fastaFileSizeKB / 1024.0 > maxFastaFileSizeMB Then
             ' Create a trimmed version of the fasta file
-            ReportMessage("Fasta file is over " & maxFastaFileSizeMB & " MB; creating a trimmed version of the fasta file")
+            OnStatusEvent("Fasta file is over " & maxFastaFileSizeMB & " MB; creating a trimmed version of the fasta file")
 
             Dim fastaFilePathTrimmed = String.Empty
 
@@ -1292,7 +1286,7 @@ Public Class clsMSGFDBUtils
                 If trimIteration <= 2 Then
                     Dim sleepTimeSec = oRand.Next(10, 19)
 
-                    ReportMessage("Fasta file trimming failed; waiting " & sleepTimeSec & " seconds then trying again")
+                    OnStatusEvent("Fasta file trimming failed; waiting " & sleepTimeSec & " seconds then trying again")
                     Threading.Thread.Sleep(sleepTimeSec * 1000)
                 End If
 
@@ -1311,7 +1305,7 @@ Public Class clsMSGFDBUtils
         End If
 
         If m_DebugLevel >= 3 OrElse (m_DebugLevel >= 1 And fastaFileSizeKB > 500) Then
-            ReportMessage("Indexing Fasta file to create Suffix Array files")
+            OnStatusEvent("Indexing Fasta file to create Suffix Array files")
         End If
 
         ' Look for the suffix array files that should exist for the fasta file
@@ -1339,15 +1333,15 @@ Public Class clsMSGFDBUtils
             ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And indexIteration > 2) Then
 
                 If Not String.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage) Then
-                    ReportError(objIndexedDBCreator.ErrorMessage)
+                    OnErrorEvent(objIndexedDBCreator.ErrorMessage)
                 Else
-                    ReportError("Error creating Suffix Array files")
+                    OnErrorEvent("Error creating Suffix Array files")
                 End If
                 Return result
             Else
                 Dim sleepTimeSec = oRand.Next(10, 19)
 
-                ReportMessage("Fasta file indexing failed; waiting " & sleepTimeSec & " seconds then trying again")
+                OnStatusEvent("Fasta file indexing failed; waiting " & sleepTimeSec & " seconds then trying again")
                 Threading.Thread.Sleep(sleepTimeSec * 1000)
             End If
 
@@ -1447,7 +1441,7 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
             mErrorMessage = "Exception in LoadScanTypeFile"
-            ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+            OnErrorEvent(mErrorMessage, ex)
             Return False
         End Try
 
@@ -1483,7 +1477,7 @@ Public Class clsMSGFDBUtils
             '  Dynamic mod definition contains ,fix, -- update the param file to have ,opt, or change to StaticMod="
             '  Static mod definition contains ,opt, -- update the param file to have ,fix, or change to DynamicMod="
             mErrorMessage = definitionType & " definition contains ," & invalidTag & ", -- update the param file to have ," & expectedTag & ", or change to " & verboseTag & "="
-            ReportError(mErrorMessage, mErrorMessage & "; " & definitionData)
+            OnErrorEvent(mErrorMessage)
 
             Return True
         End If
@@ -1647,14 +1641,14 @@ Public Class clsMSGFDBUtils
             strConsoleOutputFilePath = Path.Combine(workingDirectory, MSGFPLUS_CONSOLE_OUTPUT_FILE)
             If Not File.Exists(strConsoleOutputFilePath) Then
                 If m_DebugLevel >= 4 Then
-                    ReportMessage("Console output file not found: " & strConsoleOutputFilePath)
+                    OnStatusEvent("Console output file not found: " & strConsoleOutputFilePath)
                 End If
 
                 Return 0
             End If
 
             If m_DebugLevel >= 4 Then
-                ReportMessage("Parsing file " & strConsoleOutputFilePath)
+                OnStatusEvent("Parsing file " & strConsoleOutputFilePath)
             End If
 
             Dim strLineIn As String
@@ -1691,7 +1685,7 @@ Public Class clsMSGFDBUtils
                         ' The third line is the MS-GF+ version
                         If String.IsNullOrWhiteSpace(mMSGFPlusVersion) AndAlso (strLineIn.StartsWith("MS-GF+ Release")) Then
                             If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSGFPlusVersion) Then
-                                ReportMessage("MS-GF+ version: " & strLineIn)
+                                OnStatusEvent("MS-GF+ version: " & strLineIn)
                             End If
 
                             mMSGFPlusVersion = String.Copy(strLineIn)
@@ -1775,7 +1769,7 @@ Public Class clsMSGFDBUtils
                         Dim taskNumber = Integer.Parse(reMatch.Groups("TaskNumber").Value)
 
                         If completedTasks.Contains(taskNumber) Then
-                            ReportWarning("MS-GF+ reported that task " & taskNumber & " completed more than once")
+                            OnWarningEvent("MS-GF+ reported that task " & taskNumber & " completed more than once")
                         Else
                             completedTasks.Add(taskNumber)
                         End If
@@ -1815,7 +1809,7 @@ Public Class clsMSGFDBUtils
         Catch ex As Exception
             ' Ignore errors here
             If m_DebugLevel >= 2 Then
-                ReportWarning("Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+                OnWarningEvent("Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
             End If
         End Try
 
@@ -1923,7 +1917,7 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
             mErrorMessage = "Exception creating MS-GF+ Mods file"
-            ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+            OnErrorEvent(mErrorMessage, ex)
             blnSuccess = False
         End Try
 
@@ -2038,7 +2032,7 @@ Public Class clsMSGFDBUtils
         strMSGFDbCmdLineOptions = String.Empty
 
         If Not File.Exists(strParameterFilePath) Then
-            ReportError("Parameter file Not found", "Parameter file Not found:  " & strParameterFilePath)
+            OnErrorEvent("Parameter file Not found:  " & strParameterFilePath)
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
@@ -2086,7 +2080,7 @@ Public Class clsMSGFDBUtils
                                     ' Use FragmentationMethodID 0 (as written in the spectrum, or CID)
                                     strValue = "0"
 
-                                    ReportMessage("Using Fragmentation method -m " & strValue & " because a ScanType file was created")
+                                    OnStatusEvent("Using Fragmentation method -m " & strValue & " because a ScanType file was created")
 
                                 ElseIf Not String.IsNullOrWhiteSpace(strAssumedScanType) Then
                                     ' Override FragmentationMethodID using strAssumedScanType
@@ -2106,13 +2100,13 @@ Public Class clsMSGFDBUtils
                                         Case Else
                                             ' Invalid string
                                             mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, HCD, or UVPD"
-                                            ReportError(mErrorMessage)
+                                            OnErrorEvent(mErrorMessage)
                                             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                                     End Select
 
-                                    ReportMessage("Using Fragmentation method -m " & strValue & " because of Assumed scan type " & strAssumedScanType)
+                                    OnStatusEvent("Using Fragmentation method -m " & strValue & " because of Assumed scan type " & strAssumedScanType)
                                 Else
-                                    ReportMessage("Using Fragmentation method -m " & strValue)
+                                    OnStatusEvent("Using Fragmentation method -m " & strValue)
                                 End If
 
                             ElseIf clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_INSTRUMENT_ID) Then
@@ -2152,18 +2146,18 @@ Public Class clsMSGFDBUtils
 
                             Dim valueOverride = String.Empty
                             If overrideParams.TryGetValue(strArgumentSwitch, valueOverride) Then
-                                ReportMessage("Overriding switch " & strArgumentSwitch & " to use -" & strArgumentSwitch & " " & valueOverride &
+                                OnStatusEvent("Overriding switch " & strArgumentSwitch & " to use -" & strArgumentSwitch & " " & valueOverride &
                                                                                      " instead of -" & strArgumentSwitch & " " & strValue)
                                 strValue = String.Copy(valueOverride)
                             End If
 
                             If String.IsNullOrEmpty(strArgumentSwitch) Then
                                 If m_DebugLevel >= 1 And Not clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFPLUS_OPTION_SHOWDECOY) Then
-                                    ReportWarning("Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
+                                    OnWarningEvent("Skipping switch " & strArgumentSwitchOriginal & " since it is not valid for this version of " & strSearchEngineName)
                                 End If
                             ElseIf String.IsNullOrEmpty(strValue) Then
                                 If m_DebugLevel >= 1 Then
-                                    ReportWarning("Skipping switch " & strArgumentSwitch & " since the value is empty")
+                                    OnWarningEvent("Skipping switch " & strArgumentSwitch & " since the value is empty")
                                 End If
                             Else
                                 sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
@@ -2202,7 +2196,7 @@ Public Class clsMSGFDBUtils
                                         sbOptions.Append(" -uniformAAProb " & intValue)
                                     Else
                                         mErrorMessage = "Invalid value for uniformAAProb in MS-GF+ parameter file"
-                                        ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
+                                        OnErrorEvent(mErrorMessage & ": " & strLineIn)
                                         srParamFile.Close()
                                         Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                                     End If
@@ -2216,7 +2210,7 @@ Public Class clsMSGFDBUtils
                                 If Integer.TryParse(strValue, intParamFileThreadCount) Then
                                     ' intParamFileThreadCount now has the thread count
                                 Else
-                                    ReportWarning("Invalid value for NumThreads in MS-GF+ parameter file: " & strLineIn)
+                                    OnWarningEvent("Invalid value for NumThreads in MS-GF+ parameter file: " & strLineIn)
                                 End If
                             End If
 
@@ -2226,7 +2220,7 @@ Public Class clsMSGFDBUtils
                                 intNumMods = intValue
                             Else
                                 mErrorMessage = "Invalid value for NumMods in MS-GF+ parameter file"
-                                ReportError(mErrorMessage, mErrorMessage & ": " & strLineIn)
+                                OnErrorEvent(mErrorMessage & ": " & strLineIn)
                                 srParamFile.Close()
                                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                             End If
@@ -2276,7 +2270,7 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
             mErrorMessage = "Exception reading MS-GF+ parameter file"
-            ReportError(mErrorMessage, mErrorMessage & ": " & ex.Message)
+            OnErrorEvent(mErrorMessage, ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -2304,7 +2298,7 @@ Public Class clsMSGFDBUtils
             ' Do not define the thread count when running on HPC; MS-GF+ should use all 16 cores (or all 32 cores)
             If intParamFileThreadCount > 0 Then intParamFileThreadCount = 0
 
-            ReportMessage("Running on HPC; " & strSearchEngineName & " will use all available cores")
+            OnStatusEvent("Running on HPC; " & strSearchEngineName & " will use all available cores")
 
         ElseIf intParamFileThreadCount <= 0 OrElse limitCoreUsage Then
             ' Set intParamFileThreadCount to the number of cores on this computer
@@ -2336,11 +2330,11 @@ Public Class clsMSGFDBUtils
             End If
 
             If intParamFileThreadCount > 8 Then
-                ReportMessage("The system has " & coreCount & " cores; " & strSearchEngineName & " will use 8 cores (bumped down from " & intParamFileThreadCount & " to avoid overloading a single NUMA node)")
+                OnStatusEvent("The system has " & coreCount & " cores; " & strSearchEngineName & " will use 8 cores (bumped down from " & intParamFileThreadCount & " to avoid overloading a single NUMA node)")
                 intParamFileThreadCount = 8
             Else
                 ' Example message: The system has 8 cores; MS-GF+ will use 7 cores")
-                ReportMessage("The system has " & coreCount & " cores; " & strSearchEngineName & " will use " & intParamFileThreadCount & " cores")
+                OnStatusEvent("The system has " & coreCount & " cores; " & strSearchEngineName & " will use " & intParamFileThreadCount & " cores")
             End If
         End If
 
@@ -2379,7 +2373,7 @@ Public Class clsMSGFDBUtils
         If strMSGFDbCmdLineOptions.Contains("-tda 1") Then
             ' Make sure the .Fasta file is not a Decoy fasta
             If fastaFileIsDecoy Then
-                ReportError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
+                OnErrorEvent("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         End If
@@ -2433,13 +2427,13 @@ Public Class clsMSGFDBUtils
             If Not blnSuccess Then
                 If String.IsNullOrEmpty(mErrorMessage) Then
                     mErrorMessage = "LoadScanTypeFile returned false for " & Path.GetFileName(scanTypeFilePath)
-                    ReportError(mErrorMessage)
+                    OnErrorEvent(mErrorMessage)
                 End If
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
             ElseIf lstLowResMSn.Count + lstHighResMSn.Count + lstHCDMSn.Count = 0 Then
                 mErrorMessage = "LoadScanTypeFile could not find any MSn spectra " & Path.GetFileName(scanTypeFilePath)
-                ReportError(mErrorMessage)
+                OnErrorEvent(mErrorMessage)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             Else
                 ExamineScanTypes(lstLowResMSn.Count, lstHighResMSn.Count, lstHCDMSn.Count, instrumentIDNew, autoSwitchReason)
@@ -2465,7 +2459,7 @@ Public Class clsMSGFDBUtils
 
         If countLowResMSn + countHighResMSn + countHCDMSn = 0 Then
             ' Scan counts are all 0; leave instrumentIDNew untouched
-            ReportMessage("Scan counts provided to ExamineScanTypes are all 0; cannot auto-update InstrumentID")
+            OnStatusEvent("Scan counts provided to ExamineScanTypes are all 0; cannot auto-update InstrumentID")
         Else
             Dim dblFractionHiRes As Double = 0
 
@@ -2533,7 +2527,7 @@ Public Class clsMSGFDBUtils
             Dim blnSuccess = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LookupScanTypesForDataset", retryCount, dtResults)
 
             If Not blnSuccess Then
-                ReportError("Excessive failures attempting to retrieve dataset scan types in LookupScanTypesForDataset")
+                OnErrorEvent("Excessive failures attempting to retrieve dataset scan types in LookupScanTypesForDataset")
                 dtResults.Dispose()
                 Return False
             End If
@@ -2541,7 +2535,7 @@ Public Class clsMSGFDBUtils
             'Verify at least one row returned
             If dtResults.Rows.Count < 1 Then
                 ' No data was returned
-                ReportMessage("No rows were returned for dataset " & datasetName & " from V_Dataset_ScanType_CrossTab in DMS")
+                OnStatusEvent("No rows were returned for dataset " & datasetName & " from V_Dataset_ScanType_CrossTab in DMS")
                 Return False
             Else
                 For Each curRow As DataRow In dtResults.Rows
@@ -2570,7 +2564,7 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
             Const msg = "Exception in LookupScanTypersForDataset"
-            ReportError(msg, msg & ": " & ex.Message)
+            OnErrorEvent(msg, ex)
             Return False
         End Try
 
@@ -2621,7 +2615,7 @@ Public Class clsMSGFDBUtils
                 mErrorMessage = "Invalid modification string; must have 5 sections: " & strMod
             End If
 
-            ReportError(mErrorMessage)
+            OnErrorEvent(mErrorMessage)
             Return False
         End If
 
@@ -2637,7 +2631,7 @@ Public Class clsMSGFDBUtils
             If lstInvalidCharacters.Count > 0 Then
                 mErrorMessage = "Custom amino acid empirical formula " & strModClean & " has invalid characters. " &
                                 "It must only contain C, H, N, O, and S, and optionally an integer after each element, for example: C6H7N3O"
-                ReportError(mErrorMessage)
+                OnErrorEvent(mErrorMessage)
                 Return False
             End If
 
@@ -2661,7 +2655,7 @@ Public Class clsMSGFDBUtils
 
                     mErrorMessage = "Invalid element " & elementSymbol & " in the custom amino acid empirical formula " & strModClean & "; " &
                                     "MS-GF+ only supports C, H, N, O, and S"
-                    ReportError(mErrorMessage)
+                    OnErrorEvent(mErrorMessage)
                     Return False
                 End If
 
@@ -2673,7 +2667,7 @@ Public Class clsMSGFDBUtils
             Next
 
             If Not String.Equals(strModClean, reconstructedFormula) Then
-                ReportMessage("Auto updated the custom amino acid empirical formula to include a 1 " &
+                OnStatusEvent("Auto updated the custom amino acid empirical formula to include a 1 " &
                               "after elements that did not have an element count listed: " & strModClean & " --> " & reconstructedFormula)
                 strModClean = reconstructedFormula
             End If
@@ -2804,7 +2798,7 @@ Public Class clsMSGFDBUtils
             Dim strLineIn As String
 
             If m_DebugLevel >= 2 Then
-                ReportMessage("Validating peptide to protein mapping, file " & Path.GetFileName(strPeptideToProteinMapFilePath))
+                OnStatusEvent("Validating peptide to protein mapping, file " & Path.GetFileName(strPeptideToProteinMapFilePath))
             End If
 
             Using srInFile = New StreamReader(New FileStream(strPeptideToProteinMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -2825,12 +2819,12 @@ Public Class clsMSGFDBUtils
 
             If intPeptideCount = 0 Then
                 mErrorMessage = "Peptide to protein mapping file is empty"
-                ReportError(mErrorMessage, mErrorMessage & ", file " & Path.GetFileName(strPeptideToProteinMapFilePath))
+                OnErrorEvent(mErrorMessage & ", file " & Path.GetFileName(strPeptideToProteinMapFilePath))
                 blnSuccess = False
 
             ElseIf intPeptideCountNoMatch = 0 Then
                 If m_DebugLevel >= 2 Then
-                    ReportMessage("Peptide to protein mapping validation complete; processed " & intPeptideCount & " peptides")
+                    OnStatusEvent("Peptide to protein mapping validation complete; processed " & intPeptideCount & " peptides")
                 End If
 
                 blnSuccess = True
@@ -2841,10 +2835,10 @@ Public Class clsMSGFDBUtils
 
 
                 mErrorMessage = dblErrorPercent.ToString("0.0") & "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file"
-                ReportError(mErrorMessage)
+                OnErrorEvent(mErrorMessage)
 
                 If blnIgnorePeptideToProteinMapperErrors Then
-                    ReportWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
+                    OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
                     blnSuccess = True
                 Else
                     RaiseEvent IgnorePreviousErrorEvent()
@@ -2855,7 +2849,7 @@ Public Class clsMSGFDBUtils
         Catch ex As Exception
 
             mErrorMessage = "Error validating peptide to protein map file"
-            ReportError(mErrorMessage, mErrorMessage & ", job " & m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
+            OnErrorEvent(mErrorMessage, ex)
             blnSuccess = False
         End Try
 
@@ -2888,13 +2882,12 @@ Public Class clsMSGFDBUtils
 
             tmpFilePath = Path.Combine(m_WorkDir, fileName)
             If Not File.Exists(tmpFilePath) Then
-                ReportError("MS-GF+ results file not found: " & fileName)
+                OnErrorEvent("MS-GF+ results file not found: " & fileName)
                 Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
             End If
 
             If Not oToolRunner.GZipFile(tmpFilePath, False) Then
-                Const Msg = "Error zipping output files"
-                ReportError(Msg, Msg & ": oToolRunner.ZipFile returned false, job " & m_JobNum)
+                OnErrorEvent("Error zipping output files: oToolRunner.ZipFile returned false")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
@@ -2902,8 +2895,7 @@ Public Class clsMSGFDBUtils
             m_jobParams.AddResultFileToSkip(fileName)
 
         Catch ex As Exception
-            Dim msg = "clsAnalysisToolRunnerMSGFDB.ZipOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-            ReportError("Error zipping output files", msg)
+            OnErrorEvent("Error zipping output files", ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
