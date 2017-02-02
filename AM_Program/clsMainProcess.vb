@@ -1758,7 +1758,9 @@ Public Class clsMainProcess
     End Function
 
     Public Shared Sub ShowTraceMessage(strMessage As String)
+        Console.ForegroundColor = ConsoleColor.DarkGray
         Console.WriteLine(Date.Now.ToString("hh:mm:ss.fff tt") & ": " & strMessage)
+        Console.ResetColor()
     End Sub
 
     Private Sub UpdateClose(ManagerCloseMessage As String)

@@ -8,10 +8,11 @@ Public MustInherit Class clsLoggerBase
     Protected m_DebugLevel As Short = 1
 
     ''' <summary>
-    ''' Log an error message
+    ''' Log an error message, optionally logging to the database in addition to the log file
     ''' </summary>
     ''' <param name="errorMessage">Error message</param>
     ''' <param name="logToDb">When true, log the message to the database and the local log file</param>
+    ''' <remarks>The error is shown in red in the console</remarks>
     Protected Overridable Sub LogError(errorMessage As String, Optional logToDb As Boolean = False)
         Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(errorMessage)
@@ -31,7 +32,8 @@ Public MustInherit Class clsLoggerBase
     ''' Log an error message and exception
     ''' </summary>
     ''' <param name="errorMessage">Error message (do not include ex.message)</param>
-    ''' <param name="ex">Exception to log</param>
+    ''' <param name="ex">Exception to log (allowed to be nothing)</param>
+    ''' <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
     Protected Overridable Sub LogError(errorMessage As String, ex As Exception)
         Dim formattedError As String
         If ex Is Nothing OrElse errorMessage.EndsWith(ex.Message) Then
@@ -54,6 +56,7 @@ Public MustInherit Class clsLoggerBase
     ''' Log a warning message
     ''' </summary>
     ''' <param name="warningMessage">Warning message</param>
+    ''' <remarks>The warning is shown in yellow in the console.</remarks>
     Protected Sub LogWarning(warningMessage As String)
         Console.ForegroundColor = ConsoleColor.Yellow
         Console.WriteLine(warningMessage)
@@ -62,7 +65,7 @@ Public MustInherit Class clsLoggerBase
     End Sub
 
     ''' <summary>
-    ''' Show a status message at the console and optionally include in the log file
+    ''' Show a status message at the console and optionally include in the log file, tagging it as a debug message
     ''' </summary>
     ''' <param name="statusMessage">Status message</param>
     ''' <param name="logFileDebugLevel">
@@ -72,8 +75,11 @@ Public MustInherit Class clsLoggerBase
     ''' 2 to log if m_DebugLevel is >= 2
     ''' 10 to not log to disk
     ''' </param>
+    ''' <remarks>The message is shown in dark grey in the console.</remarks>
     Protected Sub LogDebug(statusMessage As String, Optional logFileDebugLevel As Integer = 0)
+        Console.ForegroundColor = ConsoleColor.DarkGray
         Console.WriteLine(statusMessage)
+        Console.ResetColor()
 
         If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage)
