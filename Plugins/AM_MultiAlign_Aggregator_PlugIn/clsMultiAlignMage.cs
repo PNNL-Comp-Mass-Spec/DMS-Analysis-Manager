@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
@@ -12,28 +13,30 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         #region Member Variables
 
-        protected string mResultsDBFileName = "";
-        protected string mWorkingDir;
-        protected JobParameters mJP;
-        protected ManagerParameters mMP;
-        protected string mMessage = "";
-        protected string mSearchType = "";								// File extension of input data files, e.g. "_LCMSFeatures.txt" or "_isos.csv"
-        protected string mParamFilename = "";
-        protected const string MULTIALIGN_INPUT_FILE = "Input.txt";
-        protected string mJobNum = "";
-        protected short mDebugLevel;
-        protected float mProgress = 0;
-        protected string mMultialignErroMessage = "";
-        protected clsRunDosProgram CmdRunner;
-        protected IStatusFile mStatusTools; 
+        private string mResultsDBFileName = "";
+        private string mWorkingDir;
+        private JobParameters mJP;
+        private ManagerParameters mMP;
+        private string mMessage = "";
+        private string mSearchType = "";								// File extension of input data files, e.g. "_LCMSFeatures.txt" or "_isos.csv"
+        private string mParamFilename = "";
+        private const string MULTIALIGN_INPUT_FILE = "Input.txt";
+        private string mJobNum = "";
+        private short mDebugLevel;
+        private float mProgress;
+        private string mMultialignErrorMessage = "";
+        private readonly IStatusFile mStatusTools;
 
+        private DateTime mLastStatusUpdate = DateTime.UtcNow;
+        private DateTime mLastMultialignLogFileParse = DateTime.UtcNow;
+        private DateTime mLastProgressWriteTime = DateTime.UtcNow;
 
-        protected System.Collections.Generic.SortedDictionary<eProgressSteps, Int16> mProgressStepPercentComplete;
+        private SortedDictionary<eProgressSteps, Int16> mProgressStepPercentComplete;
         // This dictionary associates key log text entries with the corresponding progress step for each
         // It is populated by sub InitializeProgressStepDictionaries
 
-        protected System.Collections.Generic.SortedDictionary<string, eProgressSteps> mProgressStepLogText;
-        protected enum eProgressSteps
+        private SortedDictionary<string, eProgressSteps> mProgressStepLogText;
+        private enum eProgressSteps
         {
             Starting = 0,
             LoadingMTDB = 1,
@@ -47,7 +50,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             Complete = 9
         }
 
-        protected string m_MultialignErroMessage = string.Empty;
+        private string m_MultialignErroMessage = string.Empty;
 
         #endregion
 
@@ -62,7 +65,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return mMessage;
             }
         }
-                
+
         #endregion
 
         #region Constructors
@@ -122,7 +125,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             blnSuccess = CopyMultiAlignInputFiles(multialignJobsToProcess, mSearchType);
-            if (!blnSuccess) 
+            if (!blnSuccess)
                 return false;
 
             blnSuccess = BuildMultiAlignInputTextFile(mSearchType);
@@ -135,7 +138,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
             cmdRunner.ErrorEvent += CmdRunnerOnErrorEvent;
 
-            if (mDebugLevel > 4) {
+            if (mDebugLevel > 4)
+            {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsMultiAlignMage.RunTool(): Enter");
             }
 
@@ -177,7 +181,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 if (!string.IsNullOrEmpty(m_MultialignErroMessage))
                 {
-                    mMessage += ": " + mMultialignErroMessage;
+                    mMessage += ": " + mMultialignErrorMessage;
                 }
                 OnErrorEvent(mMessage + ", job " + mJobNum);
 
@@ -192,7 +196,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         #region Mage Pipelines and Utilities
 
-        private bool GetMultiAlignParameterFile() {
+        private bool GetMultiAlignParameterFile()
+        {
 
             try
             {
@@ -229,7 +234,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 OnErrorEvent(mMessage + ": " + ex.Message);
                 return false;
             }
-         
+
 
             return true;
 
@@ -287,9 +292,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
                 // make module to copy file(s) from server to working directory
-                FileCopy copier = new FileCopy();
-                copier.OutputFolderPath = mWorkingDir;
-                copier.SourceFileColumnName = "Name";
+                var copier = new FileCopy
+                {
+                    OutputFolderPath = mWorkingDir,
+                    SourceFileColumnName = "Name"
+                };
 
                 ProcessingPipeline.Assemble("File_Copy", fileList, copier).RunRoot(null);
 
@@ -370,7 +377,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         /// <param name="strInputFileExtension"></param>
         /// <returns></returns>
-        protected bool BuildMultiAlignInputTextFile(string strInputFileExtension)
+        private bool BuildMultiAlignInputTextFile(string strInputFileExtension)
         {
 
             const string INPUT_FILENAME = "input.txt";
@@ -447,23 +454,21 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         private void CmdRunner_LoopWaiting()
         {
-            System.DateTime dtLastStatusUpdate = System.DateTime.UtcNow;
-            System.DateTime dtLastMultialignLogFileParse = System.DateTime.UtcNow;
 
             // Update the status file (limit the updates to every 5 seconds)
-            if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 5)
             {
-                dtLastStatusUpdate = System.DateTime.UtcNow;
+                mLastStatusUpdate = DateTime.UtcNow;
                 mStatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
             }
 
-            if (System.DateTime.UtcNow.Subtract(dtLastMultialignLogFileParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(mLastMultialignLogFileParse).TotalSeconds >= 15)
             {
-                dtLastMultialignLogFileParse = System.DateTime.UtcNow;
+                mLastMultialignLogFileParse = DateTime.UtcNow;
                 ParseMultiAlignLogFile();
             }
         }
-        
+
         /// <summary>
         /// Populates dictionary mProgressStepPercentComplete(), which is used by ParseMultiAlignLogFile
         /// </summary>
@@ -701,9 +706,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     {
                         mProgress = sngActualProgress;
 
-                        if (mDebugLevel >= 3 || System.DateTime.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 10)
+                        if (mDebugLevel >= 3 || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 10)
                         {
-                            dtLastProgressWriteTime = System.DateTime.UtcNow;
+                            mLastProgressWriteTime = DateTime.UtcNow;
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " + mProgress.ToString("0.0") + "% complete");
                         }
 
@@ -731,16 +736,17 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// This is a Mage module that does MultiAlign processing 
         /// of results for jobs that are supplied to it via standard tabular input
         /// </summary>
-        public class MageMultiAlign : ContentFilter {
+        public class MageMultiAlign : ContentFilter
+        {
 
             #region Member Variables
 
-            protected string[] jobFieldNames;
+            private string[] jobFieldNames;
 
             // indexes to look up values for some key job fields
-            protected int toolIdx;
-            protected int paramFileIdx;
-            protected int resultsFldrIdx;
+            private int toolIdx;
+            private int paramFileIdx;
+            private int resultsFldrIdx;
 
             #endregion
 
