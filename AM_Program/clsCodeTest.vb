@@ -34,6 +34,8 @@ Public Class clsCodeTest
     Private m_MaxScanInFile As Integer
     Private WithEvents mDTAWatcher As FileSystemWatcher
 
+    Private mLastStatusTime As DateTime
+
     Private Const FASTA_GEN_TIMEOUT_INTERVAL_SEC As Integer = 450             ' 7.5 minutes
 
     Private Structure udtPSMJobInfoType
@@ -57,6 +59,7 @@ Public Class clsCodeTest
         Const TRACE_MODE_ENABLED = True
 
         m_DebugLevel = 2
+        mLastStatusTime = DateTime.UtcNow.AddMinutes(-1)
 
         ' Get settings from config file
         Dim lstMgrSettings As Generic.Dictionary(Of String, String)
@@ -238,6 +241,7 @@ Public Class clsCodeTest
         Dim objSummaryFile As New clsSummaryFile()
 
         myEMSLUtilities = New clsMyEMSLUtilities(DEBUG_LEVEL, WORKING_DIRECTORY)
+        RegisterEvents(myEMSLUtilities)
 
         Dim objToolRunner = New clsCodeTestAM
         objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile, myEMSLUtilities)
@@ -2596,4 +2600,40 @@ Public Class clsCodeTest
         End Function
     End Class
 
+
+#Region "clsEventNotifier events"
+
+    Private Sub RegisterEvents(oProcessingClass As clsEventNotifier)
+        AddHandler oProcessingClass.StatusEvent, AddressOf StatusEventHandler
+        AddHandler oProcessingClass.ErrorEvent, AddressOf ErrorEventHandler
+        AddHandler oProcessingClass.WarningEvent, AddressOf WarningEventHandler
+        AddHandler oProcessingClass.ProgressUpdate, AddressOf ProgressUpdateHandler
+    End Sub
+
+    Private Sub StatusEventHandler(statusMessage As String)
+        ReportStatus(statusMessage)
+    End Sub
+
+    Private Sub ErrorEventHandler(errorMessage As String, ex As Exception)
+        LogError(errorMessage, ex)
+    End Sub
+
+    Private Sub WarningEventHandler(warningMessage As String)
+        LogWarning(warningMessage)
+    End Sub
+
+    Private Sub ProgressUpdateHandler(progressMessage As String, percentComplete As Single)
+        If DateTime.UtcNow.Subtract(mLastStatusTime).TotalSeconds >= 5 Then
+            mLastStatusTime = DateTime.UtcNow
+            If percentComplete > 0 Then
+                ReportStatus(progressMessage & "; " & percentComplete.ToString("0.0") & "% complete")
+            Else
+                ReportStatus(progressMessage)
+            End If
+
+        End If
+
+    End Sub
+
+#End Region
 End Class
