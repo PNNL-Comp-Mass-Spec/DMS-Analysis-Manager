@@ -7,7 +7,7 @@ using MageExtExtractionFilters;
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {
 
-    public class clsMultiAlignMage //: clsAnalysisToolRunnerBase
+    public class clsMultiAlignMage : clsEventNotifier
     {
 
         #region Member Variables
@@ -116,7 +116,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = "Data package " + dataPackageID + " does not have any Decon2LS_V2 analysis jobs";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+                    OnErrorEvent(mMessage);
                 }
                 return false;
             }
@@ -179,7 +179,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 {
                     mMessage += ": " + mMultialignErroMessage;
                 }
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ", job " + mJobNum);
+                OnErrorEvent(mMessage + ", job " + mJobNum);
 
                 return false;
             }
@@ -200,7 +200,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (string.IsNullOrEmpty(mParamFilename))
                 {
                     mMessage = "Job parameter ParmFileName not defined in the settings for this MultiAlign job; unable to continue";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+                    OnErrorEvent(mMessage);
                     return false;
                 }
 
@@ -209,7 +209,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
                 {
                     strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
+                    OnWarningEvent("Parameter " + strParamFileStoragePathKeyName +
+                        " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
                 }
 
                 var sourceFilePath = Path.Combine(strMAParameterFileStoragePath, mParamFilename);
@@ -217,7 +218,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (!File.Exists(sourceFilePath))
                 {
                     mMessage = "MultiAlign parameter file not found: " + strMAParameterFileStoragePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+                    OnErrorEvent(mMessage);
                     return false;
                 }
                 File.Copy(sourceFilePath, Path.Combine(mWorkingDir, mParamFilename), true);
@@ -225,7 +226,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             catch (Exception ex)
             {
                 mMessage = "Error copying the MultiAlign parameter file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ": " + ex.Message);
+                OnErrorEvent(mMessage + ": " + ex.Message);
                 return false;
             }
          
@@ -250,7 +251,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             if (jobList.Rows.Count == 0)
             {
                 mMessage = "Data package " + dataPackageID + " does not have any " + tool + " analysis jobs";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + " using query " + sqlTemplate);
+                OnErrorEvent(mMessage + " using query " + sqlTemplate);
             }
 
             return jobList;
@@ -296,7 +297,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             catch (Exception ex)
             {
                 mMessage = "Error copying DeconTools result files";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ": " + ex.Message);
+                OnErrorEvent(mMessage + ": " + ex.Message);
                 return false;
             }
 
@@ -386,7 +387,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 if (Files.Length == 0)
                 {
                     mMessage = "Did not find any files of type " + strInputFileExtension + " in folder " + mWorkingDir;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+                    OnErrorEvent(mMessage);
                     return false;
                 }
 
@@ -423,7 +424,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             catch (Exception ex)
             {
                 mMessage = "Error building the input .txt file (" + INPUT_FILENAME + ")";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage + ": " + ex.Message);
+                OnErrorEvent(mMessage + ": " + ex.Message);
                 return false;
             }
 
@@ -543,7 +544,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error finding the MultiAlign log file at " + mWorkingDir + ": " + ex.Message);
+                    OnErrorEvent("Error finding the MultiAlign log file at " + mWorkingDir + ": " + ex.Message);
                 }
 
             }
@@ -715,7 +716,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing MultiAlign log file (" + strLogFilePath + "): " + ex.Message);
+                    OnErrorEvent("Error parsing MultiAlign log file (" + strLogFilePath + "): " + ex.Message);
                 }
             }
 
