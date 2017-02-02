@@ -21,7 +21,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 
     Protected mMSXmlCacheFolder As DirectoryInfo
 
-    Protected WithEvents mCompassXportRunner As clsCompassXportRunner
+    Protected mCompassXportRunner As clsCompassXportRunner
 
 #End Region
 
@@ -211,6 +211,10 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
 
         ' Instantiate the processing class
         mCompassXportRunner = New clsCompassXportRunner(m_WorkDir, CompassXportProgramPath, m_Dataset, eOutputType, CentroidMSXML)
+        RegisterEvents(mCompassXportRunner)
+
+        AddHandler mCompassXportRunner.LoopWaiting, AddressOf CompassXportRunner_LoopWaiting
+        AddHandler mCompassXportRunner.ProgRunnerStarting, AddressOf mCompassXportRunner_ProgRunnerStarting
 
         ' Create the file
         blnSuccess = mCompassXportRunner.CreateMSXMLFile
@@ -350,7 +354,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
     ''' Event handler for CompassXportRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CompassXportRunner_LoopWaiting() Handles mCompassXportRunner.LoopWaiting
+    Private Sub CompassXportRunner_LoopWaiting()
 
         UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING)
 
@@ -363,7 +367,7 @@ Public Class clsAnalysisToolRunnerMSXMLBruker
     ''' </summary>
     ''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
     ''' <remarks></remarks>
-    Private Sub mCompassXportRunner_ProgRunnerStarting(CommandLine As String) Handles mCompassXportRunner.ProgRunnerStarting
+    Private Sub mCompassXportRunner_ProgRunnerStarting(CommandLine As String)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
     End Sub
 #End Region

@@ -20,7 +20,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
     Inherits clsAnalysisToolRunnerMASICBase
 
 #Region "Module Variables"
-    Protected WithEvents mMSXmlCreator As AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator
+    Protected mMSXmlCreator As AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator
 #End Region
 
     Public Sub New()
@@ -101,6 +101,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
 
     End Function
 
+    <Obsolete("No longer used")>
     Private Function ReplaceScanStatsFiles(
       strScanStatsFilePath As String,
       strScanStatsExFilePath As String,
@@ -155,6 +156,8 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
         strMSXmlGeneratorAppPath = MyBase.GetMSXmlGeneratorAppPath()
 
         mMSXmlCreator = New AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(strMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
+        RegisterEvents(mMSXmlCreator)
+        AddHandler mMSXmlCreator.LoopWaiting, AddressOf mMSXmlCreator_LoopWaiting
 
         blnSuccess = mMSXmlCreator.CreateMZXMLFile()
 
@@ -262,19 +265,8 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
     End Function
 
 #Region "Event Handlers"
-    Private Sub mMSXmlCreator_DebugEvent(msg As String) Handles mMSXmlCreator.DebugEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-    End Sub
 
-    Private Sub mMSXmlCreator_ErrorEvent(msg As String) Handles mMSXmlCreator.ErrorEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-    End Sub
-
-    Private Sub mMSXmlCreator_WarningEvent(msg As String) Handles mMSXmlCreator.WarningEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-    End Sub
-
-    Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
+    Private Sub mMSXmlCreator_LoopWaiting()
 
         UpdateStatusFile()
 

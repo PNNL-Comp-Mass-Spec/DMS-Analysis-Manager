@@ -448,9 +448,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Dim messageAtStart = String.Copy(m_message)
 
             Dim updater = New clsParentIonUpdater()
-            AddHandler updater.ErrorEvent, AddressOf ParentIonUpdater_ErrorEvent
-            AddHandler updater.WarningEvent, AddressOf ParentIonUpdater_WarningEvent
-            AddHandler updater.ProgressUpdate, AddressOf ParentIonUpdater_ProgressEvent
+            RegisterEvents(updater)
 
             Dim updatedMzMLPath = updater.UpdateMzMLParentIonInfoUsingMGF(sourceMsXmlFile.FullName, mgfFile.FullName, False)
 
@@ -656,21 +654,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     ''' <remarks></remarks>
     Private Sub MSXmlGen_ProgRunnerStarting(CommandLine As String)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
-    End Sub
-
-    Private Sub ParentIonUpdater_ErrorEvent(strMessage As String)
-        Console.WriteLine(m_message)
-        LogError(m_message)
-    End Sub
-
-    Private Sub ParentIonUpdater_WarningEvent(strMessage As String)
-        Console.WriteLine(strMessage)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
-    End Sub
-
-    Private Sub ParentIonUpdater_ProgressEvent(progressMessage As String, percentcomplete As Integer)
-        Console.WriteLine(progressMessage)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progressMessage)
     End Sub
 
 #End Region

@@ -180,7 +180,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             try
             {
-                clsMultiAlignMage oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams);
+                var oMultiAlignMage = new clsMultiAlignMage(m_jobParams, m_mgrParams, m_StatusTools);
+                RegisterEvents(oMultiAlignMage);
+
                 bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
 
                 if (!bSuccess)

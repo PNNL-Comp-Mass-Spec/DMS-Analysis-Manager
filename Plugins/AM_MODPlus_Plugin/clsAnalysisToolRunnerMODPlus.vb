@@ -707,26 +707,27 @@ Public Class clsAnalysisToolRunnerMODPlus
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Splitting mgf file into " & threadCount & " parts: " & fiMgfFile.Name)
         End If
 
-        mLastMgfSplitProgress = DateTime.UtcNow
-        mNextMgfSplitProgressThreshold = MGF_SPLIT_PROGRESS_THRESHOLD
-        mMgfSplitterErrorMessage = String.Empty
+        ' Cache the current state of m_message
+        Dim cachedStatusMessage = String.Copy(m_message)
+        m_message = String.Empty
 
         Dim splitter = New clsSplitMGFFile()
-        AddHandler splitter.ErrorEvent, AddressOf SplitMgfErrorHandler
-        AddHandler splitter.WarningEvent, AddressOf SplitMgfWarningHandler
-        AddHandler splitter.ProgressUpdate, AddressOf SplitMgfProgressHandler
+        RegisterEvents(splitter)
 
+        ' Split the .mgf file
+        ' If an error occurs, m_message will be updated because ErrorEventHandler calls LogError when event ErrorEvent is raised by clsSplitMGFFile
         Dim mgfFiles = splitter.SplitMgfFile(fiMgfFile.FullName, threadCount, "_Part")
 
         If mgfFiles.Count = 0 Then
-            If String.IsNullOrWhiteSpace(mMgfSplitterErrorMessage) Then
+            If String.IsNullOrWhiteSpace(m_message) Then
                 LogError("SplitMgfFile returned an empty list of files")
-            Else
-                LogError(mMgfSplitterErrorMessage)
             End If
 
             Return New List(Of FileInfo)
         End If
+
+        ' Restore m_message
+        m_message = cachedStatusMessage
 
         m_jobParams.AddResultFileToSkip(fiMgfFile.FullName)
 
@@ -1091,45 +1092,6 @@ Public Class clsAnalysisToolRunnerMODPlus
 
         LogProgress("MODPlus")
 
-    End Sub
-
-    Private Sub SplitMgfProgressHandler(progressMessage As String, percentComplete As Integer)
-        Dim logProgress = False
-
-        If m_DebugLevel >= 2 Then
-            If DateTime.UtcNow.Subtract(mLastMgfSplitProgress).TotalSeconds > 10 Then
-                mLastMgfSplitProgress = DateTime.UtcNow
-                logProgress = True
-            End If
-        End If
-
-        If Not logProgress And m_DebugLevel >= 1 Then
-            If percentComplete >= mNextMgfSplitProgressThreshold Then
-                mNextMgfSplitProgressThreshold += MGF_SPLIT_PROGRESS_THRESHOLD
-
-                While percentComplete >= mNextMgfSplitProgressThreshold
-                    mNextMgfSplitProgressThreshold += MGF_SPLIT_PROGRESS_THRESHOLD
-                End While
-
-                logProgress = True
-            End If
-        End If
-
-        If logProgress Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progressMessage & ": " & percentComplete.ToString("0") & "%")
-        End If
-
-    End Sub
-
-    Private Sub SplitMgfWarningHandler(strMessage As String)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SplitMGFFile warning: " & strMessage)
-    End Sub
-
-    Private Sub SplitMgfErrorHandler(strMessage As String)
-        If String.IsNullOrWhiteSpace(mMgfSplitterErrorMessage) Then
-            mMgfSplitterErrorMessage = strMessage
-        End If
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "SplitMGFFile error: " & strMessage)
     End Sub
 
 #End Region
