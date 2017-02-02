@@ -93,7 +93,7 @@ Public Class clsAnalysisResourcesMsMsSpectrumFilter
             Dim diDatasetFolder As DirectoryInfo
             Dim blnScanStatsFilesRetrieved = False
 
-            strDatasetFileOrFolderPath = FindDatasetFileOrFolder(blnIsFolder)
+            strDatasetFileOrFolderPath = FindDatasetFileOrFolder(blnIsFolder, assumeUnpurged:=False)
 
             If Not String.IsNullOrEmpty(strDatasetFileOrFolderPath) And Not strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
 
