@@ -75,7 +75,7 @@ Public Class clsAnalysisResourcesIDPicker
                 End If
 
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Not retrieving MASIC files since unsupported data type: " & RawDataType)
+                LogWarning("Not retrieving MASIC files since unsupported data type: " & RawDataType)
             End If
 
         End If
@@ -229,7 +229,7 @@ Public Class clsAnalysisResourcesIDPicker
                 Dim strErrorMessage As String = String.Empty
                 If Not ValidateFileHasData(synFilePath, "Synopsis file", strErrorMessage) Then
                     ' The synopsis file is empty
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strErrorMessage)
+                    LogWarning(strErrorMessage)
 
                     ' We don't want to fail the job out yet; instead, we'll exit now, then let the ToolRunner exit with a Completion message of "Synopsis file is empty"
                     mSynopsisFileIsEmpty = True
@@ -303,7 +303,7 @@ Public Class clsAnalysisResourcesIDPicker
         strIDPickerParamFilePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
         If String.IsNullOrEmpty(strIDPickerParamFilePath) Then
             strIDPickerParamFilePath = "\\gigasax\dms_parameter_Files\IDPicker"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strIDPickerParamFilePath)
+            LogWarning("Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strIDPickerParamFilePath)
         End If
 
         If Not CopyFileToWorkDir(strIDPickerParamFileName, strIDPickerParamFilePath, m_WorkingDir) Then

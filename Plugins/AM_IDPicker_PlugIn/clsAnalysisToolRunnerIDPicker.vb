@@ -170,7 +170,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             If Not blnSkipIDPicker AndAlso blnSplitFasta Then
                 blnSkipIDPicker = True
                 m_EvalMessage = "SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+                LogWarning(m_EvalMessage)
             End If
 
             ' Store the version of IDPicker and PeptideListToXML in the database
@@ -232,7 +232,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+                LogWarning("Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
 
             'Make sure objects are released
@@ -331,7 +331,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         If String.IsNullOrEmpty(strDecoyPrefix) Then
             m_EvalMessage = "No decoy proteins; skipping IDPicker"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
+            LogWarning(m_EvalMessage)
             Return True
         End If
 
@@ -374,7 +374,7 @@ Public Class clsAnalysisToolRunnerIDPicker
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+        LogWarning("Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
 
         ' Bump up the debug level if less than 2
         If m_DebugLevel < 2 Then m_DebugLevel = 2
@@ -517,7 +517,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             End If
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error copying ConsoleOutput file into the IDPicker Report folder: " & ex.Message)
+            LogWarning("Error copying ConsoleOutput file into the IDPicker Report folder: " & ex.Message)
         End Try
 
     End Sub
@@ -733,7 +733,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
                     If Not String.IsNullOrWhiteSpace(strKey) Then
                         If mIDPickerOptions.ContainsKey(strKey) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring duplicate parameter file option '" & strKey & "' in file " & mIDPickerParamFileNameLocal)
+                            LogWarning("Ignoring duplicate parameter file option '" & strKey & "' in file " & mIDPickerParamFileNameLocal)
                         Else
                             mIDPickerOptions.Add(strKey, strValue.Trim())
                         End If
@@ -1145,7 +1145,7 @@ Public Class clsAnalysisToolRunnerIDPicker
                     ' All of the proteins were filtered out; we'll treat this as a successful completion of IDPicker
                     m_message = String.Empty
                     m_EvalMessage = "IDPicker Report filtered out all of the proteins"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage & "; this indicates there are not enough filter-passing peptides.")
+                    LogWarning(m_EvalMessage & "; this indicates there are not enough filter-passing peptides.")
                     blnSuccess = True
                     Exit For
                 End If
@@ -1171,7 +1171,7 @@ Public Class clsAnalysisToolRunnerIDPicker
         Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strExePath & " " & CmdStr.TrimStart(" "c))
+            LogMessage(strExePath & " " & CmdStr.TrimStart(" "c))
         End If
 
         mCmdRunnerDescription = String.Copy(strProgramDescription)
@@ -1212,7 +1212,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             Threading.Thread.Sleep(100)
         End If
 
-        With CmdRunner
+        With cmdRunner
             If blnCaptureConsoleOutputViaDosRedirection OrElse String.IsNullOrEmpty(strConsoleOutputFileName) Then
                 .CreateNoWindow = False
                 .EchoOutputToConsole = False
@@ -1230,10 +1230,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         Dim intMaxRuntimeSeconds As Integer = intMaxRuntimeMinutes * 60
 
-        blnSuccess = CmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, True, intMaxRuntimeSeconds)
+        blnSuccess = cmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, True, intMaxRuntimeSeconds)
 
-        If mCmdRunnerErrors.Count = 0 And Not String.IsNullOrEmpty(CmdRunner.CachedConsoleError) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Cached console error is not empty, but mCmdRunnerErrors is empty; need to add code to parse CmdRunner.CachedConsoleError")
+        If mCmdRunnerErrors.Count = 0 And Not String.IsNullOrEmpty(cmdRunner.CachedConsoleError) Then
+            LogWarning("Cached console error is not empty, but mCmdRunnerErrors is empty; need to add code to parse CmdRunner.CachedConsoleError")
         End If
 
         If blnCaptureConsoleOutputViaDosRedirection Then
@@ -1260,10 +1260,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProgramDescription & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If cmdRunner.ExitCode <> 0 Then
+                LogWarning(strProgramDescription & " returned a non-zero exit code: " & cmdRunner.ExitCode.ToString)
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & strProgramDescription & " failed (but exit code is 0)")
+                LogWarning("Call to " & strProgramDescription & " failed (but exit code is 0)")
             End If
 
         Else
