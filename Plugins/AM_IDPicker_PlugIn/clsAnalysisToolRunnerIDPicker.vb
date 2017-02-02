@@ -561,7 +561,6 @@ Public Class clsAnalysisToolRunnerIDPicker
             ClearConcurrentBag(mCmdRunnerErrorsToIgnore)
 
             m_progress = PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE
-            ReportStatus(mPeptideListToXMLExePath & " " & CmdStr)
 
             blnSuccess = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, CmdStr, PEPXML_CONSOLE_OUTPUT, False, intMaxRuntimeMinutes)
 
