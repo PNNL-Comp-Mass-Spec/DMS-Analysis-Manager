@@ -831,11 +831,11 @@ Public Class clsCodeTest
         objJobParams.DebugLevel = m_DebugLevel
 
         For debugLevel = 0 To 5
-            ReportStatus("Test status, debugLevel " & debugLevel, debugLevel, False)
+            LogMessage("Test status, debugLevel " & debugLevel, debugLevel, False)
         Next
 
         For debugLevel = 0 To 5
-            ReportStatus("Test error, debugLevel " & debugLevel, debugLevel, True)
+            LogMessage("Test error, debugLevel " & debugLevel, debugLevel, True)
         Next
 
         LogError("Test error, no detailed message")
@@ -849,7 +849,7 @@ Public Class clsCodeTest
             LogError("Test exception", ex)
         End Try
 
-        ReportStatus("Testing complete")
+        LogMessage("Testing complete")
     End Sub
 
     Public Sub GetLegacyFastaFileSize()
@@ -1815,14 +1815,14 @@ Public Class clsCodeTest
         Try
             If Not File.Exists(strConsoleOutputFilePath) Then
                 If m_DebugLevel >= 4 Then
-                    ReportStatus("Console output file not found: " & strConsoleOutputFilePath)
+                    LogMessage("Console output file not found: " & strConsoleOutputFilePath)
                 End If
 
                 Exit Sub
             End If
 
             If m_DebugLevel >= 4 Then
-                ReportStatus("Parsing file " & strConsoleOutputFilePath)
+                LogMessage("Parsing file " & strConsoleOutputFilePath)
             End If
 
             ' Value between 0 and 100
@@ -1893,7 +1893,7 @@ Public Class clsCodeTest
 
                 If m_DebugLevel >= 3 OrElse Date.UtcNow.Subtract(dtLastProgressWriteTime).TotalMinutes >= 20 Then
                     dtLastProgressWriteTime = Date.UtcNow
-                    ReportStatus(" ... " & m_Progress.ToString("0") & "% complete")
+                    LogMessage(" ... " & m_Progress.ToString("0") & "% complete")
                 End If
             End If
 
@@ -2415,7 +2415,7 @@ Public Class clsCodeTest
 
                 strProcessingMsg = "HostCount=" & intHostCount & "; NodeCountActive=" & intNodeCountActive
                 If m_DebugLevel >= 1 Then
-                    ReportStatus(strProcessingMsg)
+                    LogMessage(strProcessingMsg)
                 End If
                 m_EvalMessage = String.Copy(strProcessingMsg)
 
@@ -2561,7 +2561,7 @@ Public Class clsCodeTest
                             " using " & intNodeCountThisHost & " node" & CheckForPlurality(intNodeCountThisHost) &
                             " (" & sngProcessingRate.ToString("0.0") & " DTAs/node)"
 
-                        ReportStatus(strProcessingMsg, 2)
+                        LogMessage(strProcessingMsg, 2)
                     Next
 
                 End If
@@ -2611,7 +2611,7 @@ Public Class clsCodeTest
     End Sub
 
     Private Sub StatusEventHandler(statusMessage As String)
-        ReportStatus(statusMessage)
+        LogMessage(statusMessage)
     End Sub
 
     Private Sub ErrorEventHandler(errorMessage As String, ex As Exception)
@@ -2626,9 +2626,9 @@ Public Class clsCodeTest
         If DateTime.UtcNow.Subtract(mLastStatusTime).TotalSeconds >= 5 Then
             mLastStatusTime = DateTime.UtcNow
             If percentComplete > 0 Then
-                ReportStatus(progressMessage & "; " & percentComplete.ToString("0.0") & "% complete")
+                LogMessage(progressMessage & "; " & percentComplete.ToString("0.0") & "% complete")
             Else
-                ReportStatus(progressMessage)
+                LogMessage(progressMessage)
             End If
 
         End If

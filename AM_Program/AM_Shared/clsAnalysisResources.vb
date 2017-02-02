@@ -642,16 +642,16 @@ Public MustInherit Class clsAnalysisResources
                 If m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite) Then
                     Return True
                 Else
-                    ReportStatus("CopyFileUsingLocks returned false copying " & srcFilePath & " to " & destFilePath, 0, True)
+                    LogMessage("CopyFileUsingLocks returned false copying " & srcFilePath & " to " & destFilePath, 0, True)
                     Return False
                 End If
             Catch ex As Exception
-                ReportStatus("Exception copying file " + srcFilePath + " to " + destFilePath & "; Retry Count = " + retryCount.ToString, ex)
+                LogError("Exception copying file " + srcFilePath + " to " + destFilePath & "; Retry Count = " + retryCount.ToString, ex)
 
                 retryCount -= 1
 
                 If Not overwrite AndAlso File.Exists(destFilePath) Then
-                    ReportStatus("Tried to overwrite an existing file when Overwrite = False: " + destFilePath, 0, True)
+                    LogMessage("Tried to overwrite an existing file when Overwrite = False: " + destFilePath, 0, True)
                     Return False
                 End If
 
@@ -787,7 +787,7 @@ Public MustInherit Class clsAnalysisResources
                 m_message = "File not found: " + sourceFilePath
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
                 If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                    ReportStatus(m_message, 0, True)
+                    LogMessage(m_message, 0, True)
                 End If
                 Return False
             End If
@@ -899,7 +899,7 @@ Public MustInherit Class clsAnalysisResources
                 m_message = "File not found: " + SourceFile
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
                 If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                    ReportStatus(m_message, 0, True)
+                    LogMessage(m_message, 0, True)
                 End If
                 Return False
             End If
@@ -943,7 +943,7 @@ Public MustInherit Class clsAnalysisResources
     Public Function CreateFastaFile(proteinCollectionInfo As clsProteinCollectionInfo, destFolder As String) As Boolean
 
         If m_DebugLevel >= 1 Then
-            ReportStatus("Creating fasta file at " & destFolder)
+            LogMessage("Creating fasta file at " & destFolder)
         End If
 
         If Not Directory.Exists(destFolder) Then
@@ -954,7 +954,7 @@ Public MustInherit Class clsAnalysisResources
         If m_FastaTools Is Nothing Then
             If String.IsNullOrWhiteSpace(m_FastaToolsCnStr) Then
                 m_message = "Protein database connection string not specified"
-                ReportStatus("Error in CreateFastaFile: " + m_message, 0, True)
+                LogMessage("Error in CreateFastaFile: " + m_message, 0, True)
                 Return False
             End If
 
@@ -968,7 +968,7 @@ Public MustInherit Class clsAnalysisResources
                 Exit While
             Catch ex As Exception
                 If retryCount > 1 Then
-                    ReportStatus("Error instantiating clsGetFASTAFromDMS", ex)
+                    LogError("Error instantiating clsGetFASTAFromDMS", ex)
                     ' Sleep 20 seconds after the first failure and 30 seconds after the second failure
                     If retryCount = 3 Then
                         Thread.Sleep(20000)
@@ -1003,7 +1003,7 @@ Public MustInherit Class clsAnalysisResources
                 m_message = proteinCollectionInfo.ErrorMessage & "; unable to obtain Fasta file"
             End If
 
-            ReportStatus("Error in CreateFastaFile: " + m_message, 0, True)
+            LogMessage("Error in CreateFastaFile: " + m_message, 0, True)
             Return False
         End If
 
@@ -1056,7 +1056,7 @@ Public MustInherit Class clsAnalysisResources
             End If
 
             If m_DebugLevel >= 1 Then
-                ReportStatus("Verifying that split fasta file exists: " & legacyFastaToUse)
+                LogMessage("Verifying that split fasta file exists: " & legacyFastaToUse)
             End If
 
             ' Make sure the original fasta file has already been split into the appropriate number parts
@@ -1080,7 +1080,7 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         If m_DebugLevel >= 2 Then
-            ReportStatus("ProteinCollectionList=" + proteinCollectionInfo.ProteinCollectionList + "; " +
+            LogMessage("ProteinCollectionList=" + proteinCollectionInfo.ProteinCollectionList + "; " +
                          "CreationOpts=" + proteinCollectionInfo.ProteinCollectionOptions + "; " +
                          "LegacyFasta=" + legacyFastaToUse)
         End If
@@ -1107,7 +1107,7 @@ Public MustInherit Class clsAnalysisResources
                 m_message = "Exception generating OrgDb file"
             End If
 
-            ReportStatus("Exception generating OrgDb file; " + orgDBDescription, ex)
+            LogError("Exception generating OrgDb file; " + orgDBDescription, ex)
             Return False
         End Try
 
@@ -1153,7 +1153,7 @@ Public MustInherit Class clsAnalysisResources
                 swLastUsedFile.WriteLine(Date.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
             End Using
         Catch ex As Exception
-            ReportStatus("Warning: unable to create a new .LastUsed file at " & lastUsedFilePath & ": " & ex.Message)
+            LogMessage("Warning: unable to create a new .LastUsed file at " & lastUsedFilePath & ": " & ex.Message)
         End Try
 
         ' If we got to here, everything worked OK
@@ -1330,7 +1330,7 @@ Public MustInherit Class clsAnalysisResources
                     Dim errMsg As String = "File " + fileName + " not found. Retry count = " + retryCount.ToString
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, errMsg)
                     If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                        ReportStatus(errMsg, 0, True)
+                        LogMessage(errMsg, 0, True)
                     End If
                 End If
                 retryCount -= 1
@@ -1350,7 +1350,7 @@ Public MustInherit Class clsAnalysisResources
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
             If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                ReportStatus(m_message, 0, True)
+                LogMessage(m_message, 0, True)
             End If
             Return False
         End If
@@ -1454,10 +1454,10 @@ Public MustInherit Class clsAnalysisResources
         ' Check whether unzipping was requested
         If Not unzip Then Return True
 
-        ReportStatus("Unzipping file " + fileName)
+        LogMessage("Unzipping file " + fileName)
         If UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "FindAndRetrieveMiscFiles", False) Then
             If m_DebugLevel >= 1 Then
-                ReportStatus("Unzipped file " + fileName)
+                LogMessage("Unzipped file " + fileName)
             End If
         End If
 
@@ -1640,7 +1640,7 @@ Public MustInherit Class clsAnalysisResources
                 If searchArchivedDatasetFolder OrElse (Not m_AuroraAvailable And Not MyEMSLAvailable) Then
                     LogError("Data file not found: " + fileToFind)
                 Else
-                    ReportStatus("Warning: Data file not found (did not check archive): " + fileToFind)
+                    LogMessage("Warning: Data file not found (did not check archive): " + fileToFind)
                 End If
             End If
 
@@ -2153,7 +2153,7 @@ Public MustInherit Class clsAnalysisResources
         Dim diCacheFolder = New DirectoryInfo(strMSXMLCacheFolderPath)
 
         If Not diCacheFolder.Exists Then
-            ReportStatus("Warning: Cache folder not found: " & strMSXMLCacheFolderPath)
+            LogMessage("Warning: Cache folder not found: " & strMSXMLCacheFolderPath)
             Return String.Empty
         End If
 
@@ -2219,7 +2219,7 @@ Public MustInherit Class clsAnalysisResources
         If clsGlobal.ValidateFileVsHashcheck(matchedFilePath, strHashcheckFilePath, errorMessage) Then
             Return matchedFilePath
         Else
-            ReportStatus("Warning: " & errorMessage)
+            LogMessage("Warning: " & errorMessage)
             Return String.Empty
         End If
 
@@ -2507,7 +2507,7 @@ Public MustInherit Class clsAnalysisResources
 
                 If logFolderNotFound AndAlso m_DebugLevel >= 1 Then
                     If assumeUnpurged Then
-                        ReportStatus(folderNotFoundMessage)
+                        LogMessage(folderNotFoundMessage)
                     Else
                         Dim msg As String = folderNotFoundMessage + ", Job " + m_jobParams.GetParam("StepParameters", "Job") + ", Dataset " + dsName
                         LogWarning(msg)
@@ -2531,14 +2531,14 @@ Public MustInherit Class clsAnalysisResources
     ''' <summary>
     ''' Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
     ''' </summary>
-    ''' <param name="datasetName">Dataset name</param>
+    ''' <param name="dataset">Dataset name</param>
     ''' <param name="FileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
     ''' <param name="subFolderName">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
     ''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
     ''' <param name="Recurse">True to look for FileNameToFind in all subfolders of a dataset; false to only look in the primary dataset folder</param>
     ''' <returns>Path to the most appropriate dataset folder</returns>
     ''' <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
-    Private Function FindValidFolderMyEMSL(datasetName As String, fileNameToFind As String, subFolderName As String, logFolderNotFound As Boolean, recurse As Boolean) As Boolean
+    Private Function FindValidFolderMyEMSL(dataset As String, fileNameToFind As String, subFolderName As String, logFolderNotFound As Boolean, recurse As Boolean) As Boolean
 
         If String.IsNullOrEmpty(fileNameToFind) Then fileNameToFind = "*"
 
@@ -2550,19 +2550,19 @@ Public MustInherit Class clsAnalysisResources
 
         If String.IsNullOrEmpty(subFolderName) Then
             ' Simply look for the file
-            matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, String.Empty, datasetName, recurse)
+            matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, String.Empty, dataset, recurse)
         Else
             ' First look for the subfolder
             ' If there are multiple matching subfolders, then choose the newest one
             ' The entries in matchingMyEMSLFiles will be folder entries where the "Filename" field is the folder name while the "SubDirPath" field is any parent folders above the found folder
-            matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, subFolderName, datasetName, recurse)
+            matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, subFolderName, dataset, recurse)
         End If
 
         If matchingMyEMSLFiles.Count > 0 Then
             Return True
         Else
             If logFolderNotFound Then
-                Dim msg As String = "MyEMSL does not have any files for dataset " & datasetName
+                Dim msg As String = "MyEMSL does not have any files for dataset " & dataset
                 If Not String.IsNullOrEmpty(fileNameToFind) Then
                     msg &= " and file " & fileNameToFind
                 End If
@@ -2632,7 +2632,7 @@ Public MustInherit Class clsAnalysisResources
                 ' Note: Using a 1 second holdoff between retries
                 Dim folderFound = FileExistsWithRetry(
                     Path.Combine(PathToCheck, FileNameToFind),
-                    RetryHoldoffSeconds:=1,
+                    retryHoldoffSeconds:=1,
                     eLogMsgTypeIfNotFound:=clsLogTools.LogLevels.WARN,
                     maxAttempts:=maxAttempts)
 
@@ -2806,7 +2806,7 @@ Public MustInherit Class clsAnalysisResources
                 If Not String.IsNullOrWhiteSpace(strExtraMsg) Then
                     m_message &= "; " + strExtraMsg
                 End If
-                ReportStatus(m_message, 0, True)
+                LogMessage(m_message, 0, True)
                 Return False
             End If
 
@@ -2825,7 +2825,7 @@ Public MustInherit Class clsAnalysisResources
 
         If blnSuccess Then
             If m_DebugLevel >= 1 Then
-                ReportStatus("Generated ScanStats file using " + strInputFilePath)
+                LogMessage("Generated ScanStats file using " + strInputFilePath)
             End If
 
             Thread.Sleep(125)
@@ -2842,7 +2842,7 @@ Public MustInherit Class clsAnalysisResources
         Else
             LogError("Error generating ScanStats files with clsScanStatsGenerator", objScanStatsGenerator.ErrorMessage)
             If objScanStatsGenerator.MSFileInfoScannerErrorCount > 0 Then
-                ReportStatus("MSFileInfoScanner encountered " + objScanStatsGenerator.MSFileInfoScannerErrorCount.ToString() + " errors")
+                LogMessage("MSFileInfoScanner encountered " + objScanStatsGenerator.MSFileInfoScannerErrorCount.ToString() + " errors")
             End If
         End If
 
@@ -2947,9 +2947,9 @@ Public MustInherit Class clsAnalysisResources
     Protected Function GetCurrentDatasetAndJobInfo() As clsDataPackageJobInfo
 
         Dim jobNumber = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
-        Dim datasetName = m_jobParams.GetJobParameter("JobParameters", "DatasetNum", m_DatasetName)
+        Dim dataset = m_jobParams.GetJobParameter("JobParameters", "DatasetNum", m_DatasetName)
 
-        Dim jobInfo = New clsDataPackageJobInfo(jobNumber, datasetName)
+        Dim jobInfo = New clsDataPackageJobInfo(jobNumber, dataset)
 
         With jobInfo
             .DatasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0)
@@ -3487,7 +3487,7 @@ Public MustInherit Class clsAnalysisResources
 
     Protected Function GetMzMLFile() As IJobParams.CloseOutType
 
-        ReportStatus("Getting mzML file")
+        LogMessage("Getting mzML file")
 
         Dim errorMessage = String.Empty
         Dim fileMissingFromCache = False
@@ -3508,7 +3508,7 @@ Public MustInherit Class clsAnalysisResources
         ' Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
         ' Instead, use FindAndRetrieveMiscFiles 
 
-        ReportStatus("Getting mzXML file")
+        LogMessage("Getting mzXML file")
 
         ' Note that capitalization matters for the extension; it must be .mzXML
         Dim FileToGet As String = m_DatasetName & DOT_MZXML_EXTENSION
@@ -3538,7 +3538,7 @@ Public MustInherit Class clsAnalysisResources
 
     Protected Function GetPBFFile() As IJobParams.CloseOutType
 
-        ReportStatus("Getting PBF file")
+        LogMessage("Getting PBF file")
 
         Dim errorMessage = String.Empty
         Dim fileMissingFromCache = False
@@ -3562,7 +3562,7 @@ Public MustInherit Class clsAnalysisResources
                 errorMessage = "Cached " & msXmlExtension & " file does not exist; will re-generate it"
             End If
 
-            ReportStatus("Warning: " & errorMessage)
+            LogMessage("Warning: " & errorMessage)
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_IN_CACHE
         End If
 
@@ -3570,7 +3570,7 @@ Public MustInherit Class clsAnalysisResources
             errorMessage = "Unknown error in RetrieveCached" & msXmlExtension.TrimStart("."c) & "File"
         End If
 
-        ReportStatus(errorMessage, 0, True)
+        LogMessage(errorMessage, 0, True)
         Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
 
     End Function
@@ -4234,7 +4234,7 @@ Public MustInherit Class clsAnalysisResources
 
         If Not success Then
             Dim errorMessage = "LookupJobInfo; Excessive failures attempting to retrieve data package job info from database"
-            ReportStatus(errorMessage, 0, True)
+            LogMessage(errorMessage, 0, True)
             resultSet.Dispose()
             Return False
         End If
@@ -4289,9 +4289,9 @@ Public MustInherit Class clsAnalysisResources
                 Dim statusMessage = "Warning: Could not determine the legacy fasta file's size for job " & m_JobNum & ", file " & legacyFastaName
                 If proteinCollectionInfo.UsingSplitFasta Then
                     ' Likely the FASTA file has not yet been split
-                    ReportStatus(statusMessage & "; likely the split fasta file has not yet been created", 0, False)
+                    LogMessage(statusMessage & "; likely the split fasta file has not yet been created", 0, False)
                 Else
-                    ReportStatus(statusMessage, 0, True)
+                    LogMessage(statusMessage, 0, True)
                 End If
 
                 Return 0
@@ -4299,7 +4299,7 @@ Public MustInherit Class clsAnalysisResources
 
             Dim fileSizeKB As Integer
             If Not Integer.TryParse(lstResults.First(), fileSizeKB) Then
-                ReportStatus("Legacy fasta file size is not numeric, job " & m_JobNum & ", file " & legacyFastaName & ": " & lstResults.First(), 0, True)
+                LogMessage("Legacy fasta file size is not numeric, job " & m_JobNum & ", file " & legacyFastaName & ": " & lstResults.First(), 0, True)
                 Return 0
             End If
 
@@ -4310,7 +4310,7 @@ Public MustInherit Class clsAnalysisResources
             Return fileSizeMB * 1.15
 
         Catch ex As Exception
-            ReportStatus("Error in LookupLegacyDBSizeWithIndices", ex)
+            LogError("Error in LookupLegacyDBSizeWithIndices", ex)
             Return 0
         End Try
 
@@ -4621,7 +4621,7 @@ Public MustInherit Class clsAnalysisResources
                 bytesDeleted += fileSizeBytes
             Next
         Catch ex As Exception
-            ReportStatus("Error in PurgeFastaFiles", ex)
+            LogError("Error in PurgeFastaFiles", ex)
         End Try
 
         Return bytesDeleted
@@ -4652,7 +4652,7 @@ Public MustInherit Class clsAnalysisResources
 
             Dim diOrgDbFolder = New DirectoryInfo(localOrgDbFolder)
             If diOrgDbFolder.FullName.Length <= 2 Then
-                ReportStatus("Warning: Org DB folder length is less than 3 characters; this is unexpected: " & diOrgDbFolder.FullName)
+                LogMessage("Warning: Org DB folder length is less than 3 characters; this is unexpected: " & diOrgDbFolder.FullName)
                 Exit Sub
             End If
 
@@ -4680,7 +4680,7 @@ Public MustInherit Class clsAnalysisResources
             If (percentFreeSpaceAtStart >= freeSpaceThresholdPercent) Then
                 If m_DebugLevel >= 2 Then
                     Dim freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
-                    ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required",
+                    LogMessage(String.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required",
                                                localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent))
                 End If
             Else
@@ -4694,7 +4694,7 @@ Public MustInherit Class clsAnalysisResources
             End If
 
         Catch ex As Exception
-            ReportStatus("Error in PurgeFastaFilesIfLowFreeSpace", ex)
+            LogError("Error in PurgeFastaFilesIfLowFreeSpace", ex)
         End Try
 
     End Sub
@@ -4715,7 +4715,7 @@ Public MustInherit Class clsAnalysisResources
             m_DebugLevel >= 3
 
         If logInfoMessages Then
-            ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%",
+            LogMessage(String.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%",
                                        localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent))
         End If
 
@@ -4731,7 +4731,7 @@ Public MustInherit Class clsAnalysisResources
             If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
                 If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
                     If logInfoMessages Then
-                        ReportStatus("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
+                        LogMessage("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
                                      "will not purge any more files to free disk space")
                     End If
                     Exit For
@@ -4760,7 +4760,7 @@ Public MustInherit Class clsAnalysisResources
                 If (percentFreeSpace >= freeSpaceThresholdPercent) Then
                     ' Target threshold reached
                     If m_DebugLevel >= 1 Then
-                        ReportStatus(String.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " &
+                        LogMessage(String.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " &
                                                    "deleted {3:F1} GB of cached files",
                                                    localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)))
                     End If
@@ -4777,7 +4777,7 @@ Public MustInherit Class clsAnalysisResources
         Dim finalFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
         If requiredFreeSpaceMB > 0 AndAlso finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB Then
 
-            ReportStatus(String.Format("Warning: unable to delete enough files to free up the required space on {0} ({1:F1} GB vs. {2:F1} GB); " &
+            LogMessage(String.Format("Warning: unable to delete enough files to free up the required space on {0} ({1:F1} GB vs. {2:F1} GB); " &
                                        "deleted {3:F1} GB of cached files",
                                        localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)))
         End If
@@ -4835,7 +4835,7 @@ Public MustInherit Class clsAnalysisResources
                 ' Space usage is under the threshold
                 Dim statusMessage = String.Format("Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge",
                                                   diOrgDbFolder.FullName, spaceUsageGB, maxSizeGB)
-                ReportStatus(statusMessage, 3)
+                LogMessage(statusMessage, 3)
                 Exit Sub
             End If
 
@@ -4853,7 +4853,7 @@ Public MustInherit Class clsAnalysisResources
                 Dim dtLastUsed As DateTime
                 If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
                     If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
-                        ReportStatus("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
+                        LogMessage("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
                                      "will not purge any more files to free disk space")
                         Exit For
                     End If
@@ -4872,20 +4872,20 @@ Public MustInherit Class clsAnalysisResources
                     End If
                 Else
                     ' Enough files have been deleted
-                    ReportStatus(String.Format("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
+                    LogMessage(String.Format("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
                                                diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)))
                     Exit Sub
                 End If
             Next
 
             If totalBytesPurged < bytesToPurge Then
-                ReportStatus(String.Format("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " &
+                LogMessage(String.Format("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " &
                                            "deleted {2:F1} GB of cached files",
                                            diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)))
             End If
 
         Catch ex As Exception
-            ReportStatus("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex)
+            LogError("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex)
         End Try
 
     End Sub
@@ -5019,7 +5019,7 @@ Public MustInherit Class clsAnalysisResources
                 Return False
             End If
         Catch ex As Exception
-            ReportStatus("RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex)
+            LogError("RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex)
             dctDataPackageJobs = Nothing
             Return False
         End Try
@@ -5164,7 +5164,7 @@ Public MustInherit Class clsAnalysisResources
                                 MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName)
 
                                 If m_DebugLevel >= 1 Then
-                                    ReportStatus("Retrieved the .mzML file for " & dataPkgJob.Value.Dataset & ", job " & dataPkgJob.Key)
+                                    LogMessage("Retrieved the .mzML file for " & dataPkgJob.Value.Dataset & ", job " & dataPkgJob.Key)
                                 End If
 
                                 Continue For
@@ -5172,7 +5172,7 @@ Public MustInherit Class clsAnalysisResources
 
                             m_message = "Could not find a valid folder with file " & sourceFileName & " for job " & dataPkgJob.Key
                             If m_DebugLevel >= 1 Then
-                                ReportStatus(m_message, 0, True)
+                                LogMessage(m_message, 0, True)
                             End If
                             Return False
                         End If
@@ -5180,7 +5180,7 @@ Public MustInherit Class clsAnalysisResources
                         If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
                             m_message = "CopyFileToWorkDir returned False for " & sourceFileName & " using folder " & sourceFolderPath & " for job " & dataPkgJob.Key
                             If m_DebugLevel >= 1 Then
-                                ReportStatus(m_message, 0, True)
+                                LogMessage(m_message, 0, True)
                             End If
                             Return False
                         End If
@@ -5196,11 +5196,11 @@ Public MustInherit Class clsAnalysisResources
                         MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName)
 
                         If m_DebugLevel >= 1 Then
-                            ReportStatus("Copied " + sourceFileName + " from folder " + sourceFolderPath)
+                            LogMessage("Copied " + sourceFileName + " from folder " + sourceFolderPath)
                         End If
 
                     Catch ex As Exception
-                        ReportStatus("RetrieveAggregateFiles; Exception during copy of file: " &
+                        LogError("RetrieveAggregateFiles; Exception during copy of file: " &
                                       sourceFileName & " from folder " & sourceFolderPath & " for job " & dataPkgJob.Key, ex)
                         Return False
 
@@ -5219,7 +5219,7 @@ Public MustInherit Class clsAnalysisResources
             blnSuccess = True
 
         Catch ex As Exception
-            ReportStatus("Exception in RetrieveAggregateFiles", ex)
+            LogError("Exception in RetrieveAggregateFiles", ex)
             blnSuccess = False
         End Try
 
@@ -5335,14 +5335,14 @@ Public MustInherit Class clsAnalysisResources
             Catch ex As Exception
                 errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" & folderName & "); " &
                     "cannot retrieve the " & resultFileExtension & " File"
-                ReportStatus(errorMessage, 0, True)
+                LogMessage(errorMessage, 0, True)
             End Try
         Next
 
         If msXmlToolNameVersionFolders.Count = 0 Then
             If String.IsNullOrEmpty(errorMessage) Then
                 errorMessage = "The input folder and shared results folder(s) were not in the expected form of ToolName_Version_DatasetID"
-                ReportStatus(errorMessage, 0, True)
+                LogMessage(errorMessage, 0, True)
             End If
             Return False
         Else
@@ -5372,7 +5372,7 @@ Public MustInherit Class clsAnalysisResources
 
         If diSourceFolder Is Nothing Then
             errorMessage &= "); will re-generate the " & resultFileExtension & " file"
-            ReportStatus(errorMessage)
+            LogMessage(errorMessage)
             fileMissingFromCache = True
             Return False
         End If
@@ -5672,7 +5672,7 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         If m_DebugLevel >= 1 Then
-            ReportStatus("MzXML file not found; will need to generate it: " + fiSourceFile.Name)
+            LogMessage("MzXML file not found; will need to generate it: " + fiSourceFile.Name)
         End If
 
         Return False
@@ -5706,7 +5706,7 @@ Public MustInherit Class clsAnalysisResources
             Return True
         End If
 
-        ReportStatus("MzXML file validation error in RetrieveMzXMLFileVerifyHash: " & strErrorMessage, 0, True)
+        LogMessage("MzXML file validation error in RetrieveMzXMLFileVerifyHash: " & strErrorMessage, 0, True)
 
         Try
             If createStoragePathInfoOnly Then
@@ -5920,9 +5920,9 @@ Public MustInherit Class clsAnalysisResources
 
         If m_DebugLevel >= 1 Then
             If String.IsNullOrEmpty(m_message) Then
-                ReportStatus("RetrieveScanAndSICStatsFiles v1: Unknown Error", 0, True)
+                LogMessage("RetrieveScanAndSICStatsFiles v1: Unknown Error", 0, True)
             Else
-                ReportStatus("RetrieveScanAndSICStatsFiles v1: " & m_message, 0, True)
+                LogMessage("RetrieveScanAndSICStatsFiles v1: " & m_message, 0, True)
             End If
         End If
 
@@ -6066,9 +6066,9 @@ Public MustInherit Class clsAnalysisResources
 
         If m_DebugLevel >= 1 Then
             If String.IsNullOrEmpty(m_message) Then
-                ReportStatus("RetrieveScanAndSICStatsFiles v2: Unknown Error", 0, True)
+                LogMessage("RetrieveScanAndSICStatsFiles v2: Unknown Error", 0, True)
             Else
-                ReportStatus("RetrieveScanAndSICStatsFiles v2: " & m_message, 0, True)
+                LogMessage("RetrieveScanAndSICStatsFiles v2: " & m_message, 0, True)
             End If
         End If
 
@@ -6171,7 +6171,7 @@ Public MustInherit Class clsAnalysisResources
         Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
         Dim eRawDataType As eRawDataTypeConstants
 
-        ReportStatus("Retrieving spectra file(s)")
+        LogMessage("Retrieving spectra file(s)")
 
         eRawDataType = GetRawDataType(RawDataType)
         Select Case eRawDataType
@@ -6319,7 +6319,7 @@ Public MustInherit Class clsAnalysisResources
                 ' Copy the directory and all subdirectories
                 ' Skip any files defined by objFileNamesToSkip
                 If m_DebugLevel >= 1 Then
-                    ReportStatus("Retrieving folder " & diSourceFolder.FullName)
+                    LogMessage("Retrieving folder " & diSourceFolder.FullName)
                 End If
                 ResetTimestampForQueueWaitTimeLogging()
                 m_FileTools.CopyDirectory(diSourceFolder.FullName, DestFolderPath, objFileNamesToSkip)
@@ -6389,11 +6389,11 @@ Public MustInherit Class clsAnalysisResources
                     ' Delete this directory
                     Try
                         If m_DebugLevel >= 2 Then
-                            ReportStatus("Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName)
+                            LogMessage("Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName)
                         End If
 
                         If m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe") Then
-                            ReportStatus(" Skipping delete since this is a development computer")
+                            LogMessage(" Skipping delete since this is a development computer")
                         Else
                             diSubFolder.Delete(True)
                         End If
@@ -6447,7 +6447,7 @@ Public MustInherit Class clsAnalysisResources
                     ' Log a warning if we will be renaming the file
 
                     If Not clsGlobal.IsMatch(Path.GetFileName(MisFiles(0)), strImagingSeqFilePathFinal) Then
-                        ReportStatus("Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles(0)) + " to " + Path.GetFileName(strImagingSeqFilePathFinal))
+                        LogMessage("Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles(0)) + " to " + Path.GetFileName(strImagingSeqFilePathFinal))
                     End If
 
                     If Not CopyFileWithRetry(MisFiles(0), strImagingSeqFilePathFinal, True) Then
@@ -6529,7 +6529,7 @@ Public MustInherit Class clsAnalysisResources
                             strZipFilePathToExtract = Path.Combine(m_WorkingDir, Path.GetFileName(strZipFilePathRemote))
 
                             If m_DebugLevel >= 2 Then
-                                ReportStatus("Copying " + strZipFilePathRemote)
+                                LogMessage("Copying " + strZipFilePathRemote)
                             End If
 
                             If Not CopyFileWithRetry(strZipFilePathRemote, strZipFilePathToExtract, True) Then
@@ -6550,7 +6550,7 @@ Public MustInherit Class clsAnalysisResources
 
                         Using objZipfile = New Ionic.Zip.ZipFile(strZipFilePathToExtract)
                             If m_DebugLevel >= 2 Then
-                                ReportStatus("Unzipping " + strZipFilePathToExtract)
+                                LogMessage("Unzipping " + strZipFilePathToExtract)
                             End If
 
                             objZipfile.ExtractAll(strUnzipFolderPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
@@ -6583,7 +6583,7 @@ Public MustInherit Class clsAnalysisResources
                     If strFilesToDelete.Count > 0 Then
                         If Date.UtcNow.Subtract(dtStartTime).TotalSeconds > 20 Then
                             ' Stop trying to delete files; it's not worth continuing to try
-                            ReportStatus("Unable to delete all of the files in queue strFilesToDelete; " &
+                            LogMessage("Unable to delete all of the files in queue strFilesToDelete; " &
                                          "Queue Length = " + strFilesToDelete.Count.ToString() +
                                          "; this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)")
                             Exit Do
@@ -6697,7 +6697,7 @@ Public MustInherit Class clsAnalysisResources
             ' Unzip each of the zip files to the working directory
             For Each ZipFile In ZipFiles
                 If m_DebugLevel > 3 Then
-                    ReportStatus("Unzipping file " + ZipFile)
+                    LogMessage("Unzipping file " + ZipFile)
                 End If
                 Try
                     TargetFolderPath = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
@@ -6753,7 +6753,7 @@ Public MustInherit Class clsAnalysisResources
 
         Console.WriteLine()
         If m_DebugLevel >= 3 Then
-            ReportStatus("Obtaining org db file")
+            LogMessage("Obtaining org db file")
         End If
 
         Try
@@ -6825,7 +6825,7 @@ Public MustInherit Class clsAnalysisResources
         Dim blnSuccess As Boolean
 
         Try
-            ReportStatus("Retrieving parameter file " & paramFileName)
+            LogMessage("Retrieving parameter file " & paramFileName)
 
             ParFileGen = New ParamFileGenerator.MakeParams.clsMakeParameterFile()
             ParFileGen.TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
@@ -6862,7 +6862,7 @@ Public MustInherit Class clsAnalysisResources
 
             If blnSuccess Then
                 If m_DebugLevel >= 3 Then
-                    ReportStatus("Successfully retrieved param file: " + paramFileName)
+                    LogMessage("Successfully retrieved param file: " + paramFileName)
                 End If
 
                 Return True
@@ -6880,7 +6880,7 @@ Public MustInherit Class clsAnalysisResources
 
             If Not ParFileGen Is Nothing Then
                 If Not String.IsNullOrWhiteSpace(ParFileGen.LastError) Then
-                    ReportStatus("Error converting param file: " + ParFileGen.LastError, 0, True)
+                    LogMessage("Error converting param file: " + ParFileGen.LastError, 0, True)
                 End If
             End If
             Return False
@@ -6963,7 +6963,7 @@ Public MustInherit Class clsAnalysisResources
             strErrorMessage = "Could not find " + sourceFileName + " using FindDataFile"
             Return String.Empty
         Else
-            ReportStatus("Warning: could not find the _dta.zip file, but was able to find " + sourceFileName + " in folder " + sourceFolderPath)
+            LogMessage("Warning: could not find the _dta.zip file, but was able to find " + sourceFileName + " in folder " + sourceFolderPath)
 
             If sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
                 Return sourceFolderPath
@@ -7032,7 +7032,7 @@ Public MustInherit Class clsAnalysisResources
                 m_MyEMSLUtilities.AddFileToDownloadQueue(SourceFilePath)
                 If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
                     If m_DebugLevel >= 1 Then
-                        ReportStatus("Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL")
+                        LogMessage("Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL")
                     End If
                 Else
                     Return False
@@ -7045,12 +7045,12 @@ Public MustInherit Class clsAnalysisResources
                 If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
                     m_message = "Error copying " + fiSourceFile.Name
                     If m_DebugLevel >= 2 Then
-                        ReportStatus("CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName, 0, True)
+                        LogMessage("CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName, 0, True)
                     End If
                     Return False
                 Else
                     If m_DebugLevel >= 1 Then
-                        ReportStatus("Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName)
+                        LogMessage("Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName)
                     End If
                 End If
             End If
@@ -7065,7 +7065,7 @@ Public MustInherit Class clsAnalysisResources
             End If
 
             ' Unzip concatenated DTA file
-            ReportStatus("Unzipping concatenated DTA file")
+            LogMessage("Unzipping concatenated DTA file")
             If UnzipFileStart(TargetZipFilePath, m_WorkingDir, "RetrieveDtaFiles", False) Then
                 If m_DebugLevel >= 1 Then
                     LogDebugMessage("Concatenated DTA file unzipped")
@@ -7084,7 +7084,7 @@ Public MustInherit Class clsAnalysisResources
 
                 File.Delete(TargetZipFilePath)
             Catch ex As Exception
-                ReportStatus("Error deleting the _DTA.zip file", ex)
+                LogError("Error deleting the _DTA.zip file", ex)
             End Try
 
         End If
@@ -7112,16 +7112,16 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         'Unzip concatenated OUT file
-        ReportStatus("Unzipping concatenated OUT file")
+        LogMessage("Unzipping concatenated OUT file")
         If UnzipFileStart(Path.Combine(m_WorkingDir, ZippedFileName), m_WorkingDir, "RetrieveOutFiles", False) Then
             If m_DebugLevel >= 1 Then
-                ReportStatus("Concatenated OUT file unzipped")
+                LogMessage("Concatenated OUT file unzipped")
             End If
         End If
 
         'Unconcatenate OUT file if needed
         If UnConcatenate Then
-            ReportStatus("Splitting concatenated OUT file")
+            LogMessage("Splitting concatenated OUT file")
 
             Dim fiSourceFile As FileInfo
             fiSourceFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName + "_out.txt"))
@@ -7308,7 +7308,7 @@ Public MustInherit Class clsAnalysisResources
             If Not fiFileInfo.Exists Then
                 ' File not found
                 LogError("Error unzipping '" + zipFilePath + "': File not found")
-                ReportStatus("CallingFunction: " & callingFunctionName)
+                LogMessage("CallingFunction: " & callingFunctionName)
                 Return False
             End If
 
@@ -7333,7 +7333,7 @@ Public MustInherit Class clsAnalysisResources
                 End If
 
                 If Not blnUseExternalUnzipper Then
-                    ReportStatus("External zip program not found: " + strExternalUnzipperFilePath + "; will instead use Ionic.Zip")
+                    LogMessage("External zip program not found: " + strExternalUnzipperFilePath + "; will instead use Ionic.Zip")
                 End If
             End If
 
@@ -7350,7 +7350,7 @@ Public MustInherit Class clsAnalysisResources
                     m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
                 Else
                     LogError("Error unzipping " + Path.GetFileName(zipFilePath) + " using " + strUnzipperName)
-                    ReportStatus("CallingFunction: " & callingFunctionName)
+                    LogMessage("CallingFunction: " & callingFunctionName)
                 End If
 
                 Return blnSuccess
@@ -7368,7 +7368,7 @@ Public MustInherit Class clsAnalysisResources
             If Not String.IsNullOrEmpty(strUnzipperName) Then errMsg &= " using " + strUnzipperName
 
             LogError(errMsg, ex)
-            ReportStatus("CallingFunction: " & callingFunctionName)
+            LogMessage("CallingFunction: " & callingFunctionName)
             Return False
         End Try
 
@@ -7477,9 +7477,9 @@ Public MustInherit Class clsAnalysisResources
                 ' At least 80% of the spectra are centroided
 
                 If fractionCentroided > 0.999 Then
-                    ReportStatus("All of the spectra are centroided" & commentSuffix)
+                    LogMessage("All of the spectra are centroided" & commentSuffix)
                 Else
-                    ReportStatus((fractionCentroided * 100).ToString("0") & "% of the spectra are centroided" & commentSuffix)
+                    LogMessage((fractionCentroided * 100).ToString("0") & "% of the spectra are centroided" & commentSuffix)
                 End If
 
                 Return True
@@ -7489,12 +7489,12 @@ Public MustInherit Class clsAnalysisResources
                 ' Post a message similar to:
                 '   MSGF+ will likely skip 90% of the spectra because they did not appear centroided
                 m_message = "MSGF+ will likely skip " & ((1 - fractionCentroided) * 100).ToString("0") & "% of the spectra because they do not appear centroided"
-                ReportStatus(m_message & commentSuffix)
+                LogMessage(m_message & commentSuffix)
                 Return False
             Else
                 ' None of the spectra are centroided; unable to process with MSGF+
                 m_message = SPECTRA_ARE_NOT_CENTROIDED & " with MSGF+"
-                ReportStatus(m_message & commentSuffix, 0, True)
+                LogMessage(m_message & commentSuffix, 0, True)
                 Return False
             End If
 
@@ -7658,7 +7658,7 @@ Public MustInherit Class clsAnalysisResources
 
     Private Sub m_CDTAUtilities_InfoEvent(strMessage As String, intDebugLevel As Integer) Handles m_CDTAUtilities.InfoEvent
         If m_DebugLevel >= intDebugLevel Then
-            ReportStatus(strMessage)
+            LogMessage(strMessage)
         End If
     End Sub
 
@@ -7745,7 +7745,7 @@ Public MustInherit Class clsAnalysisResources
     End Sub
 
     Private Sub StatusEventHandler(statusMessage As String)
-        ReportStatus(statusMessage)
+        LogMessage(statusMessage)
     End Sub
 
     Private Sub ErrorEventHandler(errorMessage As String, ex As Exception)

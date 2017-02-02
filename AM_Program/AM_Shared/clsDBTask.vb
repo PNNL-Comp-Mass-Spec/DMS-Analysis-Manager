@@ -208,7 +208,7 @@ Public MustInherit Class clsDBTask
 #Region "Event Handlers"
 
     Private Sub m_ExecuteSP_DebugEvent(message As String) Handles DMSProcedureExecutor.DebugEvent, PipelineDBProcedureExecutor.DebugEvent
-        ReportStatus(message, clsLogTools.LogLevels.DEBUG)
+        LogDebug(message, clsLogTools.LogLevels.DEBUG)
     End Sub
 
     Private Sub m_ExecuteSP_DBErrorEvent(message As String) Handles DMSProcedureExecutor.DBErrorEvent, PipelineDBProcedureExecutor.DBErrorEvent

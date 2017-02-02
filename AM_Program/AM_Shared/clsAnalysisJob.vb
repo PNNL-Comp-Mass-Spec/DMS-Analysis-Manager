@@ -739,8 +739,8 @@ Public Class clsAnalysisJob
             myCmd.Parameters.Add(New SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128)).Value = strProductVersion
 
             If m_DebugLevel > 4 Then
-                ReportStatus("clsAnalysisJob.RequestAnalysisJob(), connection string: " & m_BrokerConnStr, clsLogTools.LogLevels.DEBUG)
-                ReportStatus("clsAnalysisJob.RequestAnalysisJob(), printing param list", clsLogTools.LogLevels.DEBUG)
+                LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " & m_BrokerConnStr, clsLogTools.LogLevels.DEBUG)
+                LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", clsLogTools.LogLevels.DEBUG)
                 PrintCommandParams(myCmd)
             End If
 
@@ -863,7 +863,7 @@ Public Class clsAnalysisJob
             ' Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
             clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5)
 
-            ReportStatus(msg, clsLogTools.LogLevels.DEBUG)
+            LogDebug(msg, clsLogTools.LogLevels.DEBUG)
 
         Catch ex As Exception
             LogError("Exception saving analysis job parameters to " & xmlParameterFilePath, ex)
@@ -894,7 +894,7 @@ Public Class clsAnalysisJob
         If EvalMessage Is Nothing Then EvalMessage = String.Empty
 
         If m_TaskWasClosed Then
-            ReportStatus("Job " & m_JobId & " has already been closed; will not call " & SP_NAME_SET_COMPLETE & " again")
+            LogMessage("Job " & m_JobId & " has already been closed; will not call " & SP_NAME_SET_COMPLETE & " again")
         Else
             m_TaskWasClosed = True
             If Not SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage) Then

@@ -30,10 +30,24 @@ Public MustInherit Class clsLoggerBase
     ''' <summary>
     ''' Log an error message and exception
     ''' </summary>
-    ''' <param name="errorMessage">Error message</param>
+    ''' <param name="errorMessage">Error message (do not include ex.message)</param>
     ''' <param name="ex">Exception to log</param>
     Protected Overridable Sub LogError(errorMessage As String, ex As Exception)
-        ReportStatus(errorMessage, ex)
+        Dim formattedError As String
+        If ex Is Nothing OrElse errorMessage.EndsWith(ex.Message) Then
+            formattedError = errorMessage
+        Else
+            formattedError = errorMessage & ": " & ex.Message
+        End If
+        Console.ForegroundColor = ConsoleColor.Red
+        Console.WriteLine(formattedError)
+
+        If Not ex Is Nothing Then
+            Console.ForegroundColor = ConsoleColor.Cyan
+            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
+        End If
+        Console.ResetColor()
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
     End Sub
 
     ''' <summary>
@@ -48,25 +62,22 @@ Public MustInherit Class clsLoggerBase
     End Sub
 
     ''' <summary>
-    ''' Shows information about an exception at the console and in the log file
+    ''' Show a status message at the console and optionally include in the log file
     ''' </summary>
-    ''' <param name="errorMessage">Error message (do not include ex.message)</param>
-    ''' <param name="ex">Exception</param>
-    Protected Sub ReportStatus(errorMessage As String, ex As Exception)
-        Dim formattedError As String
-        If ex Is Nothing OrElse errorMessage.EndsWith(ex.Message) Then
-            formattedError = errorMessage
-        Else
-            formattedError = errorMessage & ": " & ex.Message
+    ''' <param name="statusMessage">Status message</param>
+    ''' <param name="logFileDebugLevel">
+    ''' Log level for whether to log to disk: 
+    ''' 0 to always log
+    ''' 1 to log if m_DebugLevel is >= 1
+    ''' 2 to log if m_DebugLevel is >= 2
+    ''' 10 to not log to disk
+    ''' </param>
+    Protected Sub LogDebug(statusMessage As String, Optional logFileDebugLevel As Integer = 0)
+        Console.WriteLine(statusMessage)
+
+        If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage)
         End If
-        Console.ForegroundColor = ConsoleColor.Red
-        Console.WriteLine(formattedError)
-        If Not ex Is Nothing Then
-            Console.ForegroundColor = ConsoleColor.Cyan
-            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
-        End If
-        Console.ResetColor()
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
     End Sub
 
     ''' <summary>
@@ -81,7 +92,7 @@ Public MustInherit Class clsLoggerBase
     ''' 10 to not log to disk
     ''' </param>
     ''' <param name="isError">True if this is an error</param>
-    Protected Sub ReportStatus(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
+    Protected Sub LogMessage(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
         If isError Then
             Console.ForegroundColor = ConsoleColor.Red
             Console.WriteLine(statusMessage)

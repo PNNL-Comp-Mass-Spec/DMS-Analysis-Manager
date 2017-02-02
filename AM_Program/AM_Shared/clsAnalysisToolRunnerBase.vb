@@ -238,7 +238,7 @@ Public Class clsAnalysisToolRunnerBase
         Dim dtElapsedTime As TimeSpan
 
         If stopTime < startTime Then
-            ReportStatus("CalcElapsedTime: Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
+            LogMessage("CalcElapsedTime: Stop time is less than StartTime; this is unexpected.  Assuming current time for StopTime")
             stopTime = Date.UtcNow
         End If
 
@@ -610,7 +610,7 @@ Public Class clsAnalysisToolRunnerBase
                                      "Results folder name is not defined, job " & m_jobParams.GetParam("StepParameters", "Job"))
 
                 ' Also display at console
-                ReportStatus("Results folder not defined (job parameter OutputFolderName)", 10, True)
+                LogMessage("Results folder not defined (job parameter OutputFolderName)", 10, True)
 
                 ' Without a source folder; there isn't much we can do
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -625,7 +625,7 @@ Public Class clsAnalysisToolRunnerBase
                                      "Results folder not found, job " & m_jobParams.GetParam("StepParameters", "Job") & ", folder " & sourceFolderPath)
 
                 ' Also display at console
-                ReportStatus("Results folder not found", 10, True)
+                LogMessage("Results folder not found", 10, True)
 
                 ' Without a source folder; there isn't much we can do
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -821,7 +821,7 @@ Public Class clsAnalysisToolRunnerBase
         ' Verify transfer directory exists
         ' First make sure TransferFolderPath is defined
         If String.IsNullOrEmpty(transferFolderPath) Then
-            ReportStatus("Transfer folder path not defined; job param 'transferFolderPath' is empty", 0, True)
+            LogMessage("Transfer folder path not defined; job param 'transferFolderPath' is empty", 0, True)
             m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined")
             Return String.Empty
         End If
@@ -1135,7 +1135,7 @@ Public Class clsAnalysisToolRunnerBase
                 File.Delete(strFilePath)
             End If
         Catch ex As Exception
-            ReportStatus("Exception deleting temporary file " & strFilePath, 0, True)
+            LogMessage("Exception deleting temporary file " & strFilePath, 0, True)
         End Try
 
     End Sub
@@ -1920,7 +1920,7 @@ Public Class clsAnalysisToolRunnerBase
         ' Makes results folder and moves files into it
 
         ' Log status
-        ReportStatus(m_MachName & ": Creating results folder, Job " & m_JobNum)
+        LogMessage(m_MachName & ": Creating results folder, Job " & m_JobNum)
         Dim ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName)
 
         ' Make the results folder
@@ -1928,7 +1928,7 @@ Public Class clsAnalysisToolRunnerBase
             Directory.CreateDirectory(ResFolderNamePath)
         Catch ex As Exception
             ' Log this error to the database
-            ReportStatus("Error making results folder, job " & m_JobNum, ex)
+            LogError("Error making results folder, job " & m_JobNum, ex)
             m_message = clsGlobal.AppendToComment(m_message, "Error making results folder")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
@@ -1981,7 +1981,7 @@ Public Class clsAnalysisToolRunnerBase
                       "; ResultFileExtensionsToSkip contains " & m_jobParams.ResultFileExtensionsToSkip.Count.ToString & " entries" &
                       "; ResultFilesToKeep contains " & m_jobParams.ResultFilesToKeep.Count.ToString & " entries"
                 End If
-                ReportStatus(strLogMessage, m_DebugLevel)
+                LogMessage(strLogMessage, m_DebugLevel)
             End If
 
             ' Obtain a list of all files in the working directory
@@ -2086,7 +2086,7 @@ Public Class clsAnalysisToolRunnerBase
                     Catch ex2 As Exception
                         ' Copy also failed
                         ' Continue moving files; we'll fail the results at the end of this function
-                        ReportStatus(" MoveResultFiles: error moving/copying file: " & tmpFileName, ex)
+                        LogError(" MoveResultFiles: error moving/copying file: " & tmpFileName, ex)
                         blnErrorEncountered = True
                     End Try
                 End Try
@@ -2115,9 +2115,9 @@ Public Class clsAnalysisToolRunnerBase
 
         Catch ex As Exception
             If m_DebugLevel > 0 Then
-                ReportStatus("clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder", 0, True)
-                ReportStatus("Tmpfile = " & tmpFileName)
-                ReportStatus("Results folder name = " & Path.Combine(ResFolderNamePath, Path.GetFileName(tmpFileName)))
+                LogMessage("clsAnalysisToolRunnerBase.MoveResultFiles(); Error moving files to results folder", 0, True)
+                LogMessage("Tmpfile = " & tmpFileName)
+                LogMessage("Results folder name = " & Path.Combine(ResFolderNamePath, Path.GetFileName(tmpFileName)))
             End If
 
             ' Log this error to the database
@@ -2273,7 +2273,7 @@ Public Class clsAnalysisToolRunnerBase
             dtLastCheck = Date.UtcNow
 
             Dim dtLastProgress = Date.UtcNow
-            ReportStatus("Examining hashcheck files in folder " & diCacheFolder.FullName, 1)
+            LogMessage("Examining hashcheck files in folder " & diCacheFolder.FullName, 1)
 
             ' Make a list of all of the hashcheck files in diCacheFolder
 
@@ -2291,12 +2291,12 @@ Public Class clsAnalysisToolRunnerBase
 
                             dblTotalSizeMB += clsGlobal.BytesToMB(fiDataFile.Length)
                         Catch ex As Exception
-                            ReportStatus("Exception adding to file list " + fiDataFile.Name + "; " + ex.Message, 0, True)
+                            LogMessage("Exception adding to file list " + fiDataFile.Name + "; " + ex.Message, 0, True)
                         End Try
 
                         If Date.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5 Then
                             dtLastProgress = Date.UtcNow
-                            ReportStatus(String.Format(" ... {0:#,##0} files processed", lstDataFiles.Count))
+                            LogMessage(String.Format(" ... {0:#,##0} files processed", lstDataFiles.Count))
                         End If
 
                     End If
@@ -2379,11 +2379,11 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             Next
 
-            ReportStatus("Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath &
+            LogMessage("Deleted " & intFileDeleteCount & " file(s) from " & strCacheFolderPath &
                          ", recovering " & dblSizeDeletedMB.ToString("0.0") & " MB in disk space")
 
             If intFileDeleteErrorCount > 0 Then
-                ReportStatus("Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath, 0, True)
+                LogMessage("Unable to delete " & intFileDeleteErrorCount & " file(s) from " & strCacheFolderPath, 0, True)
                 Console.WriteLine("See the log file for details")
                 For Each kvItem As KeyValuePair(Of String, Integer) In dctErrorSummary
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " & kvItem.Key & ": " & kvItem.Value)
@@ -2405,7 +2405,7 @@ Public Class clsAnalysisToolRunnerBase
             End If
 
         Catch ex As Exception
-            ReportStatus("Error in PurgeOldServerCacheFiles: " & clsGlobal.GetExceptionStackTrace(ex), 0, True)
+            LogMessage("Error in PurgeOldServerCacheFiles: " & clsGlobal.GetExceptionStackTrace(ex), 0, True)
         End Try
     End Sub
 
@@ -2447,7 +2447,7 @@ Public Class clsAnalysisToolRunnerBase
         Try
 
             If Not File.Exists(strVersionInfoFilePath) Then
-                ReportStatus("Version Info File not found: " & strVersionInfoFilePath, 0, True)
+                LogMessage("Version Info File not found: " & strVersionInfoFilePath, 0, True)
                 Return False
             End If
 
@@ -2477,13 +2477,13 @@ Public Class clsAnalysisToolRunnerBase
                             Case "version"
                                 strVersion = String.Copy(strValue)
                                 If String.IsNullOrWhiteSpace(strVersion) Then
-                                    ReportStatus("Empty version line in Version Info file for " & Path.GetFileName(strDLLFilePath), 0, True)
+                                    LogMessage("Empty version line in Version Info file for " & Path.GetFileName(strDLLFilePath), 0, True)
                                     blnSuccess = False
                                 Else
                                     blnSuccess = True
                                 End If
                             Case "error"
-                                ReportStatus("Error reported by DLLVersionInspector for " & Path.GetFileName(strDLLFilePath) & ": " & strValue, 0, True)
+                                LogMessage("Error reported by DLLVersionInspector for " & Path.GetFileName(strDLLFilePath) & ": " & strValue, 0, True)
                                 blnSuccess = False
                             Case Else
                                 ' Ignore the line
@@ -2495,7 +2495,7 @@ Public Class clsAnalysisToolRunnerBase
             End Using
 
         Catch ex As Exception
-            ReportStatus("Error reading Version Info File for " & Path.GetFileName(strDLLFilePath) & ": " & clsGlobal.GetExceptionStackTrace(ex), 0, True)
+            LogError("Error reading Version Info File for " & Path.GetFileName(strDLLFilePath), ex)
         End Try
 
         Return blnSuccess
@@ -2513,13 +2513,13 @@ Public Class clsAnalysisToolRunnerBase
 
         Try
             ' Log status
-            ReportStatus("Remove Files from the storage server; " &
+            LogMessage("Remove Files from the storage server; " &
                          "ServerFilesToDelete contains " & m_jobParams.ServerFilesToDelete.Count.ToString & " entries", 2)
 
             For Each FileToDelete In m_jobParams.ServerFilesToDelete
 
                 ' Log file to be deleted
-                ReportStatus("Deleting " & FileToDelete, 4)
+                LogMessage("Deleting " & FileToDelete, 4)
 
                 If File.Exists(FileToDelete) Then
                     'Verify file is not set to readonly, then delete it
@@ -2528,7 +2528,7 @@ Public Class clsAnalysisToolRunnerBase
                 End If
             Next
         Catch ex As Exception
-            ReportStatus("clsGlobal.RemoveNonResultServerFiles(), Error deleting file " & FileToDelete, ex)
+            LogError("clsGlobal.RemoveNonResultServerFiles(), Error deleting file " & FileToDelete, ex)
             'Even if an exception occurred, return true since the results were already copied back to the server
             Return True
         End Try
@@ -2550,7 +2550,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Catch ex As Exception
             If m_DebugLevel >= 1 Then
-                ReportStatus("Error in ReplaceUpdatedFile", ex)
+                LogError("Error in ReplaceUpdatedFile", ex)
             End If
 
             Return False
@@ -2572,7 +2572,7 @@ Public Class clsAnalysisToolRunnerBase
         GetCurrentMgrSettingsFromDB()
 
         'Make log entry
-        ReportStatus(m_MachName & ": Starting analysis, job " & m_JobNum)
+        LogMessage(m_MachName & ": Starting analysis, job " & m_JobNum)
 
         'Start the job timer
         m_StartTime = Date.UtcNow
@@ -2610,7 +2610,7 @@ Public Class clsAnalysisToolRunnerBase
             End Using
 
         Catch ex As Exception
-            ReportStatus("Exception saving tool version info", ex)
+            LogError("Exception saving tool version info", ex)
             Return False
         End Try
 
@@ -2677,13 +2677,13 @@ Public Class clsAnalysisToolRunnerBase
                 Try
                     If ioFileInfo.Exists Then
                         strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name & ": " & ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT))
-                        ReportStatus("EXE Info: " & strExeInfo, 2)
+                        LogMessage("EXE Info: " & strExeInfo, 2)
                     Else
-                        ReportStatus("Warning: Tool file not found: " & ioFileInfo.FullName)
+                        LogMessage("Warning: Tool file not found: " & ioFileInfo.FullName)
                     End If
 
                 Catch ex As Exception
-                    ReportStatus("Exception looking up tool version file info", ex)
+                    LogError("Exception looking up tool version file info", ex)
                 End Try
             Next
         End If
@@ -2718,7 +2718,7 @@ Public Class clsAnalysisToolRunnerBase
         If ResCode = 0 Then
             Outcome = True
         Else
-            ReportStatus("Error " & ResCode.ToString & " storing tool version for current processing step", 0, True)
+            LogMessage("Error " & ResCode.ToString & " storing tool version for current processing step", 0, True)
             Outcome = False
         End If
 
@@ -2799,7 +2799,7 @@ Public Class clsAnalysisToolRunnerBase
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion)
 
         Catch ex As Exception
-            ReportStatus("Exception determining Assembly info for " & strAssemblyName, ex)
+            LogError("Exception determining Assembly info for " & strAssemblyName, ex)
             Return False
         End Try
 
@@ -2824,7 +2824,7 @@ Public Class clsAnalysisToolRunnerBase
             ioFileInfo = New FileInfo(strDLLFilePath)
 
             If Not ioFileInfo.Exists Then
-                ReportStatus("Warning: File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
+                LogMessage("Warning: File not found by StoreToolVersionInfoOneFile: " & strDLLFilePath)
                 Return False
             Else
 
@@ -2856,7 +2856,7 @@ Public Class clsAnalysisToolRunnerBase
             '  <startup useLegacyV2RuntimeActivationPolicy="true">
             '    <supportedRuntime version="v4.0" />
             '  </startup>
-            ReportStatus("Exception determining Assembly info for " & Path.GetFileName(strDLLFilePath), ex)
+            LogError("Exception determining Assembly info for " & Path.GetFileName(strDLLFilePath), ex)
             blnSuccess = False
         End Try
 
@@ -2882,7 +2882,7 @@ Public Class clsAnalysisToolRunnerBase
 
             If Not ioFileInfo.Exists Then
                 m_message = "File not found by StoreToolVersionInfoViaSystemDiagnostics"
-                ReportStatus(m_message & ": " & strDLLFilePath)
+                LogMessage(m_message & ": " & strDLLFilePath)
                 Return False
             End If
 
@@ -2974,11 +2974,11 @@ Public Class clsAnalysisToolRunnerBase
 
             If Not ioFileInfo.Exists Then
                 m_message = "File not found by StoreToolVersionInfoOneFileUseExe"
-                ReportStatus(m_message & ": " & strDLLFilePath, 0, True)
+                LogMessage(m_message & ": " & strDLLFilePath, 0, True)
                 Return False
             ElseIf Not File.Exists(strAppPath) Then
                 m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFileUseExe"
-                ReportStatus(m_message & ": " & strAppPath, 0, True)
+                LogMessage(m_message & ": " & strAppPath, 0, True)
                 Return False
             End If
 
@@ -3035,7 +3035,7 @@ Public Class clsAnalysisToolRunnerBase
 
         Catch ex As Exception
             m_message = "Exception determining Version info for " & Path.GetFileName(strDLLFilePath) & " using " & versionInspectorExeName
-            ReportStatus(m_message, ex)
+            LogError(m_message, ex)
             strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, Path.GetFileNameWithoutExtension(strDLLFilePath))
         End Try
 
@@ -3242,7 +3242,7 @@ Public Class clsAnalysisToolRunnerBase
                                 Return False
                             End If
 
-                            ReportStatus("Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName &
+                            LogMessage("Error copying " & fiSourceFile.FullName & " to " & fiTargetFile.Directory.FullName &
                                          "; RetriesRemaining: " & retriesRemaining, 0, True)
 
                             ' Wait 2 seconds then try again
@@ -3327,7 +3327,7 @@ Public Class clsAnalysisToolRunnerBase
             m_SummaryFile.Add(Environment.NewLine)
 
         Catch ex As Exception
-            ReportStatus("Error creating summary file, job " & m_JobNum &
+            LogMessage("Error creating summary file, job " & m_JobNum &
                          ", step " & m_jobParams.GetParam("StepParameters", "Step") & ": " & ex.Message)
             Return False
         End Try
@@ -3410,7 +3410,7 @@ Public Class clsAnalysisToolRunnerBase
             Return coreUsage
 
         Catch ex As Exception
-            ReportStatus("Exception in UpdateCpuUsageByProcessName determining the processor usage of " & processName, ex)
+            LogError("Exception in UpdateCpuUsageByProcessName determining the processor usage of " & processName, ex)
             Return -1
         End Try
 
@@ -3733,24 +3733,24 @@ Public Class clsAnalysisToolRunnerBase
 
     Private Sub mSortUtility_ErrorEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
         mSortUtilityErrorMessage = e.Message
-        ReportStatus("SortUtility: " & e.Message, 0, True)
+        LogMessage("SortUtility: " & e.Message, 0, True)
     End Sub
 
     Private Sub mSortUtility_MessageEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
         If m_DebugLevel >= 1 Then
-            ReportStatus(e.Message)
+            LogMessage(e.Message)
         End If
     End Sub
 
     Private Sub mSortUtility_ProgressChanged(sender As Object, e As FlexibleFileSortUtility.ProgressChangedEventArgs)
         If m_DebugLevel >= 1 AndAlso Date.UtcNow.Subtract(mLastSortUtilityProgress).TotalSeconds >= 5 Then
             mLastSortUtilityProgress = Date.UtcNow
-            ReportStatus(e.taskDescription & ": " & e.percentComplete.ToString("0.0") & "% complete")
+            LogMessage(e.taskDescription & ": " & e.percentComplete.ToString("0.0") & "% complete")
         End If
     End Sub
 
     Private Sub mSortUtility_WarningEvent(sender As Object, e As FlexibleFileSortUtility.MessageEventArgs)
-        ReportStatus("SortUtility Warning: " & e.Message)
+        LogMessage("SortUtility Warning: " & e.Message)
     End Sub
 
 #End Region
@@ -3765,7 +3765,7 @@ Public Class clsAnalysisToolRunnerBase
     End Sub
 
     Private Sub StatusEventHandler(statusMessage As String)
-        ReportStatus(statusMessage)
+        LogMessage(statusMessage)
     End Sub
 
     Private Sub ErrorEventHandler(errorMessage As String, ex As Exception)

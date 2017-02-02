@@ -265,11 +265,11 @@ Public Class clsAnalysisResults
                 strTargetFolderPath = Path.Combine(diTargetFolder.FullName, diSourceFolder.Name)
 
                 ' Actually copy the results folder
-                ReportStatus("Copying results folder to failed results archive: " & strTargetFolderPath)
+                LogMessage("Copying results folder to failed results archive: " & strTargetFolderPath)
 
                 CopyDirectory(diSourceFolder.FullName, strTargetFolderPath, True, 2, True)
 
-                ReportStatus("Copy complete")
+                LogMessage("Copy complete")
             End If
 
         Catch ex As Exception
@@ -389,7 +389,7 @@ Public Class clsAnalysisResults
                     diOldResultsFolder = New DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName))
 
                     If diOldResultsFolder.Exists Then
-                        ReportStatus("Deleting old failed results folder: " & diOldResultsFolder.FullName)
+                        LogMessage("Deleting old failed results folder: " & diOldResultsFolder.FullName)
                         diOldResultsFolder.Delete(True)
                     End If
 

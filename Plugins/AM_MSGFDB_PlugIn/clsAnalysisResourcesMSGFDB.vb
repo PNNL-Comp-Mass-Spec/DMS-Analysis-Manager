@@ -85,7 +85,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
             If Not RetrieveOrgDB(localOrgDbFolder, udtHPCOptions) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
-            ReportStatus("Getting param file", 2)
+            LogMessage("Getting param file", 2)
 
             ' Retrieve the parameter file
             ' This will also obtain the _ModDefs.txt file using query 
@@ -157,10 +157,10 @@ Public Class clsAnalysisResourcesMSGFDB
         Try
             Dim lstParentDirectories = diPicFsWorkDir.Parent.GetDirectories().ToList()
 
-            ReportStatus("Found " & lstParentDirectories.Count & " subdirectories in " & diPicFsWorkDir.FullName)
+            LogMessage("Found " & lstParentDirectories.Count & " subdirectories in " & diPicFsWorkDir.FullName)
 
         Catch ex As Exception
-            ReportStatus("Exception checking " & diPicFsWorkDir.Parent.FullName & ": " & ex.Message, 0, True)
+            LogError("Exception checking " & diPicFsWorkDir.Parent.FullName, ex)
         End Try
 
     End Sub
@@ -192,7 +192,7 @@ Public Class clsAnalysisResourcesMSGFDB
             ' Scan type is assumed; we don't need the Masic ScanStats.txt files or the .Raw file
             Select Case strAssumedScanType.ToUpper()
                 Case "CID", "ETD", "HCD"
-                    ReportStatus("Assuming scan type is '" & strAssumedScanType & "'", 1)
+                    LogMessage("Assuming scan type is '" & strAssumedScanType & "'", 1)
                 Case Else
                     LogError("Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD")
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -249,7 +249,7 @@ Public Class clsAnalysisResourcesMSGFDB
         End If
 
         If blnSuccess Then
-            ReportStatus("Retrieved MASIC ScanStats and ScanStatsEx files", 1)
+            LogMessage("Retrieved MASIC ScanStats and ScanStatsEx files", 1)
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
         End If
 
@@ -293,7 +293,7 @@ Public Class clsAnalysisResourcesMSGFDB
         ' Make sure that the spectra are centroided
         Dim strCDTAPath = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
 
-        ReportStatus("Validating that the _dta.txt file has centroided spectra")
+        LogMessage("Validating that the _dta.txt file has centroided spectra")
 
         If Not ValidateCDTAFileIsCentroided(strCDTAPath) Then
             ' m_message is already updated

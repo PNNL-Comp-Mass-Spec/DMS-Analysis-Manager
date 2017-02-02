@@ -372,7 +372,7 @@ Public Class clsDtaGenToolRunner
 
         'Make individual spectra files from input raw data file, using plugin
 
-        ReportStatus("Making spectra files, job " & m_JobNum & ", step " & m_StepNum)
+        LogMessage("Making spectra files, job " & m_JobNum & ", step " & m_StepNum)
 
         Dim SpectraGen As clsDtaGen = Nothing
 
@@ -580,7 +580,7 @@ Public Class clsDtaGenToolRunner
             LogError("No .DTA files were created")
             Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
         ElseIf m_DebugLevel >= 1 Then
-            ReportStatus("Concatenating spectra files, job " & m_JobNum & ", step " & m_StepNum)
+            LogMessage("Concatenating spectra files, job " & m_JobNum & ", step " & m_StepNum)
         End If
 
 
@@ -651,7 +651,7 @@ Public Class clsDtaGenToolRunner
         Dim lstFilesToDelete As List(Of String)
 
         If m_DebugLevel >= 2 Then
-            ReportStatus("clsDtaGenToolRunner.DeleteDataFile, executing method")
+            LogMessage("clsDtaGenToolRunner.DeleteDataFile, executing method")
         End If
 
         'Delete the .raw file
@@ -664,7 +664,7 @@ Public Class clsDtaGenToolRunner
 
             For Each MyFile As String In lstFilesToDelete
                 If m_DebugLevel >= 2 Then
-                    ReportStatus("clsDtaGenToolRunner.DeleteDataFile, deleting file " & MyFile)
+                    LogMessage("clsDtaGenToolRunner.DeleteDataFile, deleting file " & MyFile)
                 End If
                 DeleteFileWithRetries(MyFile)
             Next
@@ -698,7 +698,7 @@ Public Class clsDtaGenToolRunner
             Dim fragIonDataScanStatus = New Dictionary(Of Integer, SortedSet(Of Integer))
 
             ' Cache the Start/End scan combos in strCDTAWithFragIonData
-            ReportStatus("Scanning " & Path.GetFileName(strCDTAWithFragIonData) & " to cache the scan range for each MS/MS spectrum")
+            LogMessage("Scanning " & Path.GetFileName(strCDTAWithFragIonData) & " to cache the scan range for each MS/MS spectrum")
 
             Do While True
                 Dim msMsDataListCentroid As List(Of String) = Nothing
@@ -735,7 +735,7 @@ Public Class clsDtaGenToolRunner
                 Return False
             End If
 
-            ReportStatus("Merging " & Path.GetFileName(strCDTAWithParentIonData) & " with " & Path.GetFileName(strCDTAWithFragIonData))
+            LogMessage("Merging " & Path.GetFileName(strCDTAWithParentIonData) & " with " & Path.GetFileName(strCDTAWithFragIonData))
 
             Dim intSpectrumCountSkipped = 0
             Using swCDTAOut = New StreamWriter(New FileStream(strCDTAFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -807,7 +807,7 @@ Public Class clsDtaGenToolRunner
                     If DateTime.UtcNow.Subtract(dtLastStatus).TotalSeconds >= 30 Then
                         dtLastStatus = DateTime.UtcNow
                         If m_DebugLevel >= 1 Then
-                            ReportStatus("Merging CDTAs, scan " & udtParentIonDataHeader.ScanNumberStart.ToString())
+                            LogMessage("Merging CDTAs, scan " & udtParentIonDataHeader.ScanNumberStart.ToString())
                         End If
                     End If
                 End While
@@ -909,7 +909,7 @@ Public Class clsDtaGenToolRunner
         End If
 
         If m_DebugLevel > 0 Then
-            ReportStatus("clsDtaGenToolRunner." & strCallingFunction & ": Spectra generation started")
+            LogMessage("clsDtaGenToolRunner." & strCallingFunction & ": Spectra generation started")
         End If
 
         ' Loop until the spectra generator finishes
@@ -947,7 +947,7 @@ Public Class clsDtaGenToolRunner
             Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
         Else
             If m_DebugLevel >= 2 Then
-                ReportStatus("clsDtaGenToolRunner." & strCallingFunction & ": Spectra generation completed")
+                LogMessage("clsDtaGenToolRunner." & strCallingFunction & ": Spectra generation completed")
             End If
         End If
 
@@ -962,7 +962,7 @@ Public Class clsDtaGenToolRunner
         Dim strToolVersionInfo As String = String.Empty
 
         If m_DebugLevel >= 2 Then
-            ReportStatus("Determining tool version info")
+            LogMessage("Determining tool version info")
         End If
 
         Dim fiDtaGenerator = New FileInfo(strDtaGeneratorAppPath)
@@ -1044,7 +1044,7 @@ Public Class clsDtaGenToolRunner
         Dim strToolVersionInfo As String = String.Empty
 
         If m_DebugLevel >= 2 Then
-            ReportStatus("Determining tool version info")
+            LogMessage("Determining tool version info")
         End If
 
         ' Lookup the version of the DLL
@@ -1121,7 +1121,7 @@ Public Class clsDtaGenToolRunner
         Dim DtaFileName As String = m_Dataset & "_dta.txt"
         Dim DtaFilePath As String = Path.Combine(m_WorkDir, DtaFileName)
 
-        ReportStatus("Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_StepNum)
+        LogMessage("Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_StepNum)
 
         ' Verify the _dta.txt file exists
         If Not File.Exists(DtaFilePath) Then

@@ -331,7 +331,7 @@ Public Class clsMainProcess
                         UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_MC, strManagerDisableReason)
                     End If
 
-                    ReportStatus("Manager inactive: " & strManagerDisableReason)
+                    LogMessage("Manager inactive: " & strManagerDisableReason)
                     Thread.Sleep(750)
                     Exit Sub
                 End If
@@ -339,7 +339,7 @@ Public Class clsMainProcess
                 Dim MgrUpdateRequired As Boolean = m_MgrSettings.GetParam("ManagerUpdateRequired", False)
                 If MgrUpdateRequired Then
                     Dim msg = "Manager update is required"
-                    ReportStatus(msg)
+                    LogMessage(msg)
                     m_MgrSettings.AckManagerUpdateRequired()
                     UpdateStatusIdle("Manager update is required")
                     Exit Sub
@@ -414,7 +414,7 @@ Public Class clsMainProcess
                 ' Do not request a job between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
                 Dim pendingWindowsUpdateMessage As String = String.Empty
                 If clsWindowsUpdateStatus.UpdatesArePending(pendingWindowsUpdateMessage) Then
-                    ReportStatus(pendingWindowsUpdateMessage)
+                    LogMessage(pendingWindowsUpdateMessage)
                     UpdateStatusIdle(pendingWindowsUpdateMessage)
                     Exit While
                 End If
@@ -434,7 +434,7 @@ Public Class clsMainProcess
 
                         'No tasks found
                         If m_DebugLevel >= 3 Then
-                            ReportStatus("No analysis jobs found")
+                            LogMessage("No analysis jobs found")
                         End If
                         blnRequestJobs = False
                         intCriticalMgrErrorCount = 0
@@ -539,13 +539,13 @@ Public Class clsMainProcess
                         Dim msg = "Maximum number of jobs to analyze has been reached: " & TasksStartedCount.ToString() & " job"
                         If TasksStartedCount <> 1 Then msg &= "s"
                         msg &= "; closing manager"
-                        ReportStatus(msg)
+                        LogMessage(msg)
                     End If
                 End If
             End If
 
             If blnOneTaskPerformed Then
-                ReportStatus("Analysis complete for all available jobs")
+                LogMessage("Analysis complete for all available jobs")
             End If
 
             If Me.TraceMode Then ShowTraceMessage("Closing the manager")
@@ -609,12 +609,12 @@ Public Class clsMainProcess
         ' 5/04/2015 12:34:46, Pub-88-3: Started analysis job 1193079, Dataset Lp_PDEC_N-sidG_PD1_1May15_Lynx_15-01-24, Tool Decon2LS_V2, Step 1, INFO,
         ' 5/04/2015 10:54:49, Proto-6_Analysis-1: Started analysis job 1192426, Dataset LewyHNDCGlobFractestrecheck_SRM_HNDC_Frac46_smeagol_05Apr15_w6326a, Tool Results_Transfer (MASIC_Finnigan), Step 2, INFO,
 
-        ReportStatus(m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName &
+        LogMessage(m_MgrName & ": Started analysis job " & jobNum & ", Dataset " & datasetName &
                      ", Tool " & jobToolDescription & ", Process ID " & processID)
 
         If m_DebugLevel >= 2 Then
             ' Log the debug level value whenever the debug level is 2 or higher
-            ReportStatus("Debug level is " & m_DebugLevel.ToString)
+            LogMessage("Debug level is " & m_DebugLevel.ToString)
         End If
 
         ' Create an object to manage the job resources
@@ -787,7 +787,7 @@ Public Class clsMainProcess
 
             'Close out the job as a success
             m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, String.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage)
-            ReportStatus(m_MgrName & ": Completed job " & jobNum)
+            LogMessage(m_MgrName & ": Completed job " & jobNum)
 
             UpdateStatusIdle("Completed job " & jobNum & ", step " & stepNum)
 
@@ -1592,7 +1592,7 @@ Public Class clsMainProcess
             If Not m_MgrSettings.LoadSettings(lstMgrSettings) Then
                 If Not String.IsNullOrWhiteSpace(m_MgrSettings.ErrMsg) Then
                     'Manager has been deactivated, so report this
-                    ReportStatus(m_MgrSettings.ErrMsg)
+                    LogMessage(m_MgrSettings.ErrMsg)
                     UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally")
                 Else
                     'Unknown problem reading config file
@@ -1664,7 +1664,7 @@ Public Class clsMainProcess
         If m_DebugLevel > 0 Then
             strMessage = "Loaded resourcer for StepTool " & stepToolName
             If m_PluginLoader.Message.Length > 0 Then strMessage &= ": " & m_PluginLoader.Message
-            ReportStatus(strMessage)
+            LogMessage(strMessage)
         End If
 
         Try
@@ -1742,7 +1742,7 @@ Public Class clsMainProcess
         If m_DebugLevel > 0 Then
             Dim msg = "Loaded tool runner for StepTool " & m_AnalysisTask.GetCurrentJobToolDescription()
             If m_PluginLoader.Message.Length > 0 Then msg &= ": " & m_PluginLoader.Message
-            ReportStatus(msg)
+            LogMessage(msg)
         End If
 
         Try

@@ -382,7 +382,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         mResultsIncludeAutoAddedDecoyPeptides = mMSGFDBUtils.ResultsIncludeAutoAddedDecoyPeptides
 
 
-        ReportStatus("Running MSGF+")
+        LogMessage("Running MSGF+")
 
         ' If an MSGFDB analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java 
         ' The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
@@ -480,7 +480,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         End If
 
         If Not String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
-            ReportStatus(mMSGFDBUtils.ConsoleOutputErrorMsg, 1, True)
+            LogMessage(mMSGFDBUtils.ConsoleOutputErrorMsg, 1, True)
         End If
 
         fiMSGFPlusResults.Refresh()
@@ -542,7 +542,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 End While
 
                 If mMSGFDBUtils.TaskCountCompleted = mMSGFDBUtils.TaskCountTotal Then
-                    ReportStatus("Reparsing the MSGF+ log file now indicates that all tasks finished " &
+                    LogMessage("Reparsing the MSGF+ log file now indicates that all tasks finished " &
                                  "(waited " & Date.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") & " seconds)")
                 ElseIf mMSGFDBUtils.TaskCountCompleted > savedCountCompleted Then
                     LogWarning("Reparsing the MSGF+ log file now indicates that " & mMSGFDBUtils.TaskCountCompleted & " tasks finished. " &
@@ -588,7 +588,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE
         m_StatusTools.UpdateAndWrite(m_progress)
-        ReportStatus("MSGF+ Search Complete", 3)
+        LogMessage("MSGF+ Search Complete", 3)
 
         If mMSGFDBUtils.ContinuumSpectraSkipped > 0 Then
             ' See if any spectra were processed
@@ -700,7 +700,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         ' Note that this runtime includes the time the job is queued, plus also the time the job is running
         hpcJobInfo.JobParameters.MaxRunTimeHours = 72
 
-        ReportStatus(hpcJobInfo.TaskParameters.CommandLine, 1)
+        LogMessage(hpcJobInfo.TaskParameters.CommandLine, 1)
 
         If mMSGFPlus Then
             Dim mzidToTSVTask = New HPC_Connector.ParametersTask("MZID_To_TSV")
@@ -725,7 +725,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             mzidToTSVTask.TaskTypeOption = HPC_Connector.HPCTaskType.Basic
             mzidToTSVTask.FailJobOnFailure = True
 
-            ReportStatus(mzidToTSVTask.CommandLine, 1)
+            LogMessage(mzidToTSVTask.CommandLine, 1)
 
             hpcJobInfo.SubsequentTaskParameters.Add(mzidToTSVTask)
         End If
@@ -800,7 +800,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     Private Function StartMSGFPlusLocal(javaExePath As String, cmdStr As String) As Boolean
 
         If m_DebugLevel >= 1 Then
-            ReportStatus(javaExePath & " " & cmdStr)
+            LogMessage(javaExePath & " " & cmdStr)
         End If
 
         mCmdRunner = New clsRunDosProgram(m_WorkDir) With {
@@ -923,7 +923,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         If objScanTypeFileCreator.CreateScanTypeFile() Then
             If m_DebugLevel >= 1 Then
-                ReportStatus("Created ScanType file: " & Path.GetFileName(objScanTypeFileCreator.ScanTypeFilePath))
+                LogMessage("Created ScanType file: " & Path.GetFileName(objScanTypeFileCreator.ScanTypeFilePath))
             End If
             strScanTypeFilePath = objScanTypeFileCreator.ScanTypeFilePath
             Return True
@@ -1056,7 +1056,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Return fileNameNew
 
         Catch ex As Exception
-            ReportStatus("Error renaming file " & resultsFileName & " to " & filePathNew, ex)
+            LogError("Error renaming file " & resultsFileName & " to " & filePathNew, ex)
             Return (resultsFileName)
         End Try
 
@@ -1082,7 +1082,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Catch ex As Exception
             ' Ignore errors here
             If m_DebugLevel >= 2 Then
-                ReportStatus("Error parsing console output file: " & ex.Message, 2, True)
+                LogMessage("Error parsing console output file: " & ex.Message, 2, True)
             End If
         End Try
 
@@ -1146,7 +1146,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Dim skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", False)
 
             If skipPeptideToProteinMapping Then
-                ReportStatus("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True")
+                LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True")
                 Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
             End If
 
@@ -1203,7 +1203,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         Dim strToolVersionInfo As String
 
-        ReportStatus("Determining tool version info", 2)
+        LogMessage("Determining tool version info", 2)
 
         strToolVersionInfo = String.Copy(mMSGFDBUtils.MSGFPlusVersion)
 
@@ -1216,7 +1216,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             ' The PeptideListToXML program uses that file when creating .pepXML files
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
         Catch ex As Exception
-            ReportStatus("Exception calling SetStepTaskToolVersion: " & ex.Message, 0, True)
+            LogError("Exception calling SetStepTaskToolVersion", ex)
             Return False
         End Try
 
@@ -1277,11 +1277,11 @@ Public Class clsAnalysisToolRunnerMSGFDB
 #If EnableHPC = "True" Then
 
     Private Sub mComputeCluster_ErrorEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.ErrorEvent
-        ReportStatus(e.Message, 0, True)
+        LogError(e.Message, 0, True)
     End Sub
 
     Private Sub mComputeCluster_MessageEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.MessageEvent
-        ReportStatus(e.Message)
+        LogMessage(e.Message)
     End Sub
 
     Private Sub mComputeCluster_ProgressEvent(sender As Object, e As HPC_Submit.ProgressEventArgs) Handles mComputeCluster.ProgressEvent
