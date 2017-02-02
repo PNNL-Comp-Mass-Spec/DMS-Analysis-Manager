@@ -96,7 +96,7 @@ Public Class clsMSGFRunner
 
     Private mMSXmlGeneratorAppPath As String = String.Empty
 
-    Private WithEvents mMSXmlCreator As clsMSXMLCreator
+    Private mMSXmlCreator As clsMSXMLCreator
 
     Private mUsingMSGFDB As Boolean = True
     Private mMSGFDBVersion As String = "Unknown"
@@ -651,6 +651,9 @@ Public Class clsMSGFRunner
         m_StatusTools.CurrentOperation = "Creating the .mzXML file"
 
         mMSXmlCreator = New clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
+        RegisterEvents(mMSXmlCreator)
+        AddHandler mMSXmlCreator.LoopWaiting, AddressOf mMSXmlCreator_LoopWaiting
+
         blnSuccess = mMSXmlCreator.ConvertMzMLToMzXML()
 
         If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
@@ -881,6 +884,9 @@ Public Class clsMSGFRunner
         End If
 
         mMSXmlCreator = New clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
+        RegisterEvents(mMSXmlCreator)
+        AddHandler mMSXmlCreator.LoopWaiting, AddressOf mMSXmlCreator_LoopWaiting
+
         blnSuccess = mMSXmlCreator.CreateMZXMLFile()
 
         If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
@@ -2602,19 +2608,7 @@ Public Class clsMSGFRunner
 
 #Region "Event Handlers"
 
-    Private Sub mMSXmlCreator_DebugEvent(debugMessage As String) Handles mMSXmlCreator.DebugEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, debugMessage)
-    End Sub
-
-    Private Sub mMSXmlCreator_ErrorEvent(errorMessage As String) Handles mMSXmlCreator.ErrorEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-    End Sub
-
-    Private Sub mMSXmlCreator_WarningEvent(warnMessage As String) Handles mMSXmlCreator.WarningEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warnMessage)
-    End Sub
-
-    Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
+    Private Sub mMSXmlCreator_LoopWaiting()
 
         UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING)
 

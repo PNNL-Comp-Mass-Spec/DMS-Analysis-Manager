@@ -108,7 +108,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ' Values contain info on each file
     Private mCDTAFileStats As Dictionary(Of String, clsPXFileInfoBase)
 
-    Private WithEvents mMSXmlCreator As AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator
+    Private mMSXmlCreator As AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator
     Private WithEvents mDTAtoMGF As DTAtoMGF.clsDTAtoMGF
 
     Private mCmdRunner As clsRunDosProgram
@@ -888,6 +888,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             m_jobParams.AddResultFileToSkip("MSConvert_ConsoleOutput.txt")
 
             mMSXmlCreator = New AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
+            RegisterEvents(mMSXmlCreator)
+            AddHandler mMSXmlCreator.LoopWaiting, AddressOf mMSXmlCreator_LoopWaiting
+
             mMSXmlCreator.UpdateDatasetName(strDataset)
 
             ' Make sure the dataset file is present in the working directory
@@ -4429,19 +4432,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         LogError("Error from DTAtoMGF converter: " & mDTAtoMGF.GetErrorMessage())
     End Sub
 
-    Private Sub mMSXmlCreator_DebugEvent(strMessage As String) Handles mMSXmlCreator.DebugEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
-    End Sub
-
-    Private Sub mMSXmlCreator_ErrorEvent(strMessage As String) Handles mMSXmlCreator.ErrorEvent
-        LogError("Error from MSXmlCreator: " & strMessage)
-    End Sub
-
-    Private Sub mMSXmlCreator_WarningEvent(strMessage As String) Handles mMSXmlCreator.WarningEvent
-        LogWarning(strMessage)
-    End Sub
-
-    Private Sub mMSXmlCreator_LoopWaiting() Handles mMSXmlCreator.LoopWaiting
+    Private Sub mMSXmlCreator_LoopWaiting()
 
         UpdateStatusFile()
 

@@ -71,12 +71,12 @@ Public Class clsMSXMLCreator
         ProgLoc = mMSXmlGeneratorAppPath
         If Not File.Exists(ProgLoc) Then
             m_ErrorMessage = "MSXmlGenerator not found; unable to convert .mzML file to .mzXML"
-            ReportError(m_ErrorMessage & ": " & mMSXmlGeneratorAppPath)
+            OnErrorEvent(m_ErrorMessage & ": " & mMSXmlGeneratorAppPath)
             Return False
         End If
 
         If m_DebugLevel >= 2 Then
-            ReportDebugInfo("Creating the .mzXML file for " & m_Dataset & " using " & Path.GetFileName(strSourceFilePath))
+            OnStatusEvent("Creating the .mzXML file for " & m_Dataset & " using " & Path.GetFileName(strSourceFilePath))
         End If
 
         'Setup a program runner tool to call MSConvert
@@ -87,7 +87,7 @@ Public Class clsMSXMLCreator
         CmdStr = " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) & " --32 --mzXML -o " & m_WorkDir
 
         If m_DebugLevel > 0 Then
-            ReportDebugInfo(ProgLoc & " " & CmdStr)
+            OnStatusEvent(ProgLoc & " " & CmdStr)
         End If
 
         With oProgRunner
@@ -106,18 +106,18 @@ Public Class clsMSXMLCreator
             ' .RunProgram returned False
             m_ErrorMessage = "Error running " & Path.GetFileNameWithoutExtension(ProgLoc) &
                              " to convert the .mzML file to a .mzXML file"
-            ReportError(m_ErrorMessage)
+            OnErrorEvent(m_ErrorMessage)
             Return False
         End If
 
         If m_DebugLevel >= 2 Then
-            ReportDebugInfo(" ... mzXML file created")
+            OnStatusEvent(" ... mzXML file created")
         End If
 
         ' Validate that the .mzXML file was actually created
         If Not File.Exists(strMzXmlFilePath) Then
             m_ErrorMessage = ".mzXML file was not created by MSConvert"
-            ReportError(m_ErrorMessage & ": " & strMzXmlFilePath)
+            OnErrorEvent(m_ErrorMessage & ": " & strMzXmlFilePath)
             Return False
         End If
 
@@ -163,12 +163,12 @@ Public Class clsMSXMLCreator
 
         If Not File.Exists(mMSXmlGeneratorAppPath) Then
             m_ErrorMessage = "MSXmlGenerator not found; unable to create .mzXML file"
-            ReportError(m_ErrorMessage & ": " & mMSXmlGeneratorAppPath)
+            OnErrorEvent(m_ErrorMessage & ": " & mMSXmlGeneratorAppPath)
             Return False
         End If
 
         If m_DebugLevel >= 2 Then
-            ReportDebugInfo("Creating the .mzXML file for " & m_Dataset)
+            OnStatusEvent("Creating the .mzXML file for " & m_Dataset)
         End If
 
         Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
@@ -179,10 +179,11 @@ Public Class clsMSXMLCreator
             ' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
             mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML)
+            RegisterEvents(mMSXmlGen)
 
             If rawDataType <> clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES Then
                 m_ErrorMessage = "ReAdW can only be used with .Raw files, not with " & rawDataType
-                ReportError(m_ErrorMessage)
+                OnErrorEvent(m_ErrorMessage)
                 Return False
             End If
 
@@ -216,7 +217,7 @@ Public Class clsMSXMLCreator
 
         Else
             m_ErrorMessage = "Unsupported XmlGenerator: " & strMSXmlGeneratorExe
-            ReportError(m_ErrorMessage)
+            OnErrorEvent(m_ErrorMessage)
             Return False
         End If
 
@@ -227,17 +228,17 @@ Public Class clsMSXMLCreator
 
         If Not blnSuccess Then
             m_ErrorMessage = mMSXmlGen.ErrorMessage
-            ReportError(mMSXmlGen.ErrorMessage)
+            OnErrorEvent(mMSXmlGen.ErrorMessage)
             Return False
 
         ElseIf mMSXmlGen.ErrorMessage.Length > 0 Then
-            ReportWarning(mMSXmlGen.ErrorMessage)
+            OnWarningEvent(mMSXmlGen.ErrorMessage)
         End If
 
         ' Validate that the .mzXML file was actually created
         If Not File.Exists(strMzXmlFilePath) Then
             m_ErrorMessage = ".mzXML file was not created by " & strMSXmlGeneratorExe
-            ReportError(m_ErrorMessage & ": " & strMzXmlFilePath)
+            OnErrorEvent(m_ErrorMessage & ": " & strMzXmlFilePath)
             Return False
         End If
 
@@ -247,18 +248,6 @@ Public Class clsMSXMLCreator
 
         Return True
     End Function
-
-    Private Sub ReportDebugInfo(msg As String)
-        RaiseEvent DebugEvent(msg)
-    End Sub
-
-    Private Sub ReportError(msg As String)
-        RaiseEvent ErrorEvent(msg)
-    End Sub
-
-    Private Sub ReportWarning(msg As String)
-        RaiseEvent WarningEvent(msg)
-    End Sub
 
     ' ReSharper disable once UnusedMember.Global
     ''' <summary>
@@ -288,7 +277,7 @@ Public Class clsMSXMLCreator
     ''' <remarks></remarks>
     Private Sub mMSXmlGenReadW_ProgRunnerStarting(CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
         If m_DebugLevel >= 1 Then
-            ReportDebugInfo(CommandLine)
+            OnStatusEvent(CommandLine)
         End If
     End Sub
 

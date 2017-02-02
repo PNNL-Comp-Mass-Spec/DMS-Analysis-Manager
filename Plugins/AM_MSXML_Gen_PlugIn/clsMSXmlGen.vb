@@ -38,7 +38,7 @@ Public MustInherit Class clsMSXmlGen
 
 #Region "Properties"
 
-    public Property ConsoleOutputFileName as String = ""
+    Public Property ConsoleOutputFileName As String = ""
 
     Public Property ConsoleOutputSuffix As String = ""
 
@@ -196,7 +196,7 @@ Public MustInherit Class clsMSXmlGen
             If String.IsNullOrWhiteSpace(mErrorMessage) Then
                 mErrorMessage = consoleError
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError)
+                OnErrorEvent(consoleError)
             End If
             blnSuccess = False
         End If
@@ -278,10 +278,9 @@ Public MustInherit Class clsMSXmlGen
                 strMessage &= "; Filesize Ratio = " & (dblMsXmlSizeMB / dblSourceFileSizeMB).ToString("0.00")
             End If
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
+            OnStatusEvent(strMessage)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                 "Exception saving msXML stats", ex)
+            OnErrorEvent("Exception saving msXML stats", ex)
         End Try
     End Sub
 
@@ -320,11 +319,9 @@ Public MustInherit Class clsMSXmlGen
                     If mostRecentLine <> "</mzXML>" Then
                         mErrorMessage = "File " & fiOutputFile.Name & " is corrupt; it does not end in </mzXML>"
                         If String.IsNullOrWhiteSpace(mostRecentLine) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "mzXML file is corrupt; file is empty or only contains whitespace")
+                            OnErrorEvent("mzXML file is corrupt; file is empty or only contains whitespace")
                         Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "mzXML file is corrupt; final line is: " & mostRecentLine)
+                            OnErrorEvent("mzXML file is corrupt; final line is: " & mostRecentLine)
                         End If
                         Return False
                     End If
@@ -333,11 +330,9 @@ Public MustInherit Class clsMSXmlGen
                     If mostRecentLine <> "</indexedmzML>" Then
                         mErrorMessage = "File " & fiOutputFile.Name & " is corrupt; it does not end in </indexedmzML>"
                         If String.IsNullOrWhiteSpace(mostRecentLine) Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "mzML file is corrupt; file is empty or only contains whitespace")
+                            OnErrorEvent("mzML file is corrupt; file is empty or only contains whitespace")
                         Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "mzML file is corrupt; final line is: " & mostRecentLine)
+                            OnErrorEvent("mzML file is corrupt; final line is: " & mostRecentLine)
                         End If
                         Return False
                     End If
@@ -352,7 +347,7 @@ Public MustInherit Class clsMSXmlGen
 
         Catch ex As Exception
             mErrorMessage = "Exception validating the .mzXML or .mzML file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mErrorMessage, ex)
+            OnErrorEvent(mErrorMessage, ex)
             Return False
         End Try
     End Function
