@@ -24,7 +24,7 @@ Public Class clsAnalysisToolRunnerLCMSFF
     Protected Const PROGRESS_PCT_FEATURE_FINDER_RUNNING As Single = 5
     Protected Const PROGRESS_PCT_FEATURE_FINDER_DONE As Single = 95
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -47,7 +47,9 @@ Public Class clsAnalysisToolRunnerLCMSFF
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LCMSFeatureFinder")
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         ' Determine the path to the LCMSFeatureFinder folder
         Dim progLoc As String
@@ -71,7 +73,7 @@ Public Class clsAnalysisToolRunnerLCMSFF
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -79,7 +81,7 @@ Public Class clsAnalysisToolRunnerLCMSFF
             .WriteConsoleOutputToFile = False
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "LCMSFeatureFinder", True) Then
+        If Not mCmdRunner.RunProgram(progLoc, CmdStr, "LCMSFeatureFinder", True) Then
             m_message = "Error running LCMSFeatureFinder"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
             blnSuccess = False
@@ -176,10 +178,10 @@ Public Class clsAnalysisToolRunnerLCMSFF
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         UpdateStatusFile(PROGRESS_PCT_FEATURE_FINDER_RUNNING)
-        
+
         LogProgress("LCMSFeatureFinder")
 
     End Sub

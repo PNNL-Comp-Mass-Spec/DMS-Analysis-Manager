@@ -74,8 +74,7 @@ Public Class clsRawConverterRunner
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = consoleOutputFilePath
             }
-
-            AddHandler progRunner.ConsoleErrorEvent, AddressOf ProgRunner_ConsoleErrorEvent
+            AddHandler progRunner.ErrorEvent, AddressOf ProgRunner_ErrorEvent
 
             If Not progRunner.RunProgram(fiRawConverter.FullName, cmdStr, "RawConverter", True) Then
                 ' .RunProgram returned False
@@ -96,7 +95,12 @@ Public Class clsRawConverterRunner
 
     End Function
 
-    Private Sub ProgRunner_ConsoleErrorEvent(errMsg As String)
-        OnErrorEvent("Exception running RawConverter: " + errMsg)
+    Private Sub ProgRunner_ErrorEvent(errMsg As String, ex As Exception)
+
+        If ex Is Nothing OrElse errMsg.Contains(ex.Message) Then
+            OnErrorEvent("Exception running RawConverter: " + errMsg)
+        Else
+            OnErrorEvent("Exception running RawConverter: " + errMsg + "; " + ex.Message)
+        End If
     End Sub
 End Class

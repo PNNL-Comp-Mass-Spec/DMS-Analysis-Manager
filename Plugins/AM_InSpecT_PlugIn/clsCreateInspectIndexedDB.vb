@@ -29,11 +29,9 @@ Public Class clsCreateInspectIndexedDB
         Const MAX_WAITTIME_HOURS As Single = 1.0
         Const MAX_WAITTIME_PREVENT_REPEATS As Single = 2.0
 
-        Const PREPDB_SCRIPT As String = "PrepDB.py"
-        Const SHUFFLEDB_SCRIPT As String = "ShuffleDB_Seed.py"
+        Const PREPDB_SCRIPT = "PrepDB.py"
+        Const SHUFFLEDB_SCRIPT = "ShuffleDB_Seed.py"
 
-        Dim objPrepDB As clsRunDosProgram
-        Dim objShuffleDB As clsRunDosProgram
         Dim CmdStr As String
 
         Dim intRandomNumberSeed As Integer
@@ -85,7 +83,8 @@ Public Class clsCreateInspectIndexedDB
 
             pythonProgLoc = mgrParams.GetParam("pythonprogloc")
 
-            objPrepDB = New clsRunDosProgram(InspectDir & Path.DirectorySeparatorChar)
+            Dim objPrepDB = New clsRunDosProgram(InspectDir & Path.DirectorySeparatorChar)
+            AddHandler objPrepDB.ErrorEvent, AddressOf CmdRunner_ErrorEvent
 
             ' Check to see if another Analysis Manager is already creating the indexed db files
             If File.Exists(dbLockFilename) Then
@@ -177,7 +176,8 @@ Public Class clsCreateInspectIndexedDB
 
                 If blnUseShuffledDB Then
                     'Set up and execute a program runner to run ShuffleDB_seed.py
-                    objShuffleDB = New clsRunDosProgram(InspectDir & Path.DirectorySeparatorChar)
+                    Dim objShuffleDB = New clsRunDosProgram(InspectDir & Path.DirectorySeparatorChar)
+                    AddHandler objShuffleDB.ErrorEvent, AddressOf CmdRunner_ErrorEvent
 
                     CmdStr = " " & ShuffleDBScriptPath & " -r " & dbTrieFilenameBeforeShuffle & " -w " & dbTrieFilename
 
@@ -247,4 +247,12 @@ Public Class clsCreateInspectIndexedDB
 
     End Function
 
+    ''' <summary>
+    ''' Event handler for event CmdRunner.ErrorEvent
+    ''' </summary>
+    ''' <param name="strMessage"></param>
+    ''' <param name="ex"></param>
+    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
+    End Sub
 End Class

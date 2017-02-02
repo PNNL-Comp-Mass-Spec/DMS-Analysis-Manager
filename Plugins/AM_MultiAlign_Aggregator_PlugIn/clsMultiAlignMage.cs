@@ -130,8 +130,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             InitializeProgressStepDictionaries();
 
-            CmdRunner = new clsRunDosProgram(mWorkingDir);
-            String CmdStr;
+            var cmdRunner = new clsRunDosProgram(mWorkingDir);
+            cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+            cmdRunner.ErrorEvent += CmdRunnerOnErrorEvent;
 
             if (mDebugLevel > 4) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsMultiAlignMage.RunTool(): Enter");
@@ -163,12 +164,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMultiAlignConsolePath + " " + CmdStr);
             }
 
-            CmdRunner.CreateNoWindow = true;
-            CmdRunner.CacheStandardOutput = true;
-            CmdRunner.EchoOutputToConsole = true;
-            CmdRunner.WriteConsoleOutputToFile = false;
+            cmdRunner.CreateNoWindow = true;
+            cmdRunner.CacheStandardOutput = true;
+            cmdRunner.EchoOutputToConsole = true;
+            cmdRunner.WriteConsoleOutputToFile = false;
 
-            if (!CmdRunner.RunProgram(sMultiAlignConsolePath, CmdStr, "MultiAlign", true))
+            if (!cmdRunner.RunProgram(sMultiAlignConsolePath, CmdStr, "MultiAlign", true))
             {
                 if (string.IsNullOrEmpty(mMessage))
                     mMessage = "Error running MultiAlign";
@@ -426,6 +427,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         #region Command Runner Code
 
+
+        private void CmdRunnerOnErrorEvent(string strMessage, Exception ex)
+        {
+            OnErrorEvent(strMessage, ex);
+        }
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event

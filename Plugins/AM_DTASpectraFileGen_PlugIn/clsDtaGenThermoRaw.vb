@@ -31,7 +31,7 @@ Public Class clsDtaGenThermoRaw
 
 #Region "Module variables"
     Protected m_NumScans As Integer
-    Protected WithEvents m_RunProgTool As clsRunDosProgram
+    Protected WithEvents mCmdRunner As clsRunDosProgram
     Private m_thThread As Thread
 
     Protected m_MaxScanInFile As Integer
@@ -385,7 +385,9 @@ Public Class clsDtaGenThermoRaw
         m_NumScans = ScanStop - ScanStart + 1
 
         ' Setup a program runner tool to make the spectra files
-        m_RunProgTool = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        AddHandler mCmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         Dim LocCharge As Integer
 
@@ -473,7 +475,7 @@ Public Class clsDtaGenThermoRaw
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)
                     End If
 
-                    With m_RunProgTool
+                    With mCmdRunner
                         If m_RunningExtractMSn Then
                             ' If running Extract_MSn, then cannot cache the standard output; clsProgRunner sometimes freezes on certain datasets (e.g. QC_Shew_10_05_pt5_1_24Jun10_Earth_10-05-10)
                             .CreateNoWindow = False
@@ -494,7 +496,7 @@ Public Class clsDtaGenThermoRaw
 
                     m_ToolRunner.ResetProgRunnerCpuUsage()
 
-                    If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, CmdStr, "DTA_LCQ", True) Then
+                    If Not mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "DTA_LCQ", True) Then
                         ' .RunProgram returned False
                         LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
 
@@ -657,10 +659,20 @@ Public Class clsDtaGenThermoRaw
 #Region "Event Handlers"
 
     ''' <summary>
+    ''' Event handler for event CmdRunner.ErrorEvent
+    ''' </summary>
+    ''' <param name="strMessage"></param>
+    ''' <param name="ex"></param>
+    Protected Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
+        m_ErrMsg = strMessage
+        OnErrorEvent(strMessage, ex)
+    End Sub
+
+    ''' <summary>
     ''' Event handler for LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub m_RunProgTool_LoopWaiting() Handles m_RunProgTool.LoopWaiting
+    Protected Sub CmdRunner_LoopWaiting()
 
         Static dtLastDtaCountTime As DateTime = DateTime.UtcNow
         Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
@@ -677,7 +689,7 @@ Public Class clsDtaGenThermoRaw
             dtLastDtaCountTime = DateTime.UtcNow
             MonitorProgress()
 
-            m_ToolRunner.UpdateProgRunnerCpuUsage(m_RunProgTool, SECONDS_BETWEEN_UPDATE)
+            m_ToolRunner.UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
         End If
 
         ' Update the status file (limit the updates to every 5 seconds)

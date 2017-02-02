@@ -8,13 +8,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
-using System.Xml;
 using AnalysisManagerBase;
-using PRISM.DataBase;
 
 namespace AnalysisManagerMetaboliteDetectorPlugin
 {
@@ -302,7 +297,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 WriteConsoleOutputToFile = false,
                 ConsoleOutputFilePath = mConsoleOutputFile
             };
-
+            RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
 
             m_progress = PROGRESS_PCT_STARTING;

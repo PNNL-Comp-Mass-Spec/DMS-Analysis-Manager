@@ -455,6 +455,7 @@ namespace AnalysisManagerNOMSIPlugin
                 WriteConsoleOutputToFile = false
                 // ConsoleOutputFilePath = mCurrentConsoleOutputFile
             };
+            RegisterEvents(cmdRunner);
 
             cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
 

@@ -436,6 +436,7 @@ Public Class clsMSGFDBUtils
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
             }
+            RegisterEvents(objCreateTSV)
 
             ' This process is typically quite fast, so we do not track CPU usage
             Dim blnSuccess = objCreateTSV.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", True)
@@ -547,6 +548,7 @@ Public Class clsMSGFDBUtils
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
             }
+            RegisterEvents(objCreateTSV)
 
             ' This process is typically quite fast, so we do not track CPU usage
             Dim blnSuccess = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", True)

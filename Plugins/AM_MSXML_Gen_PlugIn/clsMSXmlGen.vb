@@ -4,6 +4,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public MustInherit Class clsMSXmlGen
+    Inherits clsEventNotifier
 
 #Region "Constants"
     ' Define a maximum runtime of 36 hours
@@ -29,8 +30,6 @@ Public MustInherit Class clsMSXmlGen
     Protected mUseProgRunnerResultCode As Boolean
 
     Private mErrorMessage As String = String.Empty
-
-    Private WithEvents CmdRunner As clsRunDosProgram
 
     Public Event ProgRunnerStarting(commandLine As String)
     Public Event LoopWaiting()
@@ -146,7 +145,9 @@ Public MustInherit Class clsMSXmlGen
                 msXmlFormat = "mzML"
         End Select
 
-        CmdRunner = New clsRunDosProgram(Path.GetDirectoryName(mProgramPath))
+        Dim cmdRunner = New clsRunDosProgram(Path.GetDirectoryName(mProgramPath))
+        AddHandler cmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+        AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         ' Verify that program file exists
         If Not File.Exists(mProgramPath) Then
@@ -171,7 +172,7 @@ Public MustInherit Class clsMSXmlGen
         If ConsoleOutputSuffix Is Nothing Then ConsoleOutputSuffix = String.Empty
         ConsoleOutputFileName = Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput" & ConsoleOutputSuffix & ".txt"
 
-        With CmdRunner
+        With cmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
 
@@ -184,14 +185,14 @@ Public MustInherit Class clsMSXmlGen
         End With
 
         Dim dtStartTime = DateTime.UtcNow()
-        blnSuccess = CmdRunner.RunProgram(mProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mProgramPath),
+        blnSuccess = cmdRunner.RunProgram(mProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mProgramPath),
                                           mUseProgRunnerResultCode, MAX_RUNTIME_SECONDS)
 
-        If Not String.IsNullOrWhiteSpace(CmdRunner.CachedConsoleErrors) Then
+        If Not String.IsNullOrWhiteSpace(cmdRunner.CachedConsoleErrors) Then
             ' Append the console errors to the log file
             ' Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
 
-            Dim consoleError = "Console error: " & CmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
+            Dim consoleError = "Console error: " & cmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
             If String.IsNullOrWhiteSpace(mErrorMessage) Then
                 mErrorMessage = consoleError
             Else
@@ -207,9 +208,9 @@ Public MustInherit Class clsMSXmlGen
                                 " hours and has thus been aborted"
                 Return False
             Else
-                If CmdRunner.ExitCode <> 0 Then
+                If cmdRunner.ExitCode <> 0 Then
                     mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) & " returned a non-zero exit code: " &
-                                    CmdRunner.ExitCode.ToString
+                                    cmdRunner.ExitCode.ToString
                     Return False
                 Else
                     mErrorMessage = "Call to " & Path.GetFileNameWithoutExtension(mProgramPath) &
@@ -356,12 +357,21 @@ Public MustInherit Class clsMSXmlGen
         End Try
     End Function
 
+    ''' <summary>
+    ''' Event handler for event CmdRunner.ErrorEvent
+    ''' </summary>
+    ''' <param name="strMessage"></param>
+    ''' <param name="ex"></param>
+    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
+        mErrorMessage = strMessage
+        OnErrorEvent(strMessage, ex)
+    End Sub
 
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
         RaiseEvent LoopWaiting()
     End Sub
 End Class

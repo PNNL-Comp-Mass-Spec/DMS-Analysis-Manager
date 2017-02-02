@@ -7,6 +7,8 @@
 
 Option Strict On
 
+Imports System.IO
+Imports System.Threading
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerOM
@@ -20,8 +22,7 @@ Public Class clsAnalysisToolRunnerOM
     Protected Const PROGRESS_PCT_OMSSA_RUNNING As Single = 5
     Protected Const PROGRESS_PCT_PEPTIDEHIT_START As Single = 95
     Protected Const PROGRESS_PCT_PEPTIDEHIT_COMPLETE As Single = 99
-    
-    Protected WithEvents CmdRunner As clsRunDosProgram
+
     '--------------------------------------------------------------------------------------------
     'Future section to monitor OMSSA log file for progress determination
     '--------------------------------------------------------------------------------------------
@@ -68,7 +69,9 @@ Public Class clsAnalysisToolRunnerOM
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA")
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        Dim cmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(cmdRunner)
+        AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         If m_DebugLevel > 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter")
@@ -106,7 +109,7 @@ Public Class clsAnalysisToolRunnerOM
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting OMSSA: " & progLoc & " " & CmdStr)
         End If
 
-        With CmdRunner
+        With cmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -115,7 +118,7 @@ Public Class clsAnalysisToolRunnerOM
             .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(progLoc) & "_ConsoleOutput.txt")
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", True) Then
+        If Not cmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA, job " & m_JobNum)
             blnProcessingError = True
         End If
@@ -224,7 +227,7 @@ Public Class clsAnalysisToolRunnerOM
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         UpdateStatusFile(PROGRESS_PCT_OMSSA_RUNNING)
 
@@ -241,7 +244,9 @@ Public Class clsAnalysisToolRunnerOM
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA2PepXml")
 
-            CmdRunner = New clsRunDosProgram(m_WorkDir)
+            Dim cmdRunner = New clsRunDosProgram(m_WorkDir)
+            RegisterEvents(cmdRunner)
+            AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
             If m_DebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter")
@@ -266,7 +271,7 @@ Public Class clsAnalysisToolRunnerOM
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting OMSSA2PepXml: " & progLoc & " " & CmdStr)
             End If
 
-            With CmdRunner
+            With cmdRunner
                 .CreateNoWindow = True
                 .CacheStandardOutput = True
                 .EchoOutputToConsole = True
@@ -275,7 +280,7 @@ Public Class clsAnalysisToolRunnerOM
                 .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(progLoc) & "_ConsoleOutput.txt")
             End With
 
-            If Not CmdRunner.RunProgram(progLoc, CmdStr, "OMSSA2PepXml", True) Then
+            If Not cmdRunner.RunProgram(progLoc, CmdStr, "OMSSA2PepXml", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA2PepXml, job " & m_JobNum)
                 Return False
             End If

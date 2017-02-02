@@ -60,7 +60,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     Protected mJobFoldersProcessed As Integer
     Protected mTotalJobFolders As Integer
 
-    Protected WithEvents mCmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Methods"
@@ -785,6 +785,8 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             m_progress = PROGRESS_PCT_PHOSPHO_FDR_RUNNING
 
             mCmdRunner = New clsRunDosProgram(m_WorkDir)
+            RegisterEvents(mCmdRunner)
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
             mJobFoldersProcessed = 0
             mTotalJobFolders = jobFolderlist.Count
@@ -941,6 +943,8 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         End If
 
         mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         If String.IsNullOrWhiteSpace(fileTypeTag) Then
             fileTypeTag = ""
@@ -1058,7 +1062,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
     ''' Event handler for mCmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 

@@ -52,7 +52,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
     Private WithEvents mMSGFDBUtils As clsMSGFDBUtils
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 
 #If EnableHPC = "True" Then
     ' Include these references to enable HPC
@@ -508,8 +508,8 @@ Public Class clsAnalysisToolRunnerMSGFDB
             End If
 
             If Not udtHPCOptions.UsingHPC And Not mMSGFPlusComplete Then
-                If CmdRunner.ExitCode <> 0 Then
-                    LogWarning("MSGF+ returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                If mCmdRunner.ExitCode <> 0 Then
+                    LogWarning("MSGF+ returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
                 Else
                     LogWarning("Call to MSGF+ failed (but exit code is 0)")
                 End If
@@ -800,20 +800,22 @@ Public Class clsAnalysisToolRunnerMSGFDB
             ReportStatus(javaExePath & " " & cmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir) With {
+        mCmdRunner = New clsRunDosProgram(m_WorkDir) With {
             .CreateNoWindow = True,
             .CacheStandardOutput = True,
             .EchoOutputToConsole = True,
             .WriteConsoleOutputToFile = True,
             .ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
         }
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_STARTING
         ResetProgRunnerCpuUsage()
 
         ' Start the program and wait for it to finish
         ' However, while it's running, LoopWaiting will get called via events
-        Dim success = CmdRunner.RunProgram(javaExePath, cmdStr, "MSGF+", True)
+        Dim success = mCmdRunner.RunProgram(javaExePath, cmdStr, "MSGF+", True)
 
         Return success
 
@@ -991,7 +993,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
-            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
+            UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("MSGF+")
 
@@ -1016,7 +1018,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                             CmdRunner.AbortProgramNow()
                         End If
 #Else
-                        CmdRunner.AbortProgramNow()
+                        mCmdRunner.AbortProgramNow()
 #End If
 
                     End If
@@ -1261,7 +1263,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
         MonitorProgress()
     End Sub
 

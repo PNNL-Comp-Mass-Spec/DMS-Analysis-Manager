@@ -66,7 +66,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
     Private mMSXmlCacheFolder As DirectoryInfo
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -157,7 +157,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 Return result
             End If
 
-            CmdRunner = Nothing
+            mCmdRunner = Nothing
 
             Dim blnSuccess As Boolean
             Dim processingError = False
@@ -237,7 +237,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
 
-            CmdRunner = Nothing
+            mCmdRunner = Nothing
 
             ' Make sure objects are released
             Threading.Thread.Sleep(500)        ' 500 msec delay
@@ -486,8 +486,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
             End If
 
             If Not mMSGFPlusComplete Then
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strSearchEngineName & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                If mCmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strSearchEngineName & " returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & strSearchEngineName & " failed (but exit code is 0)")
                 End If
@@ -529,9 +529,11 @@ Public Class clsAnalysisToolRunnerMzRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath & " " & CmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -545,7 +547,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus
 
         ' Start MSGF+ and wait for it to exit
-        Dim blnSuccess = CmdRunner.RunProgram(javaExePath, CmdStr, strSearchEngineName, True)
+        Dim blnSuccess = mCmdRunner.RunProgram(javaExePath, CmdStr, strSearchEngineName, True)
 
         mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown
 
@@ -692,7 +694,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
                         ' This will prevent this function from logging the above message every 30 seconds if the .abort command fails
                         mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1)
 
-                        CmdRunner.AbortProgramNow()
+                        mCmdRunner.AbortProgramNow()
 
                     End If
                 End If
@@ -1032,9 +1034,11 @@ Public Class clsAnalysisToolRunnerMzRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mMSConvertProgLoc & cmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
 
@@ -1049,16 +1053,16 @@ Public Class clsAnalysisToolRunnerMzRefinery
         mProgRunnerMode = eMzRefinerProgRunnerMode.MzRefiner
 
         ' Start MSConvert and wait for it to exit
-        Dim blnSuccess = CmdRunner.RunProgram(mMSConvertProgLoc, cmdStr, "MSConvert_MzRefinery", True)
+        Dim blnSuccess = mCmdRunner.RunProgram(mMSConvertProgLoc, cmdStr, "MSConvert_MzRefinery", True)
 
         mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown
 
-        If Not CmdRunner.WriteConsoleOutputToFile Then
+        If Not mCmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
             Threading.Thread.Sleep(250)
 
-            Using swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
+            Using swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
             End Using
 
         End If
@@ -1066,7 +1070,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         ' Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
         ' We will also extract out the final MS-GF:SpecEValue used for filtering the data
         Threading.Thread.Sleep(250)
-        ParseMSConvertConsoleOutputfile(CmdRunner.ConsoleOutputFilePath)
+        ParseMSConvertConsoleOutputfile(mCmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mMzRefineryCorrectionMode) Then
 
@@ -1076,12 +1080,12 @@ Public Class clsAnalysisToolRunnerMzRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, logMessage)
         End If
 
-        If Not String.IsNullOrWhiteSpace(CmdRunner.CachedConsoleErrors) Then
+        If Not String.IsNullOrWhiteSpace(mCmdRunner.CachedConsoleErrors) Then
 
             ' Append the error messages to the log
             ' Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
 
-            Dim consoleError = "Console error: " & CmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
+            Dim consoleError = "Console error: " & mCmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
             If String.IsNullOrWhiteSpace(mConsoleOutputErrorMsg) Then
                 mConsoleOutputErrorMsg = consoleError
             Else
@@ -1124,8 +1128,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
             If Not m_UnableToUseMzRefinery Then
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSConvert/MzRefinery returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                If mCmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSConvert/MzRefinery returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSConvert/MzRefinery failed (but exit code is 0)")
                 End If
@@ -1156,9 +1160,11 @@ Public Class clsAnalysisToolRunnerMzRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mPpmErrorCharterProgLoc & cmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = False
             .EchoOutputToConsole = True
@@ -1170,7 +1176,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
         mProgRunnerMode = eMzRefinerProgRunnerMode.PPMErrorCharter
 
         ' Start the PPM Error Charter and wait for it to exit
-        Dim blnSuccess = CmdRunner.RunProgram(mPpmErrorCharterProgLoc, cmdStr, "PPMErrorCharter", True)
+        Dim blnSuccess = mCmdRunner.RunProgram(mPpmErrorCharterProgLoc, cmdStr, "PPMErrorCharter", True)
 
         mProgRunnerMode = eMzRefinerProgRunnerMode.Unknown
 
@@ -1182,8 +1188,8 @@ Public Class clsAnalysisToolRunnerMzRefinery
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PPMErrorCharter returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If mCmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PPMErrorCharter returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to PPMErrorCharter failed (but exit code is 0)")
             End If
@@ -1300,7 +1306,7 @@ Public Class clsAnalysisToolRunnerMzRefinery
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         MonitorProgress()
 

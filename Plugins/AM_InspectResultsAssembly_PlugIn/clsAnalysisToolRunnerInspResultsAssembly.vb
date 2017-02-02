@@ -834,7 +834,6 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                                ByVal blnCreateImageFiles As Boolean,
                                ByVal blnTopHitOnly As Boolean) As IJobParams.CloseOutType
 
-        Dim CmdRunner As clsRunDosProgram
         Dim CmdStr As String
 
         Dim InspectDir As String = m_mgrParams.GetParam("inspectdir")
@@ -856,7 +855,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         ' Lookup the p-value to filter on
         pthresh = m_jobParams.GetJobParameter("InspectPvalueThreshold", "0.1")
 
-        CmdRunner = New clsRunDosProgram(InspectDir)
+        Dim cmdRunner = New clsRunDosProgram(InspectDir)
+        RegisterEvents(cmdRunner)
 
         If m_DebugLevel > 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.RunpValue(): Enter")
@@ -923,7 +923,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
 
-        With CmdRunner
+        With cmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -932,13 +932,13 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "PValue_ConsoleOutput.txt")
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "PValue", False) Then
+        If Not cmdRunner.RunProgram(progLoc, CmdStr, "PValue", False) Then
             ' Error running program; the error should have already been logged
         End If
 
-        If CmdRunner.ExitCode <> 0 Then
+        If cmdRunner.ExitCode <> 0 Then
             ' Note: Log the non-zero exit code as an error, but return CLOSEOUT_SUCCESS anyway
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Path.GetFileName(pvalueScriptPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Path.GetFileName(pvalueScriptPath) & " returned a non-zero exit code: " & cmdRunner.ExitCode.ToString)
         End If
 
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS

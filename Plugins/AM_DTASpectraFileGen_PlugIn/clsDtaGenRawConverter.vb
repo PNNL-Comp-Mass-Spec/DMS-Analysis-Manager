@@ -141,17 +141,19 @@ Public Class clsDtaGenRawConverter
             ' The working directory must be the folder that has RawConverter.exe
             ' Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
 
-            m_RunProgTool = New clsRunDosProgram(fiRawConverter.Directory.FullName) With {
+            mCmdRunner = New clsRunDosProgram(fiRawConverter.Directory.FullName) With {
                 .CreateNoWindow = True,
                 .CacheStandardOutput = True,
                 .EchoOutputToConsole = True,
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = String.Empty      ' Allow the console output filename to be auto-generated
             }
+            AddHandler mCmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, cmdStr, "RawConverter", True) Then
+            If Not mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "RawConverter", True) Then
                 ' .RunProgram returned False
-                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
+                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "mCmdRunner.RunProgram returned False")
 
                 m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
                 Return False

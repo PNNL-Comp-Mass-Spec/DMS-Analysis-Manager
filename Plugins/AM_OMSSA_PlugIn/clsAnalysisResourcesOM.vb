@@ -9,7 +9,7 @@ Public Class clsAnalysisResourcesOM
 
     Friend Const OMSSA_DEFAULT_INPUT_FILE As String = "OMSSA_default_input.xml"
     Friend Const OMSSA_INPUT_FILE As String = "OMSSA_input.xml"
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
     Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
         MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
@@ -97,7 +97,8 @@ Public Class clsAnalysisResourcesOM
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running formatdb.exe")
 
-            CmdRunner = New clsRunDosProgram(m_WorkingDir)
+            mCmdRunner = New clsRunDosProgram(m_WorkingDir)
+            RegisterEvents(mCmdRunner)
 
             If m_DebugLevel > 4 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter")
@@ -119,7 +120,7 @@ Public Class clsAnalysisResourcesOM
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting FormatDb: " & progLoc & " " & cmdStr)
             End If
 
-            If Not CmdRunner.RunProgram(progLoc, cmdStr, "FormatDb", True) Then
+            If Not mCmdRunner.RunProgram(progLoc, cmdStr, "FormatDb", True) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running FormatDb for fasta file " & OrgDBName)
                 Return False
             End If

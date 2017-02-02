@@ -1178,7 +1178,11 @@ Public Class clsAnalysisToolRunnerIDPicker
         mCmdRunnerDescription = String.Copy(strProgramDescription)
         ClearConcurrentBag(mCmdRunnerErrors)
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        Dim cmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(cmdRunner)
+        AddHandler cmdRunner.ErrorEvent, AddressOf CmdRunner_ConsoleErrorEvent
+        AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+        AddHandler cmdRunner.Timeout, AddressOf CmdRunner_Timeout
 
         If blnCaptureConsoleOutputViaDosRedirection Then
             ' Create a batch file to run the command
@@ -1378,7 +1382,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
 #Region "Event Handlers"
 
-    Private Sub CmdRunner_ConsoleErrorEvent(NewText As String) Handles CmdRunner.ConsoleErrorEvent
+    Private Sub CmdRunner_ConsoleErrorEvent(NewText As String, ex As Exception)
 
         If Not mCmdRunnerErrors Is Nothing Then
             ' Split NewText on newline characters
@@ -1409,7 +1413,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         UpdateStatusFile()
 
@@ -1417,9 +1421,9 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Sub
 
-    Private Sub CmdRunner_Timeout() Handles CmdRunner.Timeout
+    Private Sub CmdRunner_Timeout()
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborted " & mCmdRunnerDescription)
+            LogError("Aborted " & mCmdRunnerDescription)
         End If
     End Sub
 

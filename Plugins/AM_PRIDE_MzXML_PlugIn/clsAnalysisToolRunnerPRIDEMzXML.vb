@@ -21,7 +21,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
     Protected Const PROGRESS_PCT_START As Single = 95
     Protected Const PROGRESS_PCT_COMPLETE As Single = 99
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Methods"
@@ -49,7 +49,9 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDataFileTrimmer")
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         If m_DebugLevel > 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPRIDEMzXML.RunTool(): Enter")
@@ -69,7 +71,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         CmdStr &= " /G /O:" & m_WorkDir
         CmdStr &= " /L:" & System.IO.Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt")
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -78,7 +80,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
             .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "MSDataFileTrimmer_ConsoleOutput.txt")
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "MSDataFileTrimmer", True) Then
+        If Not mCmdRunner.RunProgram(progLoc, CmdStr, "MSDataFileTrimmer", True) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running MSDataFileTrimmer, job " & m_JobNum)
 
             ' Move the source files and any results to the Failed Job folder
@@ -196,7 +198,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         UpdateStatusFile(PROGRESS_PCT_PRIDEMZXML_RUNNING)
 

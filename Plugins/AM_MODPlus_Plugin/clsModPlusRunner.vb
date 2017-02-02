@@ -148,7 +148,7 @@ Public Class clsMODPlusRunner
     Private mProcessID As Integer
     Private mCoreUsageCurrent As Single
 
-    Private WithEvents mCmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -202,6 +202,9 @@ Public Class clsMODPlusRunner
     Public Sub StartAnalysis()
 
         mCmdRunner = New clsRunDosProgram(mWorkingDirectory)
+        AddHandler mCmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+
         mProgress = 0
 
         mConsoleOutputFilePath = Path.Combine(mWorkingDirectory, MOD_PLUS_CONSOLE_OUTPUT_PREFIX & mThread & ".txt")
@@ -333,7 +336,16 @@ Public Class clsMODPlusRunner
 
     End Sub
 
-    Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
+    ''' <summary>
+    ''' Event handler for event CmdRunner.ErrorEvent
+    ''' </summary>
+    ''' <param name="strMessage"></param>
+    ''' <param name="ex"></param>
+    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage, ex)
+    End Sub
+
+    Private Sub CmdRunner_LoopWaiting()
 
         Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
@@ -347,7 +359,7 @@ Public Class clsMODPlusRunner
             mCoreUsageCurrent = ProgRunner.GetCoreUsage()
             mProcessID = ProgRunner.ProcessID
         End If
-        
+
         Dim processIDs = New List(Of Integer)
         processIDs.Add(mProcessID)
 

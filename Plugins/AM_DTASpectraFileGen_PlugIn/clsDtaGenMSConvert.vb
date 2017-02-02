@@ -251,17 +251,19 @@ Public Class clsDtaGenMSConvert
             End If
 
             'Setup a program runner tool to make the spectra files
-            m_RunProgTool = New clsRunDosProgram(m_WorkDir) With {
+            mCmdRunner = New clsRunDosProgram(m_WorkDir) With {
                 .CreateNoWindow = True,
                 .CacheStandardOutput = True,
                 .EchoOutputToConsole = True,
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = String.Empty      ' Allow the console output filename to be auto-generated
             }
+            AddHandler mCmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            If Not m_RunProgTool.RunProgram(m_DtaToolNameLoc, cmdStr, "MSConvert", True) Then
+            If Not mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "MSConvert", True) Then
                 ' .RunProgram returned False
-                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
+                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "mCmdRunner.RunProgram returned False")
 
                 m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
                 Return False

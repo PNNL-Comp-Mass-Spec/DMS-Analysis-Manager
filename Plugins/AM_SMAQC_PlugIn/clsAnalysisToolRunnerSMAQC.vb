@@ -30,7 +30,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     Private mConsoleOutputErrorMsg As String
     Private mDatasetID As Integer = 0
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Methods"
@@ -101,33 +101,35 @@ Public Class clsAnalysisToolRunnerSMAQC
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
             End If
 
-            CmdRunner = New clsRunDosProgram(m_WorkDir) With {
+            mCmdRunner = New clsRunDosProgram(m_WorkDir) With {
                 .CreateNoWindow = True,
                 .CacheStandardOutput = True,
                 .EchoOutputToConsole = True,
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, SMAQC_CONSOLE_OUTPUT)
             }
+            RegisterEvents(mCmdRunner)
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
             ' We will delete the console output file later since it has the same content as the log file
             m_jobParams.AddResultFileToSkip(SMAQC_CONSOLE_OUTPUT)
 
             m_progress = PROGRESS_PCT_SMAQC_STARTING
 
-            blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "SMAQC", True)
+            blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "SMAQC", True)
 
-            If Not CmdRunner.WriteConsoleOutputToFile Then
+            If Not mCmdRunner.WriteConsoleOutputToFile Then
                 ' Write the console output to a text file
                 Threading.Thread.Sleep(250)
 
-                Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
+                Dim swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
                 swConsoleOutputfile.Close()
             End If
 
             ' Parse the console output file one more time to check for errors
             Threading.Thread.Sleep(250)
-            ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+            ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
             If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
@@ -140,8 +142,8 @@ Public Class clsAnalysisToolRunnerSMAQC
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SMAQC returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                If mCmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "SMAQC returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to SMAQC failed (but exit code is 0)")
                 End If
@@ -877,7 +879,7 @@ Public Class clsAnalysisToolRunnerSMAQC
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 

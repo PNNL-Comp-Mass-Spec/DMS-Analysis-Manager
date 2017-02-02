@@ -93,7 +93,7 @@ Public Class clsGlyQIqRunner
 
     Protected ReadOnly mWorkingDirectory As String
 
-    Protected WithEvents mCmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -211,6 +211,9 @@ Public Class clsGlyQIqRunner
     Public Sub StartAnalysis()
 
         mCmdRunner = New clsRunDosProgram(mWorkingDirectory)
+        AddHandler mCmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+
         mProgress = 0
 
         mConsoleOutputFilePath = Path.Combine(mWorkingDirectory, GLYQ_IQ_CONSOLE_OUTPUT_PREFIX & mCore & ".txt")
@@ -302,8 +305,17 @@ Public Class clsGlyQIqRunner
         End Try
 
     End Sub
-    
-    Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
+
+    ''' <summary>
+    ''' Event handler for event CmdRunner.ErrorEvent
+    ''' </summary>
+    ''' <param name="strMessage"></param>
+    ''' <param name="ex"></param>
+    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage, ex)
+    End Sub
+
+    Private Sub CmdRunner_LoopWaiting()
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 

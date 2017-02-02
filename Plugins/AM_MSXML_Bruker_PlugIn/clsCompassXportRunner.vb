@@ -12,6 +12,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsCompassXportRunner
+    Inherits clsEventNotifier
 
 #Region "Enums"
     Public Enum MSXMLOutputTypeConstants
@@ -32,8 +33,6 @@ Public Class clsCompassXportRunner
     Private ReadOnly mCentroidMSXML As Boolean
 
     Private mErrorMessage As String = String.Empty
-
-    Protected WithEvents CmdRunner As clsRunDosProgram
 
     Public Event ProgRunnerStarting(CommandLine As String)
     Public Event LoopWaiting()
@@ -123,7 +122,9 @@ Public Class clsCompassXportRunner
             Return False
         End If
 
-        CmdRunner = New clsRunDosProgram(Path.GetDirectoryName(mCompassXportProgramPath))
+        Dim cmdRunner = New clsRunDosProgram(Path.GetDirectoryName(mCompassXportProgramPath))
+        AddHandler cmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+        AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         'Set up and execute a program runner to run CompassXport executable
 
@@ -140,7 +141,7 @@ Public Class clsCompassXportRunner
 
         RaiseEvent ProgRunnerStarting(mCompassXportProgramPath & CmdStr)
 
-        With CmdRunner
+        With cmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -149,11 +150,11 @@ Public Class clsCompassXportRunner
             .ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & "_ConsoleOutput.txt")
         End With
 
-        blnSuccess = CmdRunner.RunProgram(mCompassXportProgramPath, CmdStr, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), True)
+        blnSuccess = cmdRunner.RunProgram(mCompassXportProgramPath, CmdStr, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), True)
 
         If Not blnSuccess Then
-            If CmdRunner.ExitCode <> 0 Then
-                mErrorMessage = Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " returned a non-zero exit code: " & CmdRunner.ExitCode.ToString
+            If cmdRunner.ExitCode <> 0 Then
+                mErrorMessage = Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " returned a non-zero exit code: " & cmdRunner.ExitCode.ToString
                 blnSuccess = False
             Else
                 mErrorMessage = "Call to " & Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " failed (but exit code is 0)"
@@ -201,10 +202,20 @@ Public Class clsCompassXportRunner
     End Function
 
     ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
+    ''' Event handler for event CmdRunner.ErrorEvent
+    ''' </summary>
+    ''' <param name="strMessage"></param>
+    ''' <param name="ex"></param>
+    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
+        mErrorMessage = strMessage
+        OnErrorEvent(strMessage, ex)
+    End Sub
+
+    ''' <summary>
+    ''' Event handler for event CmdRunner.LoopWaiting
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
         RaiseEvent LoopWaiting()
     End Sub
 #End Region

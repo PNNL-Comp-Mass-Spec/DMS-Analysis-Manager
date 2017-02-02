@@ -40,7 +40,7 @@ Public Class clsAnalysisToolRunnerMODa
 
     Protected mMODaResultsFilePath As String
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -117,7 +117,7 @@ Public Class clsAnalysisToolRunnerMODa
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
 
-            CmdRunner = Nothing
+            mCmdRunner = Nothing
 
             ' Make sure objects are released
             Threading.Thread.Sleep(500)        ' 500 msec delay
@@ -206,9 +206,11 @@ Public Class clsAnalysisToolRunnerMODa
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = False
             .EchoOutputToConsole = True
@@ -222,7 +224,7 @@ Public Class clsAnalysisToolRunnerMODa
 
         ' Start the program and wait for it to finish
         ' However, while it's running, LoopWaiting will get called via events
-        blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MODa", True)
+        blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, CmdStr, "MODa", True)
 
         If Not mToolVersionWritten Then
             If String.IsNullOrWhiteSpace(mMODaVersion) Then
@@ -242,8 +244,8 @@ Public Class clsAnalysisToolRunnerMODa
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MODa returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If mCmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MODa returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MODa failed (but exit code is 0)")
             End If
@@ -633,7 +635,7 @@ Public Class clsAnalysisToolRunnerMODa
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
@@ -649,7 +651,7 @@ Public Class clsAnalysisToolRunnerMODa
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
-            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
+            UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("MODa")
         End If

@@ -3003,6 +3003,7 @@ Public Class clsAnalysisToolRunnerBase
                 .DebugLevel = 1,
                 .MonitorInterval = 250
             }
+            RegisterEvents(objProgRunner)
 
             blnSuccess = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", False)
 
@@ -3753,7 +3754,6 @@ Public Class clsAnalysisToolRunnerBase
     End Sub
 
 #End Region
-
 
 #Region "clsEventNotifier events"
 

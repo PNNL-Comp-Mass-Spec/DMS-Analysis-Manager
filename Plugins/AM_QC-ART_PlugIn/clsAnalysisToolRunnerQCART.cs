@@ -602,7 +602,7 @@ namespace AnalysisManagerQCARTPlugin
                 WriteConsoleOutputToFile = false
                 // ConsoleOutputFilePath = mCurrentConsoleOutputFile
             };
-
+            RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
 
             m_progress = PROGRESS_PCT_STARTING;

@@ -417,6 +417,7 @@ Public Class clsExtractToolRunner
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = Path.Combine(m_WorkDir, toolName & "_Filter_ConsoleOutput.txt")
             }
+            RegisterEvents(progRunner)
 
             Dim blnSuccess = progRunner.RunProgram(JavaProgLoc, cmdStr, toolName & "_Filter", True)
 
@@ -2235,6 +2236,5 @@ Public Class clsExtractToolRunner
     End Sub
 
 #End Region
-
 
 End Class

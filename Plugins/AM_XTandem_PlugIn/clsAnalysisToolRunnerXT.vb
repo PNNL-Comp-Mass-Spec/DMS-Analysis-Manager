@@ -36,7 +36,7 @@ Public Class clsAnalysisToolRunnerXT
     Protected Const PROGRESS_PCT_XTANDEM_CREATING_REPORT As Single = 95
     Protected Const PROGRESS_PCT_XTANDEM_COMPLETE As Single = 99
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
     Protected mToolVersionWritten As Boolean
     Protected mXTandemVersion As String = String.Empty
@@ -75,7 +75,9 @@ Public Class clsAnalysisToolRunnerXT
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem")
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         If m_DebugLevel > 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter")
@@ -103,7 +105,7 @@ Public Class clsAnalysisToolRunnerXT
         'Set up and execute a program runner to run X!Tandem
         CmdStr = "input.xml"
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -114,7 +116,7 @@ Public Class clsAnalysisToolRunnerXT
 
         m_progress = PROGRESS_PCT_XTANDEM_STARTING
 
-        blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True)
+        blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True)
 
         ' Parse the console output file one more time to determine the number of peptides found
         ParseConsoleOutputFile(Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT))
@@ -126,8 +128,8 @@ Public Class clsAnalysisToolRunnerXT
         If Not blnSuccess Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " & m_JobNum)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tandem.exe returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If mCmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tandem.exe returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Tandem.exe failed (but exit code is 0)")
             End If
@@ -446,7 +448,7 @@ Public Class clsAnalysisToolRunnerXT
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 

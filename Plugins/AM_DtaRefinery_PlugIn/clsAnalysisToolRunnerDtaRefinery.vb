@@ -25,7 +25,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
     Private mXTandemHasFinished As Boolean
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 
     '--------------------------------------------------------------------------------------------
     'Future section to monitor DTA_Refinery log file for progress determination
@@ -74,13 +74,15 @@ Public Class clsAnalysisToolRunnerDtaRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running DTA_Refinery")
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
-        With CmdRunner
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        With mCmdRunner
             .CreateNoWindow = False
             .EchoOutputToConsole = False
             .CacheStandardOutput = False
             .WriteConsoleOutputToFile = False
         End With
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         ' verify that program file exists
         ' DTARefineryLoc will be something like this: "c:\dms_programs\DTARefinery\dta_refinery.exe"
@@ -124,7 +126,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         ' Start the program and wait for it to finish
         ' However, while it's running, LoopWaiting will get called via events
-        Dim success = CmdRunner.RunProgram(strBatchFilePath, String.Empty, "DTARefinery", True)
+        Dim success = mCmdRunner.RunProgram(strBatchFilePath, String.Empty, "DTARefinery", True)
 
         If Not success Then
 
@@ -482,7 +484,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Const DTA_REFINERY_PROCESS_NAME = "dta_refinery"
         Const XTANDEM_PROCESS_NAME = "tandem_5digit_precision"
@@ -495,17 +497,17 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         ' Push a new core usage value into the queue every 30 seconds
         If DateTime.UtcNow.Subtract(dtLastCpuUsageCheck).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
             dtLastCpuUsageCheck = DateTime.UtcNow
-            
+
             If Not mXTandemHasFinished Then
                 mXTandemHasFinished = IsXTandemFinished()
             End If
 
             If mXTandemHasFinished Then
                 ' Determine the CPU usage of DTA_Refinery
-                UpdateCpuUsageByProcessName(DTA_REFINERY_PROCESS_NAME, SECONDS_BETWEEN_UPDATE, CmdRunner.ProcessID)
+                UpdateCpuUsageByProcessName(DTA_REFINERY_PROCESS_NAME, SECONDS_BETWEEN_UPDATE, mCmdRunner.ProcessID)
             Else
                 ' Determine the CPU usage of X!Tandem
-                UpdateCpuUsageByProcessName(XTANDEM_PROCESS_NAME, SECONDS_BETWEEN_UPDATE, CmdRunner.ProcessID)
+                UpdateCpuUsageByProcessName(XTANDEM_PROCESS_NAME, SECONDS_BETWEEN_UPDATE, mCmdRunner.ProcessID)
             End If
 
             LogProgress("DtaRefinery")

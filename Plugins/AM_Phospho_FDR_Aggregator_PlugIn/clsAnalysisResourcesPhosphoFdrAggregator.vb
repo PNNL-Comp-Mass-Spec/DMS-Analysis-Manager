@@ -9,8 +9,6 @@ Imports System.Text.RegularExpressions
 Public Class clsAnalysisResourcesPhosphoFdrAggregator
     Inherits clsAnalysisResources
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
-
     Public Overrides Function GetResources() As IJobParams.CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step

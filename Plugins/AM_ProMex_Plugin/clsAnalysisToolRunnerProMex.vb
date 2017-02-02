@@ -35,7 +35,7 @@ Public Class clsAnalysisToolRunnerProMex
 
     Protected mProMexResultsFilePath As String
 
-    Protected WithEvents mCmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -499,6 +499,8 @@ Public Class clsAnalysisToolRunnerProMex
         End If
 
         mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         With mCmdRunner
             .CreateNoWindow = True
@@ -671,7 +673,7 @@ Public Class clsAnalysisToolRunnerProMex
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles mCmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow

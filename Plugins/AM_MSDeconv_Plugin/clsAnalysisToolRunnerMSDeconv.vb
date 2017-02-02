@@ -33,7 +33,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
     Protected mMSDeconvProgLoc As String
     Protected mConsoleOutputErrorMsg As String
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -115,8 +115,8 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSDeconv returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                If mCmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSDeconv returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSDeconv failed (but exit code is 0)")
                 End If
@@ -163,7 +163,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
 
-            CmdRunner = Nothing
+            mCmdRunner = Nothing
 
             'Make sure objects are released
             Threading.Thread.Sleep(500)        ' 500 msec delay
@@ -469,9 +469,11 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = False
             .EchoOutputToConsole = True
@@ -482,7 +484,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
         m_progress = PROGRESS_PCT_STARTING
 
-        Dim blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSDeconv", True)
+        Dim blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSDeconv", True)
 
         If Not mToolVersionWritten Then
             If String.IsNullOrWhiteSpace(mMSDeconvVersion) Then
@@ -630,8 +632,8 @@ Public Class clsAnalysisToolRunnerMSDeconv
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        Static dtLastConsoleOutputParse As System.DateTime = System.DateTime.UtcNow
+    Private Sub CmdRunner_LoopWaiting()
+        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         UpdateStatusFile()
 

@@ -317,6 +317,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(m_WorkDir, DATAEXPORT_CONSOLE_OUTPUT)
                 };
+                RegisterEvents(cmdRunner);
 
                 cmdRunner.LoopWaiting += cmdRunner_LoopWaiting;
                 cmdRunner.Timeout += cmdRunner_Timeout;

@@ -111,7 +111,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     Private WithEvents mMSXmlCreator As AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator
     Private WithEvents mDTAtoMGF As DTAtoMGF.clsDTAtoMGF
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Structures and Enums"
@@ -2717,7 +2717,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         Dim strVersionFilePath As String
         Dim strPRIDEConverterVersion = "unknown"
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         m_StatusTools.CurrentOperation = "Determining PrideConverter Version"
         m_StatusTools.UpdateAndWrite(m_progress)
@@ -2731,7 +2733,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc & " " & CmdStr)
         End If
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = False
             .CacheStandardOutput = False
             .EchoOutputToConsole = False
@@ -2742,10 +2744,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         End With
 
         Dim blnSuccess As Boolean
-        blnSuccess = CmdRunner.RunProgram(mJavaProgLoc, CmdStr, "PrideConverter", True)
+        blnSuccess = mCmdRunner.RunProgram(mJavaProgLoc, CmdStr, "PrideConverter", True)
 
         ' Assure that the console output file has been parsed
-        ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+        ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
             LogError(mConsoleOutputErrorMsg)
@@ -3460,7 +3462,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Return False
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PrideConverter on " & Path.GetFileName(strMsgfResultsFilePath))
@@ -3479,7 +3483,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc & " " & CmdStr)
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = False
             .CacheStandardOutput = False
             .EchoOutputToConsole = False
@@ -3490,10 +3494,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         End With
 
         Dim blnSuccess As Boolean
-        blnSuccess = CmdRunner.RunProgram(mJavaProgLoc, CmdStr, "PrideConverter", True)
+        blnSuccess = mCmdRunner.RunProgram(mJavaProgLoc, CmdStr, "PrideConverter", True)
 
         ' Assure that the console output file has been parsed
-        ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+        ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
             If mConsoleOutputErrorMsg.Contains("/Report/PTMs/PTM") Then
@@ -4408,7 +4412,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
         If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then

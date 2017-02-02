@@ -106,7 +106,7 @@ Public Class clsMSGFRunner
     Private mConsoleOutputErrorMsg As String
 
     Private WithEvents mMSGFInputCreator As clsMSGFInputCreator
-    Private WithEvents mMSGFRunner As clsRunDosProgram
+    Private mMSGFRunner As clsRunDosProgram
 
     Private mMSGFInputCreatorErrorCount As Integer
     Private mMSGFInputCreatorWarningCount As Integer
@@ -1980,6 +1980,8 @@ Public Class clsMSGFRunner
             .WriteConsoleOutputToFile = True,
             .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT)
         }
+        RegisterEvents(mMSGFRunner)
+        AddHandler mMSGFRunner.LoopWaiting, AddressOf MSGFRunner_LoopWaiting
 
         Dim blnSuccess As Boolean
         blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", True)
@@ -2663,7 +2665,7 @@ Public Class clsMSGFRunner
     ''' Event handler that fires while MSGF is processing
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub mMSGFRunner_LoopWaiting() Handles mMSGFRunner.LoopWaiting
+    Private Sub MSGFRunner_LoopWaiting()
         Static dtLastUpdateTime As DateTime = Date.UtcNow
         Static dtLastConsoleOutputParse As DateTime = Date.UtcNow
 

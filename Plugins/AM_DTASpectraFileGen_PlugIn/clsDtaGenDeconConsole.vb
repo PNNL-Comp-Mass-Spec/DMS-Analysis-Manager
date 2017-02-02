@@ -191,14 +191,17 @@ Public Class clsDtaGenDeconConsole
         End If
 
         'Setup a program runner tool to make the spectra files
-        m_RunProgTool = New clsRunDosProgram(m_WorkDir) With {
+        mCmdRunner = New clsRunDosProgram(m_WorkDir) With {
             .CreateNoWindow = True,
             .CacheStandardOutput = True,
             .EchoOutputToConsole = True,
             .WriteConsoleOutputToFile = False   ' Disable since the DeconConsole log file has very similar information
         }
 
-        Dim blnSuccess = m_RunProgTool.RunProgram(m_DtaToolNameLoc, cmdStr, "DeconConsole", True)
+        AddHandler mCmdRunner.ErrorEvent, AddressOf MyBase.CmdRunner_ErrorEvent
+        AddHandler mCmdRunner.LoopWaiting, AddressOf MyBase.CmdRunner_LoopWaiting
+
+        Dim blnSuccess = mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "DeconConsole", True)
 
         ' Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 
@@ -279,7 +282,7 @@ Public Class clsDtaGenDeconConsole
                 mDeconConsoleFinishedDespiteProgRunnerError = True
 
                 ' Abort processing
-                m_RunProgTool.AbortProgramNow()
+                mCmdRunner.AbortProgramNow()
 
                 Threading.Thread.Sleep(3000)
             End If

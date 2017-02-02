@@ -65,8 +65,6 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
     Protected mMSAlignWorkFolderPath As String
     Protected mInputPropertyValues As udtInputPropertyValuesType
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
-
 #End Region
 
 #Region "Methods"
@@ -165,9 +163,11 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
-            CmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
+            Dim cmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
+            RegisterEvents(cmdRunner)
+            AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            With CmdRunner
+            With cmdRunner
                 .CreateNoWindow = True
                 .CacheStandardOutput = False
                 .EchoOutputToConsole = True
@@ -179,7 +179,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
             m_progress = PROGRESS_PCT_STARTING
 
-            blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", True)
+            blnSuccess = cmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", True)
 
             If Not mToolVersionWritten Then
                 If String.IsNullOrWhiteSpace(mMSAlignVersion) Then
@@ -205,8 +205,8 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_Histone returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                If cmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_Histone returned a non-zero exit code: " & cmdRunner.ExitCode.ToString)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign_Histone failed (but exit code is 0)")
                 End If
@@ -264,8 +264,6 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
             If Not UpdateSummaryFile() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
-
-            CmdRunner = Nothing
 
             'Make sure objects are released
             System.Threading.Thread.Sleep(500)        ' 500 msec delay
@@ -754,9 +752,11 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
-            CmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
+            Dim cmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
+            RegisterEvents(cmdRunner)
+            AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            With CmdRunner
+            With cmdRunner
                 .CreateNoWindow = True
                 .CacheStandardOutput = False
                 .EchoOutputToConsole = True
@@ -765,7 +765,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
                 .ConsoleOutputFilePath = IO.Path.Combine(m_WorkDir, MSAlign_Report_CONSOLE_OUTPUT)
             End With
 
-            blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", True)
+            blnSuccess = cmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", True)
 
             If Not blnSuccess Then
                 Dim Msg As String
@@ -774,8 +774,8 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_Histone returned a non-zero exit code during report creation: " & CmdRunner.ExitCode.ToString)
+                If cmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_Histone returned a non-zero exit code during report creation: " & cmdRunner.ExitCode.ToString)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign_Histone failed during report creation (but exit code is 0)")
                 End If

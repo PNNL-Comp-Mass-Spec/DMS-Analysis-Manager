@@ -7,6 +7,8 @@
 
 Option Strict On
 
+Imports System.Collections.Generic
+Imports System.IO
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerMultiAlign
@@ -20,7 +22,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
     Protected Const PROGRESS_PCT_MULTIALIGN_RUNNING As Single = 5
     Protected Const PROGRESS_PCT_MULTI_ALIGN_DONE As Single = 95
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -43,7 +45,9 @@ Public Class clsAnalysisToolRunnerMultiAlign
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign")
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         If m_DebugLevel > 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMultiAlign.OperateAnalysisTool(): Enter")
@@ -73,7 +77,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -81,7 +85,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
             .WriteConsoleOutputToFile = False
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", True) Then
+        If Not mCmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", True) Then
             m_message = "Error running MultiAlign"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
             blnSuccess = False
@@ -274,8 +278,8 @@ Public Class clsAnalysisToolRunnerMultiAlign
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
-        
+    Private Sub CmdRunner_LoopWaiting()
+
         UpdateStatusFile(PROGRESS_PCT_MULTIALIGN_RUNNING)
 
         LogProgress("MultiAlign")

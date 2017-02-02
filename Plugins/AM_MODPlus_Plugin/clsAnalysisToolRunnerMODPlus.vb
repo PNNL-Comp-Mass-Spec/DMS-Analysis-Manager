@@ -224,6 +224,7 @@ Public Class clsAnalysisToolRunnerMODPlus
         End If
 
         Dim msConvertRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(msConvertRunner)
         AddHandler msConvertRunner.LoopWaiting, AddressOf MSConvert_CmdRunner_LoopWaiting
 
         With msConvertRunner

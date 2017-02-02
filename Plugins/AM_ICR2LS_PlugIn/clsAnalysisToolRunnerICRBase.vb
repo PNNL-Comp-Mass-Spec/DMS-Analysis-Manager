@@ -615,6 +615,9 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
         ' Initialize the program runner
         mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+
         mCmdRunner.MonitorInterval = MONITOR_INTERVAL_SECONDS * 1000
 
         ' Set up and execute a program runner to run ICR2LS.exe

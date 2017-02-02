@@ -846,7 +846,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                     .WriteConsoleOutputToFile = True,
                     .ConsoleOutputFilePath = consoleOutputFilePath
                 }
-
+                AddHandler objBuildSA.ErrorEvent, AddressOf CmdRunner_ErrorEvent
 
                 strCurrentTask = "Run BuildSA using " & CmdStr
 
@@ -1280,20 +1280,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 
 #Region "Event Methods"
-    Private Sub ReportError(message As String)
-        ReportError(message, String.Empty)
-    End Sub
 
-    Private Sub ReportError(message As String, detailedMessage As String)
-        RaiseEvent ErrorEvent(message, detailedMessage)
-    End Sub
-
-    Private Sub ReportMessage(message As String)
-        RaiseEvent MessageEvent(message)
-    End Sub
-
-    Private Sub ReportWarning(message As String)
-        RaiseEvent WarningEvent(message)
+    ''' <summary>
+    ''' Event handler for event CmdRunner.ErrorEvent
+    ''' </summary>
+    ''' <param name="strMessage"></param>
+    ''' <param name="ex"></param>
+    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
+        OnErrorEvent(strMessage, ex)
     End Sub
 
 #If EnableHPC = "True" Then

@@ -37,8 +37,6 @@ Public Class clsPepHitResultsProcWrapper
     ' This list tracks the error messages reported by CmdRunner
     Protected mCmdRunnerErrors As Concurrent.ConcurrentBag(Of String)
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
-
 #End Region
 
 #Region "Properties"
@@ -175,17 +173,19 @@ Public Class clsPepHitResultsProcWrapper
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
             End If
 
-            CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName) With {
+            Dim cmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName) With {
                 .CreateNoWindow = True,
                 .CacheStandardOutput = True,
                 .EchoOutputToConsole = True,
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
             }
+            AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+            AddHandler cmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
 
             ' Abort PHRP if it runs for over 720 minutes (this generally indicates that it's stuck)
             Const intMaxRuntimeSeconds As Integer = 720 * 60
-            blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PHRP", True, intMaxRuntimeSeconds)
+            blnSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "PHRP", True, intMaxRuntimeSeconds)
 
             If mCmdRunnerErrors.Count > 0 Then
                 ' Append the error messages to the log
@@ -200,8 +200,8 @@ Public Class clsPepHitResultsProcWrapper
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            If CmdRunner.ExitCode <> 0 Then
-                m_ErrMsg = "PHRP runner returned a non-zero error code: " & CmdRunner.ExitCode.ToString
+            If cmdRunner.ExitCode <> 0 Then
+                m_ErrMsg = "PHRP runner returned a non-zero error code: " & cmdRunner.ExitCode.ToString
 
                 ' Parse the console output file for any lines that contain "Error"
                 ' Append them to m_ErrMsg
@@ -366,8 +366,7 @@ Public Class clsPepHitResultsProcWrapper
 
 #Region "Event Handlers"
 
-    Private Sub CmdRunner_ConsoleErrorEvent(NewText As String) Handles CmdRunner.ConsoleErrorEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP, " & NewText)
+    Private Sub CmdRunner_ErrorEvent(NewText As String, ex As Exception)
 
         If Not mCmdRunnerErrors Is Nothing Then
             ' Split NewText on newline characters
@@ -395,7 +394,7 @@ Public Class clsPepHitResultsProcWrapper
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
         Static dtLastStatusUpdate As DateTime = Date.UtcNow
 
         'Update the status by parsing the PHRP Console Output file every 20 seconds

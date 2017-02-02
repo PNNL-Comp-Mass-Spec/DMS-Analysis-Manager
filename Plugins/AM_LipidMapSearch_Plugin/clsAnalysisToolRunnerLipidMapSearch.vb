@@ -43,7 +43,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
     Private mLipidMapsDBFilename As String = String.Empty
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Structures"
@@ -131,9 +131,11 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mLipidToolsProgLoc & cmdStr)
             End If
 
-            CmdRunner = New clsRunDosProgram(m_WorkDir)
+            mCmdRunner = New clsRunDosProgram(m_WorkDir)
+            RegisterEvents(mCmdRunner)
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            With CmdRunner
+            With mCmdRunner
                 .CreateNoWindow = True
                 .CacheStandardOutput = True
                 .EchoOutputToConsole = True
@@ -143,28 +145,28 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
             m_progress = PROGRESS_PCT_LIPID_TOOLS_STARTING
 
-            Dim success = CmdRunner.RunProgram(mLipidToolsProgLoc, cmdStr, "LipidTools", True)
+            Dim success = mCmdRunner.RunProgram(mLipidToolsProgLoc, cmdStr, "LipidTools", True)
             Dim processingError = False
 
-            If Not CmdRunner.WriteConsoleOutputToFile Then
+            If Not mCmdRunner.WriteConsoleOutputToFile Then
                 ' Write the console output to a text file
                 Thread.Sleep(250)
 
-                Dim swConsoleOutputfile As New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
+                Dim swConsoleOutputfile As New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
                 swConsoleOutputfile.Close()
             End If
 
             ' Parse the console output file one more time to check for errors
             Thread.Sleep(250)
-            ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+            ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
             If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
             End If
 
             ' Append a line to the console output file listing the name of the LipidMapsDB that we used
-            Using swConsoleOutputFile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
+            Using swConsoleOutputFile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
                 swConsoleOutputFile.WriteLine("LipidMapsDB Name: " & mLipidMapsDBFilename)
                 swConsoleOutputFile.WriteLine("LipidMapsDB Hash: " & clsGlobal.ComputeFileHashSha1(Path.Combine(m_WorkDir, mLipidMapsDBFilename)))
             End Using
@@ -179,8 +181,8 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
 
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "LipidTools returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                If mCmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "LipidTools returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to LipidTools failed (but exit code is 0)")
                 End If
@@ -366,23 +368,25 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mLipidToolsProgLoc & cmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = False
             .EchoOutputToConsole = True
             .WriteConsoleOutputToFile = False
         End With
 
-        blnSuccess = CmdRunner.RunProgram(mLipidToolsProgLoc, cmdStr, "LipidTools", True)
+        blnSuccess = mCmdRunner.RunProgram(mLipidToolsProgLoc, cmdStr, "LipidTools", True)
 
         If Not blnSuccess Then
             m_message = "Error downloading the latest LipidMaps DB using LipidTools"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "LipidTools returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If mCmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "LipidTools returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to LipidTools failed (but exit code is 0)")
             End If
@@ -907,7 +911,7 @@ Public Class clsAnalysisToolRunnerLipidMapSearch
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 

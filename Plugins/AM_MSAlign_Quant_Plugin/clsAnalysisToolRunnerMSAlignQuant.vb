@@ -31,7 +31,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
     Protected mTargetedWorkflowsProgLoc As String
     Protected mConsoleOutputProgressMap As Dictionary(Of String, Integer)
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 #End Region
 
 #Region "Structures"
@@ -116,9 +116,11 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mTargetedWorkflowsProgLoc & cmdStr)
             End If
 
-            CmdRunner = New clsRunDosProgram(m_WorkDir)
+            mCmdRunner = New clsRunDosProgram(m_WorkDir)
+            RegisterEvents(mCmdRunner)
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            With CmdRunner
+            With mCmdRunner
                 .CreateNoWindow = True
                 .CacheStandardOutput = True
                 .EchoOutputToConsole = True
@@ -128,21 +130,21 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
             m_progress = PROGRESS_TARGETED_WORKFLOWS_STARTING
 
-            blnSuccess = CmdRunner.RunProgram(mTargetedWorkflowsProgLoc, cmdStr, "TargetedWorkflowsConsole", True)
+            blnSuccess = mCmdRunner.RunProgram(mTargetedWorkflowsProgLoc, cmdStr, "TargetedWorkflowsConsole", True)
 
-            If Not CmdRunner.WriteConsoleOutputToFile Then
+            If Not mCmdRunner.WriteConsoleOutputToFile Then
                 ' Write the console output to a text file
                 Threading.Thread.Sleep(250)
 
-                Using swConsoleOutputfile As New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                    swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
+                Using swConsoleOutputfile As New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                    swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
                 End Using
 
             End If
 
             ' Parse the console output file one more time to check for errors
             Threading.Thread.Sleep(250)
-            ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+            ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
             If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
@@ -171,8 +173,8 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
 
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "TargetedWorkflowsConsole returned a non-zero exit code: " & CmdRunner.ExitCode.ToString())
+                If mCmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "TargetedWorkflowsConsole returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString())
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to TargetedWorkflowsConsole failed (but exit code is 0)")
                 End If
@@ -562,7 +564,7 @@ Public Class clsAnalysisToolRunnerMSAlignQuant
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Protected Sub CmdRunner_LoopWaiting()
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 

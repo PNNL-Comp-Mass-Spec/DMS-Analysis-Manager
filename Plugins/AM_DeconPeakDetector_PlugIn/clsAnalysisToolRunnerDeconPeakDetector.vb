@@ -32,7 +32,7 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
 
     Private mConsoleOutputErrorMsg As String
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -245,9 +245,11 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strPeakDetectorProgLoc & " " & CmdStr)
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = False
             .EchoOutputToConsole = True
@@ -258,7 +260,7 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
 
         m_progress = PROGRESS_PCT_STARTING
 
-        blnSuccess = CmdRunner.RunProgram(strPeakDetectorProgLoc, CmdStr, "PeakDetector", True)
+        blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, CmdStr, "PeakDetector", True)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
@@ -271,8 +273,8 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PeakDetector returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If mCmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PeakDetector returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to PeakDetector failed (but exit code is 0)")
             End If
@@ -303,7 +305,7 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
         End If
 
         ' Lookup the version of the DeconConsole application
-        Dim fiPeakDetector As FileInfo = New FileInfo(strPeakDetectorPath)
+        Dim fiPeakDetector = New FileInfo(strPeakDetectorPath)
 
         Dim blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiPeakDetector.FullName)
         If Not blnSuccess Then Return False
@@ -333,11 +335,11 @@ Public Class clsAnalysisToolRunnerDeconPeakDetector
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 
-        UpdateStatusFile()		
+        UpdateStatusFile()
 
         If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
             dtLastConsoleOutputParse = DateTime.UtcNow

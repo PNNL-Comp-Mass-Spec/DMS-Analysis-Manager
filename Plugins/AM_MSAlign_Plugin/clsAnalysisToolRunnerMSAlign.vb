@@ -66,7 +66,7 @@ Public Class clsAnalysisToolRunnerMSAlign
     Protected mMSAlignWorkFolderPath As String
     Protected mInputPropertyValues As udtInputPropertyValuesType
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -162,9 +162,11 @@ Public Class clsAnalysisToolRunnerMSAlign
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
 
-            CmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
+            mCmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
+            RegisterEvents(mCmdRunner)
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            With CmdRunner
+            With mCmdRunner
                 .CreateNoWindow = True
                 .CacheStandardOutput = False
                 .EchoOutputToConsole = True
@@ -173,7 +175,7 @@ Public Class clsAnalysisToolRunnerMSAlign
                     .WriteConsoleOutputToFile = False
                 Else
                     .WriteConsoleOutputToFile = True
-                    .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT)
+                    .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT)
                 End If
 
             End With
@@ -183,7 +185,7 @@ Public Class clsAnalysisToolRunnerMSAlign
 
             ' Start the program and wait for it to finish
             ' However, while it's running, LoopWaiting will get called via events
-            blnSuccess = CmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign", True)
+            blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign", True)
 
             If Not mToolVersionWritten Then
                 If String.IsNullOrWhiteSpace(mMSAlignVersion) Then
@@ -204,8 +206,8 @@ Public Class clsAnalysisToolRunnerMSAlign
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-                If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                If mCmdRunner.ExitCode <> 0 Then
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign failed (but exit code is 0)")
                 End If
@@ -255,7 +257,7 @@ Public Class clsAnalysisToolRunnerMSAlign
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
 
-            CmdRunner = Nothing
+            mCmdRunner = Nothing
 
             'Make sure objects are released
             System.Threading.Thread.Sleep(500)        ' 500 msec delay
@@ -1211,7 +1213,7 @@ Public Class clsAnalysisToolRunnerMSAlign
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
@@ -1227,7 +1229,7 @@ Public Class clsAnalysisToolRunnerMSAlign
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
-            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
+            UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("MSAlign")
 

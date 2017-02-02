@@ -79,8 +79,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
     Protected mNodeCountActiveErrorOccurences As Integer
     Protected mLastSequestStartTime As DateTime
 
-    Protected WithEvents m_CmdRunner As clsRunDosProgram
-    Protected WithEvents m_UtilityRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
+    Protected m_UtilityRunner As clsRunDosProgram
 
     Protected mUtilityRunnerTaskName As String = String.Empty
 
@@ -191,7 +191,9 @@ Public Class clsAnalysisToolRunnerSeqCluster
             mLastOutFileCountTime = DateTime.UtcNow
             mLastActiveNodeQueryTime = DateTime.UtcNow
 
-            m_CmdRunner = New clsRunDosProgram(m_WorkDir)
+            mCmdRunner = New clsRunDosProgram(m_WorkDir)
+            RegisterEvents(mCmdRunner)
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
             ' Define the arguments to pass to the Sequest .Exe
             CmdStr = " -P" & m_jobParams.GetParam("parmFileName") & " *.dta"
@@ -201,7 +203,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
             ' Run Sequest to generate OUT files
             mLastSequestStartTime = DateTime.UtcNow
-            blnSuccess = m_CmdRunner.RunProgram(ProgLoc, CmdStr, "Seq", True)
+            blnSuccess = mCmdRunner.RunProgram(ProgLoc, CmdStr, "Seq", True)
 
             mSequestSearchEndTime = DateTime.UtcNow
 
@@ -333,7 +335,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' Provides a wait loop while Sequest is running
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Sub m_CmdRunner_LoopWaiting() Handles m_CmdRunner.LoopWaiting
+    Protected Sub CmdRunner_LoopWaiting()
         Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
         ' Compute the progress by comparing the number of .Out files to the number of .Dta files 
@@ -364,10 +366,10 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
         If mResetPVM Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... calling m_CmdRunner.AbortProgramNow in LoopWaiting since mResetPVM = True")
-            m_CmdRunner.AbortProgramNow(False)
+            mCmdRunner.AbortProgramNow(False)
         ElseIf mAbortSinceSequestIsStalled Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... calling m_CmdRunner.AbortProgramNow in LoopWaiting since mAbortSinceSequestIsStalled = True")
-            m_CmdRunner.AbortProgramNow(False)
+            mCmdRunner.AbortProgramNow(False)
         End If
 
     End Sub
@@ -746,6 +748,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
         Try
             If m_UtilityRunner Is Nothing Then
                 m_UtilityRunner = New clsRunDosProgram(strWorkDir)
+                RegisterEvents(m_UtilityRunner)
+                AddHandler m_UtilityRunner.Timeout, AddressOf m_UtilityRunner_Timeout
             Else
                 If m_UtilityRunner.State <> clsProgRunner.States.NotMonitoring Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot re-initialize the UtilityRunner to perform task " & strTaskName & " since already running task " & mUtilityRunnerTaskName)
@@ -1443,7 +1447,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         CheckForStalledSequest()
     End Sub
 
-    Private Sub m_UtilityRunner_Timeout() Handles m_UtilityRunner.Timeout
+    Private Sub m_UtilityRunner_Timeout()
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "UtilityRunner task " & mUtilityRunnerTaskName & " has timed out; " & m_UtilityRunner.MaxRuntimeSeconds & " seconds has elapsed")
 

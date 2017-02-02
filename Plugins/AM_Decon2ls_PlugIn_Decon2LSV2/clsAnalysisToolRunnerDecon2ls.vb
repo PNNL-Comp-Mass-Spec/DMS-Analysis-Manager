@@ -37,7 +37,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
     Private mDeconToolsStatus As udtDeconToolsStatusType
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -671,9 +671,11 @@ Public Class clsAnalysisToolRunnerDecon2ls
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, ProgLoc & " " & CmdStr)
             End If
 
-            CmdRunner = New clsRunDosProgram(m_WorkDir)
+            mCmdRunner = New clsRunDosProgram(m_WorkDir)
+            RegisterEvents(mCmdRunner)
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            With CmdRunner
+            With mCmdRunner
                 .CreateNoWindow = True
                 .CacheStandardOutput = True
                 .EchoOutputToConsole = True
@@ -689,7 +691,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
             ' Start the program and wait for it to finish
             ' However, while it's running, LoopWaiting will get called via events
-            Dim success = CmdRunner.RunProgram(ProgLoc, CmdStr, "DeconConsole", True)
+            Dim success = mCmdRunner.RunProgram(ProgLoc, CmdStr, "DeconConsole", True)
 
             If Not success Then
                 m_message = "Error running DeconTools"
@@ -1206,7 +1208,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastLogCheckTime As DateTime = DateTime.UtcNow
@@ -1225,7 +1227,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
 
-        UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
+        UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
 
         Dim strProgressMessage As String
 
@@ -1263,7 +1265,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
                 mDeconToolsFinishedDespiteProgRunnerError = True
 
                 ' Abort processing
-                CmdRunner.AbortProgramNow()
+                mCmdRunner.AbortProgramNow()
 
                 Threading.Thread.Sleep(3000)
             End If

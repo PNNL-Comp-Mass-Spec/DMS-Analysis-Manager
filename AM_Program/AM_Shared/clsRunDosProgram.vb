@@ -12,6 +12,7 @@ Imports System.Threading
 Imports PRISM.Processes
 
 Public Class clsRunDosProgram
+    Inherits clsEventNotifier
 
     '*********************************************************************************************************
     'Provides a looping wrapper around a ProgRunner object for running command-line programs
@@ -47,13 +48,6 @@ Public Class clsRunDosProgram
     ''' <param name="NewText"></param>
     ''' <remarks></remarks>
     Public Event ConsoleOutputEvent(NewText As String)
-
-    ''' <summary>
-    ''' Error message was written to the console
-    ''' </summary>
-    ''' <param name="NewText"></param>
-    ''' <remarks></remarks>
-    Public Event ConsoleErrorEvent(NewText As String)
 
     ''' <summary>
     ''' Program execution exceeded MaxRuntimeSeconds
@@ -280,9 +274,7 @@ Public Class clsRunDosProgram
                     Return currentCoreUsage
                 End If
             Catch ex As Exception
-                Dim msg = "Exception in GetCoreUsage"
-                Console.WriteLine(msg & ": " & ex.Message)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex)
+                OnErrorEvent("Exception in GetCoreUsage", ex)
                 Return -1
             End Try
 
@@ -350,8 +342,8 @@ Public Class clsRunDosProgram
         }
 
         If DebugLevel >= 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Arguments = " & m_ProgRunner.Arguments)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Program = " & m_ProgRunner.Program)
+            OnStatusEvent("  ProgRunner.Arguments = " & m_ProgRunner.Arguments)
+            OnStatusEvent("  ProgRunner.Program = " & m_ProgRunner.Program)
         End If
 
         m_CachedConsoleErrors = String.Empty
@@ -394,12 +386,12 @@ Public Class clsRunDosProgram
                         blnAbortLogged = True
                         Dim msg As String
                         If blnRuntimeExceeded Then
-                            msg = "  Aborting ProgRunner since " & m_MaxRuntimeSeconds & " seconds has elapsed"
+                            msg = "  Aborting ProgRunner for " & progName & " since " & m_MaxRuntimeSeconds & " seconds has elapsed"
                         Else
-                            msg = "  Aborting ProgRunner since AbortProgramNow() was called"
+                            msg = "  Aborting ProgRunner for " & progName & " since AbortProgramNow() was called"
                         End If
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+                        OnErrorEvent(msg)
                     End If
                     m_ProgRunner.StopMonitoringProgram(Kill:=True)
                 End If
@@ -409,8 +401,7 @@ Public Class clsRunDosProgram
 
         Catch ex As Exception
             Dim msg = "Exception running DOS program " & progNameLoc
-            Console.WriteLine(msg & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex)
+            OnErrorEvent(msg, ex)
             m_ProgRunner = Nothing
             Return False
         End Try
@@ -422,8 +413,7 @@ Public Class clsRunDosProgram
         If (useResCode And m_ExitCode <> 0) Then
             If (m_AbortProgramNow AndAlso m_AbortProgramPostLogEntry) OrElse Not m_AbortProgramNow Then
                 Dim msg = "  ProgRunner.ExitCode = " & m_ExitCode.ToString & " for Program = " & progNameLoc
-                Console.WriteLine(msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
+                OnErrorEvent(msg)
             End If
             Return False
         End If
@@ -438,13 +428,14 @@ Public Class clsRunDosProgram
 #End Region
 
     Private Sub ProgRunner_ConsoleErrorEvent(NewText As String) Handles m_ProgRunner.ConsoleErrorEvent
-        RaiseEvent ConsoleErrorEvent(NewText)
+        OnErrorEvent("Console error: " & NewText)
+
         If String.IsNullOrWhiteSpace(m_CachedConsoleErrors) Then
             m_CachedConsoleErrors = NewText
         Else
             m_CachedConsoleErrors &= Environment.NewLine & NewText
         End If
-        Console.WriteLine("Console error: " & Environment.NewLine & NewText)
+
     End Sub
 
     Private Sub ProgRunner_ConsoleOutputEvent(NewText As String) Handles m_ProgRunner.ConsoleOutputEvent

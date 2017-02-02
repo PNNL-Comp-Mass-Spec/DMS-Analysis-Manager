@@ -39,7 +39,7 @@ Public Class clsAnalysisToolRunnerIN
     Public Const INSPECT_INPUT_PARAMS_FILENAME As String = "inspect_input.txt"
     Protected Const INSPECT_EXE_NAME As String = "inspect.exe"
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
     Protected mInspectCustomParamFileName As String
 
@@ -463,7 +463,9 @@ Public Class clsAnalysisToolRunnerIN
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        CmdRunner = New clsRunDosProgram(InspectDir)
+        mCmdRunner = New clsRunDosProgram(InspectDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
         If m_DebugLevel > 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIN.RunInSpecT(): Enter")
@@ -490,7 +492,7 @@ Public Class clsAnalysisToolRunnerIN
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = True
             .EchoOutputToConsole = True
@@ -499,15 +501,15 @@ Public Class clsAnalysisToolRunnerIN
             .ConsoleOutputFilePath = mInspectConsoleOutputFilePath
         End With
 
-        If Not CmdRunner.RunProgram(progLoc, CmdStr, "Inspect", True) Then
+        If Not mCmdRunner.RunProgram(progLoc, CmdStr, "Inspect", True) Then
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Inspect returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If mCmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Inspect returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Inspect failed (but exit code is 0)")
             End If
 
-            Select Case CmdRunner.ExitCode
+            Select Case mCmdRunner.ExitCode
                 Case -1073741819
                     ' Corresponds to message "{W0010} .\PValue.c:453:Only 182 top-scoring matches for charge state; not recalibrating the p-value curve."
                     ' This is a warning, and not an error
@@ -522,7 +524,7 @@ Public Class clsAnalysisToolRunnerIN
                     blnSuccess = False
             End Select
 
-            If CmdRunner.ExitCode <> 0 Then
+            If mCmdRunner.ExitCode <> 0 Then
                 If mInspectSearchLogMostRecentEntry.Length > 0 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Most recent Inspect search log entry: " & mInspectSearchLogMostRecentEntry)
                 Else
@@ -570,7 +572,7 @@ Public Class clsAnalysisToolRunnerIN
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
         Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
 
         ' Update the status file (limit the updates to every 5 seconds)

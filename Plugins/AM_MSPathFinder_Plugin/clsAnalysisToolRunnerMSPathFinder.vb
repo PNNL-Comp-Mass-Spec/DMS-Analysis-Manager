@@ -58,7 +58,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     Private m_filteredPromexFeatures As Integer = 0
     Private m_unfilteredPromexFeatures As Integer = 0
 
-    Private WithEvents CmdRunner As clsRunDosProgram
+    Private mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -143,7 +143,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
 
-            CmdRunner = Nothing
+            mCmdRunner = Nothing
 
             'Make sure objects are released
             Thread.Sleep(500)        ' 500 msec delay
@@ -960,9 +960,11 @@ Public Class clsAnalysisToolRunnerMSPathFinder
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        mCmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(mCmdRunner)
+        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With mCmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = False
             .EchoOutputToConsole = True
@@ -976,20 +978,20 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
         ' Start the program and wait for it to finish
         ' However, while it's running, LoopWaiting will get called via events
-        success = CmdRunner.RunProgram(progLoc, CmdStr, "MSPathFinder", True)
+        success = mCmdRunner.RunProgram(progLoc, CmdStr, "MSPathFinder", True)
 
-        If Not CmdRunner.WriteConsoleOutputToFile Then
+        If Not mCmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
             Thread.Sleep(250)
 
-            Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
+            Dim swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
             swConsoleOutputfile.Close()
         End If
 
         ' Parse the console output file one more time to check for errors
         Thread.Sleep(250)
-        ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+        ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
@@ -1010,8 +1012,8 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSPathFinder returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If mCmdRunner.ExitCode <> 0 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSPathFinder returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
             Else
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSPathFinder failed (but exit code is 0)")
             End If
@@ -1084,7 +1086,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Const SECONDS_BETWEEN_UPDATE = 30
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
@@ -1097,7 +1099,7 @@ Public Class clsAnalysisToolRunnerMSPathFinder
 
             ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT))
 
-            UpdateProgRunnerCpuUsage(CmdRunner, SECONDS_BETWEEN_UPDATE)
+            UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
 
             LogProgress("MSPathFinder")
         End If

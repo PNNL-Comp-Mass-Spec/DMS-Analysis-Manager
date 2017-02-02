@@ -36,8 +36,6 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
     Protected mMSXmlCacheFolder As DirectoryInfo
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
-
 #End Region
 
 #Region "Methods"
@@ -166,8 +164,6 @@ Public Class clsAnalysisToolRunnerPBFGenerator
             If Not UpdateSummaryFile() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             End If
-
-            CmdRunner = Nothing
 
             ' Make sure objects are released
             Threading.Thread.Sleep(500)        ' 500 msec delay
@@ -387,9 +383,11 @@ Public Class clsAnalysisToolRunnerPBFGenerator
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(m_WorkDir)
+        Dim cmdRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(cmdRunner)
+        AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-        With CmdRunner
+        With cmdRunner
             .CreateNoWindow = True
             .CacheStandardOutput = False
             .EchoOutputToConsole = True
@@ -400,9 +398,9 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
         m_progress = PROGRESS_PCT_STARTING
 
-        blnSuccess = CmdRunner.RunProgram(progLoc, CmdStr, "PbfGen", True)
+        blnSuccess = cmdRunner.RunProgram(progLoc, CmdStr, "PbfGen", True)
 
-        If Not CmdRunner.WriteConsoleOutputToFile Then
+        If Not cmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
             Threading.Thread.Sleep(250)
 
@@ -417,7 +415,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
         ' Parse the console output file one more time to check for errors and to update mPbfFormatVersion
         Threading.Thread.Sleep(250)
-        ParseConsoleOutputFile(CmdRunner.ConsoleOutputFilePath)
+        ParseConsoleOutputFile(cmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
@@ -430,10 +428,10 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
 
-            If CmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PBFGen returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+            If cmdRunner.ExitCode <> 0 Then
+                LogWarning("PBFGen returned a non-zero exit code: " & cmdRunner.ExitCode.ToString)
             Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to PBFGen failed (but exit code is 0)")
+                LogWarning("Call to PBFGen failed (but exit code is 0)")
             End If
 
             Return False
@@ -504,7 +502,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
 
         Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
 

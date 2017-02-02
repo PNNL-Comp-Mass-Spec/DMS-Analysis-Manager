@@ -28,7 +28,7 @@ Public Class clsPeptideProphetWrapper
     Private m_DebugLevel As Short = 1
     Private m_InputFile As String = String.Empty
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected mCmdRunner As clsRunDosProgram
 
 #End Region
 
@@ -100,27 +100,29 @@ Public Class clsPeptideProphetWrapper
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_PeptideProphetRunnerLocation & " " & CmdStr)
             End If
 
-            CmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName) With {
+            mCmdRunner = New clsRunDosProgram(ioInputFile.DirectoryName) With {
                 .CreateNoWindow = True,
                 .CacheStandardOutput = True,
                 .EchoOutputToConsole = True,
                 .WriteConsoleOutputToFile = True,
                 .ConsoleOutputFilePath = strPeptideProphetConsoleOutputFilePath
             }
+            AddHandler mCmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            If Not CmdRunner.RunProgram(m_PeptideProphetRunnerLocation, CmdStr, "PeptideProphetRunner", True) Then
+            If Not mCmdRunner.RunProgram(m_PeptideProphetRunnerLocation, CmdStr, "PeptideProphetRunner", True) Then
                 m_ErrMsg = "Error running PeptideProphetRunner"
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
-            If CmdRunner.ExitCode <> 0 Then
-                m_ErrMsg = "Peptide prophet runner returned a non-zero error code: " & CmdRunner.ExitCode.ToString
+            If mCmdRunner.ExitCode <> 0 Then
+                m_ErrMsg = "Peptide prophet runner returned a non-zero error code: " & mCmdRunner.ExitCode.ToString
 
                 ' Parse the console output file for any lines that contain "Error"
                 ' Append them to m_ErrMsg
 
-                Dim ioConsoleOutputFile As FileInfo = New FileInfo(strPeptideProphetConsoleOutputFilePath)
-                Dim blnErrorMessageFound As Boolean = False
+                Dim ioConsoleOutputFile = New FileInfo(strPeptideProphetConsoleOutputFilePath)
+                Dim blnErrorMessageFound = False
 
                 If ioConsoleOutputFile.Exists Then
                     Dim srInFile As StreamReader
@@ -136,7 +138,7 @@ Public Class clsPeptideProphetWrapper
                             End If
                         End If
                     Loop
-                    srInFile.close()
+                    srInFile.Close()
                 End If
 
                 If Not blnErrorMessageFound Then
@@ -158,11 +160,16 @@ Public Class clsPeptideProphetWrapper
 
     End Function
 
+    Private Sub CmdRunner_ErrorEvent(message As String, ex As Exception)
+        m_ErrMsg = message
+        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PeptideProphetRunner: " & m_ErrMsg)
+    End Sub
+
     ''' <summary>
     ''' Event handler for CmdRunner.LoopWaiting event
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
+    Private Sub CmdRunner_LoopWaiting()
         Static dtLastStatusUpdate As DateTime = Date.UtcNow
 
         'Update the status (limit the updates to every 5 seconds)

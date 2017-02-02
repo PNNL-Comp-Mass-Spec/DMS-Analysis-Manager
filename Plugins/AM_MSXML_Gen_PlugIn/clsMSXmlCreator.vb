@@ -13,6 +13,7 @@ Imports AnalysisManagerBase
 Imports System.IO
 
 Public Class clsMSXMLCreator
+    Inherits clsEventNotifier
 
 #Region "Classwide variables"
 
@@ -25,10 +26,6 @@ Public Class clsMSXMLCreator
     Private m_ErrorMessage As String
 
     Private WithEvents mMSXmlGen As clsMSXmlGen
-
-    Public Event DebugEvent(msg As String)
-    Public Event ErrorEvent(msg As String)
-    Public Event WarningEvent(msg As String)
 
     Public Event LoopWaiting()
 
@@ -53,7 +50,6 @@ Public Class clsMSXMLCreator
 
     Public Function ConvertMzMLToMzXML() As Boolean
 
-        Dim oProgRunner As clsRunDosProgram
         Dim ProgLoc As String
         Dim CmdStr As String
 
@@ -84,7 +80,8 @@ Public Class clsMSXMLCreator
         End If
 
         'Setup a program runner tool to call MSConvert
-        oProgRunner = New clsRunDosProgram(m_WorkDir)
+        Dim oProgRunner = New clsRunDosProgram(m_WorkDir)
+        RegisterEvents(oProgRunner)
 
         'Set up command
         CmdStr = " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) & " --32 --mzXML -o " & m_WorkDir
@@ -293,6 +290,33 @@ Public Class clsMSXMLCreator
         If m_DebugLevel >= 1 Then
             ReportDebugInfo(CommandLine)
         End If
+    End Sub
+
+#End Region
+
+#Region "clsEventNotifier events"
+
+    Protected Sub RegisterEvents(oProcessingClass As clsEventNotifier)
+        AddHandler oProcessingClass.StatusEvent, AddressOf StatusEventHandler
+        AddHandler oProcessingClass.ErrorEvent, AddressOf ErrorEventHandler
+        AddHandler oProcessingClass.WarningEvent, AddressOf WarningEventHandler
+        AddHandler oProcessingClass.ProgressUpdate, AddressOf ProgressUpdateHandler
+    End Sub
+
+    Private Sub StatusEventHandler(statusMessage As String)
+        OnStatusEvent(statusMessage)
+    End Sub
+
+    Private Sub ErrorEventHandler(strMessage As String, ex As Exception)
+        OnErrorEvent(strMessage, ex)
+    End Sub
+
+    Private Sub WarningEventHandler(warningMessage As String)
+        OnWarningEvent(warningMessage)
+    End Sub
+
+    Private Sub ProgressUpdateHandler(progressMessage As String, percentComplete As Single)
+        OnProgressUpdate(progressMessage, percentComplete)
     End Sub
 
 #End Region
