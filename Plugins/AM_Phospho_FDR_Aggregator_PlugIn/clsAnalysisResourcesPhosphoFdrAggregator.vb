@@ -57,7 +57,7 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
         Dim dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo) = Nothing
 
         ' Retrieve the files for the jobs in the data package associated with this job
-        If Not RetrieveAggregateFiles(fileSpecList, clsAnalysisResources.DataPackageFileRetrievalModeConstants.Ascore, dctDataPackageJobs) Then
+        If Not RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, dctDataPackageJobs) Then
             'Errors were reported in function call, so just return
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If

@@ -56,7 +56,7 @@ namespace AnalysisManager_Mage_PlugIn
             List<clsDataPackageJobInfo> lstAdditionalJobs;
             string errorMsg;
 
-            var peptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out lstAdditionalJobs, out errorMsg);
+            var peptideHitJobs = clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out lstAdditionalJobs, out errorMsg);
 
             if (!string.IsNullOrEmpty(errorMsg))
             {

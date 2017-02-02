@@ -15,6 +15,18 @@ Public Class clsDataPackageInfoLoader
 
     Private Shared mLastJobParameterFromHistoryLookup As DateTime = Date.UtcNow
 
+    Public ReadOnly Property ConnectionString As String
+        Get
+            Return mBrokerDbConnectionString
+        End Get
+    End Property
+
+    Public ReadOnly Property DataPackageID As Integer
+        Get
+            Return DataPackageID
+        End Get
+    End Property
+
     Public Sub New(brokerDbConnectionString As String, dataPackageID As Integer)
         mBrokerDbConnectionString = brokerDbConnectionString
         mDataPackageID = dataPackageID
@@ -400,39 +412,34 @@ Public Class clsDataPackageInfoLoader
     ''' <summary>
     ''' Lookup the Peptide Hit jobs associated with the current job
     ''' </summary>
-    ''' <param name="DataPackageID">Data package ID</param>
     ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
     ''' <remarks></remarks>
-    Protected Function RetrieveDataPackagePeptideHitJobInfo(<Out()> ByRef DataPackageID As Integer) As List(Of clsDataPackageJobInfo)
+    Protected Function RetrieveDataPackagePeptideHitJobInfo() As List(Of clsDataPackageJobInfo)
 
         Dim lstAdditionalJobs = New List(Of clsDataPackageJobInfo)
-        Return RetrieveDataPackagePeptideHitJobInfo(DataPackageID, lstAdditionalJobs)
+        Return RetrieveDataPackagePeptideHitJobInfo(lstAdditionalJobs)
 
     End Function
 
     ''' <summary>
     ''' Lookup the Peptide Hit jobs associated with the current job
     ''' </summary>
-    ''' <param name="DataPackageID">Data package ID</param>
     ''' <param name="lstAdditionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
     ''' <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
     ''' <remarks></remarks>
     Public Function RetrieveDataPackagePeptideHitJobInfo(
-      <Out()> ByRef DataPackageID As Integer,
       <Out()> ByRef lstAdditionalJobs As List(Of clsDataPackageJobInfo)) As List(Of clsDataPackageJobInfo)
 
         ' Gigasax.DMS_Pipeline
         Dim connectionString As String = mBrokerDbConnectionString
 
-        DataPackageID = mDataPackageID
-
-        If DataPackageID < 0 Then
+        If mDataPackageID < 0 Then
             LogError("DataPackageID is not defined for this analysis job")
             lstAdditionalJobs = New List(Of clsDataPackageJobInfo)
             Return New List(Of clsDataPackageJobInfo)
         Else
             Dim errorMsg As String = String.Empty
-            Dim lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, DataPackageID, lstAdditionalJobs, errorMsg)
+            Dim lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, mDataPackageID, lstAdditionalJobs, errorMsg)
 
             If Not String.IsNullOrWhiteSpace(errorMsg) Then
                 LogError(errorMsg)

@@ -29,7 +29,7 @@ Public Class clsDataPackageFileHandler
         ''' <summary>
         ''' Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
         ''' </summary>
-        ''' <remarks></remarks>
+        ''' <remarks>If the search used a .mzML instead of a _dta.txt file, the .mzML file will be retrieved</remarks>
         Public RetrieveDTAFiles As Boolean
 
         ''' <summary>
@@ -163,7 +163,6 @@ Public Class clsDataPackageFileHandler
 
         Dim sourceFolderPath = "??"
         Dim sourceFilename = "??"
-        Dim dataPackageID = 0
 
         Dim blnFileCopied As Boolean
         Dim blnSuccess As Boolean
@@ -195,7 +194,7 @@ Public Class clsDataPackageFileHandler
             Dim success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(dctDataPackageDatasets)
 
             If Not success OrElse dctDataPackageDatasets.Count = 0 Then
-                OnErrorEvent("Did not find any datasets associated with this job's data package ID (" & dataPackageID & ")")
+                OnErrorEvent("Did not find any datasets associated with this job's data package ID (" & mDataPackageInfoLoader.DataPackageID & ")")
                 Return False
             End If
 
@@ -212,7 +211,7 @@ Public Class clsDataPackageFileHandler
         Dim lstAdditionalJobs As List(Of clsDataPackageJobInfo) = Nothing
 
         Try
-            lstDataPackagePeptideHitJobs = mDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(dataPackageID, lstAdditionalJobs)
+            lstDataPackagePeptideHitJobs = mDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(lstAdditionalJobs)
 
             If lstDataPackagePeptideHitJobs.Count = 0 Then
                 ' Did not find any peptide hit jobs associated with this job's data package ID
@@ -534,7 +533,7 @@ Public Class clsDataPackageFileHandler
             Next
 
             If dctRawFileRetrievalCommands.Count = 0 Then
-                OnErrorEvent("Did not find any datasets associated with this job's data package ID (" & dataPackageID & ")")
+                OnErrorEvent("Did not find any datasets associated with this job's data package ID (" & mDataPackageInfoLoader.DataPackageID & ")")
                 Return False
             End If
 
@@ -640,7 +639,7 @@ Public Class clsDataPackageFileHandler
     ''' <param name="udtOptions">File retrieval options</param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks>If udtOptions.CreateJobPathFiles is True, then will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
-    Private Function RetrieveDataPackageMzXMLFiles(
+    Public Function RetrieveDataPackageMzXMLFiles(
       dctInstrumentDataToRetrieve As Dictionary(Of clsDataPackageJobInfo, KeyValuePair(Of String, String)),
       udtOptions As udtDataPackageRetrievalOptionsType) As Boolean
 
