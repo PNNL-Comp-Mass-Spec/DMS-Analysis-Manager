@@ -475,6 +475,7 @@ Public MustInherit Class clsAnalysisResources
 
                 Dim debugMessage = dataFileDescription & " lock file found; will wait for file to be deleted or age; " &
                     fiLockFile.Name & " created " & fiLockFile.LastWriteTime.ToString()
+                ' Simulate call to LogDebugMessage() since this is a shared method
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, debugMessage)
                 Console.WriteLine(debugMessage)
             Else
@@ -982,8 +983,8 @@ Public MustInherit Class clsAnalysisResources
                         m_message &= ex.Message
                     End If
                     LogError(m_message, ex)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Connection string: " & m_FastaToolsCnStr)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Current user: " & Environment.UserName)
+                    LogDebugMessage("Connection string: " & m_FastaToolsCnStr)
+                    LogDebugMessage("Current user: " & Environment.UserName)
                     Return False
                 End If
                 retryCount -= 1
@@ -1061,6 +1062,7 @@ Public MustInherit Class clsAnalysisResources
             ' Make sure the original fasta file has already been split into the appropriate number parts
             ' and that DMS knows about them
             '
+            ' Do not use RegisterEvents with m_SplitFastaFileUtility because we handle the progress with a custom handler
             m_SplitFastaFileUtility = New clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps, m_MgrName)
             m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB
 
@@ -1136,7 +1138,7 @@ Public MustInherit Class clsAnalysisResources
 
                     strFastaFileMsg &= "; file size: " + fiFastaFile.Length.ToString() + " bytes"
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strFastaFileMsg)
+                    LogDebugMessage(strFastaFileMsg)
                 Catch ex As Exception
                     ' Ignore errors here
                 End Try
@@ -2508,8 +2510,7 @@ Public MustInherit Class clsAnalysisResources
                         ReportStatus(folderNotFoundMessage)
                     Else
                         Dim msg As String = folderNotFoundMessage + ", Job " + m_jobParams.GetParam("StepParameters", "Job") + ", Dataset " + dsName
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-                        Console.WriteLine(msg)
+                        LogWarning(msg)
                     End If
                 End If
 
@@ -2570,8 +2571,7 @@ Public MustInherit Class clsAnalysisResources
                     msg &= " and subfolder " & subFolderName
                 End If
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-                Console.WriteLine(msg)
+                LogWarning(msg)
             End If
             Return False
         End If
@@ -2732,8 +2732,7 @@ Public MustInherit Class clsAnalysisResources
                 If LogFolderNotFound Then
                     If m_DebugLevel >= 2 OrElse m_DebugLevel >= 1 AndAlso retryCount = 1 Then
                         Dim errMsg As String = "Folder " + FolderName + " not found. Retry count = " + retryCount.ToString
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errMsg)
-                        Console.WriteLine(errMsg)
+                        LogWarning(errMsg)
                     End If
                 End If
                 retryCount -= 1
@@ -3016,6 +3015,7 @@ Public MustInherit Class clsAnalysisResources
 
         If Not success Then
             Dim errorMessage = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database"
+            ' Simulate call to LogError() since this is a shared method
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
             Console.WriteLine(errorMessage)
             resultSet.Dispose()
@@ -3028,6 +3028,7 @@ Public MustInherit Class clsAnalysisResources
             ' Log an error
 
             Dim errorMessage = "GetDataPackageStoragePath; Data package not found: " & dataPackageID.ToString()
+            ' Simulate call to LogError() since this is a shared method
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
             Console.WriteLine(errorMessage)
             Return String.Empty
@@ -3219,8 +3220,7 @@ Public MustInherit Class clsAnalysisResources
             Return success
 
         Catch ex As Exception
-            m_message = "Exception in GetExistingJobParametersFile: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
+            LogError("Exception in GetExistingJobParametersFile", ex)
             Return False
         End Try
 
@@ -6319,7 +6319,7 @@ Public MustInherit Class clsAnalysisResources
                 ' Copy the directory and all subdirectories
                 ' Skip any files defined by objFileNamesToSkip
                 If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving folder " & diSourceFolder.FullName)
+                    ReportStatus("Retrieving folder " & diSourceFolder.FullName)
                 End If
                 ResetTimestampForQueueWaitTimeLogging()
                 m_FileTools.CopyDirectory(diSourceFolder.FullName, DestFolderPath, objFileNamesToSkip)
@@ -6389,13 +6389,11 @@ Public MustInherit Class clsAnalysisResources
                     ' Delete this directory
                     Try
                         If m_DebugLevel >= 2 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                 "Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName)
+                            ReportStatus("Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName)
                         End If
 
                         If m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe") Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                 " Skipping delete since this is a development computer")
+                            ReportStatus(" Skipping delete since this is a development computer")
                         Else
                             diSubFolder.Delete(True)
                         End If
@@ -6531,7 +6529,7 @@ Public MustInherit Class clsAnalysisResources
                             strZipFilePathToExtract = Path.Combine(m_WorkingDir, Path.GetFileName(strZipFilePathRemote))
 
                             If m_DebugLevel >= 2 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " + strZipFilePathRemote)
+                                ReportStatus("Copying " + strZipFilePathRemote)
                             End If
 
                             If Not CopyFileWithRetry(strZipFilePathRemote, strZipFilePathToExtract, True) Then
@@ -6552,7 +6550,7 @@ Public MustInherit Class clsAnalysisResources
 
                         Using objZipfile = New Ionic.Zip.ZipFile(strZipFilePathToExtract)
                             If m_DebugLevel >= 2 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping " + strZipFilePathToExtract)
+                                ReportStatus("Unzipping " + strZipFilePathToExtract)
                             End If
 
                             objZipfile.ExtractAll(strUnzipFolderPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
@@ -6699,7 +6697,7 @@ Public MustInherit Class clsAnalysisResources
             ' Unzip each of the zip files to the working directory
             For Each ZipFile In ZipFiles
                 If m_DebugLevel > 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file " + ZipFile)
+                    ReportStatus("Unzipping file " + ZipFile)
                 End If
                 Try
                     TargetFolderPath = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
@@ -6864,7 +6862,7 @@ Public MustInherit Class clsAnalysisResources
 
             If blnSuccess Then
                 If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successfully retrieved param file: " + paramFileName)
+                    ReportStatus("Successfully retrieved param file: " + paramFileName)
                 End If
 
                 Return True
@@ -7680,8 +7678,7 @@ Public MustInherit Class clsAnalysisResources
     End Sub
 
     Private Sub m_CDTAUtilities_WarningEvent(strMessage As String) Handles m_CDTAUtilities.WarningEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage)
-        Console.WriteLine(strMessage)
+        LogWarning(strMessage)
     End Sub
 
     Private Sub m_FastaTools_FileGenerationCompleted(FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted

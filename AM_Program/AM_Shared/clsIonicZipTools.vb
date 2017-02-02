@@ -906,7 +906,6 @@ Public Class clsIonicZipTools
 
     End Function
 
-
     ''' <summary>
     ''' Stores all files in a source directory into a zip file named ZipFilePath
     ''' </summary>

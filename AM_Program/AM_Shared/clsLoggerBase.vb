@@ -54,15 +54,17 @@ Public MustInherit Class clsLoggerBase
     ''' <param name="ex">Exception</param>
     Protected Sub ReportStatus(errorMessage As String, ex As Exception)
         Dim formattedError As String
-        If errorMessage.EndsWith(ex.Message) Then
+        If ex Is Nothing OrElse errorMessage.EndsWith(ex.Message) Then
             formattedError = errorMessage
         Else
             formattedError = errorMessage & ": " & ex.Message
         End If
         Console.ForegroundColor = ConsoleColor.Red
         Console.WriteLine(formattedError)
-        Console.ForegroundColor = ConsoleColor.Cyan
-        Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
+        If Not ex Is Nothing Then
+            Console.ForegroundColor = ConsoleColor.Cyan
+            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
+        End If
         Console.ResetColor()
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
     End Sub
@@ -87,6 +89,7 @@ Public MustInherit Class clsLoggerBase
         Else
             Console.WriteLine(statusMessage)
         End If
+
         If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
             If isError Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage)
