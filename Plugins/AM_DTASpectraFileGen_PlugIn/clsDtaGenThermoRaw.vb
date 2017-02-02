@@ -114,7 +114,7 @@ Public Class clsDtaGenThermoRaw
 
         Catch ex As Exception
             m_ErrMsg = "Error calling MakeDTAFilesThreaded"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ": " & ex.Message, ex)
+            OnErrorEvent(m_ErrMsg, ex)
             m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
         End Try
 
@@ -196,7 +196,7 @@ Public Class clsDtaGenThermoRaw
         ' Verifies all necessary files exist in the specified locations
 
         If m_DebugLevel > 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenThermoRaw.InitSetup: Initializing DTA generator setup")
+            OnStatusEvent("clsDtaGenThermoRaw.InitSetup: Initializing DTA generator setup")
         End If
 
         ' Do tests specfied in base class
@@ -316,7 +316,7 @@ Public Class clsDtaGenThermoRaw
         Thread.CurrentThread.Name = "MakeDTAFiles"
 
         If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating DTA files using " + Path.GetFileName(m_DtaToolNameLoc))
+            OnStatusEvent("Creating DTA files using " + Path.GetFileName(m_DtaToolNameLoc))
         End If
 
         ' Get the parameters from the various parameter dictionaries
@@ -472,7 +472,7 @@ Public Class clsDtaGenThermoRaw
                     cmdStr &= " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(m_WorkDir, m_InstrumentFileName))
 
                     If m_DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)
+                        OnStatusEvent(m_DtaToolNameLoc & " " & cmdStr)
                     End If
 
                     With mCmdRunner
@@ -505,8 +505,7 @@ Public Class clsDtaGenThermoRaw
                     End If
 
                     If m_DebugLevel >= 2 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                             "clsDtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " & Thread.CurrentThread.Name)
+                        OnStatusEvent("clsDtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " & Thread.CurrentThread.Name)
                     End If
 
                     ' Update loopy parameters
@@ -544,8 +543,7 @@ Public Class clsDtaGenThermoRaw
         End If
 
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " _
-              & Thread.CurrentThread.Name)
+            OnStatusEvent("clsDtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " & Thread.CurrentThread.Name)
         End If
 
         ' We got this far, everything must have worked

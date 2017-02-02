@@ -15,6 +15,7 @@ Imports System.Text.RegularExpressions
 ''' </summary>
 ''' <remarks></remarks>
 Public MustInherit Class clsDtaGen
+    Inherits clsEventNotifier
     Implements ISpectraFileProcessor
 
 #Region "Module variables"
@@ -237,7 +238,7 @@ Public MustInherit Class clsDtaGen
             strErrorMessage = "Unknown error"
         End If
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcedureName & ", Error running " & strDTAToolName & "; " & strErrorMessage)
+        OnErrorEvent(strProcedureName & ", Error running " & strDTAToolName & "; " & strErrorMessage)
 
         ' Now count the number of .Dta files in the working folder
 
@@ -289,23 +290,24 @@ Public MustInherit Class clsDtaGen
                 If intDTACount > 0 Then
                     ' Log the name of the most recently created .Dta file
                     If intMostRecentValidDTAIndex >= 0 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent .Dta file created is " & strMostRecentValidDTA & " with size " & lngDTAFileSize.ToString & " bytes")
+                        OnStatusEvent(strProcedureName & ", The most recent .Dta file created is " & strMostRecentValidDTA &
+                                      " with size " & lngDTAFileSize.ToString & " bytes")
                     Else
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", No valid (non zero length) .Dta files were created")
+                        OnWarningEvent(strProcedureName & ", No valid (non zero length) .Dta files were created")
                     End If
 
                     If intMostRecentBlankDTAIndex >= 0 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", The most recent blank (zero-length) .Dta file created is " & strMostRecentBlankDTA)
+                        OnStatusEvent(strProcedureName & ", The most recent blank (zero-length) .Dta file created is " & strMostRecentBlankDTA)
                     End If
                 End If
 
             End If
 
             ' Log the number of .Dta files that were found
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcedureName & ", " & strDTAToolName & " created " & intDTACount.ToString & " .dta files")
+            OnStatusEvent(strProcedureName & ", " & strDTAToolName & " created " & intDTACount.ToString & " .dta files")
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcedureName & ", Error finding the most recently created .Dta file: " & ex.Message)
+            OnErrorEvent(", Error finding the most recently created .Dta file: " & ex.Message)
         End Try
 
     End Sub

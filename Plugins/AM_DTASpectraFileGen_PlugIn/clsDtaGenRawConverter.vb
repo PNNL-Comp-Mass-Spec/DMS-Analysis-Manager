@@ -93,7 +93,7 @@ Public Class clsDtaGenRawConverter
             Return blnSuccess
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ConvertMGFtoDTA: " + ex.Message)
+            OnErrorEvent("Exception in ConvertMGFtoDTA", ex)
             Return False
         End Try
 
@@ -111,7 +111,7 @@ Public Class clsDtaGenRawConverter
         Try
 
             If m_DebugLevel > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .MGF file using RawConverter")
+                OnStatusEvent("Creating .MGF file using RawConverter")
             End If
 
             Dim rawFilePath As String
@@ -134,7 +134,7 @@ Public Class clsDtaGenRawConverter
             Dim cmdStr = " " & clsGlobal.PossiblyQuotePath(rawFilePath) & " --mgf"
 
             If m_DebugLevel > 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)
+                OnStatusEvent(m_DtaToolNameLoc & " " & cmdStr)
             End If
 
             ' Setup a program runner tool to make the spectra files
@@ -160,13 +160,13 @@ Public Class clsDtaGenRawConverter
             End If
 
             If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MGF file created using RawConverter")
+                OnStatusEvent(" ... MGF file created using RawConverter")
             End If
 
             Return True
 
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ConvertRawToMGF: " + ex.Message)
+            OnErrorEvent("Exception in ConvertRawToMGF", ex)
             Return False
         End Try
 

@@ -409,8 +409,7 @@ Public Class clsAnalysisToolRunnerMSXMLGen
             Dim messageAtStart = String.Copy(m_message)
 
             Dim converter = New clsRawConverterRunner(rawConverterDir, m_DebugLevel)
-            AddHandler converter.ErrorEvent, AddressOf RawConverterRunner_ErrorEvent
-            AddHandler converter.ProgressUpdate, AddressOf RawConverterRunner_ProgressEvent
+            RegisterEvents(converter)
 
             Dim success = converter.ConvertRawToMGF(rawFilePath)
 
@@ -657,16 +656,6 @@ Public Class clsAnalysisToolRunnerMSXMLGen
     ''' <remarks></remarks>
     Private Sub MSXmlGen_ProgRunnerStarting(CommandLine As String)
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
-    End Sub
-
-    Private Sub RawConverterRunner_ErrorEvent(strMessage As String)
-        Console.WriteLine(m_message)
-        LogError(m_message)
-    End Sub
-
-    Private Sub RawConverterRunner_ProgressEvent(progressMessage As String, percentComplete As Integer)
-        Console.WriteLine(progressMessage)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progressMessage)
     End Sub
 
     Private Sub ParentIonUpdater_ErrorEvent(strMessage As String)

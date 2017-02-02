@@ -141,7 +141,7 @@ Public Class clsDtaGenDeconConsole
         Dim RawFilePath As String
 
         If m_DebugLevel > 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .MGF file using DeconConsole")
+            OnStatusEvent("Creating .MGF file using DeconConsole")
         End If
 
         m_ErrMsg = String.Empty
@@ -187,7 +187,7 @@ Public Class clsDtaGenDeconConsole
         Dim cmdStr = " " & RawFilePath & " " & strParamFilePath
 
         If m_DebugLevel > 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_DtaToolNameLoc & " " & cmdStr)
+            OnStatusEvent(m_DtaToolNameLoc & " " & cmdStr)
         End If
 
         'Setup a program runner tool to make the spectra files
@@ -224,7 +224,7 @@ Public Class clsDtaGenDeconConsole
 
         For Each fiFile As FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
             m_ErrMsg = "Error running DeconTools; Bad_Error_log file exists"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ": " & fiFile.Name)
+            OnErrorEvent(m_ErrMsg & ": " & fiFile.Name)
             blnSuccess = False
             mDeconConsoleFinishedDespiteProgRunnerError = False
             Exit For
@@ -249,7 +249,7 @@ Public Class clsDtaGenDeconConsole
         End If
 
         If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MGF file created using DeconConsole")
+            OnStatusEvent(" ... MGF file created using DeconConsole")
         End If
 
         Return True
@@ -266,7 +266,7 @@ Public Class clsDtaGenDeconConsole
         If m_DebugLevel >= 2 Then
 
             Dim strProgressMessage = "Scan=" & mDeconConsoleStatus.CurrentLCScan
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "... " & strProgressMessage & ", " & m_Progress.ToString("0.0") & "% complete")
+            OnProgressUpdate("... " & strProgressMessage & ", " & m_Progress.ToString("0.0") & "% complete", m_Progress)
 
         End If
 
@@ -277,7 +277,8 @@ Public Class clsDtaGenDeconConsole
             ' If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
 
             If DateTime.Now().Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Note: Log file reports finished over " & MAX_LOGFINISHED_WAITTIME_SECONDS & " seconds ago, but the DeconConsole CmdRunner is still active")
+                OnWarningEvent("Note: Log file reports finished over " & MAX_LOGFINISHED_WAITTIME_SECONDS & " seconds ago, " &
+                               "but the DeconConsole CmdRunner is still active")
 
                 mDeconConsoleFinishedDespiteProgRunnerError = True
 
@@ -329,7 +330,8 @@ Public Class clsDtaGenDeconConsole
                                 blnDateValid = True
                             Else
                                 ' Unable to parse out the date
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim & "'; will use file modification date as the processing finish time")
+                                OnErrorEvent("Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim &
+                                              "'; will use file modification date as the processing finish time")
                             End If
                         End If
 
@@ -339,7 +341,7 @@ Public Class clsDtaGenDeconConsole
                         End If
 
                         If m_DebugLevel >= 3 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconConsole log file reports 'finished file processing' at " & dtFinishTime.ToString())
+                            OnStatusEvent("DeconConsole log file reports 'finished file processing' at " & dtFinishTime.ToString())
                         End If
 
                         ''If intWorkFlowStep < TOTAL_WORKFLOW_STEPS Then
@@ -379,7 +381,7 @@ Public Class clsDtaGenDeconConsole
                             ' An exception was reported in the log file; treat this as a fatal error
                             m_ErrMsg = "Error thrown by DeconConsole"
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeconConsole reports " & strLineIn.Substring(intCharIndex))
+                            OnErrorEvent("DeconConsole reports " & strLineIn.Substring(intCharIndex))
                             mDeconConsoleExceptionThrown = True
 
                         End If
@@ -393,7 +395,7 @@ Public Class clsDtaGenDeconConsole
         Catch ex As Exception
             ' Ignore errors here		
             If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exception in ParseDeconToolsLogFile: " & ex.Message)
+                OnWarningEvent("Exception in ParseDeconToolsLogFile: " & ex.Message)
             End If
 
         End Try
