@@ -1183,9 +1183,7 @@ Public Class clsMSGFDBUtils
         Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
 
         Dim objIndexedDBCreator = New clsCreateMSGFDBSuffixArrayFiles(strMgrName, sPICHPCUsername, sPICHPCPassword)
-        AddHandler objIndexedDBCreator.ErrorEvent, AddressOf CreateMSGFDBSuffixArrayFiles_ErrorEvent
-        AddHandler objIndexedDBCreator.MessageEvent, AddressOf CreateMSGFDBSuffixArrayFiles_MessageEvent
-        AddHandler objIndexedDBCreator.WarningEvent, AddressOf CreateMSGFDBSuffixArrayFiles_WarningEvent
+        RegisterEvents(objIndexedDBCreator)
 
         ' Define the path to the fasta file
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
@@ -2907,34 +2905,6 @@ Public Class clsMSGFDBUtils
 
 #Region "Event Methods"
 
-    Private Sub CreateMSGFDBSuffixArrayFiles_ErrorEvent(message As String, detailedmessage As String)
-        ReportMessage("Error: " & message)
-    End Sub
-
-    Private Sub CreateMSGFDBSuffixArrayFiles_MessageEvent(message As String)
-        ReportMessage(message)
-    End Sub
-
-    Private Sub CreateMSGFDBSuffixArrayFiles_WarningEvent(message As String)
-        ReportWarning(message)
-    End Sub
-
-    Private Sub ReportError(message As String)
-        ReportError(message, String.Empty)
-    End Sub
-
-    Private Sub ReportError(message As String, detailedMessage As String)
-        RaiseEvent ErrorEvent(message, detailedMessage)
-    End Sub
-
-    Private Sub ReportMessage(message As String)
-        RaiseEvent MessageEvent(message)
-    End Sub
-
-    Private Sub ReportWarning(message As String)
-        RaiseEvent WarningEvent(message)
-    End Sub
-
     Private Sub mPeptideToProteinMapper_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
 
         Const MAPPER_PROGRESS_LOG_INTERVAL_SECONDS = 120
@@ -2943,11 +2913,38 @@ Public Class clsMSGFDBUtils
         If m_DebugLevel >= 1 Then
             If Date.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS Then
                 dtLastLogTime = Date.UtcNow
-                ReportMessage("Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
+                OnStatusEvent("Mapping peptides to proteins: " & percentComplete.ToString("0.0") & "% complete")
             End If
         End If
 
     End Sub
+#End Region
+
+#Region "clsEventNotifier events"
+
+    Private Sub RegisterEvents(oProcessingClass As clsEventNotifier)
+        AddHandler oProcessingClass.StatusEvent, AddressOf StatusEventHandler
+        AddHandler oProcessingClass.ErrorEvent, AddressOf ErrorEventHandler
+        AddHandler oProcessingClass.WarningEvent, AddressOf WarningEventHandler
+        AddHandler oProcessingClass.ProgressUpdate, AddressOf ProgressUpdateHandler
+    End Sub
+
+    Private Sub StatusEventHandler(statusMessage As String)
+        OnStatusEvent(statusMessage)
+    End Sub
+
+    Private Sub ErrorEventHandler(strMessage As String, ex As Exception)
+        OnErrorEvent(strMessage, ex)
+    End Sub
+
+    Private Sub WarningEventHandler(warningMessage As String)
+        OnWarningEvent(warningMessage)
+    End Sub
+
+    Private Sub ProgressUpdateHandler(progressMessage As String, percentComplete As Single)
+        OnProgressUpdate(progressMessage, percentComplete)
+    End Sub
+
 #End Region
 
 End Class

@@ -13,17 +13,12 @@ Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
 
 Public Class clsCreateMSGFDBSuffixArrayFiles
+    Inherits clsEventNotifier
 
 #Region "Constants"
     Public Const LEGACY_MSGFDB_SUBDIRECTORY_NAME As String = "Legacy_MSGFDB"
     Private Const MSGF_PLUS_INDEX_FILE_INFO_SUFFIX As String = ".MSGFPlusIndexFileInfo"
     Private Const DATE_TIME_FORMAT As String = "yyyy-MM-dd hh:mm:ss tt"
-#End Region
-
-#Region "Events"
-    Public Event ErrorEvent(message As String, detailedMessage As String)
-    Public Event MessageEvent(message As String)
-    Public Event WarningEvent(message As String)
 #End Region
 
 #Region "Module Variables"
@@ -149,7 +144,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             End If
 
             If intDebugLevel >= 1 AndAlso fileSizeTotalKB >= 1000 Then
-                ReportMessage("Copying existing MSGF+ index files from " & diRemoteIndexFolderPath.FullName)
+                OnStatusEvent("Copying existing MSGF+ index files from " & diRemoteIndexFolderPath.FullName)
             End If
 
             ' Copy each file in lstFilesToCopy (overwrite existing files)
@@ -211,7 +206,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 If intDebugLevel >= 1 AndAlso Date.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30 Then
                     dtLastStatusUpdate = Date.UtcNow
-                    ReportMessage("Retrieved " & filesCopied & " / " & dctFilesToCopy.Count & " index files")
+                    OnStatusEvent("Retrieved " & filesCopied & " / " & dctFilesToCopy.Count & " index files")
                 End If
 
             Next
@@ -222,7 +217,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             DeleteLockFile(fiRemoteLockFile2)
 
         Catch ex As Exception
-            ReportError("Exception in CopyExistingIndexFilesFromRemote; " & ex.Message)
+            OnErrorEvent("Exception in CopyExistingIndexFilesFromRemote", ex)
             blnSuccess = False
         End Try
 
@@ -245,7 +240,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         Dim success = CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel, strManager, createIndexFileForExistingFiles, strErrorMessage)
         If Not success Then
-            ReportError(strErrorMessage)
+            OnErrorEvent(strErrorMessage)
         End If
 
         Return success
@@ -453,7 +448,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                     For intIndex = 0 To fiLegacyIndexedFiles.Length - 1
                         strCurrentTask = "Deleting indexed file created by legacy MSGFDB: " & fiLegacyIndexedFiles(intIndex).FullName
                         If intDebugLevel >= 1 Then
-                            ReportMessage(strCurrentTask)
+                            OnStatusEvent(strCurrentTask)
                         End If
                         fiLegacyIndexedFiles(intIndex).Delete()
                     Next
@@ -482,7 +477,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                                         If Char.IsLetter(strLine2.Chars(0)) Then
                                             strCurrentTask = "Legacy MSGFDB indexed file found (" & fiCAnnoFile.Name & "); re-indexing"
                                             If intDebugLevel >= 1 Then
-                                                ReportMessage(strCurrentTask)
+                                                OnStatusEvent(strCurrentTask)
                                             End If
                                             blnReindexingRequired = True
                                         End If
@@ -514,10 +509,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                     strCurrentTask = "Some files are missing: " & lstExistingFiles.Count & " vs. " & lstFilesToFind.Count
                     If lstExistingFiles.Count > 0 Then
                         If intDebugLevel >= 1 Then
-                            ReportWarning("Indexing of " & fiFastaFile.Name & " was incomplete (found " & lstExistingFiles.Count &
+                            OnWarningEvent("Indexing of " & fiFastaFile.Name & " was incomplete (found " & lstExistingFiles.Count &
                                           " out of " & lstFilesToFind.Count & " index files)")
-                            ReportMessage(" ... existing files: " & strExistingFiles)
-                            ReportMessage(" ... missing files: " & strMissingFiles)
+                            OnStatusEvent(" ... existing files: " & strExistingFiles)
+                            OnStatusEvent(" ... missing files: " & strMissingFiles)
                         End If
                     End If
                 ElseIf blnUsingLegacyFasta Then
@@ -531,7 +526,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                     For Each fiIndexFile In lstExistingFiles
                         If fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1) Then
-                            ReportMessage("Index file is older than the fasta file; " &
+                            OnStatusEvent("Index file is older than the fasta file; " &
                               fiIndexFile.FullName & " modified " &
                               fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT) & " vs. " &
                               fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT))
@@ -595,7 +590,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                     If blnReindexingRequired Then
 
-                        ReportMessage("Running BuildSA to index " & fiFastaFile.Name)
+                        OnStatusEvent("Running BuildSA to index " & fiFastaFile.Name)
 
                         eResult = CreateSuffixArrayFilesWork(
                           strLogFileDir, intDebugLevel, JobNum,
@@ -606,7 +601,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                           udtHPCOptions)
 
                         If blnRemoteLockFileCreated AndAlso eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                            ReportMessage("Copying index files to " & strRemoteIndexFolderPath)
+                            OnStatusEvent("Copying index files to " & strRemoteIndexFolderPath)
                             CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel)
                         End If
 
@@ -624,7 +619,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         Catch ex As Exception
             mErrorMessage = "Exception in .CreateIndexedDbFiles"
-            ReportError(mErrorMessage & "; " & strCurrentTask & "; " & ex.Message)
+            OnErrorEvent(mErrorMessage & "; " & strCurrentTask, ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         End Try
@@ -656,14 +651,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             ' Verify that Java exists
             If Not File.Exists(JavaProgLoc) Then
                 mErrorMessage = "Cannot find Java program file"
-                ReportError(mErrorMessage & ": " & JavaProgLoc)
+                OnErrorEvent(mErrorMessage & ": " & JavaProgLoc)
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             ' Verify that the MSGFDB.Jar or MSGFPlus.jar file exists
             If Not File.Exists(msgfDbProgLoc) Then
                 mErrorMessage = "Cannot find " + Path.GetFileName(msgfDbProgLoc) & " file"
-                ReportError(mErrorMessage & ": " & msgfDbProgLoc)
+                OnErrorEvent(mErrorMessage & ": " & msgfDbProgLoc)
                 Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
@@ -700,7 +695,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
             ' Create a lock file
             If intDebugLevel >= 3 Then
-                ReportMessage("Creating lock file: " & fiLockFile.FullName)
+                OnStatusEvent("Creating lock file: " & fiLockFile.FullName)
             End If
 
             ' Delay between 2 and 5 seconds
@@ -713,7 +708,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             fiLockFile.Refresh()
             If fiLockFile.Exists Then
                 If intDebugLevel >= 1 Then
-                    ReportMessage("Warning: new lock file found: " & fiLockFile.FullName & "; aborting")
+                    OnStatusEvent("Warning: new lock file found: " & fiLockFile.FullName & "; aborting")
                     Return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES
                 End If
             End If
@@ -740,7 +735,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Next
 
             If intDebugLevel >= 2 Then
-                ReportMessage("Creating Suffix Array database file: " & dbSarrayFilename)
+                OnStatusEvent("Creating Suffix Array database file: " & dbSarrayFilename)
             End If
 
             'Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar or MSGFPlus.jar)          
@@ -761,7 +756,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             End If
 
             If intDebugLevel >= 1 Then
-                ReportMessage(JavaProgLoc & " " & CmdStr)
+                OnStatusEvent(JavaProgLoc & " " & CmdStr)
             End If
 
             Dim consoleOutputFilePath = String.Empty
@@ -824,7 +819,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 success = mComputeCluster.MonitorJob(buildSAJob)
                 If Not success Then
                     mErrorMessage = "HPC Job Monitor returned false: " & mComputeCluster.ErrorMessage
-                    ReportError(mErrorMessage)
+                    OnErrorEvent(mErrorMessage)
                 End If
 
                 Try
@@ -870,17 +865,17 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                     End If
                 End If
 
-                ReportMessage(mErrorMessage)
+                OnStatusEvent(mErrorMessage)
                 DeleteLockFile(fiLockFile)
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             Else
                 If intDebugLevel >= 1 Then
-                    ReportMessage("Created suffix array files for " & fiFastaFile.Name)
+                    OnStatusEvent("Created suffix array files for " & fiFastaFile.Name)
                 End If
             End If
 
             If intDebugLevel >= 3 Then
-                ReportMessage("Deleting lock file: " & fiLockFile.FullName)
+                OnStatusEvent("Deleting lock file: " & fiLockFile.FullName)
             End If
 
             ' Delete the lock file
@@ -889,7 +884,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         Catch ex As Exception
             mErrorMessage = "Exception in .CreateSuffixArrayFilesWork"
-            ReportError(mErrorMessage & "; " & strCurrentTask & "; " & ex.Message)
+            OnErrorEvent(mErrorMessage & "; " & strCurrentTask, ex)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
 
         End Try
@@ -912,7 +907,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         Catch ex As Exception
             mErrorMessage = "Error creating lock file"
-            ReportError("clsCreateMSGFDBSuffixArrayFiles.CreateLockFile, " & mErrorMessage & ": " & ex.Message)
+            OnErrorEvent("clsCreateMSGFDBSuffixArrayFiles.CreateLockFile, " & mErrorMessage, ex)
             Return False
         End Try
 
@@ -937,7 +932,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
         diRemoteIndexFolderPath = New DirectoryInfo(strRemoteIndexFolderPath)
 
         If Not diRemoteIndexFolderPath.Parent.Exists Then
-            ReportError("Cannot read/write MSGF+ index files from remote share; folder not found; " & diRemoteIndexFolderPath.FullName)
+            OnErrorEvent("Cannot read/write MSGF+ index files from remote share; folder not found; " & diRemoteIndexFolderPath.FullName)
             fiRemoteLockFile = Nothing
             Return False
         End If
@@ -959,7 +954,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             End If
 
         Catch ex As Exception
-            ReportError("Exception creating remote MSGF+ suffix array lock file at " & diRemoteIndexFolderPath.FullName & "; " & strCurrentTask & "; " & ex.Message)
+            OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " & diRemoteIndexFolderPath.FullName & "; " & strCurrentTask, ex)
             Return False
         End Try
 
@@ -1151,7 +1146,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
     Private Function ParseConsoleOutputFile(consoleOutputFilePath As String) As String
         Try
             If Not File.Exists(consoleOutputFilePath) Then
-                ReportWarning("BuildSA console output file not found: " & consoleOutputFilePath)
+                OnWarningEvent("BuildSA console output file not found: " & consoleOutputFilePath)
                 Return String.Empty
             End If
 
@@ -1159,7 +1154,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 While Not srReader.EndOfStream
                     Dim dataLine = srReader.ReadLine()
                     If dataLine.StartsWith("Error") Then
-                        ReportError("BuildSA reports: " & dataLine)
+                        OnErrorEvent("BuildSA reports: " & dataLine)
                         If dataLine.Contains("too many redundant proteins") Then
                             Return "Error while indexing, too many redundant proteins"
                         End If
@@ -1171,7 +1166,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Return String.Empty
 
         Catch ex As Exception
-            ReportError("Error parsing the BuildSA console output file: " & ex.Message)
+            OnErrorEvent("Error parsing the BuildSA console output file", ex)
             Return String.Empty
         End Try
 
@@ -1208,20 +1203,20 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             If Not fiSourceFile.Exists Then
                 ' Remote MSGF+ index file not found
                 ' Local MSGF+ index file not found
-                ReportWarning(sourceDescription & " not found: " & fiSourceFile.FullName)
+                OnWarningEvent(sourceDescription & " not found: " & fiSourceFile.FullName)
                 Return False
 
             ElseIf fiSourceFile.Length <> entry.Value Then
                 ' Remote MSGF+ index file is not the expected size
                 ' Local MSGF+ index file is not the expected size
-                ReportWarning(sourceDescription & " is not the expected size: " & fiSourceFile.FullName & " should be " & entry.Value & " bytes but is actually " & fiSourceFile.Length & " bytes")
+                OnWarningEvent(sourceDescription & " is not the expected size: " & fiSourceFile.FullName & " should be " & entry.Value & " bytes but is actually " & fiSourceFile.Length & " bytes")
                 Return False
 
             ElseIf blnUsingLegacyFasta Then
                 ' Require that the index files be newer than the fasta file
                 If fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1) Then
 
-                    ReportMessage(sourceDescription & " is older than the fasta file; " &
+                    OnStatusEvent(sourceDescription & " is older than the fasta file; " &
                       fiSourceFile.FullName & " modified " &
                       fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT) & " vs. " &
                       dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(DATE_TIME_FORMAT))
@@ -1241,14 +1236,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
         If fiLockFile.Exists AndAlso Date.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60 Then
             ' Lock file is over 60 minutes old; delete it
             If intDebugLevel >= 1 Then
-                ReportMessage("Lock file is over 60 minutes old (created " & fiLockFile.LastWriteTime.ToString() & "); deleting " & fiLockFile.FullName)
+                OnStatusEvent("Lock file is over 60 minutes old (created " & fiLockFile.LastWriteTime.ToString() & "); deleting " & fiLockFile.FullName)
             End If
             DeleteLockFile(fiLockFile)
 
         ElseIf fiLockFile.Exists Then
 
             If intDebugLevel >= 1 Then
-                ReportMessage("Lock file found: " & fiLockFile.FullName & "; waiting for file to be removed by other manager generating suffix array files")
+                OnStatusEvent("Lock file found: " & fiLockFile.FullName & "; waiting for file to be removed by other manager generating suffix array files")
             End If
 
             ' Lock file found; wait up to sngMaxWaitTimeHours hours
@@ -1270,7 +1265,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 Dim strLogMessage As String
                 strLogMessage = "Waited over " & sngMaxWaitTimeHours.ToString("0.0") & " hour(s) for lock file to be deleted, but it is still present; " &
                     "deleting the file now and continuing: " & fiLockFile.FullName
-                ReportWarning(strLogMessage)
+                OnWarningEvent(strLogMessage)
                 DeleteLockFile(fiLockFile)
             End If
 
@@ -1292,11 +1287,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
 #If EnableHPC = "True" Then
     Private Sub mComputeCluster_ErrorEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.ErrorEvent
-        ReportError(e.Message)
+        OnErrorEvent(e.Message)
     End Sub
 
     Private Sub mComputeCluster_MessageEvent(sender As Object, e As HPC_Submit.MessageEventArgs) Handles mComputeCluster.MessageEvent
-        ReportMessage(e.Message)
+        OnStatusEvent(e.Message)
     End Sub
 
     Private Sub mComputeCluster_ProgressEvent(sender As Object, e As HPC_Submit.ProgressEventArgs) Handles mComputeCluster.ProgressEvent
@@ -1304,7 +1299,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         If Date.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 60 Then
             dtLastStatusUpdate = Date.UtcNow
-            ReportMessage("Running BuildSA with HPC, " & (e.HoursElapsed * 60).ToString("0.00") & " minutes elapsed")
+            OnStatusEvent("Running BuildSA with HPC, " & (e.HoursElapsed * 60).ToString("0.00") & " minutes elapsed")
         End If
 
     End Sub
