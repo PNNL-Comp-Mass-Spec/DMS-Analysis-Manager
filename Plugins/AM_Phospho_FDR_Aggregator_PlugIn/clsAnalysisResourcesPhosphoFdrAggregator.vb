@@ -3,7 +3,6 @@ Option Strict On
 Imports AnalysisManagerBase
 Imports System.Linq
 Imports System.IO
-Imports System.Text.RegularExpressions
 
 
 Public Class clsAnalysisResourcesPhosphoFdrAggregator
@@ -142,18 +141,6 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
         End If
 
         Return success
-
-    End Function
-
-    <Obsolete>
-    Protected Function GetDatasetID(DatasetName As String) As String
-        Dim DatasetID = 0
-
-        If m_jobParams.DatasetInfoList.TryGetValue(DatasetName, DatasetID) Then
-            Return DatasetID.ToString()
-        Else
-            Return String.Empty
-        End If
 
     End Function
 
