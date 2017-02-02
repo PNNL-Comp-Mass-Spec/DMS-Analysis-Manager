@@ -104,7 +104,7 @@ Public Class clsAnalysisResourcesProMex
     ''' <param name="jobParams"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function IsProMexBrukerJob(ByVal jobParams As IJobParams) As Boolean
+    Public Shared Function IsProMexBrukerJob(jobParams As IJobParams) As Boolean
         Dim toolName = jobParams.GetParam("ToolName")
         Dim proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase)
 
@@ -114,7 +114,7 @@ Public Class clsAnalysisResourcesProMex
 
     Protected Function RetrieveMzMLFile() As IJobParams.CloseOutType
 
-        Dim currentTask As String = "Initializing"
+        Dim currentTask = "Initializing"
 
         Try
             ' Retrieve the .mzML file from the MSXml cache folder
@@ -140,7 +140,7 @@ Public Class clsAnalysisResourcesProMex
 
     Protected Function RetrievePBFFile() As IJobParams.CloseOutType
 
-        Dim currentTask As String = "Initializing"
+        Dim currentTask = "Initializing"
 
         Try
             ' Retrieve the .pbf file from the MSXml cache folder

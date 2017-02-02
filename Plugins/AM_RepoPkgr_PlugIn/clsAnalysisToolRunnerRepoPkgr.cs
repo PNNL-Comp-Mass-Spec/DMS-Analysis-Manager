@@ -63,7 +63,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                string instrumentDataWarning = m_jobParams.GetJobParameter(WARNING_INSTRUMENT_DATA_MISSING, string.Empty);
+                var instrumentDataWarning = m_jobParams.GetJobParameter(WARNING_INSTRUMENT_DATA_MISSING, string.Empty);
                 if (!string.IsNullOrEmpty(instrumentDataWarning))
                     m_EvalMessage = instrumentDataWarning;
 
@@ -90,7 +90,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             // do operations for repository specified in job parameters
             var targetRepository = m_jobParams.GetJobParameter("Repository", "");
-            bool success = false;
+            var success = false;
             switch (targetRepository)
             {
                 case "PeptideAtlas":
@@ -136,8 +136,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             m_progress = PROGRESS_PCT_FASTA_FILES_COPIED;
             m_StatusTools.UpdateAndWrite(m_progress);
 
-            int dataPkgJobCountMatch = 0;
-            int dataPkgFileCountMatch = 0;
+            var dataPkgJobCountMatch = 0;
 
             if (_bIncludeMSGFPlusResults)
             {
@@ -149,8 +148,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     "*_msgfplus_fht.txt;*_msgfplus_fht_MSGF.txt;*_msgfdb_fht.txt;*_msgfdb_fht_MSGF.txt",
                     "MSGFPlus_Results", "Job");
 
-                dataPkgJobCountMatch = _mgr.DataPackageItems.Rows.Count();
-                dataPkgFileCountMatch = _mgr.AssociatedFiles.Rows.Count();
+                dataPkgJobCountMatch = _mgr.DataPackageItems.Rows.Count;
+                var dataPkgFileCountMatch = _mgr.AssociatedFiles.Rows.Count;
 
                 if (dataPkgJobCountMatch == 0)
                 {
@@ -172,8 +171,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 // find any sequest jobs in data package and copy their first hits files to appropriate cache subfolder
                 _mgr.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "SEQUEST", "*_fht.txt", "SEQUEST_Results", "Job");
-                dataPkgJobCountMatch = _mgr.DataPackageItems.Rows.Count();
-                dataPkgFileCountMatch = _mgr.AssociatedFiles.Rows.Count();
+                dataPkgJobCountMatch = _mgr.DataPackageItems.Rows.Count;
+                var dataPkgFileCountMatch = _mgr.AssociatedFiles.Rows.Count;
 
                 if (dataPkgJobCountMatch == 0)
                 {
@@ -194,7 +193,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 // find any MSGFPlus jobs in data package and copy their MZID files to appropriate cache subfolder
                 _mgr.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "MSGFPlus", "*_msgfplus.zip;*_msgfplus.mzid.gz", @"MSGFPlus_Results\MZID_Files", "Job");
-                int zipFileCountConverted = FileUtils.ConvertZipsToGZips(Path.Combine(_outputResultsFolderPath, @"MSGFPlus_Results\MZID_Files"), m_WorkDir);
+                var zipFileCountConverted = FileUtils.ConvertZipsToGZips(Path.Combine(_outputResultsFolderPath, @"MSGFPlus_Results\MZID_Files"), m_WorkDir);
 
                 if (zipFileCountConverted > 0)
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Converted " + zipFileCountConverted + " _msgfplus.zip files to .mzid.gz files");
@@ -218,7 +217,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 }
 
 
-                string msg = "Data package " + _mgr.DataPkgId + " has " + dataPkgJobCountMatch + " associated jobs, but no instrument data files were retrieved";
+                var msg = "Data package " + _mgr.DataPkgId + " has " + dataPkgJobCountMatch + " associated jobs, but no instrument data files were retrieved";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 
             }
@@ -312,7 +311,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 foreach (var candidateFile in candidateFileNames)
                 {
-                    string filePath = Path.Combine(m_WorkDir, candidateFile);
+                    var filePath = Path.Combine(m_WorkDir, candidateFile);
 
                     if (File.Exists(filePath))
                     {
@@ -324,7 +323,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                     if (File.Exists(filePath))
                     {
-                        string strDestPath = string.Empty;
+                        var strDestPath = string.Empty;
                         var retrieveSuccess = RetrieveStoragePathInfoTargetFile(filePath, objAnalysisResults, ref strDestPath);
                         if (retrieveSuccess)
                         {
@@ -432,7 +431,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     return string.Empty;
                 }
 
-                string strMSXmlGeneratorName = Path.GetFileNameWithoutExtension(_MSXmlGeneratorAppPath);
+                var strMSXmlGeneratorName = Path.GetFileNameWithoutExtension(_MSXmlGeneratorAppPath);
                 string strDatasetYearQuarter;
                 if (!dctDatasetYearQuarter.TryGetValue(datasetName, out strDatasetYearQuarter))
                 {
@@ -479,7 +478,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             Dictionary<string, string> dctDatasetRawDataTypes)
         {
 
-            string strDatasetFilePathLocal = string.Empty;
+            var strDatasetFilePathLocal = string.Empty;
 
             try
             {
@@ -536,7 +535,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         strDatasetFilePathLocal = strDatasetFilePathSource;
                     }
 
-                    bool blnDatasetFileIsAFolder = Directory.Exists(strDatasetFilePathSource);
+                    var blnDatasetFileIsAFolder = Directory.Exists(strDatasetFilePathSource);
 
                     if (blnDatasetFileIsAFolder)
                     {
@@ -604,8 +603,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             objMSXmlCreator.ErrorEvent += objMSXmlCreator_ErrorEvent;
             objMSXmlCreator.WarningEvent += objMSXmlCreator_WarningEvent;
 
-            int successCount = 0;
-            int errorCount = 0;
+            var successCount = 0;
+            var errorCount = 0;
 
             if (dctDatasetRawFilePaths.Keys.Count == 0)
             {
@@ -617,7 +616,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             foreach (var datasetName in dctDatasetRawFilePaths.Keys)
             {
 
-                bool success = ProcessDataset(objAnalysisResults, objMSXmlCreator, datasetName, dctDatasetRawFilePaths, dctDatasetYearQuarter, dctDatasetRawDataTypes);
+                var success = ProcessDataset(objAnalysisResults, objMSXmlCreator, datasetName, dctDatasetRawFilePaths, dctDatasetYearQuarter, dctDatasetRawDataTypes);
 
                 if (success)
                     successCount++;
@@ -652,7 +651,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         protected bool RetrieveStoragePathInfoTargetFile(string strStoragePathInfoFilePath, clsAnalysisResults objAnalysisResults, bool IsFolder, ref string strDestPath)
         {
-            string strSourceFilePath = string.Empty;
+            var strSourceFilePath = string.Empty;
 
             try
             {
@@ -705,7 +704,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         private bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             // Store paths to key files in ioToolFiles
             var ioToolFiles = new List<FileInfo>();

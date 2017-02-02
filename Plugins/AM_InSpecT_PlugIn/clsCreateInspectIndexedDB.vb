@@ -21,10 +21,10 @@ Public Class clsCreateInspectIndexedDB
     ''' <remarks></remarks>
     Public Function CreateIndexedDbFiles(ByRef mgrParams As IMgrParams,
                                          ByRef jobParams As IJobParams,
-                                         ByVal DebugLevel As Integer,
-                                         ByVal JobNum As String,
-                                         ByVal InspectDir As String,
-                                         ByVal OrgDbDir As String) As IJobParams.CloseOutType
+                                         DebugLevel As Integer,
+                                         JobNum As String,
+                                         InspectDir As String,
+                                         OrgDbDir As String) As IJobParams.CloseOutType
 
         Const MAX_WAITTIME_HOURS As Single = 1.0
         Const MAX_WAITTIME_PREVENT_REPEATS As Single = 2.0
@@ -228,15 +228,13 @@ Public Class clsCreateInspectIndexedDB
     ''' Creates a lock file
     ''' </summary>
     ''' <returns>True if success; false if failure</returns>
-    Protected Function CreateLockFile(ByVal strLockFilePath As String) As Boolean
+    Protected Function CreateLockFile(strLockFilePath As String) As Boolean
 
         Try
-            Dim sw As StreamWriter = New StreamWriter(strLockFilePath)
-
-            ' Add Date and time to the file.
-            sw.WriteLine(DateTime.Now)
-            sw.Close()
-            sw.Dispose()
+            Using sw = New StreamWriter(strLockFilePath)
+                ' Add Date and time to the file.
+                sw.WriteLine(DateTime.Now)
+            End Using
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsCreateInspectIndexedDB.CreateLockFile, Error creating lock file: " & ex.Message)

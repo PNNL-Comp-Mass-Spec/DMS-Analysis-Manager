@@ -344,9 +344,8 @@ Public Class clsAnalysisToolRunnerIN
     ''' <returns>Value as a string or empty string means failure</returns>
     ''' <remarks></remarks>
     Private Function getPthresh() As String
-        Dim defPvalThresh As String = "0.1"
-        Dim tmpPvalThresh As String = ""
-        tmpPvalThresh = m_mgrParams.GetParam("InspectPvalueThreshold")
+        Dim defPvalThresh = "0.1"
+        Dim tmpPvalThresh = m_mgrParams.GetParam("InspectPvalueThreshold")
         If tmpPvalThresh <> "" Then
             Return tmpPvalThresh 'return pValueThreshold value in settings file
         Else
@@ -355,7 +354,7 @@ Public Class clsAnalysisToolRunnerIN
 
     End Function
 
-    Private Sub InitializeInspectSearchLogFileWatcher(ByVal strWorkDir As String)
+    Private Sub InitializeInspectSearchLogFileWatcher(strWorkDir As String)
 
         mSearchLogFileWatcher = New FileSystemWatcher()
         With mSearchLogFileWatcher
@@ -373,11 +372,10 @@ Public Class clsAnalysisToolRunnerIN
     ''' <summary>
     ''' Looks for the inspect _errors.txt file in the working folder.  If present, reads and parses it
     ''' </summary>
-    ''' <param name="m_workdir"></param>
     ''' <param name="errorFilename"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function ParseInspectErrorsFile(ByVal m_workdir As String, ByVal errorFilename As String) As Boolean
+    Protected Function ParseInspectErrorsFile(errorFilename As String) As Boolean
 
         Dim srInFile As StreamReader
 
@@ -392,7 +390,7 @@ Public Class clsAnalysisToolRunnerIN
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " & errorFilename)
             End If
 
-            strInputFilePath = Path.Combine(m_workdir, errorFilename)
+            strInputFilePath = Path.Combine(m_WorkDir, errorFilename)
 
             If Not File.Exists(strInputFilePath) Then
                 ' File not found; that means no errors occurred
@@ -452,7 +450,7 @@ Public Class clsAnalysisToolRunnerIN
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function RunInSpecT(ByVal InspectDir As String) As IJobParams.CloseOutType
+    Private Function RunInSpecT(InspectDir As String) As IJobParams.CloseOutType
         Dim CmdStr As String
         Dim ParamFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
         Dim blnSuccess As Boolean = False
@@ -549,7 +547,7 @@ Public Class clsAnalysisToolRunnerIN
         End If
 
         ' Parse the _errors.txt file (if it exists) and copy any errors to the analysis manager log
-        ParseInspectErrorsFile(m_WorkDir, mInspectErrorFilePath)
+        ParseInspectErrorsFile(mInspectErrorFilePath)
 
         'even though success is returned, check for the result file
         If File.Exists(mInspectResultsFilePath) Then
@@ -585,7 +583,7 @@ Public Class clsAnalysisToolRunnerIN
 
     End Sub
 
-    Private Sub ParseInspectSearchLogFile(ByVal strSearchLogFilePath As String)
+    Private Sub ParseInspectSearchLogFile(strSearchLogFilePath As String)
         Dim strLineIn As String = String.Empty
         Dim strLastEntry As String = String.Empty
         Dim strSplitline() As String
@@ -647,7 +645,7 @@ Public Class clsAnalysisToolRunnerIN
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strInspectFolder As String) As Boolean
+    Protected Function StoreToolVersionInfo(strInspectFolder As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
 
@@ -674,7 +672,7 @@ Public Class clsAnalysisToolRunnerIN
     ''' <param name="sender"></param>
     ''' <param name="e"></param>
     ''' <remarks></remarks>
-    Private Sub mSearchLogFileWatcher_Changed(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mSearchLogFileWatcher.Changed
+    Private Sub mSearchLogFileWatcher_Changed(sender As Object, e As FileSystemEventArgs) Handles mSearchLogFileWatcher.Changed
         ParseInspectSearchLogFile(mInspectSearchLogFilePath)
     End Sub
 

@@ -271,7 +271,7 @@ Public Class clsAnalysisToolRunnerXT
 
     End Function
 
-    Protected Function DetermineXTandemProgramLocation(ByVal progLoc As String) As String
+    Protected Function DetermineXTandemProgramLocation(progLoc As String) As String
 
         ' Check whether the settings file specifies that a specific version of the step tool be used
         Dim strXTandemStepToolVersion As String = m_jobParams.GetParam("XTandem_Version")
@@ -305,10 +305,9 @@ Public Class clsAnalysisToolRunnerXT
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         Dim reExtraceValue = New Regex("= *(\d+)", RegexOptions.Compiled)
-        Dim reMatch As Match
 
         Try
 
@@ -325,71 +324,67 @@ Public Class clsAnalysisToolRunnerXT
             End If
 
 
-            Dim srInFile As StreamReader
-            Dim strLineIn As String
-            Dim intLinesRead As Integer
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-            srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                Dim intLinesRead = 0
+                Do While Not srInFile.EndOfStream
+                    Dim strLineIn = srInFile.ReadLine()
+                    intLinesRead += 1
 
-            intLinesRead = 0
-            Do While Not srInFile.EndOfStream
-                strLineIn = srInFile.ReadLine()
-                intLinesRead += 1
+                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
 
-                If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
+                    If intLinesRead <= 4 AndAlso String.IsNullOrEmpty(mXTandemVersion) AndAlso strLineIn.StartsWith("X!") Then
+                        ' Originally the first line was the X!Tandem version
+                        ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                        ' The third or fourth line should be the X!Tandem version
 
-                If intLinesRead <= 3 AndAlso String.IsNullOrEmpty(mXTandemVersion) AndAlso strLineIn.StartsWith("X!") Then
-                    ' Originally the first line was the X!Tandem version
-                    ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                    ' The third line is the X!Tandem version
+                        If m_DebugLevel >= 2 Then
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "X!Tandem version: " & strLineIn)
+                        End If
 
-                    If m_DebugLevel >= 2 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "X!Tandem version: " & strLineIn)
-                    End If
+                        mXTandemVersion = String.Copy(strLineIn)
 
-                    mXTandemVersion = String.Copy(strLineIn)
+                    Else
 
-                Else
+                        ' Update progress if the line starts with one of the expected phrases
+                        If strLineIn.StartsWith("Loading spectra") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA
 
-                    ' Update progress if the line starts with one of the expected phrases
-                    If strLineIn.StartsWith("Loading spectra") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA
+                        ElseIf strLineIn.StartsWith("Computing models") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS
 
-                    ElseIf strLineIn.StartsWith("Computing models") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS
+                        ElseIf strLineIn.StartsWith("Model refinement") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT
 
-                    ElseIf strLineIn.StartsWith("Model refinement") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT
+                        ElseIf strLineIn.StartsWith("	partial cleavage") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE
 
-                    ElseIf strLineIn.StartsWith("	partial cleavage") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE
+                        ElseIf strLineIn.StartsWith("	unanticipated cleavage") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE
 
-                    ElseIf strLineIn.StartsWith("	unanticipated cleavage") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE
+                        ElseIf strLineIn.StartsWith("	finishing refinement ") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING
 
-                    ElseIf strLineIn.StartsWith("	finishing refinement ") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING
+                        ElseIf strLineIn.StartsWith("Merging results") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS
 
-                    ElseIf strLineIn.StartsWith("Merging results") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS
+                        ElseIf strLineIn.StartsWith("Creating report") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_CREATING_REPORT
 
-                    ElseIf strLineIn.StartsWith("Creating report") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_CREATING_REPORT
+                        ElseIf strLineIn.StartsWith("Estimated false positives") Then
+                            m_progress = PROGRESS_PCT_XTANDEM_COMPLETE
 
-                    ElseIf strLineIn.StartsWith("Estimated false positives") Then
-                        m_progress = PROGRESS_PCT_XTANDEM_COMPLETE
-
-                    ElseIf strLineIn.StartsWith("Valid models") Then
-                        reMatch = reExtraceValue.Match(strLineIn)
-                        If reMatch.Success Then
-                            Integer.TryParse(reMatch.Groups(1).Value, mXTandemResultsCount)
+                        ElseIf strLineIn.StartsWith("Valid models") Then
+                            Dim reMatch = reExtraceValue.Match(strLineIn)
+                            If reMatch.Success Then
+                                Integer.TryParse(reMatch.Groups(1).Value, mXTandemResultsCount)
+                            End If
                         End If
                     End If
-                End If
 
-            Loop
+                Loop
 
-            srInFile.Close()
+            End Using
 
         Catch ex As Exception
             ' Ignore errors here

@@ -41,7 +41,7 @@ Public Class clsAnalysisResourcesOM
         'convert the .fasta file to OMSSA format using formatdb.exe
         Dim success = ConvertOMSSAFastaFile()
         If Not success Then
-            Const msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format."
+            Const msg = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -63,7 +63,7 @@ Public Class clsAnalysisResourcesOM
 
         success = ConvertDtaToXml()
         If Not success Then
-            Const Msg As String = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format."
+            Const Msg = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -139,7 +139,7 @@ Public Class clsAnalysisResourcesOM
 
         Dim SourceFilePath As String
 
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
 
         Try
             ' Convert the _DTA.txt file to a DTA .XML file
@@ -179,7 +179,6 @@ Public Class clsAnalysisResourcesOM
         Dim OmssaDefaultInput As String = Path.Combine(m_WorkingDir, OMSSA_DEFAULT_INPUT_FILE)
         Dim OmssaInput As String = Path.Combine(m_WorkingDir, OMSSA_INPUT_FILE)
         Dim ParamFilePath As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
-        Dim FastaFilename As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
 
         Dim SearchSettings As String = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
         Dim MSInfilename As String = Path.Combine(m_WorkingDir, m_DatasetName & ".xml")

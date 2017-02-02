@@ -179,7 +179,7 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' <param name="fiSourceOutFile"></param>
     ''' <param name="swTargetFile"></param>
     ''' <remarks></remarks>
-    Protected Sub AppendOutFile(ByVal fiSourceOutFile As FileInfo, ByRef swTargetFile As StreamWriter)
+    Protected Sub AppendOutFile(fiSourceOutFile As FileInfo, ByRef swTargetFile As StreamWriter)
 
         Const hdrLeft As String = "=================================== " & """"
         Const hdrRight As String = """" & " =================================="
@@ -277,7 +277,7 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' Calculates status information for progress file by counting the number of .out files
     ''' </summary>
     ''' <param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
-    Protected Sub CalculateNewStatus(ByVal blnUpdateDTACount As Boolean)
+    Protected Sub CalculateNewStatus(blnUpdateDTACount As Boolean)
 
         Dim OutFileCount As Integer
 
@@ -349,7 +349,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
     End Function
 
-    Protected Function ConstructDTASkipList(ByVal strConcatenatedTempFilePath As String) As SortedSet(Of String)
+    Protected Function ConstructDTASkipList(strConcatenatedTempFilePath As String) As SortedSet(Of String)
 
         Dim reFileSeparator As Regex
         Dim objFileSepMatch As Match
@@ -615,7 +615,7 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' <param name="JobNum">Job number</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Overridable Function ConcatOutFiles(ByVal WorkDir As String, ByVal DSName As String, ByVal JobNum As String) As Boolean
+    Protected Overridable Function ConcatOutFiles(WorkDir As String, DSName As String, JobNum As String) As Boolean
 
         Dim MAX_RETRY_ATTEMPTS = 5
         Dim MAX_INTERLOCK_WAIT_TIME_MINUTES = 30
@@ -721,7 +721,7 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' </summary>
     ''' <param name="strOutFilePath"></param>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strOutFilePath As String) As Boolean
+    Protected Function StoreToolVersionInfo(strOutFilePath As String) As Boolean
 
         Dim ioToolFiles As New List(Of FileInfo)
         Dim strToolVersionInfo As String = String.Empty
@@ -856,7 +856,7 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' </summary>
     ''' <remarks></remarks>
     ''' <returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
-    Protected Function ValidateSequestNodeCount(ByVal strLogFilePath As String) As Boolean
+    Protected Function ValidateSequestNodeCount(strLogFilePath As String) As Boolean
         Return ValidateSequestNodeCount(strLogFilePath, blnLogToConsole:=False)
     End Function
 
@@ -869,7 +869,7 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' <param name="blnLogToConsole">If true, then displays the various status messages at the console</param>
     ''' <remarks></remarks>
     ''' <returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
-    Protected Function ValidateSequestNodeCount(ByVal strLogFilePath As String, ByVal blnLogToConsole As Boolean) As Boolean
+    Protected Function ValidateSequestNodeCount(strLogFilePath As String, blnLogToConsole As Boolean) As Boolean
         Const ERROR_CODE_A = 2
         Const ERROR_CODE_B = 4
         Const ERROR_CODE_C = 8
@@ -1202,7 +1202,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
     End Function
 
-    Protected Function CheckForPlurality(ByVal intValue As Integer) As String
+    Protected Function CheckForPlurality(intValue As Integer) As String
         If intValue = 1 Then
             Return String.Empty
         Else
@@ -1210,7 +1210,7 @@ Public Class clsAnalysisToolRunnerSeqBase
         End If
     End Function
 
-    Protected Function ComputeMedian(ByVal lstValues As List(Of Single)) As Single
+    Protected Function ComputeMedian(lstValues As List(Of Single)) As Single
 
         Dim intMidpoint As Integer
         Dim lstSortedValues As List(Of Single) = (From item In lstValues Order By item).ToList()
@@ -1240,7 +1240,7 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' <param name="JobNum">Job number</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Protected Overridable Function ZipConcatOutFile(ByVal WorkDir As String, ByVal JobNum As String) As Boolean
+    Protected Overridable Function ZipConcatOutFile(WorkDir As String, JobNum As String) As Boolean
 
         Dim OutFileName As String = m_Dataset & "_out.txt"
         Dim OutFilePath As String = Path.Combine(WorkDir, OutFileName)

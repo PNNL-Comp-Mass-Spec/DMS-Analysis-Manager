@@ -212,11 +212,11 @@ Public Class clsAnalysisResourcesXT
         Return result
     End Function
 
-    Friend Shared Function ConstructModificationDefinitionsFilename(ByVal ParameterFileName As String) As String
+    Friend Shared Function ConstructModificationDefinitionsFilename(ParameterFileName As String) As String
         Return Path.GetFileNameWithoutExtension(ParameterFileName) & MOD_DEFS_FILE_SUFFIX
     End Function
 
-    Protected Function ValidateDTATextFileSize(ByVal strWorkDir As String, ByVal strInputFileName As String) As Boolean
+    Protected Function ValidateDTATextFileSize(strWorkDir As String, strInputFileName As String) As Boolean
         Const FILE_SIZE_THRESHOLD As Integer = Int32.MaxValue
 
         Dim ioFileInfo As FileInfo
@@ -298,11 +298,11 @@ Public Class clsAnalysisResourcesXT
 
     End Function
 
-    Private Sub mCDTACondenser_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mCDTACondenser.ProgressChanged
+    Private Sub mCDTACondenser_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mCDTACondenser.ProgressChanged
         Static dtLastUpdateTime As DateTime
 
         If m_DebugLevel >= 1 Then
-            If m_DebugLevel = 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse _
+            If m_DebugLevel = 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse
                m_DebugLevel > 1 AndAlso DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
                 dtLastUpdateTime = DateTime.UtcNow
 

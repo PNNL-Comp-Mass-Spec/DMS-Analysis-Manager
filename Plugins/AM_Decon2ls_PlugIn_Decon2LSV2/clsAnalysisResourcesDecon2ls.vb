@@ -55,11 +55,11 @@ Public Class clsAnalysisResourcesDecon2ls
             End If
         End If
 
-        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
-        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
-        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION)
-        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
-        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION)
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED

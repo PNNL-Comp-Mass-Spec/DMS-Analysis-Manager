@@ -7,6 +7,9 @@
 
 Option Strict On
 
+Imports System.Collections.Generic
+Imports System.IO
+Imports System.Threading
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerPRIDEMzXML
@@ -60,16 +63,16 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         ' verify that program file exists
         ' progLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
         Dim progLoc As String = m_mgrParams.GetParam("MSDataFileTrimmerprogloc")
-        If Not System.IO.File.Exists(progLoc) Then
+        If Not File.Exists(progLoc) Then
             If progLoc.Length = 0 Then progLoc = "Parameter 'MSDataFileTrimmerprogloc' not defined for this manager"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find MSDataFileTrimmer program file: " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
         Dim CmdStr As String
-        CmdStr = "/M:" & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile"))
+        CmdStr = "/M:" & Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile"))
         CmdStr &= " /G /O:" & m_WorkDir
-        CmdStr &= " /L:" & System.IO.Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt")
+        CmdStr &= " /L:" & Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt")
 
         With mCmdRunner
             .CreateNoWindow = True
@@ -77,7 +80,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "MSDataFileTrimmer_ConsoleOutput.txt")
+            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MSDataFileTrimmer_ConsoleOutput.txt")
         End With
 
         If Not mCmdRunner.RunProgram(progLoc, CmdStr, "MSDataFileTrimmer", True) Then
@@ -91,7 +94,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         End If
 
         'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+        m_StopTime = DateTime.UtcNow
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
@@ -99,7 +102,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         End If
 
         'Make sure objects are released
-        System.Threading.Thread.Sleep(500)        ' 500 msec delay
+        Thread.Sleep(500)        ' 500 msec delay
         PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
         ' Override the dataset name and transfer folder path so that the results get copied to the correct location
@@ -114,9 +117,9 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         Dim DumFiles() As String
 
         'update list of files to be deleted after run
-        DumFiles = System.IO.Directory.GetFiles(m_WorkDir, "*_grouped*")
+        DumFiles = Directory.GetFiles(m_WorkDir, "*_grouped*")
         For Each FileToSave As String In DumFiles
-            m_jobParams.AddResultFileToKeep(System.IO.Path.GetFileName(FileToSave))
+            m_jobParams.AddResultFileToKeep(Path.GetFileName(FileToSave))
         Next
 
         result = MoveResultFiles()
@@ -158,12 +161,12 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
             result = MoveResultFiles()
             If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
 
@@ -182,8 +185,8 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         End If
 
         ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")))
+        Dim ioToolFiles As New List(Of FileInfo)
+        ioToolFiles.Add(New FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)

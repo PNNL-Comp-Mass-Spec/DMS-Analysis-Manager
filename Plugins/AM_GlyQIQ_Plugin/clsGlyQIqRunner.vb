@@ -97,7 +97,7 @@ Public Class clsGlyQIqRunner
 
 #End Region
 
-    Public Sub New(ByVal workingDirectory As String, ByVal processingCore As Integer, batchFilePathToUse As String)
+    Public Sub New(workingDirectory As String, processingCore As Integer, batchFilePathToUse As String)
         mWorkingDirectory = workingDirectory
         mCore = processingCore
         mBatchFilePath = batchFilePathToUse
@@ -246,7 +246,7 @@ Public Class clsGlyQIqRunner
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' In the Console output, we look for lines like this:
         ' Start Workflows... (FragmentedTargetedIQWorkflow) on 3-6-1-0-0
@@ -301,7 +301,8 @@ Public Class clsGlyQIqRunner
 
         Catch ex As Exception
             ' Ignore errors here
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
         End Try
 
     End Sub

@@ -155,8 +155,7 @@ Public Class clsMSXmlGenMSConvert
         '  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
         '  to indicate that we agree to the Thermo license
 
-        Dim objProteowizardTools As clsProteowizardTools
-        objProteowizardTools = New clsProteowizardTools(DebugLevel)
+        Dim objProteowizardTools = New clsProteowizardTools(DebugLevel)
 
         Return objProteowizardTools.RegisterProteoWizard()
     End Function

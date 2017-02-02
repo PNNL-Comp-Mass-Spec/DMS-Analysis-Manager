@@ -239,7 +239,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -276,7 +276,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output
         '
@@ -342,7 +342,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
 
     End Sub
 
-    Protected Function StartPBFFileCreation(ByVal progLoc As String) As Boolean
+    Protected Function StartPBFFileCreation(progLoc As String) As Boolean
 
         Dim CmdStr As String
         Dim blnSuccess As Boolean
@@ -357,8 +357,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
             Return False
         End If
 
-        Dim rawFilePath As String = String.Empty
-        rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
+        Dim rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
 
         ' Cache the size of the instrument data file
         Dim fiInstrumentFile = New FileInfo(rawFilePath)
@@ -404,9 +403,9 @@ Public Class clsAnalysisToolRunnerPBFGenerator
             ' Write the console output to a text file
             Threading.Thread.Sleep(250)
 
-            Dim swConsoleOutputfile = New StreamWriter(New FileStream(CmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-            swConsoleOutputfile.WriteLine(CmdRunner.CachedConsoleOutput)
-            swConsoleOutputfile.Close()
+            Using swConsoleOutputfile = New StreamWriter(New FileStream(cmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+                swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput)
+            End Using
         End If
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -452,7 +451,7 @@ Public Class clsAnalysisToolRunnerPBFGenerator
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim blnSuccess As Boolean

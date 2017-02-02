@@ -65,7 +65,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 mLastProgressWriteTime = DateTime.UtcNow;
 
                 // Determine the version of the Bruker DataAnalysis.exe program
-                string progLoc = FindDataAnalysisProgram();
+                var progLoc = FindDataAnalysisProgram();
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {
@@ -199,7 +199,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var fiSpectraFiles = GetXMLSpectraFiles(diWorkDir);
                 if (fiSpectraFiles.Count > 1)
                 {
-                    for (int i = 1; i < fiSpectraFiles.Count; i++)
+                    for (var i = 1; i < fiSpectraFiles.Count; i++)
                         fiSpectraFiles[i].Delete();
                 }
             }
@@ -491,9 +491,9 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 // Value between 0 and 100
-                float progressComplete = m_progress;
-                int totalScans = 0;
-                int currentScan = 0;
+                var progressComplete = m_progress;
+                var totalScans = 0;
+                var currentScan = 0;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {

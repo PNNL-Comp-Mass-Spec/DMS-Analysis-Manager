@@ -212,7 +212,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
             Else
 
                 If Not mResetPVM And Not mAbortSinceSequestIsStalled Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, " ... CmdRunner returned false; ExitCode = " & m_CmdRunner.ExitCode)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                         " ... CmdRunner returned false; ExitCode = " & mCmdRunner.ExitCode)
                 End If
 
                 ' Check whether any .DTA files remain for this dataset
@@ -471,7 +472,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End Try
     End Sub
 
-    Protected Function CopyFileToTransferFolder(ByVal strSourceFileName As String, ByVal strTargetFileName As String, ByVal blnAddToListOfServerFilesToDelete As Boolean) As Boolean
+    Protected Function CopyFileToTransferFolder(strSourceFileName As String, strTargetFileName As String, blnAddToListOfServerFilesToDelete As Boolean) As Boolean
 
         Dim strSourceFilePath As String
         Dim strTargetFilePath As String
@@ -511,7 +512,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' <param name="RegexStr">Regular expresion match string to uniquely identify the line containing the count of interest</param>
     ''' <returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
     ''' <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
-    Protected Function GetIntegerFromSeqLogFileString(ByVal InpFileStr As String, ByVal RegexStr As String) As Integer
+    Protected Function GetIntegerFromSeqLogFileString(InpFileStr As String, RegexStr As String) As Integer
 
         Dim RetVal = 0
         Dim TmpStr As String
@@ -539,7 +540,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Function
 
-    Protected Function GetNodeNamesFromSequestLog(ByVal strLogFilePath As String) As Boolean
+    Protected Function GetNodeNamesFromSequestLog(strLogFilePath As String) As Boolean
 
         Dim reReceivedReadyMsg As Regex
         Dim reSpawnedSlaveProcesses As Regex
@@ -657,7 +658,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' <param name="RegexStr">Regular expresion match string to uniquely identify the line containing the count of interest</param>
     ''' <returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
     ''' <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
-    Protected Function GetSingleFromSeqLogFileString(ByVal InpFileStr As String, ByVal RegexStr As String) As Single
+    Protected Function GetSingleFromSeqLogFileString(InpFileStr As String, RegexStr As String) As Single
 
         Dim RetVal As Single = 0.0
         Dim TmpStr As String
@@ -707,7 +708,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' </summary>
     ''' <param name="OutFileName"></param>
     ''' <remarks></remarks>
-    Protected Sub HandleOutFileChange(ByVal OutFileName As String)
+    Protected Sub HandleOutFileChange(OutFileName As String)
 
         Try
 
@@ -739,11 +740,11 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Sub
 
-    Protected Function InitializeUtilityRunner(ByVal strTaskName As String, ByVal strWorkDir As String) As Boolean
+    Protected Function InitializeUtilityRunner(strTaskName As String, strWorkDir As String) As Boolean
         Return InitializeUtilityRunner(strTaskName, strWorkDir, intMonitoringIntervalMsec:=1000)
     End Function
 
-    Protected Function InitializeUtilityRunner(ByVal strTaskName As String, ByVal strWorkDir As String, ByVal intMonitoringIntervalMsec As Integer) As Boolean
+    Protected Function InitializeUtilityRunner(strTaskName As String, strWorkDir As String, intMonitoringIntervalMsec As Integer) As Boolean
 
         Try
             If m_UtilityRunner Is Nothing Then
@@ -771,9 +772,8 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Function
 
-    Protected Function ProcessCandidateOutFiles(ByVal blnProcessAllRemainingFiles As Boolean) As Boolean
+    Protected Function ProcessCandidateOutFiles(blnProcessAllRemainingFiles As Boolean) As Boolean
 
-        Dim strDtaFilePath As String = String.Empty
         Dim strSourceFileName As String
         Dim blnSuccess As Boolean
         Dim blnAppendSuccess As Boolean
@@ -919,7 +919,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Sub
 
-    Protected Function ResetPVMWithRetry(ByVal intMaxPVMResetAttempts As Integer) As Boolean
+    Protected Function ResetPVMWithRetry(intMaxPVMResetAttempts As Integer) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -1000,7 +1000,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Function
 
-    Protected Function ResetPVMHalt(ByVal PVMProgFolder As String) As Boolean
+    Protected Function ResetPVMHalt(PVMProgFolder As String) As Boolean
 
         Dim strBatchFilePath As String
         Dim blnSuccess As Boolean
@@ -1043,7 +1043,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Function
 
-    Protected Function ResetPVMWipeTemp(ByVal PVMProgFolder As String) As Boolean
+    Protected Function ResetPVMWipeTemp(PVMProgFolder As String) As Boolean
 
         Dim strBatchFilePath As String
         Dim blnSuccess As Boolean
@@ -1086,7 +1086,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Function
 
-    Protected Function ResetPVMStartPVM(ByVal PVMProgFolder As String) As Boolean
+    Protected Function ResetPVMStartPVM(PVMProgFolder As String) As Boolean
 
         Dim strBatchFilePath As String
         Dim blnSuccess As Boolean
@@ -1137,7 +1137,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Function
 
-    Protected Function ResetPVMAddNodes(ByVal PVMProgFolder As String) As Boolean
+    Protected Function ResetPVMAddNodes(PVMProgFolder As String) As Boolean
 
         Dim strBatchFilePath As String
         Dim blnSuccess As Boolean
@@ -1180,7 +1180,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Function
 
-    Protected Sub UpdateSequestNodeProcessingStats(ByVal blnProcessAllSequestLogFiles As Boolean)
+    Protected Sub UpdateSequestNodeProcessingStats(blnProcessAllSequestLogFiles As Boolean)
 
         If blnProcessAllSequestLogFiles Then
             Dim diWorkDir As DirectoryInfo
@@ -1195,7 +1195,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End If
     End Sub
 
-    Protected Sub UpdateSequestNodeProcessingStatsOneFile(ByVal SeqLogFilePath As String)
+    Protected Sub UpdateSequestNodeProcessingStatsOneFile(SeqLogFilePath As String)
 
 
         Dim NumNodeMachines As Integer
@@ -1434,15 +1434,15 @@ Public Class clsAnalysisToolRunnerSeqCluster
 
     End Sub
 
-    Protected Sub mOutFileWatcher_Created(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mOutFileWatcher.Created
+    Protected Sub mOutFileWatcher_Created(sender As Object, e As FileSystemEventArgs) Handles mOutFileWatcher.Created
         HandleOutFileChange(e.Name)
     End Sub
 
-    Protected Sub mOutFileWatcher_Changed(ByVal sender As Object, ByVal e As FileSystemEventArgs) Handles mOutFileWatcher.Changed
+    Protected Sub mOutFileWatcher_Changed(sender As Object, e As FileSystemEventArgs) Handles mOutFileWatcher.Changed
         HandleOutFileChange(e.Name)
     End Sub
 
-    Protected Sub mOutFileAppenderTime_Elapsed(ByVal sender As Object, ByVal e As ElapsedEventArgs) Handles mOutFileAppenderTimer.Elapsed
+    Protected Sub mOutFileAppenderTime_Elapsed(sender As Object, e As ElapsedEventArgs) Handles mOutFileAppenderTimer.Elapsed
         ProcessCandidateOutFiles(False)
         CheckForStalledSequest()
     End Sub

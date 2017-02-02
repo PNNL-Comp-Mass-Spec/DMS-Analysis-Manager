@@ -7,6 +7,7 @@
 
 Option Strict On
 
+Imports System.IO
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisResourcesMultiAlign
@@ -80,40 +81,32 @@ Public Class clsAnalysisResourcesMultiAlign
 
     End Function
 
-    Protected Function BuildMultiAlignInputTextFile(ByVal strInputFileExtension As String) As Boolean
+    Protected Function BuildMultiAlignInputTextFile(strInputFileExtension As String) As Boolean
 
-        Const INPUT_FILENAME As String = "input.txt"
+        Const INPUT_FILENAME = "input.txt"
 
-        Dim blnSuccess As Boolean = True
-        Dim swOutFile As System.IO.StreamWriter
+        Dim TargetFilePath As String = Path.Combine(m_WorkingDir, INPUT_FILENAME)
+        Dim DatasetFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & strInputFileExtension)
 
-        Dim TargetFilePath As String = System.IO.Path.Combine(m_WorkingDir, INPUT_FILENAME)
-        Dim DatasetFilePath As String = System.IO.Path.Combine(m_WorkingDir, m_DatasetName & strInputFileExtension)
-
-        Dim blnInputFileDefined As Boolean
-        Dim blnOutputDirectoryDefined As Boolean
-
-        blnInputFileDefined = False
-        blnOutputDirectoryDefined = False
-        blnSuccess = True
+        Dim blnSuccess = True
 
         ' Create the MA input file 
         Try
 
-            swOutFile = New System.IO.StreamWriter(New System.IO.FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+            Using swOutFile = New StreamWriter(New FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
 
-            swOutFile.WriteLine("[Files]")
-            swOutFile.WriteLine(DatasetFilePath)
-            '..\SARC_MS_Final\663878_Sarc_MS_13_24Aug10_Cheetah_10-08-02_0000_LCMSFeatures.txt
+                swOutFile.WriteLine("[Files]")
+                swOutFile.WriteLine(DatasetFilePath)
+                '..\SARC_MS_Final\663878_Sarc_MS_13_24Aug10_Cheetah_10-08-02_0000_LCMSFeatures.txt
 
-            swOutFile.WriteLine("[Database]")
+                swOutFile.WriteLine("[Database]")
 
-            swOutFile.WriteLine("Database = " & m_jobParams.GetParam("AMTDB"))
-            swOutFile.WriteLine("Server = " & m_jobParams.GetParam("AMTDBServer"))
-            'Database = MT_Human_Sarcopenia_MixedLC_P692
-            'Server = elmer
+                swOutFile.WriteLine("Database = " & m_jobParams.GetParam("AMTDB"))
+                swOutFile.WriteLine("Server = " & m_jobParams.GetParam("AMTDBServer"))
+                'Database = MT_Human_Sarcopenia_MixedLC_P692
+                'Server = elmer
 
-            swOutFile.Close()
+            End Using
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" & INPUT_FILENAME & "): " & ex.Message)

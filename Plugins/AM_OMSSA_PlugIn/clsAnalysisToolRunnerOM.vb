@@ -79,7 +79,7 @@ Public Class clsAnalysisToolRunnerOM
 
         ' verify that program file exists
         Dim progLoc As String = m_mgrParams.GetParam("OMSSAprogloc")
-        If Not System.IO.File.Exists(progLoc) Then
+        If Not File.Exists(progLoc) Then
             If progLoc.Length = 0 Then progLoc = "Parameter 'OMSSAprogloc' not defined for this manager"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " & progLoc)
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -89,7 +89,7 @@ Public Class clsAnalysisToolRunnerOM
         'Future section to monitor OMSSA log file for progress determination
         '--------------------------------------------------------------------------------------------
         ''Get the OMSSA log file name for a File Watcher to monitor
-        'Dim OMSSALogFileName As String = GetOMSSALogFileName(System.IO.Path.Combine(m_WorkDir, m_OMSSASetupFile))
+        'Dim OMSSALogFileName As String = GetOMSSALogFileName(Path.Combine(m_WorkDir, m_OMSSASetupFile))
         'If OMSSALogFileName = "" Then
         '	m_logger.PostEntry("Error getting OMSSA log file name", ILogger.logMsgType.logError, True)
         '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -101,7 +101,7 @@ Public Class clsAnalysisToolRunnerOM
         'End future section
         '--------------------------------------------------------------------------------------------
 
-        Dim inputFilename As String = System.IO.Path.Combine(m_WorkDir, "OMSSA_Input.xml")
+        Dim inputFilename As String = Path.Combine(m_WorkDir, "OMSSA_Input.xml")
         'Set up and execute a program runner to run OMSSA
         CmdStr = " -pm " & inputFilename
 
@@ -115,7 +115,7 @@ Public Class clsAnalysisToolRunnerOM
             .EchoOutputToConsole = True
 
             .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(progLoc) & "_ConsoleOutput.txt")
+            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(progLoc) & "_ConsoleOutput.txt")
         End With
 
         If Not cmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", True) Then
@@ -133,7 +133,7 @@ Public Class clsAnalysisToolRunnerOM
         '--------------------------------------------------------------------------------------------
 
         'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+        m_StopTime = DateTime.UtcNow
 
 
         If blnProcessingError Then
@@ -156,7 +156,7 @@ Public Class clsAnalysisToolRunnerOM
         End If
 
         'Make sure objects are released
-        System.Threading.Thread.Sleep(500)        ' 500 msec delay
+        Thread.Sleep(500)        ' 500 msec delay
         PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
         If Not blnProcessingError Then
@@ -183,8 +183,8 @@ Public Class clsAnalysisToolRunnerOM
 
         If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
             ' Try to save whatever files were moved into the results folder
-            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+            Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
@@ -212,7 +212,7 @@ Public Class clsAnalysisToolRunnerOM
         Dim strOMSSAResultsFilePath As String
         Dim blnSuccess As Boolean
 
-        strOMSSAResultsFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_om.omx")
+        strOMSSAResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & "_om.omx")
 
         blnSuccess = MyBase.ZipFile(strOMSSAResultsFilePath, True)
         If Not blnSuccess Then
@@ -237,7 +237,7 @@ Public Class clsAnalysisToolRunnerOM
 
     Protected Function ConvertOMSSA2PepXmlFile() As Boolean
         Dim CmdStr As String
-        Dim result As Boolean = True
+        Dim result = True
 
         Try
             ' set up formatdb.exe to reference the organsim DB file (fasta)
@@ -254,14 +254,14 @@ Public Class clsAnalysisToolRunnerOM
 
             ' verify that program formatdb.exe file exists
             Dim progLoc As String = m_mgrParams.GetParam("omssa2pepprogloc")
-            If Not System.IO.File.Exists(progLoc) Then
+            If Not File.Exists(progLoc) Then
                 If progLoc.Length = 0 Then progLoc = "Parameter 'omssa2pepprogloc' not defined for this manager"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA2PepXml program file: " & progLoc)
                 Return False
             End If
 
-            Dim outputFilename As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_pepxml.xml")
-            Dim inputFilename As String = System.IO.Path.Combine(m_WorkDir, m_Dataset & "_om_large.omx")
+            Dim outputFilename As String = Path.Combine(m_WorkDir, m_Dataset & "_pepxml.xml")
+            Dim inputFilename As String = Path.Combine(m_WorkDir, m_Dataset & "_om_large.omx")
 
             'Set up and execute a program runner to run Omssa2PepXml.exe
             'omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
@@ -277,7 +277,7 @@ Public Class clsAnalysisToolRunnerOM
                 .EchoOutputToConsole = True
 
                 .WriteConsoleOutputToFile = True
-                .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(progLoc) & "_ConsoleOutput.txt")
+                .ConsoleOutputFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(progLoc) & "_ConsoleOutput.txt")
             End With
 
             If Not cmdRunner.RunProgram(progLoc, CmdStr, "OMSSA2PepXml", True) Then
@@ -285,7 +285,7 @@ Public Class clsAnalysisToolRunnerOM
                 Return False
             End If
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " & ex.Message)
         End Try
 
@@ -306,9 +306,9 @@ Public Class clsAnalysisToolRunnerOM
         End If
 
         ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("OMSSAprogloc")))
-        ioToolFiles.Add(New System.IO.FileInfo(m_mgrParams.GetParam("omssa2pepprogloc")))
+        Dim ioToolFiles As New Generic.List(Of FileInfo)
+        ioToolFiles.Add(New FileInfo(m_mgrParams.GetParam("OMSSAprogloc")))
+        ioToolFiles.Add(New FileInfo(m_mgrParams.GetParam("omssa2pepprogloc")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)

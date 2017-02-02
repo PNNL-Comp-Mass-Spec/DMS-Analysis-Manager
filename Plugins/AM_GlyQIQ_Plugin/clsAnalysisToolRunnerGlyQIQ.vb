@@ -122,7 +122,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
             End If
 
             'Make sure objects are released
-            Threading.Thread.Sleep(500)        ' 500 msec delay
+            Thread.Sleep(500)        ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             If Not blnSuccess Then
@@ -248,7 +248,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     End Function
 
-    Private Function CountMsMsSpectra(ByVal rawFilePath As String) As Integer
+    Private Function CountMsMsSpectra(rawFilePath As String) As Integer
 
         Try
             If m_DebugLevel >= 1 Then
@@ -301,7 +301,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     End Function
 
-    Protected Function ExamineFilteredResults(ByVal fiResultsFile As FileInfo) As Boolean
+    Protected Function ExamineFilteredResults(fiResultsFile As FileInfo) As Boolean
         Dim job As Integer
         If Not Integer.TryParse(m_JobNum, job) Then
             m_message = "Unable to determine job number since '" & m_JobNum & "' is not numeric"
@@ -322,9 +322,9 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     ''' <returns></returns>
     ''' <remarks>If dmsConnectionStringOverride is empty then PostJobResults will use the Manager Parameters (m_mgrParams)</remarks>
     Public Function ExamineFilteredResults(
-      ByVal fiResultsFile As FileInfo,
-      ByVal jobNumber As Integer,
-      ByVal dmsConnectionStringOverride As String) As Boolean
+      fiResultsFile As FileInfo,
+      jobNumber As Integer,
+      dmsConnectionStringOverride As String) As Boolean
 
         Try
 
@@ -466,10 +466,10 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
         Try
             ' Clear the TempZipFolder
-            Threading.Thread.Sleep(250)
+            Thread.Sleep(250)
             diTempZipFolder.Delete(True)
 
-            Threading.Thread.Sleep(250)
+            Thread.Sleep(250)
             diTempZipFolder.Create()
 
         Catch ex As Exception
@@ -481,9 +481,9 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     End Function
 
     Protected Function PostJobResults(
-      ByVal jobNumber As Integer,
-      ByVal udtPSMStats As udtPSMStatsType,
-      ByVal dmsConnectionStringOverride As String) As Boolean
+      jobNumber As Integer,
+      udtPSMStats As udtPSMStatsType,
+      dmsConnectionStringOverride As String) As Boolean
 
         Const MAX_RETRY_COUNT As Integer = 3
 
@@ -594,7 +594,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
     End Function
 
-    Protected Sub PruneConsoleOutputFiles(ByVal fiConsoleOutputFile As FileInfo, ByVal diTargetFolder As DirectoryInfo)
+    Protected Sub PruneConsoleOutputFiles(fiConsoleOutputFile As FileInfo, diTargetFolder As DirectoryInfo)
 
         If fiConsoleOutputFile.Directory.FullName = diTargetFolder.FullName Then
             Throw New Exception("The Source console output file cannot reside in the Target Folder: " & fiConsoleOutputFile.FullName & " vs. " & diTargetFolder.FullName)
@@ -709,7 +709,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
                 If USE_THREADING Then
                     Dim newThread As New Thread(New ThreadStart(AddressOf glyQRunner.StartAnalysis))
-                    newThread.Priority = Threading.ThreadPriority.BelowNormal
+                    newThread.Priority = ThreadPriority.BelowNormal
                     newThread.Start()
                     lstThreads.Add(newThread)
                 Else
@@ -842,7 +842,7 @@ Public Class clsAnalysisToolRunnerGlyQIQ
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim blnSuccess As Boolean
@@ -893,12 +893,12 @@ Public Class clsAnalysisToolRunnerGlyQIQ
 
 #Region "Event Handlers"
 
-    Private Sub m_ExecuteSP_DebugEvent(ByVal errorMessage As String) Handles mStoredProcedureExecutor.DebugEvent
+    Private Sub m_ExecuteSP_DebugEvent(errorMessage As String) Handles mStoredProcedureExecutor.DebugEvent
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "StoredProcedureExecutor: " & errorMessage)
 
     End Sub
 
-    Private Sub m_ExecuteSP_DBErrorEvent(ByVal errorMessage As String) Handles mStoredProcedureExecutor.DBErrorEvent
+    Private Sub m_ExecuteSP_DBErrorEvent(errorMessage As String) Handles mStoredProcedureExecutor.DBErrorEvent
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "StoredProcedureExecutor: " & errorMessage)
 
         If Message.Contains("permission was denied") Then

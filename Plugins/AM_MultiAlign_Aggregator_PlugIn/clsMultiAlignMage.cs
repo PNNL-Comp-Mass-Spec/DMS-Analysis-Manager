@@ -80,16 +80,17 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
-        private void Intialize(IJobParams jobParms, IMgrParams mgrParms) {
-            this.mJP = new JobParameters(jobParms);
-            this.mMP = new ManagerParameters(mgrParms);
+        private void Intialize(IJobParams jobParms, IMgrParams mgrParms)
+        {
+            mJP = new JobParameters(jobParms);
+            mMP = new ManagerParameters(mgrParms);
 
-            this.mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName", "Results") + ".db3";
-            this.mWorkingDir = mMP.RequireMgrParam("workdir");
-            this.mSearchType = mJP.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, can be "_LCMSFeatures.txt" or "_isos.csv"
-            this.mParamFilename = mJP.RequireJobParam("ParmFileName");
-            this.mDebugLevel = Convert.ToInt16(mMP.RequireMgrParam("debuglevel"));
-            this.mJobNum = mJP.RequireJobParam("Job");
+            mResultsDBFileName = mJP.RequireJobParam("ResultsBaseName", "Results") + ".db3";
+            mWorkingDir = mMP.RequireMgrParam("workdir");
+            mSearchType = mJP.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, can be "_LCMSFeatures.txt" or "_isos.csv"
+            mParamFilename = mJP.RequireJobParam("ParmFileName");
+            mDebugLevel = Convert.ToInt16(mMP.RequireMgrParam("debuglevel"));
+            mJobNum = mJP.RequireJobParam("Job");
         }
 
         #endregion
@@ -100,15 +101,15 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// Do processing
         /// </summary>
         /// <returns>True if success; otherwise false</returns>
-        public bool Run(string sMultiAlignConsolePath) {
-            string dataPackageID = mJP.RequireJobParam("DataPackageID");
-            bool blnSuccess;
+        public bool Run(string sMultiAlignConsolePath)
+        {
+            var dataPackageID = mJP.RequireJobParam("DataPackageID");
 
-            blnSuccess = GetMultiAlignParameterFile();
-            if (!blnSuccess) 
+            var blnSuccess = GetMultiAlignParameterFile();
+            if (!blnSuccess)
                 return false;
 
-            SimpleSink multialignJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "Decon2LS_V2");
+            var multialignJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "Decon2LS_V2");
 
             if (multialignJobsToProcess.Rows.Count == 0)
             {
@@ -144,13 +145,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return false;
             }
 
-            if (!System.IO.File.Exists(sMultiAlignConsolePath))
+            if (!File.Exists(sMultiAlignConsolePath))
             {
                 mMessage = "MultiAlign program not found: " + sMultiAlignConsolePath;
                 return false;
             }
 
-            String MultiAlignResultFilename = mJP.GetJobParam("ResultsBaseName");
+            var MultiAlignResultFilename = mJP.GetJobParam("ResultsBaseName");
 
             if (string.IsNullOrWhiteSpace(MultiAlignResultFilename))
             {
@@ -158,7 +159,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             //Set up and execute a program runner to run MultiAlign
-            CmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + System.IO.Path.Combine(mWorkingDir, mParamFilename) + " -path " + mWorkingDir + " -name " + mResultsDBFileName + " -plots";
+            var CmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + Path.Combine(mWorkingDir, mParamFilename) + " -path " + mWorkingDir + " -name " + mResultsDBFileName + " -plots";
             if (mDebugLevel >= 1)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMultiAlignConsolePath + " " + CmdStr);
@@ -203,23 +204,23 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return false;
                 }
 
-                string strParamFileStoragePathKeyName = AnalysisManagerBase.clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
-                string strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
+                var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
+                var strMAParameterFileStoragePath = mMP.RequireMgrParam(strParamFileStoragePathKeyName);
                 if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
                 {
                     strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
                 }
 
-                string sourceFilePath = System.IO.Path.Combine(strMAParameterFileStoragePath, mParamFilename);
+                var sourceFilePath = Path.Combine(strMAParameterFileStoragePath, mParamFilename);
 
-                if (!System.IO.File.Exists(sourceFilePath))
+                if (!File.Exists(sourceFilePath))
                 {
                     mMessage = "MultiAlign parameter file not found: " + strMAParameterFileStoragePath;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
                     return false;
                 }
-                System.IO.File.Copy(sourceFilePath, System.IO.Path.Combine(mWorkingDir, mParamFilename), true);
+                File.Copy(sourceFilePath, Path.Combine(mWorkingDir, mParamFilename), true);
             }
             catch (Exception ex)
             {
@@ -237,12 +238,14 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// query DMS to get list of data package jobs to process
         /// </summary>
         /// <param name="dataPackageID"></param>
+        /// <param name="tool"></param>
         /// <returns></returns>
-        private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool) {
-            string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
-            string connStr = mMP.RequireMgrParam("ConnectionString");
-            string sql = string.Format(sqlTemplate, new string[] { dataPackageID, tool });
-            SimpleSink jobList = GetListOfItemsFromDB(sql, connStr);
+        private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
+        {
+            var sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
+            var connStr = mMP.RequireMgrParam("ConnectionString");
+            var sql = string.Format(sqlTemplate, dataPackageID, tool);
+            var jobList = GetListOfItemsFromDB(sql, connStr);
 
             if (jobList.Rows.Count == 0)
             {
@@ -258,23 +261,25 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// Looks for DeconTools _LCMSFeatures.txt or _isos.csv files for the given jobs
         /// </summary>
         /// <param name="multialignJobsToProcess"></param>
-        private bool CopyMultiAlignInputFiles(SimpleSink multialignJobsToProcess, string fileSpec) {
+        /// <param name="fileSpec"></param>
+        private bool CopyMultiAlignInputFiles(SimpleSink multialignJobsToProcess, string fileSpec)
+        {
 
             try
             {
 
-                string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
-                SimpleSink fileList = GetListOfFilesFromFolderList(multialignJobsToProcess, fileSpec, columnsToIncludeInOutput);
+                var columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
+                var fileList = GetListOfFilesFromFolderList(multialignJobsToProcess, fileSpec, columnsToIncludeInOutput);
 
                 // Check for "--No Files Found--" for any of the jobs
                 foreach (var row in fileList.Rows)
                 {
                     if (row.Length > 4)
                     {
-                        if (row[1].ToString() == Mage.BaseModule.kNoFilesFound)
+                        if (row[1] == BaseModule.kNoFilesFound)
                         {
-                            mMessage = "Did not find any " + fileSpec + " files for job " + row[4].ToString() + " at " + row[3].ToString();
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMessage);
+                            mMessage = "Did not find any " + fileSpec + " files for job " + row[4] + " at " + row[3];
+                            OnErrorEvent(mMessage);
                             return false;
                         }
                     }
@@ -303,11 +308,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// Get a list of items using a database query
         /// </summary>
         /// <param name="sql">Query to use a source of jobs</param>
+        /// <param name="connectionString"></param>
         /// <returns>A Mage module containing list of jobs</returns>
-        public static SimpleSink GetListOfItemsFromDB(string sql, string connectionString) {
-            SimpleSink itemList = new SimpleSink();
-            MSSQLReader reader = MakeDBReaderModule(sql, connectionString);
-            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
+        public static SimpleSink GetListOfItemsFromDB(string sql, string connectionString)
+        {
+            var itemList = new SimpleSink();
+            var reader = MakeDBReaderModule(sql, connectionString);
+            var pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
             pipeline.RunRoot(null);
             return itemList;
         }
@@ -316,11 +323,15 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// Create a new MSSQLReader module to do a specific query
         /// </summary>
         /// <param name="sql">Query to use</param>
+        /// <param name="connectionString"></param>
         /// <returns></returns>
-        public static MSSQLReader MakeDBReaderModule(String sql, string connectionString) {
-            MSSQLReader reader = new MSSQLReader();
-            reader.ConnectionString = connectionString;
-            reader.SQLText = sql;
+        public static MSSQLReader MakeDBReaderModule(String sql, string connectionString)
+        {
+            var reader = new MSSQLReader
+            {
+                ConnectionString = connectionString,
+                SQLText = sql
+            };
             return reader;
         }
 
@@ -331,19 +342,22 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <param name="fileNameSelector">File name selector to select files to be included in output list</param>
         /// <param name="passThroughColumns">List of columns from source object to pass through to output list object</param>
         /// <returns>Mage object containing list of files</returns>
-        public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns) {
-            SimpleSink sinkObject = new SimpleSink();
+        public SimpleSink GetListOfFilesFromFolderList(IBaseModule folderListSource, string fileNameSelector, string passThroughColumns)
+        {
+            var sinkObject = new SimpleSink();
 
             // create file filter module and initialize it
-            FileListFilter fileFilter = new FileListFilter();
-            fileFilter.FileNameSelector = fileNameSelector;
-            fileFilter.SourceFolderColumnName = "Folder";
-            fileFilter.FileColumnName = "Name";
-            fileFilter.OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Folder, " + passThroughColumns;
-            fileFilter.FileSelectorMode = "RegEx";
-            fileFilter.IncludeFilesOrFolders = "File";
-            fileFilter.RecursiveSearch = "No";
-            fileFilter.SubfolderSearchName = "*";
+            var fileFilter = new FileListFilter
+            {
+                FileNameSelector = fileNameSelector,
+                SourceFolderColumnName = "Folder",
+                FileColumnName = "Name",
+                OutputColumnList = "Item|+|text, Name|+|text, File_Size_KB|+|text, Folder, " + passThroughColumns,
+                FileSelectorMode = "RegEx",
+                IncludeFilesOrFolders = "File",
+                RecursiveSearch = "No",
+                SubfolderSearchName = "*"
+            };
 
             // build, wire, and run pipeline
             ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject).RunRoot(null);
@@ -360,19 +374,14 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             const string INPUT_FILENAME = "input.txt";
 
-            bool blnSuccess = true;
-
-            string TargetFilePath = System.IO.Path.Combine(mWorkingDir, INPUT_FILENAME);
-
-            string TmpFile = null;
-            string[] Files = null;
+            var TargetFilePath = Path.Combine(mWorkingDir, INPUT_FILENAME);
 
             // Create the MultiAlign input file 
 
             try
             {
 
-                Files = System.IO.Directory.GetFiles(mWorkingDir, "*" + strInputFileExtension);
+                var Files = Directory.GetFiles(mWorkingDir, "*" + strInputFileExtension);
 
                 if (Files.Length == 0)
                 {
@@ -381,13 +390,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return false;
                 }
 
-                using (System.IO.StreamWriter swOutFile = new System.IO.StreamWriter(new System.IO.FileStream(TargetFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read)))
+                using (var swOutFile = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     swOutFile.WriteLine("[Files]");
-                    string AlignmentDataset = mJP.GetJobParam("AlignmentDataset");
-                    foreach (string TmpFile_loopVariable in Files)
+                    var AlignmentDataset = mJP.GetJobParam("AlignmentDataset");
+                    foreach (var TmpFile_loopVariable in Files)
                     {
-                        TmpFile = TmpFile_loopVariable;
+                        var TmpFile = TmpFile_loopVariable;
                         if (!string.IsNullOrWhiteSpace(AlignmentDataset) && TmpFile.ToLower().Contains(AlignmentDataset.ToLower()))
                         {
                             // Append an asterisk to this dataset's path to indicate that it is the base dataset to which the others will be aligned
@@ -400,7 +409,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     }
 
                     //Check to see if a mass tag database has been defined and NO alignment dataset has been defined
-                    string AmtDb = mJP.GetJobParam("AMTDB");
+                    var AmtDb = mJP.GetJobParam("AMTDB");
                     if (!string.IsNullOrEmpty(AmtDb.Trim()))
                     {
                         swOutFile.WriteLine("[Database]");
@@ -408,8 +417,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         swOutFile.WriteLine("Server = " + mJP.GetJobParam("AMTDBServer"));		// For example, Elmer
                     }
                 }
-            
-                blnSuccess = true;
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -418,7 +427,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return false;
             }
 
-            return blnSuccess;
         }
 
         #endregion
@@ -495,14 +503,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <remarks></remarks>
         private void ParseMultiAlignLogFile()
         {
-            System.IO.DirectoryInfo diWorkDirectory = null;
-            System.IO.FileInfo[] fiFiles = null;
-            string strLogFilePath = string.Empty;
+            var strLogFilePath = string.Empty;
 
             try
             {
-                diWorkDirectory = new System.IO.DirectoryInfo(mWorkingDir);
-                fiFiles = diWorkDirectory.GetFiles("*-log*.txt");
+                var diWorkDirectory = new DirectoryInfo(mWorkingDir);
+                var fiFiles = diWorkDirectory.GetFiles("*-log*.txt");
 
                 if (fiFiles.Length >= 1)
                 {
@@ -511,9 +517,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     if (fiFiles.Length > 1)
                     {
                         // Use the newest file in fiFiles
-                        int intBestIndex = 0;
+                        var intBestIndex = 0;
 
-                        for (int intIndex = 1; intIndex <= fiFiles.Length - 1; intIndex++)
+                        for (var intIndex = 1; intIndex <= fiFiles.Length - 1; intIndex++)
                         {
                             if (fiFiles[intIndex].LastWriteTimeUtc > fiFiles[intBestIndex].LastWriteTimeUtc)
                             {
@@ -564,7 +570,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             //Dim oMatch As System.Text.RegularExpressions.Match
             try
             {
-                if (!System.IO.File.Exists(strLogFilePath))
+                if (!File.Exists(strLogFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
@@ -580,76 +586,69 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
 
-                System.IO.StreamReader srInFile = null;
-                string strLineIn = null;
-                int intLinesRead = 0;
+                var eProgress = eProgressSteps.Starting;
 
-                eProgressSteps eProgress = eProgressSteps.Starting;
-
-                bool blnMatchFound = false;
-                int intTotalDatasets = 0;
-                int intDatasetsLoaded = 0;
-                int intDatasetsAligned = 0;
-                int intChargeStatesClustered = 0;
+                var intTotalDatasets = 0;
+                var intDatasetsLoaded = 0;
+                var intDatasetsAligned = 0;
+                var intChargeStatesClustered = 0;
 
                 // Open the file for read; don't lock it (to thus allow MultiAlign to still write to it)
-                srInFile = new System.IO.StreamReader(new System.IO.FileStream(strLogFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite));
-
-                intLinesRead = 0;
-                while (!srInFile.EndOfStream)
+                using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    strLineIn = srInFile.ReadLine();
-                    intLinesRead += 1;
-
-                    if (!string.IsNullOrWhiteSpace(strLineIn))
+                    while (!srInFile.EndOfStream)
                     {
-                        blnMatchFound = false;
+                        var strLineIn = srInFile.ReadLine();
 
-                        // Update progress if the line contains any of the entries in mProgressStepLogText
-                        foreach (System.Collections.Generic.KeyValuePair<string, eProgressSteps> lstItem in mProgressStepLogText)
+                        if (!string.IsNullOrWhiteSpace(strLineIn))
                         {
-                            if (strLineIn.Contains(lstItem.Key))
+                            var blnMatchFound = false;
+
+                            // Update progress if the line contains any of the entries in mProgressStepLogText
+                            foreach (var lstItem in mProgressStepLogText)
                             {
-                                if (eProgress < lstItem.Value)
+                                if (strLineIn.Contains(lstItem.Key))
                                 {
-                                    eProgress = lstItem.Value;
+                                    if (eProgress < lstItem.Value)
+                                    {
+                                        eProgress = lstItem.Value;
+                                    }
+                                    blnMatchFound = true;
+                                    break;
                                 }
-                                blnMatchFound = true;
-                                break;
                             }
-                        }
 
-                        if (!blnMatchFound)
-                        {
-                            if (strLineIn.Contains("Dataset Information: "))
+                            if (!blnMatchFound)
                             {
-                                intTotalDatasets += 1;
+                                if (strLineIn.Contains("Dataset Information: "))
+                                {
+                                    intTotalDatasets += 1;
+                                }
+                                else if (strLineIn.Contains("- Adding features to cache database"))
+                                {
+                                    intDatasetsLoaded += 1;
+                                }
+                                else if (strLineIn.Contains("- Features Aligned -"))
+                                {
+                                    intDatasetsAligned += 1;
+                                }
+                                else if (strLineIn.Contains("- Clustering Charge State"))
+                                {
+                                    intChargeStatesClustered += 1;
+                                }
+                                else if (strLineIn.Contains("No baseline dataset or database was selected"))
+                                {
+                                    m_MultialignErroMessage = "No baseline dataset or database was selected";
+                                }
                             }
-                            else if (strLineIn.Contains("- Adding features to cache database"))
-                            {
-                                intDatasetsLoaded += 1;
-                            }
-                            else if (strLineIn.Contains("- Features Aligned -"))
-                            {
-                                intDatasetsAligned += 1;
-                            }
-                            else if (strLineIn.Contains("- Clustering Charge State"))
-                            {
-                                intChargeStatesClustered += 1;
-                            }
-                            else if (strLineIn.Contains("No baseline dataset or database was selected"))
-                            {
-                                m_MultialignErroMessage = "No baseline dataset or database was selected";
-                            }
-                        }
 
+                        }
                     }
+
                 }
 
-                srInFile.Close();
-
                 // Compute the actual progress
-                Int16 intActualProgress = default(Int16);
+                short intActualProgress;
 
                 if (mProgressStepPercentComplete.TryGetValue(eProgress, out intActualProgress))
                 {
@@ -754,7 +753,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region Constructors
 
             // constructor
-            public MageMultiAlign() {
+            public MageMultiAlign()
+            {
 
             }
 
@@ -763,10 +763,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region Overrides of Mage ContentFilter
 
             // set up internal references
-            protected override void ColumnDefsFinished() {
+            protected override void ColumnDefsFinished()
+            {
                 // get array of column names
-                List<string> cols = new List<string>();
-                foreach (MageColumnDef colDef in this.InputColumnDefs) {
+                var cols = new List<string>();
+                foreach (var colDef in this.InputColumnDefs)
+                {
                     cols.Add(colDef.Name);
                 }
                 jobFieldNames = cols.ToArray();
@@ -783,15 +785,16 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region MageMultiAlign Mage Pipelines
 
             // Build and run Mage pipeline to to extract contents of job
-            private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParms, string extractedResultsFileName) {
+            private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParms, string extractedResultsFileName)
+            {
                 // search job results folders for list of results files to process and accumulate into buffer module
-                SimpleSink fileList = new SimpleSink();
-                ProcessingPipeline plof = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
+                var fileList = new SimpleSink();
+                var plof = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
                 plof.RunRoot(null);
 
                 // extract contents of files
-                DestinationType destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
-                ProcessingPipeline pefc = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
+                var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
+                var pefc = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
                 pefc.RunRoot(null);
             }
 
@@ -800,17 +803,19 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region MageMultiAlign Utility Methods
 
             // Build Mage source module containing one job to process
-            private BaseModule MakeJobSourceModule(string[] jobFieldNames, object[] jobFields) {
-                DataGenerator currentJob = new DataGenerator();
-                currentJob.AddAdHocRow = jobFieldNames;
+            private BaseModule MakeJobSourceModule(string[] fieldNames, object[] jobFields)
+            {
+                var currentJob = new DataGenerator {AddAdHocRow = fieldNames };
                 currentJob.AddAdHocRow = ConvertObjectArrayToStringArray(jobFields);
                 return currentJob;
             }
 
             // Convert array of objects to array of strings
-            private static string[] ConvertObjectArrayToStringArray(object[] row) {
-                List<string> obj = new List<string>();
-                foreach (object fld in row) {
+            private static string[] ConvertObjectArrayToStringArray(object[] row)
+            {
+                var obj = new List<string>();
+                foreach (var fld in row)
+                {
                     obj.Add(fld.ToString());
                 }
                 return obj.ToArray();
@@ -830,7 +835,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// that imports the contents of files that it receives via standard tabular input
         /// to the given SQLite database table
         /// </summary>
-        public class MageFileImport : FileContentProcessor {
+        public class MageFileImport : FileContentProcessor
+        {
 
             #region Properties
 
@@ -843,7 +849,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region Constructors
 
             // constructor
-            public MageFileImport() {
+            public MageFileImport()
+            {
                 base.SourceFolderColumnName = "Folder";
                 base.SourceFileColumnName = "Name";
                 base.OutputFolderPath = "ignore";
@@ -861,16 +868,20 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         #region Classes for handling parameters
 
         // class for managing IJobParams object 
-        public class JobParameters {
-            protected IJobParams mJobParms;
+        public class JobParameters
+        {
+            private readonly IJobParams mJobParms;
 
-            public JobParameters(IJobParams jobParms) {
+            public JobParameters(IJobParams jobParms)
+            {
                 mJobParms = jobParms;
             }
 
-            public string RequireJobParam(string paramName) {
-                string val = mJobParms.GetParam(paramName);
-                if (string.IsNullOrWhiteSpace(val)) {
+            public string RequireJobParam(string paramName)
+            {
+                var val = mJobParms.GetParam(paramName);
+                if (string.IsNullOrWhiteSpace(val))
+                {
                     throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
                 }
                 return val;
@@ -878,7 +889,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             public string RequireJobParam(string paramName, string defaultValue)
             {
-                string val = mJobParms.GetParam(paramName);
+                var val = mJobParms.GetParam(paramName);
                 if (string.IsNullOrWhiteSpace(val))
                 {
                     mJobParms.AddAdditionalParameter("JobParameters", paramName, defaultValue);
@@ -886,12 +897,14 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
                 return val;
             }
-            public string GetJobParam(string paramName) {
+            public string GetJobParam(string paramName)
+            {
                 return mJobParms.GetParam(paramName);
             }
 
-            public string GetJobParam(string paramName, string defaultValue) {
-                string val = mJobParms.GetParam(paramName);
+            public string GetJobParam(string paramName, string defaultValue)
+            {
+                var val = mJobParms.GetParam(paramName);
                 if (string.IsNullOrWhiteSpace(val))
                     val = defaultValue;
                 return val;
@@ -899,16 +912,20 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         }
 
         // class for managing IMgrParams object
-        public class ManagerParameters {
-            protected IMgrParams mMgrParms;
+        public class ManagerParameters
+        {
+            private readonly IMgrParams mMgrParms;
 
-            public ManagerParameters(IMgrParams mgrParms) {
+            public ManagerParameters(IMgrParams mgrParms)
+            {
                 mMgrParms = mgrParms;
             }
 
-            public string RequireMgrParam(string paramName) {
-                string val = mMgrParms.GetParam(paramName);
-                if (string.IsNullOrWhiteSpace(val)) {
+            public string RequireMgrParam(string paramName)
+            {
+                var val = mMgrParms.GetParam(paramName);
+                if (string.IsNullOrWhiteSpace(val))
+                {
                     throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));
                 }
                 return val;

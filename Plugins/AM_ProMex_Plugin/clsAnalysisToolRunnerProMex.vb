@@ -11,6 +11,9 @@ Imports AnalysisManagerBase
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Runtime.InteropServices
+Imports System.Text
+Imports System.Threading
+Imports PRISM.Processes
 
 Public Class clsAnalysisToolRunnerProMex
     Inherits clsAnalysisToolRunnerBase
@@ -111,8 +114,8 @@ Public Class clsAnalysisToolRunnerProMex
             mCmdRunner = Nothing
 
             'Make sure objects are released
-            Threading.Thread.Sleep(500)        ' 500 msec delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            Thread.Sleep(500)        ' 500 msec delay
+            clsProgRunner.GarbageCollectNow()
 
             If Not blnSuccess Then
                 ' Move the source files and any results to the Failed Job folder
@@ -188,7 +191,7 @@ Public Class clsAnalysisToolRunnerProMex
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -216,7 +219,7 @@ Public Class clsAnalysisToolRunnerProMex
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output
         '
@@ -241,7 +244,7 @@ Public Class clsAnalysisToolRunnerProMex
         ' Processing 6.76 % of mass bins (3562.563 Da); Elapsed Time = 40.169 sec; # of features = 1426
         ' Processing 9.02 % of mass bins (3750.063 Da); Elapsed Time = 51.633 sec; # of features = 2154
 
-        Const REGEX_ProMex_PROGRESS As String = "Processing ([0-9.]+)\%"
+        Const REGEX_ProMex_PROGRESS = "Processing ([0-9.]+)\%"
         Static reCheckProgress As New Regex(REGEX_ProMex_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
 
         Try
@@ -327,7 +330,7 @@ Public Class clsAnalysisToolRunnerProMex
             Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
-        Dim sbOptions = New Text.StringBuilder(500)
+        Dim sbOptions = New StringBuilder(500)
 
         Try
 
@@ -379,7 +382,7 @@ Public Class clsAnalysisToolRunnerProMex
     ''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
     ''' <returns>True if valid; false if invalid</returns>
     ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-    Protected Function ParseProMexValidateMod(ByVal strMod As String, <Out()> ByRef strModClean As String) As Boolean
+    Protected Function ParseProMexValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
 
         Dim intPoundIndex As Integer
         Dim strSplitMod() As String
@@ -425,7 +428,7 @@ Public Class clsAnalysisToolRunnerProMex
 
     End Function
 
-    Private Function PostProcessProMexResults(ByVal fiResultsFile As FileInfo) As Boolean
+    Private Function PostProcessProMexResults(fiResultsFile As FileInfo) As Boolean
 
         ' Make sure there are at least two features in the .ms1ft file
 
@@ -454,7 +457,7 @@ Public Class clsAnalysisToolRunnerProMex
 
     End Function
 
-    Protected Function StartProMex(ByVal progLoc As String) As Boolean
+    Protected Function StartProMex(progLoc As String) As Boolean
 
         Dim CmdStr As String
         Dim blnSuccess As Boolean
@@ -520,15 +523,15 @@ Public Class clsAnalysisToolRunnerProMex
 
         If Not mCmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
-            System.Threading.Thread.Sleep(250)
+            Thread.Sleep(250)
 
-            Dim swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+            Dim swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
             swConsoleOutputfile.Close()
         End If
 
         ' Parse the console output file one more time to check for errors
-        System.Threading.Thread.Sleep(250)
+        Thread.Sleep(250)
         ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
@@ -624,7 +627,7 @@ Public Class clsAnalysisToolRunnerProMex
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim blnSuccess As Boolean

@@ -258,7 +258,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Sub
 
-    Private Function AssembleResults(ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
+    Private Function AssembleResults(intNumResultFiles As Integer) As IJobParams.CloseOutType
         Dim result As IJobParams.CloseOutType
         Dim strFileName = ""
 
@@ -337,9 +337,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
 
-    Private Function AssembleFiles(ByVal strCombinedFileName As String,
-                                   ByVal resFileType As ResultFileType,
-                                   ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
+    Private Function AssembleFiles(strCombinedFileName As String,
+                                   resFileType As ResultFileType,
+                                   intNumResultFiles As Integer) As IJobParams.CloseOutType
 
         Dim tr As StreamReader = Nothing
         Dim tw As StreamWriter
@@ -476,7 +476,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Function
 
-    Private Function CreateNewExportFile(ByVal exportFilePath As String) As StreamWriter
+    Private Function CreateNewExportFile(exportFilePath As String) As StreamWriter
         Dim ef As StreamWriter
 
         If File.Exists(exportFilePath) Then
@@ -615,7 +615,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <param name="udtModList"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function ExtractModInfoFromInspectParamFile(ByVal strInspectParameterFilePath As String, ByRef udtModList() As udtModInfoType) As Boolean
+    Private Function ExtractModInfoFromInspectParamFile(strInspectParameterFilePath As String, ByRef udtModList() As udtModInfoType) As Boolean
 
         Dim strLineIn As String
         Dim strSplitLine As String()
@@ -743,9 +743,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Sub
 
-    Private Function RenameAndZipInspectFile(ByVal strSourceFilePath As String,
-                                             ByVal strZipFilePath As String,
-                                             ByVal blnDeleteSourceAfterZip As Boolean) As Boolean
+    Private Function RenameAndZipInspectFile(strSourceFilePath As String,
+                                             strZipFilePath As String,
+                                             blnDeleteSourceAfterZip As Boolean) As Boolean
 
         Dim fiFileInfo As FileInfo
         Dim strTargetFilePath As String
@@ -829,10 +829,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Function
 
-    Private Function RunpValue(ByVal strInspectResultsInputFilePath As String,
-                               ByVal strOutputFilePath As String,
-                               ByVal blnCreateImageFiles As Boolean,
-                               ByVal blnTopHitOnly As Boolean) As IJobParams.CloseOutType
+    Private Function RunpValue(strInspectResultsInputFilePath As String,
+                               strOutputFilePath As String,
+                               blnCreateImageFiles As Boolean,
+                               blnTopHitOnly As Boolean) As IJobParams.CloseOutType
 
         Dim CmdStr As String
 
@@ -1001,7 +1001,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' <param name="strInspectDir"></param>
     ''' <param name="strInspectParameterFilePath"></param>
     ''' <remarks></remarks>
-    Private Function UpdatePTModsFile(ByVal strInspectDir As String, ByVal strInspectParameterFilePath As String) As Boolean
+    Private Function UpdatePTModsFile(strInspectDir As String, strInspectParameterFilePath As String) As Boolean
 
         Dim srInFile As StreamReader
         Dim swOutFile As StreamWriter
@@ -1176,7 +1176,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Function
 
-    Private Function ValidateShuffledDBInUse(ByVal strInspectResultsPath As String) As Boolean
+    Private Function ValidateShuffledDBInUse(strInspectResultsPath As String) As Boolean
         Dim srInspectResults As StreamReader
         Dim intLinesRead As Integer
 
@@ -1313,7 +1313,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 #End Region
 
 #Region "Event Handlers"
-    Private Sub mPeptideToProteinMapper_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
+    Private Sub mPeptideToProteinMapper_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
 
         ' Note that percentComplete is a value between 0 and 100
 

@@ -261,8 +261,7 @@ Public Class clsAnalysisToolRunnerSMAQC
 
         Dim lstDatasetIDs = New List(Of Integer)
 
-        Dim intDatasetID As Integer
-        intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1)
+        Dim intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1)
 
         If Not LLRC_ENABLED Then Throw New Exception("LLRC is disabled -- do not call this function")
 
@@ -584,9 +583,6 @@ Public Class clsAnalysisToolRunnerSMAQC
             End If
 
 
-            Dim strLineIn As String
-            Dim intLinesRead As Integer
-
             Dim sngEffectiveProgress As Single
             sngEffectiveProgress = PROGRESS_PCT_SMAQC_STARTING
 
@@ -594,9 +590,9 @@ Public Class clsAnalysisToolRunnerSMAQC
 
             Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
-                intLinesRead = 0
+                Dim intLinesRead = 0
                 Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
+                    Dim strLineIn = srInFile.ReadLine()
                     intLinesRead += 1
 
                     If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do

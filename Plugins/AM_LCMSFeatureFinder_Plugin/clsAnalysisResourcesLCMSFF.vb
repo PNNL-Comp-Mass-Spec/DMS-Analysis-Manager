@@ -109,7 +109,7 @@ Public Class clsAnalysisResourcesLCMSFF
 
     End Function
 
-    Protected Function GetValue(ByVal strLine As String) As String
+    Protected Function GetValue(strLine As String) As String
         Dim intEqualsIndex As Integer
         Dim strValue As String = String.Empty
 
@@ -124,14 +124,12 @@ Public Class clsAnalysisResourcesLCMSFF
 
     End Function
 
-    Protected Function UpdateFeatureFinderIniFile(ByVal strLCMSFFIniFileName As String) As Boolean
+    Protected Function UpdateFeatureFinderIniFile(strLCMSFFIniFileName As String) As Boolean
 
-        Const INPUT_FILENAME_KEY As String = "InputFileName"
-        Const OUTPUT_DIRECTORY_KEY As String = "OutputDirectory"
-        Const FILTER_FILE_NAME_KEY As String = "DeconToolsFilterFileName"
+        Const INPUT_FILENAME_KEY = "InputFileName"
+        Const OUTPUT_DIRECTORY_KEY = "OutputDirectory"
+        Const FILTER_FILE_NAME_KEY = "DeconToolsFilterFileName"
 
-
-        Dim result As Boolean = True
 
         ' Read the source .Ini file and update the settings for InputFileName and OutputDirectory
         ' In addition, look for an entry for DeconToolsFilterFileName; 
@@ -149,16 +147,16 @@ Public Class clsAnalysisResourcesLCMSFF
 
         blnInputFileDefined = False
         blnOutputDirectoryDefined = False
-        result = True
+        Dim result = True
 
 
         Try
             ' Create the output file (temporary name ending in "_new"; we'll swap the files later)
-            Using swOutFile As StreamWriter = New StreamWriter(New FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swOutFile = New StreamWriter(New FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 Try
                     ' Open the input file
-                    Using srInFile As StreamReader = New StreamReader(New FileStream(SrcFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    Using srInFile = New StreamReader(New FileStream(SrcFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                         Do While Not srInFile.EndOfStream
                             strLineIn = srInFile.ReadLine
@@ -182,11 +180,10 @@ Public Class clsAnalysisResourcesLCMSFF
                             If strLineInLCase.StartsWith(FILTER_FILE_NAME_KEY.ToLower) Then
                                 ' Copy the file defined by DeconToolsFilterFileName= to the working directory
 
-                                Dim strValue As String
-                                strValue = GetValue(strLineIn)
+                                Dim strValue = GetValue(strLineIn)
 
                                 If Not String.IsNullOrEmpty(strValue) Then
-                                    Dim fiFileInfo As FileInfo = New FileInfo(strValue)
+                                    Dim fiFileInfo = New FileInfo(strValue)
                                     If Not fiFileInfo.Exists Then
                                         m_message = "Entry for " & FILTER_FILE_NAME_KEY & " in " & strLCMSFFIniFileName & " points to an invalid file: " & strValue
                                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)

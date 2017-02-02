@@ -168,7 +168,7 @@ Public Class clsAnalysisToolRunnerLCMSFF
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
 
@@ -190,7 +190,7 @@ Public Class clsAnalysisToolRunnerLCMSFF
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strFeatureFinderProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strFeatureFinderProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
         Dim ioFeatureFinderInfo As FileInfo

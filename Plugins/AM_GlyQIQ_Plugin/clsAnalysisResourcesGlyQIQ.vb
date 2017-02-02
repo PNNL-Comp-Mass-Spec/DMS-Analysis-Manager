@@ -78,9 +78,9 @@ Public Class clsAnalysisResourcesGlyQIQ
     End Function
 
     Private Function CopyFileToWorkingDirectories(
-        ByVal sourceFileName As String,
-        ByVal sourceFolderPath As String,
-        ByVal fileDesription As String) As Boolean
+        sourceFileName As String,
+        sourceFolderPath As String,
+        fileDesription As String) As Boolean
 
         For Each workingDirectory In mGlyQIQParams.WorkingParameterFolders
             If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, workingDirectory.Value.FullName) Then
@@ -93,7 +93,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
     End Function
 
-    Private Function CountTargets(ByVal targetsFilePath As String) As Integer
+    Private Function CountTargets(targetsFilePath As String) As Integer
         Try
             ' numTargets is initialized to -1 because we don't want to count the header line
             Dim numTargets As Integer = -1
@@ -155,7 +155,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
     End Function
 
-    Private Function CreateLauncherBatchFiles(ByVal splitTargetFileInfo As Dictionary(Of Integer, FileInfo)) As Boolean
+    Private Function CreateLauncherBatchFiles(splitTargetFileInfo As Dictionary(Of Integer, FileInfo)) As Boolean
 
         Try
 
@@ -223,7 +223,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
     End Function
 
-    Private Function CreateSubFolders(ByVal coreCount As Integer) As Dictionary(Of Integer, DirectoryInfo)
+    Private Function CreateSubFolders(coreCount As Integer) As Dictionary(Of Integer, DirectoryInfo)
 
         Try
             ' Make sure that required subfolders exist in the working directory
@@ -257,7 +257,7 @@ Public Class clsAnalysisResourcesGlyQIQ
 
     End Function
 
-    Private Function RetrieveGlyQIQParameters(ByVal coreCount As Integer) As Boolean
+    Private Function RetrieveGlyQIQParameters(coreCount As Integer) As Boolean
 
         Try
 
@@ -325,7 +325,7 @@ Public Class clsAnalysisResourcesGlyQIQ
             ' Count the number of targets
             mGlyQIQParams.NumTargets = CountTargets(fiTargetsFile.FullName)
             If mGlyQIQParams.NumTargets < 1 Then
-                LogError( "Targets file is empty: " & Path.Combine(sourceFolderPath, sourceFileName))
+                LogError("Targets file is empty: " & Path.Combine(sourceFolderPath, sourceFileName))
                 Return False
             End If
 
@@ -409,7 +409,7 @@ Public Class clsAnalysisResourcesGlyQIQ
             Dim sourceFolderPath As String = String.Empty
 
             fileToFind = m_DatasetName & "_peaks.txt"
-            If Not FindAndRetrieveMiscFiles(fileToFind, Unzip:=False, SearchArchivedDatasetFolder:=False, sourceFolderPath:=sourceFolderPath) Then
+            If Not FindAndRetrieveMiscFiles(fileToFind, unzip:=False, searchArchivedDatasetFolder:=False, sourceFolderPath:=sourceFolderPath) Then
                 m_message = "Could not find the _peaks.txt file; this is typically created by the DeconPeakDetector job step; rerun that job step if it has been deleted"
                 Return False
             End If
@@ -455,7 +455,7 @@ Public Class clsAnalysisResourcesGlyQIQ
     ''' <param name="numTargets"></param>
     ''' <returns>List of FileInfo objects for the newly created target files (key is core number, value is the Targets file path)</returns>
     ''' <remarks></remarks>
-    Private Function SplitTargetsFile(ByVal fiTargetsFile As FileInfo, ByVal numTargets As Integer) As Dictionary(Of Integer, FileInfo)
+    Private Function SplitTargetsFile(fiTargetsFile As FileInfo, numTargets As Integer) As Dictionary(Of Integer, FileInfo)
 
         Try
             Dim lstOutputFiles = New Dictionary(Of Integer, FileInfo)

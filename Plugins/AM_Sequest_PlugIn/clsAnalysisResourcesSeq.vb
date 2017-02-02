@@ -56,7 +56,7 @@ Public Class clsAnalysisResourcesSeq
 
     End Sub
 
-    Public Sub ArchiveSequestParamFile(ByVal strSrcFilePath As String, ByVal strTargetFolderPath As String)
+    Public Sub ArchiveSequestParamFile(strSrcFilePath As String, strTargetFolderPath As String)
 
         Dim blnNeedToArchiveFile As Boolean
         Dim strTargetFilePath As String
@@ -272,7 +272,7 @@ Public Class clsAnalysisResourcesSeq
 
     End Function
 
-    Protected Function CompareRemoteAndLocalFilesForResume(ByVal strRemoteFilePath As String, ByVal strLocalFilePath As String, ByVal strFileDescription As String) As Boolean
+    Protected Function CompareRemoteAndLocalFilesForResume(strRemoteFilePath As String, strLocalFilePath As String, strFileDescription As String) As Boolean
 
         If Not File.Exists(strRemoteFilePath) Then
             If m_DebugLevel >= 1 Then
@@ -378,7 +378,7 @@ Public Class clsAnalysisResourcesSeq
     ''' <param name="OrgDBPath">Fasta file location on analysis machine</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks></remarks>
-    Private Function VerifyDatabase(ByVal OrgDBName As String, ByVal OrgDBPath As String) As Boolean
+    Private Function VerifyDatabase(OrgDBName As String, OrgDBPath As String) As Boolean
 
         Dim HostFilePath As String = m_mgrParams.GetParam("hostsfilelocation")
         Dim Nodes As List(Of String)
@@ -490,7 +490,7 @@ Public Class clsAnalysisResourcesSeq
     ''' <param name="HostFilePath">Name of hosts file on cluster head node</param>
     ''' <returns>returns a string collection containing IP addresses for each node</returns>
     ''' <remarks></remarks>
-    Private Function GetHostList(ByVal HostFilePath As String) As List(Of String)
+    Private Function GetHostList(HostFilePath As String) As List(Of String)
 
         Dim lstNodes As New List(Of String)
         Dim InpLine As String
@@ -530,7 +530,7 @@ Public Class clsAnalysisResourcesSeq
 
     End Function
 
-    Private Function VerifyFilesMatchSizeAndDate(ByVal FileA As String, ByVal FileB As String) As Boolean
+    Private Function VerifyFilesMatchSizeAndDate(FileA As String, FileB As String) As Boolean
 
         Const DETAILED_LOG_THRESHOLD = 3
 
@@ -608,7 +608,7 @@ Public Class clsAnalysisResourcesSeq
     ''' <param name="blnNotEnoughFreeSpace">Output parameter: true if the target node does not have enough space for the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
     ''' <remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
-    Private Function VerifyRemoteDatabase(ByVal OrgDBFilePath As String, ByVal DestPath As String, ByRef blnFileAlreadyExists As Boolean, ByRef blnNotEnoughFreeSpace As Boolean) As Boolean
+    Private Function VerifyRemoteDatabase(OrgDBFilePath As String, DestPath As String, ByRef blnFileAlreadyExists As Boolean, ByRef blnNotEnoughFreeSpace As Boolean) As Boolean
 
         Dim CopyNeeded As Boolean
 

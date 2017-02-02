@@ -298,7 +298,7 @@ Public Class clsAnalysisToolRunnerMODa
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -353,8 +353,8 @@ Public Class clsAnalysisToolRunnerMODa
             Dim intLinesRead As Integer
 
             Dim intValue As Integer
-            Dim intScansProcessed As Integer = 0
-            Dim intTotalScans As Integer = 0
+            Dim intScansProcessed = 0
+            Dim intTotalScans = 0
             Dim strMODaVersionAndDate As String = String.Empty
 
             mConsoleOutputErrorMsg = String.Empty
@@ -543,8 +543,8 @@ Public Class clsAnalysisToolRunnerMODa
 
     Protected Function UpdateParameterFile(paramFileName As String, spectrumFileName As String, fastaFilePath As String) As Boolean
 
-        Const SPEC_FILE_PATH As String = "Spectra"
-        Const FASTA_FILE_PATH As String = "Fasta"
+        Const SPEC_FILE_PATH = "Spectra"
+        Const FASTA_FILE_PATH = "Fasta"
 
         Dim specFileDefined = False
         Dim fastaFileDefined = False

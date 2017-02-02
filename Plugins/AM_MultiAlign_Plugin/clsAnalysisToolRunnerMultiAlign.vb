@@ -72,7 +72,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
         Dim MultiAlignDatabaseName As String = String.Copy(m_Dataset)
 
         ' Set up and execute a program runner to run MultiAlign
-        CmdStr = " input.txt " & System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " " & m_WorkDir & " " & MultiAlignDatabaseName
+        CmdStr = " input.txt " & Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) & " " & m_WorkDir & " " & MultiAlignDatabaseName
         If m_DebugLevel >= 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
         End If
@@ -94,7 +94,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
         End If
 
         'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+        m_StopTime = DateTime.UtcNow
         m_progress = PROGRESS_PCT_MULTI_ALIGN_DONE
 
         'Add the current job data to the summary file
@@ -103,7 +103,7 @@ Public Class clsAnalysisToolRunnerMultiAlign
         End If
 
         'Make sure objects are released
-        System.Threading.Thread.Sleep(500)        ' 500 msec delay
+        Threading.Thread.Sleep(500)        ' 500 msec delay
         PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
         If Not blnSuccess Then
@@ -130,11 +130,10 @@ Public Class clsAnalysisToolRunnerMultiAlign
         End If
 
         ' Move the Plots folder to the result files folder
-        Dim diPlotsFolder As System.IO.DirectoryInfo
-        diPlotsFolder = New System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"))
+        Dim diPlotsFolder = New DirectoryInfo(Path.Combine(m_WorkDir, "Plots"))
 
         Dim strTargetFolderPath As String
-        strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots")
+        strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots")
         diPlotsFolder.MoveTo(strTargetFolderPath)
 
         result = CopyResultsFolderToServer()
@@ -150,19 +149,19 @@ Public Class clsAnalysisToolRunnerMultiAlign
 
     Protected Function RenameLogFile() As IJobParams.CloseOutType
 
-        Dim TmpFile As String = String.Empty
+        Dim TmpFile As String
         Dim Files As String()
-        Dim LogExtension As String = "-log.txt"
+        Dim LogExtension = "-log.txt"
         Dim NewFilename As String = m_Dataset & LogExtension
         'This is what MultiAlign is currently naming the log file
         Dim LogNameFilter As String = m_Dataset & ".db3-log*.txt"
         Try
             'Get the log file name.  There should only be one log file
-            Files = System.IO.Directory.GetFiles(m_WorkDir, LogNameFilter)
+            Files = Directory.GetFiles(m_WorkDir, LogNameFilter)
             'go through each log file found.  Again, there should only be one log file
             For Each TmpFile In Files
                 'Check to see if the log file exists.  If so, only rename one of them
-                If Not System.IO.File.Exists(NewFilename) Then
+                If Not File.Exists(NewFilename) Then
                     My.Computer.FileSystem.RenameFile(TmpFile, NewFilename)
                 End If
             Next
@@ -193,8 +192,8 @@ Public Class clsAnalysisToolRunnerMultiAlign
         strFolderPathToArchive = String.Copy(m_WorkDir)
 
         Try
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & ".UIMF"))
-            System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset & "*.csv"))
+            File.Delete(Path.Combine(m_WorkDir, m_Dataset & ".UIMF"))
+            File.Delete(Path.Combine(m_WorkDir, m_Dataset & "*.csv"))
         Catch ex As Exception
             ' Ignore errors here
         End Try
@@ -206,12 +205,12 @@ Public Class clsAnalysisToolRunnerMultiAlign
             result = MoveResultFiles()
             If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -220,21 +219,21 @@ Public Class clsAnalysisToolRunnerMultiAlign
     ''' Stores the tool version info in the database
     ''' </summary>
     ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(ByVal strMultiAlignProgLoc As String) As Boolean
+    Protected Function StoreToolVersionInfo(strMultiAlignProgLoc As String) As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-        Dim ioMultiAlignProg As System.IO.FileInfo
+        Dim ioMultiAlignProg As FileInfo
         Dim blnSuccess As Boolean
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        ioMultiAlignProg = New System.IO.FileInfo(strMultiAlignProgLoc)
+        ioMultiAlignProg = New FileInfo(strMultiAlignProgLoc)
         If Not ioMultiAlignProg.Exists Then
             Try
                 strToolVersionInfo = "Unknown"
-                MyBase.SetStepTaskToolVersion(strToolVersionInfo, New System.Collections.Generic.List(Of System.IO.FileInfo), blnSaveToolVersionTextFile:=False)
+                MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), blnSaveToolVersionTextFile:=False)
             Catch ex As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
                 Return False
@@ -248,22 +247,22 @@ Public Class clsAnalysisToolRunnerMultiAlign
         If Not blnSuccess Then Return False
 
         ' Lookup the version of additional DLLs
-        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
         If Not blnSuccess Then Return False
 
-        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"))
         If Not blnSuccess Then Return False
 
-        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignCore.dll"))
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignCore.dll"))
         If Not blnSuccess Then Return False
 
-        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
+        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"))
         If Not blnSuccess Then Return False
 
         ' Store paths to key DLLs in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")))
-        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")))
+        Dim ioToolFiles As New List(Of FileInfo)
+        ioToolFiles.Add(New FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")))
+        ioToolFiles.Add(New FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")))
 
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)

@@ -12,6 +12,7 @@ Imports System.Linq
 Imports MSDataFileReader
 Imports System.IO
 Imports System.Text.RegularExpressions
+Imports System.Threading
 
 Public Class clsAnalysisToolRunnerMSDeconv
     Inherits clsAnalysisToolRunnerBase
@@ -82,7 +83,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
             End If
 
             Dim strOutputFormat = m_jobParams.GetParam("MSDeconvOutputFormat")
-            Dim resultsFileName As String = "unknown"
+            Dim resultsFileName = "unknown"
 
             If String.IsNullOrEmpty(strOutputFormat) Then
                 strOutputFormat = "msalign"
@@ -166,7 +167,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
             mCmdRunner = Nothing
 
             'Make sure objects are released
-            Threading.Thread.Sleep(500)        ' 500 msec delay
+            Thread.Sleep(500)        ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             ' Trim the console output file to remove the majority of the % finished messages
@@ -244,7 +245,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -254,7 +255,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
 
         ' Example Console output:
         '
@@ -300,8 +301,8 @@ Public Class clsAnalysisToolRunnerMSDeconv
             Dim intActualProgress As Int16
 
             mConsoleOutputErrorMsg = String.Empty
-            
-            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
+
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 intLinesRead = 0
                 Do While Not srInFile.EndOfStream
@@ -401,7 +402,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
                     ' Renumber the .mzXML file
                     ' May need to renumber if the scan gap is every greater than one; not sure
 
-                    Threading.Thread.Sleep(200)
+                    Thread.Sleep(200)
 
                     ' Rename the file 
                     fiMzXmlFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset & "_old" & clsAnalysisResources.DOT_MZXML_EXTENSION))
@@ -439,7 +440,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
     End Function
 
-    Private Function StartMSDeconv(ByVal JavaProgLoc As String, ByVal strOutputFormat As String) As Boolean
+    Private Function StartMSDeconv(JavaProgLoc As String, strOutputFormat As String) As Boolean
 
         ' Store the MSDeconv version info in the database after the first line is written to file MSDeconv_ConsoleOutput.txt
         mToolVersionWritten = False
@@ -508,16 +509,14 @@ Public Class clsAnalysisToolRunnerMSDeconv
     ''' <remarks></remarks>
     Protected Function StoreToolVersionInfo() As Boolean
 
-        Dim strToolVersionInfo As String = String.Empty
-
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-        strToolVersionInfo = String.Copy(mMSDeconvVersion)
+        Dim strToolVersionInfo = String.Copy(mMSDeconvVersion)
 
         ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New System.Collections.Generic.List(Of FileInfo)
+        Dim ioToolFiles As New List(Of FileInfo)
         ioToolFiles.Add(New FileInfo(mMSDeconvProgLoc))
 
         Try
@@ -534,7 +533,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
     ''' </summary>
     ''' <param name="strConsoleOutputFilePath"></param>
     ''' <remarks></remarks>
-    Private Sub TrimConsoleOutputFile(ByVal strConsoleOutputFilePath As String)
+    Private Sub TrimConsoleOutputFile(strConsoleOutputFilePath As String)
 
         Static reExtractScan As New Regex("Processing spectrum Scan_(\d+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
         Dim oMatch As Match
@@ -552,8 +551,7 @@ Public Class clsAnalysisToolRunnerMSDeconv
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Trimming console output file at " & strConsoleOutputFilePath)
             End If
 
-            Dim srInFile As StreamReader
-            Dim swOutFile As StreamWriter
+
 
             Dim strLineIn As String
             Dim blnKeepLine As Boolean
@@ -567,44 +565,43 @@ Public Class clsAnalysisToolRunnerMSDeconv
             Dim strTrimmedFilePath As String
             strTrimmedFilePath = strConsoleOutputFilePath & ".trimmed"
 
-            srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-            swOutFile = New StreamWriter(New FileStream(strTrimmedFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)),
+                  swOutFile = New StreamWriter(New FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-            intScanNumberOutputThreshold = 0
-            Do While Not srInFile.EndOfStream
-                strLineIn = srInFile.ReadLine()
-                blnKeepLine = True
+                intScanNumberOutputThreshold = 0
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
+                    blnKeepLine = True
 
-                oMatch = reExtractScan.Match(strLineIn)
-                If oMatch.Success Then
-                    If Integer.TryParse(oMatch.Groups(1).Value, intScanNumber) Then
-                        If intScanNumber < intScanNumberOutputThreshold Then
-                            blnKeepLine = False
-                        Else
-                            ' Write out this line and bump up intScanNumberOutputThreshold by 100
-                            intScanNumberOutputThreshold += 100
-                            strMostRecentProgressLineWritten = String.Copy(strLineIn)
+                    oMatch = reExtractScan.Match(strLineIn)
+                    If oMatch.Success Then
+                        If Integer.TryParse(oMatch.Groups(1).Value, intScanNumber) Then
+                            If intScanNumber < intScanNumberOutputThreshold Then
+                                blnKeepLine = False
+                            Else
+                                ' Write out this line and bump up intScanNumberOutputThreshold by 100
+                                intScanNumberOutputThreshold += 100
+                                strMostRecentProgressLineWritten = String.Copy(strLineIn)
+                            End If
+                        End If
+                        strMostRecentProgressLine = String.Copy(strLineIn)
+
+                    ElseIf strLineIn.StartsWith("Deconvolution finished") Then
+                        ' Possibly write out the most recent progress line
+                        If String.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) <> 0 Then
+                            swOutFile.WriteLine(strMostRecentProgressLine)
                         End If
                     End If
-                    strMostRecentProgressLine = String.Copy(strLineIn)
 
-                ElseIf strLineIn.StartsWith("Deconvolution finished") Then
-                    ' Possibly write out the most recent progress line
-                    If String.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) <> 0 Then
-                        swOutFile.WriteLine(strMostRecentProgressLine)
+                    If blnKeepLine Then
+                        swOutFile.WriteLine(strLineIn)
                     End If
-                End If
+                Loop
 
-                If blnKeepLine Then
-                    swOutFile.WriteLine(strLineIn)
-                End If
-            Loop
-
-            srInFile.Close()
-            swOutFile.Close()
+            End Using
 
             ' Wait 500 msec, then swap the files
-            System.Threading.Thread.Sleep(500)
+            Thread.Sleep(500)
 
             Try
                 File.Delete(strConsoleOutputFilePath)
@@ -637,8 +634,8 @@ Public Class clsAnalysisToolRunnerMSDeconv
 
         UpdateStatusFile()
 
-        If System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = System.DateTime.UtcNow
+        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
+            dtLastConsoleOutputParse = DateTime.UtcNow
 
             ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT))
 

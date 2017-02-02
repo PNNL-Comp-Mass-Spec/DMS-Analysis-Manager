@@ -33,8 +33,6 @@ Public Class clsAnalysisToolRunnerMODPlus
     Protected Const PROGRESS_PCT_MODPLUS_COMPLETE As Single = 95
     Protected Const PROGRESS_PCT_COMPUTING_FDR As Single = 96
 
-    Protected Const MGF_SPLIT_PROGRESS_THRESHOLD As Integer = 25
-
     Protected Const USE_THREADING As Boolean = True
 
 #End Region
@@ -45,10 +43,6 @@ Public Class clsAnalysisToolRunnerMODPlus
 
     Protected mMODPlusProgLoc As String
     Protected mConsoleOutputErrorMsg As String
-
-    Protected mLastMgfSplitProgress As DateTime
-    Protected mNextMgfSplitProgressThreshold As Integer
-    Protected mMgfSplitterErrorMessage As String
 
     ''' <summary>
     ''' Dictionary of ModPlus instances
@@ -125,7 +119,7 @@ Public Class clsAnalysisToolRunnerMODPlus
 
 
             ' Make sure objects are released
-            Threading.Thread.Sleep(500)        ' 500 msec delay
+            Thread.Sleep(500)        ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             If Not blnSuccess Then
@@ -300,7 +294,7 @@ Public Class clsAnalysisToolRunnerMODPlus
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
+        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
         objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
 
     End Sub
@@ -867,7 +861,7 @@ Public Class clsAnalysisToolRunnerMODPlus
 
                 If USE_THREADING Then
                     Dim newThread As New Thread(New ThreadStart(AddressOf modPlusRunner.StartAnalysis))
-                    newThread.Priority = Threading.ThreadPriority.BelowNormal
+                    newThread.Priority = ThreadPriority.BelowNormal
                     newThread.Start()
                     lstThreads.Add(newThread)
                 Else

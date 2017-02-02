@@ -13,6 +13,7 @@ Imports System.Linq
 Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
+Imports System.Threading
 Imports PHRPReader
 
 Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
@@ -139,7 +140,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
             mCmdRunner = Nothing
 
             ' Make sure objects are released
-            System.Threading.Thread.Sleep(1000)
+            Thread.Sleep(1000)
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             If Not success Then
@@ -252,7 +253,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                 Return False
             End If
 
-            Threading.Thread.Sleep(100)
+            Thread.Sleep(100)
 
             ' Replace the original file with the new one
             Dim originalFilePath = fiSynFile.FullName
@@ -805,7 +806,6 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
                 udtJobMetadata.Job = jobFolder.Key
 
                 Dim datasetName = String.Empty
-                Dim settingsFileName = String.Empty
 
                 If Not jobToDatasetMap.TryGetValue(udtJobMetadata.Job.ToString(), datasetName) Then
                     m_message = "Job " & udtJobMetadata.Job & " not found in packed job parameter " & clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP
@@ -815,7 +815,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
                 udtJobMetadata.Dataset = datasetName
 
-                settingsFileName = jobToSettingsFileMap(udtJobMetadata.Job.ToString())
+                Dim settingsFileName = jobToSettingsFileMap(udtJobMetadata.Job.ToString())
                 udtJobMetadata.ToolName = jobToToolMap(udtJobMetadata.Job.ToString())
 
                 ' Determine the AScore parameter file to use
@@ -968,7 +968,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
 
         If Not mCmdRunner.WriteConsoleOutputToFile Then
             ' Write the console output to a text file
-            System.Threading.Thread.Sleep(250)
+            Thread.Sleep(250)
 
             Dim swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
@@ -980,7 +980,7 @@ Public Class clsAnalysisToolRunnerPhosphoFdrAggregator
         End If
 
         ' Parse the console output file one more time to check for errors
-        System.Threading.Thread.Sleep(250)
+        Thread.Sleep(250)
         ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
 
         If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
