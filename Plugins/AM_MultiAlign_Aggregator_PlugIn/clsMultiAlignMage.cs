@@ -70,7 +70,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         #region Constructors
 
-        public clsMultiAlignMage(IJobParams jobParms, IMgrParams mgrParms) {
+        public clsMultiAlignMage(IJobParams jobParms, IMgrParams mgrParms, IStatusFile statusTools)
+        {
+            mStatusTools = statusTools;
             Intialize(jobParms, mgrParms);
         }
 
@@ -475,30 +477,34 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <remarks></remarks>
         private void InitializeProgressStepDictionaries()
         {
-            mProgressStepPercentComplete = new System.Collections.Generic.SortedDictionary<eProgressSteps, Int16>();
+            mProgressStepPercentComplete = new SortedDictionary<eProgressSteps, Int16>
+            {
+                {eProgressSteps.Starting, 5},
+                {eProgressSteps.LoadingMTDB, 6},
+                {eProgressSteps.LoadingDatasets, 7},
+                {eProgressSteps.LinkingMSFeatures, 45},
+                {eProgressSteps.AligningDatasets, 50},
+                {eProgressSteps.PerformingClustering, 75},
+                {eProgressSteps.PerformingPeakMatching, 85},
+                {eProgressSteps.CreatingFinalPlots, 90},
+                {eProgressSteps.CreatingReport, 95},
+                {eProgressSteps.Complete, 97}
+            };
 
-            mProgressStepPercentComplete.Add(eProgressSteps.Starting, 5);
-            mProgressStepPercentComplete.Add(eProgressSteps.LoadingMTDB, 6);
-            mProgressStepPercentComplete.Add(eProgressSteps.LoadingDatasets, 7);
-            mProgressStepPercentComplete.Add(eProgressSteps.LinkingMSFeatures, 45);
-            mProgressStepPercentComplete.Add(eProgressSteps.AligningDatasets, 50);
-            mProgressStepPercentComplete.Add(eProgressSteps.PerformingClustering, 75);
-            mProgressStepPercentComplete.Add(eProgressSteps.PerformingPeakMatching, 85);
-            mProgressStepPercentComplete.Add(eProgressSteps.CreatingFinalPlots, 90);
-            mProgressStepPercentComplete.Add(eProgressSteps.CreatingReport, 95);
-            mProgressStepPercentComplete.Add(eProgressSteps.Complete, 97);
 
-            mProgressStepLogText = new System.Collections.Generic.SortedDictionary<string, eProgressSteps>();
-            mProgressStepLogText.Add("[LogStart]", eProgressSteps.Starting);
-            mProgressStepLogText.Add(" - Loading Mass Tag database from database", eProgressSteps.LoadingMTDB);
-            mProgressStepLogText.Add(" - Loading dataset data files", eProgressSteps.LoadingDatasets);
-            mProgressStepLogText.Add(" - Linking MS Features", eProgressSteps.LinkingMSFeatures);
-            mProgressStepLogText.Add(" - Aligning datasets", eProgressSteps.AligningDatasets);
-            mProgressStepLogText.Add(" - Performing clustering", eProgressSteps.PerformingClustering);
-            mProgressStepLogText.Add(" - Performing Peak Matching", eProgressSteps.PerformingPeakMatching);
-            mProgressStepLogText.Add(" - Creating Final Plots", eProgressSteps.CreatingFinalPlots);
-            mProgressStepLogText.Add(" - Creating report", eProgressSteps.CreatingReport);
-            mProgressStepLogText.Add(" - Analysis Complete", eProgressSteps.Complete);
+            mProgressStepLogText = new SortedDictionary<string, eProgressSteps>
+            {
+                {"[LogStart]", eProgressSteps.Starting},
+                {" - Loading Mass Tag database from database", eProgressSteps.LoadingMTDB},
+                {" - Loading dataset data files", eProgressSteps.LoadingDatasets},
+                {" - Linking MS Features", eProgressSteps.LinkingMSFeatures},
+                {" - Aligning datasets", eProgressSteps.AligningDatasets},
+                {" - Performing clustering", eProgressSteps.PerformingClustering},
+                {" - Performing Peak Matching", eProgressSteps.PerformingPeakMatching},
+                {" - Creating Final Plots", eProgressSteps.CreatingFinalPlots},
+                {" - Creating report", eProgressSteps.CreatingReport},
+                {" - Analysis Complete", eProgressSteps.Complete}
+            };
 
         }
 
@@ -571,7 +577,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             // For certain long-running steps we can compute a more precise version of % complete by keeping track of the number of datasets processed
 
             //Static reExtractPercentFinished As New System.Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-            System.DateTime dtLastProgressWriteTime = System.DateTime.UtcNow;
 
             //Dim oMatch As System.Text.RegularExpressions.Match
             try
@@ -670,19 +675,19 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                         if (eProgress == eProgressSteps.LoadingDatasets)
                         {
-                            dblSubProgressPercent = intDatasetsLoaded * 100 / intTotalDatasets;
+                            dblSubProgressPercent = intDatasetsLoaded * 100 / (double)intTotalDatasets;
 
                         }
                         else if (eProgress == eProgressSteps.AligningDatasets)
                         {
-                            dblSubProgressPercent = intDatasetsAligned * 100 / intTotalDatasets;
+                            dblSubProgressPercent = intDatasetsAligned * 100 / (double)intTotalDatasets;
 
                         }
                         else if (eProgress == eProgressSteps.PerformingClustering)
                         {
                             // The majority of the data will be charge 1 through 7
                             // Thus, we're dividing by 7 here, which means dblSubProgressPercent might be larger than 100; we'll account for that below
-                            dblSubProgressPercent = intChargeStatesClustered * 100 / 7;
+                            dblSubProgressPercent = intChargeStatesClustered * 100 / (double)7;
                         }
 
                         if (dblSubProgressPercent > 0)
@@ -691,7 +696,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                                 dblSubProgressPercent = 100;
 
                             // Bump up dblActualProgress based on dblSubProgressPercent
-                            Int16 intProgressNext = default(Int16);
+                            short intProgressNext;
 
                             if (mProgressStepPercentComplete.TryGetValue(eProgress + 1, out intProgressNext))
                             {
