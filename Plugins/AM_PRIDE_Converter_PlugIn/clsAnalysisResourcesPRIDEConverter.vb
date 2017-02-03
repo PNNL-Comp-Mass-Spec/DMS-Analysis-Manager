@@ -211,6 +211,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
                     m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", String.Empty)
                     If Not RetrieveOrgDB(strLocalOrgDBFolder) Then
                         If String.IsNullOrEmpty(m_message) Then m_message = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles"
+                        OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo)
                         Return False
                     End If
 
@@ -219,6 +220,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
                     If String.IsNullOrEmpty(strOrgDBNameGenerated) Then
                         m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB"
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (class clsAnalysisResourcesPRIDEConverter)")
+                        OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo)
                         Return False
                     End If
 
@@ -228,6 +230,7 @@ Public Class clsAnalysisResourcesPRIDEConverter
 
                         m_message = "Generated FASTA file name (" & strOrgDBNameGenerated & ") does not match expected fasta file name (" & dataPkgJob.OrganismDBName & "); aborting"
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (class clsAnalysisResourcesPRIDEConverter)")
+                        OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo)
                         Return False
                     End If
 
