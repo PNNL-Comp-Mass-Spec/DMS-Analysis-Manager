@@ -50,8 +50,8 @@ Public MustInherit Class clsDBTask
 
     Protected m_Xml_Text As String
 
-    Public WithEvents DMSProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
-    Public WithEvents PipelineDBProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
+    Public ReadOnly DMSProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
+    Public ReadOnly PipelineDBProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
 
 #End Region
 
@@ -107,6 +107,12 @@ Public MustInherit Class clsDBTask
 
         DMSProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr)
         PipelineDBProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(m_BrokerConnStr)
+
+        AddHandler DMSProcedureExecutor.DebugEvent, AddressOf ProcedureExecutor_DebugEvent
+        AddHandler PipelineDBProcedureExecutor.DebugEvent, AddressOf ProcedureExecutor_DebugEvent
+
+        AddHandler DMSProcedureExecutor.DBErrorEvent, AddressOf ProcedureExecutor_DBErrorEvent
+        AddHandler PipelineDBProcedureExecutor.DBErrorEvent, AddressOf ProcedureExecutor_DBErrorEvent
 
         If m_DebugLevel > 1 Then
             DMSProcedureExecutor.DebugMessagesEnabled = True
@@ -207,12 +213,12 @@ Public MustInherit Class clsDBTask
 
 #Region "Event Handlers"
 
-    Private Sub m_ExecuteSP_DebugEvent(message As String) Handles DMSProcedureExecutor.DebugEvent, PipelineDBProcedureExecutor.DebugEvent
+    Private Sub ProcedureExecutor_DebugEvent(message As String)
         LogDebug(message, clsLogTools.LogLevels.DEBUG)
     End Sub
 
-    Private Sub m_ExecuteSP_DBErrorEvent(message As String) Handles DMSProcedureExecutor.DBErrorEvent, PipelineDBProcedureExecutor.DBErrorEvent
-        If Message.Contains("permission was denied") Then
+    Private Sub ProcedureExecutor_DBErrorEvent(message As String)
+        If message.Contains("permission was denied") Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message)
         End If
         LogError(message)
