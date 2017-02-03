@@ -32,6 +32,7 @@ Public Class clsGlobal
 #Region "Enums"
     Public Enum eAnalysisResourceOptions
         OrgDbRequired = 0
+        MyEMSLSearchDisabled = 1
     End Enum
 #End Region
 

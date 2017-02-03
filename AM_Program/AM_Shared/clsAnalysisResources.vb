@@ -318,6 +318,7 @@ Public MustInherit Class clsAnalysisResources
 
         m_ResourceOptions = New Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, False)
+        SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, False)
 
         m_StatusTools = statusTools
 
@@ -368,6 +369,9 @@ Public MustInherit Class clsAnalysisResources
             m_ResourceOptions.Add(resourceOption, enabled)
         End If
 
+        If resourceOption = clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled Then
+            MyEMSLSearchDisabled = enabled
+        End If
     End Sub
 
     ''' <summary>

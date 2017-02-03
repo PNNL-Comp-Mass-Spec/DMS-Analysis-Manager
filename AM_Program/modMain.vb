@@ -28,12 +28,13 @@ Imports System.IO
 Imports System.Threading
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "November 30, 2016"
+    Public Const PROGRAM_DATE As String = "February 2, 2017"
 
     Private mCodeTestMode As Boolean
     Private mCreateWindowsEventLog As Boolean
     Private mTraceMode As Boolean
     Private mDisableMessageQueue As Boolean
+    Private mDisableMyEMSL As Boolean
     Private mDisplayDllVersions As Boolean
     Private mDisplayDllPath As String
 
@@ -47,6 +48,7 @@ Module modMain
         mCodeTestMode = False
         mTraceMode = False
         mDisableMessageQueue = False
+        mDisableMyEMSL = False
         mDisplayDllVersions = False
         mDisplayDllPath = ""
 
@@ -172,6 +174,7 @@ Module modMain
 
                     Dim objDMSMain = New clsMainProcess(mTraceMode)
                     objDMSMain.DisableMessageQueue = mDisableMessageQueue
+                    objDMSMain.DisableMyEMSL = mDisableMyEMSL
 
                     intReturnCode = objDMSMain.Main()
 
@@ -207,7 +210,7 @@ Module modMain
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
-        Dim lstValidParameters = New List(Of String) From {"T", "Test", "Trace", "EL", "NQ", "DLL"}
+        Dim lstValidParameters = New List(Of String) From {"T", "Test", "Trace", "EL", "NQ", "NoMyEMSL", "DLL"}
 
         Try
             ' Make sure no invalid parameters are present
@@ -226,6 +229,8 @@ Module modMain
                     If .IsParameterPresent("EL") Then mCreateWindowsEventLog = True
 
                     If .IsParameterPresent("NQ") Then mDisableMessageQueue = True
+
+                    If .IsParameterPresent("NoMyEMSL") Then mDisableMyEMSL = True
 
                     If .IsParameterPresent("DLL") Then
                         mDisplayDllVersions = True
@@ -282,12 +287,14 @@ Module modMain
 
             Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.")
             Console.WriteLine()
-            Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(GetAppPath()) & " [/EL] [/NQ] [/T] [/Trace] [/DLL]")
+            Console.WriteLine("Program syntax:" & ControlChars.NewLine & Path.GetFileName(GetAppPath()) & " [/EL] [/NQ] [/NoMyEMSL] [/T] [/Trace] [/DLL]")
             Console.WriteLine()
 
             Console.WriteLine("Use /EL to create the Windows Event Log named '" & clsMainProcess.CUSTOM_LOG_NAME & "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'")
             Console.WriteLine()
             Console.WriteLine("Use /NQ to disable posting status messages to the message queue")
+            Console.WriteLine()
+            Console.WriteLine("Use /NoMyEMSL to disable searching for files in MyEMSL. This is useful if MyEMSL is offline or the current user does not have read access to SimpleSearch")
             Console.WriteLine()
             Console.WriteLine("Use /T or /Test to start the program in code test mode.")
             Console.WriteLine()

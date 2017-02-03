@@ -63,6 +63,7 @@ Public Class clsMainProcess
 
 #Region "Properties"
     Public Property DisableMessageQueue As Boolean
+    Public Property DisableMyEMSL As Boolean
     Public Property TraceMode As Boolean
 #End Region
 
@@ -653,6 +654,11 @@ Public Class clsMainProcess
             m_MgrErrorCleanup.CleanWorkDir()
             UpdateStatusIdle("Processing aborted")
             Return False
+        End If
+
+        ' Possibly disable MyEMSL
+        If DisableMyEMSL Then
+            m_Resource.SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, True)
         End If
 
         ' Retrieve files required for the job
