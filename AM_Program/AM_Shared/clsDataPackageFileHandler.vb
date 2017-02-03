@@ -1,6 +1,8 @@
-﻿Imports System.IO
+﻿Imports System.Data.SqlClient
+Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Threading
+Imports System.Xml
 Imports PHRPReader
 
 Public Class clsDataPackageFileHandler
@@ -8,6 +10,8 @@ Public Class clsDataPackageFileHandler
 
 #Region "Constants"
     Public Const JOB_INFO_FILE_PREFIX As String = "JobInfoFile_Job"
+
+    Private Const SP_NAME_GET_JOB_STEP_INPUT_FOLDER As String = "GetJobStepInputFolder"
 
 #End Region
 
@@ -29,7 +33,7 @@ Public Class clsDataPackageFileHandler
         ''' <summary>
         ''' Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
         ''' </summary>
-        ''' <remarks>If the search used a .mzML instead of a _dta.txt file, the .mzML file will be retrieved</remarks>
+        ''' <remarks>If the search used a .mzML instead of a _dta.txt file, the .mzML.gz file will be retrieved</remarks>
         Public RetrieveDTAFiles As Boolean
 
         ''' <summary>
@@ -72,6 +76,7 @@ Public Class clsDataPackageFileHandler
 
     Private ReadOnly mDataPackageInfoLoader As clsDataPackageInfoLoader
 
+    Public ReadOnly mPipelineDBProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
 #End Region
 
     ''' <summary>
@@ -84,14 +89,191 @@ Public Class clsDataPackageFileHandler
 
         mDataPackageInfoLoader = New clsDataPackageInfoLoader(mBrokerDbConnectionString, mDataPackageID)
 
+        mPipelineDBProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(mBrokerDbConnectionString)
+
+        AddHandler mPipelineDBProcedureExecutor.DebugEvent, AddressOf ProcedureExecutor_DebugEvent
+        AddHandler mPipelineDBProcedureExecutor.DBErrorEvent, AddressOf ProcedureExecutor_DBErrorEvent
+
     End Sub
 
-    Private Sub AddMzIdFilesToFind(
+    ''' <summary>
+    ''' Contact the database to determine the exact folder name of the MSXML_Gen or Mz_Refinery folder
+    ''' that has the CacheInfo file for the mzML file used by a given job
+    ''' Look for the cache info file in that folder, then use that to find the location of the actual .mzML.gz file
+    ''' </summary>
+    ''' <param name="job"></param>
+    ''' <param name="stepToolFilter">step tool to filter on; if an empty string, returns the input folder for the primary step tool for the job</param>
+    ''' <returns>Path to the .mzML or .mzML.gz file; empty string if not found</returns>
+    ''' <remarks>Uses the highest job step to determine the input folder, meaning the .mzML.gz file returned will be the one used by MSGF+</remarks>
+    Private Function FindMzMLForJob(dataset As String, job As Integer, stepToolFilter As String, workingDir As String) As String
+
+        Try
+
+            ' Set up the command object prior to SP execution
+            Dim myCmd = New SqlCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER) With {
+                .CommandType = CommandType.StoredProcedure
+            }
+
+            myCmd.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
+            myCmd.Parameters.Add(New SqlParameter("@job", SqlDbType.Int)).Value = job
+
+            Dim stepToolFilterParam = myCmd.Parameters.Add(New SqlParameter("@stepToolFilter", SqlDbType.VarChar, 8000))
+            stepToolFilterParam.Value = stepToolFilter
+
+            myCmd.Parameters.Add(New SqlParameter("@inputFolderName", SqlDbType.VarChar, 128)).Direction = ParameterDirection.Output
+            myCmd.Parameters.Add(New SqlParameter("@stepToolMatch", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output
+
+            Dim matchFound = False
+            Dim inputFolderName As String = String.Empty
+            Dim stepToolMatch As String = String.Empty
+
+            Do While Not matchFound
+
+                ' Execute the SP
+                mPipelineDBProcedureExecutor.ExecuteSP(myCmd, 1)
+
+                inputFolderName = CStr(myCmd.Parameters("@inputFolderName").Value)
+                stepToolMatch = CStr(myCmd.Parameters("@stepToolMatch").Value)
+
+                If String.IsNullOrWhiteSpace(inputFolderName) Then
+                    If String.IsNullOrEmpty(stepToolFilter) Then
+                        OnErrorEvent(String.Format("Unable to determine the input folder for job {0}", job))
+                        Return String.Empty
+                    Else
+                        OnStatusEvent(String.Format("Unable to determine the input folder for job {0} and step tool {1}; will try again without a step tool filter",
+                                                    job, stepToolFilter))
+                        stepToolFilter = String.Empty
+                        stepToolFilterParam.Value = stepToolFilter
+                    End If
+                Else
+                    matchFound = True
+                End If
+            Loop
+
+            OnStatusEvent(String.Format("Determined the input folder for job {0} is {1}, step tool {2}", job, inputFolderName, stepToolMatch))
+
+            ' Look for a CacheInfo.txt file in the matched input folder
+            ' Note that FindValidFolder will search both the dataset folder and in folder inputFolderName below the dataset folder
+
+            Dim validFolderFound As Boolean
+
+            Dim datasetFolderPath As String = mAnalysisResources.FindValidFolder(
+                dataset,
+                "*_CacheInfo.txt",
+                folderNameToFind:=inputFolderName,
+                maxAttempts:=1,
+                logFolderNotFound:=False,
+                retrievingInstrumentDataFolder:=False,
+                validFolderFound:=validFolderFound,
+                assumeUnpurged:=False)
+
+            If Not validFolderFound Then
+                Return String.Empty
+            End If
+
+            Dim cacheInfoFileName As String = String.Empty
+            Dim cacheInfoFileSourceType As String = String.Empty
+
+            ' datasetFolderPath will hold the full path to the actual folder with the CacheInfo.txt file
+            ' For example: \\proto-6\QExactP02\2016_2\Biodiversity_A_cryptum_FeTSB\Mz_Refinery_1_195_501572
+
+            If datasetFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG) Then
+                ' File found in MyEMSL
+                ' Determine the MyEMSL FileID by searching for the expected file in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles
+
+                For Each udtArchivedFile In mAnalysisResources.MyEMSLUtilities.RecentlyFoundMyEMSLFiles
+                    Dim fiArchivedFile As New FileInfo(udtArchivedFile.FileInfo.RelativePathWindows)
+                    If fiArchivedFile.Name.EndsWith("_CacheInfo.txt", StringComparison.InvariantCultureIgnoreCase) Then
+                        mAnalysisResources.MyEMSLUtilities.AddFileToDownloadQueue(udtArchivedFile.FileInfo)
+                        cacheInfoFileName = udtArchivedFile.FileInfo.Filename
+                        Exit For
+                    End If
+                Next
+
+                If String.IsNullOrEmpty(cacheInfoFileName) Then
+                    OnErrorEvent("FindValidFolder reported a match to a file in MyEMSL (" & datasetFolderPath & ") " &
+                                 "but MyEMSLUtilities.RecentlyFoundMyEMSLFiles is empty")
+                    Return String.Empty
+                Else
+                    mAnalysisResources.ProcessMyEMSLDownloadQueue()
+                    cacheInfoFileSourceType = "MyEMSL"
+                End If
+            Else
+                Dim sourceFolder = New DirectoryInfo(datasetFolderPath)
+                cacheInfoFileSourceType = sourceFolder.FullName
+
+                If Not sourceFolder.Exists Then
+                    OnErrorEvent("FindValidFolder reported a match to folder " & cacheInfoFileSourceType & " but the folder was not found")
+                    Return String.Empty
+                End If
+
+                Dim cacheInfoFiles = sourceFolder.GetFiles("*_CacheInfo.txt")
+                If cacheInfoFiles.Count = 0 Then
+                    OnErrorEvent("FindValidFolder reported that folder " & cacheInfoFileSourceType & " has a _CacheInfo.txt file, but none was found")
+                    Return String.Empty
+                End If
+
+                Dim sourceCacheInfoFile = cacheInfoFiles.First()
+
+                Dim success = mAnalysisResources.CopyFileToWorkDir(sourceCacheInfoFile.Name, sourceCacheInfoFile.DirectoryName, workingDir, clsLogTools.LogLevels.ERROR)
+                If Not success Then
+                    ' The error should have already been logged
+                    Return String.Empty
+                End If
+
+                cacheInfoFileName = sourceCacheInfoFile.Name
+            End If
+
+            ' Open the CacheInfo file and read the first line
+
+            Dim localCacheInfoFile = New FileInfo(Path.Combine(workingDir, cacheInfoFileName))
+            If Not localCacheInfoFile.Exists Then
+                OnErrorEvent("CacheInfo file not found in the working directory; should have been retrieved from " & cacheInfoFileSourceType)
+                Return String.Empty
+            End If
+
+            Dim remoteMsXmlFilePath As String = String.Empty
+
+            Using reader = New StreamReader(New FileStream(localCacheInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                If Not reader.EndOfStream Then
+                    remoteMsXmlFilePath = reader.ReadLine
+                End If
+            End Using
+
+            If String.IsNullOrEmpty(remoteMsXmlFilePath) Then
+                OnErrorEvent("CacheInfo file retrieved from " & cacheInfoFileSourceType & " was empty")
+            Else
+                OnStatusEvent(String.Format("Found remote mzML file for job {0}: {1}", job, remoteMsXmlFilePath))
+            End If
+
+            Thread.Sleep(250)
+
+            ' Delete the locally cached file
+            localCacheInfoFile.Delete()
+
+            Return remoteMsXmlFilePath
+
+        Catch ex As Exception
+            OnErrorEvent("Exception finding the .mzML file used by job " & job, ex)
+            Return String.Empty
+        End Try
+
+    End Function
+
+    ''' <summary>
+    ''' Add expected .mzid file names
+    ''' Originally .mzid files were named _msgfplus.zip
+    ''' We switched to naming them _msgfplus.mzid.gz in January 2014
+    ''' </summary>
+    ''' <param name="datasetName"></param>
+    ''' <param name="splitFastaResultID"></param>
+    ''' <param name="zipFileCandidates">Potential names of zip files to decompress</param>
+    ''' <param name="gzipFileCandidates">Potential names of gzip files to decompress</param>
+    Private Sub GetMzIdFilesToFind(
       datasetName As String,
       splitFastaResultID As Integer,
-      zipFileCandidates As List(Of String),
-      gzipFileCandidates As List(Of String),
-      lstFilesToGet As SortedList(Of String, Boolean))
+      zipFileCandidates As ICollection(Of String),
+      gzipFileCandidates As ICollection(Of String))
 
         Dim zipFile As String
         Dim gZipFile As String
@@ -106,8 +288,6 @@ Public Class clsDataPackageFileHandler
 
         zipFileCandidates.Add(zipFile)
         gzipFileCandidates.Add(gZipFile)
-        lstFilesToGet.Add(zipFile, False)
-        lstFilesToGet.Add(gZipFile, False)
 
     End Sub
 
@@ -119,29 +299,139 @@ Public Class clsDataPackageFileHandler
         Return Path.Combine(strWorkDirPath, JOB_INFO_FILE_PREFIX & intJob & ".txt")
     End Function
 
-    Private Function RenameDuplicatePHRPFile(
-      sourceFolderPath As String,
-      sourceFilename As String,
-      TargetFolderPath As String,
-      strPrefixToAdd As String,
-      intJob As Integer) As Boolean
+    ''' <summary>
+    ''' Return the full path to the most recently unzipped file (.zip or .gz)
+    ''' Returns an empty string if no recent unzipped files
+    ''' </summary>
+    ''' <param name="ionicZipTools"></param>
+    ''' <returns></returns>
+    Private Function MostRecentUnzippedFile(ionicZipTools As clsIonicZipTools) As String
+        If ionicZipTools.MostRecentUnzippedFiles.Count > 0 Then
+            Return ionicZipTools.MostRecentUnzippedFiles.First.Value
+        End If
+
+        Return String.Empty
+    End Function
+
+    ''' <summary>
+    ''' Open an .mzid or .mzid.gz file and look for the SpectraData element
+    ''' If the location of the file specified by SpectraData points to a .mzML or .mzML.gz file, return true
+    ''' Otherwise, return false
+    ''' </summary>
+    ''' <param name="mzIdFileToInspect"></param>
+    ''' <param name="ionicZipTools"></param>
+    ''' <returns></returns>
+    Private Function MSGFPlusSearchUsedMzML(mzIdFileToInspect As String, ionicZipTools As clsIonicZipTools) As Boolean
 
         Try
-            Dim fiFileToRename = New FileInfo(Path.Combine(sourceFolderPath, sourceFilename))
-            Dim strFilePathWithPrefix As String = Path.Combine(TargetFolderPath, strPrefixToAdd & fiFileToRename.Name)
+            Dim mzidFile = New FileInfo(mzIdFileToInspect)
+            If Not mzidFile.Exists Then
+                OnErrorEvent("Unable to examine the mzid file to determine whether MSGF+ searched a .mzML file; file Not found:   " & mzIdFileToInspect)
+                Return False
+            End If
 
-            Thread.Sleep(100)
-            fiFileToRename.MoveTo(strFilePathWithPrefix)
+            Dim mzidFilePathLocal As String
+            Dim deleteLocalFile As Boolean
+            Dim searchedUsedMzML = False
 
-            mAnalysisResources.AddResultFileToSkip(Path.GetFileName(strFilePathWithPrefix))
+            If mzidFile.Name.EndsWith(".zip") Then
+                If Not ionicZipTools.UnzipFile(mzidFile.FullName) Then
+                    OnErrorEvent("Error unzipping " & mzidFile.FullName)
+                    Return False
+                End If
+
+                mzidFilePathLocal = MostRecentUnzippedFile(ionicZipTools)
+                deleteLocalFile = True
+
+            ElseIf mzidFile.Name.EndsWith(".gz") Then
+                If Not ionicZipTools.GUnzipFile(mzidFile.FullName) Then
+                    OnErrorEvent("Error unzipping " & mzidFile.FullName)
+                    Return False
+                End If
+
+                mzidFilePathLocal = MostRecentUnzippedFile(ionicZipTools)
+                deleteLocalFile = True
+            Else
+                mzidFilePathLocal = mzidFile.FullName
+                deleteLocalFile = False
+            End If
+
+            If Not File.Exists(mzidFilePathLocal) Then
+                OnErrorEvent("mzID file not found in the working directory; cannot inspect it in MSGFPlusSearchUsedMzML: " & Path.GetFileName(mzidFilePathLocal))
+                Return False
+            End If
+
+            Dim spectraLocationFound = False
+
+            Using reader = New XmlTextReader(mzidFilePathLocal)
+                Do While reader.Read()
+
+                    Select Case reader.NodeType
+                        Case XmlNodeType.Element
+                            If reader.Name = "SpectraData" Then
+                                ' The location attribute of the SpectraData element has the input file name
+                                If reader.MoveToAttribute("location") Then
+                                    Dim spectraDataFileName = Path.GetFileName(reader.Value)
+                                    Const DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION
+                                    Const DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION & clsAnalysisResources.DOT_GZ_EXTENSION
+
+                                    If spectraDataFileName.EndsWith(DOT_MZML, StringComparison.InvariantCultureIgnoreCase) OrElse
+                                       spectraDataFileName.EndsWith(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase) Then
+                                        searchedUsedMzML = True
+                                    End If
+
+                                    spectraLocationFound = True
+                                    Exit Do
+                                End If
+                            End If
+                    End Select
+
+                Loop
+            End Using
+
+            If deleteLocalFile Then
+                Thread.Sleep(200)
+                File.Delete(mzidFilePathLocal)
+            End If
+
+            If Not spectraLocationFound Then
+                OnErrorEvent(".mzID file did not have node SpectraData with attribute location: " & Path.GetFileName(mzidFilePathLocal))
+                Return False
+            End If
+
+            Return searchedUsedMzML
 
         Catch ex As Exception
-            OnErrorEvent("Exception renaming PHRP file " & sourceFilename & " for job " & intJob &
-                         " (data package has multiple jobs for the same dataset)", ex)
+            OnErrorEvent("Exception examining the mzid file To determine whether MSGF+ searched a .mzML file", ex)
             Return False
         End Try
 
-        Return True
+    End Function
+
+    Private Function RenameDuplicatePHRPFile(
+      sourceFolderPath As String,
+      sourceFilename As String,
+      targetFolderPath As String,
+      strPrefixToAdd As String,
+      intJob As Integer,
+      <Out()> newFilePath As String) As Boolean
+
+        Try
+            Dim fiFileToRename = New FileInfo(Path.Combine(sourceFolderPath, sourceFilename))
+            newFilePath = Path.Combine(targetFolderPath, strPrefixToAdd & fiFileToRename.Name)
+
+            Thread.Sleep(100)
+            fiFileToRename.MoveTo(newFilePath)
+
+            mAnalysisResources.AddResultFileToSkip(Path.GetFileName(newFilePath))
+            Return True
+
+        Catch ex As Exception
+            OnErrorEvent("Exception renaming PHRP file " & sourceFilename & " For job " & intJob &
+                         " (data package has multiple jobs For the same dataset)", ex)
+            newFilePath = String.Empty
+            Return False
+        End Try
 
     End Function
 
@@ -186,7 +476,6 @@ Public Class clsDataPackageFileHandler
         ' This dictionary tracks the datasets associated with this aggregation job's data package
         Dim dctDataPackageDatasets As Dictionary(Of Integer, clsDataPackageDatasetInfo) = Nothing
 
-        Dim datasetName = mAnalysisResources.DatasetName
         Dim debugLevel = mAnalysisResources.DebugLevel
         Dim workingDir = mAnalysisResources.WorkDir
 
@@ -239,8 +528,11 @@ Public Class clsDataPackageFileHandler
 
                 If Not mAnalysisResources.OverrideCurrentDatasetAndJobInfo(dataPkgJob) Then
                     ' Error message has already been logged
+                    mAnalysisResources.RestoreCachedDataAndJobInfo()
                     Return False
                 End If
+
+                Dim datasetName = mAnalysisResources.DatasetName
 
                 If dataPkgJob.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
                     Dim msg = "PeptideHit ResultType not recognized for job " & dataPkgJob.Job & ": " & dataPkgJob.ResultType.ToString()
@@ -250,7 +542,7 @@ Public Class clsDataPackageFileHandler
 
                     ' Keys in this list are filenames; values are True if the file is required and False if not required
                     Dim lstFilesToGet = New SortedList(Of String, Boolean)
-                    Dim LocalFolderPath As String
+                    Dim localFolderPath As String
                     Dim lstPendingFileRenames = New List(Of String)
                     Dim strSynopsisFileName As String
                     Dim strSynopsisMSGFFileName As String
@@ -279,17 +571,29 @@ Public Class clsDataPackageFileHandler
                         lstFilesToGet.Add(strSynopsisMSGFFileName, False)
                     End If
 
+                    ' Names of mzid result files that we should look for
+                    ' Examples include:
+                    '  DatasetName_msgfplus.mzid.gz
+                    '  DatasetName_msgfplus_Part5.mzid.gz
+                    '  DatasetName_msgfplus.zip
+                    Dim candidateMzIdFiles = New SortedSet(Of String)(StringComparer.InvariantCultureIgnoreCase)
+
                     If udtOptions.RetrieveMZidFiles AndAlso dataPkgJob.PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
                         ' Retrieve MSGF+ .mzID files
                         ' They will either be stored as .zip files or as .gz files
 
                         If dataPkgJob.NumberOfClonedSteps > 0 Then
                             For splitFastaResultID = 1 To dataPkgJob.NumberOfClonedSteps
-                                AddMzIdFilesToFind(datasetName, splitFastaResultID, zipFileCandidates, gzipFileCandidates, lstFilesToGet)
+                                GetMzIdFilesToFind(datasetName, splitFastaResultID, zipFileCandidates, gzipFileCandidates)
                             Next
                         Else
-                            AddMzIdFilesToFind(datasetName, 0, zipFileCandidates, gzipFileCandidates, lstFilesToGet)
+                            GetMzIdFilesToFind(datasetName, 0, zipFileCandidates, gzipFileCandidates)
                         End If
+
+                        For Each candidateFile In zipFileCandidates.Union(gzipFileCandidates)
+                            candidateMzIdFiles.Add(candidateFile)
+                            lstFilesToGet.Add(candidateFile, False)
+                        Next
 
                     End If
 
@@ -306,21 +610,21 @@ Public Class clsDataPackageFileHandler
                     If Not udtOptions.CreateJobPathFiles AndAlso File.Exists(Path.Combine(workingDir, strSynopsisFileName)) Then
                         blnPrefixRequired = True
 
-                        LocalFolderPath = Path.Combine(workingDir, "FileRename")
-                        If Not Directory.Exists(LocalFolderPath) Then
-                            Directory.CreateDirectory(LocalFolderPath)
+                        localFolderPath = Path.Combine(workingDir, "FileRename")
+                        If Not Directory.Exists(localFolderPath) Then
+                            Directory.CreateDirectory(localFolderPath)
                         End If
 
                     Else
                         blnPrefixRequired = False
-                        LocalFolderPath = String.Copy(workingDir)
+                        localFolderPath = String.Copy(workingDir)
                     End If
 
-                    Dim swJobInfoFile As StreamWriter = Nothing
-                    If udtOptions.CreateJobPathFiles Then
-                        Dim strJobInfoFilePath As String = GetJobInfoFilePath(dataPkgJob.Job)
-                        swJobInfoFile = New StreamWriter(New FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
-                    End If
+                    ' This list tracks files that have been found
+                    ' If udtOptions.CreateJobPathFiles is true, it has the remote file paths
+                    ' Otherwise, the file has been copied locally and it has local file paths
+                    ' Note that files might need to be renamed; that's tracked via lstPendingFileRenames
+                    Dim lstFoundFiles = New List(Of String)
 
                     For Each sourceFile In lstFilesToGet
 
@@ -351,9 +655,9 @@ Public Class clsDataPackageFileHandler
                             Dim alternateFileNamelternateFileName As String = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt")
 
                             If File.Exists(sourceFilePath) Then
-                                swJobInfoFile.WriteLine(sourceFilePath)
+                                lstFoundFiles.Add(sourceFilePath)
                             ElseIf File.Exists(alternateFileNamelternateFileName) Then
-                                swJobInfoFile.WriteLine(alternateFileNamelternateFileName)
+                                lstFoundFiles.Add(alternateFileNamelternateFileName)
                             Else
                                 If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
                                     Dim warningMessage = "Required PHRP file not found: " & sourceFilename
@@ -362,17 +666,18 @@ Public Class clsDataPackageFileHandler
                                     End If
                                     mAnalysisResources.UpdateStatusMessage(warningMessage)
                                     OnWarningEvent("Required PHRP file not found: " & sourceFilePath)
+                                    mAnalysisResources.RestoreCachedDataAndJobInfo()
                                     Return False
                                 End If
                             End If
 
                         Else
                             ' Note for files in MyEMSL, this call will simply add the file to the download queue; use ProcessMyEMSLDownloadQueue() to retrieve the file
-                            blnFileCopied = mAnalysisResources.CopyFileToWorkDir(sourceFilename, sourceFolderPath, LocalFolderPath, eLogMsgTypeIfNotFound)
+                            blnFileCopied = mAnalysisResources.CopyFileToWorkDir(sourceFilename, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound)
 
                             If Not blnFileCopied Then
                                 Dim alternateFileName As String = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt")
-                                blnFileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceFolderPath, LocalFolderPath, eLogMsgTypeIfNotFound)
+                                blnFileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound)
                                 If blnFileCopied Then
                                     sourceFilename = alternateFileName
                                 End If
@@ -382,11 +687,13 @@ Public Class clsDataPackageFileHandler
 
                                 If eLogMsgTypeIfNotFound <> clsLogTools.LogLevels.DEBUG Then
                                     OnErrorEvent("CopyFileToWorkDir returned False for " + sourceFilename + " using folder " + sourceFolderPath)
+                                    mAnalysisResources.RestoreCachedDataAndJobInfo()
                                     Return False
                                 End If
 
                             Else
                                 OnStatusEvent("Copied " + sourceFilename + " from folder " + sourceFolderPath)
+                                lstFoundFiles.Add(Path.Combine(localFolderPath, sourceFilename))
 
                                 If blnPrefixRequired Then
                                     lstPendingFileRenames.Add(sourceFilename)
@@ -400,73 +707,159 @@ Public Class clsDataPackageFileHandler
 
                     Dim success = mAnalysisResources.ProcessMyEMSLDownloadQueue()
                     If Not success Then
+                        mAnalysisResources.RestoreCachedDataAndJobInfo()
                         Return False
                     End If
 
                     ' Now perform any required file renames
                     For Each sourceFilename In lstPendingFileRenames
-                        If Not RenameDuplicatePHRPFile(LocalFolderPath, sourceFilename, workingDir, "Job" & dataPkgJob.Job.ToString() & "_", dataPkgJob.Job) Then
+                        Dim newFilePath As String = String.Empty
+                        If RenameDuplicatePHRPFile(localFolderPath, sourceFilename,
+                                                   workingDir, "Job" & dataPkgJob.Job.ToString() & "_",
+                                                   dataPkgJob.Job, newFilePath) Then
+                            ' Rename succeeded
+                            lstFoundFiles.Remove(Path.Combine(localFolderPath, sourceFilename))
+                            lstFoundFiles.Add(newFilePath)
+                        Else
+                            ' Rename failed
+                            mAnalysisResources.RestoreCachedDataAndJobInfo()
                             Return False
                         End If
                     Next
 
                     If udtOptions.RetrieveDTAFiles Then
-                        If udtOptions.CreateJobPathFiles Then
-                            ' Find the CDTA file
-                            Dim strErrorMessage As String = String.Empty
-                            Dim sourceConcatenatedDTAFilePath As String = mAnalysisResources.FindCDTAFile(strErrorMessage)
+                        ' Find the _dta.txt or .mzML.gz file that was used for a MSGF+ search
 
-                            If String.IsNullOrEmpty(sourceConcatenatedDTAFilePath) Then
-                                OnErrorEvent(strErrorMessage)
-                                Return False
-                            Else
-                                swJobInfoFile.WriteLine(sourceConcatenatedDTAFilePath)
+                        Dim mzIDFileToInspect = String.Empty
+
+                        ' Need to examine the .mzid file to determine which file was used for the search
+                        For Each foundFile In lstFoundFiles
+                            If candidateMzIdFiles.Contains(Path.GetFileName(foundFile)) Then
+                                mzIDFileToInspect = foundFile
+                                Exit For
+                            End If
+                        Next
+
+                        Dim searchUsedmzML = False
+                        If Not String.IsNullOrEmpty(mzIDFileToInspect) Then
+                            searchUsedmzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, ionicZipTools)
+                        End If
+
+                        If searchUsedmzML Then
+                            Dim stepToolFilter = String.Empty
+                            If dataPkgJob.Tool.ToLower().StartsWith("msgfplus") Then
+                                stepToolFilter = "MSGFPlus"
+                            End If
+
+                            Dim mzMLFilePathRemote As String = FindMzMLForJob(dataPkgJob.Dataset, dataPkgJob.Job, stepToolFilter, workingDir)
+
+                            If Not String.IsNullOrEmpty(mzMLFilePathRemote) Then
+                                If udtOptions.CreateJobPathFiles And Not mzMLFilePathRemote.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG) Then
+                                    If Not lstFoundFiles.Contains(mzMLFilePathRemote) Then
+                                        lstFoundFiles.Add(mzMLFilePathRemote)
+                                    End If
+                                Else
+                                    ' Note for files in MyEMSL, this call will simply add the file to the download queue 
+                                    ' Use ProcessMyEMSLDownloadQueue() to retrieve the file
+                                    Dim sourceMzMLFile = New FileInfo(mzMLFilePathRemote)
+                                    Dim targetMzMLFile = New FileInfo(Path.Combine(localFolderPath, sourceMzMLFile.Name))
+
+                                    ' Only copy the .mzML.gz file if it does not yet exist locally
+                                    If Not targetMzMLFile.Exists Then
+                                        eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR
+
+                                        blnFileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName,
+                                                                                             localFolderPath, eLogMsgTypeIfNotFound)
+
+                                        If blnFileCopied Then
+                                            OnStatusEvent("Copied " + sourceMzMLFile.Name + " from folder " + sourceMzMLFile.DirectoryName)
+                                            lstFoundFiles.Add(Path.Combine(localFolderPath, sourceMzMLFile.Name))
+
+                                        End If
+                                    End If
+
+                                End If
                             End If
                         Else
-                            If Not mAnalysisResources.RetrieveDtaFiles() Then
-                                'Errors were reported in function call, so just return
-                                Return False
+
+                            ' Find the CDTA file
+                            If udtOptions.CreateJobPathFiles Then
+
+                                Dim strErrorMessage As String = String.Empty
+                                Dim sourceConcatenatedDTAFilePath As String = mAnalysisResources.FindCDTAFile(strErrorMessage)
+
+                                If String.IsNullOrEmpty(sourceConcatenatedDTAFilePath) Then
+                                    OnErrorEvent(strErrorMessage)
+                                    mAnalysisResources.RestoreCachedDataAndJobInfo()
+                                    Return False
+                                Else
+                                    lstFoundFiles.Add(sourceConcatenatedDTAFilePath)
+                                End If
+                            Else
+                                If Not mAnalysisResources.RetrieveDtaFiles() Then
+                                    'Errors were reported in function call, so just return
+                                    mAnalysisResources.RestoreCachedDataAndJobInfo()
+                                    Return False
+                                Else
+                                    ' The retrieved file is probably named Dataset_dta.zip
+                                    ' We'll add it to lstFoundFiles, but the exact name is not critical
+                                    lstFoundFiles.Add(Path.Combine(workingDir, datasetName + "_dta.zip"))
+                                End If
                             End If
                         End If
+
                     End If
 
                     If udtOptions.CreateJobPathFiles Then
-                        swJobInfoFile.Close()
+                        Dim strJobInfoFilePath As String = GetJobInfoFilePath(dataPkgJob.Job)
+                        Using swJobInfoFile = New StreamWriter(New FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
+                            For Each filePath In lstFoundFiles
+                                swJobInfoFile.WriteLine(filePath)
+                            Next
+                        End Using
                     Else
                         ' Unzip any mzid files that were found
                         If zipFileCandidates.Count > 0 OrElse gzipFileCandidates.Count > 0 Then
 
-                            Dim matchFound = False
+                            Dim unzippedFilePath = String.Empty
+
                             For Each gzipCandidate In gzipFileCandidates
                                 Dim fiFileToUnzip = New FileInfo(Path.Combine(workingDir, gzipCandidate))
                                 If fiFileToUnzip.Exists Then
                                     ionicZipTools.GUnzipFile(fiFileToUnzip.FullName)
-                                    matchFound = True
+                                    unzippedFilePath = MostRecentUnzippedFile(ionicZipTools)
                                     Exit For
                                 End If
                             Next
 
-                            If Not matchFound Then
+                            If String.IsNullOrEmpty(unzippedFilePath) Then
                                 For Each zipCandidate In zipFileCandidates
                                     Dim fiFileToUnzip = New FileInfo(Path.Combine(workingDir, zipCandidate))
                                     If fiFileToUnzip.Exists Then
                                         ionicZipTools.UnzipFile(fiFileToUnzip.FullName)
-                                        matchFound = True
+                                        unzippedFilePath = MostRecentUnzippedFile(ionicZipTools)
                                         Exit For
                                     End If
                                 Next
                             End If
 
-                            If Not matchFound Then
+                            If String.IsNullOrEmpty(unzippedFilePath) Then
                                 OnErrorEvent("Could not find either the _msgfplus.zip file or the _msgfplus.mzid.gz file for dataset")
+                                mAnalysisResources.RestoreCachedDataAndJobInfo()
                                 Return False
                             End If
 
                             If blnPrefixRequired Then
-                                If Not RenameDuplicatePHRPFile(workingDir, datasetName & "_msgfplus.mzid", workingDir, "Job" & dataPkgJob.Job.ToString() & "_", dataPkgJob.Job) Then
+                                If RenameDuplicatePHRPFile(workingDir, datasetName & "_msgfplus.mzid",
+                                                               workingDir, "Job" & dataPkgJob.Job.ToString() & "_",
+                                                               dataPkgJob.Job, unzippedFilePath) Then
+                                Else
+                                    mAnalysisResources.RestoreCachedDataAndJobInfo()
                                     Return False
                                 End If
                             End If
+
+                            lstFoundFiles.Add(unzippedFilePath)
 
                         End If
 
@@ -475,6 +868,7 @@ Public Class clsDataPackageFileHandler
                             Dim fiFileToUnzip = New FileInfo(Path.Combine(workingDir, zippedPepXmlFile))
                             If fiFileToUnzip.Exists Then
                                 ionicZipTools.UnzipFile(fiFileToUnzip.FullName)
+                                lstFoundFiles.Add(MostRecentUnzippedFile(ionicZipTools))
                             End If
                         End If
                     End If
@@ -483,7 +877,9 @@ Public Class clsDataPackageFileHandler
 
                 ' Find the instrument data file or folder if a new dataset
                 If Not dctRawFileRetrievalCommands.ContainsKey(dataPkgJob.DatasetID) Then
-                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands,
+                                                             dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                        mAnalysisResources.RestoreCachedDataAndJobInfo()
                         Return False
                     End If
                 End If
@@ -501,7 +897,9 @@ Public Class clsDataPackageFileHandler
 
                 ' Find the instrument data file or folder if a new dataset
                 If Not dctRawFileRetrievalCommands.ContainsKey(dataPkgJob.DatasetID) Then
-                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands,
+                                                             dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                        mAnalysisResources.RestoreCachedDataAndJobInfo()
                         Return False
                     End If
                 End If
@@ -523,22 +921,25 @@ Public Class clsDataPackageFileHandler
 
                     If Not mAnalysisResources.OverrideCurrentDatasetAndJobInfo(dataPkgJob) Then
                         ' Error message has already been logged
+                        mAnalysisResources.RestoreCachedDataAndJobInfo()
                         Return False
                     End If
 
-                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                    If Not RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands,
+                                                             dctInstrumentDataToRetrieve, dctDatasetRawFilePaths) Then
+                        mAnalysisResources.RestoreCachedDataAndJobInfo()
                         Return False
                     End If
                 End If
             Next
 
+            ' Restore the dataset and job info for this aggregation job
+            mAnalysisResources.RestoreCachedDataAndJobInfo()
+
             If dctRawFileRetrievalCommands.Count = 0 Then
                 OnErrorEvent("Did not find any datasets associated with this job's data package ID (" & mDataPackageInfoLoader.DataPackageID & ")")
                 Return False
             End If
-
-            ' Restore the dataset and job info for this aggregation job
-            mAnalysisResources.RestoreCachedDataAndJobInfo()
 
             If dctRawFileRetrievalCommands.Count > 0 Then
                 ' Create a batch file with commands for retrieve the dataset files
@@ -571,6 +972,7 @@ Public Class clsDataPackageFileHandler
         Return blnSuccess
 
     End Function
+
 
     ''' <summary>
     ''' Look for the .mzXML and/or .raw file
@@ -702,7 +1104,7 @@ Public Class clsDataPackageFileHandler
                         Dim msXmlFileExtension As String
 
                         If strMzXMLFilePath.ToLower().EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION) Then
-                            msXmlFileExtension = Path.GetExtension(strMzXMLFilePath.Substring(0, strMzXMLFilePath.Length - 3))
+                            msXmlFileExtension = Path.GetExtension(strMzXMLFilePath.Substring(0, strMzXMLFilePath.Length - clsAnalysisResources.DOT_GZ_EXTENSION.Length))
                         Else
                             msXmlFileExtension = Path.GetExtension(strMzXMLFilePath)
                         End If
@@ -755,4 +1157,20 @@ Public Class clsDataPackageFileHandler
 
     End Function
 
+#Region "Event Handlers"
+
+    Private Sub ProcedureExecutor_DebugEvent(message As String)
+        OnStatusEvent(message)
+
+    End Sub
+
+    Private Sub ProcedureExecutor_DBErrorEvent(message As String)
+        If message.Contains("permission was denied") Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message)
+        End If
+        OnErrorEvent(message)
+    End Sub
+
+#End Region
 End Class
+

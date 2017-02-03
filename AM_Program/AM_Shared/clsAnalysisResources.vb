@@ -249,6 +249,12 @@ Public MustInherit Class clsAnalysisResources
 
     Public Property MyEMSLSearchDisabled() As Boolean
 
+    Public ReadOnly Property MyEMSLUtilities As clsMyEMSLUtilities
+        Get
+            Return m_MyEMSLUtilities
+        End Get
+    End Property
+
     ' Explanation of what happened to last operation this class performed
     Public ReadOnly Property Message() As String Implements IAnalysisResources.Message
         Get
