@@ -699,7 +699,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="targetFolderPath">Destination directory for file copy</param>
     ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+    ''' <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
     Public Function CopyFileToWorkDir(
       sourceFileName As String,
       sourceFolderPath As String,
@@ -764,7 +764,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="createStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
     ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
     ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+    ''' <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
     Protected Function CopyFileToWorkDir(
       sourceFileName As String,
       sourceFolderPath As String,
@@ -1188,25 +1188,25 @@ Public MustInherit Class clsAnalysisResources
 
     ''' <summary>
     ''' Creates a file named DestFilePath but with "_StoragePathInfo.txt" appended to the name
-    ''' The file's contents is the path given by SourceFilePath
+    ''' The file's contents is the path given by sourceFilePath
     ''' </summary>
-    ''' <param name="SourceFilePath">The path to write to the StoragePathInfo file</param>
+    ''' <param name="sourceFilePath">The path to write to the StoragePathInfo file</param>
     ''' <param name="DestFilePath">The path where the file would have been copied to</param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Protected Function CreateStoragePathInfoFile(SourceFilePath As String, DestFilePath As String) As Boolean
+    Protected Function CreateStoragePathInfoFile(sourceFilePath As String, DestFilePath As String) As Boolean
 
         Dim strInfoFilePath As String = String.Empty
 
         Try
-            If SourceFilePath Is Nothing Or DestFilePath Is Nothing Then
+            If sourceFilePath Is Nothing Or DestFilePath Is Nothing Then
                 Return False
             End If
 
             strInfoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX
 
             Using swOutFile = New StreamWriter(New FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                swOutFile.WriteLine(SourceFilePath)
+                swOutFile.WriteLine(sourceFilePath)
             End Using
 
         Catch ex As Exception
@@ -2020,7 +2020,7 @@ Public MustInherit Class clsAnalysisResources
 
         Dim diServerFolder = New DirectoryInfo(serverPath)
 
-        ' Get a list of the subfolders in the dataset folder		
+        ' Get a list of the subfolders in the dataset folder
         ' Go through the folders looking for a file with a ".mgf" extension
         For Each diSubFolder As DirectoryInfo In diServerFolder.GetDirectories()
 
@@ -2036,7 +2036,7 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
-    ''' Looks for the .mzXML file for this dataset
+    ''' Looks for the newest .mzXML file for this dataset
     ''' </summary>
     ''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
     ''' <returns>Full path to the file, if found; empty string if no match</returns>
@@ -2131,7 +2131,7 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
-    ''' Looks for the mzXML or mzML file for this dataset
+    ''' Looks for the newest mzXML or mzML file for this dataset
     ''' </summary>
     ''' <param name="msXmlType">File type to find (mzXML or mzML)</param>
     ''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
@@ -2283,7 +2283,9 @@ Public MustInherit Class clsAnalysisResources
 
         Const folderNameToFind = ""
         Dim validFolderFound As Boolean
-        Return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder, validFolderFound:=validFolderFound, assumeUnpurged:=assumeUnpurged)
+        Return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True,
+                               retrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder, validFolderFound:=validFolderFound,
+                               assumeUnpurged:=assumeUnpurged)
 
     End Function
 
@@ -2389,7 +2391,7 @@ Public MustInherit Class clsAnalysisResources
     ''' <param name="assumeUnpurged">When true, this function returns the path to the dataset folder on the storage server</param>
     ''' <returns>Path to the most appropriate dataset folder</returns>
     ''' <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
-    Protected Function FindValidFolder(
+    Public Function FindValidFolder(
       dsName As String,
       fileNameToFind As String,
       folderNameToFind As String,
@@ -2461,11 +2463,14 @@ Public MustInherit Class clsAnalysisResources
 
                     Else
 
-                        blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound And pathToCheck.Item2)
+                        blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts,
+                                                            logFolderNotFound And pathToCheck.Item2)
+
                         If Not blnValidFolder AndAlso Not String.IsNullOrEmpty(fileNameToFind) AndAlso Not String.IsNullOrEmpty(folderNameToFind) Then
                             ' Look for a subfolder named folderNameToFind that contains file fileNameToFind
                             Dim pathToCheckAlt = Path.Combine(pathToCheck.Item1, folderNameToFind)
-                            blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, String.Empty, maxAttempts, logFolderNotFound And pathToCheck.Item2)
+                            blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, String.Empty, maxAttempts,
+                                                                logFolderNotFound And pathToCheck.Item2)
 
                             If blnValidFolder Then
                                 pathToCheck = New Tuple(Of String, Boolean)(pathToCheckAlt, pathToCheck.Item2)
@@ -2536,13 +2541,18 @@ Public MustInherit Class clsAnalysisResources
     ''' Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
     ''' </summary>
     ''' <param name="dataset">Dataset name</param>
-    ''' <param name="FileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
+    ''' <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
     ''' <param name="subFolderName">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-    ''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
-    ''' <param name="Recurse">True to look for FileNameToFind in all subfolders of a dataset; false to only look in the primary dataset folder</param>
+    ''' <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+    ''' <param name="recurse">True to look for fileNameToFind in all subfolders of a dataset; false to only look in the primary dataset folder</param>
     ''' <returns>Path to the most appropriate dataset folder</returns>
     ''' <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
-    Private Function FindValidFolderMyEMSL(dataset As String, fileNameToFind As String, subFolderName As String, logFolderNotFound As Boolean, recurse As Boolean) As Boolean
+    Private Function FindValidFolderMyEMSL(
+      dataset As String,
+      fileNameToFind As String,
+      subFolderName As String,
+      logFolderNotFound As Boolean,
+      recurse As Boolean) As Boolean
 
         If String.IsNullOrEmpty(fileNameToFind) Then fileNameToFind = "*"
 
@@ -2586,22 +2596,22 @@ Public MustInherit Class clsAnalysisResources
     ''' Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
     ''' </summary>
     ''' <param name="PathToCheck">Path to examine</param>
-    ''' <param name="FileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="FolderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+    ''' <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
+    ''' <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
     ''' <param name="maxAttempts">Maximum number of attempts</param>
-    ''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
+    ''' <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
     ''' <returns>Path to the most appropriate dataset folder</returns>
     ''' <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
     Private Function FindValidFolderUNC(
-      PathToCheck As String,
-      FileNameToFind As String,
-      FolderNameToFind As String,
+      pathToCheck As String,
+      fileNameToFind As String,
+      folderNameToFind As String,
       maxAttempts As Integer,
-      LogFolderNotFound As Boolean) As Boolean
+      logFolderNotFound As Boolean) As Boolean
 
         ' First check whether this folder exists
         ' Using a 1 second holdoff between retries
-        If Not FolderExistsWithRetry(PathToCheck, 1, maxAttempts, LogFolderNotFound) Then
+        If Not FolderExistsWithRetry(pathToCheck, 1, maxAttempts, logFolderNotFound) Then
             Return False
         End If
 
@@ -2609,65 +2619,68 @@ Public MustInherit Class clsAnalysisResources
         Dim blnValidFolder = True
 
         If m_DebugLevel > 3 Then
-            LogDebugMessage("FindValidFolderUNC, Folder found " + PathToCheck)
+            LogDebugMessage("FindValidFolderUNC, Folder found " + pathToCheck)
         End If
 
-        ' Optionally look for FileNameToFind
-        If Not String.IsNullOrEmpty(FileNameToFind) Then
+        ' Optionally look for fileNameToFind
+        If Not String.IsNullOrEmpty(fileNameToFind) Then
 
-            If FileNameToFind.Contains("*") Then
+            If fileNameToFind.Contains("*") Then
                 If m_DebugLevel > 3 Then
-                    LogDebugMessage("FindValidFolderUNC, Looking for files matching " + FileNameToFind)
+                    LogDebugMessage("FindValidFolderUNC, Looking for files matching " + fileNameToFind)
                 End If
 
                 ' Wildcard in the name
-                ' Look for any files matching FileNameToFind
-                Dim objFolderInfo = New DirectoryInfo(PathToCheck)
+                ' Look for any files matching fileNameToFind
+                Dim objFolderInfo = New DirectoryInfo(pathToCheck)
 
-                If objFolderInfo.GetFiles(FileNameToFind).Length = 0 Then
+                ' Do not recurse here
+                ' If the dataset folder does not contain a target file, and if folderNameToFind is defined, 
+                ' FindValidFolder will append folderNameToFind to the dataset folder path and call this method again
+                If objFolderInfo.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length = 0 Then
                     blnValidFolder = False
                 End If
             Else
                 If m_DebugLevel > 3 Then
-                    LogDebugMessage("FindValidFolderUNC, Looking for file named " + FileNameToFind)
+                    LogDebugMessage("FindValidFolderUNC, Looking for file named " + fileNameToFind)
                 End If
 
-                ' Look for file FileNameToFind in this folder
+                ' Look for file fileNameToFind in this folder
                 ' Note: Using a 1 second holdoff between retries
-                Dim folderFound = FileExistsWithRetry(
-                    Path.Combine(PathToCheck, FileNameToFind),
-                    retryHoldoffSeconds:=1,
-                    eLogMsgTypeIfNotFound:=clsLogTools.LogLevels.WARN,
-                    maxAttempts:=maxAttempts)
+                Dim fileFound = FileExistsWithRetry(
+                        Path.Combine(pathToCheck, fileNameToFind),
+                        retryHoldoffSeconds:=1,
+                        eLogMsgTypeIfNotFound:=clsLogTools.LogLevels.WARN,
+                        maxAttempts:=maxAttempts)
 
-                If Not folderFound Then
+                If Not fileFound Then
                     blnValidFolder = False
                 End If
             End If
         End If
 
-        ' Optionally look for FolderNameToFind
-        If blnValidFolder AndAlso Not String.IsNullOrEmpty(FolderNameToFind) Then
-            If FolderNameToFind.Contains("*") Then
+        ' Optionally look for folderNameToFind
+        If blnValidFolder AndAlso Not String.IsNullOrEmpty(folderNameToFind) Then
+            If folderNameToFind.Contains("*") Then
                 If m_DebugLevel > 3 Then
-                    LogDebugMessage("FindValidFolderUNC, Looking for folders matching " + FolderNameToFind)
+                    LogDebugMessage("FindValidFolderUNC, Looking for folders matching " + folderNameToFind)
                 End If
 
                 ' Wildcard in the name
-                ' Look for any folders matching FolderNameToFind
-                Dim objFolderInfo = New DirectoryInfo(PathToCheck)
+                ' Look for any folders matching folderNameToFind
+                Dim objFolderInfo = New DirectoryInfo(pathToCheck)
 
-                If objFolderInfo.GetDirectories(FolderNameToFind).Length = 0 Then
+                If objFolderInfo.GetDirectories(folderNameToFind).Length = 0 Then
                     blnValidFolder = False
                 End If
             Else
                 If m_DebugLevel > 3 Then
-                    LogDebugMessage("FindValidFolderUNC, Looking for folder named " + FolderNameToFind)
+                    LogDebugMessage("FindValidFolderUNC, Looking for folder named " + folderNameToFind)
                 End If
 
-                ' Look for folder FolderNameToFind in this folder
+                ' Look for folder folderNameToFind in this folder
                 ' Note: Using a 1 second holdoff between retries
-                If Not FolderExistsWithRetry(Path.Combine(PathToCheck, FolderNameToFind), 1, maxAttempts, LogFolderNotFound) Then
+                If Not FolderExistsWithRetry(Path.Combine(pathToCheck, folderNameToFind), 1, maxAttempts, logFolderNotFound) Then
                     blnValidFolder = False
                 End If
             End If
@@ -2682,9 +2695,9 @@ Public MustInherit Class clsAnalysisResources
     ' ''' <summary>
     ' ''' Test for folder existence with a retry loop in case of temporary glitch
     ' ''' </summary>
-    ' ''' <param name="FolderName">Folder name to look for</param>	
+    ' ''' <param name="FolderName">Folder name to look for</param>
     'Private Function FolderExistsWithRetry(FolderName As String) As Boolean
-    '	Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS, DEFAULT_MAX_RETRY_COUNT, True)
+    '    Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS, DEFAULT_MAX_RETRY_COUNT, True)
     'End Function
 
     ' ''' <summary>
@@ -2693,7 +2706,7 @@ Public MustInherit Class clsAnalysisResources
     ' ''' <param name="FolderName">Folder name to look for</param>
     ' ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
     'Private Function FolderExistsWithRetry(FolderName As String, RetryHoldoffSeconds As Integer) As Boolean
-    '	Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT, True)
+    '    Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT, True)
     'End Function
 
     ' ''' <summary>
@@ -2703,7 +2716,7 @@ Public MustInherit Class clsAnalysisResources
     ' ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
     ' ''' <param name="maxAttempts">Maximum number of attempts</param>
     'Private Function FolderExistsWithRetry(FolderName As String, RetryHoldoffSeconds As Integer, maxAttempts As Integer) As Boolean
-    '	Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, maxAttempts, True)
+    '    Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, maxAttempts, True)
     'End Function
 
 
@@ -5623,15 +5636,15 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
-    ''' Looks for this dataset's mzXML file
-    ''' Looks in folders with names like MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus a few others)
-    ''' Also examines \\Proto-11\MSXML_Cache
-    ''' If the .mzXML file cannot be found, then returns False
+    ''' Looks for the newest mzXML file for this dataset
+    ''' First looks for the newest file in \\Proto-11\MSXML_Cache
+    ''' If not found, looks in the dataset folder, looking for subfolders 
+    ''' MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
     ''' </summary>
     ''' <param name="CreateStoragePathInfoOnly"></param>
-    ''' <param name="SourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
+    ''' <param name="sourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
     ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    ''' <remarks>The retrieved file might be gzipped</remarks>
+    ''' <remarks>The retrieved file might be gzipped.  For MzML files, use RetrieveMzMLFile</remarks>
     Protected Function RetrieveMZXmlFile(createStoragePathInfoOnly As Boolean, <Out()> ByRef sourceFilePath As String) As Boolean
 
         Dim hashcheckFilePath As String = String.Empty
@@ -5646,12 +5659,12 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
-    ''' Retrieves this dataset's mzXML file
+    ''' Retrieves this dataset's mzXML or mzML file
     ''' </summary>
     ''' <param name="CreateStoragePathInfoOnly"></param>
-    ''' <param name="SourceFilePath">Full path to the file that should be retrieved</param>
+    ''' <param name="sourceFilePath">Full path to the file that should be retrieved</param>
     ''' <param name="HashcheckFilePath"></param>
-    ''' <returns></returns>
+    ''' <returns>True if success, false if not retrieved or a hash error</returns>
     ''' <remarks></remarks>
     Public Function RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly As Boolean, sourceFilePath As String, hashcheckFilePath As String) As Boolean
 
@@ -5676,7 +5689,7 @@ Public MustInherit Class clsAnalysisResources
         End If
 
         If m_DebugLevel >= 1 Then
-            LogMessage("MzXML file not found; will need to generate it: " + fiSourceFile.Name)
+            LogMessage("MzXML (or MzML) file not found; will need to generate it: " + fiSourceFile.Name)
         End If
 
         Return False
@@ -5684,13 +5697,13 @@ Public MustInherit Class clsAnalysisResources
     End Function
 
     ''' <summary>
-    ''' Verify the hash value of a given .mzXML file
+    ''' Verify the hash value of a given .mzXML or .mzML file
     ''' </summary>
     ''' <param name="fiSourceFile"></param>
     ''' <param name="HashcheckFilePath"></param>
     ''' <param name="CreateStoragePathInfoOnly"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
+    ''' <returns>True if the hash of the file matches the expected hash, otherwise false</returns>
+    ''' <remarks>If createStoragePathInfoOnly is true and the source file matches the target file, the hash is not recomputed</remarks>
     Protected Function RetrieveMzXMLFileVerifyHash(fiSourceFile As FileInfo, HashcheckFilePath As String, createStoragePathInfoOnly As Boolean) As Boolean
 
         Dim strTargetFilePath As String
@@ -5710,7 +5723,7 @@ Public MustInherit Class clsAnalysisResources
             Return True
         End If
 
-        LogMessage("MzXML file validation error in RetrieveMzXMLFileVerifyHash: " & strErrorMessage, 0, True)
+        LogMessage("MzXML/MzML file validation error in RetrieveMzXMLFileVerifyHash: " & strErrorMessage, 0, True)
 
         Try
             If createStoragePathInfoOnly Then
@@ -5729,7 +5742,7 @@ Public MustInherit Class clsAnalysisResources
         End Try
 
         Try
-            ' Delete the remote mzXML file only if we computed the hash and we had a hash mismatch
+            ' Delete the remote mzXML or mzML file only if we computed the hash and we had a hash mismatch
             If blnComputeHash Then
                 fiSourceFile.Delete()
             End If
@@ -5888,7 +5901,7 @@ Public MustInherit Class clsAnalysisResources
                         m_message = "Dataset folder does not contain any MASIC results folders: " + diFolderInfo.FullName
                     Else
                         ' MASIC Results Folder Found
-                        ' If more than one folder, then use the folder with the newest _ScanStats.txt file						
+                        ' If more than one folder, then use the folder with the newest _ScanStats.txt file
                         Dim dtNewestScanStatsFileDate As DateTime
                         Dim strNewestScanStatsFilePath As String = String.Empty
 
@@ -6199,7 +6212,7 @@ Public MustInherit Class clsAnalysisResources
             Case eRawDataTypeConstants.ZippedSFolders           'FTICR data
                 blnSuccess = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts)
 
-            Case eRawDataTypeConstants.ThermoRawFile            'Finnigan ion trap/LTQ-FT data				
+            Case eRawDataTypeConstants.ThermoRawFile            'Finnigan ion trap/LTQ-FT data
                 blnSuccess = RetrieveDatasetFile(DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts)
 
             Case eRawDataTypeConstants.MicromassRawFolder           'Micromass QTOF data
@@ -6620,7 +6633,7 @@ Public MustInherit Class clsAnalysisResources
         Dim DSWorkFolder As String
         Dim UnZipper As clsIonicZipTools
 
-        Dim SourceFilePath As String
+        Dim sourceFilePath As String
         Dim TargetFolderPath As String
 
         Dim ZipFile As String
@@ -6707,9 +6720,9 @@ Public MustInherit Class clsAnalysisResources
                     TargetFolderPath = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
                     Directory.CreateDirectory(TargetFolderPath)
 
-                    SourceFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(ZipFile))
+                    sourceFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(ZipFile))
 
-                    If Not UnZipper.UnzipFile(SourceFilePath, TargetFolderPath) Then
+                    If Not UnZipper.UnzipFile(sourceFilePath, TargetFolderPath) Then
                         LogError("Error unzipping file " + ZipFile)
                         Return False
                     End If
@@ -6793,8 +6806,8 @@ Public MustInherit Class clsAnalysisResources
                 Return False
             End If
 
-            'Fasta file was successfully generated. Put the name of the generated fastafile in the
-            '	job data class for other methods to use
+            ' Fasta file was successfully generated. Put the name of the generated fastafile in the
+            ' job data class for other methods to use
             If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
                 LogError("Error adding parameter 'generatedFastaName' to m_jobParams")
                 Return False
@@ -6819,7 +6832,7 @@ Public MustInherit Class clsAnalysisResources
 
     ''' <summary>
     ''' Overrides base class version of the function to creates a Sequest params file compatible 
-    '''	with the Bioworks version on this System. Uses ParamFileGenerator dll provided by Ken Auberry
+    ''' with the Bioworks version on this System. Uses ParamFileGenerator dll provided by Ken Auberry
     ''' </summary>
     ''' <param name="paramFileName">Name of param file to be created</param>
     ''' <returns>True for success; False for failure</returns>
@@ -7016,24 +7029,23 @@ Public MustInherit Class clsAnalysisResources
     ''' <remarks>If the _dta.zip or _dta.txt file already exists in the working folder then will not re-copy it from the remote folder</remarks>
     Public Function RetrieveDtaFiles() As Boolean
 
-        Dim TargetZipFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.zip")
-        Dim TargetCDTAFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt")
+        Dim targetZipFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.zip")
+        Dim targetCDTAFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt")
 
-        If Not File.Exists(TargetCDTAFilePath) And Not File.Exists(TargetZipFilePath) Then
+        If Not File.Exists(targetCDTAFilePath) And Not File.Exists(targetZipFilePath) Then
 
-            Dim SourceFilePath As String
             Dim strErrorMessage As String = String.Empty
 
             ' Find the CDTA file
-            SourceFilePath = FindCDTAFile(strErrorMessage)
+            Dim sourceFilePath = FindCDTAFile(strErrorMessage)
 
-            If String.IsNullOrEmpty(SourceFilePath) Then
+            If String.IsNullOrEmpty(sourceFilePath) Then
                 LogError(strErrorMessage)
                 Return False
             End If
 
-            If SourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
-                m_MyEMSLUtilities.AddFileToDownloadQueue(SourceFilePath)
+            If sourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
+                m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath)
                 If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
                     If m_DebugLevel >= 1 Then
                         LogMessage("Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL")
@@ -7043,7 +7055,7 @@ Public MustInherit Class clsAnalysisResources
                 End If
             Else
 
-                Dim fiSourceFile = New FileInfo(SourceFilePath)
+                Dim fiSourceFile = New FileInfo(sourceFilePath)
 
                 ' Copy the file locally
                 If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
@@ -7061,16 +7073,16 @@ Public MustInherit Class clsAnalysisResources
 
         End If
 
-        If Not File.Exists(TargetCDTAFilePath) Then
+        If Not File.Exists(targetCDTAFilePath) Then
 
-            If Not File.Exists(TargetZipFilePath) Then
-                LogError(Path.GetFileName(TargetZipFilePath) & " not found in the working directory; cannot unzip in RetrieveDtaFiles")
+            If Not File.Exists(targetZipFilePath) Then
+                LogError(Path.GetFileName(targetZipFilePath) & " not found in the working directory; cannot unzip in RetrieveDtaFiles")
                 Return False
             End If
 
             ' Unzip concatenated DTA file
             LogMessage("Unzipping concatenated DTA file")
-            If UnzipFileStart(TargetZipFilePath, m_WorkingDir, "RetrieveDtaFiles", False) Then
+            If UnzipFileStart(targetZipFilePath, m_WorkingDir, "RetrieveDtaFiles", False) Then
                 If m_DebugLevel >= 1 Then
                     LogDebugMessage("Concatenated DTA file unzipped")
                 End If
@@ -7086,7 +7098,7 @@ Public MustInherit Class clsAnalysisResources
                 Thread.Sleep(125)
                 PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-                File.Delete(TargetZipFilePath)
+                File.Delete(targetZipFilePath)
             Catch ex As Exception
                 LogError("Error deleting the _DTA.zip file", ex)
             End Try

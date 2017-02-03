@@ -1,7 +1,7 @@
 ﻿Public Class clsResultFileContainer
 
     ''' <summary>
-    ''' Tracks the .mgf or _dta.txt file for the analysis job
+    ''' Tracks the .mgf or _dta.txt or .mzML file for the analysis job
     ''' </summary>
     ''' <value></value>
     ''' <returns></returns>

@@ -1512,15 +1512,13 @@ Public Class clsGlobal
 
             If blnComputeHash Then
                 ' Compute the hash of the file
-                Dim strActualHash As String
-                strActualHash = ComputeFileHashMD5(strDataFilePath)
+                Dim strActualHash = ComputeFileHashMD5(strDataFilePath)
 
                 If strActualHash <> strExpectedHash Then
                     strErrorMessage = "Hash mismatch: expecting " & strExpectedHash & " but computed " & strActualHash
                     Return False
                 End If
             End If
-
 
         Catch ex As Exception
             Console.WriteLine("Error in ValidateFileVsHashcheck: " & ex.Message)

@@ -2885,7 +2885,7 @@ Public Class clsMSGFDBUtils
             End If
 
             If Not oToolRunner.GZipFile(tmpFilePath, False) Then
-                OnErrorEvent("Error zipping output files: oToolRunner.ZipFile returned false")
+                OnErrorEvent("Error zipping output files: oToolRunner.GZipFile returned false")
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
 
