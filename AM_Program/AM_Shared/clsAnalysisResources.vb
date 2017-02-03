@@ -2059,23 +2059,27 @@ Public MustInherit Class clsAnalysisResources
 
         Const MAX_ATTEMPTS = 1
 
-        Dim lstValuesToCheck As List(Of Integer)
-        lstValuesToCheck = New List(Of Integer)
+        Dim lstValuesToCheck = New List(Of Integer)
 
         ' Initialize the values we'll look for
         ' Note that these values are added to the list in the order of the preferred file to retrieve
-        lstValuesToCheck.Add(154)           ' MSXML_Gen_1_154_DatasetID,   CentroidMSXML=True;  MSXMLGenerator=MSConvert.exe; CentroidPeakCountToRetain=250; MSXMLOutputType=mzXML;
-        lstValuesToCheck.Add(132)           ' MSXML_Gen_1_132_DatasetID,   CentroidMSXML=True;  MSXMLGenerator=MSConvert.exe; CentroidPeakCountToRetain=150; MSXMLOutputType=mzXML;
-        lstValuesToCheck.Add(93)            ' MSXML_Gen_1_93_DatasetID,    CentroidMSXML=True;  MSXMLGenerator=ReadW.exe;     MSXMLOutputType=mzXML;
-        lstValuesToCheck.Add(126)           ' MSXML_Gen_1_126_DatasetID,   CentroidMSXML=True;  MSXMLGenerator=ReadW.exe;     MSXMLOutputType=mzXML; ReAdW_Version=v2.1;
-        lstValuesToCheck.Add(39)            ' MSXML_Gen_1_39_DatasetID,    CentroidMSXML=False; MSXMLGenerator=ReadW.exe;     MSXMLOutputType=mzXML;
+
+        '                                   ' Example folder name          CentroidMSXML  MSXMLGenerator   CentroidPeakCount    MSXMLOutputType
+        lstValuesToCheck.Add(215)           ' MSXML_Gen_1_215_DatasetID,   True           MSConvert        -1                   mzXML
+        lstValuesToCheck.Add(149)           ' MSXML_Gen_1_149_DatasetID,   True           MSConvert        1000                 mzXML
+        lstValuesToCheck.Add(148)           ' MSXML_Gen_1_148_DatasetID,   True           MSConvert        500                  mzXML
+        lstValuesToCheck.Add(154)           ' MSXML_Gen_1_154_DatasetID,   True           MSConvert        250                  mzXML
+        lstValuesToCheck.Add(132)           ' MSXML_Gen_1_132_DatasetID,   True           MSConvert        150                  mzXML
+        lstValuesToCheck.Add(93)            ' MSXML_Gen_1_93_DatasetID,    True           ReadW.exe        n/a                  mzXML
+        lstValuesToCheck.Add(126)           ' MSXML_Gen_1_126_DatasetID,   True           ReadW.exe        n/a                  mzXML; ReAdW_Version=v2.1
+        lstValuesToCheck.Add(177)           ' MSXML_Gen_1_177_DatasetID,   False          MSConvert.exe    n/a                  mzXML
+        lstValuesToCheck.Add(39)            ' MSXML_Gen_1_39_DatasetID,    False          ReadW.exe        n/a                  mzXML
 
         strHashcheckFilePath = String.Empty
 
         For Each intVersion As Integer In lstValuesToCheck
 
-            Dim MSXmlFoldername As String
-            MSXmlFoldername = MSXmlFoldernameBase + intVersion.ToString() + "_" + DatasetID
+            Dim msXmlFoldername = MSXmlFoldernameBase + intVersion.ToString() + "_" + DatasetID
 
             ' Look for the MSXmlFolder
             ' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
