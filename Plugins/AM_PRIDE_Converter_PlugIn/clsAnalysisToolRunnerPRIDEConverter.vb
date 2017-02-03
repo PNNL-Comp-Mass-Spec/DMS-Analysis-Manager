@@ -202,11 +202,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPRIDEConverter.RunTool(): Enter")
             End If
 
-            Dim udtFilterThresholds As udtFilterThresholdsType
-
-            ' Initialize the class-wide variables
-            udtFilterThresholds = InitializeOptions()
-
             ' Verify that program files exist
             If Not DefineProgramPaths() Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -222,8 +217,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             mConsoleOutputErrorMsg = String.Empty
 
             mCacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", "\\protoapps\PeptideAtlas_Staging")
-
-            Dim assumeInstrumentDataUnpurged = m_jobParams.GetJobParameter("AssumeInstrumentDataUnpurged", True)
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PRIDEConverter")
 
@@ -247,75 +240,25 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             ' The objAnalysisResults object is used to copy files to/from this computer
             Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
 
-            ' Extract the dataset raw file paths
-            Dim dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS)
+            ' Assure that the remote transfer folder exists
+            Dim remoteTransferFolder = CreateRemoteTransferFolder(objAnalysisResults, mCacheFolderPath)
 
-            ' Process each job in mDataPackagePeptideHitJobs
-            ' Sort the jobs by dataset so that we can use the same .mzXML file for datasets with multiple jobs
-            Dim linqJobsSortedByDataset = (From item In mDataPackagePeptideHitJobs Select item Order By item.Value.Dataset, SortPreference(item.Value.Tool))
+            Try
+                ' Create the remote Transfer Directory
+                If Not Directory.Exists(remoteTransferFolder) Then
+                    Directory.CreateDirectory(remoteTransferFolder)
+                End If
+
+            Catch ex As Exception
+                ' Folder creation error
+                LogError("Exception creating transfer directory folder", ex)
+                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            End Try
 
             ' Read the PX_Submission_Template.px file
             Dim dctTemplateParameters = ReadTemplatePXSubmissionFile()
 
-            Const blnContinueOnError = True
-            Const maxErrorCount = 10
-            Dim intJobsProcessed = 0
-            Dim intJobFailureCount = 0
-            Dim dtLastLogTime = DateTime.UtcNow
-
-            ' This dictionary tracks the datasets that have been processed
-            ' Keys are dataset ID, values are dataset name
-            Dim dctDatasetsProcessed = New Dictionary(Of Integer, String)
-
-            For Each kvJobInfo As KeyValuePair(Of Integer, clsDataPackageJobInfo) In linqJobsSortedByDataset
-
-                Dim udtCurrentJobInfo = kvJobInfo.Value
-
-                m_StatusTools.CurrentOperation = "Processing job " & udtCurrentJobInfo.Job & ", dataset " & udtCurrentJobInfo.Dataset
-
-                Console.WriteLine()
-                Console.WriteLine((intJobsProcessed + 1).ToString() & ": " & m_StatusTools.CurrentOperation)
-
-                result = ProcessJob(kvJobInfo, udtFilterThresholds, objAnalysisResults, dctDatasetRawFilePaths, dctTemplateParameters, assumeInstrumentDataUnpurged)
-                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                    intJobFailureCount += 1
-                    If Not blnContinueOnError OrElse intJobFailureCount > maxErrorCount Then Exit For
-                End If
-
-                If Not dctDatasetsProcessed.ContainsKey(udtCurrentJobInfo.DatasetID) Then
-                    dctDatasetsProcessed.Add(udtCurrentJobInfo.DatasetID, udtCurrentJobInfo.Dataset)
-                End If
-
-                intJobsProcessed += 1
-                m_progress = ComputeIncrementalProgress(PROGRESS_PCT_TOOL_RUNNER_STARTING, PROGRESS_PCT_SAVING_RESULTS, intJobsProcessed, mDataPackagePeptideHitJobs.Count)
-                m_StatusTools.UpdateAndWrite(m_progress)
-
-                If DateTime.UtcNow.Subtract(dtLastLogTime).TotalMinutes >= 5 OrElse m_DebugLevel >= 2 Then
-                    dtLastLogTime = DateTime.UtcNow
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... processed " & intJobsProcessed & " / " & mDataPackagePeptideHitJobs.Count & " jobs")
-                End If
-            Next
-
-            TransferPreviousDatasetFiles(objAnalysisResults)
-
-            ' Look for datasets associated with the data package that have no PeptideHit jobs
-            ' Create fake PeptideHit jobs in the .px file to alert the user of the missing jobs
-
-            For Each kvDatasetInfo In dctDataPackageDatasets
-                If Not dctDatasetsProcessed.ContainsKey(kvDatasetInfo.Key) Then
-                    m_StatusTools.CurrentOperation = "Adding dataset " & kvDatasetInfo.Value.Dataset & " (no associated PeptideHit job)"
-
-                    Console.WriteLine()
-                    Console.WriteLine(m_StatusTools.CurrentOperation)
-
-                    AddPlaceholderDatasetEntry(kvDatasetInfo)
-                End If
-            Next
-
-            ' If we were still unable to delete some files, we want to make sure that they don't end up in the results folder
-            For Each fileToDelete In mPreviousDatasetFilesToDelete
-                m_jobParams.AddResultFileToSkip(fileToDelete)
-            Next
+            Dim jobFailureCount = ProcessJobs(objAnalysisResults, remoteTransferFolder, dctTemplateParameters, dctDataPackageDatasets)
 
             ' Create the PX Submission file
             blnSuccess = CreatePXSubmissionFile(dctTemplateParameters)
@@ -341,7 +284,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Threading.Thread.Sleep(500)         ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-            If Not blnSuccess Or intJobFailureCount > 0 Then
+            If Not blnSuccess Or jobFailureCount > 0 Then
                 ' Something went wrong
                 ' In order to help diagnose things, we will move whatever files were created into the result folder, 
                 '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -378,6 +321,97 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         ' No failures so everything must have succeeded
         Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+
+    End Function
+
+    Private Function ProcessJobs(objAnalysisResults As clsAnalysisResults, remoteTransferFolder As String,
+                                 dctTemplateParameters As IReadOnlyDictionary(Of String, String),
+                                 dctDataPackageDatasets As Dictionary(Of Integer, clsDataPackageDatasetInfo)) As Integer
+        Dim jobsProcessed = 0
+        Dim jobFailureCount = 0
+
+        Try
+            Dim udtFilterThresholds As udtFilterThresholdsType
+
+            ' Initialize the class-wide variables
+            udtFilterThresholds = InitializeOptions()
+
+            ' Extract the dataset raw file paths
+            Dim dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS)
+
+            ' Process each job in mDataPackagePeptideHitJobs
+            ' Sort the jobs by dataset so that we can use the same .mzXML file for datasets with multiple jobs
+            Dim linqJobsSortedByDataset = (From item In mDataPackagePeptideHitJobs Select item Order By item.Value.Dataset, SortPreference(item.Value.Tool))
+
+            Dim assumeInstrumentDataUnpurged = m_jobParams.GetJobParameter("AssumeInstrumentDataUnpurged", True)
+
+            Const blnContinueOnError = True
+            Const maxErrorCount = 10
+            Dim dtLastLogTime = DateTime.UtcNow
+
+            ' This dictionary tracks the datasets that have been processed
+            ' Keys are dataset ID, values are dataset name
+            Dim dctDatasetsProcessed = New Dictionary(Of Integer, String)
+
+            For Each kvJobInfo As KeyValuePair(Of Integer, clsDataPackageJobInfo) In linqJobsSortedByDataset
+
+                Dim udtCurrentJobInfo = kvJobInfo.Value
+
+                m_StatusTools.CurrentOperation = "Processing job " & udtCurrentJobInfo.Job & ", dataset " & udtCurrentJobInfo.Dataset
+
+                Console.WriteLine()
+                Console.WriteLine((jobsProcessed + 1).ToString() & ": " & m_StatusTools.CurrentOperation)
+
+                Dim result = ProcessJob(kvJobInfo, udtFilterThresholds, objAnalysisResults, remoteTransferFolder,
+                                    dctDatasetRawFilePaths, dctTemplateParameters, assumeInstrumentDataUnpurged)
+
+                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    jobFailureCount += 1
+                    If Not blnContinueOnError OrElse jobFailureCount > maxErrorCount Then Exit For
+                End If
+
+                If Not dctDatasetsProcessed.ContainsKey(udtCurrentJobInfo.DatasetID) Then
+                    dctDatasetsProcessed.Add(udtCurrentJobInfo.DatasetID, udtCurrentJobInfo.Dataset)
+                End If
+
+                jobsProcessed += 1
+                m_progress = ComputeIncrementalProgress(PROGRESS_PCT_TOOL_RUNNER_STARTING, PROGRESS_PCT_SAVING_RESULTS, jobsProcessed, mDataPackagePeptideHitJobs.Count)
+                m_StatusTools.UpdateAndWrite(m_progress)
+
+                If DateTime.UtcNow.Subtract(dtLastLogTime).TotalMinutes >= 5 OrElse m_DebugLevel >= 2 Then
+                    dtLastLogTime = DateTime.UtcNow
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... processed " & jobsProcessed & " / " & mDataPackagePeptideHitJobs.Count & " jobs")
+                End If
+            Next
+
+            TransferPreviousDatasetFiles(objAnalysisResults, remoteTransferFolder)
+
+            ' Look for datasets associated with the data package that have no PeptideHit jobs
+            ' Create fake PeptideHit jobs in the .px file to alert the user of the missing jobs
+
+            For Each kvDatasetInfo In dctDataPackageDatasets
+                If Not dctDatasetsProcessed.ContainsKey(kvDatasetInfo.Key) Then
+                    m_StatusTools.CurrentOperation = "Adding dataset " & kvDatasetInfo.Value.Dataset & " (no associated PeptideHit job)"
+
+                    Console.WriteLine()
+                    Console.WriteLine(m_StatusTools.CurrentOperation)
+
+                    AddPlaceholderDatasetEntry(kvDatasetInfo)
+                End If
+            Next
+
+            ' If we were still unable to delete some files, we want to make sure that they don't end up in the results folder
+            For Each fileToDelete In mPreviousDatasetFilesToDelete
+                m_jobParams.AddResultFileToSkip(fileToDelete)
+            Next
+
+            Return jobFailureCount
+
+        Catch ex As Exception
+            LogError("Exception in ProcessJobs", ex)
+            Dim totalFailedJobs = jobFailureCount + mDataPackagePeptideHitJobs.Count - jobsProcessed
+            Return totalFailedJobs
+        End Try
 
     End Function
 
