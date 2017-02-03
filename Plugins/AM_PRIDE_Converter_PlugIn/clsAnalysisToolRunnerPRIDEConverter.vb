@@ -3411,36 +3411,66 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     Continue For
                 End If
 
-                Dim sourceFileName As String = Path.GetFileName(sourceFilePath)
+                Dim fiSourceFile = New FileInfo(sourceFilePath)
 
-                Dim targetFilePath As String
-                targetFilePath = Path.Combine(m_WorkDir, sourceFileName)
+                If Not fiSourceFile.Exists Then
+                    fileCountNotFound += 1
+                    LogError(String.Format("File not found for job {0}: {1}", intJob, sourceFilePath))
+                    Continue For
+                End If
 
-                ' Retrieve the file, allowing for up to 3 attempts (uses CopyFileUsingLocks)
-                objAnalysisResults.CopyFileWithRetry(sourceFilePath, targetFilePath, True)
+                Dim targetFilePath = Path.Combine(m_WorkDir, fiSourceFile.Name)
 
                 Dim fiLocalFile = New FileInfo(targetFilePath)
-                If Not fiLocalFile.Exists Then
-                    LogError("PHRP file was not copied locally: " & fiLocalFile.Name)
-                    Return False
+                Dim alreadyCopiedToTransferDirectory = False
+
+                If fiSourceFile.Name.EndsWith(DOT_MZML, StringComparison.InvariantCultureIgnoreCase) OrElse
+                   fiSourceFile.Name.EndsWith(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase) Then
+                    ' mzML files can be large
+                    ' If the file already exists in the transfer directory and the sizes match, do not recopy
+
+                    Dim fiFileInTransferDirectory = New FileInfo(Path.Combine(remoteTransferFolder, fiSourceFile.Name))
+
+                    If fiFileInTransferDirectory.Exists Then
+                        If fiFileInTransferDirectory.Length = fiSourceFile.Length Then
+                            alreadyCopiedToTransferDirectory = True
+                            LogDebug(String.Format("Skipping file {0} since already copied to {1}", fiSourceFile.Name, remoteTransferFolder))
+                        End If
+                    End If
                 End If
 
-                Dim blnUnzipped = False
+                If alreadyCopiedToTransferDirectory Then
+                    filesCopied.Add(fiSourceFile.Name)
+                Else
+                    ' Retrieve the file, allowing for up to 3 attempts (uses CopyFileUsingLocks)
+                    objAnalysisResults.CopyFileWithRetry(fiSourceFile.FullName, fiLocalFile.FullName, True)
 
-                If fiLocalFile.Extension.ToLower() = ".zip" Then
-                    ' Decompress the .zip file
-                    m_IonicZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir)
-                    blnUnzipped = True
-                ElseIf fiLocalFile.Extension.ToLower() = ".gz" Then
-                    ' Decompress the .gz file
-                    m_IonicZipTools.GUnzipFile(fiLocalFile.FullName, m_WorkDir)
-                    blnUnzipped = True
-                End If
+                    If Not fiLocalFile.Exists Then
+                        LogError("PHRP file was not copied locally: " & fiLocalFile.Name)
+                        Return False
+                    End If
 
-                If blnUnzipped Then
-                    For Each kvUnzippedFile In m_IonicZipTools.MostRecentUnzippedFiles
-                        AddToListIfNew(mPreviousDatasetFilesToDelete, kvUnzippedFile.Value)
-                    Next
+                    filesCopied.Add(fiSourceFile.Name)
+
+                    Dim blnUnzipped = False
+
+                    If fiLocalFile.Extension.ToLower() = ".zip" Then
+                        ' Decompress the .zip file
+                        m_IonicZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir)
+                        blnUnzipped = True
+                    ElseIf fiLocalFile.Extension.ToLower() = clsAnalysisResources.DOT_GZ_EXTENSION.ToLower() Then
+                        ' Decompress the .gz file
+                        m_IonicZipTools.GUnzipFile(fiLocalFile.FullName, m_WorkDir)
+                        blnUnzipped = True
+                    End If
+
+                    If blnUnzipped Then
+                        For Each kvUnzippedFile In m_IonicZipTools.MostRecentUnzippedFiles
+                            filesCopied.Add(kvUnzippedFile.Key)
+                            AddToListIfNew(mPreviousDatasetFilesToDelete, kvUnzippedFile.Value)
+                        Next
+                    End If
+
                 End If
 
                 AddToListIfNew(mPreviousDatasetFilesToDelete, fiLocalFile.FullName)
@@ -3461,6 +3491,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 End If
 
             End If
+
+            If fileCountNotFound = 0 Then Return True
+            Return False
 
         Catch ex As Exception
             LogError("Error in RetrievePHRPFiles", ex)
