@@ -14,6 +14,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     'Class for running PRIDEConverter
     '*********************************************************************************************************
 
+#Region "Constants"
+    Const DOT_GZ = clsAnalysisResources.DOT_GZ_EXTENSION
+    Const DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION
+    Const DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION & clsAnalysisResources.DOT_GZ_EXTENSION
+#End Region
+
 #Region "Module Variables"
     Private Const PRIDEConverter_CONSOLE_OUTPUT As String = "PRIDEConverter_ConsoleOutput.txt"
     Public Const PROGRESS_PCT_TOOL_RUNNER_STARTING As Single = 20
@@ -587,7 +593,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             If intPrideXMLFileID = 0 Then
                 ' Pride XML file was not created
                 If rawFileID > 0 AndAlso resultFiles.MzIDFilePaths.Count = 0 Then
-                    ' Only associate Peak files with .Raw files if we do not have a .MzId.gz file
+                    ' Only associate Peak files with .Raw files if we do not have a .mzid.gz file
                     If Not DefinePxFileMapping(intPeakfileID, rawFileID) Then
                         Return False
                     End If
@@ -674,7 +680,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 End If
             End If
 
-            strFilename = strFileBaseName & fiFile.Extension.ToLower()
+            If (fiFile.Extension.Equals(DOT_MZML, StringComparison.InvariantCultureIgnoreCase)) Then
+                strFilename = strFileBaseName & DOT_MZML
+            ElseIf (fiFile.Extension.Equals(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase)) Then
+                strFilename = strFileBaseName & DOT_MZML_GZ
+            Else
+                strFilename = strFileBaseName & fiFile.Extension.ToLower()
+            End If
+
         End If
 
         Return strFilename
@@ -3030,6 +3043,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
       kvJobInfo As KeyValuePair(Of Integer, clsDataPackageJobInfo),
       udtFilterThresholds As udtFilterThresholdsType,
       objAnalysisResults As clsAnalysisResults,
+      remoteTransferFolder As String,
       dctDatasetRawFilePaths As IReadOnlyDictionary(Of String, String),
       dctTemplateParameters As IReadOnlyDictionary(Of String, String),
       assumeInstrumentDataUnpurged As Boolean) As IJobParams.CloseOutType
@@ -3042,7 +3056,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         If mPreviousDatasetName <> strDataset Then
 
-            TransferPreviousDatasetFiles(objAnalysisResults)
+            TransferPreviousDatasetFiles(objAnalysisResults, remoteTransferFolder)
 
             ' Retrieve the dataset files for this dataset
             mPreviousDatasetName = strDataset
@@ -3065,24 +3079,42 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         ' Update the cached NEWT info
         AddNEWTInfo(kvJobInfo.Value.Experiment_NEWT_ID, kvJobInfo.Value.Experiment_NEWT_Name)
 
-        ' Retrieve the PHRP files, MSGF+ results, and _dta.txt file for this job
-        blnSuccess = RetrievePHRPFiles(intJob, strDataset, objAnalysisResults)
+        ' Retrieve the PHRP files, MSGF+ results, and _dta.txt or .mzML.gz file for this job
+        Dim filesCopied As New List(Of String)
+
+        blnSuccess = RetrievePHRPFiles(intJob, strDataset, objAnalysisResults, remoteTransferFolder, filesCopied)
         If Not blnSuccess Then
             Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
+        Dim searchedMzML = False
+        For Each copiedFile In filesCopied
+            If copiedFile.EndsWith(DOT_MZML, StringComparison.InvariantCultureIgnoreCase) OrElse
+               copiedFile.EndsWith(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase) Then
+
+                searchedMzML = True
+                Exit For
+            End If
+        Next
+
         resultFiles.MGFFilePath = String.Empty
-        If mCreateMGFFiles Then
+        If mCreateMGFFiles AndAlso Not searchedMzML Then
             ' Convert the _dta.txt file to .mgf files
             blnSuccess = ConvertCDTAToMGF(kvJobInfo.Value, resultFiles.MGFFilePath)
             If Not blnSuccess Then
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
             End If
         Else
-            ' Store the path to the _dta.txt file instead of the path to the .mgf file
-            resultFiles.MGFFilePath = Path.Combine(m_WorkDir, strDataset & "_dta.txt")
-            If Not assumeInstrumentDataUnpurged AndAlso Not File.Exists(resultFiles.MGFFilePath) Then
+            ' Store the path to the _dta.txt or .mzML.gz file
+            If searchedMzML Then
+                resultFiles.MGFFilePath = Path.Combine(m_WorkDir, strDataset & DOT_MZML_GZ)
+            Else
+                resultFiles.MGFFilePath = Path.Combine(m_WorkDir, strDataset & "_dta.txt")
+            End If
+
+            If Not assumeInstrumentDataUnpurged AndAlso Not searchedMzML AndAlso Not File.Exists(resultFiles.MGFFilePath) Then
                 ' .mgf file not found
+                ' We don't check for .mzML.gz files since those are not copied locally if they already exist in remoteTransferFolder
                 resultFiles.MGFFilePath = String.Empty
             End If
         End If
@@ -3095,7 +3127,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             m_message = String.Empty
 
             Dim mzIdFilePaths As List(Of String) = Nothing
-            blnSuccess = UpdateMzIdFiles(kvJobInfo.Value, mzIdFilePaths, dctTemplateParameters)
+            blnSuccess = UpdateMzIdFiles(kvJobInfo.Value, searchedMzML, mzIdFilePaths, dctTemplateParameters)
 
             If Not blnSuccess OrElse mzIdFilePaths Is Nothing OrElse mzIdFilePaths.Count = 0 Then
                 If String.IsNullOrEmpty(m_message) Then
@@ -3325,7 +3357,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Private Function RetrievePHRPFiles(intJob As Integer, strDataset As String, objAnalysisResults As clsAnalysisResults) As Boolean
+    Private Function RetrievePHRPFiles(
+       intJob As Integer,
+       strDataset As String,
+       objAnalysisResults As clsAnalysisResults,
+       remoteTransferFolder As String,
+       filesCopied As ICollection(Of String)) As Boolean
+
+
         Dim strJobInfoFilePath As String
         Dim lstFilesToCopy = New List(Of String)
 
@@ -3346,6 +3385,8 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 Loop
             End Using
 
+            Dim fileCountNotFound = 0
+
             ' Retrieve the files
             ' If the same dataset has multiple jobs then we might overwrite existing files; 
             '   that's OK since results files that we care about will have been auto-renamed based on the call to JobFileRenameRequired
@@ -3359,10 +3400,13 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     Dim cleanFilePath As String = Nothing
                     DatasetInfoBase.ExtractMyEMSLFileID(sourceFilePath, cleanFilePath)
 
-                    Dim fiSourceFile = New FileInfo(cleanFilePath)
-                    Dim unzipRequired = (fiSourceFile.Extension.ToLower() = ".zip" OrElse fiSourceFile.Extension.ToLower() = ".gz")
+                    Dim fiSourceFileClean = New FileInfo(cleanFilePath)
+                    Dim unzipRequired = (fiSourceFileClean.Extension.ToLower() = ".zip" OrElse
+                                         fiSourceFileClean.Extension.ToLower() = clsAnalysisResources.DOT_GZ_EXTENSION.ToLower())
 
                     m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath, unzipRequired)
+
+                    filesCopied.Add(fiSourceFileClean.Name)
 
                     Continue For
                 End If
@@ -3422,8 +3466,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             LogError("Error in RetrievePHRPFiles", ex)
             Return False
         End Try
-
-        Return True
 
     End Function
 
@@ -3646,7 +3688,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     End Function
 
-    Private Sub TransferPreviousDatasetFiles(objAnalysisResults As clsAnalysisResults)
+    Private Sub TransferPreviousDatasetFiles(objAnalysisResults As clsAnalysisResults, remoteTransferFolder As String)
 
         ' Delete the dataset files for the previous dataset
         Dim lstFilesToRetry = New List(Of String)
@@ -3654,43 +3696,30 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         If mPreviousDatasetFilesToCopy.Count > 0 Then
             lstFilesToRetry.Clear()
 
-            Dim strRemoteTransferFolder = CreateRemoteTransferFolder(objAnalysisResults, mCacheFolderPath)
+            Try
 
-            If String.IsNullOrEmpty(strRemoteTransferFolder) Then
-                LogError("CreateRemoteTransferFolder returned an empty string; unable to copy files to the transfer folder")
-                lstFilesToRetry.AddRange(mPreviousDatasetFilesToCopy)
-            Else
+                ' Copy the files we want to keep to the remote Transfer Directory
+                For Each strSrcFilePath In mPreviousDatasetFilesToCopy
+                    Dim strTargetFilePath As String = Path.Combine(remoteTransferFolder, Path.GetFileName(strSrcFilePath))
 
-                Try
-                    ' Create the remote Transfer Directory
-                    If Not Directory.Exists(strRemoteTransferFolder) Then
-                        Directory.CreateDirectory(strRemoteTransferFolder)
+                    If File.Exists(strSrcFilePath) Then
+
+                        Try
+                            objAnalysisResults.CopyFileWithRetry(strSrcFilePath, strTargetFilePath, True)
+                            AddToListIfNew(mPreviousDatasetFilesToDelete, strSrcFilePath)
+                        Catch ex As Exception
+                            LogError("Exception copying file to transfer directory", ex)
+                            lstFilesToRetry.Add(strSrcFilePath)
+                        End Try
+
                     End If
+                Next
 
-                    ' Copy the files we want to keep to the remote Transfer Directory
-                    For Each strSrcFilePath In mPreviousDatasetFilesToCopy
-                        Dim strTargetFilePath As String = Path.Combine(strRemoteTransferFolder, Path.GetFileName(strSrcFilePath))
-
-                        If File.Exists(strSrcFilePath) Then
-
-                            Try
-                                objAnalysisResults.CopyFileWithRetry(strSrcFilePath, strTargetFilePath, True)
-                                AddToListIfNew(mPreviousDatasetFilesToDelete, strSrcFilePath)
-                            Catch ex As Exception
-                                LogError("Exception copying file to transfer directory", ex)
-                                lstFilesToRetry.Add(strSrcFilePath)
-                            End Try
-
-                        End If
-                    Next
-
-                Catch ex As Exception
-                    ' Folder creation error
-                    LogError("Exception creating transfer directory folder", ex)
-                    lstFilesToRetry.AddRange(mPreviousDatasetFilesToCopy)
-                End Try
-
-            End If
+            Catch ex As Exception
+                ' Folder creation error
+                LogError("Exception copying files to " & remoteTransferFolder, ex)
+                lstFilesToRetry.AddRange(mPreviousDatasetFilesToCopy)
+            End Try
 
             mPreviousDatasetFilesToCopy.Clear()
 
@@ -3771,12 +3800,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' Also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
     ''' </summary>
     ''' <param name="dataPkgJob">Data package job info</param>
+    ''' <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
     ''' <param name="mzIdFilePaths">Output parameter: path to the .mzid file for this job (will be multiple files if a SplitFasta search was performed)</param>
     ''' <param name="dctTemplateParameters"></param>
     ''' <returns>True if success, false if an error</returns>
     ''' <remarks></remarks>
     Private Function UpdateMzIdFiles(
       dataPkgJob As clsDataPackageJobInfo,
+      searchedMzML As Boolean,
       <Out()> ByRef mzIdFilePaths As List(Of String),
       dctTemplateParameters As IReadOnlyDictionary(Of String, String)) As Boolean
 
@@ -3823,7 +3854,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             If dataPkgJob.NumberOfClonedSteps > 0 Then
                 For splitFastaResultID = 1 To dataPkgJob.NumberOfClonedSteps
-                    success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, splitFastaResultID, sampleMetadata, strMzIDFilePath)
+                    success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, splitFastaResultID, sampleMetadata, strMzIDFilePath)
                     If success Then
                         mzIdFilePaths.Add(strMzIDFilePath)
                     Else
@@ -3832,7 +3863,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                 Next
             Else
-                success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, 0, sampleMetadata, strMzIDFilePath)
+                success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, strMzIDFilePath)
                 If success Then
                     mzIdFilePaths.Add(strMzIDFilePath)
                 End If
@@ -3861,6 +3892,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' </summary>
     ''' <param name="dataPkgJob">Data package job</param>
     ''' <param name="dataPkgDataset">Data package dataset</param>
+    ''' <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
     ''' <param name="splitFastaResultID">For SplitFasta jobs, the part number being processed; 0 for non-SplitFasta jobs</param>
     ''' <param name="sampleMetadata">Sample Metadata</param>
     ''' <param name="strMzIDFilePath">Output parameter: path to the .mzid file being processed</param>
@@ -3869,6 +3901,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     Private Function UpdateMzIdFile(
       dataPkgJob As Integer,
       dataPkgDataset As String,
+      searchedMzML As Boolean,
       splitFastaResultID As Integer,
       sampleMetadata As clsSampleMetadata,
       <Out()> ByRef strMzIDFilePath As String) As Boolean
@@ -3912,16 +3945,18 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End If
 
             AddToListIfNew(mPreviousDatasetFilesToDelete, strMzIDFilePath)
-            AddToListIfNew(mPreviousDatasetFilesToDelete, strMzIDFilePath & ".gz")
+            AddToListIfNew(mPreviousDatasetFilesToDelete, strMzIDFilePath & DOT_GZ)
 
             strUpdatedFilePathTemp = strMzIDFilePath & ".tmp"
+            Dim replaceOriginal = False
 
             ' Important: instantiate the XmlTextWriter using an instance of the UTF8Encoding class where the byte order mark (BOM) is not emitted
             ' The ProteomeXchange import pipeline breaks if the .mzid files have the BOM at the start of the file
 
-            Using objXmlWriter = New XmlTextWriter(New FileStream(strUpdatedFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read), New Text.UTF8Encoding(False))
+            Using objXmlWriter = New XmlTextWriter(New FileStream(strUpdatedFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read),
+                                                   New Text.UTF8Encoding(False))
                 objXmlWriter.Formatting = Formatting.Indented
-                objXmlWriter.Indentation = 4
+                objXmlWriter.Indentation = 2
 
                 objXmlWriter.WriteStartDocument()
 
@@ -3967,10 +4002,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
                                         Case "SpectraData"
                                             ' Override the location and name attributes for this node
-
                                             Dim strSpectraDataFilename As String
 
-                                            If mCreateMGFFiles Then
+                                            If searchedMzML Then
+                                                ' MSGF+ likely lists a .mzML file but we upload .mzML.gz files since they're smaller; fix the name
+                                                strSpectraDataFilename = dataPkgDataset & DOT_MZML_GZ
+                                            ElseIf mCreateMGFFiles Then
                                                 strSpectraDataFilename = dataPkgDataset & ".mgf"
                                             Else
                                                 strSpectraDataFilename = dataPkgDataset & "_dta.txt"
@@ -3980,9 +4017,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                             lstAttributeOverride.Add("name", strSpectraDataFilename)
 
                                         Case "FileFormat"
-                                            If eFileLocation = eMzIDXMLFileLocation.InputSpectraData Then
+                                            If eFileLocation = eMzIDXMLFileLocation.InputSpectraData And Not searchedMzML Then
+
                                                 ' Override the accession and name attributes for this node
 
+                                                ' For .mzML files, the .mzID file should already have: 
+                                                '                         <cvParam accession="MS:1000584" cvRef="PSI-MS" name="mzML file"/>
                                                 ' For .mgf files,     use <cvParam accession="MS:1001062" cvRef="PSI-MS" name="Mascot MGF file"/>
                                                 ' For _dta.txt files, use <cvParam accession="MS:1001369" cvRef="PSI-MS" name="text file"/>
 
@@ -4037,7 +4077,6 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                                 End If
 
                                                 nodeWritten = True
-                                                readModAccession = False
                                             End If
                                     End Select
 
@@ -4048,6 +4087,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                             ' Likely should not do this when objXmlReader.NodeType is XmlNodeType.EndElement
                                             objXmlReader.Skip()
                                         End If
+                                        replaceOriginal = True
 
                                     ElseIf Not nodeWritten Then
                                         ' Copy this element from the source file to the target file
@@ -4060,6 +4100,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                                 Dim strAttributeOverride As String = String.Empty
                                                 If lstAttributeOverride.Count > 0 AndAlso lstAttributeOverride.TryGetValue(objXmlReader.Name, strAttributeOverride) Then
                                                     objXmlWriter.WriteAttributeString(objXmlReader.Name, strAttributeOverride)
+                                                    replaceOriginal = True
                                                 Else
                                                     objXmlWriter.WriteAttributeString(objXmlReader.Name, objXmlReader.Value)
                                                 End If
@@ -4123,10 +4164,16 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             End Using
 
             ' Must append .gz to the .mzid file name to allow for successful lookups in function CreatePXSubmissionFile
-            StoreMzIdSampleInfo(strMzIDFilePath & ".gz", sampleMetadata)
+            StoreMzIdSampleInfo(strMzIDFilePath & DOT_GZ, sampleMetadata)
 
             Threading.Thread.Sleep(250)
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
+
+            If Not replaceOriginal Then
+                ' Nothing was changed; delete the .tmp file
+                File.Delete(strUpdatedFilePathTemp)
+                Return True
+            End If
 
             Try
                 ' Replace the original .mzid file with the updated one
