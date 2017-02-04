@@ -4034,20 +4034,23 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                                     Select Case objXmlReader.Name
 
                                         Case "SpectraData"
-                                            ' Override the location and name attributes for this node
-                                            Dim strSpectraDataFilename As String
-
                                             If searchedMzML Then
-                                                ' MSGF+ likely lists a .mzML file but we upload .mzML.gz files since they're smaller; fix the name
-                                                strSpectraDataFilename = dataPkgDataset & DOT_MZML_GZ
-                                            ElseIf mCreateMGFFiles Then
-                                                strSpectraDataFilename = dataPkgDataset & ".mgf"
+                                                ' MSGF+ will list an .mzML file here
+                                                ' Although we upload .mzML.gz files, the .mzid file needs to list the input file as .mzML
+                                                ' Thus, do not update the .mzid file
                                             Else
-                                                strSpectraDataFilename = dataPkgDataset & "_dta.txt"
-                                            End If
+                                                ' Override the location and name attributes for this node
+                                                Dim strSpectraDataFilename As String
 
-                                            lstAttributeOverride.Add("location", "C:\DMS_WorkDir\" & strSpectraDataFilename)
-                                            lstAttributeOverride.Add("name", strSpectraDataFilename)
+                                                If mCreateMGFFiles Then
+                                                    strSpectraDataFilename = dataPkgDataset & ".mgf"
+                                                Else
+                                                    strSpectraDataFilename = dataPkgDataset & "_dta.txt"
+                                                End If
+
+                                                lstAttributeOverride.Add("location", "C:\DMS_WorkDir\" & strSpectraDataFilename)
+                                                lstAttributeOverride.Add("name", strSpectraDataFilename)
+                                            End If
 
                                         Case "FileFormat"
                                             If eFileLocation = eMzIDXMLFileLocation.InputSpectraData And Not searchedMzML Then
