@@ -4050,9 +4050,12 @@ Public MustInherit Class clsAnalysisResources
 
         Dim sqlStr = New Text.StringBuilder
 
-        ' Note that this queries view V_DMS_Data_Package_Datasets in the DMS_Pipeline database
-        ' That view references   view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
-
+        ' View V_DMS_Data_Package_Datasets is in the DMS_Pipeline database
+        ' That view references view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
+        ' That view pulls information from several tables in the DMS_Data_Package database, plus 3 views in DMS5:
+        '   V_Dataset_Folder_Path, V_Organism_Export, and V_Dataset_Archive_Path 
+        ' Experiment_NEWT_ID comes from the organism for the experiment, and actually comes from field NCBI_Taxonomy_ID in T_Organisms
+        ' 
         sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, ")
         sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
         sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType")
