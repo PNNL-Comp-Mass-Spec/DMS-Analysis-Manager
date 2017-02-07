@@ -1,1111 +1,1235 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 07/10/2014
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports AnalysisManagerBase
-Imports System.IO
-Imports System.Text.RegularExpressions
-Imports System.Runtime.InteropServices
-Imports System.Text
-Imports System.Threading
-Imports PRISM.Processes
-
-''' <summary>
-''' Class for running MSPathFinder analysis of top down data
-''' </summary>
-''' <remarks></remarks>
-Public Class clsAnalysisToolRunnerMSPathFinder
-    Inherits clsAnalysisToolRunnerBase
-
-#Region "Constants and Enums"
-    Private Const MSPATHFINDER_CONSOLE_OUTPUT As String = "MSPathFinder_ConsoleOutput.txt"
-
-    Private Const PROGRESS_PCT_STARTING As Single = 1
-    Private Const PROGRESS_PCT_GENERATING_SEQUENCE_TAGS As Single = 2
-    Private Const PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB As Single = 3
-    Private Const PROGRESS_PCT_SEARCHING_TARGET_DB As Single = 7
-    Private Const PROGRESS_PCT_CALCULATING_TARGET_EVALUES = 40
-    Private Const PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB As Single = 50
-    Private Const PROGRESS_PCT_SEARCHING_DECOY_DB As Single = 54
-    Private Const PROGRESS_PCT_CALCULATING_DECOY_EVALUES As Single = 85
-    Private Const PROGRESS_PCT_COMPLETE As Single = 99
-
-    'Private Const MSPathFinder_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.txt"
-    'Private Const MSPathFinder_FILTERED_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.id.txt"
-
-    Private Enum MSPathFinderSearchStage
-        Start = 0
-        GeneratingSequenceTags = 1
-        TagBasedSearchingTargetDB = 2
-        SearchingTargetDB = 3
-        CalculatingEValuesForTargetSpectra = 4
-        TagBasedSearchingDecoyDB = 5
-        SearchingDecoyDB = 6
-        CalculatingEValuesForDecoySpectra = 7
-        Complete = 8
-    End Enum
-#End Region
-
-#Region "Module Variables"
-
-    Private mConsoleOutputErrorMsg As String
-
-    Private m_filteredPromexFeatures As Integer = 0
-    Private m_unfilteredPromexFeatures As Integer = 0
-
-    Private mCmdRunner As clsRunDosProgram
-
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Runs MSPathFinder
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
-
-        Dim result As IJobParams.CloseOutType
-
-        Try
-            ' Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSPathFinder.RunTool(): Enter")
-            End If
-
-            ' Determine the path to the MSPathFinder program (Top-down version)
-            Dim progLoc As String
-            progLoc = DetermineProgramLocation("MSPathFinder", "MSPathFinderProgLoc", "MSPathFinderT.exe")
-
-            If String.IsNullOrWhiteSpace(progLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Store the MSPathFinder version info in the database
-            If Not StoreToolVersionInfo(progLoc) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-                m_message = "Error determining MSPathFinder version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            Dim fastaFileIsDecoy As Boolean
-            If Not InitializeFastaFile(fastaFileIsDecoy) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Run MSPathFinder
-            Dim tdaEnabled As Boolean
-            Dim blnSuccess = StartMSPathFinder(progLoc, fastaFileIsDecoy, tdaEnabled)
-
-            If blnSuccess Then
-                ' Look for the results file
-
-                Dim fiResultsFile As FileInfo
-
-                If tdaEnabled Then
-                    fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_IcTda.tsv"))
-                Else
-                    fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_IcTarget.tsv"))
-                End If
-
-                If fiResultsFile.Exists Then
-                    blnSuccess = PostProcessMSPathFinderResults()
-                    If Not blnSuccess Then
-                        If String.IsNullOrEmpty(m_message) Then
-                            m_message = "Unknown error post-processing the MSPathFinder results"
-                        End If
-                    End If
-
-                Else
-                    If String.IsNullOrEmpty(m_message) Then
-                        m_message = "MSPathFinder results file not found: " & fiResultsFile.Name
-                        blnSuccess = False
-                    End If
-                End If
-            End If
-
-            m_progress = PROGRESS_PCT_COMPLETE
-
-            'Stop the job timer
-            m_StopTime = DateTime.UtcNow
-
-            'Add the current job data to the summary file
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            End If
-
-            mCmdRunner = Nothing
-
-            'Make sure objects are released
-            Thread.Sleep(500)        ' 500 msec delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-            If Not blnSuccess Then
-                ' Move the source files and any results to the Failed Job folder
-                ' Useful for debugging problems
-                CopyFailedResultsToArchiveFolder()
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-        Catch ex As Exception
-            m_message = "Error in MSPathFinderPlugin->RunTool"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Private Sub CopyFailedResultsToArchiveFolder()
-
-        Dim strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
-
-        ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
-
-        ' Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-        Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
-
-        Try
-            File.Delete(Path.Combine(m_WorkDir, m_Dataset & ".mzXML"))
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        ' Make the results folder
-        Dim result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
-            End If
-        End If
-
-        ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
-    End Sub
-
-    Private Function GetMSPathFinderParameterNames() As Dictionary(Of String, String)
-        Dim dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
-
-        dctParamNames.Add("PMTolerance", "t")
-        dctParamNames.Add("FragTolerance", "f")
-        dctParamNames.Add("SearchMode", "m")
-        dctParamNames.Add("ActivationMethod", "act")
-        dctParamNames.Add("TDA", "tda")
-
-        dctParamNames.Add("minLength", "minLength")
-        dctParamNames.Add("maxLength", "maxLength")
-
-        dctParamNames.Add("minCharge", "minCharge")
-        dctParamNames.Add("maxCharge", "maxCharge")
-
-        dctParamNames.Add("minFragCharge", "minFragCharge")
-        dctParamNames.Add("maxFragCharge", "maxFragCharge")
-
-        dctParamNames.Add("minMass", "minMass")
-        dctParamNames.Add("maxMass", "maxMass")
-
-        dctParamNames.Add("tagSearch", "tagSearch")
-
-        ' The following are special cases; 
-        ' do not add to dctParamNames
-        '   NumMods
-        '   StaticMod
-        '   DynamicMod
-
-        Return dctParamNames
-
-    End Function
-
-    Private Function InitializeFastaFile(<Out()> ByRef fastaFileIsDecoy As Boolean) As Boolean
-
-        fastaFileIsDecoy = False
-
-        ' Define the path to the fasta file
-        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
-        Dim fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-
-        Dim fiFastaFile As FileInfo
-        fiFastaFile = New FileInfo(fastaFilePath)
-
-        If Not fiFastaFile.Exists Then
-            ' Fasta file not found
-            LogError("Fasta file not found: " & fiFastaFile.Name, "Fasta file not found: " & fiFastaFile.FullName)
-            Return False
-        End If
-
-        Dim strProteinOptions As String
-        strProteinOptions = m_jobParams.GetParam("ProteinOptions")
-        If Not String.IsNullOrEmpty(strProteinOptions) Then
-            If strProteinOptions.ToLower.Contains("seq_direction=decoy") Then
-                fastaFileIsDecoy = True
-            End If
-        End If
-
-        Return True
-
-    End Function
-
-    Private Function LineStartsWith(strLineIn As String, matchString As String) As Boolean
-        If strLineIn.ToLower().StartsWith(matchString.ToLower()) Then
-            Return True
-        Else
-            Return False
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Parse the MSPathFinder console output file to track the search progress
-    ''' </summary>
-    ''' <param name="strConsoleOutputFilePath"></param>
-    ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
-
-        ' Example Console output
-
-        ' MSPathFinderT 0.93 (June 29, 2015)
-        ' SpectrumFilePath: E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.pbf
-        ' DatabaseFilePath: c:\DMS_Temp_Org\ID_004973_9BA6912F_Excerpt.fasta
-        ' FeatureFilePath:  E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.ms1ft
-        ' OutputDir:        E:\DMS_WorkDir
-        ' SearchMode: 1
-        ' Tda: Target+Decoy
-        ' PrecursorIonTolerancePpm: 10
-        ' ProductIonTolerancePpm: 10
-        ' MinSequenceLength: 21
-        ' MaxSequenceLength: 300
-        ' MinPrecursorIonCharge: 2
-        ' MaxPrecursorIonCharge: 30
-        ' MinProductIonCharge: 1
-        ' MaxProductIonCharge: 15
-        ' MinSequenceMass: 3000
-        ' MaxSequenceMass: 50000
-        ' MinFeatureProbability: 0.1
-        ' MaxDynamicModificationsPerSequence: 4
-        ' Modifications:
-        ' C(0) H(0) N(0) O(1) S(0),M,opt,Everywhere,Oxidation
-        ' C(0) H(-1) N(0) O(0) S(0),C,opt,Everywhere,Dehydro
-        ' C(2) H(2) N(0) O(1) S(0),*,opt,ProteinNTerm,Acetyl
-        ' Getting MS1 features from E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.ms1ft.
-        ' Reading raw file...Elapsed Time: 0.0304 sec
-        ' Reading ProMex results...332/354 features loaded...Elapsed Time: 5.0866 sec
-        ' Generating sequence tags for MS/MS spectra...
-        ' Number of spectra: 6360
-        ' Processing, 0 spectra done, 0.0% complete, 0.1 sec elapsed
-        ' Processing, 1863 spectra done, 29.3% complete, 15.1 sec elapsed
-        ' Processing, 3123 spectra done, 49.1% complete, 30.1 sec elapsed
-        ' Processing, 3917 spectra done, 61.6% complete, 45.1 sec elapsed
-        ' Processing, 4718 spectra done, 74.2% complete, 60.2 sec elapsed
-        ' Processing, 5545 spectra done, 87.2% complete, 75.2 sec elapsed
-        ' Generated sequence tags: 1345048
-        ' Elapsed Time: 87.9 sec
-        ' Reading the target database...Elapsed Time: 0.0 sec
-        ' Tag-based searching the target database
-        ' Processing, 0 spectra done, 0.0% complete, 0.0 sec elapsed
-        ' Processing, 1424 spectra done, 22.4% complete, 15.1 sec elapsed
-        ' Processing, 1550 spectra done, 24.4% complete, 30.2 sec elapsed
-        ' ...
-        ' Processing, 4703 spectra done, 73.9% complete, 1817.6 sec elapsed
-        ' Processing, 5807 spectra done, 91.3% complete, 2117.9 sec elapsed
-        ' Target database tag-based search elapsed Time: 2147.0 sec
-        ' Searching the target database
-        ' Estimated proteins: 3421782
-        ' Processing, 0 proteins done, 0.0% complete, 0.0 sec elapsed
-        ' Processing, 4331 proteins done, 0.1% complete, 15.0 sec elapsed
-        ' Processing, 7092 proteins done, 0.2% complete, 30.0 sec elapsed
-        ' ...
-        ' Processing, 3316784 proteins done, 96.9% complete, 12901.9 sec elapsed
-        ' Processing, 3398701 proteins done, 99.3% complete, 13201.9 sec elapsed
-        ' Target database search elapsed Time: 13275.2 sec
-        ' Calculating spectral E-values for target-spectrum matches
-        ' Estimated matched proteins: 8059
-        ' Processing, 0 proteins done, 0.0% complete, 0.2 sec elapsed
-        ' Processing, 110 proteins done, 1.4% complete, 15.2 sec elapsed
-        ' Processing, 231 proteins done, 2.9% complete, 30.2 sec elapsed
-        ' ...
-        ' Processing, 7222 proteins done, 89.6% complete, 1128.6 sec elapsed
-        ' Processing, 7513 proteins done, 93.2% complete, 1188.6 sec elapsed
-        ' Target-spectrum match E-value calculation elapsed Time: 1429.6 sec
-        ' Reading the decoy database...Elapsed Time: 0.0 sec
-        ' Tag-based searching the decoy database
-        ' Processing, 0 spectra done, 0.0% complete, 0.0 sec elapsed
-        ' Processing, 1544 spectra done, 24.3% complete, 27.0 sec elapsed
-        ' Processing, 1618 spectra done, 25.4% complete, 42.4 sec elapsed
-        ' ...
-        ' Processing, 4150 spectra done, 65.3% complete, 1465.5 sec elapsed
-        ' Processing, 5351 spectra done, 84.1% complete, 1765.6 sec elapsed
-        ' Target database tag-based search elapsed Time: 1990.2 sec
-        ' Searching the decoy database
-        ' Estimated proteins: 3421782
-        ' Processing, 0 proteins done, 0.0% complete, 0.0 sec elapsed
-        ' Processing, 4045 proteins done, 0.1% complete, 15.0 sec elapsed
-        ' ...
-        ' Processing, 3341406 proteins done, 97.7% complete, 16795.6 sec elapsed
-        ' Processing, 3411145 proteins done, 99.7% complete, 17095.6 sec elapsed
-        ' Decoy database search elapsed Time: 17143.6 sec
-        ' Calculating spectral E-values for decoy-spectrum matches
-        ' Estimated matched proteins: 9708
-        ' Processing, 0 proteins done, 0.0% complete, 0.2 sec elapsed
-        ' Processing, 100 proteins done, 1.0% complete, 15.2 sec elapsed
-        ' ...
-        ' Processing, 7277 proteins done, 75.0% complete, 1188.8 sec elapsed
-        ' Processing, 8764 proteins done, 90.3% complete, 1488.8 sec elapsed
-        ' Decoy-spectrum match E-value calculation elapsed Time: 1849.9 sec
-        ' Done.
-        ' Total elapsed time for search: 37962.4 sec (632.71 min)
-
-
-        Const EXCEPTION_FLAG = "Exception while processing:"
-        Const ERROR_PROCESSING_FLAG = "Error processing"
-
-        Const REGEX_PROMEX_RESULTS = "ProMex[^\d]+(\d+)/(\d+) features loaded"
-        Static rePromexFeatureStats As New Regex(REGEX_PROMEX_RESULTS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-
-        Const REGEX_MSPATHFINDER_PROGRESS = "([0-9.]+)% complete"
-        Static reCheckProgress As New Regex(REGEX_MSPATHFINDER_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-
-        Static reProcessingProteins As New Regex("(\d+) proteins done", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-
-        Try
-            If Not File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-                End If
-
-                Exit Sub
-            End If
-
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
-            End If
-
-            ' progressComplete values are between 0 and 100
-            ' MSPathFinder reports % complete values numerous times for each section
-            ' We keep track of the section using currentStage
-            Dim progressCompleteCurrentStage As Single = 0
-            Dim currentStage = MSPathFinderSearchStage.Start
-
-            Dim percentCompleteFound = False
-
-            ' This array holds the % complete values at the start of each stage
-            Dim percentCompleteLevels As Single()
-            ReDim percentCompleteLevels(CInt(MSPathFinderSearchStage.Complete))
-
-            percentCompleteLevels(MSPathFinderSearchStage.Start) = 0
-            percentCompleteLevels(MSPathFinderSearchStage.GeneratingSequenceTags) = PROGRESS_PCT_GENERATING_SEQUENCE_TAGS
-            percentCompleteLevels(MSPathFinderSearchStage.TagBasedSearchingTargetDB) = PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB
-            percentCompleteLevels(MSPathFinderSearchStage.SearchingTargetDB) = PROGRESS_PCT_SEARCHING_TARGET_DB
-            percentCompleteLevels(MSPathFinderSearchStage.CalculatingEValuesForTargetSpectra) = PROGRESS_PCT_CALCULATING_TARGET_EVALUES
-            percentCompleteLevels(MSPathFinderSearchStage.TagBasedSearchingDecoyDB) = PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB
-            percentCompleteLevels(MSPathFinderSearchStage.SearchingDecoyDB) = PROGRESS_PCT_SEARCHING_DECOY_DB
-            percentCompleteLevels(MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra) = PROGRESS_PCT_CALCULATING_DECOY_EVALUES
-            percentCompleteLevels(MSPathFinderSearchStage.Complete) = PROGRESS_PCT_COMPLETE
-
-            Dim filteredFeatures = 0
-            Dim unfilteredFeatures = 0
-
-            Dim targetProteinsSearched = 0
-            Dim decoyProteinsSearched = 0
-
-            Dim searchingDecoyDB = False
-            mConsoleOutputErrorMsg = String.Empty
-
-            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                Do While Not srInFile.EndOfStream
-                    Dim strLineIn = srInFile.ReadLine()
-
-                    If String.IsNullOrWhiteSpace(strLineIn) Then
-                        Continue Do
-                    End If
-
-                    Dim strLineInLCase = strLineIn.ToLower()
-
-                    If strLineInLCase.StartsWith(EXCEPTION_FLAG.ToLower()) OrElse strLineInLCase.Contains("unhandled exception") Then
-                        ' Exception while processing
-
-                        Dim exceptionMessage = strLineIn.Substring(EXCEPTION_FLAG.Length).TrimStart()
-
-                        mConsoleOutputErrorMsg = "Error running MSPathFinder: " & exceptionMessage
-                        Exit Do
-                    End If
-
-                    If strLineInLCase.StartsWith(ERROR_PROCESSING_FLAG.ToLower()) Then
-                        ' Error processing FileName.msf1lt: Error details;
-
-                        Dim errorMessage As String
-
-                        Dim colonIndex = strLineIn.IndexOf(":"c)
-                        If colonIndex > 0 Then
-                            errorMessage = strLineIn.Substring(colonIndex + 1).Trim()
-                        Else
-                            errorMessage = strLineIn
-                        End If
-
-                        If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                            If errorMessage.Contains("No results found") Then
-                                mConsoleOutputErrorMsg = errorMessage
-                            Else
-                                mConsoleOutputErrorMsg = "Error running MSPathFinder: " & errorMessage
-                            End If
-
-                            Continue Do
-                        End If
-
-                        mConsoleOutputErrorMsg &= "; " & errorMessage
-                        Continue Do
-
-                    ElseIf LineStartsWith(strLineIn, "Generating sequence tags for MS/MS spectra") Then
-                        currentStage = MSPathFinderSearchStage.GeneratingSequenceTags
-
-                    ElseIf LineStartsWith(strLineIn, "Reading the target database") OrElse
-                           LineStartsWith(strLineIn, "tag-based searching the target database") Then
-                        currentStage = MSPathFinderSearchStage.TagBasedSearchingTargetDB
-
-                    ElseIf LineStartsWith(strLineIn, "Searching the target database") Then
-                        currentStage = MSPathFinderSearchStage.SearchingTargetDB
-
-                    ElseIf LineStartsWith(strLineIn, "Calculating spectral E-values for target-spectrum matches") Then
-                        currentStage = MSPathFinderSearchStage.CalculatingEValuesForTargetSpectra
-
-                    ElseIf LineStartsWith(strLineIn, "Reading the decoy database") OrElse
-                           LineStartsWith(strLineIn, "Tag-based searching the decoy database") Then
-                        currentStage = MSPathFinderSearchStage.TagBasedSearchingDecoyDB
-                        searchingDecoyDB = True
-                        Continue Do
-
-                    ElseIf LineStartsWith(strLineIn, "Searching the decoy database") Then
-                        currentStage = MSPathFinderSearchStage.SearchingDecoyDB
-                        searchingDecoyDB = True
-                        Continue Do
-
-                    ElseIf LineStartsWith(strLineIn, "Calculating spectral E-values for decoy-spectrum matches") Then
-                        currentStage = MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra
-
-                    End If
-
-                    Dim oProgressMatch As Match = reCheckProgress.Match(strLineIn)
-                    If oProgressMatch.Success Then
-                        Dim progressValue As Single
-                        If Single.TryParse(oProgressMatch.Groups(1).ToString(), progressValue) Then
-                            progressCompleteCurrentStage = progressValue
-                            percentCompleteFound = True
-                        End If
-                        Continue Do
-
-                    End If
-
-                    If percentCompleteFound Then
-                        ' No need to manually compute the % complete
-                        Continue Do
-                    End If
-
-                    If unfilteredFeatures = 0 Then
-                        Dim oPromexResults As Match = rePromexFeatureStats.Match(strLineIn)
-                        If oPromexResults.Success Then
-                            If Integer.TryParse(oPromexResults.Groups(1).ToString(), filteredFeatures) Then
-                                m_filteredPromexFeatures = filteredFeatures
-                            End If
-                            If Integer.TryParse(oPromexResults.Groups(2).ToString(), unfilteredFeatures) Then
-                                m_unfilteredPromexFeatures = unfilteredFeatures
-                            End If
-                        End If
-                    End If
-
-                    Dim oProteinSerchedMatch = reProcessingProteins.Match(strLineIn)
-                    If oProteinSerchedMatch.Success Then
-                        Dim proteinsSearched As Integer
-                        If Integer.TryParse(oProteinSerchedMatch.Groups(1).ToString(), proteinsSearched) Then
-                            If searchingDecoyDB Then
-                                decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched)
-                            Else
-                                targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched)
-                            End If
-                        End If
-                    End If
-
-                Loop
-
-            End Using
-
-            Dim progressComplete As Single
-
-            If percentCompleteFound Then
-                ' Numeric % complete values were found
-
-                Dim progressCompleteAtStart = percentCompleteLevels(currentStage)
-                Dim progressCompleteAtEnd = percentCompleteLevels(currentStage + 1)
-
-                progressComplete = ComputeIncrementalProgress(progressCompleteAtStart, progressCompleteAtEnd, progressCompleteCurrentStage)
-
-            ElseIf searchingDecoyDB Then
-                ' Numeric % complete values were not found, but we did encounter "Searching the decoy database" 
-                ' so we can thus now compute % complete based on the number of proteins searched
-                progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched)
-            End If
-
-            If m_progress < progressComplete Then
-                m_progress = progressComplete
-            End If
-
-        Catch ex As Exception
-            ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-            End If
-        End Try
-
-    End Sub
-
-    ''' <summary>
-    ''' Parses the static and dynamic modification information to create the MSPathFinder Mods file
-    ''' </summary>
-    ''' <param name="strParameterFilePath">Full path to the MSPathFinder parameter file; will create file MSPathFinder_Mods.txt in the same folder</param>
-    ''' <param name="sbOptions">String builder of command line arguments to pass to MSPathFinder</param>
-    ''' <param name="intNumMods">Max Number of Modifications per peptide</param>
-    ''' <param name="lstStaticMods">List of Static Mods</param>
-    ''' <param name="lstDynamicMods">List of Dynamic Mods</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks></remarks>
-    Private Function ParseMSPathFinderModifications(
-     strParameterFilePath As String,
-     sbOptions As StringBuilder,
-     intNumMods As Integer,
-     lstStaticMods As List(Of String),
-     lstDynamicMods As List(Of String)) As Boolean
-
-        Const MOD_FILE_NAME = "MSPathFinder_Mods.txt"
-        Dim blnSuccess As Boolean
-        Dim strModFilePath As String
-        Dim errMsg As String
-
-        Try
-            Dim fiParameterFile = New FileInfo(strParameterFilePath)
-
-            strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME)
-
-            sbOptions.Append(" -mod " & strModFilePath)
-
-            Using swModFile = New StreamWriter(New FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-                swModFile.WriteLine("# This file is used to specify modifications for MSPathFinder")
-                swModFile.WriteLine("")
-                swModFile.WriteLine("# Max Number of Modifications per peptide")
-                swModFile.WriteLine("NumMods=" & intNumMods)
-
-                swModFile.WriteLine("")
-                swModFile.WriteLine("# Static mods")
-                If lstStaticMods.Count = 0 Then
-                    swModFile.WriteLine("# None")
-                Else
-                    For Each strStaticMod As String In lstStaticMods
-                        Dim strModClean = String.Empty
-
-                        If ParseMSPathFinderValidateMod(strStaticMod, strModClean) Then
-                            If strModClean.Contains(",opt,") Then
-                                ' Static (fixed) mod is listed as dynamic
-                                ' Abort the analysis since the parameter file is misleading and needs to be fixed							
-                                errMsg = "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='"
-                                LogError(errMsg, errMsg & "; " & strStaticMod)
-                                Return False
-                            End If
-                            swModFile.WriteLine(strModClean)
-                        Else
-                            Return False
-                        End If
-                    Next
-                End If
-
-                swModFile.WriteLine("")
-                swModFile.WriteLine("# Dynamic mods")
-                If lstDynamicMods.Count = 0 Then
-                    swModFile.WriteLine("# None")
-                Else
-                    For Each strDynamicMod As String In lstDynamicMods
-                        Dim strModClean = String.Empty
-
-                        If ParseMSPathFinderValidateMod(strDynamicMod, strModClean) Then
-                            If strModClean.Contains(",fix,") Then
-                                ' Dynamic (optional) mod is listed as static
-                                ' Abort the analysis since the parameter file is misleading and needs to be fixed							
-                                errMsg = "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='"
-                                LogError(errMsg, errMsg & "; " & strDynamicMod)
-                                Return False
-                            End If
-                            swModFile.WriteLine(strModClean)
-                        Else
-                            Return False
-                        End If
-                    Next
-                End If
-
-            End Using
-
-            blnSuccess = True
-
-        Catch ex As Exception
-            errMsg = "Exception creating MSPathFinder Mods file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg, ex)
-            blnSuccess = False
-        End Try
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Read the MSPathFinder options file and convert the options to command line switches
-    ''' </summary>
-    ''' <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
-    ''' <param name="strCmdLineOptions">Output: MSPathFinder command line arguments</param>
-    ''' <returns>Options string if success; empty string if an error</returns>
-    ''' <remarks></remarks>
-    Public Function ParseMSPathFinderParameterFile(
-      fastaFileIsDecoy As Boolean,
-      <Out()> ByRef strCmdLineOptions As String,
-      <Out()> ByRef tdaEnabled As Boolean) As IJobParams.CloseOutType
-
-        Dim intNumMods = 0
-        Dim lstStaticMods = New List(Of String)
-        Dim lstDynamicMods = New List(Of String)
-
-        Dim errMsg As String
-
-        strCmdLineOptions = String.Empty
-        tdaEnabled = False
-
-        Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
-
-        If Not File.Exists(strParameterFilePath) Then
-            LogError("Parameter file not found", "Parameter file not found: " & strParameterFilePath)
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
-        End If
-
-        Dim sbOptions = New StringBuilder(500)
-
-        Try
-
-            ' Initialize the Param Name dictionary
-            Dim dctParamNames = GetMSPathFinderParameterNames()
-
-            Using srParamFile = New StreamReader(New FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-                Do While Not srParamFile.EndOfStream
-                    Dim strLineIn = srParamFile.ReadLine()
-
-                    Dim kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
-
-                    If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
-
-                        Dim strValue = kvSetting.Value
-                        Dim intValue As Integer
-
-                        Dim strArgumentSwitch = String.Empty
-
-                        ' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-                        If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
-
-                            sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
-
-                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "NumMods") Then
-                            If Integer.TryParse(strValue, intValue) Then
-                                intNumMods = intValue
-                            Else
-                                errMsg = "Invalid value for NumMods in MSPathFinder parameter file"
-                                LogError(errMsg, errMsg & ": " & strLineIn)
-                                srParamFile.Close()
-                                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                            End If
-
-                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "StaticMod") Then
-                            If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
-                                lstStaticMods.Add(strValue)
-                            End If
-
-                        ElseIf clsGlobal.IsMatch(kvSetting.Key, "DynamicMod") Then
-                            If Not String.IsNullOrWhiteSpace(strValue) AndAlso Not clsGlobal.IsMatch(strValue, "none") Then
-                                lstDynamicMods.Add(strValue)
-                            End If
-                        End If
-
-                    End If
-                Loop
-
-            End Using
-
-        Catch ex As Exception
-            m_message = "Exception reading MSPathFinder parameter file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        ' Create the modification file and append the -mod switch
-        If Not ParseMSPathFinderModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        strCmdLineOptions = sbOptions.ToString()
-
-        If strCmdLineOptions.Contains("-tda 1") Then
-            tdaEnabled = True
-            ' Make sure the .Fasta file is not a Decoy fasta
-            If fastaFileIsDecoy Then
-                LogError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-        End If
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Validates that the modification definition text
-    ''' </summary>
-    ''' <param name="strMod">Modification definition</param>
-    ''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
-    ''' <returns>True if valid; false if invalid</returns>
-    ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-    Private Function ParseMSPathFinderValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
-
-        Dim intPoundIndex As Integer
-        Dim strSplitMod() As String
-
-        Dim strComment = String.Empty
-
-        strModClean = String.Empty
-
-        intPoundIndex = strMod.IndexOf("#"c)
-        If intPoundIndex > 0 Then
-            strComment = strMod.Substring(intPoundIndex)
-            strMod = strMod.Substring(0, intPoundIndex - 1).Trim
-        End If
-
-        strSplitMod = strMod.Split(","c)
-
-        If strSplitMod.Length < 5 Then
-            ' Invalid mod definition; must have 5 sections
-            LogError("Invalid modification string; must have 5 sections: " & strMod)
-            Return False
-        End If
-
-        ' Make sure mod does not have both * and any
-        If strSplitMod(1).Trim() = "*" AndAlso strSplitMod(3).ToLower().Trim() = "any" Then
-            LogError("Modification cannot contain both * and any: " & strMod)
-            Return False
-        End If
-
-        ' Reconstruct the mod definition, making sure there is no whitespace
-        strModClean = strSplitMod(0).Trim()
-        For intIndex = 1 To strSplitMod.Length - 1
-            strModClean &= "," & strSplitMod(intIndex).Trim()
-        Next
-
-        If Not String.IsNullOrWhiteSpace(strComment) Then
-            ' As of August 12, 2011, the comment cannot contain a comma
-            ' Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
-            strComment = strComment.Replace(",", ";")
-            strModClean &= "     " & strComment
-        End If
-
-        Return True
-
-    End Function
-
-    Private Function PostProcessMSPathFinderResults() As Boolean
-
-        ' Move the output files into a subfolder so that we can zip them
-        Dim compressDirPath As String
-
-        Try
-            Dim diWorkDir = New DirectoryInfo(m_WorkDir)
-
-            ' Make sure MSPathFinder has released the file handles
-            clsProgRunner.GarbageCollectNow()
-            Thread.Sleep(500)
-
-            Dim diCompressDir = New DirectoryInfo(Path.Combine(m_WorkDir, "TempCompress"))
-            If diCompressDir.Exists Then
-                For Each fiFile In diCompressDir.GetFiles()
-                    fiFile.Delete()
-                Next
-            Else
-                diCompressDir.Create()
-            End If
-
-            Dim fiResultFiles = diWorkDir.GetFiles(m_Dataset & "*_Ic*.tsv").ToList()
-
-            If fiResultFiles.Count = 0 Then
-                m_message = "Did not find any _Ic*.tsv files"
-                Return False
-            End If
-
-            For Each fiFile In fiResultFiles
-                Dim targetFilePath = Path.Combine(diCompressDir.FullName, fiFile.Name)
-                fiFile.MoveTo(targetFilePath)
-            Next
-
-            compressDirPath = diCompressDir.FullName
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception preparing the MSPathFinder results for zipping: " & ex.Message)
-            Return False
-        End Try
-
-        Try
-
-            m_IonicZipTools.DebugLevel = m_DebugLevel
-
-            Dim resultsZipFilePath = Path.Combine(m_WorkDir, m_Dataset & "_IcTsv.zip")
-            Dim blnSuccess = m_IonicZipTools.ZipDirectory(compressDirPath, resultsZipFilePath)
-
-            If Not blnSuccess Then
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = m_IonicZipTools.Message
-                    If String.IsNullOrEmpty(m_message) Then
-                        m_message = "Unknown error zipping the MSPathFinder results"
-                    End If
-                End If
-            End If
-
-            Return blnSuccess
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception zipping the MSPathFinder results: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    Private Function StartMSPathFinder(progLoc As String, fastaFileIsDecoy As Boolean, <Out()> ByRef tdaEnabled As Boolean) As Boolean
-
-        Dim CmdStr As String
-        Dim success As Boolean
-
-        mConsoleOutputErrorMsg = String.Empty
-
-        ' Read the MSPathFinder Parameter File
-        ' The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
-
-        Dim strCmdLineOptions As String = String.Empty
-
-        Dim eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, strCmdLineOptions, tdaEnabled)
-
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return False
-        ElseIf String.IsNullOrEmpty(strCmdLineOptions) Then
-            If String.IsNullOrEmpty(m_message) Then
-                m_message = "Problem parsing MSPathFinder parameter file"
-            End If
-            Return False
-        End If
-
-        Dim pbfFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION)
-        Dim featureFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MS1FT_EXTENSION)
-
-        ' Define the path to the fasta file
-        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
-        Dim fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSPathFinder")
-
-        'Set up and execute a program runner to run MSPathFinder
-
-        CmdStr = " -s " & pbfFilePath
-        CmdStr &= " -feature " & featureFilePath
-        CmdStr &= " -d " & fastaFilePath
-        CmdStr &= " -o " & m_WorkDir
-        CmdStr &= " " & strCmdLineOptions
-
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
-        End If
-
-        mCmdRunner = New clsRunDosProgram(m_WorkDir)
-        RegisterEvents(mCmdRunner)
-        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
-
-        With mCmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT)
-        End With
-
-        m_progress = PROGRESS_PCT_STARTING
-        ResetProgRunnerCpuUsage()
-
-        ' Start the program and wait for it to finish
-        ' However, while it's running, LoopWaiting will get called via events
-        success = mCmdRunner.RunProgram(progLoc, CmdStr, "MSPathFinder", True)
-
-        If Not mCmdRunner.WriteConsoleOutputToFile Then
-            ' Write the console output to a text file
-            Thread.Sleep(250)
-
-            Dim swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
-            swConsoleOutputfile.Close()
-        End If
-
-        ' Parse the console output file one more time to check for errors
-        Thread.Sleep(250)
-        ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
-
-        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
-        End If
-
-        If Not success Then
-            Dim msg = "Error running MSPathFinder"
-
-            If mConsoleOutputErrorMsg.Contains("No results found") Then
-                msg = mConsoleOutputErrorMsg
-
-                If m_unfilteredPromexFeatures > 0 Then
-                    msg &= "; loaded " & m_filteredPromexFeatures & "/" & m_unfilteredPromexFeatures & " ProMex features"
-                End If
-            End If
-
-            m_message = clsGlobal.AppendToComment(m_message, msg)
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
-
-            If mCmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSPathFinder returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSPathFinder failed (but exit code is 0)")
-            End If
-
-            Return False
-
-        End If
-
-        m_progress = PROGRESS_PCT_COMPLETE
-        m_StatusTools.UpdateAndWrite(m_progress)
-        If m_DebugLevel >= 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSPathFinder Search Complete")
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Function StoreToolVersionInfo(strProgLoc As String) As Boolean
-
-        Dim strToolVersionInfo = String.Empty
-        Dim blnSuccess As Boolean
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        Dim fiProgram = New FileInfo(strProgLoc)
-        If Not fiProgram.Exists Then
-            Try
-                strToolVersionInfo = "Unknown"
-                Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), blnSaveToolVersionTextFile:=False)
-            Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-                Return False
-            End Try
-
-        End If
-
-        ' Lookup the version of the .NET application
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiProgram.FullName)
-        If Not blnSuccess Then Return False
-
-
-        ' Store paths to key DLLs in ioToolFiles
-        Dim ioToolFiles = New List(Of FileInfo)
-        ioToolFiles.Add(fiProgram)
-
-        ioToolFiles.Add(New FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")))
-        ioToolFiles.Add(New FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.TopDown.dll")))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-#End Region
-
-#Region "Event Handlers"
-
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
-
-        Const SECONDS_BETWEEN_UPDATE = 30
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
-
-        UpdateStatusFile()
-
-        ' Parse the console output file every 30 seconds
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
-
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT))
-
-            UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
-
-            LogProgress("MSPathFinder")
-        End If
-
-    End Sub
-
-#End Region
-
-End Class
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 07/10/2014
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+
+using AnalysisManagerBase;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Text;
+using System.Threading;
+using PRISM.Processes;
+
+namespace AnalysisManagerMSPathFinderPlugin
+{
+    /// <summary>
+    /// Class for running MSPathFinder analysis of top down data
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsAnalysisToolRunnerMSPathFinder : clsAnalysisToolRunnerBase
+    {
+
+        #region "Constants and Enums"
+
+        private const string MSPATHFINDER_CONSOLE_OUTPUT = "MSPathFinder_ConsoleOutput.txt";
+        private const float PROGRESS_PCT_STARTING = 1;
+        private const float PROGRESS_PCT_GENERATING_SEQUENCE_TAGS = 2;
+        private const float PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB = 3;
+        private const float PROGRESS_PCT_SEARCHING_TARGET_DB = 7;
+        private const int PROGRESS_PCT_CALCULATING_TARGET_EVALUES = 40;
+        private const float PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB = 50;
+        private const float PROGRESS_PCT_SEARCHING_DECOY_DB = 54;
+        private const float PROGRESS_PCT_CALCULATING_DECOY_EVALUES = 85;
+        private const float PROGRESS_PCT_COMPLETE = 99;
+
+        //Private Const MSPathFinder_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.txt"
+        //Private Const MSPathFinder_FILTERED_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.id.txt"
+
+        private enum MSPathFinderSearchStage : int
+        {
+            Start = 0,
+            GeneratingSequenceTags = 1,
+            TagBasedSearchingTargetDB = 2,
+            SearchingTargetDB = 3,
+            CalculatingEValuesForTargetSpectra = 4,
+            TagBasedSearchingDecoyDB = 5,
+            SearchingDecoyDB = 6,
+            CalculatingEValuesForDecoySpectra = 7,
+            Complete = 8
+        }
+
+        #endregion
+
+        #region "Module Variables"
+
+        private string mConsoleOutputErrorMsg;
+        private int m_filteredPromexFeatures = 0;
+        private int m_unfilteredPromexFeatures = 0;
+
+        private clsRunDosProgram mCmdRunner;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Runs MSPathFinder
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override IJobParams.CloseOutType RunTool()
+        {
+            IJobParams.CloseOutType result;
+
+            try
+            {
+                // Call base class for initial setup
+                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSPathFinder.RunTool(): Enter");
+                }
+
+                // Determine the path to the MSPathFinder program (Top-down version)
+                var progLoc = DetermineProgramLocation("MSPathFinder", "MSPathFinderProgLoc", "MSPathFinderT.exe");
+
+                if (string.IsNullOrWhiteSpace(progLoc))
+                {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Store the MSPathFinder version info in the database
+                if (!StoreToolVersionInfo(progLoc))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    m_message = "Error determining MSPathFinder version";
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                bool fastaFileIsDecoy;
+                if (!InitializeFastaFile(out fastaFileIsDecoy))
+                {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Run MSPathFinder
+                bool tdaEnabled;
+                var blnSuccess = StartMSPathFinder(progLoc, fastaFileIsDecoy, out tdaEnabled);
+
+                if (blnSuccess)
+                {
+                    // Look for the results file
+
+                    FileInfo fiResultsFile;
+
+                    if (tdaEnabled)
+                    {
+                        fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_IcTda.tsv"));
+                    }
+                    else
+                    {
+                        fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_IcTarget.tsv"));
+                    }
+
+                    if (fiResultsFile.Exists)
+                    {
+                        blnSuccess = PostProcessMSPathFinderResults();
+                        if (!blnSuccess)
+                        {
+                            if (string.IsNullOrEmpty(m_message))
+                            {
+                                m_message = "Unknown error post-processing the MSPathFinder results";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(m_message))
+                        {
+                            m_message = "MSPathFinder results file not found: " + fiResultsFile.Name;
+                            blnSuccess = false;
+                        }
+                    }
+                }
+
+                m_progress = PROGRESS_PCT_COMPLETE;
+
+                // Stop the job timer
+                m_StopTime = DateTime.UtcNow;
+
+                // Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
+
+                mCmdRunner = null;
+
+                // Make sure objects are released
+                Thread.Sleep(500); // 500 msec delay
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                if (!blnSuccess)
+                {
+                    // Move the source files and any results to the Failed Job folder
+                    // Useful for debugging problems
+                    CopyFailedResultsToArchiveFolder();
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = MakeResultsFolder();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // MakeResultsFolder handles posting to local log, so set database error message and exit
+                    m_message = "Error making results folder";
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = MoveResultFiles();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    m_message = "Error moving files into results folder";
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = CopyResultsFolderToServer();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in MSPathFinderPlugin->RunTool";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private void CopyFailedResultsToArchiveFolder()
+        {
+            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
+                strFailedResultsFolderPath = "??Not Defined??";
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
+
+            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
+            var strFolderPathToArchive = string.Copy(m_WorkDir);
+
+            try
+            {
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
+
+            // Make the results folder
+            var result = MakeResultsFolder();
+            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the result files into the result folder
+                result = MoveResultFiles();
+                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Move was a success; update strFolderPathToArchive
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
+
+            // Copy the results folder to the Archive folder
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+        }
+
+        private Dictionary<string, string> GetMSPathFinderParameterNames()
+        {
+            var dctParamNames = new Dictionary<string, string>(25, StringComparer.CurrentCultureIgnoreCase);
+
+            dctParamNames.Add("PMTolerance", "t");
+            dctParamNames.Add("FragTolerance", "f");
+            dctParamNames.Add("SearchMode", "m");
+            dctParamNames.Add("ActivationMethod", "act");
+            dctParamNames.Add("TDA", "tda");
+
+            dctParamNames.Add("minLength", "minLength");
+            dctParamNames.Add("maxLength", "maxLength");
+
+            dctParamNames.Add("minCharge", "minCharge");
+            dctParamNames.Add("maxCharge", "maxCharge");
+
+            dctParamNames.Add("minFragCharge", "minFragCharge");
+            dctParamNames.Add("maxFragCharge", "maxFragCharge");
+
+            dctParamNames.Add("minMass", "minMass");
+            dctParamNames.Add("maxMass", "maxMass");
+
+            dctParamNames.Add("tagSearch", "tagSearch");
+
+            // The following are special cases;
+            // do not add to dctParamNames
+            //   NumMods
+            //   StaticMod
+            //   DynamicMod
+
+            return dctParamNames;
+        }
+
+        private bool InitializeFastaFile(out bool fastaFileIsDecoy)
+        {
+            fastaFileIsDecoy = false;
+
+            // Define the path to the fasta file
+            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+
+            var fiFastaFile = new FileInfo(fastaFilePath);
+
+            if (!fiFastaFile.Exists)
+            {
+                // Fasta file not found
+                LogError("Fasta file not found: " + fiFastaFile.Name, "Fasta file not found: " + fiFastaFile.FullName);
+                return false;
+            }
+
+            string strProteinOptions = null;
+            strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+            if (!string.IsNullOrEmpty(strProteinOptions))
+            {
+                if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
+                {
+                    fastaFileIsDecoy = true;
+                }
+            }
+
+            return true;
+        }
+
+        private bool LineStartsWith(string strLineIn, string matchString)
+        {
+            if (strLineIn.ToLower().StartsWith(matchString.ToLower()))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private const string REGEX_PROMEX_RESULTS = "ProMex[^\\d]+(\\d+)/(\\d+) features loaded";
+        private const string REGEX_MSPATHFINDER_PROGRESS = "([0-9.]+)% complete";
+        private Regex rePromexFeatureStats = new Regex(REGEX_PROMEX_RESULTS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private Regex reCheckProgress = new Regex(REGEX_MSPATHFINDER_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private Regex reProcessingProteins = new Regex("(\\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// Parse the MSPathFinder console output file to track the search progress
+        /// </summary>
+        /// <param name="strConsoleOutputFilePath"></param>
+        /// <remarks></remarks>
+        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        {
+            // Example Console output
+
+            // MSPathFinderT 0.93 (June 29, 2015)
+            // SpectrumFilePath: E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.pbf
+            // DatabaseFilePath: c:\DMS_Temp_Org\ID_004973_9BA6912F_Excerpt.fasta
+            // FeatureFilePath:  E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.ms1ft
+            // OutputDir:        E:\DMS_WorkDir
+            // SearchMode: 1
+            // Tda: Target+Decoy
+            // PrecursorIonTolerancePpm: 10
+            // ProductIonTolerancePpm: 10
+            // MinSequenceLength: 21
+            // MaxSequenceLength: 300
+            // MinPrecursorIonCharge: 2
+            // MaxPrecursorIonCharge: 30
+            // MinProductIonCharge: 1
+            // MaxProductIonCharge: 15
+            // MinSequenceMass: 3000
+            // MaxSequenceMass: 50000
+            // MinFeatureProbability: 0.1
+            // MaxDynamicModificationsPerSequence: 4
+            // Modifications:
+            // C(0) H(0) N(0) O(1) S(0),M,opt,Everywhere,Oxidation
+            // C(0) H(-1) N(0) O(0) S(0),C,opt,Everywhere,Dehydro
+            // C(2) H(2) N(0) O(1) S(0),*,opt,ProteinNTerm,Acetyl
+            // Getting MS1 features from E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.ms1ft.
+            // Reading raw file...Elapsed Time: 0.0304 sec
+            // Reading ProMex results...332/354 features loaded...Elapsed Time: 5.0866 sec
+            // Generating sequence tags for MS/MS spectra...
+            // Number of spectra: 6360
+            // Processing, 0 spectra done, 0.0% complete, 0.1 sec elapsed
+            // Processing, 1863 spectra done, 29.3% complete, 15.1 sec elapsed
+            // Processing, 3123 spectra done, 49.1% complete, 30.1 sec elapsed
+            // Processing, 3917 spectra done, 61.6% complete, 45.1 sec elapsed
+            // Processing, 4718 spectra done, 74.2% complete, 60.2 sec elapsed
+            // Processing, 5545 spectra done, 87.2% complete, 75.2 sec elapsed
+            // Generated sequence tags: 1345048
+            // Elapsed Time: 87.9 sec
+            // Reading the target database...Elapsed Time: 0.0 sec
+            // Tag-based searching the target database
+            // Processing, 0 spectra done, 0.0% complete, 0.0 sec elapsed
+            // Processing, 1424 spectra done, 22.4% complete, 15.1 sec elapsed
+            // Processing, 1550 spectra done, 24.4% complete, 30.2 sec elapsed
+            // ...
+            // Processing, 4703 spectra done, 73.9% complete, 1817.6 sec elapsed
+            // Processing, 5807 spectra done, 91.3% complete, 2117.9 sec elapsed
+            // Target database tag-based search elapsed Time: 2147.0 sec
+            // Searching the target database
+            // Estimated proteins: 3421782
+            // Processing, 0 proteins done, 0.0% complete, 0.0 sec elapsed
+            // Processing, 4331 proteins done, 0.1% complete, 15.0 sec elapsed
+            // Processing, 7092 proteins done, 0.2% complete, 30.0 sec elapsed
+            // ...
+            // Processing, 3316784 proteins done, 96.9% complete, 12901.9 sec elapsed
+            // Processing, 3398701 proteins done, 99.3% complete, 13201.9 sec elapsed
+            // Target database search elapsed Time: 13275.2 sec
+            // Calculating spectral E-values for target-spectrum matches
+            // Estimated matched proteins: 8059
+            // Processing, 0 proteins done, 0.0% complete, 0.2 sec elapsed
+            // Processing, 110 proteins done, 1.4% complete, 15.2 sec elapsed
+            // Processing, 231 proteins done, 2.9% complete, 30.2 sec elapsed
+            // ...
+            // Processing, 7222 proteins done, 89.6% complete, 1128.6 sec elapsed
+            // Processing, 7513 proteins done, 93.2% complete, 1188.6 sec elapsed
+            // Target-spectrum match E-value calculation elapsed Time: 1429.6 sec
+            // Reading the decoy database...Elapsed Time: 0.0 sec
+            // Tag-based searching the decoy database
+            // Processing, 0 spectra done, 0.0% complete, 0.0 sec elapsed
+            // Processing, 1544 spectra done, 24.3% complete, 27.0 sec elapsed
+            // Processing, 1618 spectra done, 25.4% complete, 42.4 sec elapsed
+            // ...
+            // Processing, 4150 spectra done, 65.3% complete, 1465.5 sec elapsed
+            // Processing, 5351 spectra done, 84.1% complete, 1765.6 sec elapsed
+            // Target database tag-based search elapsed Time: 1990.2 sec
+            // Searching the decoy database
+            // Estimated proteins: 3421782
+            // Processing, 0 proteins done, 0.0% complete, 0.0 sec elapsed
+            // Processing, 4045 proteins done, 0.1% complete, 15.0 sec elapsed
+            // ...
+            // Processing, 3341406 proteins done, 97.7% complete, 16795.6 sec elapsed
+            // Processing, 3411145 proteins done, 99.7% complete, 17095.6 sec elapsed
+            // Decoy database search elapsed Time: 17143.6 sec
+            // Calculating spectral E-values for decoy-spectrum matches
+            // Estimated matched proteins: 9708
+            // Processing, 0 proteins done, 0.0% complete, 0.2 sec elapsed
+            // Processing, 100 proteins done, 1.0% complete, 15.2 sec elapsed
+            // ...
+            // Processing, 7277 proteins done, 75.0% complete, 1188.8 sec elapsed
+            // Processing, 8764 proteins done, 90.3% complete, 1488.8 sec elapsed
+            // Decoy-spectrum match E-value calculation elapsed Time: 1849.9 sec
+            // Done.
+            // Total elapsed time for search: 37962.4 sec (632.71 min)
+
+
+            const string EXCEPTION_FLAG = "Exception while processing:";
+            const string ERROR_PROCESSING_FLAG = "Error processing";
+
+            try
+            {
+                if (!File.Exists(strConsoleOutputFilePath))
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " + strConsoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (m_DebugLevel >= 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                }
+
+                // progressComplete values are between 0 and 100
+                // MSPathFinder reports % complete values numerous times for each section
+                // We keep track of the section using currentStage
+                float progressCompleteCurrentStage = 0;
+                var currentStage = MSPathFinderSearchStage.Start;
+
+                var percentCompleteFound = false;
+
+                // This array holds the % complete values at the start of each stage
+                var percentCompleteLevels = new float[(int) MSPathFinderSearchStage.Complete + 1];
+
+                percentCompleteLevels[(int) MSPathFinderSearchStage.Start] = 0;
+                percentCompleteLevels[(int) MSPathFinderSearchStage.GeneratingSequenceTags] = PROGRESS_PCT_GENERATING_SEQUENCE_TAGS;
+                percentCompleteLevels[(int) MSPathFinderSearchStage.TagBasedSearchingTargetDB] = PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB;
+                percentCompleteLevels[(int) MSPathFinderSearchStage.SearchingTargetDB] = PROGRESS_PCT_SEARCHING_TARGET_DB;
+                percentCompleteLevels[(int) MSPathFinderSearchStage.CalculatingEValuesForTargetSpectra] = PROGRESS_PCT_CALCULATING_TARGET_EVALUES;
+                percentCompleteLevels[(int) MSPathFinderSearchStage.TagBasedSearchingDecoyDB] = PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB;
+                percentCompleteLevels[(int) MSPathFinderSearchStage.SearchingDecoyDB] = PROGRESS_PCT_SEARCHING_DECOY_DB;
+                percentCompleteLevels[(int) MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra] = PROGRESS_PCT_CALCULATING_DECOY_EVALUES;
+                percentCompleteLevels[(int) MSPathFinderSearchStage.Complete] = PROGRESS_PCT_COMPLETE;
+
+                var filteredFeatures = 0;
+                var unfilteredFeatures = 0;
+
+                var targetProteinsSearched = 0;
+                var decoyProteinsSearched = 0;
+
+                var searchingDecoyDB = false;
+                mConsoleOutputErrorMsg = string.Empty;
+
+                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!srInFile.EndOfStream)
+                    {
+                        var strLineIn = srInFile.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        {
+                            continue;
+                        }
+
+                        var strLineInLCase = strLineIn.ToLower();
+
+                        if (strLineInLCase.StartsWith(EXCEPTION_FLAG.ToLower()) || strLineInLCase.Contains("unhandled exception"))
+                        {
+                            // Exception while processing
+
+                            var exceptionMessage = strLineIn.Substring(EXCEPTION_FLAG.Length).TrimStart();
+
+                            mConsoleOutputErrorMsg = "Error running MSPathFinder: " + exceptionMessage;
+                            break;
+                        }
+
+                        if (strLineInLCase.StartsWith(ERROR_PROCESSING_FLAG.ToLower()))
+                        {
+                            // Error processing FileName.msf1lt: Error details;
+
+                            string errorMessage = null;
+
+                            var colonIndex = strLineIn.IndexOf(':');
+                            if (colonIndex > 0)
+                            {
+                                errorMessage = strLineIn.Substring(colonIndex + 1).Trim();
+                            }
+                            else
+                            {
+                                errorMessage = strLineIn;
+                            }
+
+                            if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                            {
+                                if (errorMessage.Contains("No results found"))
+                                {
+                                    mConsoleOutputErrorMsg = errorMessage;
+                                }
+                                else
+                                {
+                                    mConsoleOutputErrorMsg = "Error running MSPathFinder: " + errorMessage;
+                                }
+
+                                continue;
+                            }
+
+                            mConsoleOutputErrorMsg += "; " + errorMessage;
+                            continue;
+                        }
+                        else if (LineStartsWith(strLineIn, "Generating sequence tags for MS/MS spectra"))
+                        {
+                            currentStage = MSPathFinderSearchStage.GeneratingSequenceTags;
+                        }
+                        else if (LineStartsWith(strLineIn, "Reading the target database") ||
+                                 LineStartsWith(strLineIn, "tag-based searching the target database"))
+                        {
+                            currentStage = MSPathFinderSearchStage.TagBasedSearchingTargetDB;
+                        }
+                        else if (LineStartsWith(strLineIn, "Searching the target database"))
+                        {
+                            currentStage = MSPathFinderSearchStage.SearchingTargetDB;
+                        }
+                        else if (LineStartsWith(strLineIn, "Calculating spectral E-values for target-spectrum matches"))
+                        {
+                            currentStage = MSPathFinderSearchStage.CalculatingEValuesForTargetSpectra;
+                        }
+                        else if (LineStartsWith(strLineIn, "Reading the decoy database") ||
+                                 LineStartsWith(strLineIn, "Tag-based searching the decoy database"))
+                        {
+                            currentStage = MSPathFinderSearchStage.TagBasedSearchingDecoyDB;
+                            searchingDecoyDB = true;
+                            continue;
+                        }
+                        else if (LineStartsWith(strLineIn, "Searching the decoy database"))
+                        {
+                            currentStage = MSPathFinderSearchStage.SearchingDecoyDB;
+                            searchingDecoyDB = true;
+                            continue;
+                        }
+                        else if (LineStartsWith(strLineIn, "Calculating spectral E-values for decoy-spectrum matches"))
+                        {
+                            currentStage = MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra;
+                        }
+
+                        var oProgressMatch = reCheckProgress.Match(strLineIn);
+                        if (oProgressMatch.Success)
+                        {
+                            float progressValue = 0;
+                            if (float.TryParse(oProgressMatch.Groups[1].ToString(), out progressValue))
+                            {
+                                progressCompleteCurrentStage = progressValue;
+                                percentCompleteFound = true;
+                            }
+                            continue;
+                        }
+
+                        if (percentCompleteFound)
+                        {
+                            // No need to manually compute the % complete
+                            continue;
+                        }
+
+                        if (unfilteredFeatures == 0)
+                        {
+                            var oPromexResults = rePromexFeatureStats.Match(strLineIn);
+                            if (oPromexResults.Success)
+                            {
+                                if (int.TryParse(oPromexResults.Groups[1].ToString(), out filteredFeatures))
+                                {
+                                    m_filteredPromexFeatures = filteredFeatures;
+                                }
+                                if (int.TryParse(oPromexResults.Groups[2].ToString(), out unfilteredFeatures))
+                                {
+                                    m_unfilteredPromexFeatures = unfilteredFeatures;
+                                }
+                            }
+                        }
+
+                        var oProteinSerchedMatch = reProcessingProteins.Match(strLineIn);
+                        if (oProteinSerchedMatch.Success)
+                        {
+                            int proteinsSearched = 0;
+                            if (int.TryParse(oProteinSerchedMatch.Groups[1].ToString(), out proteinsSearched))
+                            {
+                                if (searchingDecoyDB)
+                                {
+                                    decoyProteinsSearched = Math.Max(decoyProteinsSearched, proteinsSearched);
+                                }
+                                else
+                                {
+                                    targetProteinsSearched = Math.Max(targetProteinsSearched, proteinsSearched);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                float progressComplete = 0;
+
+                if (percentCompleteFound)
+                {
+                    // Numeric % complete values were found
+
+                    var progressCompleteAtStart = percentCompleteLevels[(int) currentStage];
+                    var progressCompleteAtEnd = percentCompleteLevels[(int) currentStage + 1];
+
+                    progressComplete = ComputeIncrementalProgress(progressCompleteAtStart, progressCompleteAtEnd, progressCompleteCurrentStage);
+                }
+                else if (searchingDecoyDB)
+                {
+                    // Numeric % complete values were not found, but we did encounter "Searching the decoy database"
+                    // so we can thus now compute % complete based on the number of proteins searched
+                    progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_SEARCHING_DECOY_DB, PROGRESS_PCT_COMPLETE, decoyProteinsSearched, targetProteinsSearched);
+                }
+
+                if (m_progress < progressComplete)
+                {
+                    m_progress = progressComplete;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Parses the static and dynamic modification information to create the MSPathFinder Mods file
+        /// </summary>
+        /// <param name="strParameterFilePath">Full path to the MSPathFinder parameter file; will create file MSPathFinder_Mods.txt in the same folder</param>
+        /// <param name="sbOptions">String builder of command line arguments to pass to MSPathFinder</param>
+        /// <param name="intNumMods">Max Number of Modifications per peptide</param>
+        /// <param name="lstStaticMods">List of Static Mods</param>
+        /// <param name="lstDynamicMods">List of Dynamic Mods</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        private bool ParseMSPathFinderModifications(string strParameterFilePath, StringBuilder sbOptions, int intNumMods, List<string> lstStaticMods,
+            List<string> lstDynamicMods)
+        {
+            const string MOD_FILE_NAME = "MSPathFinder_Mods.txt";
+            bool blnSuccess = false;
+            string strModFilePath = null;
+            string errMsg = null;
+
+            try
+            {
+                var fiParameterFile = new FileInfo(strParameterFilePath);
+
+                strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME);
+
+                sbOptions.Append(" -mod " + strModFilePath);
+
+                using (var swModFile = new StreamWriter(new FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    swModFile.WriteLine("# This file is used to specify modifications for MSPathFinder");
+                    swModFile.WriteLine("");
+                    swModFile.WriteLine("# Max Number of Modifications per peptide");
+                    swModFile.WriteLine("NumMods=" + intNumMods);
+
+                    swModFile.WriteLine("");
+                    swModFile.WriteLine("# Static mods");
+                    if (lstStaticMods.Count == 0)
+                    {
+                        swModFile.WriteLine("# None");
+                    }
+                    else
+                    {
+                        foreach (var strStaticMod in lstStaticMods)
+                        {
+                            var strModClean = string.Empty;
+
+                            if (ParseMSPathFinderValidateMod(strStaticMod, out strModClean))
+                            {
+                                if (strModClean.Contains(",opt,"))
+                                {
+                                    // Static (fixed) mod is listed as dynamic
+                                    // Abort the analysis since the parameter file is misleading and needs to be fixed
+                                    errMsg =
+                                        "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='";
+                                    LogError(errMsg, errMsg + "; " + strStaticMod);
+                                    return false;
+                                }
+                                swModFile.WriteLine(strModClean);
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                    }
+
+                    swModFile.WriteLine("");
+                    swModFile.WriteLine("# Dynamic mods");
+                    if (lstDynamicMods.Count == 0)
+                    {
+                        swModFile.WriteLine("# None");
+                    }
+                    else
+                    {
+                        foreach (var strDynamicMod in lstDynamicMods)
+                        {
+                            var strModClean = string.Empty;
+
+                            if (ParseMSPathFinderValidateMod(strDynamicMod, out strModClean))
+                            {
+                                if (strModClean.Contains(",fix,"))
+                                {
+                                    // Dynamic (optional) mod is listed as static
+                                    // Abort the analysis since the parameter file is misleading and needs to be fixed
+                                    errMsg =
+                                        "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='";
+                                    LogError(errMsg, errMsg + "; " + strDynamicMod);
+                                    return false;
+                                }
+                                swModFile.WriteLine(strModClean);
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                blnSuccess = true;
+
+            }
+            catch (Exception ex)
+            {
+                errMsg = "Exception creating MSPathFinder Mods file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg, ex);
+                blnSuccess = false;
+            }
+
+            return blnSuccess;
+        }
+
+        /// <summary>
+        /// Read the MSPathFinder options file and convert the options to command line switches
+        /// </summary>
+        /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+        /// <param name="strCmdLineOptions">Output: MSPathFinder command line arguments</param>
+        /// <returns>Options string if success; empty string if an error</returns>
+        /// <remarks></remarks>
+        public IJobParams.CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string strCmdLineOptions, out bool tdaEnabled)
+        {
+            var intNumMods = 0;
+            var lstStaticMods = new List<string>();
+            var lstDynamicMods = new List<string>();
+
+            string errMsg = null;
+
+            strCmdLineOptions = string.Empty;
+            tdaEnabled = false;
+
+            var strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+
+            if (!File.Exists(strParameterFilePath))
+            {
+                LogError("Parameter file not found", "Parameter file not found: " + strParameterFilePath);
+                return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
+
+            var sbOptions = new StringBuilder(500);
+
+            try
+            {
+                // Initialize the Param Name dictionary
+                var dctParamNames = GetMSPathFinderParameterNames();
+
+                using (var srParamFile = new StreamReader(new FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srParamFile.EndOfStream)
+                    {
+                        var strLineIn = srParamFile.ReadLine();
+
+                        var kvSetting = clsGlobal.GetKeyValueSetting(strLineIn);
+
+                        if (!string.IsNullOrWhiteSpace(kvSetting.Key))
+                        {
+                            var strValue = kvSetting.Value;
+                            int intValue = 0;
+
+                            var strArgumentSwitch = string.Empty;
+
+                            // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
+                            if (dctParamNames.TryGetValue(kvSetting.Key, out strArgumentSwitch))
+                            {
+                                sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
+
+                            }
+                            else if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
+                            {
+                                if (int.TryParse(strValue, out intValue))
+                                {
+                                    intNumMods = intValue;
+                                }
+                                else
+                                {
+                                    errMsg = "Invalid value for NumMods in MSPathFinder parameter file";
+                                    LogError(errMsg, errMsg + ": " + strLineIn);
+                                    srParamFile.Close();
+                                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                                }
+                            }
+                            else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
+                            {
+                                if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
+                                {
+                                    lstStaticMods.Add(strValue);
+                                }
+                            }
+                            else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
+                            {
+                                if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
+                                {
+                                    lstDynamicMods.Add(strValue);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception reading MSPathFinder parameter file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Create the modification file and append the -mod switch
+            if (!ParseMSPathFinderModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods))
+            {
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            strCmdLineOptions = sbOptions.ToString();
+
+            if (strCmdLineOptions.Contains("-tda 1"))
+            {
+                tdaEnabled = true;
+                // Make sure the .Fasta file is not a Decoy fasta
+                if (fastaFileIsDecoy)
+                {
+                    LogError(
+                        "Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)");
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Validates that the modification definition text
+        /// </summary>
+        /// <param name="strMod">Modification definition</param>
+        /// <param name="strModClean">Cleaned-up modification definition (output param)</param>
+        /// <returns>True if valid; false if invalid</returns>
+        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
+        private bool ParseMSPathFinderValidateMod(string strMod, out string strModClean)
+        {
+            int intPoundIndex = 0;
+            string[] strSplitMod = null;
+
+            var strComment = string.Empty;
+
+            strModClean = string.Empty;
+
+            intPoundIndex = strMod.IndexOf('#');
+            if (intPoundIndex > 0)
+            {
+                strComment = strMod.Substring(intPoundIndex);
+                strMod = strMod.Substring(0, intPoundIndex - 1).Trim();
+            }
+
+            strSplitMod = strMod.Split(',');
+
+            if (strSplitMod.Length < 5)
+            {
+                // Invalid mod definition; must have 5 sections
+                LogError("Invalid modification string; must have 5 sections: " + strMod);
+                return false;
+            }
+
+            // Make sure mod does not have both * and any
+            if (strSplitMod[1].Trim() == "*" && strSplitMod[3].ToLower().Trim() == "any")
+            {
+                LogError("Modification cannot contain both * and any: " + strMod);
+                return false;
+            }
+
+            // Reconstruct the mod definition, making sure there is no whitespace
+            strModClean = strSplitMod[0].Trim();
+            for (var intIndex = 1; intIndex <= strSplitMod.Length - 1; intIndex++)
+            {
+                strModClean += "," + strSplitMod[intIndex].Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(strComment))
+            {
+                // As of August 12, 2011, the comment cannot contain a comma
+                // Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
+                strComment = strComment.Replace(",", ";");
+                strModClean += "     " + strComment;
+            }
+
+            return true;
+        }
+
+        private bool PostProcessMSPathFinderResults()
+        {
+            // Move the output files into a subfolder so that we can zip them
+            string compressDirPath = null;
+
+            try
+            {
+                var diWorkDir = new DirectoryInfo(m_WorkDir);
+
+                // Make sure MSPathFinder has released the file handles
+                clsProgRunner.GarbageCollectNow();
+                Thread.Sleep(500);
+
+                var diCompressDir = new DirectoryInfo(Path.Combine(m_WorkDir, "TempCompress"));
+                if (diCompressDir.Exists)
+                {
+                    foreach (var fiFile in diCompressDir.GetFiles())
+                    {
+                        fiFile.Delete();
+                    }
+                }
+                else
+                {
+                    diCompressDir.Create();
+                }
+
+                var fiResultFiles = diWorkDir.GetFiles(m_Dataset + "*_Ic*.tsv").ToList();
+
+                if (fiResultFiles.Count == 0)
+                {
+                    m_message = "Did not find any _Ic*.tsv files";
+                    return false;
+                }
+
+                foreach (var fiFile in fiResultFiles)
+                {
+                    var targetFilePath = Path.Combine(diCompressDir.FullName, fiFile.Name);
+                    fiFile.MoveTo(targetFilePath);
+                }
+
+                compressDirPath = diCompressDir.FullName;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception preparing the MSPathFinder results for zipping: " + ex.Message);
+                return false;
+            }
+
+            try
+            {
+                m_IonicZipTools.DebugLevel = m_DebugLevel;
+
+                var resultsZipFilePath = Path.Combine(m_WorkDir, m_Dataset + "_IcTsv.zip");
+                var blnSuccess = m_IonicZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
+
+                if (!blnSuccess)
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        m_message = m_IonicZipTools.Message;
+                        if (string.IsNullOrEmpty(m_message))
+                        {
+                            m_message = "Unknown error zipping the MSPathFinder results";
+                        }
+                    }
+                }
+
+                return blnSuccess;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception zipping the MSPathFinder results: " + ex.Message);
+                return false;
+            }
+        }
+
+        private bool StartMSPathFinder(string progLoc, bool fastaFileIsDecoy, out bool tdaEnabled)
+        {
+            string CmdStr = null;
+            bool success = false;
+
+            mConsoleOutputErrorMsg = string.Empty;
+
+            // Read the MSPathFinder Parameter File
+            // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
+
+            var strCmdLineOptions = string.Empty;
+
+            var eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, out strCmdLineOptions, out tdaEnabled);
+
+            if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return false;
+            }
+            else if (string.IsNullOrEmpty(strCmdLineOptions))
+            {
+                if (string.IsNullOrEmpty(m_message))
+                {
+                    m_message = "Problem parsing MSPathFinder parameter file";
+                }
+                return false;
+            }
+
+            var pbfFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION);
+            var featureFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MS1FT_EXTENSION);
+
+            // Define the path to the fasta file
+            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSPathFinder");
+
+            //Set up and execute a program runner to run MSPathFinder
+
+            CmdStr = " -s " + pbfFilePath;
+            CmdStr += " -feature " + featureFilePath;
+            CmdStr += " -d " + fastaFilePath;
+            CmdStr += " -o " + m_WorkDir;
+            CmdStr += " " + strCmdLineOptions;
+
+            if (m_DebugLevel >= 1)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+            }
+
+            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            RegisterEvents(mCmdRunner);
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+            mCmdRunner.CreateNoWindow = true;
+            mCmdRunner.CacheStandardOutput = false;
+            mCmdRunner.EchoOutputToConsole = true;
+
+            mCmdRunner.WriteConsoleOutputToFile = true;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT);
+
+            m_progress = PROGRESS_PCT_STARTING;
+            ResetProgRunnerCpuUsage();
+
+            // Start the program and wait for it to finish
+            // However, while it's running, LoopWaiting will get called via events
+            success = mCmdRunner.RunProgram(progLoc, CmdStr, "MSPathFinder", true);
+
+            if (!mCmdRunner.WriteConsoleOutputToFile)
+            {
+                // Write the console output to a text file
+                Thread.Sleep(250);
+
+                var swConsoleOutputfile =
+                    new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                swConsoleOutputfile.Close();
+            }
+
+            // Parse the console output file one more time to check for errors
+            Thread.Sleep(250);
+            ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+
+            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+            }
+
+            if (!success)
+            {
+                var msg = "Error running MSPathFinder";
+
+                if (mConsoleOutputErrorMsg.Contains("No results found"))
+                {
+                    msg = mConsoleOutputErrorMsg;
+
+                    if (m_unfilteredPromexFeatures > 0)
+                    {
+                        msg += "; loaded " + m_filteredPromexFeatures + "/" + m_unfilteredPromexFeatures + " ProMex features";
+                    }
+                }
+
+                m_message = clsGlobal.AppendToComment(m_message, msg);
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSPathFinder returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSPathFinder failed (but exit code is 0)");
+                }
+
+                return false;
+            }
+
+            m_progress = PROGRESS_PCT_COMPLETE;
+            m_StatusTools.UpdateAndWrite(m_progress);
+            if (m_DebugLevel >= 3)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSPathFinder Search Complete");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        private bool StoreToolVersionInfo(string strProgLoc)
+        {
+            var strToolVersionInfo = string.Empty;
+            bool blnSuccess = false;
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            var fiProgram = new FileInfo(strProgLoc);
+            if (!fiProgram.Exists)
+            {
+                try
+                {
+                    strToolVersionInfo = "Unknown";
+                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), blnSaveToolVersionTextFile: false);
+                }
+                catch (Exception ex)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    return false;
+                }
+            }
+
+            // Lookup the version of the .NET application
+            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
+            if (!blnSuccess)
+                return false;
+
+            // Store paths to key DLLs in ioToolFiles
+            var ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(fiProgram);
+
+            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
+            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.TopDown.dll")));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            const int SECONDS_BETWEEN_UPDATE = 30;
+
+            UpdateStatusFile();
+
+            // Parse the console output file every 30 seconds
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
+            {
+                dtLastConsoleOutputParse = DateTime.UtcNow;
+
+                ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSPATHFINDER_CONSOLE_OUTPUT));
+
+                UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
+
+                LogProgress("MSPathFinder");
+            }
+        }
+
+        #endregion
+
+    }
+}
