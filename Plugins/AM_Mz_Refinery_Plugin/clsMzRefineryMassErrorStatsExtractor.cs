@@ -1,217 +1,226 @@
-Imports AnalysisManagerBase
-Imports System.IO
-Imports System.Text
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
+using AnalysisManagerBase;
+using System.IO;
+using System.Linq;
+using System.Text;
 
-''' <summary>
-''' This class reads the console text from the PPMErrorCharter's console output and extracts the parent ion mass error information
-''' It passes on the information to DMS for storage in table T_Dataset_QC
-''' </summary>
-''' <remarks></remarks>
-Public Class clsMzRefineryMassErrorStatsExtractor
+namespace AnalysisManagerMzRefineryPlugIn
+{
+    /// <summary>
+    /// This class reads the console text from the PPMErrorCharter's console output and extracts the parent ion mass error information
+    /// It passes on the information to DMS for storage in table T_Dataset_QC
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsMzRefineryMassErrorStatsExtractor
+    {
+        private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
+        private readonly IMgrParams m_mgrParams;
+        private readonly short m_DebugLevel;
 
-    Private Const STORE_MASS_ERROR_STATS_SP_NAME As String = "StoreDTARefMassErrorStats"
+        private readonly bool mPostResultsToDB;
 
-    Private ReadOnly m_mgrParams As IMgrParams
-    Private ReadOnly m_DebugLevel As Short
-    Private ReadOnly mPostResultsToDB As Boolean
+        private string mErrorMessage;
+        private struct udtMassErrorInfoType
+        {
+            public string DatasetName;
+            public int DatasetID;
+            public int PSMJob;
+            // Parent Ion Mass Error, before refinement
+            public double MassErrorPPM;
+            // Parent Ion Mass Error, after refinement
+            public double MassErrorPPMRefined;
+        }
 
-    Private mErrorMessage As String
+        public string ErrorMessage
+        {
+            get { return mErrorMessage; }
+        }
 
-    Private Structure udtMassErrorInfoType
-        Public DatasetName As String
-        Public DatasetID As Integer
-        Public PSMJob As Integer
-        Public MassErrorPPM As Double               ' Parent Ion Mass Error, before refinement
-        Public MassErrorPPMRefined As Double        ' Parent Ion Mass Error, after refinement
-    End Structure
+        public clsMzRefineryMassErrorStatsExtractor(ref IMgrParams mgrParams, string strWorkDir, short intDebugLevel, bool blnPostResultsToDB)
+        {
+            m_mgrParams = mgrParams;
+            m_DebugLevel = intDebugLevel;
+            mPostResultsToDB = blnPostResultsToDB;
 
-    Public ReadOnly Property ErrorMessage() As String
-        Get
-            Return mErrorMessage
-        End Get
-    End Property
+            mErrorMessage = string.Empty;
+        }
 
-    Public Sub New(ByRef mgrParams As IMgrParams, strWorkDir As String, intDebugLevel As Short, blnPostResultsToDB As Boolean)
+        private string ConstructXML(udtMassErrorInfoType udtMassErrorInfo)
+        {
+            var sbXml = new StringBuilder();
 
-        m_mgrParams = mgrParams
-        m_DebugLevel = intDebugLevel
-        mPostResultsToDB = blnPostResultsToDB
+            try
+            {
+                sbXml.Append("<DTARef_MassErrorStats>");
 
-        mErrorMessage = String.Empty
-    End Sub
+                sbXml.Append((Convert.ToString("<Dataset>") + udtMassErrorInfo.DatasetName) + "</Dataset>");
+                sbXml.Append((Convert.ToString("<PSM_Source_Job>") + udtMassErrorInfo.PSMJob) + "</PSM_Source_Job>");
 
-    Private Function ConstructXML(udtMassErrorInfo As udtMassErrorInfoType) As String
-        Dim sbXml = New StringBuilder()
+                sbXml.Append("<Measurements>");
+                sbXml.Append((Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + udtMassErrorInfo.MassErrorPPM) + "</Measurement>");
+                sbXml.Append((Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + udtMassErrorInfo.MassErrorPPMRefined) + "</Measurement>");
+                sbXml.Append("</Measurements>");
 
-        Try
-            sbXml.Append("<DTARef_MassErrorStats>")
+                sbXml.Append("</DTARef_MassErrorStats>");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error converting Mass Error stats to XML; details:");
+                Console.WriteLine(ex);
+                return string.Empty;
+            }
 
-            sbXml.Append((Convert.ToString("<Dataset>") & udtMassErrorInfo.DatasetName) + "</Dataset>")
-            sbXml.Append((Convert.ToString("<PSM_Source_Job>") & udtMassErrorInfo.PSMJob) + "</PSM_Source_Job>")
+            return sbXml.ToString();
+        }
 
-            sbXml.Append("<Measurements>")
-            sbXml.Append((Convert.ToString("<Measurement Name=""" + "MassErrorPPM" + """>") & udtMassErrorInfo.MassErrorPPM) + "</Measurement>")
-            sbXml.Append((Convert.ToString("<Measurement Name=""" + "MassErrorPPM_Refined" + """>") & udtMassErrorInfo.MassErrorPPMRefined) + "</Measurement>")
-            sbXml.Append("</Measurements>")
+        public bool ParsePPMErrorCharterOutput(string strDatasetName, int intDatasetID, int intPSMJob, string ppmErrorCharterConsoleOutputFilePath)
+        {
+            // Parse the Console Output file to extract the mass error reported in this table
+            //
+            // Using fixed data file "E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_FIXED.mzML"
+            // Statistic                   Original    Refined
+            // MeanMassErrorPPM:              2.430      1.361
+            // MedianMassErrorPPM:            1.782      0.704
+            // StDev(Mean):                   6.969      6.972
+            // StDev(Median):                 6.999      7.003
+            // PPM Window for 99%: 0 +/-     22.779     21.712
+            // PPM Window for 99%: high:     22.779     21.712
+            // PPM Window for 99%:  low:    -19.216    -20.305
 
-            sbXml.Append("</DTARef_MassErrorStats>")
+            const string MASS_ERROR_PPM = "MedianMassErrorPPM:";
 
-        Catch ex As Exception
-            Console.WriteLine("Error converting Mass Error stats to XML; details:")
-            Console.WriteLine(ex)
-            Return String.Empty
-        End Try
+            try
+            {
+                var udtMassErrorInfo = new udtMassErrorInfoType();
+                udtMassErrorInfo.DatasetName = strDatasetName;
+                udtMassErrorInfo.DatasetID = intDatasetID;
+                udtMassErrorInfo.PSMJob = intPSMJob;
+                udtMassErrorInfo.MassErrorPPM = double.MinValue;
+                udtMassErrorInfo.MassErrorPPMRefined = double.MinValue;
 
-        Return sbXml.ToString()
+                var fiSourceFile = new FileInfo(ppmErrorCharterConsoleOutputFilePath);
+                if (!fiSourceFile.Exists)
+                {
+                    mErrorMessage = "MzRefinery Log file not found";
+                    return false;
+                }
 
-    End Function
+                using (var srSourceFile = new StreamReader(new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srSourceFile.EndOfStream)
+                    {
+                        var strLineIn = srSourceFile.ReadLine();
 
-    Public Function ParsePPMErrorCharterOutput(
-      strDatasetName As String,
-      intDatasetID As Integer,
-      intPSMJob As Integer,
-      ppmErrorCharterConsoleOutputFilePath As String) As Boolean
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
 
-        ' Parse the Console Output file to extract the mass error reported in this table
-        '
-        ' Using fixed data file "E:\DMS_WorkDir\Pcarb001_LTQFT_run1_23Sep05_Andro_0705-06_FIXED.mzML"
-        ' Statistic                   Original    Refined
-        ' MeanMassErrorPPM:              2.430      1.361
-        ' MedianMassErrorPPM:            1.782      0.704
-        ' StDev(Mean):                   6.969      6.972
-        ' StDev(Median):                 6.999      7.003
-        ' PPM Window for 99%: 0 +/-     22.779     21.712
-        ' PPM Window for 99%: high:     22.779     21.712
-        ' PPM Window for 99%:  low:    -19.216    -20.305
+                        strLineIn = strLineIn.Trim();
 
-        Const MASS_ERROR_PPM = "MedianMassErrorPPM:"
+                        double massError = 0;
 
-        Try
+                        if (strLineIn.StartsWith(MASS_ERROR_PPM))
+                        {
+                            var dataString = strLineIn.Substring(MASS_ERROR_PPM.Length).Trim();
+                            massError = 0;
 
-            Dim udtMassErrorInfo = New udtMassErrorInfoType
-            udtMassErrorInfo.DatasetName = strDatasetName
-            udtMassErrorInfo.DatasetID = intDatasetID
-            udtMassErrorInfo.PSMJob = intPSMJob
-            udtMassErrorInfo.MassErrorPPM = Double.MinValue
-            udtMassErrorInfo.MassErrorPPMRefined = Double.MinValue
+                            var dataValues = dataString.Split(' ').ToList();
 
-            Dim fiSourceFile = New FileInfo(ppmErrorCharterConsoleOutputFilePath)
-            If Not fiSourceFile.Exists Then
-                mErrorMessage = "MzRefinery Log file not found"
-                Return False
-            End If
+                            if (double.TryParse(dataValues.First(), out massError))
+                            {
+                                udtMassErrorInfo.MassErrorPPM = massError;
+                            }
 
-            Using srSourceFile = New StreamReader(New FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            if (dataValues.Count > 1 && double.TryParse(dataValues.Last(), out massError))
+                            {
+                                udtMassErrorInfo.MassErrorPPMRefined = massError;
+                            }
+                        }
+                    }
+                }
 
-                Do While Not srSourceFile.EndOfStream
-                    Dim strLineIn = srSourceFile.ReadLine()
+                if (Math.Abs(udtMassErrorInfo.MassErrorPPM - double.MinValue) < float.Epsilon)
+                {
+                    mErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' in the PPM Error Charter output";
+                    return false;
+                }
 
-                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
+                if (Math.Abs(udtMassErrorInfo.MassErrorPPMRefined - double.MinValue) < float.Epsilon)
+                {
+                    mErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' with two values in the PPM Error Charter output";
+                    return false;
+                }
 
-                    strLineIn = strLineIn.Trim()
+                var strXMLResults = ConstructXML(udtMassErrorInfo);
 
-                    Dim massError As Double
+                if (mPostResultsToDB)
+                {
+                    bool blnSuccess = false;
 
-                    If strLineIn.StartsWith(MASS_ERROR_PPM) Then
-                        Dim dataString = strLineIn.Substring(MASS_ERROR_PPM.Length).Trim()
-                        massError = 0
+                    blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults);
 
-                        Dim dataValues = dataString.Split(" "c).ToList()
+                    if (!blnSuccess)
+                    {
+                        if (string.IsNullOrEmpty(mErrorMessage))
+                        {
+                            mErrorMessage = "Unknown error posting Mass Error results from MzRefinery to the database";
+                        }
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                mErrorMessage = "Exception in ParsePPMErrorCharterOutput: " + ex.Message;
+                return false;
+            }
 
-                        If Double.TryParse(dataValues.First, massError) Then
-                            udtMassErrorInfo.MassErrorPPM = massError
-                        End If
+            return true;
+        }
 
-                        If dataValues.Count > 1 AndAlso Double.TryParse(dataValues.Last, massError) Then
-                            udtMassErrorInfo.MassErrorPPMRefined = massError
-                        End If
+        private bool PostMassErrorInfoToDB(int intDatasetID, string strXMLResults)
+        {
+            const int MAX_RETRY_COUNT = 3;
 
-                    End If
-                Loop
+            bool blnSuccess = false;
 
-            End Using
+            try
+            {
+                // Call stored procedure StoreDTARefMassErrorStats in DMS5
 
-            If Math.Abs(udtMassErrorInfo.MassErrorPPM - Double.MinValue) < Single.Epsilon Then
-                mErrorMessage = "Did not find '" & MASS_ERROR_PPM & "' in the PPM Error Charter output"
-                Return False
-            End If
+                var objCommand = new SqlCommand();
+                objCommand.CommandType = CommandType.StoredProcedure;
+                objCommand.CommandText = STORE_MASS_ERROR_STATS_SP_NAME;
 
-            If Math.Abs(udtMassErrorInfo.MassErrorPPMRefined - Double.MinValue) < Single.Epsilon Then
-                mErrorMessage = "Did not find '" & MASS_ERROR_PPM & "' with two values in the PPM Error Charter output"
-                Return False
-            End If
+                objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
+                objCommand.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = strXMLResults;
 
-            Dim strXMLResults = ConstructXML(udtMassErrorInfo)
+                var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
-            If mPostResultsToDB Then
-                Dim blnSuccess As Boolean
+                //Execute the SP (retry the call up to 4 times)
+                var ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
 
-                blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults)
+                objAnalysisTask = null;
 
-                If Not blnSuccess Then
-                    If String.IsNullOrEmpty(mErrorMessage) Then
-                        mErrorMessage = "Unknown error posting Mass Error results from MzRefinery to the database"
-                    End If
-                    Return False
-                End If
-            End If
+                if (ResCode == 0)
+                {
+                    blnSuccess = true;
+                }
+                else
+                {
+                    mErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + ResCode.ToString();
+                    blnSuccess = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                mErrorMessage = "Exception storing MzRefinery Mass Error Results in the database: " + ex.Message;
+                blnSuccess = false;
+            }
 
-        Catch ex As Exception
-            mErrorMessage = "Exception in ParsePPMErrorCharterOutput: " & ex.Message
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    Private Function PostMassErrorInfoToDB(
-      intDatasetID As Integer,
-      strXMLResults As String) As Boolean
-
-        Const MAX_RETRY_COUNT = 3
-
-        Dim objCommand As SqlClient.SqlCommand
-
-        Dim blnSuccess As Boolean
-
-        Try
-
-            ' Call stored procedure StoreDTARefMassErrorStats in DMS5
-
-            objCommand = New SqlClient.SqlCommand()
-
-            With objCommand
-                .CommandType = CommandType.StoredProcedure
-                .CommandText = STORE_MASS_ERROR_STATS_SP_NAME
-
-                .Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
-                .Parameters.Add(New SqlClient.SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID
-                .Parameters.Add(New SqlClient.SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = strXMLResults
-            End With
-
-
-            Dim objAnalysisTask = New clsAnalysisJob(m_mgrParams, m_DebugLevel)
-
-            'Execute the SP (retry the call up to 4 times)
-            Dim ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT)
-
-            objAnalysisTask = Nothing
-
-            If ResCode = 0 Then
-                blnSuccess = True
-            Else
-                mErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " & STORE_MASS_ERROR_STATS_SP_NAME & " returned " & ResCode.ToString
-                blnSuccess = False
-            End If
-
-        Catch ex As Exception
-            mErrorMessage = "Exception storing MzRefinery Mass Error Results in the database: " & ex.Message
-            blnSuccess = False
-        End Try
-
-        Return blnSuccess
-
-    End Function
-
-End Class
+            return blnSuccess;
+        }
+    }
+}

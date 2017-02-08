@@ -1,163 +1,181 @@
-Option Strict On
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
 
-Imports AnalysisManagerBase
-Imports System.IO
+using AnalysisManagerBase;
+using System.IO;
 
-Public Class clsAnalysisResourcesMzRefinery
-    Inherits clsAnalysisResources
+namespace AnalysisManagerMzRefineryPlugIn
+{
+    public class clsAnalysisResourcesMzRefinery : clsAnalysisResources
+    {
+        #region "Methods"
 
-#Region "Methods"
+        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        {
+            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+        }
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-    End Sub
+        /// <summary>
+        /// Retrieves files necessary for running MzRefinery
+        /// </summary>
+        /// <returns>IJobParams.CloseOutType indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override IJobParams.CloseOutType GetResources()
+        {
+            var currentTask = "Initializing";
 
-    ''' <summary>
-    ''' Retrieves files necessary for running MzRefinery
-    ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+            try
+            {
+                currentTask = "Retrieve shared resources";
 
-        Dim currentTask = "Initializing"
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                GetSharedResources();
 
-        Try
+                var mzRefParamFile = m_jobParams.GetJobParameter("MzRefParamFile", string.Empty);
+                if (string.IsNullOrEmpty(mzRefParamFile))
+                {
+                    LogError("MzRefParamFile parameter is empty");
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
 
-            currentTask = "Retrieve shared resources"
+                currentTask = "Get Input file";
 
-            ' Retrieve shared resources, including the JobParameters file from the previous job step
-            GetSharedResources()
+                IJobParams.CloseOutType eResult = default(IJobParams.CloseOutType);
+                eResult = GetMsXmlFile();
 
-            Dim mzRefParamFile = m_jobParams.GetJobParameter("MzRefParamFile", String.Empty)
-            If String.IsNullOrEmpty(mzRefParamFile) Then
-                LogError("MzRefParamFile parameter is empty")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return eResult;
+                }
 
-            currentTask = "Get Input file"
+                // Retrieve the Fasta file
+                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
 
-            Dim eResult As IJobParams.CloseOutType
-            eResult = GetMsXmlFile()
+                currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return eResult
-            End If
+                if (!RetrieveOrgDB(localOrgDbFolder))
+                {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
 
-            ' Retrieve the Fasta file
-            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+                // Retrieve the Mz Refinery parameter file
+                currentTask = "Retrieve the Mz Refinery parameter file " + mzRefParamFile;
 
-            currentTask = "RetrieveOrgDB to " & localOrgDbFolder
+                const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "Mz_Refinery";
 
-            If Not RetrieveOrgDB(localOrgDbFolder) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+                var mzRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+                if (string.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath))
+                {
+                    mzRefineryParmFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\MzRefinery";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + mzRefineryParmFileStoragePath);
+                }
 
-            ' Retrieve the Mz Refinery parameter file
-            currentTask = "Retrieve the Mz Refinery parameter file " & mzRefParamFile
+                if (!RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
+                {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
 
-            Const paramFileStoragePathKeyName As String = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "Mz_Refinery"
+                // Look for existing MSGF+ results in the transfer folder
+                currentTask = "Find existing MSGF+ results";
 
-            Dim mzRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName)
-            If String.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath) Then
-                mzRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\MzRefinery"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & paramFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & mzRefineryParmFileStoragePath)
-            End If
+                if (!FindExistingMSGFPlusResults(mzRefParamFile))
+                {
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in GetResources: " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-            If Not RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-            ' Look for existing MSGF+ results in the transfer folder
-            currentTask = "Find existing MSGF+ results"
+        /// <summary>
+        /// Check for existing MSGF+ results in the transfer directory
+        /// </summary>
+        /// <returns>True if no errors, false if a problem</returns>
+        /// <remarks>Will retrun True even if existing results are not found</remarks>
+        private bool FindExistingMSGFPlusResults(string mzRefParamFileName)
+        {
+            var resultsFolderName = m_jobParams.GetParam("OutputFolderName");
+            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
 
-            If Not FindExistingMSGFPlusResults(mzRefParamFile) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
+            if (string.IsNullOrWhiteSpace(resultsFolderName))
+            {
+                m_message = "Results folder not defined (job parameter OutputFolderName)";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
 
-        Catch ex As Exception
-            m_message = "Exception in GetResources: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
+            if (string.IsNullOrWhiteSpace(transferFolderPath))
+            {
+                m_message = "Transfer folder not defined (job parameter transferFolderPath)";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            var diTransferFolder = new DirectoryInfo(Path.Combine(transferFolderPath, m_DatasetName, resultsFolderName));
+            if (!diTransferFolder.Exists)
+            {
+                // This is not an error -- it just means there are no existing MSGF+ results to use
+                return true;
+            }
 
-    End Function
+            // Look for the required files in the transfer folder
+            var resultsFileName = m_DatasetName + clsAnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX + ".gz";
+            var fiMSGFPlusResults = new FileInfo(Path.Combine(diTransferFolder.FullName, resultsFileName));
 
-    ''' <summary>
-    ''' Check for existing MSGF+ results in the transfer directory
-    ''' </summary>
-    ''' <returns>True if no errors, false if a problem</returns>
-    ''' <remarks>Will retrun True even if existing results are not found</remarks>
-    Private Function FindExistingMSGFPlusResults(mzRefParamFileName As String) As Boolean
+            if (!fiMSGFPlusResults.Exists)
+            {
+                // This is not an error -- it just means there are no existing MSGF+ results to use
+                return true;
+            }
 
-        Dim resultsFolderName = m_jobParams.GetParam("OutputFolderName")
-        Dim transferFolderPath = m_jobParams.GetParam("transferFolderPath")
+            var fiMSGFPlusConsoleOutput = new FileInfo(Path.Combine(diTransferFolder.FullName, "MSGFPlus_ConsoleOutput.txt"));
+            if (!fiMSGFPlusResults.Exists)
+            {
+                // This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " + fiMSGFPlusResults.FullName + " but did not find " + fiMSGFPlusConsoleOutput.Name + "; will re-run MSGF+");
+                return true;
+            }
 
-        If String.IsNullOrWhiteSpace(resultsFolderName) Then
-            m_message = "Results folder not defined (job parameter OutputFolderName)"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
+            var fiMzRefParamFile = new FileInfo(Path.Combine(diTransferFolder.FullName, mzRefParamFileName));
+            if (!fiMzRefParamFile.Exists)
+            {
+                // This is unusual; typically if the mzid.gz file exists there should be a MzRefinery parameter file
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " + fiMSGFPlusResults.FullName + " but did not find " + fiMzRefParamFile.Name + "; will re-run MSGF+");
+                return true;
+            }
 
-        If String.IsNullOrWhiteSpace(transferFolderPath) Then
-            m_message = "Transfer folder not defined (job parameter transferFolderPath)"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
+            // Compare the remote parameter file and the local one to make sure they match
+            if (!clsGlobal.TextFilesMatch(fiMzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), true))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefinery parameter file in transfer folder does not match the official MzRefinery paramter file; will re-run MSGF+");
+                return true;
+            }
 
-        Dim diTransferFolder = New DirectoryInfo(Path.Combine(transferFolderPath, m_DatasetName, resultsFolderName))
-        If Not diTransferFolder.Exists Then
-            ' This is not an error -- it just means there are no existing MSGF+ results to use
-            Return True
-        End If
+            // Existing results found
+            // Copy the MSGF+ results locally
+            var localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusResults.Name);
+            fiMSGFPlusResults.CopyTo(localFilePath, true);
 
-        ' Look for the required files in the transfer folder
-        Dim resultsFileName = m_DatasetName & clsAnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX & ".gz"
-        Dim fiMSGFPlusResults = New FileInfo(Path.Combine(diTransferFolder.FullName, resultsFileName))
+            m_IonicZipTools.GUnzipFile(localFilePath);
 
-        If Not fiMSGFPlusResults.Exists Then
-            ' This is not an error -- it just means there are no existing MSGF+ results to use
-            Return True
-        End If
+            localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusConsoleOutput.Name);
+            fiMSGFPlusConsoleOutput.CopyTo(localFilePath, true);
 
-        Dim fiMSGFPlusConsoleOutput = New FileInfo(Path.Combine(diTransferFolder.FullName, "MSGFPlus_ConsoleOutput.txt"))
-        If Not fiMSGFPlusResults.Exists Then
-            ' This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " & fiMSGFPlusResults.FullName & " but did not find " & fiMSGFPlusConsoleOutput.Name & "; will re-run MSGF+")
-            Return True
-        End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found existing MSGF+ results to use for MzRefinery");
 
-        Dim fiMzRefParamFile = New FileInfo(Path.Combine(diTransferFolder.FullName, mzRefParamFileName))
-        If Not fiMzRefParamFile.Exists Then
-            ' This is unusual; typically if the mzid.gz file exists there should be a MzRefinery parameter file
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " & fiMSGFPlusResults.FullName & " but did not find " & fiMzRefParamFile.Name & "; will re-run MSGF+")
-            Return True
-        End If
+            return true;
+        }
 
-        ' Compare the remote parameter file and the local one to make sure they match
-        If Not clsGlobal.TextFilesMatch(fiMzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefinery parameter file in transfer folder does not match the official MzRefinery paramter file; will re-run MSGF+")
-            Return True
-        End If
-
-        ' Existing results found
-        ' Copy the MSGF+ results locally
-        Dim localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusResults.Name)
-        fiMSGFPlusResults.CopyTo(localFilePath, True)
-
-        m_IonicZipTools.GUnzipFile(localFilePath)
-
-        localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusConsoleOutput.Name)
-        fiMSGFPlusConsoleOutput.CopyTo(localFilePath, True)
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found existing MSGF+ results to use for MzRefinery")
-
-        Return True
-
-    End Function
-
-#End Region
-
-End Class
+        #endregion
+    }
+}
