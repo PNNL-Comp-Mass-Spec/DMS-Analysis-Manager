@@ -83,7 +83,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSAlignQuant
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSPathFinderPlugin", "AM_MSPathFinder_Plugin\AnalysisManagerMSPathFinderPlugin.csproj", "{DF8FD60E-3864-4B82-8E80-B3DC220280AB}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMzRefineryPlugIn", "AM_Mz_Refinery_Plugin\AnalysisManagerMzRefineryPlugIn.vbproj", "{2B8D4538-555C-4D01-A508-A75CBE76147C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMzRefineryPlugIn", "AM_Mz_Refinery_Plugin\AnalysisManagerMzRefineryPlugIn.csproj", "{2B8D4538-555C-4D01-A508-A75CBE76147C}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerPBFGenerator", "AM_PBFSpectraFileGen_PlugIn\AnalysisManagerPBFGenerator.vbproj", "{5A93C411-3A34-4C0B-A84D-EFFA65BAD19E}"
 EndProject
