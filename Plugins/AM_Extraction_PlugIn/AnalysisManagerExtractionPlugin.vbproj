@@ -155,11 +155,11 @@
       <Project>{44e81b35-ba39-47ad-9b67-fbafc925caca}</Project>
       <Name>AnalysisManagerMSGFDBPlugIn</Name>
     </ProjectReference>
-    <ProjectReference Include="..\AM_MSGF_PlugIn\AnalysisManagerMSGFPlugin.vbproj">
+    <ProjectReference Include="..\AM_MSGF_PlugIn\AnalysisManagerMSGFPlugin.csproj">
       <Project>{7a6de396-7309-43e1-8f8a-b387709508dd}</Project>
       <Name>AnalysisManagerMSGFPlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="..\AM_MSGF_PlugIn\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.vbproj">
+    <ProjectReference Include="..\AM_MSGF_PlugIn\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj">
       <Project>{60c3570f-82bd-4103-ac4b-ac6cdd4a729c}</Project>
       <Name>MSGFResultsSummarizer</Name>
     </ProjectReference>

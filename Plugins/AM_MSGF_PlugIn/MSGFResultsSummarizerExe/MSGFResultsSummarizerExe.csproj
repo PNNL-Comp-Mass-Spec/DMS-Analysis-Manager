@@ -93,7 +93,7 @@
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.vbproj">
+    <ProjectReference Include="..\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj">
       <Project>{60c3570f-82bd-4103-ac4b-ac6cdd4a729c}</Project>
       <Name>MSGFResultsSummarizer</Name>
     </ProjectReference>

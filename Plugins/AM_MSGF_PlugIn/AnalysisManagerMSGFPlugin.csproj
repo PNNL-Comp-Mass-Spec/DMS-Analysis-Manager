@@ -126,7 +126,7 @@
       <Project>{02d682e5-f70f-4c46-bac8-1c18920fff22}</Project>
       <Name>AnalysisManagerMSXMLGenPlugIn</Name>
     </ProjectReference>
-    <ProjectReference Include="MSGFResultsSummarizerDLL\MSGFResultsSummarizer.vbproj">
+    <ProjectReference Include="MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj">
       <Project>{60c3570f-82bd-4103-ac4b-ac6cdd4a729c}</Project>
       <Name>MSGFResultsSummarizer</Name>
     </ProjectReference>
