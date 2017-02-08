@@ -1,231 +1,266 @@
-Option Strict On
+﻿// This class was created to support being loaded as a pluggable DLL into the New DMS
+// Analysis Tool Manager program.  Each DLL requires a Resource class.  The new ATM
+// supports the mini-pipeline. It uses class MsMsSpectrumFilter.DLL to filter the .DTA
+// files present in a given folder
+//
+// Written by John Sandoval for the Department of Energy (PNNL, Richland, WA)
+// Copyright 2009, Battelle Memorial Institute
+// Started January 20, 2009
 
-' This class was created to support being loaded as a pluggable DLL into the New DMS 
-' Analysis Tool Manager program.  Each DLL requires a Resource class.  The new ATM 
-' supports the mini-pipeline. It uses class MsMsSpectrumFilter.DLL to filter the .DTA 
-' files present in a given folder
-'
-' Written by John Sandoval for the Department of Energy (PNNL, Richland, WA)
-' Copyright 2009, Battelle Memorial Institute
-' Started January 20, 2009
+using System;
+using System.Collections.Generic;
 
-Imports System.IO
-Imports AnalysisManagerBase
-Imports MSMSSpectrumFilter
-Imports MyEMSLReader
+using System.IO;
+using System.Linq;
+using AnalysisManagerBase;
+using MSMSSpectrumFilter;
+using MyEMSLReader;
 
-Public Class clsAnalysisResourcesMsMsSpectrumFilter
-    Inherits clsAnalysisResources
+namespace MSMSSpectrumFilterAM
+{
+    public class clsAnalysisResourcesMsMsSpectrumFilter : clsAnalysisResources
+    {
+        #region "Methods"
 
-#Region "Methods"
-    ''' <summary>
-    ''' Retrieves files necessary for performance of Sequest analysis
-    ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+        /// <summary>
+        /// Retrieves files necessary for performance of Sequest analysis
+        /// </summary>
+        /// <returns>IJobParams.CloseOutType indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override IJobParams.CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            // Retrieve the _DTA.txt file
+            // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+            if (!RetrieveDtaFiles())
+            {
+                //Errors were reported in function call, so just return
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Retrieve the _DTA.txt file
-        ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-        If Not RetrieveDtaFiles() Then
-            'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+            // Add the _dta.txt file to the list of extensions to delete after the tool finishes
+            m_jobParams.AddResultFileExtensionToSkip(m_DatasetName + "_dta.txt");
+            //Unzipped, concatenated DTA
 
-        ' Add the _dta.txt file to the list of extensions to delete after the tool finishes
-        m_jobParams.AddResultFileExtensionToSkip(m_DatasetName & "_dta.txt") 'Unzipped, concatenated DTA
+            // Add the _Dta.zip file to the list of files to move to the results folder
+            // Note that this .Zip file will contain the filtered _Dta.txt file (not the original _Dta.txt file)
+            m_jobParams.AddResultFileToKeep("_dta.zip");
+            //Zipped DTA
 
-        ' Add the _Dta.zip file to the list of files to move to the results folder
-        ' Note that this .Zip file will contain the filtered _Dta.txt file (not the original _Dta.txt file)
-        m_jobParams.AddResultFileToKeep("_dta.zip") 'Zipped DTA
+            // Look at the job parameters
+            // If ScanTypeFilter is defined, or MSCollisionModeFilter is defined, or MSLevelFilter is defined, then we need either of the following
+            //  a) The _ScanStats.txt file and _ScanStatsEx.txt file from a MASIC job for this dataset
+            //       This is essentially a job-depending-on a job
+            //  b) The .Raw file
+            //
 
+            var strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0");
 
-        ' Look at the job parameters
-        ' If ScanTypeFilter is defined, or MSCollisionModeFilter is defined, or MSLevelFilter is defined, then we need either of the following
-        '  a) The _ScanStats.txt file and _ScanStatsEx.txt file from a MASIC job for this dataset
-        '       This is essentially a job-depending-on a job
-        '  b) The .Raw file
-        '
+            var strScanTypeFilter = m_jobParams.GetJobParameter("ScanTypeFilter", "");
+            var strScanTypeMatchType = m_jobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
 
-        Dim strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0")
+            var strMSCollisionModeFilter = m_jobParams.GetJobParameter("MSCollisionModeFilter", "");
+            var strMSCollisionModeMatchType = m_jobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
 
-        Dim strScanTypeFilter = m_jobParams.GetJobParameter("ScanTypeFilter", "")
-        Dim strScanTypeMatchType = m_jobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
+            var blnNeedScanStatsFiles = false;
 
-        Dim strMSCollisionModeFilter = m_jobParams.GetJobParameter("MSCollisionModeFilter", "")
-        Dim strMSCollisionModeMatchType = m_jobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS)
+            if ((strMSLevelFilter != null) && strMSLevelFilter.Length > 0 && strMSLevelFilter != "0")
+            {
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: MSLevelFilter is defined (" + strMSLevelFilter + "); will retrieve or generate the ScanStats files");
+                }
+                blnNeedScanStatsFiles = true;
+            }
 
-        Dim blnNeedScanStatsFiles = False
+            if ((strScanTypeFilter != null) && strScanTypeFilter.Length > 0)
+            {
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: ScanTypeFilter is defined (" + strScanTypeFilter + " with match type " + strScanTypeMatchType + "); will retrieve or generate the ScanStats files");
+                }
+                blnNeedScanStatsFiles = true;
+            }
 
-        If Not strMSLevelFilter Is Nothing AndAlso strMSLevelFilter.Length > 0 AndAlso strMSLevelFilter <> "0" Then
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: MSLevelFilter is defined (" & strMSLevelFilter & "); will retrieve or generate the ScanStats files")
-            End If
-            blnNeedScanStatsFiles = True
-        End If
+            if ((strMSCollisionModeFilter != null) && strMSCollisionModeFilter.Length > 0)
+            {
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter + " with match type " + strMSCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
+                }
+                blnNeedScanStatsFiles = true;
+            }
 
-        If Not strScanTypeFilter Is Nothing AndAlso strScanTypeFilter.Length > 0 Then
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: ScanTypeFilter is defined (" & strScanTypeFilter & " with match type " & strScanTypeMatchType & "); will retrieve or generate the ScanStats files")
-            End If
-            blnNeedScanStatsFiles = True
-        End If
+            if (blnNeedScanStatsFiles)
+            {
+                // Find and copy the ScanStats files from an existing job rather than copying over the .Raw file
+                // However, if the _ScanStats.txt file does not have column ScanTypeName, then we will need the .raw file
 
-        If Not strMSCollisionModeFilter Is Nothing AndAlso strMSCollisionModeFilter.Length > 0 Then
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: MSCollisionModeFilter is defined (" & strMSCollisionModeFilter & " with match type " & strMSCollisionModeMatchType & "); will retrieve or generate the ScanStats files")
-            End If
-            blnNeedScanStatsFiles = True
-        End If
+                var blnIsFolder = false;
+                string strDatasetFileOrFolderPath = null;
+                var blnScanStatsFilesRetrieved = false;
 
-        If blnNeedScanStatsFiles Then
-            ' Find and copy the ScanStats files from an existing job rather than copying over the .Raw file
-            ' However, if the _ScanStats.txt file does not have column ScanTypeName, then we will need the .raw file
+                strDatasetFileOrFolderPath = FindDatasetFileOrFolder(out blnIsFolder, assumeUnpurged: false);
 
-            Dim blnIsFolder = False
-            Dim strDatasetFileOrFolderPath As String
-            Dim diDatasetFolder As DirectoryInfo
-            Dim blnScanStatsFilesRetrieved = False
+                if (!string.IsNullOrEmpty(strDatasetFileOrFolderPath) & !strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    DirectoryInfo diDatasetFolder;
+                    if (blnIsFolder)
+                    {
+                        diDatasetFolder = new DirectoryInfo(strDatasetFileOrFolderPath);
+                        diDatasetFolder = diDatasetFolder.Parent;
+                    }
+                    else
+                    {
+                        var fiDatasetFile = new FileInfo(strDatasetFileOrFolderPath);
+                        diDatasetFolder = fiDatasetFile.Directory;
+                    }
 
-            strDatasetFileOrFolderPath = FindDatasetFileOrFolder(blnIsFolder, assumeUnpurged:=False)
+                    if (FindExistingScanStatsFile(diDatasetFolder.FullName))
+                    {
+                        blnScanStatsFilesRetrieved = true;
+                    }
+                }
 
-            If Not String.IsNullOrEmpty(strDatasetFileOrFolderPath) And Not strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
+                if (!blnScanStatsFilesRetrieved)
+                {
+                    // Find the dataset file and either create a StoragePathInfo file or copy it locally
 
-                If blnIsFolder Then
-                    diDatasetFolder = New DirectoryInfo(strDatasetFileOrFolderPath)
-                    diDatasetFolder = diDatasetFolder.Parent
-                Else
-                    Dim fiDatasetFile = New FileInfo(strDatasetFileOrFolderPath)
-                    diDatasetFolder = fiDatasetFile.Directory
-                End If
+                    var CreateStoragePathInfoOnly = false;
+                    string RawDataType = m_jobParams.GetParam("RawDataType");
 
-                If FindExistingScanStatsFile(diDatasetFolder.FullName) Then
-                    blnScanStatsFilesRetrieved = True
-                End If
+                    switch (RawDataType.ToLower())
+                    {
+                        case RAW_DATA_TYPE_DOT_RAW_FILES:
+                        case RAW_DATA_TYPE_DOT_WIFF_FILES:
+                        case RAW_DATA_TYPE_DOT_UIMF_FILES:
+                        case RAW_DATA_TYPE_DOT_MZXML_FILES:
+                            // Don't actually copy the .Raw (or .wiff, .uimf, etc.) file locally; instead,
+                            //  determine where it is located then create a text file named "DatesetName.raw_StoragePathInfo.txt"
+                            //  This new file contains just one line of text: the full path to the actual file
+                            CreateStoragePathInfoOnly = true;
+                            break;
+                        default:
+                            CreateStoragePathInfoOnly = false;
+                            break;
+                    }
 
-            End If
+                    if (!RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.");
+                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
 
-            If Not blnScanStatsFilesRetrieved Then
+                // Add additional extensions to delete after the tool finishes
+                m_jobParams.AddResultFileExtensionToSkip("_ScanStats.txt");
+                m_jobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt");
+                m_jobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt");
 
-                ' Find the dataset file and either create a StoragePathInfo file or copy it locally
+                m_jobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
+                m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
+                m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-                Dim CreateStoragePathInfoOnly = False
-                Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
+                m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
+                m_jobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
+            }
 
-                Select Case RawDataType.ToLower
-                    Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_DOT_WIFF_FILES, RAW_DATA_TYPE_DOT_UIMF_FILES, RAW_DATA_TYPE_DOT_MZXML_FILES
-                        ' Don't actually copy the .Raw (or .wiff, .uimf, etc.) file locally; instead, 
-                        '  determine where it is located then create a text file named "DatesetName.raw_StoragePathInfo.txt"
-                        '  This new file contains just one line of text: the full path to the actual file
-                        CreateStoragePathInfoOnly = True
-                    Case Else
-                        CreateStoragePathInfoOnly = False
-                End Select
+            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-                If Not RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.")
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
+            //All finished
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-            End If
+        private bool FindExistingScanStatsFile(string strDatasetFolderPath)
+        {
+            var diDatasetFolder = new DirectoryInfo(strDatasetFolderPath);
+            var blnFilesFound = false;
 
-            ' Add additional extensions to delete after the tool finishes
-            m_jobParams.AddResultFileExtensionToSkip("_ScanStats.txt")
-            m_jobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt")
-            m_jobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt")
+            try
+            {
+                if (!diDatasetFolder.Exists)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Dataset folder not found: " + strDatasetFolderPath);
+                }
 
-            m_jobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION)
-            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
-            m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION)
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
+                var lstFiles = diDatasetFolder.GetFiles(m_DatasetName + "_ScanStats.txt", SearchOption.AllDirectories).ToList();
 
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION)
-            m_jobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION)
-        End If
+                if (lstFiles.Count == 0)
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "No _ScanStats.txt files were found in subfolders below " + strDatasetFolderPath);
+                    }
+                    return false;
+                }
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+                // Find the newest file in lstFiles
+                List<FileInfo> lstSortedFiles = (from item in lstFiles orderby item.LastWriteTime descending select item).ToList();
 
-        'All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                FileInfo fiNewestScanStatsFile = lstSortedFiles[0];
 
-    End Function
+                // Copy the ScanStats file locally
+                fiNewestScanStatsFile.CopyTo(Path.Combine(m_WorkingDir, fiNewestScanStatsFile.Name));
 
-    Private Function FindExistingScanStatsFile(strDatasetFolderPath As String) As Boolean
+                // Read the first line of the file and confirm that the _ScanTypeName column exists
+                using (var srScanStatsFile = new StreamReader(new FileStream(fiNewestScanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    string strLineIn = null;
+                    strLineIn = srScanStatsFile.ReadLine();
 
-        Dim diDatasetFolder = New DirectoryInfo(strDatasetFolderPath)
-        Dim blnFilesFound = False
+                    if (!strLineIn.Contains(clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME))
+                    {
+                        if (m_DebugLevel >= 1)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The newest _ScanStats.txt file for this dataset does not contain column " + clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME + "; will need to re-generate the file using the .Raw file");
+                        }
+                        return false;
+                    }
+                }
 
-        Try
-            If Not diDatasetFolder.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Dataset folder not found: " & strDatasetFolderPath)
-            End If
+                // Look for the _ScanStatsEx.txt file
+                string strScanStatsExPath = Path.Combine(fiNewestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiNewestScanStatsFile.Name) + "Ex.txt");
 
-            Dim lstFiles As List(Of FileInfo)
-            lstFiles = diDatasetFolder.GetFiles(m_DatasetName & "_ScanStats.txt", SearchOption.AllDirectories).ToList
+                if (File.Exists(strScanStatsExPath))
+                {
+                    // Copy it locally
+                    File.Copy(strScanStatsExPath, Path.Combine(m_WorkingDir, Path.GetFileName(strScanStatsExPath)));
 
-            If lstFiles.Count = 0 Then
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "No _ScanStats.txt files were found in subfolders below " & strDatasetFolderPath)
-                End If
-                Return False
-            End If
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using existing _ScanStats.txt from " + fiNewestScanStatsFile.FullName);
+                    }
 
-            ' Find the newest file in lstFiles
-            Dim lstSortedFiles As List(Of FileInfo) = (From item In lstFiles Order By item.LastWriteTime Descending).ToList()
+                    blnFilesFound = true;
+                }
+                else
+                {
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "The _ScanStats.txt file was found at " + fiNewestScanStatsFile.FullName + " but the _ScanStatsEx.txt file was not present");
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FindExistingScanStatsFile", ex);
+                return false;
+            }
 
-            Dim fiNewestScanStatsFile As FileInfo = lstSortedFiles(0)
+            return blnFilesFound;
+        }
 
-            ' Copy the ScanStats file locally
-            fiNewestScanStatsFile.CopyTo(Path.Combine(m_WorkingDir, fiNewestScanStatsFile.Name))
-
-            ' Read the first line of the file and confirm that the _ScanTypeName column exists
-            Using srScanStatsFile = New StreamReader(New FileStream(fiNewestScanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                Dim strLineIn As String
-                strLineIn = srScanStatsFile.ReadLine
-
-                If Not strLineIn.Contains(clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME) Then
-                    If m_DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The newest _ScanStats.txt file for this dataset does not contain column " & clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME & "; will need to re-generate the file using the .Raw file")
-                    End If
-                    Return False
-                End If
-            End Using
-
-            ' Look for the _ScanStatsEx.txt file
-            Dim strScanStatsExPath As String = Path.Combine(fiNewestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiNewestScanStatsFile.Name) & "Ex.txt")
-
-            If File.Exists(strScanStatsExPath) Then
-                ' Copy it locally
-                File.Copy(strScanStatsExPath, Path.Combine(m_WorkingDir, Path.GetFileName(strScanStatsExPath)))
-
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using existing _ScanStats.txt from " & fiNewestScanStatsFile.FullName)
-                End If
-
-                blnFilesFound = True
-            Else
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "The _ScanStats.txt file was found at " & fiNewestScanStatsFile.FullName & " but the _ScanStatsEx.txt file was not present")
-                End If
-                Return False
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FindExistingScanStatsFile", ex)
-            Return False
-        End Try
-
-        Return blnFilesFound
-    End Function
-
-#End Region
-
-End Class
+        #endregion
+    }
+}

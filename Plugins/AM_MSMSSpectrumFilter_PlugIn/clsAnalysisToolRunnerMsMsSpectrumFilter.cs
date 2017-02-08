@@ -1,758 +1,897 @@
-Option Strict On
-
-' This class was converted to be loaded as a pluggable DLL into the New DMS 
-' Analysis Tool Manager program.  The new ATM supports the mini-pipeline. It 
-' uses class clsMsMsSpectrumFilter to filter the _DTA.txt file present in a given folder
-'
-' Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-' Copyright 2005, Battelle Memorial Institute
-' Started October 13, 2005
-' 
-' Converted January 23, 2009 by JDS
-' Updated July 2009 by MEM to process a _Dta.txt file instead of a folder of .Dta files
-' Updated August 2009 by MEM to generate _ScanStats.txt files, if required
-
-Imports AnalysisManagerBase
-Imports MSMSSpectrumFilter
-
-Public Class clsAnalysisToolRunnerMsMsSpectrumFilter
-    Inherits clsAnalysisToolRunnerBase
-
-    Private WithEvents m_MsMsSpectrumFilter As clsMsMsSpectrumFilter
-    Private m_ErrMsg As String = String.Empty
-    Private m_SettingsFileName As String = String.Empty         ' Handy place to store value so repeated calls to m_JobParams aren't required
-    Private m_Results As ISpectraFilter.ProcessResults
-    Private m_DTATextFileName As String = String.Empty
-
-    Private m_thThread As Threading.Thread
-    Private m_FilterStatus As ISpectraFilter.ProcessStatus
-
-#Region "Methods"
-    Public Sub New()
-
-    End Sub
-
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
-
-        Dim result As IJobParams.CloseOutType
-
-        'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Store the MSMSSpectrumFilter version info in the database
-        If Not StoreToolVersionInfo() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-            m_message = "Error determining MSMSSpectrumFilter version"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_STARTING
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file")
-
-        'Verify necessary files are in specified locations
-        If Not InitSetup() Then
-            m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Filter the spectra (the process runs in a separate thread)
-        m_FilterStatus = FilterDTATextFile()
-
-        If m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR Then
-            m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering complete")
-        End If
-
-        ' Zip the filtered _Dta.txt file
-        If m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED Then
-            result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-            m_EvalMessage = "Filtered CDTA file is identical to the original file and was thus not copied to the job results folder"
-        Else
-            result = ZipConcDtaFile()
-        End If
-
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        'Stop the job timer
-        m_StopTime = DateTime.UtcNow
-
-        'Add the current job data to the summary file
-        If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-        End If
-
-        'Make the results folder
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder")
-        End If
-
-        result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'MakeResultsFolder handles posting to local log, so set database error message and exit
-            m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'MoveResultFiles moves the result files to the result folder
-            m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Private Function CDTAFilesMatch(strOriginalCDTA As String, strFilteredCDTA As String) As Boolean
-
-        Dim fiOriginalCDTA As IO.FileInfo
-        Dim fiFilteredCDTA As IO.FileInfo
-
-        Dim objOriginalCDTA As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass = Nothing
-        Dim objFilteredCDTA As MsMsDataFileReader.clsMsMsDataFileReaderBaseClass = Nothing
-
-        Try
-            fiFilteredCDTA = New IO.FileInfo(strFilteredCDTA)
-            fiOriginalCDTA = New IO.FileInfo(strOriginalCDTA)
-
-            ' If the file sizes do not agree within 10 bytes, then the files likely do not match (unless we have a unicode; non-unicode issue, which shouldn't be the case)
-            If Math.Abs(fiFilteredCDTA.Length - fiOriginalCDTA.Length) > 10 Then
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file (" & fiFilteredCDTA.Length & " vs. " & fiOriginalCDTA.Length & "); assuming the files do not match")
-                End If
-                Return False
-            Else
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Comparing original CDTA file to filtered CDTA file to see if they contain the same spectral data")
-                End If
-            End If
-
-            ' Files are very similar in size; read the spectra data
-
-            objFilteredCDTA = New MsMsDataFileReader.clsDtaTextFileReader(False)
-            objOriginalCDTA = New MsMsDataFileReader.clsDtaTextFileReader(False)
-
-            If Not objFilteredCDTA.OpenFile(strFilteredCDTA) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " & strFilteredCDTA)
-                Return False
-            End If
-
-            If Not objOriginalCDTA.OpenFile(strOriginalCDTA) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " & strOriginalCDTA)
-                Return False
-            End If
-
-            Dim msmsDataListFilt As List(Of String) = Nothing
-            Dim udtSpectrumHeaderInfoFilt = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-
-            Dim msmsDataListOrig As List(Of String) = Nothing
-            Dim udtSpectrumHeaderInfoOrig = New MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType
-
-            Dim intOriginalCDTASpectra = 0
-            Dim intFilteredCDTASpectra = 0
-
-            Do While objOriginalCDTA.ReadNextSpectrum(msmsDataListFilt, udtSpectrumHeaderInfoOrig)
-                intOriginalCDTASpectra += 1
-
-                If objFilteredCDTA.ReadNextSpectrum(msmsDataListOrig, udtSpectrumHeaderInfoFilt) Then
-                    intFilteredCDTASpectra += 1
-
-                    ' If the parent ions differ or the MS/MS spectral data differs, then the files do not match
-
-                    If udtSpectrumHeaderInfoOrig.SpectrumTitle <> udtSpectrumHeaderInfoFilt.SpectrumTitle Then
-                        If m_DebugLevel >= 2 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has a different spectrum header vs. spectrum " & intFilteredCDTASpectra & " in the filtered CDTA file; files do not match")
-                        End If
-                        Return False
-                    End If
-
-                    If msmsDataListOrig.Count <> msmsDataListFilt.Count Then
-                        If m_DebugLevel >= 2 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has a different number of ions (" & msmsDataListOrig.Count & " vs. " & msmsDataListFilt.Count & "); files do not match")
-                        End If
-                        Return False
-                    End If
-
-                    For intIndex = 0 To msmsDataListOrig.Count - 1
-                        If msmsDataListOrig(intIndex).Trim() <> msmsDataListFilt(intIndex).Trim() Then
-                            If m_DebugLevel >= 2 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " & intOriginalCDTASpectra & " in the original CDTA file has different ion mass or abundance values; files do not match")
-                            End If
-                            Return False
-                        End If
-                    Next
-
-                Else
-                    ' Original CDTA file has more spectra than the filtered one
-                    If m_DebugLevel >= 2 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Original CDTA file has more spectra than the filtered one (" & intOriginalCDTASpectra & " vs. " & intFilteredCDTASpectra & "); files do not match")
-                    End If
-                    Return False
-                End If
-            Loop
-
-            If objFilteredCDTA.ReadNextSpectrum(msmsDataListFilt, udtSpectrumHeaderInfoFilt) Then
-                ' Filtered CDTA file has more spectra than the original one
-                Return False
-            End If
-
-            ' If we get here, then the files match
-            Return True
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CDTAFilesMatch", ex)
-            Return False
-        Finally
-            Try
-                Threading.Thread.Sleep(250)
-                If Not objOriginalCDTA Is Nothing Then objOriginalCDTA.CloseFile()
-                If Not objFilteredCDTA Is Nothing Then objFilteredCDTA.CloseFile()
-            Catch ex As Exception
-                ' Ignore errors here
-            End Try
-        End Try
-
-
-    End Function
-
-    Protected Overridable Function CountDtaFiles(strDTATextFilePath As String) As Integer
-        'Returns the number of dta files in the _dta.txt file
-
-        ' This RegEx matches text of the form:
-        ' =================================== "File.ScanStart.ScanEnd.Charge.dta" ==================================
-        '
-        ' For example:
-        ' =================================== "QC_Shew_07_02-pt5-a_27Sep07_EARTH_07-08-15.351.351.1.dta" ==================================
-        '
-        ' It also can match lines where there is extra information associated with the charge state, for example:
-        ' =================================== "QC_Shew_07_02-pt5-a_27Sep07_EARTH_07-08-15.351.351.1_1_2.dta" ==================================
-        ' =================================== "vxl_VP2P74_B_4_F12_rn1_14May08_Falcon_080403-F4.1001.1001.2_1_2.dta" ==================================
-        Const DTA_FILENAME_REGEX = "^\s*[=]{5,}\s+\""([^.]+)\.\d+\.\d+\..+dta"
-
-        Dim intDTACount As Integer
-        Dim strLineIn As String
-
-        Dim reFind As Text.RegularExpressions.Regex
-
-        Try
-            reFind = New Text.RegularExpressions.Regex(DTA_FILENAME_REGEX, Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-
-            Using srInFile = New IO.StreamReader(New IO.FileStream(strDTATextFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-
-                intDTACount = 0
-                Do While Not srInFile.EndOfStream
-
-                    strLineIn = srInFile.ReadLine
-
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-                        If reFind.Match(strLineIn).Success Then
-                            intDTACount += 1
-                        End If
-                    End If
-                Loop
-
-            End Using
-
-        Catch ex As Exception
-            LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex)
-            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-        End Try
-
-        Return intDTACount
-
-    End Function
-
-    Protected Overridable Function FilterDTATextFile() As ISpectraFilter.ProcessStatus
-        ' Initializes m_MsMsSpectrumFilter, then starts a separate thread to filter the _Dta.txt file in the working folder
-        ' If ScanStats files are required, will first call GenerateFinniganScanStatsFiles() to generate those files using the .Raw file
-
-        Dim strParameterFilePath As String
-
-        Try
-            'Initialize MsMsSpectrumFilterDLL.dll
-            m_MsMsSpectrumFilter = New clsMsMsSpectrumFilter
-
-            ' Pre-read the parameter file now, so that we can override some of the settings
-            strParameterFilePath = IO.Path.Combine(m_WorkDir, m_SettingsFileName)
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Loading parameter file: " & strParameterFilePath)
-            End If
-
-            If Not m_MsMsSpectrumFilter.LoadParameterFileSettings(strParameterFilePath) Then
-                m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage
-                If m_ErrMsg Is Nothing OrElse m_ErrMsg.Length = 0 Then
-                    m_ErrMsg = "Parameter file load error: " & strParameterFilePath
-                End If
-                LogErrors("FilterDTATextFile", m_ErrMsg, Nothing)
-                Return ISpectraFilter.ProcessStatus.SFILT_ERROR
-            End If
-
-            ' Set a few additional settings
-            With m_MsMsSpectrumFilter
-                .OverwriteExistingFiles = True
-                .OverwriteReportFile = True
-                .AutoCloseReportFile = False
-                .LogMessagesToFile = True
-                .LogFolderPath = m_WorkDir
-                .MaximumProgressUpdateIntervalSeconds = 10
-            End With
-
-            ' Determine if we need to generate a _ScanStats.txt file
-            If m_MsMsSpectrumFilter.ScanStatsFileIsRequired Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling GenerateFinniganScanStatsFiles")
-                End If
-
-                If Not GenerateFinniganScanStatsFiles() Then
-                    If m_DebugLevel >= 4 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False")
-                    End If
-
-                    m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-                    Return m_FilterStatus
-                Else
-                    If m_DebugLevel >= 4 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True")
-                    End If
-                End If
-            End If
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Instantiate the thread to run MsMsSpectraFilter")
-            End If
-
-            'Instantiate the thread to run MsMsSpectraFilter
-            m_thThread = New Threading.Thread(AddressOf FilterDTATextFileWork)
-            m_thThread.Start()
-
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Thread started")
-            End If
-
-            Do While m_thThread.IsAlive
-                Threading.Thread.Sleep(2000)                 'Delay for 2 seconds
-            Loop
-
-            Threading.Thread.Sleep(5000)                    'Delay for 5 seconds
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-            'Removes the MsMsSpectra Filter object
-            If Not IsNothing(m_thThread) Then
-                m_thThread.Abort()
-                m_thThread = Nothing
-            End If
-
-            'If we reach here, everything must be good
-            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
-
-        Catch ex As Exception
-            LogErrors("FilterDTAFilesInFolder", "Error initializing and running clsMsMsSpectrumFilter", ex)
-            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-        End Try
-
-        Return m_FilterStatus
-    End Function
-
-    Protected Overridable Sub FilterDTATextFileWork()
-
-        Dim strInputFilePath As String
-        Dim strBakFilePath As String
-
-        Dim blnSuccess As Boolean
-        Dim blnFilesMatch As Boolean
-
-        Try
-
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  Spectrum Filter Mode: " & m_MsMsSpectrumFilter.SpectrumFilterMode)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MS Level Filter: " & m_MsMsSpectrumFilter.MSLevelFilter)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ScanTypeFilter: " & m_MsMsSpectrumFilter.ScanTypeFilter & " (match type " & m_MsMsSpectrumFilter.ScanTypeMatchType & ")")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MSCollisionModeFilter: " & m_MsMsSpectrumFilter.MSCollisionModeFilter & " (match type " & m_MsMsSpectrumFilter.MSCollisionModeMatchType & ")")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MinimumIonCount: " & m_MsMsSpectrumFilter.MinimumIonCount)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemovePrecursor: " & m_MsMsSpectrumFilter.IonFilter_RemovePrecursor)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveChargeReducedPrecursors: " & m_MsMsSpectrumFilter.IonFilter_RemoveChargeReducedPrecursors)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors: " & m_MsMsSpectrumFilter.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors)
-            End If
-
-            ' Define the input file name
-            strInputFilePath = IO.Path.Combine(m_WorkDir, m_DTATextFileName)
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Call ProcessFilesWildcard for: " & strInputFilePath)
-            End If
-
-            blnSuccess = m_MsMsSpectrumFilter.ProcessFilesWildcard(strInputFilePath, m_WorkDir, "")
-
-
-            Try
-
-                If blnSuccess Then
-                    If m_DebugLevel >= 3 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProcessFilesWildcard returned True; now calling .SortSpectrumQualityTextFile")
-                    End If
-
-                    ' Sort the report file (this also closes the file)
-                    m_MsMsSpectrumFilter.SortSpectrumQualityTextFile()
-
-                    strBakFilePath = strInputFilePath & ".bak"
-
-                    If Not IO.File.Exists(strBakFilePath) Then
-                        LogErrors("FilterDTATextFileWork", "CDTA .Bak file not found", Nothing)
-                        m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED
-                    End If
-
-                    ' Compare the new _dta.txt file to the _dta.txt.bak file
-                    ' If they have the same data, then do not keep the new _dta.txt file
-
-                    blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath)
-
-                    Threading.Thread.Sleep(250)
-                    PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-                    ' Delete the _dta.txt.bak file
-                    IO.File.Delete(strBakFilePath)
-
-                    If blnFilesMatch Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The filtered CDTA file matches the original CDTA file (same number of spectra and same spectral data); the filtered CDTA file will not be retained")
-
-                        IO.File.Delete(strInputFilePath)
-
-                        m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED
-
-                    Else
-                        'Count the number of .Dta files remaining in the _dta.txt file
-                        If Not VerifyDtaCreation(strInputFilePath) Then
-                            m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED
-                        Else
-                            m_Results = ISpectraFilter.ProcessResults.SFILT_SUCCESS
-                        End If
-                    End If
-
-                    m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE
-                Else
-                    If m_MsMsSpectrumFilter.AbortProcessing Then
-                        LogErrors("FilterDTATextFileWork", "Processing aborted", Nothing)
-                        m_Results = ISpectraFilter.ProcessResults.SFILT_ABORTED
-                        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ABORTING
-                    Else
-                        LogErrors("FilterDTATextFileWork", m_MsMsSpectrumFilter.GetErrorMessage(), Nothing)
-                        m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE
-                        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-                    End If
-                End If
-
-                m_MsMsSpectrumFilter.CloseLogFileNow()
-
-            Catch ex As Exception
-                LogErrors("FilterDTATextFileWork", "Error performing tasks after m_MsMsSpectrumFilter.ProcessFilesWildcard completes", ex)
-                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-            End Try
-
-        Catch ex As Exception
-            LogErrors("FilterDTATextFileWork", "Error calling m_MsMsSpectrumFilter.ProcessFilesWildcard", ex)
-            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR
-        End Try
-
-
-    End Sub
-
-    Private Function GenerateFinniganScanStatsFiles() As Boolean
-
-        Dim strRawFileName As String
-        Dim strFinniganRawFilePath As String
-
-        Dim blnScanStatsFilesExist As Boolean
-
-        Dim blnSuccess As Boolean
-
-        Try
-            ' Assume success for now
-            blnSuccess = True
-
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for the _ScanStats.txt files for dataset " & m_Dataset)
-            End If
-
-            blnScanStatsFilesExist = clsMsMsSpectrumFilter.CheckForExistingScanStatsFiles(m_WorkDir, m_Dataset)
-            If blnScanStatsFilesExist Then
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "_ScanStats.txt files found for dataset " & m_Dataset)
-                End If
-                Return True
-            End If
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the _ScanStats.txt files for dataset " & m_Dataset)
-
-            ' Determine the path to the .Raw file
-            strRawFileName = m_Dataset & ".raw"
-            strFinniganRawFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName)
-
-            If strFinniganRawFilePath Is Nothing OrElse strFinniganRawFilePath.Length = 0 Then
-                ' Unable to resolve the file path
-                m_ErrMsg = "Could not find " & strRawFileName & " or " & strRawFileName & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the dataset folder; unable to generate the ScanStats files"
-                LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
-                Return False
-            End If
-
-            ' Look for an existing _ScanStats.txt file in a SIC folder below folder with the .Raw file
-            Dim fiRawFile = New IO.FileInfo(strFinniganRawFilePath)
-
-            If Not fiRawFile.Exists Then
-                ' File not found at the specified path
-                m_ErrMsg = "File not found: " & strFinniganRawFilePath & " -- unable to generate the ScanStats files"
-                LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
-                Return False
-            End If
-
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating _ScanStats.txt file using " & strFinniganRawFilePath)
-            End If
-
-            If Not m_MsMsSpectrumFilter.GenerateFinniganScanStatsFiles(strFinniganRawFilePath, m_WorkDir) Then
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False")
-                End If
-
-                m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage()
-                If m_ErrMsg Is Nothing OrElse m_ErrMsg.Length = 0 Then
-                    m_ErrMsg = "GenerateFinniganScanStatsFiles returned False; _ScanStats.txt files not generated"
-                End If
-
-                LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, Nothing)
-                blnSuccess = False
-            Else
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True")
-                End If
-                blnSuccess = True
-            End If
-
-
-        Catch ex As Exception
-            LogErrors("GenerateFinniganScanStatsFiles", "Error generating _ScanStats.txt files", ex)
-        End Try
-
-        Return blnSuccess
-
-    End Function
-
-    Private Sub HandleProgressUpdate(percentComplete As Single)
-        Static dtLastStatusUpdate As DateTime = DateTime.UtcNow
-
-        m_progress = percentComplete
-
-        ' Update the status file (limit the updates to every 5 seconds)
-        If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
-            dtLastStatusUpdate = DateTime.UtcNow
-            UpdateStatusRunning(m_progress, m_DtaCount)
-        End If
-
-        LogProgress("MsMsSpectrumFilter")
-
-    End Sub
-
-    Protected Overridable Function InitSetup() As Boolean
-
-        'Initializes module variables and verifies mandatory parameters have been propery specified
-
-        'Manager parameters
-        If m_mgrParams Is Nothing Then
-            m_ErrMsg = "Manager parameters not specified"
-            Return False
-        End If
-
-        'Job parameters
-        If m_jobParams Is Nothing Then
-            m_ErrMsg = "Job parameters not specified"
-            Return False
-        End If
-
-        'Status tools
-        If m_StatusTools Is Nothing Then
-            m_ErrMsg = "Status tools object not set"
-            Return False
-        End If
-
-        'Set the _DTA.Txt file name
-        m_DTATextFileName = m_Dataset & "_dta.txt"
-
-        'Set settings file name
-        'This is the job parameters file that contains the settings information
-        m_SettingsFileName = m_jobParams.GetParam("JobParameters", "genJobParamsFilename")
-
-        'Source folder name
-        If m_WorkDir = "" Then
-            m_ErrMsg = "m_WorkDir variable is empty"
-            Return False
-        End If
-
-        'Source directory exist?
-        If Not VerifyDirExists(m_WorkDir) Then Return False 'Error msg handled by VerifyDirExists
-
-        'Settings file exist?
-        Dim SettingsNamePath As String = IO.Path.Combine(m_WorkDir, m_SettingsFileName)
-        If Not VerifyFileExists(SettingsNamePath) Then Return False 'Error msg handled by VerifyFileExists
-
-        'If we got here, everything's OK
-        Return True
-
-    End Function
-
-    Private Sub LogErrors(strSource As String, strMessage As String, ex As Exception, Optional ByVal blnLogLocalOnly As Boolean = True)
-
-        m_ErrMsg = String.Copy(strMessage).Replace(ControlChars.NewLine, "; ")
-
-        If ex Is Nothing Then
-            ex = New Exception("Error")
-        Else
-            If Not ex.Message Is Nothing AndAlso ex.Message.Length > 0 Then
-                m_ErrMsg &= "; " & ex.Message
-            End If
-        End If
-
-        Trace.WriteLine(DateTime.Now().ToLongTimeString & "; " & m_ErrMsg, strSource)
-        Console.WriteLine(DateTime.Now().ToLongTimeString & "; " & m_ErrMsg, strSource)
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ex.Message)
-
-    End Sub
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Function StoreToolVersionInfo() As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-        Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        ' Lookup the version of the MSMSSpectrumFilterAM
-        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "MSMSSpectrumFilterAM") Then
-            Return False
-        End If
-
-        ' Lookup the version of the MsMsDataFileReader
-        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "MsMsDataFileReader") Then
-            Return False
-        End If
-
-        ' Store the path to MsMsDataFileReader.dll in ioToolFiles
-        Dim ioToolFiles As New List(Of IO.FileInfo)
-        ioToolFiles.Add(New IO.FileInfo(IO.Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll")))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    Protected Overridable Function VerifyDirExists(TestDir As String) As Boolean
-
-        'Verifies that the specified directory exists
-        If IO.Directory.Exists(TestDir) Then
-            m_ErrMsg = ""
-            Return True
-        Else
-            m_ErrMsg = "Directory " & TestDir & " not found"
-            Return False
-        End If
-
-    End Function
-
-
-    Private Function VerifyDtaCreation(strDTATextFilePath As String) As Boolean
-
-        'Verify at least one .dta file has been created
-        If CountDtaFiles(strDTATextFilePath) < 1 Then
-            m_ErrMsg = "No dta files remain after filtering"
-            Return False
-        Else
-            Return True
-        End If
-
-    End Function
-
-    Protected Overridable Function VerifyFileExists(TestFile As String) As Boolean
-        'Verifies specified file exists
-        If IO.File.Exists(TestFile) Then
-            m_ErrMsg = ""
-            Return True
-        Else
-            m_ErrMsg = "File " & TestFile & " not found"
-            Return False
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Zips concatenated DTA file to reduce size
-    ''' </summary>
-    ''' <returns>CloseoutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Protected Overridable Function ZipConcDtaFile() As IJobParams.CloseOutType
-
-        'Zips the concatenated dta file
-        Dim DtaFileName As String = m_Dataset & "_dta.txt"
-        Dim DtaFilePath As String = IO.Path.Combine(m_WorkDir, DtaFileName)
-
-        'Verify file exists
-        If IO.File.Exists(DtaFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-        Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        'Zip the file
-        Try
-            If Not MyBase.ZipFile(DtaFilePath, False) Then
-                Dim Msg As String = "Error zipping concat dta file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-        Catch ex As Exception
-            Dim Msg As String = "Exception zipping concat dta file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-#End Region
-
-    Private Sub m_MsMsSpectrumFilter_ProgressChanged(taskDescription As String, percentComplete As Single) Handles m_MsMsSpectrumFilter.ProgressChanged
-        HandleProgressUpdate(percentComplete)
-    End Sub
-
-    Private Sub m_MsMsSpectrumFilter_ProgressComplete() Handles m_MsMsSpectrumFilter.ProgressComplete
-        HandleProgressUpdate(100)
-    End Sub
-End Class
+﻿// This class was converted to be loaded as a pluggable DLL into the New DMS
+// Analysis Tool Manager program.  The new ATM supports the mini-pipeline. It
+// uses class clsMsMsSpectrumFilter to filter the _DTA.txt file present in a given folder
+//
+// Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
+// Copyright 2005, Battelle Memorial Institute
+// Started October 13, 2005
+//
+// Converted January 23, 2009 by JDS
+// Updated July 2009 by MEM to process a _Dta.txt file instead of a folder of .Dta files
+// Updated August 2009 by MEM to generate _ScanStats.txt files, if required
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Text.RegularExpressions;
+using AnalysisManagerBase;
+using MSMSSpectrumFilter;
+
+namespace MSMSSpectrumFilterAM
+{
+    public class clsAnalysisToolRunnerMsMsSpectrumFilter : clsAnalysisToolRunnerBase
+    {
+        private clsMsMsSpectrumFilter withEventsField_m_MsMsSpectrumFilter;
+
+        private clsMsMsSpectrumFilter m_MsMsSpectrumFilter
+        {
+            get { return withEventsField_m_MsMsSpectrumFilter; }
+            set
+            {
+                if (withEventsField_m_MsMsSpectrumFilter != null)
+                {
+                    withEventsField_m_MsMsSpectrumFilter.ProgressChanged -= m_MsMsSpectrumFilter_ProgressChanged;
+                    withEventsField_m_MsMsSpectrumFilter.ProgressComplete -= m_MsMsSpectrumFilter_ProgressComplete;
+                }
+                withEventsField_m_MsMsSpectrumFilter = value;
+                if (withEventsField_m_MsMsSpectrumFilter != null)
+                {
+                    withEventsField_m_MsMsSpectrumFilter.ProgressChanged += m_MsMsSpectrumFilter_ProgressChanged;
+                    withEventsField_m_MsMsSpectrumFilter.ProgressComplete += m_MsMsSpectrumFilter_ProgressComplete;
+                }
+            }
+        }
+
+        private string m_ErrMsg = string.Empty;
+        // Handy place to store value so repeated calls to m_JobParams aren't required
+        private string m_SettingsFileName = string.Empty;
+        private ISpectraFilter.ProcessResults m_Results;
+
+        private string m_DTATextFileName = string.Empty;
+        private System.Threading.Thread m_thThread;
+
+        private ISpectraFilter.ProcessStatus m_FilterStatus;
+
+        #region "Methods"
+
+        public clsAnalysisToolRunnerMsMsSpectrumFilter()
+        {
+        }
+
+        public override IJobParams.CloseOutType RunTool()
+        {
+            IJobParams.CloseOutType result;
+
+            //Do the base class stuff
+            if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Store the MSMSSpectrumFilter version info in the database
+            if (!StoreToolVersionInfo())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                m_message = "Error determining MSMSSpectrumFilter version";
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_STARTING;
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file");
+
+            //Verify necessary files are in specified locations
+            if (!InitSetup())
+            {
+                m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE;
+                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Filter the spectra (the process runs in a separate thread)
+            m_FilterStatus = FilterDTATextFile();
+
+            if (m_FilterStatus == ISpectraFilter.ProcessStatus.SFILT_ERROR)
+            {
+                m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE;
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering complete");
+            }
+
+            // Zip the filtered _Dta.txt file
+            if (m_Results == ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED)
+            {
+                result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                m_EvalMessage = "Filtered CDTA file is identical to the original file and was thus not copied to the job results folder";
+            }
+            else
+            {
+                result = ZipConcDtaFile();
+            }
+
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE;
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            //Stop the job timer
+            m_StopTime = DateTime.UtcNow;
+
+            //Add the current job data to the summary file
+            if (!UpdateSummaryFile())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            }
+
+            //Make the results folder
+            if (m_DebugLevel > 3)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder");
+            }
+
+            result = MakeResultsFolder();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //MakeResultsFolder handles posting to local log, so set database error message and exit
+                m_message = "Error making results folder";
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            result = MoveResultFiles();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //MoveResultFiles moves the result files to the result folder
+                m_message = "Error making results folder";
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            result = CopyResultsFolderToServer();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                return result;
+            }
+
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private bool CDTAFilesMatch(string strOriginalCDTA, string strFilteredCDTA)
+        {
+            MsMsDataFileReader.clsMsMsDataFileReaderBaseClass objOriginalCDTA = null;
+            MsMsDataFileReader.clsMsMsDataFileReaderBaseClass objFilteredCDTA = null;
+
+            try
+            {
+                var fiFilteredCDTA = new FileInfo(strFilteredCDTA);
+                var fiOriginalCDTA = new FileInfo(strOriginalCDTA);
+
+                // If the file sizes do not agree within 10 bytes, then the files likely do not match (unless we have a unicode; non-unicode issue, which shouldn't be the case)
+                if (Math.Abs(fiFilteredCDTA.Length - fiOriginalCDTA.Length) > 10)
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file (" + fiFilteredCDTA.Length + " vs. " + fiOriginalCDTA.Length + "); assuming the files do not match");
+                    }
+                    return false;
+                }
+                else
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Comparing original CDTA file to filtered CDTA file to see if they contain the same spectral data");
+                    }
+                }
+
+                // Files are very similar in size; read the spectra data
+
+                objFilteredCDTA = new MsMsDataFileReader.clsDtaTextFileReader(false);
+                objOriginalCDTA = new MsMsDataFileReader.clsDtaTextFileReader(false);
+
+                if (!objFilteredCDTA.OpenFile(strFilteredCDTA))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " + strFilteredCDTA);
+                    return false;
+                }
+
+                if (!objOriginalCDTA.OpenFile(strOriginalCDTA))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " + strOriginalCDTA);
+                    return false;
+                }
+
+                List<string> msmsDataListFilt = null;
+                var udtSpectrumHeaderInfoFilt = new MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType();
+
+                List<string> msmsDataListOrig = null;
+                var udtSpectrumHeaderInfoOrig = new MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType();
+
+                var intOriginalCDTASpectra = 0;
+                var intFilteredCDTASpectra = 0;
+
+                while (objOriginalCDTA.ReadNextSpectrum(out msmsDataListFilt, out udtSpectrumHeaderInfoOrig))
+                {
+                    intOriginalCDTASpectra += 1;
+
+                    if (objFilteredCDTA.ReadNextSpectrum(out msmsDataListOrig, out udtSpectrumHeaderInfoFilt))
+                    {
+                        intFilteredCDTASpectra += 1;
+
+                        // If the parent ions differ or the MS/MS spectral data differs, then the files do not match
+
+                        if (udtSpectrumHeaderInfoOrig.SpectrumTitle != udtSpectrumHeaderInfoFilt.SpectrumTitle)
+                        {
+                            if (m_DebugLevel >= 2)
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different spectrum header vs. spectrum " + intFilteredCDTASpectra + " in the filtered CDTA file; files do not match");
+                            }
+                            return false;
+                        }
+
+                        if (msmsDataListOrig.Count != msmsDataListFilt.Count)
+                        {
+                            if (m_DebugLevel >= 2)
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different number of ions (" + msmsDataListOrig.Count + " vs. " + msmsDataListFilt.Count + "); files do not match");
+                            }
+                            return false;
+                        }
+
+                        for (var intIndex = 0; intIndex <= msmsDataListOrig.Count - 1; intIndex++)
+                        {
+                            if (msmsDataListOrig[intIndex].Trim() != msmsDataListFilt[intIndex].Trim())
+                            {
+                                if (m_DebugLevel >= 2)
+                                {
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has different ion mass or abundance values; files do not match");
+                                }
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Original CDTA file has more spectra than the filtered one
+                        if (m_DebugLevel >= 2)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Original CDTA file has more spectra than the filtered one (" + intOriginalCDTASpectra + " vs. " + intFilteredCDTASpectra + "); files do not match");
+                        }
+                        return false;
+                    }
+                }
+
+                if (objFilteredCDTA.ReadNextSpectrum(out msmsDataListFilt, out udtSpectrumHeaderInfoFilt))
+                {
+                    // Filtered CDTA file has more spectra than the original one
+                    return false;
+                }
+
+                // If we get here, then the files match
+                return true;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CDTAFilesMatch", ex);
+                return false;
+            }
+            finally
+            {
+                try
+                {
+                    System.Threading.Thread.Sleep(250);
+                    if ((objOriginalCDTA != null))
+                        objOriginalCDTA.CloseFile();
+                    if ((objFilteredCDTA != null))
+                        objFilteredCDTA.CloseFile();
+                }
+                catch (Exception ex)
+                {
+                    // Ignore errors here
+                }
+            }
+        }
+
+        protected virtual int CountDtaFiles(string strDTATextFilePath)
+        {
+            //Returns the number of dta files in the _dta.txt file
+
+            // This RegEx matches text of the form:
+            // =================================== "File.ScanStart.ScanEnd.Charge.dta" ==================================
+            //
+            // For example:
+            // =================================== "QC_Shew_07_02-pt5-a_27Sep07_EARTH_07-08-15.351.351.1.dta" ==================================
+            //
+            // It also can match lines where there is extra information associated with the charge state, for example:
+            // =================================== "QC_Shew_07_02-pt5-a_27Sep07_EARTH_07-08-15.351.351.1_1_2.dta" ==================================
+            // =================================== "vxl_VP2P74_B_4_F12_rn1_14May08_Falcon_080403-F4.1001.1001.2_1_2.dta" ==================================
+            const string DTA_FILENAME_REGEX = "^\\s*[=]{5,}\\s+\\\"([^.]+)\\.\\d+\\.\\d+\\..+dta";
+
+            int intDTACount = 0;
+            string strLineIn = null;
+
+            try
+            {
+                var reFind = new Regex(DTA_FILENAME_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                using (var srInFile = new StreamReader(new FileStream(strDTATextFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    intDTACount = 0;
+
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+
+                        if (!string.IsNullOrEmpty(strLineIn))
+                        {
+                            if (reFind.Match(strLineIn).Success)
+                            {
+                                intDTACount += 1;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex);
+                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+            }
+
+            return intDTACount;
+        }
+
+        protected virtual ISpectraFilter.ProcessStatus FilterDTATextFile()
+        {
+            // Initializes m_MsMsSpectrumFilter, then starts a separate thread to filter the _Dta.txt file in the working folder
+            // If ScanStats files are required, will first call GenerateFinniganScanStatsFiles() to generate those files using the .Raw file
+
+            string strParameterFilePath = null;
+
+            try
+            {
+                //Initialize MsMsSpectrumFilterDLL.dll
+                m_MsMsSpectrumFilter = new clsMsMsSpectrumFilter();
+
+                // Pre-read the parameter file now, so that we can override some of the settings
+                strParameterFilePath = Path.Combine(m_WorkDir, m_SettingsFileName);
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Loading parameter file: " + strParameterFilePath);
+                }
+
+                if (!m_MsMsSpectrumFilter.LoadParameterFileSettings(strParameterFilePath))
+                {
+                    m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage();
+                    if (m_ErrMsg == null || m_ErrMsg.Length == 0)
+                    {
+                        m_ErrMsg = "Parameter file load error: " + strParameterFilePath;
+                    }
+                    LogErrors("FilterDTATextFile", m_ErrMsg, null);
+                    return ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                }
+
+                // Set a few additional settings
+                m_MsMsSpectrumFilter.OverwriteExistingFiles = true;
+                m_MsMsSpectrumFilter.OverwriteReportFile = true;
+                m_MsMsSpectrumFilter.AutoCloseReportFile = false;
+                m_MsMsSpectrumFilter.LogMessagesToFile = true;
+                m_MsMsSpectrumFilter.LogFolderPath = m_WorkDir;
+                m_MsMsSpectrumFilter.MaximumProgressUpdateIntervalSeconds = 10;
+
+                // Determine if we need to generate a _ScanStats.txt file
+                if (m_MsMsSpectrumFilter.ScanStatsFileIsRequired())
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling GenerateFinniganScanStatsFiles");
+                    }
+
+                    if (!GenerateFinniganScanStatsFiles())
+                    {
+                        if (m_DebugLevel >= 4)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False");
+                        }
+
+                        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                        return m_FilterStatus;
+                    }
+                    else
+                    {
+                        if (m_DebugLevel >= 4)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True");
+                        }
+                    }
+                }
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Instantiate the thread to run MsMsSpectraFilter");
+                }
+
+                //Instantiate the thread to run MsMsSpectraFilter
+                m_thThread = new System.Threading.Thread(FilterDTATextFileWork);
+                m_thThread.Start();
+
+                if (m_DebugLevel >= 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Thread started");
+                }
+
+                while (m_thThread.IsAlive)
+                {
+                    System.Threading.Thread.Sleep(2000);
+                    //Delay for 2 seconds
+                }
+
+                System.Threading.Thread.Sleep(5000);
+                //Delay for 5 seconds
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                //Removes the MsMsSpectra Filter object
+                if ((m_thThread != null))
+                {
+                    m_thThread.Abort();
+                    m_thThread = null;
+                }
+
+                //If we reach here, everything must be good
+                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE;
+            }
+            catch (Exception ex)
+            {
+                LogErrors("FilterDTAFilesInFolder", "Error initializing and running clsMsMsSpectrumFilter", ex);
+                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+            }
+
+            return m_FilterStatus;
+        }
+
+        protected virtual void FilterDTATextFileWork()
+        {
+            string strInputFilePath = null;
+            string strBakFilePath = null;
+
+            bool blnSuccess = false;
+            bool blnFilesMatch = false;
+
+            try
+            {
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  Spectrum Filter Mode: " + m_MsMsSpectrumFilter.SpectrumFilterMode);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MS Level Filter: " + m_MsMsSpectrumFilter.MSLevelFilter);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ScanTypeFilter: " + m_MsMsSpectrumFilter.ScanTypeFilter + " (match type " + m_MsMsSpectrumFilter.ScanTypeMatchType + ")");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MSCollisionModeFilter: " + m_MsMsSpectrumFilter.MSCollisionModeFilter + " (match type " + m_MsMsSpectrumFilter.MSCollisionModeMatchType + ")");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MinimumIonCount: " + m_MsMsSpectrumFilter.MinimumIonCount);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemovePrecursor: " + m_MsMsSpectrumFilter.IonFilter_RemovePrecursor);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveChargeReducedPrecursors: " + m_MsMsSpectrumFilter.IonFilter_RemoveChargeReducedPrecursors);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors: " + m_MsMsSpectrumFilter.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors);
+                }
+
+                // Define the input file name
+                strInputFilePath = Path.Combine(m_WorkDir, m_DTATextFileName);
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Call ProcessFilesWildcard for: " + strInputFilePath);
+                }
+
+                blnSuccess = m_MsMsSpectrumFilter.ProcessFilesWildcard(strInputFilePath, m_WorkDir, "");
+
+                try
+                {
+                    if (blnSuccess)
+                    {
+                        if (m_DebugLevel >= 3)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProcessFilesWildcard returned True; now calling .SortSpectrumQualityTextFile");
+                        }
+
+                        // Sort the report file (this also closes the file)
+                        m_MsMsSpectrumFilter.SortSpectrumQualityTextFile();
+
+                        strBakFilePath = strInputFilePath + ".bak";
+
+                        if (!File.Exists(strBakFilePath))
+                        {
+                            LogErrors("FilterDTATextFileWork", "CDTA .Bak file not found", null);
+                            m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED;
+                        }
+
+                        // Compare the new _dta.txt file to the _dta.txt.bak file
+                        // If they have the same data, then do not keep the new _dta.txt file
+
+                        blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath);
+
+                        System.Threading.Thread.Sleep(250);
+                        PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                        // Delete the _dta.txt.bak file
+                        File.Delete(strBakFilePath);
+
+                        if (blnFilesMatch)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The filtered CDTA file matches the original CDTA file (same number of spectra and same spectral data); the filtered CDTA file will not be retained");
+
+                            File.Delete(strInputFilePath);
+
+                            m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED;
+                        }
+                        else
+                        {
+                            //Count the number of .Dta files remaining in the _dta.txt file
+                            if (!VerifyDtaCreation(strInputFilePath))
+                            {
+                                m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED;
+                            }
+                            else
+                            {
+                                m_Results = ISpectraFilter.ProcessResults.SFILT_SUCCESS;
+                            }
+                        }
+
+                        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE;
+                    }
+                    else
+                    {
+                        if (m_MsMsSpectrumFilter.AbortProcessing)
+                        {
+                            LogErrors("FilterDTATextFileWork", "Processing aborted", null);
+                            m_Results = ISpectraFilter.ProcessResults.SFILT_ABORTED;
+                            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ABORTING;
+                        }
+                        else
+                        {
+                            LogErrors("FilterDTATextFileWork", m_MsMsSpectrumFilter.GetErrorMessage(), null);
+                            m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE;
+                            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                        }
+                    }
+
+                    m_MsMsSpectrumFilter.CloseLogFileNow();
+                }
+                catch (Exception ex)
+                {
+                    LogErrors("FilterDTATextFileWork", "Error performing tasks after m_MsMsSpectrumFilter.ProcessFilesWildcard completes", ex);
+                    m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogErrors("FilterDTATextFileWork", "Error calling m_MsMsSpectrumFilter.ProcessFilesWildcard", ex);
+                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+            }
+        }
+
+        private bool GenerateFinniganScanStatsFiles()
+        {
+            string strRawFileName = null;
+            string strFinniganRawFilePath = null;
+
+            bool blnScanStatsFilesExist = false;
+
+            bool blnSuccess = false;
+
+            try
+            {
+                // Assume success for now
+                blnSuccess = true;
+
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for the _ScanStats.txt files for dataset " + m_Dataset);
+                }
+
+                blnScanStatsFilesExist = clsMsMsSpectrumFilter.CheckForExistingScanStatsFiles(m_WorkDir, m_Dataset);
+                if (blnScanStatsFilesExist)
+                {
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "_ScanStats.txt files found for dataset " + m_Dataset);
+                    }
+                    return true;
+                }
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the _ScanStats.txt files for dataset " + m_Dataset);
+
+                // Determine the path to the .Raw file
+                strRawFileName = m_Dataset + ".raw";
+                strFinniganRawFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName);
+
+                if (strFinniganRawFilePath == null || strFinniganRawFilePath.Length == 0)
+                {
+                    // Unable to resolve the file path
+                    m_ErrMsg = "Could not find " + strRawFileName + " or " + strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX + " in the dataset folder; unable to generate the ScanStats files";
+                    LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, null);
+                    return false;
+                }
+
+                // Look for an existing _ScanStats.txt file in a SIC folder below folder with the .Raw file
+                var fiRawFile = new FileInfo(strFinniganRawFilePath);
+
+                if (!fiRawFile.Exists)
+                {
+                    // File not found at the specified path
+                    m_ErrMsg = "File not found: " + strFinniganRawFilePath + " -- unable to generate the ScanStats files";
+                    LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, null);
+                    return false;
+                }
+
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating _ScanStats.txt file using " + strFinniganRawFilePath);
+                }
+
+                if (!m_MsMsSpectrumFilter.GenerateFinniganScanStatsFiles(strFinniganRawFilePath, m_WorkDir))
+                {
+                    if (m_DebugLevel >= 3)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False");
+                    }
+
+                    m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage();
+                    if (m_ErrMsg == null || m_ErrMsg.Length == 0)
+                    {
+                        m_ErrMsg = "GenerateFinniganScanStatsFiles returned False; _ScanStats.txt files not generated";
+                    }
+
+                    LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, null);
+                    blnSuccess = false;
+                }
+                else
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True");
+                    }
+                    blnSuccess = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogErrors("GenerateFinniganScanStatsFiles", "Error generating _ScanStats.txt files", ex);
+            }
+
+            return blnSuccess;
+        }
+
+        private DateTime dtLastStatusUpdate = DateTime.MinValue;
+
+        private void HandleProgressUpdate(float percentComplete)
+        {
+            m_progress = percentComplete;
+
+            // Update the status file (limit the updates to every 5 seconds)
+            if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
+            {
+                dtLastStatusUpdate = DateTime.UtcNow;
+                UpdateStatusRunning(m_progress, m_DtaCount);
+            }
+
+            LogProgress("MsMsSpectrumFilter");
+        }
+
+        protected virtual bool InitSetup()
+        {
+            //Initializes module variables and verifies mandatory parameters have been propery specified
+
+            //Manager parameters
+            if (m_mgrParams == null)
+            {
+                m_ErrMsg = "Manager parameters not specified";
+                return false;
+            }
+
+            //Job parameters
+            if (m_jobParams == null)
+            {
+                m_ErrMsg = "Job parameters not specified";
+                return false;
+            }
+
+            //Status tools
+            if (m_StatusTools == null)
+            {
+                m_ErrMsg = "Status tools object not set";
+                return false;
+            }
+
+            //Set the _DTA.Txt file name
+            m_DTATextFileName = m_Dataset + "_dta.txt";
+
+            //Set settings file name
+            //This is the job parameters file that contains the settings information
+            m_SettingsFileName = m_jobParams.GetParam("JobParameters", "genJobParamsFilename");
+
+            //Source folder name
+            if (string.IsNullOrEmpty(m_WorkDir))
+            {
+                m_ErrMsg = "m_WorkDir variable is empty";
+                return false;
+            }
+
+            //Source directory exist?
+            if (!VerifyDirExists(m_WorkDir))
+                return false;
+            //Error msg handled by VerifyDirExists
+
+            //Settings file exist?
+            string SettingsNamePath = Path.Combine(m_WorkDir, m_SettingsFileName);
+            if (!VerifyFileExists(SettingsNamePath))
+                return false;
+            //Error msg handled by VerifyFileExists
+
+            //If we got here, everything's OK
+            return true;
+        }
+
+        private void LogErrors(string strSource, string strMessage, Exception ex, bool blnLogLocalOnly = true)
+        {
+            m_ErrMsg = string.Copy(strMessage).Replace("\n", "; ").Replace("\r", "");
+
+            if (ex == null)
+            {
+                ex = new Exception("Error");
+            }
+            else
+            {
+                if ((ex.Message != null) && ex.Message.Length > 0)
+                {
+                    m_ErrMsg += "; " + ex.Message;
+                }
+            }
+
+            Trace.WriteLine(DateTime.Now.ToLongTimeString() + "; " + m_ErrMsg, strSource);
+            Console.WriteLine(DateTime.Now.ToLongTimeString() + "; " + m_ErrMsg, strSource);
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg + ex.Message);
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        private bool StoreToolVersionInfo()
+        {
+            string strToolVersionInfo = string.Empty;
+            string strAppFolderPath = clsGlobal.GetAppFolderPath();
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            // Lookup the version of the MSMSSpectrumFilterAM
+            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "MSMSSpectrumFilterAM"))
+            {
+                return false;
+            }
+
+            // Lookup the version of the MsMsDataFileReader
+            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "MsMsDataFileReader"))
+            {
+                return false;
+            }
+
+            // Store the path to MsMsDataFileReader.dll in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll")));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        protected virtual bool VerifyDirExists(string TestDir)
+        {
+            //Verifies that the specified directory exists
+            if (Directory.Exists(TestDir))
+            {
+                m_ErrMsg = "";
+                return true;
+            }
+            else
+            {
+                m_ErrMsg = "Directory " + TestDir + " not found";
+                return false;
+            }
+        }
+
+        private bool VerifyDtaCreation(string strDTATextFilePath)
+        {
+            //Verify at least one .dta file has been created
+            if (CountDtaFiles(strDTATextFilePath) < 1)
+            {
+                m_ErrMsg = "No dta files remain after filtering";
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        protected virtual bool VerifyFileExists(string TestFile)
+        {
+            //Verifies specified file exists
+            if (File.Exists(TestFile))
+            {
+                m_ErrMsg = "";
+                return true;
+            }
+            else
+            {
+                m_ErrMsg = "File " + TestFile + " not found";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Zips concatenated DTA file to reduce size
+        /// </summary>
+        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        protected virtual IJobParams.CloseOutType ZipConcDtaFile()
+        {
+            //Zips the concatenated dta file
+            string DtaFileName = m_Dataset + "_dta.txt";
+            string DtaFilePath = Path.Combine(m_WorkDir, DtaFileName);
+
+            //Verify file exists
+            if (File.Exists(DtaFilePath))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file");
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            //Zip the file
+            try
+            {
+                if (!base.ZipFile(DtaFilePath, false))
+                {
+                    string Msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                string Msg = "Exception zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        #endregion
+
+        private void m_MsMsSpectrumFilter_ProgressChanged(string taskDescription, float percentComplete)
+        {
+            HandleProgressUpdate(percentComplete);
+        }
+
+        private void m_MsMsSpectrumFilter_ProgressComplete()
+        {
+            HandleProgressUpdate(100);
+        }
+    }
+}
