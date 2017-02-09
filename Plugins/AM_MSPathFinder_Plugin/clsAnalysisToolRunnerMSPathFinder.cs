@@ -327,11 +327,11 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
         }
 
-        private const string REGEX_PROMEX_RESULTS = "ProMex[^\\d]+(\\d+)/(\\d+) features loaded";
-        private const string REGEX_MSPATHFINDER_PROGRESS = "([0-9.]+)% complete";
+        private const string REGEX_PROMEX_RESULTS = @"ProMex[^\d]+(\d+)/(\d+) features loaded";
+        private const string REGEX_MSPATHFINDER_PROGRESS = @"([0-9.]+)% complete";
         private Regex rePromexFeatureStats = new Regex(REGEX_PROMEX_RESULTS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private Regex reCheckProgress = new Regex(REGEX_MSPATHFINDER_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private Regex reProcessingProteins = new Regex("(\\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private Regex reProcessingProteins = new Regex(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSPathFinder console output file to track the search progress

@@ -901,10 +901,10 @@ namespace AnalysisManagerMzRefineryPlugIn
             //    Filtered out 8 identifications because of score.
             //    Filtered out 0 identifications because of mass error.
 
-            var reResultsAfterFiltering = new Regex("Less than \\d+ \\(\\d+\\) results after filtering", RegexOptions.Compiled);
+            var reResultsAfterFiltering = new Regex(@"Less than \d+ \(\d+\) results after filtering", RegexOptions.Compiled);
 
-            var reGoodDataPoints = new Regex("Good data points:[^\\d]+(\\d+)", RegexOptions.Compiled);
-            var reSpecEValueThreshold = new Regex("New: MS-GF:SpecEValue;.+value <= ([^ ]+)", RegexOptions.Compiled);
+            var reGoodDataPoints = new Regex(@"Good data points:[^\d]+(\d+)", RegexOptions.Compiled);
+            var reSpecEValueThreshold = new Regex(@"New: MS-GF:SpecEValue;.+value <= ([^ ]+)", RegexOptions.Compiled);
 
             try
             {

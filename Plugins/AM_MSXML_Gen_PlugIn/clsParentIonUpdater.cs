@@ -113,7 +113,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         private string UpdateDtaParentIonInfoUsingMGF(string dtaFilePath, string mgfFilePath, bool removeUnmatchedSpectra, bool replaceDtaFile)
         {
             // Look for the charge state in the title line, for example 2.dta in "DatasetName.5396.5396.2.dta"
-            var reDtaChargeUpdater = new Regex("\\d+\\.dta", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var reDtaChargeUpdater = new Regex(@"\d+\.dta", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -285,7 +285,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <returns>Path to the updated mzML file</returns>
         public string UpdateMzMLParentIonInfoUsingMGF(string mzMLFilePath, string mgfFilePath, bool replaceMzMLFile)
         {
-            var reScanNumber = new Regex("scan=(?<ScanNumber>\\d+)", RegexOptions.Compiled);
+            var reScanNumber = new Regex(@"scan=(?<ScanNumber>\d+)", RegexOptions.Compiled);
 
             try
             {
