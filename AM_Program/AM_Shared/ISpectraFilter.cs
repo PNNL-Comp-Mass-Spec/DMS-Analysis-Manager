@@ -19,27 +19,27 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Operation succeeded
         /// </summary>
-        SFILT_SUCCESS = 0,
+        SF_SUCCESS = 0,
 
         /// <summary>
         /// Operation failed
         /// </summary>
-        SFILT_FAILURE = -1,
+        SF_FAILURE = -1,
 
         /// <summary>
         /// Spectra filter operation didn't fail, but no output files were created
         /// </summary>
-        SFILT_NO_FILES_CREATED = -2,
+        SF_NO_FILES_CREATED = -2,
 
         /// <summary>
         /// Spectra filter operation aborted
         /// </summary>
-        SFILT_ABORTED = -3,
+        SF_ABORTED = -3,
 
         /// <summary>
         /// Spectra filter did not alter any spectra
         /// </summary>
-        SFILT_NO_SPECTRA_ALTERED = -4
+        SF_NO_SPECTRA_ALTERED = -4
         
     }
 
@@ -51,27 +51,27 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Plugin initialization in progress
         /// </summary>
-        SFILT_STARTING = 0,
+        SF_STARTING = 0,
 
         /// <summary>
         /// Plugin is attempting to do its job
         /// </summary>
-        SFILT_RUNNING = 1,
+        SF_RUNNING = 1,
 
         /// <summary>
         /// Plugin successfully completed its job
         /// </summary>
-        SFILT_COMPLETE = 2,
+        SF_COMPLETE = 2,
 
         /// <summary>
         /// There was an error somewhere
         /// </summary>
-        SFILT_ERROR = 3,
+        SF_ERROR = 3,
 
         /// <summary>
         /// An ABORT command has been received; plugin shutdown in progress
         /// </summary>
-        SFILT_ABORTING = 4
+        SF_ABORTING = 4
     }
     #endregion
 
