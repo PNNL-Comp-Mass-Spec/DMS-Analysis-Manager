@@ -32,7 +32,7 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <OldToolsVersion>3.5</OldToolsVersion>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
@@ -112,6 +112,10 @@
     <Reference Include="AM_Shared">
       <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="FileConcatenator, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\FileConcatenator.dll</HintPath>
+    </Reference>
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
@@ -147,6 +151,7 @@
     <Compile Include="AssemblyInfo.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="clsConcatToolWrapper.vb" />
     <Compile Include="clsDtaGen.vb">
       <SubType>Code</SubType>
     </Compile>

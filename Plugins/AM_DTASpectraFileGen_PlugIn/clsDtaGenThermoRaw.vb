@@ -69,7 +69,7 @@ Public Class clsDtaGenThermoRaw
 
 #Region "Methods"
 
-    Public Overrides Sub Setup(initParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
+    Public Overrides Sub Setup(initParams As SpectraFileProcessorParams, toolRunner As clsAnalysisToolRunnerBase)
         MyBase.Setup(initParams, toolRunner)
 
         m_DtaToolNameLoc = ConstructDTAToolPath()
@@ -81,20 +81,20 @@ Public Class clsDtaGenThermoRaw
     ''' </summary>
     ''' <returns>ProcessStatus value indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function Start() As ISpectraFileProcessor.ProcessStatus
+    Public Overrides Function Start() As ProcessStatus
 
-        m_Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING
+        m_Status = ProcessStatus.SF_STARTING
 
         ' Verify necessary files are in specified locations
         If Not InitSetup() Then
-            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            m_Results = ProcessResults.SF_FAILURE
+            m_Status = ProcessStatus.SF_ERROR
             Return m_Status
         End If
 
         If Not VerifyFileExists(m_DtaToolNameLoc) Then
-            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            m_Results = ProcessResults.SF_FAILURE
+            m_Status = ProcessStatus.SF_ERROR
             Return m_Status
         End If
 
@@ -106,16 +106,16 @@ Public Class clsDtaGenThermoRaw
             If USE_THREADING Then
                 m_thThread = New Thread(AddressOf MakeDTAFilesThreaded)
                 m_thThread.Start()
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+                m_Status = ProcessStatus.SF_RUNNING
             Else
                 MakeDTAFilesThreaded()
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+                m_Status = ProcessStatus.SF_COMPLETE
             End If
 
         Catch ex As Exception
             m_ErrMsg = "Error calling MakeDTAFilesThreaded"
             OnErrorEvent(m_ErrMsg, ex)
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            m_Status = ProcessStatus.SF_ERROR
         End Try
 
         Return m_Status
@@ -264,38 +264,38 @@ Public Class clsDtaGenThermoRaw
     ''' <remarks></remarks>
     Protected Overridable Sub MakeDTAFilesThreaded()
 
-        m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+        m_Status = ProcessStatus.SF_RUNNING
         If Not MakeDTAFiles() Then
-            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            If m_Status <> ProcessStatus.SF_ABORTING Then
+                m_Results = ProcessResults.SF_FAILURE
+                m_Status = ProcessStatus.SF_ERROR
             End If
         End If
 
         ' Remove any files with non-standard file names (extract_msn artifact)
         If Not DeleteNonDosFiles() Then
-            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            If m_Status <> ProcessStatus.SF_ABORTING Then
+                m_Results = ProcessResults.SF_FAILURE
+                m_Status = ProcessStatus.SF_ERROR
             End If
         End If
 
-        If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-            m_Results = ISpectraFileProcessor.ProcessResults.SF_ABORTED
-        ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+        If m_Status = ProcessStatus.SF_ABORTING Then
+            m_Results = ProcessResults.SF_ABORTED
+        ElseIf m_Status = ProcessStatus.SF_ERROR Then
+            m_Results = ProcessResults.SF_FAILURE
         Else
             ' Verify at least one dta file was created
             If Not VerifyDtaCreation() Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_NO_FILES_CREATED
+                m_Results = ProcessResults.SF_NO_FILES_CREATED
             Else
                 ' Processing succeded
                 ' We don't need to keep the console output file long-term
                 m_JobParams.AddResultFileToSkip(CONSOLE_OUTPUT_FILENAME)
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
+                m_Results = ProcessResults.SF_SUCCESS
             End If
 
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+            m_Status = ProcessStatus.SF_COMPLETE
         End If
 
     End Sub
@@ -444,7 +444,7 @@ Public Class clsDtaGenThermoRaw
                 Do While (LocScanStart <= ScanStop)
                     ' Check for abort
                     If m_AbortRequested Then
-                        m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
+                        m_Status = ProcessStatus.SF_ABORTING
                         Exit Do
                     End If
 
@@ -530,7 +530,7 @@ Public Class clsDtaGenThermoRaw
         Loop
 
         If m_AbortRequested Then
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
+            m_Status = ProcessStatus.SF_ABORTING
         End If
 
         ' Disable the watchers
@@ -547,14 +547,14 @@ Public Class clsDtaGenThermoRaw
         End If
 
         ' We got this far, everything must have worked
-        If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
+        If m_Status = ProcessStatus.SF_ABORTING Then
             LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles",
-                                Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING")
+                                Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ProcessStatus.SF_ABORTING")
             Return False
 
-        ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
+        ElseIf m_Status = ProcessStatus.SF_ERROR Then
             LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles",
-                                Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR ")
+                                Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_Status = ProcessStatus.SF_ERROR ")
             Return False
 
         Else
@@ -693,7 +693,7 @@ Public Class clsDtaGenThermoRaw
         ' Update the status file (limit the updates to every 5 seconds)
         If DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = DateTime.UtcNow
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_Progress, m_SpectraFileCount, "", "", "", False)
+            m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, m_Progress, m_SpectraFileCount, "", "", "", False)
         End If
 
     End Sub

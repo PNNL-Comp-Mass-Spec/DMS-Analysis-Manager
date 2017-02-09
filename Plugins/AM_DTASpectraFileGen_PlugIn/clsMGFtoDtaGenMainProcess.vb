@@ -29,21 +29,21 @@ Public Class clsMGFtoDtaGenMainProcess
 
 #End Region
 
-    Public Overrides Sub Setup(initParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
+    Public Overrides Sub Setup(initParams As SpectraFileProcessorParams, toolRunner As clsAnalysisToolRunnerBase)
         MyBase.Setup(initParams, toolRunner)
 
         m_DtaToolNameLoc = Path.Combine(clsGlobal.GetAppFolderPath(), "MascotGenericFileToDTA.dll")
 
     End Sub
 
-    Public Overrides Function Start() As ISpectraFileProcessor.ProcessStatus
+    Public Overrides Function Start() As ProcessStatus
 
-        m_Status = ISpectraFileProcessor.ProcessStatus.SF_STARTING
+        m_Status = ProcessStatus.SF_STARTING
 
         'Verify necessary files are in specified locations
         If Not InitSetup() Then
-            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            m_Results = ProcessResults.SF_FAILURE
+            m_Status = ProcessStatus.SF_ERROR
             Return m_Status
         End If
 
@@ -52,15 +52,15 @@ Public Class clsMGFtoDtaGenMainProcess
             If USE_THREADING Then
                 m_thThread = New Threading.Thread(AddressOf MakeDTAFilesThreaded)
                 m_thThread.Start()
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+                m_Status = ProcessStatus.SF_RUNNING
             Else
                 MakeDTAFilesThreaded()
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+                m_Status = ProcessStatus.SF_COMPLETE
             End If
 
         Catch ex As Exception
             m_ErrMsg = "Error calling MakeDTAFilesFromMGF: " & ex.Message
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            m_Status = ProcessStatus.SF_ERROR
         End Try
 
         Return m_Status
@@ -97,27 +97,27 @@ Public Class clsMGFtoDtaGenMainProcess
 
     Private Sub MakeDTAFilesThreaded()
 
-        m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+        m_Status = ProcessStatus.SF_RUNNING
         If Not MakeDTAFilesFromMGF() Then
-            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            If m_Status <> ProcessStatus.SF_ABORTING Then
+                m_Results = ProcessResults.SF_FAILURE
+                m_Status = ProcessStatus.SF_ERROR
             End If
         End If
 
-        If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-            m_Results = ISpectraFileProcessor.ProcessResults.SF_ABORTED
-        ElseIf m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
-            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
+        If m_Status = ProcessStatus.SF_ABORTING Then
+            m_Results = ProcessResults.SF_ABORTED
+        ElseIf m_Status = ProcessStatus.SF_ERROR Then
+            m_Results = ProcessResults.SF_FAILURE
         Else
             'Verify at least one dta file was created
             If Not VerifyDtaCreation() Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_NO_FILES_CREATED
+                m_Results = ProcessResults.SF_NO_FILES_CREATED
             Else
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
+                m_Results = ProcessResults.SF_SUCCESS
             End If
 
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+            m_Status = ProcessStatus.SF_COMPLETE
         End If
 
     End Sub
@@ -136,17 +136,17 @@ Public Class clsMGFtoDtaGenMainProcess
         'Run the MGF to DTA converter
         If Not ConvertMGFtoDTA(MGFFile, m_WorkDir) Then
             ' Note that ConvertMGFtoDTA will have updated m_ErrMsg with the error message
-            m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            m_Results = ProcessResults.SF_FAILURE
+            m_Status = ProcessStatus.SF_ERROR
             Return False
         End If
 
         If m_AbortRequested Then
-            m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING
+            m_Status = ProcessStatus.SF_ABORTING
         End If
 
         'We got this far, everything must have worked
-        If m_Status = ISpectraFileProcessor.ProcessStatus.SF_ABORTING Or m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR Then
+        If m_Status = ProcessStatus.SF_ABORTING Or m_Status = ProcessStatus.SF_ERROR Then
             Return False
         Else
             Return True

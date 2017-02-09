@@ -21,11 +21,11 @@ Public Class clsDtaGenResources
 #End Region
 
 #Region "Methods"
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -45,11 +45,11 @@ Public Class clsDtaGenResources
             End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_SETTINGS_FILE
+            Return CloseOutType.CLOSEOUT_NO_SETTINGS_FILE
         End If
 
         If Not GetParameterFiles(eDtaGeneratorType) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
 
@@ -57,7 +57,7 @@ Public Class clsDtaGenResources
             Dim strFileToFind As String = m_DatasetName & DOT_MGF_EXTENSION
             If Not FindAndRetrieveMiscFiles(strFileToFind, False) Then
                 LogError("Instrument data not found: " & strFileToFind)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
                 m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
             End If
@@ -67,7 +67,7 @@ Public Class clsDtaGenResources
                 If String.IsNullOrEmpty(m_message) Then
                     LogError("Error retrieving instrument data file")
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Dim blnCentroidDTAs = False
@@ -121,7 +121,7 @@ Public Class clsDtaGenResources
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not String.IsNullOrEmpty(zippedDTAFilePath) Then
@@ -144,7 +144,7 @@ Public Class clsDtaGenResources
             End If
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

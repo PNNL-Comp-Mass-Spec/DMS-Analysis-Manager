@@ -26,8 +26,8 @@ Public MustInherit Class clsDtaGen
 
     Protected m_DtaToolNameLoc As String = String.Empty             ' Path to the program used to create DTA files
 
-    Protected m_Status As ISpectraFileProcessor.ProcessStatus
-    Protected m_Results As ISpectraFileProcessor.ProcessResults
+    Protected m_Status As ProcessStatus
+    Protected m_Results As ProcessResults
     Protected m_MgrParams As IMgrParams
     Protected m_JobParams As IJobParams
     Protected m_DebugLevel As Short = 0
@@ -73,13 +73,13 @@ Public MustInherit Class clsDtaGen
         End Set
     End Property
 
-    Public ReadOnly Property Status() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Status
+    Public ReadOnly Property Status() As ProcessStatus Implements ISpectraFileProcessor.Status
         Get
             Return m_Status
         End Get
     End Property
 
-    Public ReadOnly Property Results() As ISpectraFileProcessor.ProcessResults Implements ISpectraFileProcessor.Results
+    Public ReadOnly Property Results() As ProcessResults Implements ISpectraFileProcessor.Results
         Get
             Return m_Results
         End Get
@@ -113,14 +113,14 @@ Public MustInherit Class clsDtaGen
     ''' </summary>
     ''' <returns>ProcessStatus value indicating process was aborted</returns>
     ''' <remarks></remarks>
-    Public Function Abort() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Abort
+    Public Function Abort() As ProcessStatus Implements ISpectraFileProcessor.Abort
         m_AbortRequested = True
     End Function
 
-    Public MustOverride Function Start() As ISpectraFileProcessor.ProcessStatus Implements ISpectraFileProcessor.Start
+    Public MustOverride Function Start() As ProcessStatus Implements ISpectraFileProcessor.Start
 
     Public Overridable Sub Setup(
-      initParams As ISpectraFileProcessor.InitializationParams,
+      initParams As SpectraFileProcessorParams,
       toolRunner As clsAnalysisToolRunnerBase) Implements ISpectraFileProcessor.Setup
 
         ' Copies all input data required for plugin operation to appropriate memory variables

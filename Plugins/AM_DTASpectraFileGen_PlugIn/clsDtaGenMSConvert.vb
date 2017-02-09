@@ -28,7 +28,7 @@ Public Class clsDtaGenMSConvert
         End Set
     End Property
 
-    Public Overrides Sub Setup(initParams As ISpectraFileProcessor.InitializationParams, toolRunner As clsAnalysisToolRunnerBase)
+    Public Overrides Sub Setup(initParams As SpectraFileProcessorParams, toolRunner As clsAnalysisToolRunnerBase)
         MyBase.Setup(initParams, toolRunner)
 
         ' Tool setup for MSConvert involves creating a
@@ -61,15 +61,15 @@ Public Class clsDtaGenMSConvert
 
     Protected Overrides Sub MakeDTAFilesThreaded()
 
-        m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+        m_Status = ProcessStatus.SF_RUNNING
         m_ErrMsg = String.Empty
 
         m_Progress = 10
 
         If Not ConvertRawToMGF(m_RawDataType) Then
-            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            If m_Status <> ProcessStatus.SF_ABORTING Then
+                m_Results = ProcessResults.SF_FAILURE
+                m_Status = ProcessStatus.SF_ERROR
             End If
             Return
         End If
@@ -77,15 +77,15 @@ Public Class clsDtaGenMSConvert
         m_Progress = 75
 
         If Not ConvertMGFtoDTA() Then
-            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            If m_Status <> ProcessStatus.SF_ABORTING Then
+                m_Results = ProcessResults.SF_FAILURE
+                m_Status = ProcessStatus.SF_ERROR
             End If
             Return
         End If
 
-        m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
-        m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+        m_Results = ProcessResults.SF_SUCCESS
+        m_Status = ProcessStatus.SF_COMPLETE
 
     End Sub
 

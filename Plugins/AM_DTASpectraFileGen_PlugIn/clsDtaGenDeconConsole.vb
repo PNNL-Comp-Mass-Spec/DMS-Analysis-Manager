@@ -67,15 +67,15 @@ Public Class clsDtaGenDeconConsole
 
     Protected Overrides Sub MakeDTAFilesThreaded()
 
-        m_Status = ISpectraFileProcessor.ProcessStatus.SF_RUNNING
+        m_Status = ProcessStatus.SF_RUNNING
         m_ErrMsg = String.Empty
 
         m_Progress = PROGRESS_DECON_CONSOLE_START
 
         If Not ConvertRawToMGF(m_RawDataType) Then
-            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            If m_Status <> ProcessStatus.SF_ABORTING Then
+                m_Results = ProcessResults.SF_FAILURE
+                m_Status = ProcessStatus.SF_ERROR
             End If
             Return
         End If
@@ -83,17 +83,17 @@ Public Class clsDtaGenDeconConsole
         m_Progress = PROGRESS_MGF_TO_CDTA_START
 
         If Not ConvertMGFtoDTA() Then
-            If m_Status <> ISpectraFileProcessor.ProcessStatus.SF_ABORTING Then
-                m_Results = ISpectraFileProcessor.ProcessResults.SF_FAILURE
-                m_Status = ISpectraFileProcessor.ProcessStatus.SF_ERROR
+            If m_Status <> ProcessStatus.SF_ABORTING Then
+                m_Results = ProcessResults.SF_FAILURE
+                m_Status = ProcessStatus.SF_ERROR
             End If
             Return
         End If
 
         m_Progress = PROGRESS_CDTA_CREATED
 
-        m_Results = ISpectraFileProcessor.ProcessResults.SF_SUCCESS
-        m_Status = ISpectraFileProcessor.ProcessStatus.SF_COMPLETE
+        m_Results = ProcessResults.SF_SUCCESS
+        m_Status = ProcessStatus.SF_COMPLETE
 
     End Sub
 
