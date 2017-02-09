@@ -72,7 +72,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.vbproj">
+    <ProjectReference Include="..\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.csproj">
       <Project>{02d682e5-f70f-4c46-bac8-1c18920fff22}</Project>
       <Name>AnalysisManagerMSXMLGenPlugIn</Name>
     </ProjectReference>

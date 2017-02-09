@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFPlugin", "AnalysisManagerMSGFPlugin.csproj", "{7A6DE396-7309-43E1-8F8A-B387709508DD}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSXMLGenPlugIn", "..\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.vbproj", "{02D682E5-F70F-4C46-BAC8-1C18920FFF22}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSXMLGenPlugIn", "..\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.csproj", "{02D682E5-F70F-4C46-BAC8-1C18920FFF22}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizer", "MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj", "{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}"
 EndProject
