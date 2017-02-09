@@ -140,12 +140,12 @@ namespace AnalysisManagerBase
         /// 
         /// </summary>
         /// <param name="ManagerIdleMessage"></param>
-        /// <param name="RecentErrorMessages"></param>
+        /// <param name="recentErrorMessages"></param>
         /// <param name="JobInfo"></param>
         /// <param name="ForceLogToBrokerDB"></param>
         /// <remarks></remarks>
 
-        void UpdateClose(string ManagerIdleMessage, ref string[] RecentErrorMessages, string JobInfo, bool ForceLogToBrokerDB);
+        void UpdateClose(string ManagerIdleMessage, List<string> recentErrorMessages, string JobInfo, bool ForceLogToBrokerDB);
 
         /// <summary>
         /// Update the current status
@@ -218,11 +218,11 @@ namespace AnalysisManagerBase
         /// Logs to the status file that the manager is idle
         /// </summary>
         /// <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-        /// <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-        void UpdateIdle(string ManagerIdleMessage, ref string[] RecentErrorMessages, string RecentJobInfo, bool ForceLogToBrokerDB);
+        void UpdateIdle(string ManagerIdleMessage, List<string> recentErrorMessages, string RecentJobInfo, bool ForceLogToBrokerDB);
 
         /// <summary>
         /// Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
@@ -243,10 +243,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="ManagerStatus">Should be EnumMgrStatus.DISABLED_LOCAL or EnumMgrStatus.DISABLED_MC</param>
         /// <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-        /// <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <remarks></remarks>
-        void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage, ref string[] RecentErrorMessages, string RecentJobInfo);
+        void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage, List<string> recentErrorMessages, string RecentJobInfo);
 
         /// <summary>
         /// Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
@@ -257,10 +257,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
         /// </summary>
-        /// <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <remarks></remarks>
-        void UpdateFlagFileExists(ref string[] RecentErrorMessages, string RecentJobInfo);
+        void UpdateFlagFileExists(List<string> recentErrorMessages, string RecentJobInfo);
 
         /// <summary>
         /// Writes out a new status file, indicating that the manager is still alive
