@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DF8FD60E-3864-4B82-8E80-B3DC220280AB}</ProjectGuid>
+    <ProjectGuid>{62E15FEE-C239-4896-8FD2-7551A5D1A070}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerMSPathFinderPlugin</RootNamespace>

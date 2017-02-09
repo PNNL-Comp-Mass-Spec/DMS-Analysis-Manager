@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C9AA48CF-0DF2-4CE2-A333-3E92AFDC629F}</ProjectGuid>
+    <ProjectGuid>{A939D260-136F-4400-8750-1B3E9E57F2F8}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerProg</RootNamespace>
@@ -114,7 +114,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="AM_Shared\AM_Shared.csproj">
-      <Project>{18adc755-b570-4571-8ef8-a539fc9efb75}</Project>
+      <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>
     </ProjectReference>
   </ItemGroup>
