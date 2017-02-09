@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerMSPathFinderPlugin</RootNamespace>
     <AssemblyName>AnalysisManagerMSPathFinderPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -32,10 +32,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AM_Shared">
-      <HintPath>..\..\..\AM_Common\AM_Shared.dll</HintPath>
+      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
-      <HintPath>..\..\..\AM_Common\PRISM.dll</HintPath>
+      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
