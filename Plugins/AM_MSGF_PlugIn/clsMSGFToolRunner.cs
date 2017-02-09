@@ -108,26 +108,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private string mConsoleOutputErrorMsg;
 
-        private clsMSGFInputCreator withEventsField_mMSGFInputCreator;
-
-        private clsMSGFInputCreator mMSGFInputCreator
-        {
-            get { return withEventsField_mMSGFInputCreator; }
-            set
-            {
-                if (withEventsField_mMSGFInputCreator != null)
-                {
-                    withEventsField_mMSGFInputCreator.ErrorEvent -= mMSGFInputCreator_ErrorEvent;
-                    withEventsField_mMSGFInputCreator.WarningEvent -= mMSGFInputCreator_WarningEvent;
-                }
-                withEventsField_mMSGFInputCreator = value;
-                if (withEventsField_mMSGFInputCreator != null)
-                {
-                    withEventsField_mMSGFInputCreator.ErrorEvent += mMSGFInputCreator_ErrorEvent;
-                    withEventsField_mMSGFInputCreator.WarningEvent += mMSGFInputCreator_WarningEvent;
-                }
-            }
-        }
+        private clsMSGFInputCreator mMSGFInputCreator;
 
         private clsRunDosProgram mMSGFRunner;
 
@@ -808,6 +789,10 @@ namespace AnalysisManagerMSGFPlugin
 
             if (blnSuccess)
             {
+                // Register events
+                mMSGFInputCreator.ErrorEvent += mMSGFInputCreator_ErrorEvent;
+                mMSGFInputCreator.WarningEvent += mMSGFInputCreator_WarningEvent;
+
                 mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath;
                 mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath;
 

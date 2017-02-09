@@ -153,26 +153,7 @@ namespace MSGFResultsSummarizer
         private readonly string mWorkDir;
         private readonly string mConnectionString;
 
-        private PRISM.DataBase.clsExecuteDatabaseSP withEventsField_mStoredProcedureExecutor;
-
-        private PRISM.DataBase.clsExecuteDatabaseSP mStoredProcedureExecutor
-        {
-            get { return withEventsField_mStoredProcedureExecutor; }
-            set
-            {
-                if (withEventsField_mStoredProcedureExecutor != null)
-                {
-                    withEventsField_mStoredProcedureExecutor.DebugEvent -= m_ExecuteSP_DebugEvent;
-                    withEventsField_mStoredProcedureExecutor.DBErrorEvent -= m_ExecuteSP_DBErrorEvent;
-                }
-                withEventsField_mStoredProcedureExecutor = value;
-                if (withEventsField_mStoredProcedureExecutor != null)
-                {
-                    withEventsField_mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
-                    withEventsField_mStoredProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
-                }
-            }
-        }
+        private readonly PRISM.DataBase.clsExecuteDatabaseSP mStoredProcedureExecutor;
 
         // The following is auto-determined in ProcessMSGFResults
         private string mMSGFSynopsisFileName = string.Empty;
@@ -439,6 +420,8 @@ namespace MSGFResultsSummarizer
             mConnectionString = strConnectionString;
 
             mStoredProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(mConnectionString);
+            mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
+            mStoredProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
             ContactDatabase = true;
         }
 

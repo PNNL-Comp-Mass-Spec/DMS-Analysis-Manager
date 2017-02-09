@@ -22,26 +22,7 @@ namespace MSMSSpectrumFilterAM
 {
     public class clsAnalysisToolRunnerMsMsSpectrumFilter : clsAnalysisToolRunnerBase
     {
-        private clsMsMsSpectrumFilter withEventsField_m_MsMsSpectrumFilter;
-
-        private clsMsMsSpectrumFilter m_MsMsSpectrumFilter
-        {
-            get { return withEventsField_m_MsMsSpectrumFilter; }
-            set
-            {
-                if (withEventsField_m_MsMsSpectrumFilter != null)
-                {
-                    withEventsField_m_MsMsSpectrumFilter.ProgressChanged -= m_MsMsSpectrumFilter_ProgressChanged;
-                    withEventsField_m_MsMsSpectrumFilter.ProgressComplete -= m_MsMsSpectrumFilter_ProgressComplete;
-                }
-                withEventsField_m_MsMsSpectrumFilter = value;
-                if (withEventsField_m_MsMsSpectrumFilter != null)
-                {
-                    withEventsField_m_MsMsSpectrumFilter.ProgressChanged += m_MsMsSpectrumFilter_ProgressChanged;
-                    withEventsField_m_MsMsSpectrumFilter.ProgressComplete += m_MsMsSpectrumFilter_ProgressComplete;
-                }
-            }
-        }
+        private readonly clsMsMsSpectrumFilter m_MsMsSpectrumFilter;
 
         private string m_ErrMsg = string.Empty;
         // Handy place to store value so repeated calls to m_JobParams aren't required
@@ -57,6 +38,10 @@ namespace MSMSSpectrumFilterAM
 
         public clsAnalysisToolRunnerMsMsSpectrumFilter()
         {
+            //Initialize MsMsSpectrumFilterDLL.dll
+            m_MsMsSpectrumFilter = new clsMsMsSpectrumFilter();
+            m_MsMsSpectrumFilter.ProgressChanged += m_MsMsSpectrumFilter_ProgressChanged;
+            m_MsMsSpectrumFilter.ProgressComplete += m_MsMsSpectrumFilter_ProgressComplete;
         }
 
         public override CloseOutType RunTool()
@@ -354,9 +339,6 @@ namespace MSMSSpectrumFilterAM
 
             try
             {
-                //Initialize MsMsSpectrumFilterDLL.dll
-                m_MsMsSpectrumFilter = new clsMsMsSpectrumFilter();
-
                 // Pre-read the parameter file now, so that we can override some of the settings
                 strParameterFilePath = Path.Combine(m_WorkDir, m_SettingsFileName);
 

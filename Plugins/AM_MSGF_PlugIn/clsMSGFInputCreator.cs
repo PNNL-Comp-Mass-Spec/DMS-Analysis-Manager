@@ -64,31 +64,6 @@ namespace AnalysisManagerMSGFPlugin
 
         private int mMSGFInputFileLineCount = 0;
 
-        // Note that this reader is instantiated and disposed of several times
-        // We declare it here as a classwide variable so that we can attach the event handlers
-        private clsPHRPReader withEventsField_mPHRPReader;
-
-        private clsPHRPReader mPHRPReader
-        {
-            get { return withEventsField_mPHRPReader; }
-            set
-            {
-                if (withEventsField_mPHRPReader != null)
-                {
-                    withEventsField_mPHRPReader.ErrorEvent -= mPHRPReader_ErrorEvent;
-                    withEventsField_mPHRPReader.MessageEvent -= mPHRPReader_MessageEvent;
-                    withEventsField_mPHRPReader.WarningEvent -= mPHRPReader_WarningEvent;
-                }
-                withEventsField_mPHRPReader = value;
-                if (withEventsField_mPHRPReader != null)
-                {
-                    withEventsField_mPHRPReader.ErrorEvent += mPHRPReader_ErrorEvent;
-                    withEventsField_mPHRPReader.MessageEvent += mPHRPReader_MessageEvent;
-                    withEventsField_mPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
-                }
-            }
-        }
-
         private StreamWriter mLogFile;
 
         #endregion
@@ -336,10 +311,11 @@ namespace AnalysisManagerMSGFPlugin
                 startupOptions.LoadModsAndSeqInfo = true;
 
                 // Open the first-hits file
-                mPHRPReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
-                mPHRPReader.EchoMessagesToConsole = true;
+                var phrpReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
+                RegisterPHRPReaderEventHandlers(phrpReader);
+                phrpReader.EchoMessagesToConsole = true;
 
-                if (!mPHRPReader.CanRead)
+                if (!phrpReader.CanRead)
                 {
                     ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage));
                     return false;
@@ -358,9 +334,9 @@ namespace AnalysisManagerMSGFPlugin
 
                     intMissingValueCount = 0;
 
-                    while (mPHRPReader.MoveNext())
+                    while (phrpReader.MoveNext())
                     {
-                        var objPSM = mPHRPReader.CurrentPSM;
+                        var objPSM = phrpReader.CurrentPSM;
 
                         strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide);
 
@@ -419,7 +395,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 // First Hits MSGF writer
 
-                mPHRPReader.Dispose();
+                phrpReader.Dispose();
             }
             catch (Exception ex)
             {
@@ -504,33 +480,34 @@ namespace AnalysisManagerMSGFPlugin
                         startupOptions.LoadModsAndSeqInfo = true;
 
                         // Read the synopsis file data
-                        mPHRPReader = new clsPHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, startupOptions);
-                        mPHRPReader.EchoMessagesToConsole = true;
+                        var phrpReader = new clsPHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, startupOptions);
+                        RegisterPHRPReaderEventHandlers(phrpReader);
+                        phrpReader.EchoMessagesToConsole = true;
 
                         // Report any errors cached during instantiation of mPHRPReader
-                        foreach (string strMessage in mPHRPReader.ErrorMessages)
+                        foreach (string strMessage in phrpReader.ErrorMessages)
                         {
                             ReportError(strMessage);
                         }
                         mErrorMessage = string.Empty;
 
                         // Report any warnings cached during instantiation of mPHRPReader
-                        foreach (string strMessage in mPHRPReader.WarningMessages)
+                        foreach (string strMessage in phrpReader.WarningMessages)
                         {
                             ReportWarning(strMessage);
                         }
 
-                        mPHRPReader.ClearErrors();
-                        mPHRPReader.ClearWarnings();
+                        phrpReader.ClearErrors();
+                        phrpReader.ClearWarnings();
 
-                        if (!mPHRPReader.CanRead)
+                        if (!phrpReader.CanRead)
                         {
                             ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage));
                             return false;
                         }
 
-                        ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strSpectrumFileName, true);
-                        mPHRPReader.Dispose();
+                        ReadAndStorePHRPData(phrpReader, swMSGFInputFile, strSpectrumFileName, true);
+                        phrpReader.Dispose();
 
                         blnSuccess = true;
                     }
@@ -542,17 +519,18 @@ namespace AnalysisManagerMSGFPlugin
                         clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
                         startupOptions.LoadModsAndSeqInfo = true;
 
-                        mPHRPReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
-                        mPHRPReader.EchoMessagesToConsole = true;
+                        var phrpReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
+                        RegisterPHRPReaderEventHandlers(phrpReader);
+                        phrpReader.EchoMessagesToConsole = true;
 
-                        if (!mPHRPReader.CanRead)
+                        if (!phrpReader.CanRead)
                         {
                             ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage));
                             return false;
                         }
 
-                        ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strSpectrumFileName, false);
-                        mPHRPReader.Dispose();
+                        ReadAndStorePHRPData(phrpReader, swMSGFInputFile, strSpectrumFileName, false);
+                        phrpReader.Dispose();
 
                         blnSuccess = true;
                     }
@@ -865,17 +843,29 @@ namespace AnalysisManagerMSGFPlugin
             swOutFile.WriteLine("Result_ID\tScan\tCharge\tProtein\tPeptide\tSpecProb\tNotes");
         }
 
-        private void mPHRPReader_ErrorEvent(string strErrorMessage)
+        /// <summary>
+        /// Note that clsPHRPReader is instantiated and disposed of several times
+        /// Make it easy to attach the event handlers
+        /// </summary>
+        /// <param name="reader"></param>
+        private void RegisterPHRPReaderEventHandlers(clsPHRPReader reader)
+        {
+            reader.ErrorEvent += PHRPReader_ErrorEvent;
+            reader.MessageEvent += PHRPReader_MessageEvent;
+            reader.WarningEvent += PHRPReader_WarningEvent;
+        }
+
+        private void PHRPReader_ErrorEvent(string strErrorMessage)
         {
             ReportError(strErrorMessage);
         }
 
-        private void mPHRPReader_MessageEvent(string strMessage)
+        private void PHRPReader_MessageEvent(string strMessage)
         {
             Console.WriteLine(strMessage);
         }
 
-        private void mPHRPReader_WarningEvent(string strWarningMessage)
+        private void PHRPReader_WarningEvent(string strWarningMessage)
         {
             ReportWarning(strWarningMessage);
         }

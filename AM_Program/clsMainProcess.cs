@@ -52,23 +52,7 @@ namespace AnalysisManagerProg
         private clsPluginLoader m_PluginLoader;
 
         private clsSummaryFile m_SummaryFile;
-        private FileSystemWatcher withEventsField_m_FileWatcher;
-        private FileSystemWatcher m_FileWatcher
-        {
-            get { return withEventsField_m_FileWatcher; }
-            set
-            {
-                if (withEventsField_m_FileWatcher != null)
-                {
-                    withEventsField_m_FileWatcher.Changed -= m_FileWatcher_Changed;
-                }
-                withEventsField_m_FileWatcher = value;
-                if (withEventsField_m_FileWatcher != null)
-                {
-                    withEventsField_m_FileWatcher.Changed += m_FileWatcher_Changed;
-                }
-            }
-        }
+        private FileSystemWatcher m_FileWatcher;
 
         private bool m_ConfigChanged;
         private IAnalysisResources m_Resource;
@@ -259,6 +243,8 @@ namespace AnalysisManagerProg
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
                 EnableRaisingEvents = true
             };
+
+            m_FileWatcher.Changed += m_FileWatcher_Changed;
 
             // Get the debug level
             m_DebugLevel = Convert.ToInt16(m_MgrSettings.GetParam("debuglevel", 2));

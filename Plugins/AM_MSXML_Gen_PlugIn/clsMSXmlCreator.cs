@@ -26,26 +26,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         private string m_ErrorMessage;
 
-        private clsMSXmlGen withEventsField_mMSXmlGen;
-
-        private clsMSXmlGen mMSXmlGen
-        {
-            get { return withEventsField_mMSXmlGen; }
-            set
-            {
-                if (withEventsField_mMSXmlGen != null)
-                {
-                    withEventsField_mMSXmlGen.LoopWaiting -= MSXmlGenReadW_LoopWaiting;
-                    withEventsField_mMSXmlGen.ProgRunnerStarting -= mMSXmlGenReadW_ProgRunnerStarting;
-                }
-                withEventsField_mMSXmlGen = value;
-                if (withEventsField_mMSXmlGen != null)
-                {
-                    withEventsField_mMSXmlGen.LoopWaiting += MSXmlGenReadW_LoopWaiting;
-                    withEventsField_mMSXmlGen.ProgRunnerStarting += mMSXmlGenReadW_ProgRunnerStarting;
-                }
-            }
-        }
+        private clsMSXmlGen mMSXmlGen;
 
         public event LoopWaitingEventHandler LoopWaiting;
 
@@ -200,9 +181,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 // ReAdW
                 // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
-
                 mMSXmlGen = new clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML);
-                RegisterEvents(mMSXmlGen);
 
                 if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
                 {
@@ -250,6 +229,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
+            // Register the events in mMSXMLGen
+            RegisterMsXmlGenEventHandlers(mMSXmlGen);
+
             var dtStartTimeUTC = DateTime.UtcNow;
 
             // Create the file
@@ -294,6 +276,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
         }
 
         #region "Event Handlers"
+
+        private void RegisterMsXmlGenEventHandlers(clsMSXmlGen msXmlGen)
+        {
+            RegisterEvents(msXmlGen);
+            msXmlGen.LoopWaiting += MSXmlGenReadW_LoopWaiting;
+            msXmlGen.ProgRunnerStarting += mMSXmlGenReadW_ProgRunnerStarting;
+        }
 
         /// <summary>
         /// Event handler for MSXmlGenReadW.LoopWaiting event
