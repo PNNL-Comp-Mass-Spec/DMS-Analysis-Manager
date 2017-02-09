@@ -1,86 +1,91 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 07/19/2010
-'
-' Uses ReAdW to create a .mzXML or .mzML file
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 07/19/2010
+//
+// Uses ReAdW to create a .mzXML or .mzML file
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
+namespace AnalysisManagerMsXmlGenPlugIn
+{
+    public class clsMSXMLGenReadW : clsMSXmlGen
+    {
+        protected override string ProgramName
+        {
+            get { return "ReAdW"; }
+        }
 
-Public Class clsMSXMLGenReadW
-    Inherits clsMSXmlGen
+        #region "Methods"
 
-    Protected Overrides ReadOnly Property ProgramName As String
-        Get
-            Return "ReAdW"
-        End Get
-    End Property
+        public clsMSXMLGenReadW(string WorkDir, string ReadWProgramPath, string DatasetName, clsAnalysisResources.eRawDataTypeConstants RawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool CentroidMSXML)
+            : base(WorkDir, ReadWProgramPath, DatasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, eOutputType, CentroidMSXML)
+        {
+            if (RawDataType != clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            {
+                throw new ArgumentOutOfRangeException("clsMSXMLGenReadW can only be used to process Thermo .Raw files");
+            }
 
-#Region "Methods"
+            mUseProgRunnerResultCode = true;
+        }
 
-    Public Sub New(WorkDir As String,
-      ReadWProgramPath As String,
-      DatasetName As String,
-      RawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      CentroidMSXML As Boolean)
+        protected override string CreateArguments(string msXmlFormat, string RawFilePath)
+        {
+            string cmdStr = null;
 
-        MyBase.New(WorkDir, ReadWProgramPath, DatasetName, clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile, eOutputType, CentroidMSXML)
+            if (mProgramPath.ToLower().Contains("\\v2."))
+            {
+                // Version 2.x syntax
+                // Syntax is: readw <raw file path> <c/p> [<output file>]
 
-        If RawDataType <> clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
-            Const exceptionMsg = "clsMSXMLGenReadW can only be used to process Thermo .Raw files"
-            Throw New ArgumentOutOfRangeException(exceptionMsg)
-        End If
+                if (mCentroidMS1 || mCentroidMS2)
+                {
+                    // Centroiding is enabled
+                    cmdStr = " " + RawFilePath + " c";
+                }
+                else
+                {
+                    cmdStr = " " + RawFilePath + " p";
+                }
+            }
+            else
+            {
+                // Version 3 or higher
+                // Syntax is ReAdW [options] <raw file path> [<output file>]
+                //  where Options will include --mzXML and possibly -c
 
-        mUseProgRunnerResultCode = True
-    End Sub
+                if (mCentroidMS1 || mCentroidMS2)
+                {
+                    // Centroiding is enabled
+                    cmdStr = " --" + msXmlFormat + " " + " -c " + RawFilePath;
+                }
+                else
+                {
+                    // Not centroiding
+                    cmdStr = " --" + msXmlFormat + " " + RawFilePath;
+                }
+            }
 
-    Protected Overrides Function CreateArguments(msXmlFormat As String, RawFilePath As String) As String
+            mOutputFileName = GetOutputFileName(msXmlFormat, RawFilePath, mRawDataType);
 
-        Dim cmdStr As String
+            return cmdStr;
+        }
 
-        If mProgramPath.ToLower.Contains("\v2.") Then
-            ' Version 2.x syntax
-            ' Syntax is: readw <raw file path> <c/p> [<output file>]
+        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        {
+            return Path.GetFileName(Path.ChangeExtension(rawFilePath, msXmlFormat));
+        }
 
-            If mCentroidMS1 OrElse mCentroidMS2 Then
-                ' Centroiding is enabled
-                cmdStr = " " & RawFilePath & " c"
-            Else
-                cmdStr = " " & RawFilePath & " p"
-            End If
+        protected override bool SetupTool()
+        {
+            // No special setup is required for ReAdW
+            return true;
+        }
 
-        Else
-            ' Version 3 or higher
-            ' Syntax is ReAdW [options] <raw file path> [<output file>]
-            '  where Options will include --mzXML and possibly -c
-
-            If mCentroidMS1 OrElse mCentroidMS2 Then
-                ' Centroiding is enabled
-                cmdStr = " --" & msXmlFormat & " " & " -c " & RawFilePath
-            Else
-                ' Not centroiding
-                cmdStr = " --" & msXmlFormat & " " & RawFilePath
-            End If
-        End If
-
-        mOutputFileName = GetOutputFileName(msXmlFormat, RawFilePath, mRawDataType)
-
-        Return cmdStr
-    End Function
-
-    Protected Overrides Function GetOutputFileName(msXmlFormat As String, rawFilePath As String, rawDataType As clsAnalysisResources.eRawDataTypeConstants) As String
-        Return IO.Path.GetFileName(IO.Path.ChangeExtension(rawFilePath, msXmlFormat))
-    End Function
-
-    Protected Overrides Function SetupTool() As Boolean
-
-        ' No special setup is required for ReAdW
-        Return True
-    End Function
-
-#End Region
-End Class
+        #endregion
+    }
+}

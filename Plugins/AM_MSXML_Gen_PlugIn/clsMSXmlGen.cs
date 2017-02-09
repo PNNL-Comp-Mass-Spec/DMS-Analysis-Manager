@@ -1,372 +1,426 @@
-﻿Option Strict On
+﻿using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.IO
+namespace AnalysisManagerMsXmlGenPlugIn
+{
+    public abstract class clsMSXmlGen : clsEventNotifier
+    {
+        #region "Constants"
 
-Public MustInherit Class clsMSXmlGen
-    Inherits clsEventNotifier
-
-#Region "Constants"
-    ' Define a maximum runtime of 36 hours
-    Const MAX_RUNTIME_SECONDS As Integer = 36 * 60 * 60
+        // Define a maximum runtime of 36 hours
+        const int MAX_RUNTIME_SECONDS = 36 * 60 * 60;
 
-#End Region
+        #endregion
 
-#Region "Module Variables"
+        #region "Module Variables"
 
-    Protected ReadOnly mWorkDir As String
-    Protected ReadOnly mProgramPath As String
-    Private ReadOnly mDatasetName As String
-    Protected ReadOnly mRawDataType As clsAnalysisResources.eRawDataTypeConstants
-    Private mSourceFilePath As String = String.Empty
-    Protected mOutputFileName As String = String.Empty
-
-    Private ReadOnly mOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
-
-    Protected ReadOnly mCentroidMS1 As Boolean
-    Protected ReadOnly mCentroidMS2 As Boolean
-
-    ' When true, then return an error if the progrunner returns a non-zero exit code
-    Protected mUseProgRunnerResultCode As Boolean
-
-    Private mErrorMessage As String = String.Empty
-
-    Public Event ProgRunnerStarting(commandLine As String)
-    Public Event LoopWaiting()
-
-#End Region
-
-#Region "Properties"
-
-    Public Property ConsoleOutputFileName As String = ""
-
-    Public Property ConsoleOutputSuffix As String = ""
-
-    Public Property DebugLevel As Integer = 1
-
-    Public ReadOnly Property ErrorMessage() As String
-        Get
-            If mErrorMessage Is Nothing Then
-                Return String.Empty
-            Else
-                Return mErrorMessage
-            End If
-        End Get
-    End Property
-
-    Public ReadOnly Property OutputFileName As String
-        Get
-            Return mOutputFileName
-        End Get
-    End Property
-
-    Protected MustOverride ReadOnly Property ProgramName As String
-
-    Public ReadOnly Property SourceFilePath As String
-        Get
-            Return mSourceFilePath
-        End Get
-    End Property
-
-#End Region
-
-    Public Sub New(
-      workDir As String,
-      programPath As String,
-      datasetName As String,
-      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      centroidMSXML As Boolean)
-
-        mWorkDir = workDir
-        mProgramPath = programPath
-        mDatasetName = datasetName
-        mRawDataType = rawDataType
-        mOutputType = eOutputType
-        mCentroidMS1 = centroidMSXML
-        mCentroidMS2 = centroidMSXML
-
-        mErrorMessage = String.Empty
-    End Sub
-
-    Public Sub New(
-      workDir As String,
-      programPath As String,
-      datasetName As String,
-      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      centroidMS1 As Boolean,
-      centroidMS2 As Boolean)
-
-        mWorkDir = workDir
-        mProgramPath = programPath
-        mDatasetName = datasetName
-        mRawDataType = rawDataType
-        mOutputType = eOutputType
-        mCentroidMS1 = centroidMS1
-        mCentroidMS2 = centroidMS2
-
-        mErrorMessage = String.Empty
-    End Sub
-
-    Protected MustOverride Function CreateArguments(msXmlFormat As String, rawFilePath As String) As String
-
-    ''' <summary>
-    ''' Generate the mzXML or mzML file
-    ''' </summary>
-    ''' <returns>True if success; false if a failure</returns>
-    ''' <remarks></remarks>
-    Public Function CreateMSXMLFile() As Boolean
-        Dim msXmlFormat = "mzXML"
-
-        Select Case mRawDataType
-            Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-                mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_RAW_EXTENSION)
-            Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder,
-                clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf,
-                clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder
-                mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
-            Case clsAnalysisResources.eRawDataTypeConstants.mzXML
-                mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_MZXML_EXTENSION)
-            Case clsAnalysisResources.eRawDataTypeConstants.mzML
-                mSourceFilePath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_MZML_EXTENSION)
-            Case Else
-                Throw New ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString())
-        End Select
-
-        Dim blnSuccess As Boolean
-
-        mErrorMessage = String.Empty
-
-        Select Case mOutputType
-            Case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
-                msXmlFormat = "mzXML"
-            Case clsAnalysisResources.MSXMLOutputTypeConstants.mzML
-                msXmlFormat = "mzML"
-        End Select
-
-        Dim cmdRunner = New clsRunDosProgram(Path.GetDirectoryName(mProgramPath))
-        AddHandler cmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
-        AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
-
-        ' Verify that program file exists
-        If Not File.Exists(mProgramPath) Then
-            mErrorMessage = "Cannot find MSXmlGenerator exe program file: " & mProgramPath
-            Return False
-        End If
-
-        ' Set up and execute a program runner to run MS XML executable
-
-        Dim cmdStr = CreateArguments(msXmlFormat, mSourceFilePath)
-
-        blnSuccess = SetupTool()
-        If Not blnSuccess Then
-            If String.IsNullOrEmpty(mErrorMessage) Then
-                mErrorMessage = "SetupTool returned false"
-            End If
-            Return False
-        End If
-
-        RaiseEvent ProgRunnerStarting(mProgramPath & cmdStr)
-
-        If ConsoleOutputSuffix Is Nothing Then ConsoleOutputSuffix = String.Empty
-        ConsoleOutputFileName = Path.GetFileNameWithoutExtension(mProgramPath) & "_ConsoleOutput" & ConsoleOutputSuffix & ".txt"
-
-        With cmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(mWorkDir, ConsoleOutputFileName)
-
-            .WorkDir = mWorkDir
-        End With
-
-        Dim dtStartTime = DateTime.UtcNow()
-        blnSuccess = cmdRunner.RunProgram(mProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mProgramPath),
-                                          mUseProgRunnerResultCode, MAX_RUNTIME_SECONDS)
-
-        If Not String.IsNullOrWhiteSpace(cmdRunner.CachedConsoleErrors) Then
-            ' Append the console errors to the log file
-            ' Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
-
-            Dim consoleError = "Console error: " & cmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
-            If String.IsNullOrWhiteSpace(mErrorMessage) Then
-                mErrorMessage = consoleError
-            Else
-                OnErrorEvent(consoleError)
-            End If
-            blnSuccess = False
-        End If
-
-        If Not blnSuccess Then
-            If DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds >= MAX_RUNTIME_SECONDS Then
-                mErrorMessage = ProgramName & " has run for over " &
-                                DateTime.UtcNow.Subtract(dtStartTime).TotalHours.ToString("0") &
-                                " hours and has thus been aborted"
-                Return False
-            Else
-                If cmdRunner.ExitCode <> 0 Then
-                    mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) & " returned a non-zero exit code: " &
-                                    cmdRunner.ExitCode.ToString
-                    Return False
-                Else
-                    mErrorMessage = "Call to " & Path.GetFileNameWithoutExtension(mProgramPath) &
-                                    " failed (but exit code is 0)"
-                    Return True
-                End If
-            End If
-        Else
-            ' Make sure the output file was created and is not empty
-            Dim sourceFile = New FileInfo(mSourceFilePath)
-            Dim outputFilePath = Path.Combine(sourceFile.Directory.FullName, GetOutputFileName(msXmlFormat, mSourceFilePath, mRawDataType))
-
-            If Not File.Exists(outputFilePath) Then
-                mErrorMessage = "Output file not found: " & outputFilePath
-                Return False
-            End If
-
-            ' Validate that the output file is complete
-            If Not ValidateMsXmlFile(mOutputType, outputFilePath) Then
-                Return False
-            End If
-
-            Return True
-
-        End If
-    End Function
-
-    Protected MustOverride Function GetOutputFileName(msXmlFormat As String, rawFilePath As String, rawDataType As clsAnalysisResources.eRawDataTypeConstants) As String
-
-    Public Sub LogCreationStatsSourceToMsXml(dtStartTimeUTC As DateTime, strSourceFilePath As String, strMsXmlFilePath As String)
-
-        Try
-            ' Save some stats to the log
-
-            Dim strMessage As String
-            Dim ioFileInfo As FileInfo
-            Dim dblSourceFileSizeMB As Double, dblMsXmlSizeMB As Double
-            Dim dblTotalMinutes As Double
-
-            Dim strSourceFileExtension As String = Path.GetExtension(strSourceFilePath)
-            Dim strTargetFileExtension As String = Path.GetExtension(strMsXmlFilePath)
-
-            dblTotalMinutes = DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes
-
-            ioFileInfo = New FileInfo(strSourceFilePath)
-            If ioFileInfo.Exists Then
-                dblSourceFileSizeMB = ioFileInfo.Length / 1024.0 / 1024
-            End If
-
-            ioFileInfo = New FileInfo(strMsXmlFilePath)
-            If ioFileInfo.Exists Then
-                dblMsXmlSizeMB = ioFileInfo.Length / 1024.0 / 1024
-            End If
-
-            strMessage = "MsXml creation time = " & dblTotalMinutes.ToString("0.00") & " minutes"
-
-            If dblTotalMinutes > 0 Then
-                strMessage &= "; Processing rate = " & (dblSourceFileSizeMB / dblTotalMinutes / 60).ToString("0.0") & " MB/second"
-            End If
-
-            strMessage &= "; " & strSourceFileExtension & " file size = " & dblSourceFileSizeMB.ToString("0.0") & " MB"
-            strMessage &= "; " & strTargetFileExtension & " file size = " & dblMsXmlSizeMB.ToString("0.0") & " MB"
-
-            If dblMsXmlSizeMB > 0 Then
-                strMessage &= "; Filesize Ratio = " & (dblMsXmlSizeMB / dblSourceFileSizeMB).ToString("0.00")
-            End If
-
-            OnStatusEvent(strMessage)
-        Catch ex As Exception
-            OnErrorEvent("Exception saving msXML stats", ex)
-        End Try
-    End Sub
-
-    Protected MustOverride Function SetupTool() As Boolean
-
-    Private Function ValidateMsXmlFile(eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-                                         outputFilePath As String) As Boolean
-        ' Open the .mzXML or .mzML file and look for </mzXML> or </indexedmzML> at the end of the file
-
-        Try
-            Dim mostRecentLine = String.Empty
-
-            Dim fiOutputFile = New FileInfo(outputFilePath)
-
-            If Not fiOutputFile.Exists Then
-                mErrorMessage = "Output file not found: " & fiOutputFile.FullName
-                Return False
-            End If
-
-            Using srMsXmlfile = New StreamReader(New FileStream(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                While Not srMsXmlfile.EndOfStream
-                    Dim dataLine = srMsXmlfile.ReadLine()
-                    If Not String.IsNullOrWhiteSpace(dataLine) Then
-                        mostRecentLine = dataLine
-                    End If
-                End While
-            End Using
-
-            mostRecentLine = mostRecentLine.Trim()
-            If mostRecentLine.Length > 250 Then
-                mostRecentLine = mostRecentLine.Substring(0, 250)
-            End If
-
-            Select Case eOutputType
-                Case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
-                    If mostRecentLine <> "</mzXML>" Then
-                        mErrorMessage = "File " & fiOutputFile.Name & " is corrupt; it does not end in </mzXML>"
-                        If String.IsNullOrWhiteSpace(mostRecentLine) Then
-                            OnErrorEvent("mzXML file is corrupt; file is empty or only contains whitespace")
-                        Else
-                            OnErrorEvent("mzXML file is corrupt; final line is: " & mostRecentLine)
-                        End If
-                        Return False
-                    End If
-
-                Case clsAnalysisResources.MSXMLOutputTypeConstants.mzML
-                    If mostRecentLine <> "</indexedmzML>" Then
-                        mErrorMessage = "File " & fiOutputFile.Name & " is corrupt; it does not end in </indexedmzML>"
-                        If String.IsNullOrWhiteSpace(mostRecentLine) Then
-                            OnErrorEvent("mzML file is corrupt; file is empty or only contains whitespace")
-                        Else
-                            OnErrorEvent("mzML file is corrupt; final line is: " & mostRecentLine)
-                        End If
-                        Return False
-                    End If
-
-                Case Else
-                    mErrorMessage = "Unrecognized output type: " & eOutputType.ToString()
-                    Return False
-
-            End Select
-
-            Return True
-
-        Catch ex As Exception
-            mErrorMessage = "Exception validating the .mzXML or .mzML file"
-            OnErrorEvent(mErrorMessage, ex)
-            Return False
-        End Try
-    End Function
-
-    ''' <summary>
-    ''' Event handler for event CmdRunner.ErrorEvent
-    ''' </summary>
-    ''' <param name="strMessage"></param>
-    ''' <param name="ex"></param>
-    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
-        mErrorMessage = strMessage
-        OnErrorEvent(strMessage, ex)
-    End Sub
-
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
-        RaiseEvent LoopWaiting()
-    End Sub
-End Class
+        protected readonly string mWorkDir;
+        protected readonly string mProgramPath;
+        private readonly string mDatasetName;
+        protected readonly clsAnalysisResources.eRawDataTypeConstants mRawDataType;
+        private string mSourceFilePath = string.Empty;
+        protected string mOutputFileName = string.Empty;
+
+        private readonly clsAnalysisResources.MSXMLOutputTypeConstants mOutputType;
+
+        protected readonly bool mCentroidMS1;
+        protected readonly bool mCentroidMS2;
+
+        // When true, then return an error if the progrunner returns a non-zero exit code
+        protected bool mUseProgRunnerResultCode;
+
+        private string mErrorMessage = string.Empty;
+
+        public event ProgRunnerStartingEventHandler ProgRunnerStarting;
+
+        public delegate void ProgRunnerStartingEventHandler(string commandLine);
+
+        public event LoopWaitingEventHandler LoopWaiting;
+
+        public delegate void LoopWaitingEventHandler();
+
+        #endregion
+
+        #region "Properties"
+
+        public string ConsoleOutputFileName { get; set; }
+
+        public string ConsoleOutputSuffix { get; set; }
+
+        public int DebugLevel { get; set; }
+
+        public string ErrorMessage
+        {
+            get
+            {
+                if (mErrorMessage == null)
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    return mErrorMessage;
+                }
+            }
+        }
+
+        public string OutputFileName
+        {
+            get { return mOutputFileName; }
+        }
+
+        protected abstract string ProgramName { get; }
+
+        public string SourceFilePath
+        {
+            get { return mSourceFilePath; }
+        }
+
+        #endregion
+
+        public clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMSXML)
+        {
+            mWorkDir = workDir;
+            mProgramPath = programPath;
+            mDatasetName = datasetName;
+            mRawDataType = rawDataType;
+            mOutputType = eOutputType;
+            mCentroidMS1 = centroidMSXML;
+            mCentroidMS2 = centroidMSXML;
+
+            mErrorMessage = string.Empty;
+        }
+
+        public clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
+            clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMS1, bool centroidMS2)
+        {
+            mWorkDir = workDir;
+            mProgramPath = programPath;
+            mDatasetName = datasetName;
+            mRawDataType = rawDataType;
+            mOutputType = eOutputType;
+            mCentroidMS1 = centroidMS1;
+            mCentroidMS2 = centroidMS2;
+
+            mErrorMessage = string.Empty;
+        }
+
+        protected abstract string CreateArguments(string msXmlFormat, string rawFilePath);
+
+        /// <summary>
+        /// Generate the mzXML or mzML file
+        /// </summary>
+        /// <returns>True if success; false if a failure</returns>
+        /// <remarks></remarks>
+        public bool CreateMSXMLFile()
+        {
+            var msXmlFormat = "mzXML";
+
+            switch (mRawDataType)
+            {
+                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    break;
+                case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                    mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+                    break;
+                case clsAnalysisResources.eRawDataTypeConstants.mzXML:
+                    mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                    break;
+                case clsAnalysisResources.eRawDataTypeConstants.mzML:
+                    mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString());
+            }
+
+            bool blnSuccess = false;
+
+            mErrorMessage = string.Empty;
+
+            switch (mOutputType)
+            {
+                case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
+                    msXmlFormat = "mzXML";
+                    break;
+                case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
+                    msXmlFormat = "mzML";
+                    break;
+            }
+
+            var cmdRunner = new clsRunDosProgram(Path.GetDirectoryName(mProgramPath));
+            cmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
+            cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+            // Verify that program file exists
+            if (!File.Exists(mProgramPath))
+            {
+                mErrorMessage = "Cannot find MSXmlGenerator exe program file: " + mProgramPath;
+                return false;
+            }
+
+            // Set up and execute a program runner to run MS XML executable
+
+            var cmdStr = CreateArguments(msXmlFormat, mSourceFilePath);
+
+            blnSuccess = SetupTool();
+            if (!blnSuccess)
+            {
+                if (string.IsNullOrEmpty(mErrorMessage))
+                {
+                    mErrorMessage = "SetupTool returned false";
+                }
+                return false;
+            }
+
+            if (ProgRunnerStarting != null)
+            {
+                ProgRunnerStarting(mProgramPath + cmdStr);
+            }
+
+            if (ConsoleOutputSuffix == null)
+                ConsoleOutputSuffix = string.Empty;
+            ConsoleOutputFileName = Path.GetFileNameWithoutExtension(mProgramPath) + "_ConsoleOutput" + ConsoleOutputSuffix + ".txt";
+
+            cmdRunner.CreateNoWindow = true;
+            cmdRunner.CacheStandardOutput = true;
+
+            cmdRunner.EchoOutputToConsole = true;
+
+            cmdRunner.WriteConsoleOutputToFile = true;
+            cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, ConsoleOutputFileName);
+
+            cmdRunner.WorkDir = mWorkDir;
+
+            var dtStartTime = DateTime.UtcNow;
+            blnSuccess = cmdRunner.RunProgram(mProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mProgramPath), mUseProgRunnerResultCode,
+                MAX_RUNTIME_SECONDS);
+
+            if (!string.IsNullOrWhiteSpace(cmdRunner.CachedConsoleErrors))
+            {
+                // Append the console errors to the log file
+                // Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
+
+                var consoleError = "Console error: " + cmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
+                if (string.IsNullOrWhiteSpace(mErrorMessage))
+                {
+                    mErrorMessage = consoleError;
+                }
+                else
+                {
+                    OnErrorEvent(consoleError);
+                }
+                blnSuccess = false;
+            }
+
+            if (!blnSuccess)
+            {
+                if (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds >= MAX_RUNTIME_SECONDS)
+                {
+                    mErrorMessage = ProgramName + " has run for over " + DateTime.UtcNow.Subtract(dtStartTime).TotalHours.ToString("0") +
+                                    " hours and has thus been aborted";
+                    return false;
+                }
+                else
+                {
+                    if (cmdRunner.ExitCode != 0)
+                    {
+                        mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) + " returned a non-zero exit code: " +
+                                        cmdRunner.ExitCode.ToString();
+                        return false;
+                    }
+                    else
+                    {
+                        mErrorMessage = "Call to " + Path.GetFileNameWithoutExtension(mProgramPath) + " failed (but exit code is 0)";
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                // Make sure the output file was created and is not empty
+                var sourceFile = new FileInfo(mSourceFilePath);
+                var outputFilePath = Path.Combine(sourceFile.Directory.FullName, GetOutputFileName(msXmlFormat, mSourceFilePath, mRawDataType));
+
+                if (!File.Exists(outputFilePath))
+                {
+                    mErrorMessage = "Output file not found: " + outputFilePath;
+                    return false;
+                }
+
+                // Validate that the output file is complete
+                if (!ValidateMsXmlFile(mOutputType, outputFilePath))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        protected abstract string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType);
+
+        public void LogCreationStatsSourceToMsXml(DateTime dtStartTimeUTC, string strSourceFilePath, string strMsXmlFilePath)
+        {
+            try
+            {
+                // Save some stats to the log
+                string strMessage = null;
+                double dblSourceFileSizeMB = 0;
+                double dblMsXmlSizeMB = 0;
+                double dblTotalMinutes = 0;
+
+                string strSourceFileExtension = Path.GetExtension(strSourceFilePath);
+                string strTargetFileExtension = Path.GetExtension(strMsXmlFilePath);
+
+                dblTotalMinutes = DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes;
+
+                var ioFileInfo = new FileInfo(strSourceFilePath);
+                if (ioFileInfo.Exists)
+                {
+                    dblSourceFileSizeMB = ioFileInfo.Length / 1024.0 / 1024;
+                }
+
+                ioFileInfo = new FileInfo(strMsXmlFilePath);
+                if (ioFileInfo.Exists)
+                {
+                    dblMsXmlSizeMB = ioFileInfo.Length / 1024.0 / 1024;
+                }
+
+                strMessage = "MsXml creation time = " + dblTotalMinutes.ToString("0.00") + " minutes";
+
+                if (dblTotalMinutes > 0)
+                {
+                    strMessage += "; Processing rate = " + (dblSourceFileSizeMB / dblTotalMinutes / 60).ToString("0.0") + " MB/second";
+                }
+
+                strMessage += "; " + strSourceFileExtension + " file size = " + dblSourceFileSizeMB.ToString("0.0") + " MB";
+                strMessage += "; " + strTargetFileExtension + " file size = " + dblMsXmlSizeMB.ToString("0.0") + " MB";
+
+                if (dblMsXmlSizeMB > 0)
+                {
+                    strMessage += "; Filesize Ratio = " + (dblMsXmlSizeMB / dblSourceFileSizeMB).ToString("0.00");
+                }
+
+                OnStatusEvent(strMessage);
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception saving msXML stats", ex);
+            }
+        }
+
+        protected abstract bool SetupTool();
+
+        private bool ValidateMsXmlFile(clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, string outputFilePath)
+        {
+            // Open the .mzXML or .mzML file and look for </mzXML> or </indexedmzML> at the end of the file
+
+            try
+            {
+                var mostRecentLine = string.Empty;
+
+                var fiOutputFile = new FileInfo(outputFilePath);
+
+                if (!fiOutputFile.Exists)
+                {
+                    mErrorMessage = "Output file not found: " + fiOutputFile.FullName;
+                    return false;
+                }
+
+                using (var srMsXmlfile = new StreamReader(new FileStream(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!srMsXmlfile.EndOfStream)
+                    {
+                        var dataLine = srMsXmlfile.ReadLine();
+                        if (!string.IsNullOrWhiteSpace(dataLine))
+                        {
+                            mostRecentLine = dataLine;
+                        }
+                    }
+                }
+
+                mostRecentLine = mostRecentLine.Trim();
+                if (mostRecentLine.Length > 250)
+                {
+                    mostRecentLine = mostRecentLine.Substring(0, 250);
+                }
+
+                switch (eOutputType)
+                {
+                    case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
+                        if (mostRecentLine != "</mzXML>")
+                        {
+                            mErrorMessage = "File " + fiOutputFile.Name + " is corrupt; it does not end in </mzXML>";
+                            if (string.IsNullOrWhiteSpace(mostRecentLine))
+                            {
+                                OnErrorEvent("mzXML file is corrupt; file is empty or only contains whitespace");
+                            }
+                            else
+                            {
+                                OnErrorEvent("mzXML file is corrupt; final line is: " + mostRecentLine);
+                            }
+                            return false;
+                        }
+
+                        break;
+                    case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
+                        if (mostRecentLine != "</indexedmzML>")
+                        {
+                            mErrorMessage = "File " + fiOutputFile.Name + " is corrupt; it does not end in </indexedmzML>";
+                            if (string.IsNullOrWhiteSpace(mostRecentLine))
+                            {
+                                OnErrorEvent("mzML file is corrupt; file is empty or only contains whitespace");
+                            }
+                            else
+                            {
+                                OnErrorEvent("mzML file is corrupt; final line is: " + mostRecentLine);
+                            }
+                            return false;
+                        }
+
+                        break;
+                    default:
+                        mErrorMessage = "Unrecognized output type: " + eOutputType.ToString();
+
+                        return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                mErrorMessage = "Exception validating the .mzXML or .mzML file";
+                OnErrorEvent(mErrorMessage, ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Event handler for event CmdRunner.ErrorEvent
+        /// </summary>
+        /// <param name="strMessage"></param>
+        /// <param name="ex"></param>
+        private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
+        {
+            mErrorMessage = strMessage;
+            OnErrorEvent(strMessage, ex);
+        }
+
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            if (LoopWaiting != null)
+            {
+                LoopWaiting();
+            }
+        }
+    }
+}

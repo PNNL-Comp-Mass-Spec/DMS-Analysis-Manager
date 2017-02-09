@@ -1,312 +1,357 @@
-﻿Option Strict On
-
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-'
-' This class is intended to be instantiated by other Analysis Manager plugins
-' For example, see AM_MSGF_PlugIn
-'
-'*********************************************************************************************************
-
-Imports AnalysisManagerBase
-Imports System.IO
-
-Public Class clsMSXMLCreator
-    Inherits clsEventNotifier
-
-#Region "Classwide variables"
-
-    Private ReadOnly mMSXmlGeneratorAppPath As String
-    Private ReadOnly m_jobParams As IJobParams
-    Private ReadOnly m_WorkDir As String
-    Private m_Dataset As String
-    Private ReadOnly m_DebugLevel As Short
-
-    Private m_ErrorMessage As String
-
-    Private WithEvents mMSXmlGen As clsMSXmlGen
-
-    Public Event LoopWaiting()
-
-#End Region
-
-    Public ReadOnly Property ErrorMessage() As String
-        Get
-            Return m_ErrorMessage
-        End Get
-    End Property
-
-    Public Sub New(MSXmlGeneratorAppPath As String, WorkDir As String, Dataset As String, DebugLevel As Short, JobParams As IJobParams)
-
-        mMSXmlGeneratorAppPath = MSXmlGeneratorAppPath
-        m_WorkDir = WorkDir
-        m_Dataset = Dataset
-        m_DebugLevel = DebugLevel
-        m_jobParams = JobParams
-
-        m_ErrorMessage = String.Empty
-    End Sub
-
-    Public Function ConvertMzMLToMzXML() As Boolean
-
-        Dim ProgLoc As String
-        Dim CmdStr As String
-
-        Dim dtStartTimeUTC As DateTime
-        Dim strSourceFilePath As String
-
-        ' mzXML filename is dataset plus .mzXML
-        Dim strMzXmlFilePath As String
-        strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
-
-        If File.Exists(strMzXmlFilePath) OrElse
-           File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
-            ' File already exists; nothing to do
-            Return True
-        End If
-
-        strSourceFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
-
-        ProgLoc = mMSXmlGeneratorAppPath
-        If Not File.Exists(ProgLoc) Then
-            m_ErrorMessage = "MSXmlGenerator not found; unable to convert .mzML file to .mzXML"
-            OnErrorEvent(m_ErrorMessage & ": " & mMSXmlGeneratorAppPath)
-            Return False
-        End If
-
-        If m_DebugLevel >= 2 Then
-            OnStatusEvent("Creating the .mzXML file for " & m_Dataset & " using " & Path.GetFileName(strSourceFilePath))
-        End If
-
-        'Setup a program runner tool to call MSConvert
-        Dim oProgRunner = New clsRunDosProgram(m_WorkDir)
-        RegisterEvents(oProgRunner)
-
-        'Set up command
-        CmdStr = " " & clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) & " --32 --mzXML -o " & m_WorkDir
-
-        If m_DebugLevel > 0 Then
-            OnStatusEvent(ProgLoc & " " & CmdStr)
-        End If
-
-        With oProgRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = False
-            .ConsoleOutputFilePath = String.Empty      ' Allow the console output filename to be auto-generated
-        End With
-
-
-        dtStartTimeUTC = DateTime.UtcNow
-
-        If Not oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", True) Then
-            ' .RunProgram returned False
-            m_ErrorMessage = "Error running " & Path.GetFileNameWithoutExtension(ProgLoc) &
-                             " to convert the .mzML file to a .mzXML file"
-            OnErrorEvent(m_ErrorMessage)
-            Return False
-        End If
-
-        If m_DebugLevel >= 2 Then
-            OnStatusEvent(" ... mzXML file created")
-        End If
-
-        ' Validate that the .mzXML file was actually created
-        If Not File.Exists(strMzXmlFilePath) Then
-            m_ErrorMessage = ".mzXML file was not created by MSConvert"
-            OnErrorEvent(m_ErrorMessage & ": " & strMzXmlFilePath)
-            Return False
-        End If
-
-        If m_DebugLevel >= 1 Then
-            mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMzXmlFilePath)
-        End If
-
-        Return True
-    End Function
-
-    ''' <summary>
-    ''' Generate the mzXML
-    ''' </summary>
-    ''' <returns>True if success; false if an error</returns>
-    ''' <remarks></remarks>
-    Public Function CreateMZXMLFile() As Boolean
-
-        Dim dtStartTimeUTC As DateTime
-
-        ' Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
-        Dim CentroidMSXML = True
-
-        Dim eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants
-
-        Dim blnSuccess As Boolean
-
-        ' mzXML filename is dataset plus .mzXML
-        Dim strMzXmlFilePath As String
-        strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
-
-        If File.Exists(strMzXmlFilePath) OrElse
-           File.Exists(strMzXmlFilePath & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX) Then
-            ' File already exists; nothing to do
-            Return True
-        End If
-
-        eOutputType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
-
-        ' Instantiate the processing class
-        ' Note that mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo() by an Analysis Manager plugin using clsAnalysisToolRunnerBase.GetMSXmlGeneratorAppPath()
-        Dim strMSXmlGeneratorExe As String
-        strMSXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath)
-
-        If Not File.Exists(mMSXmlGeneratorAppPath) Then
-            m_ErrorMessage = "MSXmlGenerator not found; unable to create .mzXML file"
-            OnErrorEvent(m_ErrorMessage & ": " & mMSXmlGeneratorAppPath)
-            Return False
-        End If
-
-        If m_DebugLevel >= 2 Then
-            OnStatusEvent("Creating the .mzXML file for " & m_Dataset)
-        End If
-
-        Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
-
-        If strMSXmlGeneratorExe.ToLower().Contains("readw") Then
-            ' ReAdW
-            ' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
-
-            mMSXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML)
-            RegisterEvents(mMSXmlGen)
-
-            If rawDataType <> clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES Then
-                m_ErrorMessage = "ReAdW can only be used with .Raw files, not with " & rawDataType
-                OnErrorEvent(m_ErrorMessage)
-                Return False
-            End If
-
-        ElseIf strMSXmlGeneratorExe.ToLower().Contains("msconvert") Then
-            ' MSConvert
-
-            ' Lookup Centroid Settings
-            CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", True)
-            Dim CentroidPeakCountToRetain As Integer
-
-            ' Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
-            CentroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0)
-
-            If CentroidPeakCountToRetain = 0 Then
-                ' Look for parameter CentroidPeakCountToRetain in any section
-                CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain",
-                                                                        clsMSXmlGenMSConvert.
-                                                                           DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
-            End If
-
-            ' Look for custom processing arguments
-            Dim CustomMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "")
-
-            If String.IsNullOrWhiteSpace(CustomMSConvertArguments) Then
-                mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
-                                                     eOutputType, CentroidMSXML, CentroidPeakCountToRetain)
-            Else
-                mMSXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
-                                                     eOutputType, CustomMSConvertArguments)
-            End If
-
-        Else
-            m_ErrorMessage = "Unsupported XmlGenerator: " & strMSXmlGeneratorExe
-            OnErrorEvent(m_ErrorMessage)
-            Return False
-        End If
-
-        dtStartTimeUTC = DateTime.UtcNow
-
-        ' Create the file
-        blnSuccess = mMSXmlGen.CreateMSXMLFile()
-
-        If Not blnSuccess Then
-            m_ErrorMessage = mMSXmlGen.ErrorMessage
-            OnErrorEvent(mMSXmlGen.ErrorMessage)
-            Return False
-
-        ElseIf mMSXmlGen.ErrorMessage.Length > 0 Then
-            OnWarningEvent(mMSXmlGen.ErrorMessage)
-        End If
-
-        ' Validate that the .mzXML file was actually created
-        If Not File.Exists(strMzXmlFilePath) Then
-            m_ErrorMessage = ".mzXML file was not created by " & strMSXmlGeneratorExe
-            OnErrorEvent(m_ErrorMessage & ": " & strMzXmlFilePath)
-            Return False
-        End If
-
-        If m_DebugLevel >= 1 Then
-            mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, mMSXmlGen.SourceFilePath, strMzXmlFilePath)
-        End If
-
-        Return True
-    End Function
-
-    ' ReSharper disable once UnusedMember.Global
-    ''' <summary>
-    ''' Update the current dataset name
-    ''' </summary>
-    ''' <param name="datasetName"></param>
-    ''' <remarks>Used by clsAnalysisToolRunnerPRIDEConverter.vb and clsAnalysisToolRunnerRepoPkgr.cs</remarks>
-    Public Sub UpdateDatasetName(datasetName As String)
-        m_Dataset = datasetName
-    End Sub
-
-#Region "Event Handlers"
-
-    ''' <summary>
-    ''' Event handler for MSXmlGenReadW.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub MSXmlGenReadW_LoopWaiting() Handles mMSXmlGen.LoopWaiting
-
-        RaiseEvent LoopWaiting()
-    End Sub
-
-    ''' <summary>
-    ''' Event handler for mMSXmlGen.ProgRunnerStarting event
-    ''' </summary>
-    ''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
-    ''' <remarks></remarks>
-    Private Sub mMSXmlGenReadW_ProgRunnerStarting(CommandLine As String) Handles mMSXmlGen.ProgRunnerStarting
-        If m_DebugLevel >= 1 Then
-            OnStatusEvent(CommandLine)
-        End If
-    End Sub
-
-#End Region
-
-#Region "clsEventNotifier events"
-
-    Protected Sub RegisterEvents(oProcessingClass As clsEventNotifier)
-        AddHandler oProcessingClass.StatusEvent, AddressOf StatusEventHandler
-        AddHandler oProcessingClass.ErrorEvent, AddressOf ErrorEventHandler
-        AddHandler oProcessingClass.WarningEvent, AddressOf WarningEventHandler
-        AddHandler oProcessingClass.ProgressUpdate, AddressOf ProgressUpdateHandler
-    End Sub
-
-    Private Sub StatusEventHandler(statusMessage As String)
-        OnStatusEvent(statusMessage)
-    End Sub
-
-    Private Sub ErrorEventHandler(strMessage As String, ex As Exception)
-        OnErrorEvent(strMessage, ex)
-    End Sub
-
-    Private Sub WarningEventHandler(warningMessage As String)
-        OnWarningEvent(warningMessage)
-    End Sub
-
-    Private Sub ProgressUpdateHandler(progressMessage As String, percentComplete As Single)
-        OnProgressUpdate(progressMessage, percentComplete)
-    End Sub
-
-#End Region
-End Class
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+//
+// This class is intended to be instantiated by other Analysis Manager plugins
+// For example, see AM_MSGF_PlugIn
+//
+//*********************************************************************************************************
+
+using System;
+using System.IO;
+using AnalysisManagerBase;
+
+namespace AnalysisManagerMsXmlGenPlugIn
+{
+    public class clsMSXMLCreator : clsEventNotifier
+    {
+        #region "Classwide variables"
+
+        private readonly string mMSXmlGeneratorAppPath;
+        private readonly IJobParams m_jobParams;
+        private readonly string m_WorkDir;
+        private string m_Dataset;
+
+        private readonly short m_DebugLevel;
+
+        private string m_ErrorMessage;
+
+        private clsMSXmlGen withEventsField_mMSXmlGen;
+
+        private clsMSXmlGen mMSXmlGen
+        {
+            get { return withEventsField_mMSXmlGen; }
+            set
+            {
+                if (withEventsField_mMSXmlGen != null)
+                {
+                    withEventsField_mMSXmlGen.LoopWaiting -= MSXmlGenReadW_LoopWaiting;
+                    withEventsField_mMSXmlGen.ProgRunnerStarting -= mMSXmlGenReadW_ProgRunnerStarting;
+                }
+                withEventsField_mMSXmlGen = value;
+                if (withEventsField_mMSXmlGen != null)
+                {
+                    withEventsField_mMSXmlGen.LoopWaiting += MSXmlGenReadW_LoopWaiting;
+                    withEventsField_mMSXmlGen.ProgRunnerStarting += mMSXmlGenReadW_ProgRunnerStarting;
+                }
+            }
+        }
+
+        public event LoopWaitingEventHandler LoopWaiting;
+
+        public delegate void LoopWaitingEventHandler();
+
+        #endregion
+
+        public string ErrorMessage
+        {
+            get { return m_ErrorMessage; }
+        }
+
+        public clsMSXMLCreator(string MSXmlGeneratorAppPath, string WorkDir, string Dataset, short DebugLevel, IJobParams JobParams)
+        {
+            mMSXmlGeneratorAppPath = MSXmlGeneratorAppPath;
+            m_WorkDir = WorkDir;
+            m_Dataset = Dataset;
+            m_DebugLevel = DebugLevel;
+            m_jobParams = JobParams;
+
+            m_ErrorMessage = string.Empty;
+        }
+
+        public bool ConvertMzMLToMzXML()
+        {
+            string ProgLoc = null;
+            string CmdStr = null;
+
+            string strSourceFilePath = null;
+
+            // mzXML filename is dataset plus .mzXML
+            string strMzXmlFilePath = null;
+            strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+
+            if (File.Exists(strMzXmlFilePath) || File.Exists(strMzXmlFilePath + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
+            {
+                // File already exists; nothing to do
+                return true;
+            }
+
+            strSourceFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+
+            ProgLoc = mMSXmlGeneratorAppPath;
+            if (!File.Exists(ProgLoc))
+            {
+                m_ErrorMessage = "MSXmlGenerator not found; unable to convert .mzML file to .mzXML";
+                OnErrorEvent(m_ErrorMessage + ": " + mMSXmlGeneratorAppPath);
+                return false;
+            }
+
+            if (m_DebugLevel >= 2)
+            {
+                OnStatusEvent("Creating the .mzXML file for " + m_Dataset + " using " + Path.GetFileName(strSourceFilePath));
+            }
+
+            //Setup a program runner tool to call MSConvert
+            var oProgRunner = new clsRunDosProgram(m_WorkDir);
+            RegisterEvents(oProgRunner);
+
+            //Set up command
+            CmdStr = " " + clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) + " --32 --mzXML -o " + m_WorkDir;
+
+            if (m_DebugLevel > 0)
+            {
+                OnStatusEvent(ProgLoc + " " + CmdStr);
+            }
+
+            oProgRunner.CreateNoWindow = true;
+            oProgRunner.CacheStandardOutput = true;
+            oProgRunner.EchoOutputToConsole = true;
+
+            oProgRunner.WriteConsoleOutputToFile = false;
+            oProgRunner.ConsoleOutputFilePath = string.Empty;
+            // Allow the console output filename to be auto-generated
+
+            var dtStartTimeUTC = DateTime.UtcNow;
+
+            if (!oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", true))
+            {
+                // .RunProgram returned False
+                m_ErrorMessage = "Error running " + Path.GetFileNameWithoutExtension(ProgLoc) + " to convert the .mzML file to a .mzXML file";
+                OnErrorEvent(m_ErrorMessage);
+                return false;
+            }
+
+            if (m_DebugLevel >= 2)
+            {
+                OnStatusEvent(" ... mzXML file created");
+            }
+
+            // Validate that the .mzXML file was actually created
+            if (!File.Exists(strMzXmlFilePath))
+            {
+                m_ErrorMessage = ".mzXML file was not created by MSConvert";
+                OnErrorEvent(m_ErrorMessage + ": " + strMzXmlFilePath);
+                return false;
+            }
+
+            if (m_DebugLevel >= 1)
+            {
+                mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, strSourceFilePath, strMzXmlFilePath);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Generate the mzXML
+        /// </summary>
+        /// <returns>True if success; false if an error</returns>
+        /// <remarks></remarks>
+        public bool CreateMZXMLFile()
+        {
+            // Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
+            var CentroidMSXML = true;
+
+            bool blnSuccess = false;
+
+            // mzXML filename is dataset plus .mzXML
+            string strMzXmlFilePath = null;
+            strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+
+            if (File.Exists(strMzXmlFilePath) || File.Exists(strMzXmlFilePath + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
+            {
+                // File already exists; nothing to do
+                return true;
+            }
+
+            var eOutputType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
+
+            // Instantiate the processing class
+            // Note that mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo() by an Analysis Manager plugin using clsAnalysisToolRunnerBase.GetMSXmlGeneratorAppPath()
+            string strMSXmlGeneratorExe = null;
+            strMSXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath);
+
+            if (!File.Exists(mMSXmlGeneratorAppPath))
+            {
+                m_ErrorMessage = "MSXmlGenerator not found; unable to create .mzXML file";
+                OnErrorEvent(m_ErrorMessage + ": " + mMSXmlGeneratorAppPath);
+                return false;
+            }
+
+            if (m_DebugLevel >= 2)
+            {
+                OnStatusEvent("Creating the .mzXML file for " + m_Dataset);
+            }
+
+            string rawDataType = m_jobParams.GetParam("RawDataType");
+            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+
+            if (strMSXmlGeneratorExe.ToLower().Contains("readw"))
+            {
+                // ReAdW
+                // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
+
+                mMSXmlGen = new clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML);
+                RegisterEvents(mMSXmlGen);
+
+                if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
+                {
+                    m_ErrorMessage = "ReAdW can only be used with .Raw files, not with " + rawDataType;
+                    OnErrorEvent(m_ErrorMessage);
+                    return false;
+                }
+            }
+            else if (strMSXmlGeneratorExe.ToLower().Contains("msconvert"))
+            {
+                // MSConvert
+
+                // Lookup Centroid Settings
+                CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", true);
+                int CentroidPeakCountToRetain = 0;
+
+                // Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
+                CentroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0);
+
+                if (CentroidPeakCountToRetain == 0)
+                {
+                    // Look for parameter CentroidPeakCountToRetain in any section
+                    CentroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain",
+                        clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN);
+                }
+
+                // Look for custom processing arguments
+                var CustomMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "");
+
+                if (string.IsNullOrWhiteSpace(CustomMSConvertArguments))
+                {
+                    mMSXmlGen = new clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType, CentroidMSXML,
+                        CentroidPeakCountToRetain);
+                }
+                else
+                {
+                    mMSXmlGen = new clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, eOutputType,
+                        CustomMSConvertArguments);
+                }
+            }
+            else
+            {
+                m_ErrorMessage = "Unsupported XmlGenerator: " + strMSXmlGeneratorExe;
+                OnErrorEvent(m_ErrorMessage);
+                return false;
+            }
+
+            var dtStartTimeUTC = DateTime.UtcNow;
+
+            // Create the file
+            blnSuccess = mMSXmlGen.CreateMSXMLFile();
+
+            if (!blnSuccess)
+            {
+                m_ErrorMessage = mMSXmlGen.ErrorMessage;
+                OnErrorEvent(mMSXmlGen.ErrorMessage);
+                return false;
+            }
+            else if (mMSXmlGen.ErrorMessage.Length > 0)
+            {
+                OnWarningEvent(mMSXmlGen.ErrorMessage);
+            }
+
+            // Validate that the .mzXML file was actually created
+            if (!File.Exists(strMzXmlFilePath))
+            {
+                m_ErrorMessage = ".mzXML file was not created by " + strMSXmlGeneratorExe;
+                OnErrorEvent(m_ErrorMessage + ": " + strMzXmlFilePath);
+                return false;
+            }
+
+            if (m_DebugLevel >= 1)
+            {
+                mMSXmlGen.LogCreationStatsSourceToMsXml(dtStartTimeUTC, mMSXmlGen.SourceFilePath, strMzXmlFilePath);
+            }
+
+            return true;
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        /// <summary>
+        /// Update the current dataset name
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <remarks>Used by clsAnalysisToolRunnerPRIDEConverter.vb and clsAnalysisToolRunnerRepoPkgr.cs</remarks>
+        public void UpdateDatasetName(string datasetName)
+        {
+            m_Dataset = datasetName;
+        }
+
+        #region "Event Handlers"
+
+        /// <summary>
+        /// Event handler for MSXmlGenReadW.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void MSXmlGenReadW_LoopWaiting()
+        {
+            if (LoopWaiting != null)
+            {
+                LoopWaiting();
+            }
+        }
+
+        /// <summary>
+        /// Event handler for mMSXmlGen.ProgRunnerStarting event
+        /// </summary>
+        /// <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
+        /// <remarks></remarks>
+        private void mMSXmlGenReadW_ProgRunnerStarting(string CommandLine)
+        {
+            if (m_DebugLevel >= 1)
+            {
+                OnStatusEvent(CommandLine);
+            }
+        }
+
+        #endregion
+
+        #region "clsEventNotifier events"
+
+        protected void RegisterEvents(clsEventNotifier oProcessingClass)
+        {
+            oProcessingClass.StatusEvent += StatusEventHandler;
+            oProcessingClass.ErrorEvent += ErrorEventHandler;
+            oProcessingClass.WarningEvent += WarningEventHandler;
+            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private void StatusEventHandler(string statusMessage)
+        {
+            OnStatusEvent(statusMessage);
+        }
+
+        private void ErrorEventHandler(string strMessage, Exception ex)
+        {
+            OnErrorEvent(strMessage, ex);
+        }
+
+        private void WarningEventHandler(string warningMessage)
+        {
+            OnWarningEvent(warningMessage);
+        }
+
+        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
+        {
+            OnProgressUpdate(progressMessage, percentComplete);
+        }
+
+        #endregion
+    }
+}

@@ -1,139 +1,151 @@
-Option Strict On
+﻿using System;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
+namespace AnalysisManagerMsXmlGenPlugIn
+{
+    public class clsAnalysisResourcesMSXMLGen : clsAnalysisResources
+    {
+        #region "Methods"
 
-' ReSharper disable once UnusedMember.Global
-Public Class clsAnalysisResourcesMSXMLGen
-    Inherits clsAnalysisResources
+        /// <summary>
+        /// Retrieves files necessary for creating the .mzXML file
+        /// </summary>
+        /// <returns>IJobParams.CloseOutType indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override IJobParams.CloseOutType GetResources()
+        {
+            var currentTask = "Initializing";
 
-#Region "Methods"
+            try
+            {
+                currentTask = "Retrieve shared resources";
 
-    ''' <summary>
-    ''' Retrieves files necessary for creating the .mzXML file
-    ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                var result = GetSharedResources();
+                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
 
-        Dim currentTask = "Initializing"
+                currentTask = "Determine RawDataType";
 
-        Try
+                var toolName = m_jobParams.GetParam("ToolName");
+                var proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase);
 
-            currentTask = "Retrieve shared resources"
+                if (proMexBruker)
+                {
+                    // Make sure the settings file has MSXMLOutputType=mzML, not mzXML
 
-            ' Retrieve shared resources, including the JobParameters file from the previous job step
-            Dim result = GetSharedResources()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
+                    string msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");
+                    if (string.IsNullOrWhiteSpace(msXmlFormat))
+                    {
+                        LogError("Job parameter MSXMLOutputType must be defined in the settings file");
+                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    }
 
-            currentTask = "Determine RawDataType"
+                    if (!msXmlFormat.ToLower().Contains("mzml"))
+                    {
+                        LogError("ProMex_Bruker jobs require mzML files, not " + msXmlFormat + " files");
+                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
 
-            Dim toolName = m_jobParams.GetParam("ToolName")
-            Dim proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase)
+                // Get input data file
+                string strRawDataType = m_jobParams.GetParam("RawDataType");
 
-            If proMexBruker Then
-                ' Make sure the settings file has MSXMLOutputType=mzML, not mzXML
+                var retrievalAttempts = 0;
 
-                Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")
-                If String.IsNullOrWhiteSpace(msXmlFormat) Then
-                    LogError("Job parameter MSXMLOutputType must be defined in the settings file")
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
+                while (retrievalAttempts < 2)
+                {
+                    retrievalAttempts += 1;
+                    switch (strRawDataType.ToLower())
+                    {
+                        case RAW_DATA_TYPE_DOT_RAW_FILES:
+                        case RAW_DATA_TYPE_DOT_D_FOLDERS:
+                        case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
+                        case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+                            currentTask = "Retrieve spectra: " + strRawDataType;
 
-                If Not msXmlFormat.ToLower().Contains("mzml") Then
-                    LogError("ProMex_Bruker jobs require mzML files, not " & msXmlFormat & " files")
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
-            End If
-
-            ' Get input data file
-            Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
-
-            Dim retrievalAttempts = 0
-
-            While retrievalAttempts < 2
-
-                retrievalAttempts += 1
-                Select Case strRawDataType.ToLower
-                    Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_DOT_D_FOLDERS, RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER,
-                        RAW_DATA_TYPE_BRUKER_FT_FOLDER
-                        currentTask = "Retrieve spectra: " & strRawDataType
-
-                        If RetrieveSpectra(strRawDataType) Then
-                            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)  'Raw file
-                        Else
+                            if (RetrieveSpectra(strRawDataType))
+                            {
+                                m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+                                //Raw file
+                            }
+                            else
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    "clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.");
+                                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                            }
+                            break;
+                        default:
+                            m_message = "Dataset type " + strRawDataType + " is not supported";
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                 "clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.")
-                            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                        End If
-                    Case Else
-                        m_message = "Dataset type " & strRawDataType & " is not supported"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                             "clsAnalysisResourcesMSXMLGen.GetResources: " & m_message & "; must be " &
-                                             RAW_DATA_TYPE_DOT_RAW_FILES & ", " & RAW_DATA_TYPE_DOT_D_FOLDERS & ", " &
-                                             RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER & ", or " &
-                                             RAW_DATA_TYPE_BRUKER_FT_FOLDER)
+                                "clsAnalysisResourcesMSXMLGen.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
+                                RAW_DATA_TYPE_DOT_D_FOLDERS + ", " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
 
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End Select
+                            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    }
 
-                If m_MyEMSLUtilities.FilesToDownload.Count = 0 Then
-                    Exit While
-                End If
+                    if (m_MyEMSLUtilities.FilesToDownload.Count == 0)
+                    {
+                        break;
+                    }
 
-                currentTask = "ProcessMyEMSLDownloadQueue"
-                If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                    Exit While
-                End If
+                    currentTask = "ProcessMyEMSLDownloadQueue";
+                    if (m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    {
+                        break;
+                    }
 
-                ' Look for this file on the Samba share
-                MyBase.DisableMyEMSLSearch()
+                    // Look for this file on the Samba share
+                    base.DisableMyEMSLSearch();
+                }
 
-            End While
+                var mzMLRefParamFile = m_jobParams.GetJobParameter("MzMLRefParamFile", string.Empty);
 
-            Dim mzMLRefParamFile = m_jobParams.GetJobParameter("MzMLRefParamFile", String.Empty)
-            If Not String.IsNullOrEmpty(mzMLRefParamFile) Then
+                if (!string.IsNullOrEmpty(mzMLRefParamFile))
+                {
+                    // Retrieve the Fasta file
+                    var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
 
-                ' Retrieve the Fasta file
-                Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+                    currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
-                currentTask = "RetrieveOrgDB to " & localOrgDbFolder
+                    if (!RetrieveOrgDB(localOrgDbFolder))
+                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
 
-                If Not RetrieveOrgDB(localOrgDbFolder) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    currentTask = "Retrieve the MzML Refinery parameter file " + mzMLRefParamFile;
 
-                currentTask = "Retrieve the MzML Refinery parameter file " & mzMLRefParamFile
+                    const string paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MzML_Refinery";
 
-                Const paramFileStoragePathKeyName As String = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX &
-                                                              "MzML_Refinery"
+                    var mzMLRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+                    if (string.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath))
+                    {
+                        mzMLRefineryParmFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\MzMLRefinery";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "Parameter '" + paramFileStoragePathKeyName +
+                            "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
+                            mzMLRefineryParmFileStoragePath);
+                    }
 
-                Dim mzMLRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName)
-                If String.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath) Then
-                    mzMLRefineryParmFileStoragePath = "\\gigasax\dms_parameter_Files\MzMLRefinery"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                         "Parameter '" & paramFileStoragePathKeyName &
-                                         "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " &
-                                         mzMLRefineryParmFileStoragePath)
+                    //Retrieve param file
+                    if (!RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")))
+                    {
+                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in GetResources: " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-                End If
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-                'Retrieve param file
-                If Not RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")) Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
-
-            End If
-
-        Catch ex As Exception
-            m_message = "Exception in GetResources: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-    End Function
-
-#End Region
-End Class
+        #endregion
+    }
+}

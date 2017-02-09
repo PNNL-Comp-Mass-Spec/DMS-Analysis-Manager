@@ -1,660 +1,744 @@
-'*********************************************************************************************************
-' Written by John Sandoval for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
-' Created 02/06/2009
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by John Sandoval for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2009, Battelle Memorial Institute
+// Created 02/06/2009
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Collections.Generic;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports System.Collections.Generic
-Imports AnalysisManagerBase
-Imports System.IO
-Imports System.Runtime.InteropServices
+namespace AnalysisManagerMsXmlGenPlugIn
+{
+    public class clsAnalysisToolRunnerMSXMLGen : clsAnalysisToolRunnerBase
+    {
+        //*********************************************************************************************************
+        //Class for running MS XML generator
+        //Currently used to generate MZXML or MZML files
+        //*********************************************************************************************************
 
-' ReSharper disable once UnusedMember.Global
-Public Class clsAnalysisToolRunnerMSXMLGen
-    Inherits clsAnalysisToolRunnerBase
+        #region "Module Variables"
 
-    '*********************************************************************************************************
-    'Class for running MS XML generator
-    'Currently used to generate MZXML or MZML files
-    '*********************************************************************************************************
+        private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
 
-#Region "Module Variables"
+        private string mMSXmlGeneratorAppPath = string.Empty;
 
-    Private Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 5
+        private clsAnalysisResources.MSXMLOutputTypeConstants mMSXmlOutputFileType;
 
-    Private mMSXmlGeneratorAppPath As String = String.Empty
+        private DirectoryInfo mMSXmlCacheFolder;
 
-    Private mMSXmlOutputFileType As clsAnalysisResources.MSXMLOutputTypeConstants
+        #endregion
 
-    Private mMSXmlCacheFolder As DirectoryInfo
+        #region "Methods"
 
-#End Region
+        /// <summary>
+        /// Runs ReAdW or MSConvert
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override IJobParams.CloseOutType RunTool()
+        {
+            IJobParams.CloseOutType result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
-#Region "Methods"
+            //Do the base class stuff
+            if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-    ''' <summary>
-    ''' Runs ReAdW or MSConvert
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
-        Dim result As IJobParams.CloseOutType
+            // Store the ReAdW or MSConvert version info in the database
+            if (!StoreToolVersionInfo())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Error determining MSXMLGen version");
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+            var storeInCache = m_jobParams.GetJobParameter("StoreMSXmlInCache", true);
+            if (storeInCache)
+            {
+                string msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+                mMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
 
-        ' Store the ReAdW or MSConvert version info in the database
-        If Not StoreToolVersionInfo() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Aborting since StoreToolVersionInfo returned false")
-            LogError("Error determining MSXMLGen version")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+                if (!mMSXmlCacheFolder.Exists)
+                {
+                    LogError("MSXmlCache folder not found: " + msXMLCacheFolderPath);
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
 
-        Dim storeInCache = m_jobParams.GetJobParameter("StoreMSXmlInCache", True)
-        If storeInCache Then
-            Dim msXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
-            mMSXmlCacheFolder = New DirectoryInfo(msXMLCacheFolderPath)
+            if (CreateMSXMLFile() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-            If Not mMSXmlCacheFolder.Exists Then
-                LogError("MSXmlCache folder not found: " & msXMLCacheFolderPath)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-        End If
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-        If CreateMSXMLFile() <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+            if (!PostProcessMSXmlFile())
+            {
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            //Stop the job timer
+            m_StopTime = DateTime.UtcNow;
 
-        If Not PostProcessMSXmlFile() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
+            //Add the current job data to the summary file
+            if (!UpdateSummaryFile())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                    "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            }
 
-        'Stop the job timer
-        m_StopTime = DateTime.UtcNow
+            result = MakeResultsFolder();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //MakeResultsFolder handles posting to local log, so set database error message and exit
+                m_message = "Error making results folder";
+                return result;
+            }
 
-        'Add the current job data to the summary file
-        If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                                 "Error creating summary file, job " & m_JobNum & ", step " &
-                                 m_jobParams.GetParam("Step"))
-        End If
+            result = MoveResultFiles();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                m_message = "Error moving files into results folder";
+                return result;
+            }
 
-        result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'MakeResultsFolder handles posting to local log, so set database error message and exit
-            m_message = "Error making results folder"
-            Return result
-        End If
+            result = CopyResultsFolderToServer();
+            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
 
-        result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            m_message = "Error moving files into results folder"
-            Return result
-        End If
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
+        }
 
-        result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
+        /// <summary>
+        /// Generate the mzXML or mzML file
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        private IJobParams.CloseOutType CreateMSXMLFile()
+        {
+            try
+            {
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "clsAnalysisToolRunnerMSXMLGen.CreateMSXMLFile(): Enter");
+                }
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
-    End Function
+                string msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");          // ReAdW.exe or MSConvert.exe
+                string msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");            // Typically mzXML or mzML
 
-    ''' <summary>
-    ''' Generate the mzXML or mzML file
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function CreateMSXMLFile() As IJobParams.CloseOutType
+                // Determine the output type
+                switch (msXmlFormat.ToLower())
+                {
+                    case "mzxml":
+                        mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
+                        break;
+                    case "mzml":
+                        mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
+                        break;
+                    default:
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "msXmlFormat string is not mzXML or mzML (" + msXmlFormat + "); will default to mzXML");
+                        mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
+                        break;
+                }
 
-        Try
+                // Lookup Centroid Settings
+                var centroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", false);
+                var centroidMS1 = m_jobParams.GetJobParameter("CentroidMS1", false);
+                var centroidMS2 = m_jobParams.GetJobParameter("CentroidMS2", false);
 
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "clsAnalysisToolRunnerMSXMLGen.CreateMSXMLFile(): Enter")
-            End If
+                if (centroidMSXML)
+                {
+                    centroidMS1 = true;
+                    centroidMS2 = true;
+                }
 
-            Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReAdW.exe or MSConvert.exe
-            Dim msXmlFormat As String = m_jobParams.GetParam("MSXMLOutputType")             ' Typically mzXML or mzML
+                // Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
+                // If the value is -1, then will retain all data points
+                var centroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0);
 
-            ' Determine the output type
-            Select Case msXmlFormat.ToLower()
-                Case "mzxml"
-                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
-                Case "mzml"
-                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML
-                Case Else
+                if (centroidPeakCountToRetain == 0)
+                {
+                    // Look for parameter CentroidPeakCountToRetain in any section
+                    centroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain",
+                        clsMSXmlGenMSConvert.DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN);
+                }
+
+                // Look for custom processing arguments
+                var customMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "");
+
+                if (string.IsNullOrEmpty(mMSXmlGeneratorAppPath))
+                {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                         "msXmlFormat string is not mzXML or mzML (" & msXmlFormat &
-                                         "); will default to mzXML")
-                    mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
-            End Select
-
-            ' Lookup Centroid Settings
-            Dim centroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", False)
-            Dim centroidMS1 = m_jobParams.GetJobParameter("CentroidMS1", False)
-            Dim centroidMS2 = m_jobParams.GetJobParameter("CentroidMS2", False)
-
-            If centroidMSXML Then
-                centroidMS1 = True
-                centroidMS2 = True
-            End If
-
-            ' Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
-            ' If the value is -1, then will retain all data points
-            Dim centroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0)
-
-            If centroidPeakCountToRetain = 0 Then
-                ' Look for parameter CentroidPeakCountToRetain in any section
-                centroidPeakCountToRetain = m_jobParams.GetJobParameter("CentroidPeakCountToRetain",
-                                                                        clsMSXmlGenMSConvert.
-                                                                           DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN)
-            End If
-
-            ' Look for custom processing arguments
-            Dim customMSConvertArguments = m_jobParams.GetJobParameter("MSXMLGenerator", "CustomMSConvertArguments", "")
-
-            If String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                     "mMSXmlGeneratorAppPath is empty; this is unexpected")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
-            Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
-
-            Dim msXmlGen As clsMSXmlGen
-
-            ' Determine the program path and Instantiate the processing class
-            If msXmlGenerator.ToLower.Contains("readw") Then
-                ' ReAdW
-                ' mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
-
-                msXmlGen = New clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
-                                                 mMSXmlOutputFileType, centroidMS1 Or centroidMS2)
-
-                If rawDataType <> clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES Then
-                    LogError("ReAdW can only be used with .Raw files, not with " & rawDataType)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                End If
-
-            ElseIf msXmlGenerator.ToLower.Contains("msconvert") Then
-                ' MSConvert
-
-                If String.IsNullOrWhiteSpace(CustomMSConvertArguments) Then
-                    msXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
-                                                         mMSXmlOutputFileType, centroidMS1, centroidMS2,
-                                                         centroidPeakCountToRetain)
-                Else
-                    msXmlGen = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType,
-                                                         mMSXmlOutputFileType, customMSConvertArguments)
-                End If
-
-            Else
-                LogError("Unsupported XmlGenerator: " & msXmlGenerator)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Attach events to msXmlGen
-            AddHandler msXmlGen.LoopWaiting, AddressOf MSXmlGen_LoopWaiting
-            AddHandler msXmlGen.ProgRunnerStarting, AddressOf MSXmlGen_ProgRunnerStarting
-
-            msXmlGen.DebugLevel = m_DebugLevel
-
-            If Not File.Exists(mMSXmlGeneratorAppPath) Then
-                LogError("MsXmlGenerator not found: " & mMSXmlGeneratorAppPath)
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-            End If
-
-            ' Create the file
-            Dim success = msXmlGen.CreateMSXMLFile()
-
-            If Not success Then
-                LogError(msXmlGen.ErrorMessage)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-
-            End If
-
-            If msXmlGen.ErrorMessage.Length > 0 Then
-                LogError(msXmlGen.ErrorMessage)
-            End If
-
-        Catch ex As Exception
-            LogError("Exception in CreateMSXMLFile", ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-    End Function
-
-    ''' <summary>
-    ''' Get the path to the .Exe to use for recalculating precursor ion m/z and charge values
-    ''' </summary>
-    ''' <param name="recalculatePrecursorsTool"></param>
-    ''' <returns>Path to the exe, or an empty string if an error</returns>
-    Private Function GetRecalculatePrecursorsToolProgLoc(<Out()> ByRef recalculatePrecursorsTool As String) As String
-
-        recalculatePrecursorsTool = m_jobParams.GetJobParameter("RecalculatePrecursorsTool", String.Empty)
-        If String.IsNullOrWhiteSpace(recalculatePrecursorsTool) Then
-            LogError("Job parameter RecalculatePrecursorsTool is not defined in the settings file; cannot determine tool to use")
-            Return String.Empty
-        End If
-
-        If String.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase) Then
-            Dim rawConverterDir As String = m_mgrParams.GetParam("RawConverterProgLoc")
-            If String.IsNullOrWhiteSpace(rawConverterDir) Then
-                LogError("Manager parameter RawConverterProgLoc is not defined; cannot find the folder for " & clsRawConverterRunner.RAWCONVERTER_FILENAME)
-                Return String.Empty
-            Else
-                Return Path.Combine(rawConverterDir, clsRawConverterRunner.RAWCONVERTER_FILENAME)
-            End If
-        Else
-            Return String.Empty
-        End If
-
-    End Function
-
-    Private Function PostProcessMSXmlFile() As Boolean
-        Try
-            Dim resultFileExtension As String
-
-            Select Case mMSXmlOutputFileType
-                Case clsAnalysisResources.MSXMLOutputTypeConstants.mzML
-                    resultFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION
-                Case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML
-                    resultFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION
-                Case Else
-                    Throw New Exception("Unrecognized MSXMLOutputType value")
-            End Select
-
-            Dim msXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & resultFileExtension)
-            Dim fiMSXmlFile = New FileInfo(msXmlFilePath)
-
-            If Not fiMSXmlFile.Exists Then
-                LogError(resultFileExtension & " file not found: " & Path.GetFileName(msXmlFilePath))
-                Return False
-            End If
-
-            ' Possibly update the file using results from RawConverter
-
-            Dim recalculatePrecursors = m_jobParams.GetJobParameter("RecalculatePrecursors", False)
-            If recalculatePrecursors Then
-                Dim success = RecalculatePrecursorIons(fiMSXmlFile)
-                If Not success Then
-                    Return False
-                End If
-            End If
-
-            ' Compress the file using GZip
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                 "GZipping " & fiMSXmlFile.Name)
-
-            ' Note that if this process turns out to be slow, we can have MSConvert do this for us using --gzip
-            ' However, that will not work if RecalculatePrecursors is true
-            fiMSXmlFile = GZipFile(fiMSXmlFile)
-            If fiMSXmlFile Is Nothing Then
-                Return False
-            End If
-
-            Dim storeInDataset = m_jobParams.GetJobParameter("StoreMSXmlInDataset", False)
-            Dim storeInCache = m_jobParams.GetJobParameter("StoreMSXmlInCache", True)
-
-            If Not storeInDataset AndAlso Not storeInCache Then storeInCache = True
-
-            If Not storeInDataset Then
-                ' Do not move the .mzXML or .mzML file to the result folder
-                m_jobParams.AddResultFileExtensionToSkip(resultFileExtension)
-                m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_GZ_EXTENSION)
-            End If
-
-            If storeInCache Then
-                ' Copy the .mzXML or .mzML file to the MSXML cache
-                Dim remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiMSXmlFile.FullName,
-                                                                purgeOldFilesIfNeeded:=True)
-
-                If String.IsNullOrEmpty(remoteCachefilePath) Then
-                    If String.IsNullOrEmpty(m_message) Then
-                        LogError("CopyFileToServerCache returned false for " & fiMSXmlFile.Name)
-                    End If
-                    Return False
-                End If
-
-                ' Create the _CacheInfo.txt file
-                Dim cacheInfoFilePath = msXmlFilePath & "_CacheInfo.txt"
-                Using swOutFile = New StreamWriter(New FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                    swOutFile.WriteLine(remoteCachefilePath)
-                End Using
-
-            End If
-
-        Catch ex As Exception
-            LogError("Exception in PostProcessMSXmlFile", ex)
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    ''' <summary>
-    ''' Recalculate the precursor ions in a MzML file
-    ''' The only supported option at present is RawConverter
-    ''' </summary>
-    ''' <param name="sourceMsXmlFile">MzML file to read</param>
-    ''' <returns>True if success, false if an error</returns>
-    Private Function RecalculatePrecursorIons(sourceMsXmlFile As FileInfo) As Boolean
-
-        If mMSXmlOutputFileType <> clsAnalysisResources.MSXMLOutputTypeConstants.mzML Then
-            LogError("Unsupported file extension for RecalculatePrecursors=True; must be mzML, not " & mMSXmlOutputFileType.ToString())
-            Return False
-        End If
-
-        Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
-        Dim rawFilePath As String
-
-        If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
-            rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
-        Else
-            LogError("Unsupported dataset type for RecalculatePrecursors=True; must be .Raw, not " & eRawDataType.ToString())
-            Return False
-        End If
-
-        Dim recalculatePrecursorsTool As String = Nothing
-        Dim recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(recalculatePrecursorsTool)
-        If String.IsNullOrWhiteSpace(recalculatePrecursorsToolProgLoc) Then
-            Return False
-        End If
-
-        If String.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase) Then
-            ' Using RawConverter.exe
-            Dim mgfFile As FileInfo = Nothing
-            Dim rawConverterExe = New FileInfo(recalculatePrecursorsToolProgLoc)
-
-            Dim rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterExe.Directory.FullName, rawFilePath, mgfFile)
-            If Not rawConverterSuccess Then Return False
-
-            Dim mzMLUpdated = RecalculatePrecursorIonsUpdateMzML(sourceMsXmlFile, mgfFile)
-            Return mzMLUpdated
-        Else
-            LogError("Unsupported tool for precursursor recalculation: " & recalculatePrecursorsTool)
-            Return False
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Use RawConverter to process the Thermo .Raw file and recalculate the precursor ion information, writing the results to a .MGF file
-    ''' </summary>
-    ''' <param name="rawConverterDir"></param>
-    ''' <param name="rawFilePath"></param>
-    ''' <param name="mgfFile"></param>
-    ''' <returns></returns>
-    Private Function RecalculatePrecursorIonsCreateMGF(rawConverterDir As String, rawFilePath As String, <Out()> ByRef mgfFile As FileInfo) As Boolean
-
-        Try
-            If m_message Is Nothing Then m_message = String.Empty
-            Dim messageAtStart = String.Copy(m_message)
-
-            Dim converter = New clsRawConverterRunner(rawConverterDir, m_DebugLevel)
-            RegisterEvents(converter)
-
-            Dim success = converter.ConvertRawToMGF(rawFilePath)
-
-            If Not success Then
-                If String.IsNullOrWhiteSpace(m_message) OrElse String.Equals(messageAtStart, m_message) Then
-                    LogError("Unknown RawConverter error")
-                End If
-                mgfFile = Nothing
-                Return False
-            End If
-
-            ' Confirm that RawConverter created a .mgf file
-
-            mgfFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION))
-            If Not mgfFile.Exists Then
-                LogError("RawConverter did not create file " & mgfFile.Name)
-                Return False
-            End If
-
-            m_jobParams.AddResultFileToSkip(mgfFile.Name)
-
-            Return True
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RawConverter error", ex)
-            m_message = "Exception running RawConverter"
-            mgfFile = Nothing
-            Return False
-        End Try
-
-    End Function
-
-    Private Function RecalculatePrecursorIonsUpdateMzML(sourceMsXmlFile As FileInfo, mgfFile As FileInfo) As Boolean
-
-        Try
-            Dim messageAtStart = String.Copy(m_message)
-
-            Dim updater = New clsParentIonUpdater()
-            RegisterEvents(updater)
-
-            Dim updatedMzMLPath = updater.UpdateMzMLParentIonInfoUsingMGF(sourceMsXmlFile.FullName, mgfFile.FullName, False)
-
-            If String.IsNullOrEmpty(updatedMzMLPath) Then
-                If String.IsNullOrWhiteSpace(m_message) OrElse String.Equals(messageAtStart, m_message) Then
-                    LogError("Unknown ParentIonUpdater error")
-                End If
-                Return False
-            End If
-
-            ' Confirm that clsParentIonUpdater created a new .mzML file
-
-            Dim updatedMzMLFile = New FileInfo(updatedMzMLPath)
-            If Not updatedMzMLFile.Exists Then
-                LogError("ParentIonUpdater did not create file " & mgfFile.Name)
-                Return False
-            End If
-
-            Dim finalMsXmlFilePath = String.Copy(sourceMsXmlFile.FullName)
-
-            ' Delete the original mzML file
-            Threading.Thread.Sleep(125)
-            sourceMsXmlFile.Delete()
-
-            Threading.Thread.Sleep(125)
-
-            ' Rename the updated mzML file so that it does not end in _new.mzML
-            updatedMzMLFile.MoveTo(finalMsXmlFilePath)
-
-            ' Re-index the mzML file using MSConvert
-
-            Dim success = ReindexMzML(finalMsXmlFilePath)
-
-            Return success
-
-        Catch ex As Exception
-            LogError("RecalculatePrecursorIonsUpdateMzML error", ex)
-            m_message = "Exception in RecalculatePrecursorIonsUpdateMzML"
-            Return False
-        End Try
-
-    End Function
-
-    Private Function ReindexMzML(mzMLFilePath As String) As Boolean
-        Try
-
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Re-index the mzML file using MSConvert")
-            End If
-
-            Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' Must be MSConvert.exe
-
-            If Not msXmlGenerator.ToLower().Contains("msconvert") Then
-                LogError("ParentIonUpdater only supports MSConvert, not " & msXmlGenerator)
-                Return False
-            End If
-
-            If String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
-                LogError("mMSXmlGeneratorAppPath is empty; this is unexpected")
-                Return False
-            End If
-
-            Dim eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML
-            Dim outputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML
-            Dim centroidMS1 = False
-            Dim centroidMS2 = False
-
-            Dim sourcefileBase = Path.GetFileNameWithoutExtension(mzMLFilePath)
-
-            Dim msConvertRunner = New clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, sourcefileBase, eRawDataType,
-                                                         outputFileType, centroidMS1, centroidMS2, 0)
-
-            msConvertRunner.ConsoleOutputSuffix = "_Reindex"
-            msConvertRunner.DebugLevel = m_DebugLevel
-
-            If Not File.Exists(mMSXmlGeneratorAppPath) Then
-                LogError("MsXmlGenerator not found: " & mMSXmlGeneratorAppPath)
-                Return False
-            End If
-
-            ' Create the file
-            Dim success = msConvertRunner.CreateMSXMLFile()
-
-            If Not success Then
-                LogError(msConvertRunner.ErrorMessage)
-                Return False
-            Else
-                m_jobParams.AddResultFileToSkip(msConvertRunner.ConsoleOutputFileName)
-            End If
-
-            If msConvertRunner.ErrorMessage.Length > 0 Then
-                LogError(msConvertRunner.ErrorMessage)
-            End If
-
-            ' Replace the original .mzML file with the new .mzML file
-            Dim reindexedMzMLFile = New FileInfo(Path.Combine(m_WorkDir, msConvertRunner.OutputFileName))
-
-            If Not reindexedMzMLFile.Exists Then
-                LogError("Reindexed mzML file not found at " & reindexedMzMLFile.FullName)
-                m_message = "Reindexed mzML file not found"
-                Return False
-            End If
-
-            ' Replace the original .mzML file with the indexed one
-            Threading.Thread.Sleep(125)
-            File.Delete(mzMLFilePath)
-            Threading.Thread.Sleep(125)
-
-            reindexedMzMLFile.MoveTo(mzMLFilePath)
-            Return True
-
-        Catch ex As Exception
-            LogError("ReindexMzML error", ex)
-            m_message = "Exception in ReindexMzML"
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Function StoreToolVersionInfo() As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                 "Determining tool version info")
-        End If
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-
-        ' Determine the path to the XML Generator
-        Dim msXmlGenerator As String = m_jobParams.GetParam("MSXMLGenerator")           ' ReAdW.exe or MSConvert.exe
-
-        mMSXmlGeneratorAppPath = String.Empty
-        If msXmlGenerator.ToLower().Contains("readw") Then
-            ' ReAdW
-            ' Note that msXmlGenerator will likely be ReAdW.exe
-            mMSXmlGeneratorAppPath = MyBase.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator)
-
-        ElseIf msXmlGenerator.ToLower().Contains("msconvert") Then
-            ' MSConvert
-            ' MSConvert.exe is stored in the ProteoWizard folder
-            Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")
-            mMSXmlGeneratorAppPath = Path.Combine(ProteoWizardDir, msXmlGenerator)
-
-        Else
-            LogError("Invalid value for MSXMLGenerator; should be 'ReAdW' or 'MSConvert'")
-            Return False
-        End If
-
-        If Not String.IsNullOrEmpty(mMSXmlGeneratorAppPath) Then
-            ioToolFiles.Add(New FileInfo(mMSXmlGeneratorAppPath))
-        Else
-            ' Invalid value for ProgramPath
-            LogError("MSXMLGenerator program path is empty")
-            Return False
-        End If
-
-        Dim recalculatePrecursors = m_jobParams.GetJobParameter("RecalculatePrecursors", False)
-        If recalculatePrecursors Then
-
-            Dim recalculatePrecursorsTool As String = Nothing
-            Dim recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(recalculatePrecursorsTool)
-
-            If Not String.IsNullOrEmpty(recalculatePrecursorsToolProgLoc) Then
-                ioToolFiles.Add(New FileInfo(recalculatePrecursorsToolProgLoc))
-            End If
-
-        End If
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
-        Catch ex As Exception
-            LogError("Exception calling SetStepTaskToolVersion", ex)
-            Return False
-        End Try
-
-    End Function
-
-#End Region
-
-#Region "Event Handlers"
-
-    ''' <summary>
-    ''' Event handler for msXmlGen.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub MSXmlGen_LoopWaiting()
-        UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING)
-        LogProgress("MSXmlGen")
-    End Sub
-
-    ''' <summary>
-    ''' Event handler for msXmlGen.ProgRunnerStarting event
-    ''' </summary>
-    ''' <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
-    ''' <remarks></remarks>
-    Private Sub MSXmlGen_ProgRunnerStarting(CommandLine As String)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine)
-    End Sub
-
-#End Region
-End Class
+                        "mMSXmlGeneratorAppPath is empty; this is unexpected");
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                string rawDataType = m_jobParams.GetParam("RawDataType");
+                var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+
+                clsMSXmlGen msXmlGen;
+
+                // Determine the program path and Instantiate the processing class
+                if (msXmlGenerator.ToLower().Contains("readw"))
+                {
+                    // ReAdW
+                    // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
+
+                    msXmlGen = new clsMSXMLGenReadW(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, mMSXmlOutputFileType,
+                        centroidMS1 | centroidMS2);
+
+                    if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
+                    {
+                        LogError("ReAdW can only be used with .Raw files, not with " + rawDataType);
+                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+                else if (msXmlGenerator.ToLower().Contains("msconvert"))
+                {
+                    // MSConvert
+
+                    if (string.IsNullOrWhiteSpace(customMSConvertArguments))
+                    {
+                        msXmlGen = new clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, mMSXmlOutputFileType,
+                            centroidMS1, centroidMS2, centroidPeakCountToRetain);
+                    }
+                    else
+                    {
+                        msXmlGen = new clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, m_Dataset, eRawDataType, mMSXmlOutputFileType,
+                            customMSConvertArguments);
+                    }
+                }
+                else
+                {
+                    LogError("Unsupported XmlGenerator: " + msXmlGenerator);
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Attach events to msXmlGen
+                msXmlGen.LoopWaiting += MSXmlGen_LoopWaiting;
+                msXmlGen.ProgRunnerStarting += MSXmlGen_ProgRunnerStarting;
+
+                msXmlGen.DebugLevel = m_DebugLevel;
+
+                if (!File.Exists(mMSXmlGeneratorAppPath))
+                {
+                    LogError("MsXmlGenerator not found: " + mMSXmlGeneratorAppPath);
+                    return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                // Create the file
+                var success = msXmlGen.CreateMSXMLFile();
+
+                if (!success)
+                {
+                    LogError(msXmlGen.ErrorMessage);
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (msXmlGen.ErrorMessage.Length > 0)
+                {
+                    LogError(msXmlGen.ErrorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in CreateMSXMLFile", ex);
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Get the path to the .Exe to use for recalculating precursor ion m/z and charge values
+        /// </summary>
+        /// <param name="recalculatePrecursorsTool"></param>
+        /// <returns>Path to the exe, or an empty string if an error</returns>
+        private string GetRecalculatePrecursorsToolProgLoc(out string recalculatePrecursorsTool)
+        {
+            recalculatePrecursorsTool = m_jobParams.GetJobParameter("RecalculatePrecursorsTool", string.Empty);
+            if (string.IsNullOrWhiteSpace(recalculatePrecursorsTool))
+            {
+                LogError("Job parameter RecalculatePrecursorsTool is not defined in the settings file; cannot determine tool to use");
+                return string.Empty;
+            }
+
+            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase))
+            {
+                string rawConverterDir = m_mgrParams.GetParam("RawConverterProgLoc");
+                if (string.IsNullOrWhiteSpace(rawConverterDir))
+                {
+                    LogError("Manager parameter RawConverterProgLoc is not defined; cannot find the folder for " +
+                             clsRawConverterRunner.RAWCONVERTER_FILENAME);
+                    return string.Empty;
+                }
+                else
+                {
+                    return Path.Combine(rawConverterDir, clsRawConverterRunner.RAWCONVERTER_FILENAME);
+                }
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
+
+        private bool PostProcessMSXmlFile()
+        {
+            try
+            {
+                string resultFileExtension = null;
+
+                switch (mMSXmlOutputFileType)
+                {
+                    case clsAnalysisResources.MSXMLOutputTypeConstants.mzML:
+                        resultFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
+                        break;
+                    case clsAnalysisResources.MSXMLOutputTypeConstants.mzXML:
+                        resultFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
+                        break;
+                    default:
+                        throw new Exception("Unrecognized MSXMLOutputType value");
+                }
+
+                var msXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + resultFileExtension);
+                var fiMSXmlFile = new FileInfo(msXmlFilePath);
+
+                if (!fiMSXmlFile.Exists)
+                {
+                    LogError(resultFileExtension + " file not found: " + Path.GetFileName(msXmlFilePath));
+                    return false;
+                }
+
+                // Possibly update the file using results from RawConverter
+
+                var recalculatePrecursors = m_jobParams.GetJobParameter("RecalculatePrecursors", false);
+                if (recalculatePrecursors)
+                {
+                    var success = RecalculatePrecursorIons(fiMSXmlFile);
+                    if (!success)
+                    {
+                        return false;
+                    }
+                }
+
+                // Compress the file using GZip
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "GZipping " + fiMSXmlFile.Name);
+
+                // Note that if this process turns out to be slow, we can have MSConvert do this for us using --gzip
+                // However, that will not work if RecalculatePrecursors is true
+                fiMSXmlFile = GZipFile(fiMSXmlFile);
+                if (fiMSXmlFile == null)
+                {
+                    return false;
+                }
+
+                var storeInDataset = m_jobParams.GetJobParameter("StoreMSXmlInDataset", false);
+                var storeInCache = m_jobParams.GetJobParameter("StoreMSXmlInCache", true);
+
+                if (!storeInDataset && !storeInCache)
+                    storeInCache = true;
+
+                if (!storeInDataset)
+                {
+                    // Do not move the .mzXML or .mzML file to the result folder
+                    m_jobParams.AddResultFileExtensionToSkip(resultFileExtension);
+                    m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_GZ_EXTENSION);
+                }
+
+                if (storeInCache)
+                {
+                    // Copy the .mzXML or .mzML file to the MSXML cache
+                    var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiMSXmlFile.FullName, purgeOldFilesIfNeeded: true);
+
+                    if (string.IsNullOrEmpty(remoteCachefilePath))
+                    {
+                        if (string.IsNullOrEmpty(m_message))
+                        {
+                            LogError("CopyFileToServerCache returned false for " + fiMSXmlFile.Name);
+                        }
+                        return false;
+                    }
+
+                    // Create the _CacheInfo.txt file
+                    var cacheInfoFilePath = msXmlFilePath + "_CacheInfo.txt";
+                    using (var swOutFile = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        swOutFile.WriteLine(remoteCachefilePath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in PostProcessMSXmlFile", ex);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Recalculate the precursor ions in a MzML file
+        /// The only supported option at present is RawConverter
+        /// </summary>
+        /// <param name="sourceMsXmlFile">MzML file to read</param>
+        /// <returns>True if success, false if an error</returns>
+        private bool RecalculatePrecursorIons(FileInfo sourceMsXmlFile)
+        {
+            if (mMSXmlOutputFileType != clsAnalysisResources.MSXMLOutputTypeConstants.mzML)
+            {
+                LogError("Unsupported file extension for RecalculatePrecursors=True; must be mzML, not " + mMSXmlOutputFileType.ToString());
+                return false;
+            }
+
+            string rawDataType = m_jobParams.GetParam("RawDataType");
+            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+            string rawFilePath = null;
+
+            if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            {
+                rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+            }
+            else
+            {
+                LogError("Unsupported dataset type for RecalculatePrecursors=True; must be .Raw, not " + eRawDataType.ToString());
+                return false;
+            }
+
+            string recalculatePrecursorsTool = null;
+            var recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(out recalculatePrecursorsTool);
+            if (string.IsNullOrWhiteSpace(recalculatePrecursorsToolProgLoc))
+            {
+                return false;
+            }
+
+            if (string.Equals(recalculatePrecursorsTool, clsRawConverterRunner.RAWCONVERTER_FILENAME, StringComparison.InvariantCultureIgnoreCase))
+            {
+                // Using RawConverter.exe
+                FileInfo mgfFile = null;
+                var rawConverterExe = new FileInfo(recalculatePrecursorsToolProgLoc);
+
+                var rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterExe.Directory.FullName, rawFilePath, out mgfFile);
+                if (!rawConverterSuccess)
+                    return false;
+
+                var mzMLUpdated = RecalculatePrecursorIonsUpdateMzML(sourceMsXmlFile, mgfFile);
+                return mzMLUpdated;
+            }
+            else
+            {
+                LogError("Unsupported tool for precursursor recalculation: " + recalculatePrecursorsTool);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Use RawConverter to process the Thermo .Raw file and recalculate the precursor ion information, writing the results to a .MGF file
+        /// </summary>
+        /// <param name="rawConverterDir"></param>
+        /// <param name="rawFilePath"></param>
+        /// <param name="mgfFile"></param>
+        /// <returns></returns>
+        private bool RecalculatePrecursorIonsCreateMGF(string rawConverterDir, string rawFilePath, out FileInfo mgfFile)
+        {
+            try
+            {
+                if (m_message == null)
+                    m_message = string.Empty;
+                var messageAtStart = string.Copy(m_message);
+
+                var converter = new clsRawConverterRunner(rawConverterDir, m_DebugLevel);
+                RegisterEvents(converter);
+
+                var success = converter.ConvertRawToMGF(rawFilePath);
+
+                if (!success)
+                {
+                    if (string.IsNullOrWhiteSpace(m_message) || string.Equals(messageAtStart, m_message))
+                    {
+                        LogError("Unknown RawConverter error");
+                    }
+                    mgfFile = null;
+                    return false;
+                }
+
+                // Confirm that RawConverter created a .mgf file
+
+                mgfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MGF_EXTENSION));
+                if (!mgfFile.Exists)
+                {
+                    LogError("RawConverter did not create file " + mgfFile.Name);
+                    return false;
+                }
+
+                m_jobParams.AddResultFileToSkip(mgfFile.Name);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RawConverter error", ex);
+                m_message = "Exception running RawConverter";
+                mgfFile = null;
+                return false;
+            }
+        }
+
+        private bool RecalculatePrecursorIonsUpdateMzML(FileInfo sourceMsXmlFile, FileInfo mgfFile)
+        {
+            try
+            {
+                var messageAtStart = string.Copy(m_message);
+
+                var updater = new clsParentIonUpdater();
+                RegisterEvents(updater);
+
+                var updatedMzMLPath = updater.UpdateMzMLParentIonInfoUsingMGF(sourceMsXmlFile.FullName, mgfFile.FullName, false);
+
+                if (string.IsNullOrEmpty(updatedMzMLPath))
+                {
+                    if (string.IsNullOrWhiteSpace(m_message) || string.Equals(messageAtStart, m_message))
+                    {
+                        LogError("Unknown ParentIonUpdater error");
+                    }
+                    return false;
+                }
+
+                // Confirm that clsParentIonUpdater created a new .mzML file
+
+                var updatedMzMLFile = new FileInfo(updatedMzMLPath);
+                if (!updatedMzMLFile.Exists)
+                {
+                    LogError("ParentIonUpdater did not create file " + mgfFile.Name);
+                    return false;
+                }
+
+                var finalMsXmlFilePath = string.Copy(sourceMsXmlFile.FullName);
+
+                // Delete the original mzML file
+                System.Threading.Thread.Sleep(125);
+                sourceMsXmlFile.Delete();
+
+                System.Threading.Thread.Sleep(125);
+
+                // Rename the updated mzML file so that it does not end in _new.mzML
+                updatedMzMLFile.MoveTo(finalMsXmlFilePath);
+
+                // Re-index the mzML file using MSConvert
+
+                var success = ReindexMzML(finalMsXmlFilePath);
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                LogError("RecalculatePrecursorIonsUpdateMzML error", ex);
+                m_message = "Exception in RecalculatePrecursorIonsUpdateMzML";
+                return false;
+            }
+        }
+
+        private bool ReindexMzML(string mzMLFilePath)
+        {
+            try
+            {
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Re-index the mzML file using MSConvert");
+                }
+
+                string msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+                // Must be MSConvert.exe
+
+                if (!msXmlGenerator.ToLower().Contains("msconvert"))
+                {
+                    LogError("ParentIonUpdater only supports MSConvert, not " + msXmlGenerator);
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(mMSXmlGeneratorAppPath))
+                {
+                    LogError("mMSXmlGeneratorAppPath is empty; this is unexpected");
+                    return false;
+                }
+
+                var eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML;
+                var outputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
+                var centroidMS1 = false;
+                var centroidMS2 = false;
+
+                var sourcefileBase = Path.GetFileNameWithoutExtension(mzMLFilePath);
+
+                var msConvertRunner = new clsMSXmlGenMSConvert(m_WorkDir, mMSXmlGeneratorAppPath, sourcefileBase, eRawDataType, outputFileType,
+                    centroidMS1, centroidMS2, 0);
+
+                msConvertRunner.ConsoleOutputSuffix = "_Reindex";
+                msConvertRunner.DebugLevel = m_DebugLevel;
+
+                if (!File.Exists(mMSXmlGeneratorAppPath))
+                {
+                    LogError("MsXmlGenerator not found: " + mMSXmlGeneratorAppPath);
+                    return false;
+                }
+
+                // Create the file
+                var success = msConvertRunner.CreateMSXMLFile();
+
+                if (!success)
+                {
+                    LogError(msConvertRunner.ErrorMessage);
+                    return false;
+                }
+                else
+                {
+                    m_jobParams.AddResultFileToSkip(msConvertRunner.ConsoleOutputFileName);
+                }
+
+                if (msConvertRunner.ErrorMessage.Length > 0)
+                {
+                    LogError(msConvertRunner.ErrorMessage);
+                }
+
+                // Replace the original .mzML file with the new .mzML file
+                var reindexedMzMLFile = new FileInfo(Path.Combine(m_WorkDir, msConvertRunner.OutputFileName));
+
+                if (!reindexedMzMLFile.Exists)
+                {
+                    LogError("Reindexed mzML file not found at " + reindexedMzMLFile.FullName);
+                    m_message = "Reindexed mzML file not found";
+                    return false;
+                }
+
+                // Replace the original .mzML file with the indexed one
+                System.Threading.Thread.Sleep(125);
+                File.Delete(mzMLFilePath);
+                System.Threading.Thread.Sleep(125);
+
+                reindexedMzMLFile.MoveTo(mzMLFilePath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("ReindexMzML error", ex);
+                m_message = "Exception in ReindexMzML";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        private bool StoreToolVersionInfo()
+        {
+            string strToolVersionInfo = string.Empty;
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            // Store paths to key files in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+
+            // Determine the path to the XML Generator
+            string msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+            // ReAdW.exe or MSConvert.exe
+
+            mMSXmlGeneratorAppPath = string.Empty;
+            if (msXmlGenerator.ToLower().Contains("readw"))
+            {
+                // ReAdW
+                // Note that msXmlGenerator will likely be ReAdW.exe
+                mMSXmlGeneratorAppPath = base.DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator);
+            }
+            else if (msXmlGenerator.ToLower().Contains("msconvert"))
+            {
+                // MSConvert
+                // MSConvert.exe is stored in the ProteoWizard folder
+                string ProteoWizardDir = m_mgrParams.GetParam("ProteoWizardDir");
+                mMSXmlGeneratorAppPath = Path.Combine(ProteoWizardDir, msXmlGenerator);
+            }
+            else
+            {
+                LogError("Invalid value for MSXMLGenerator; should be 'ReAdW' or 'MSConvert'");
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(mMSXmlGeneratorAppPath))
+            {
+                ioToolFiles.Add(new FileInfo(mMSXmlGeneratorAppPath));
+            }
+            else
+            {
+                // Invalid value for ProgramPath
+                LogError("MSXMLGenerator program path is empty");
+                return false;
+            }
+
+            var recalculatePrecursors = m_jobParams.GetJobParameter("RecalculatePrecursors", false);
+
+            if (recalculatePrecursors)
+            {
+                string recalculatePrecursorsTool = null;
+                var recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(out recalculatePrecursorsTool);
+
+                if (!string.IsNullOrEmpty(recalculatePrecursorsToolProgLoc))
+                {
+                    ioToolFiles.Add(new FileInfo(recalculatePrecursorsToolProgLoc));
+                }
+            }
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling SetStepTaskToolVersion", ex);
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        /// <summary>
+        /// Event handler for msXmlGen.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void MSXmlGen_LoopWaiting()
+        {
+            UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING);
+            LogProgress("MSXmlGen");
+        }
+
+        /// <summary>
+        /// Event handler for msXmlGen.ProgRunnerStarting event
+        /// </summary>
+        /// <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
+        /// <remarks></remarks>
+        private void MSXmlGen_ProgRunnerStarting(string CommandLine)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine);
+        }
+
+        #endregion
+    }
+}

@@ -1,164 +1,163 @@
-﻿
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 05/10/2011
-'
-' Uses MSConvert to create a .mzXML or .mzML file
-' Also used by RecalculatePrecursorIonsUpdateMzML in clsAnalysisToolRunnerMSXMLGen to re-index a .mzML file to create a new .mzML file
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 05/10/2011
+//
+// Uses MSConvert to create a .mzXML or .mzML file
+// Also used by RecalculatePrecursorIonsUpdateMzML in clsAnalysisToolRunnerMSXMLGen to re-index a .mzML file to create a new .mzML file
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
+namespace AnalysisManagerMsXmlGenPlugIn
+{
+    public class clsMSXmlGenMSConvert : clsMSXmlGen
+    {
+        public const int DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN = 500;
 
-Public Class clsMSXmlGenMSConvert
-    Inherits clsMSXmlGen
+        /// <summary>
+        /// Number of data points to keep when centroiding
+        /// </summary>
+        /// <remarks>0 to keep default (500); -1 to keep all</remarks>
+        private int mCentroidPeakCountToRetain;
 
-    Public Const DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN As Integer = 500
+        /// <summary>
+        /// Custom arguments that will override the auto-defined arguments
+        /// </summary>
+        /// <remarks></remarks>
+        private readonly string mCustomMSConvertArguments;
 
-    ''' <summary>
-    ''' Number of data points to keep when centroiding
-    ''' </summary>
-    ''' <remarks>0 to keep default (500); -1 to keep all</remarks>
-    Private mCentroidPeakCountToRetain As Integer
+        protected override string ProgramName
+        {
+            get { return "MSConvert"; }
+        }
 
-    ''' <summary>
-    ''' Custom arguments that will override the auto-defined arguments
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private ReadOnly mCustomMSConvertArguments As String
+        #region "Methods"
 
-    Protected Overrides ReadOnly Property ProgramName As String
-        Get
-            Return "MSConvert"
-        End Get
-    End Property
+        public clsMSXmlGenMSConvert(string WorkDir, string msConvertProgramPath, string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType, clsAnalysisResources.MSXMLOutputTypeConstants eOutputType,
+            string customMSConvertArguments) : base(WorkDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML: false)
+        {
+            mCustomMSConvertArguments = customMSConvertArguments;
 
-#Region "Methods"
+            mUseProgRunnerResultCode = false;
+        }
 
-    Public Sub New(WorkDir As String,
-      msConvertProgramPath As String,
-      datasetName As String,
-      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      customMSConvertArguments As String)
+        public clsMSXmlGenMSConvert(string workDir, string msConvertProgramPath, string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType, clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMSXML,
+            int centroidPeakCountToRetain) : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML)
+        {
+            mCentroidPeakCountToRetain = centroidPeakCountToRetain;
 
-        MyBase.New(WorkDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML:=False)
+            mUseProgRunnerResultCode = false;
+        }
 
-        mCustomMSConvertArguments = customMSConvertArguments
+        public clsMSXmlGenMSConvert(string workDir, string msConvertProgramPath, string datasetName,
+            clsAnalysisResources.eRawDataTypeConstants rawDataType, clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMS1,
+            bool centroidMS2, int centroidPeakCountToRetain)
+            : base(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMS1, centroidMS2)
+        {
+            mCentroidPeakCountToRetain = centroidPeakCountToRetain;
 
-        mUseProgRunnerResultCode = False
-    End Sub
+            mUseProgRunnerResultCode = false;
+        }
 
-    Public Sub New(workDir As String,
-      msConvertProgramPath As String,
-      datasetName As String,
-      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      centroidMSXML As Boolean,
-      centroidPeakCountToRetain As Integer)
+        protected override string CreateArguments(string msXmlFormat, string rawFilePath)
+        {
+            var cmdStr = " " + clsGlobal.PossiblyQuotePath(rawFilePath);
 
-        MyBase.New(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMSXML)
+            if (string.IsNullOrWhiteSpace(mCustomMSConvertArguments))
+            {
+                if (mCentroidMS1 || mCentroidMS2)
+                {
+                    // Centroid the data by first applying the peak-picking algorithm, then keeping the top N data points
+                    // Syntax details:
+                    //   peakPicking prefer_vendor:<true|false>  int_set(MS levels)
+                    //   threshold <count|count-after-ties|absolute|bpi-relative|tic-relative|tic-cutoff> <threshold> <most-intense|least-intense> [int_set(MS levels)]
 
-        mCentroidPeakCountToRetain = centroidPeakCountToRetain
+                    // So, the following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 150 peaks (sorted by intensity)
+                    // --filter "peakPicking true 1-" --filter "threshold count 150 most-intense"
 
-        mUseProgRunnerResultCode = False
-    End Sub
+                    if (mCentroidMS1 & !mCentroidMS2)
+                    {
+                        cmdStr += " --filter \"peakPicking true 1\"";
+                    }
+                    else if (!mCentroidMS1 & mCentroidMS2)
+                    {
+                        cmdStr += " --filter \"peakPicking true 2-\"";
+                    }
+                    else
+                    {
+                        cmdStr += " --filter \"peakPicking true 1-\"";
+                    }
 
-    Public Sub New(workDir As String,
-      msConvertProgramPath As String,
-      datasetName As String,
-      rawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      eOutputType As clsAnalysisResources.MSXMLOutputTypeConstants,
-      centroidMS1 As Boolean,
-      centroidMS2 As Boolean,
-      centroidPeakCountToRetain As Integer)
+                    if (mCentroidPeakCountToRetain < 0)
+                    {
+                        // Keep all points
+                    }
+                    else
+                    {
+                        if (mCentroidPeakCountToRetain == 0)
+                        {
+                            mCentroidPeakCountToRetain = DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN;
+                        }
+                        else if (mCentroidPeakCountToRetain < 25)
+                        {
+                            mCentroidPeakCountToRetain = 25;
+                        }
 
-        MyBase.New(workDir, msConvertProgramPath, datasetName, rawDataType, eOutputType, centroidMS1, centroidMS2)
+                        cmdStr += " --filter \"threshold count " + mCentroidPeakCountToRetain + " most-intense\"";
+                    }
+                }
 
-        mCentroidPeakCountToRetain = centroidPeakCountToRetain
+                cmdStr += " --" + msXmlFormat + " --32";
+            }
+            else
+            {
+                cmdStr += " " + mCustomMSConvertArguments;
+            }
 
-        mUseProgRunnerResultCode = False
-    End Sub
+            mOutputFileName = GetOutputFileName(msXmlFormat, rawFilePath, mRawDataType);
 
-    Protected Overrides Function CreateArguments(msXmlFormat As String, rawFilePath As String) As String
+            // Specify the output directory and the output file name
+            cmdStr += "  -o " + mWorkDir + " --outfile " + mOutputFileName;
 
-        Dim cmdStr = " " & clsGlobal.PossiblyQuotePath(rawFilePath)
+            return cmdStr;
+        }
 
-        If String.IsNullOrWhiteSpace(mCustomMSConvertArguments) Then
+        protected override string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType)
+        {
+            if (string.Equals(msXmlFormat, "mzML", StringComparison.InvariantCultureIgnoreCase) &&
+                mRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
+            {
+                // Input and output files are both .mzML
+                return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + clsAnalysisResources.DOT_MZML_EXTENSION;
+            }
+            else if (string.Equals(msXmlFormat, "mzXML", StringComparison.InvariantCultureIgnoreCase) &&
+                     mRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
+            {
+                // Input and output files are both .mzXML
+                return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + clsAnalysisResources.DOT_MZXML_EXTENSION;
+            }
+            else
+            {
+                return Path.GetFileName(Path.ChangeExtension(rawFilePath, msXmlFormat));
+            }
+        }
 
-            If mCentroidMS1 OrElse mCentroidMS2 Then
-                ' Centroid the data by first applying the peak-picking algorithm, then keeping the top N data points
-                ' Syntax details:
-                '   peakPicking prefer_vendor:<true|false>  int_set(MS levels)
-                '   threshold <count|count-after-ties|absolute|bpi-relative|tic-relative|tic-cutoff> <threshold> <most-intense|least-intense> [int_set(MS levels)]
+        protected override bool SetupTool()
+        {
+            // Tool setup for MSConvert involves creating a
+            //  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
+            //  to indicate that we agree to the Thermo license
 
-                ' So, the following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 150 peaks (sorted by intensity)
-                ' --filter "peakPicking true 1-" --filter "threshold count 150 most-intense"
+            var objProteowizardTools = new clsProteowizardTools(DebugLevel);
 
-                If mCentroidMS1 And Not mCentroidMS2 Then
-                    cmdStr &= " --filter ""peakPicking true 1"""
-                ElseIf Not mCentroidMS1 And mCentroidMS2 Then
-                    cmdStr &= " --filter ""peakPicking true 2-"""
-                Else
-                    cmdStr &= " --filter ""peakPicking true 1-"""
-                End If
+            return objProteowizardTools.RegisterProteoWizard();
+        }
 
-                If mCentroidPeakCountToRetain < 0 Then
-                    ' Keep all points
-                Else
-                    If mCentroidPeakCountToRetain = 0 Then
-                        mCentroidPeakCountToRetain = DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN
-                    ElseIf mCentroidPeakCountToRetain < 25 Then
-                        mCentroidPeakCountToRetain = 25
-                    End If
-
-                    cmdStr &= " --filter ""threshold count " & mCentroidPeakCountToRetain & " most-intense"""
-                End If
-
-            End If
-
-            cmdStr &= " --" & msXmlFormat & " --32"
-        Else
-            cmdStr &= " " & mCustomMSConvertArguments
-        End If
-
-        mOutputFileName = GetOutputFileName(msXmlFormat, rawFilePath, mRawDataType)
-
-        ' Specify the output directory and the output file name
-        cmdStr &= "  -o " & mWorkDir & " --outfile " & mOutputFileName
-
-        Return cmdStr
-
-    End Function
-
-    Protected Overrides Function GetOutputFileName(msXmlFormat As String, rawFilePath As String, rawDataType As clsAnalysisResources.eRawDataTypeConstants) As String
-
-        If String.Equals(msXmlFormat, "mzML", StringComparison.InvariantCultureIgnoreCase) AndAlso
-          mRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML Then
-            ' Input and output files are both .mzML
-            Return IO.Path.GetFileNameWithoutExtension(rawFilePath) & "_new" & clsAnalysisResources.DOT_MZML_EXTENSION
-        ElseIf String.Equals(msXmlFormat, "mzXML", StringComparison.InvariantCultureIgnoreCase) AndAlso
-               mRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzXML Then
-            ' Input and output files are both .mzXML
-            Return IO.Path.GetFileNameWithoutExtension(rawFilePath) & "_new" & clsAnalysisResources.DOT_MZXML_EXTENSION
-        Else
-            Return IO.Path.GetFileName(IO.Path.ChangeExtension(rawFilePath, msXmlFormat))
-        End If
-
-    End Function
-
-    Protected Overrides Function SetupTool() As Boolean
-
-        ' Tool setup for MSConvert involves creating a
-        '  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
-        '  to indicate that we agree to the Thermo license
-
-        Dim objProteowizardTools = New clsProteowizardTools(DebugLevel)
-
-        Return objProteowizardTools.RegisterProteoWizard()
-    End Function
-
-#End Region
-End Class
+        #endregion
+    }
+}

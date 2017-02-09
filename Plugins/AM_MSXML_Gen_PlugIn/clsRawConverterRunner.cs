@@ -1,106 +1,120 @@
-﻿Imports System.IO
-Imports AnalysisManagerBase
+﻿using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Public Class clsRawConverterRunner
-    Inherits clsEventNotifier
+namespace AnalysisManagerMsXmlGenPlugIn
+{
+    public class clsRawConverterRunner : clsEventNotifier
+    {
+        #region "Constants"
 
-#Region "Constants"
-    Public Const RAWCONVERTER_FILENAME As String = "RawConverter.exe"
-#End Region
+        public const string RAWCONVERTER_FILENAME = "RawConverter.exe";
 
-#Region "Member variables"
-    ''' <summary>
-    ''' 0 means no debugging, 1 for normal, 2 for verbose
-    ''' </summary>
-    Private ReadOnly m_DebugLevel As Integer
+        #endregion
 
-#End Region
+        #region "Member variables"
 
-#Region "Properties"
+        /// <summary>
+        /// 0 means no debugging, 1 for normal, 2 for verbose
+        /// </summary>
+        private readonly int m_DebugLevel;
 
-    Public ReadOnly Property RawConverterExePath As String
+        #endregion
 
-#End Region
+        #region "Properties"
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    Public Sub New(rawConverterDir As String, Optional debugLevel As Integer = 1)
+        public string RawConverterExePath { get; }
 
-        RawConverterExePath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME)
-        If Not File.Exists(RawConverterExePath) Then
-            Throw New FileNotFoundException(RawConverterExePath)
-        End If
+        #endregion
 
-        m_DebugLevel = debugLevel
-
-    End Sub
-
-    ''' <summary>
-    ''' Create .mgf file using RawConverter
-    ''' This function is called by MakeDTAFilesThreaded
-    ''' </summary>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Public Function ConvertRawToMGF(rawFilePath As String) As Boolean
-
-        Try
-
-            Dim fiSourceFile = New FileInfo(rawFilePath)
-
-            If m_DebugLevel > 0 Then
-                OnProgressUpdate("Creating .MGF file using RawConverter", 0)
-            End If
-
-            Dim fiRawConverter = New FileInfo(RawConverterExePath)
-
-            ' Set up command
-            Dim cmdStr = " " & clsGlobal.PossiblyQuotePath(fiSourceFile.FullName) & " --mgf"
-
-            If m_DebugLevel > 0 Then
-                OnProgressUpdate(fiRawConverter.FullName & " " & cmdStr, 0)
-            End If
-
-            ' Setup a program runner tool to make the spectra files
-            ' The working directory must be the folder that has RawConverter.exe
-            ' Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
-
-            Dim consoleOutputFilePath = Path.Combine(fiSourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt")
-
-            Dim progRunner = New clsRunDosProgram(fiRawConverter.Directory.FullName) With {
-                .CreateNoWindow = True,
-                .CacheStandardOutput = True,
-                .EchoOutputToConsole = True,
-                .WriteConsoleOutputToFile = True,
-                .ConsoleOutputFilePath = consoleOutputFilePath
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public clsRawConverterRunner(string rawConverterDir, int debugLevel = 1)
+        {
+            RawConverterExePath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME);
+            if (!File.Exists(RawConverterExePath))
+            {
+                throw new FileNotFoundException(RawConverterExePath);
             }
-            AddHandler progRunner.ErrorEvent, AddressOf ProgRunner_ErrorEvent
 
-            If Not progRunner.RunProgram(fiRawConverter.FullName, cmdStr, "RawConverter", True) Then
-                ' .RunProgram returned False
-                OnErrorEvent("Error running " & Path.GetFileNameWithoutExtension(fiRawConverter.Name))
-                Return False
-            End If
+            m_DebugLevel = debugLevel;
+        }
 
-            If m_DebugLevel >= 2 Then
-                OnProgressUpdate(" ... MGF file created using RawConverter", 100)
-            End If
+        /// <summary>
+        /// Create .mgf file using RawConverter
+        /// This function is called by MakeDTAFilesThreaded
+        /// </summary>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        public bool ConvertRawToMGF(string rawFilePath)
+        {
+            try
+            {
+                var fiSourceFile = new FileInfo(rawFilePath);
 
-            Return True
+                if (m_DebugLevel > 0)
+                {
+                    OnProgressUpdate("Creating .MGF file using RawConverter", 0);
+                }
 
-        Catch ex As Exception
-            OnErrorEvent("Exception in ConvertRawToMGF: " + ex.Message)
-            Return False
-        End Try
+                var fiRawConverter = new FileInfo(RawConverterExePath);
 
-    End Function
+                // Set up command
+                var cmdStr = " " + clsGlobal.PossiblyQuotePath(fiSourceFile.FullName) + " --mgf";
 
-    Private Sub ProgRunner_ErrorEvent(errMsg As String, ex As Exception)
+                if (m_DebugLevel > 0)
+                {
+                    OnProgressUpdate(fiRawConverter.FullName + " " + cmdStr, 0);
+                }
 
-        If ex Is Nothing OrElse errMsg.Contains(ex.Message) Then
-            OnErrorEvent("Exception running RawConverter: " + errMsg)
-        Else
-            OnErrorEvent("Exception running RawConverter: " + errMsg + "; " + ex.Message)
-        End If
-    End Sub
-End Class
+                // Setup a program runner tool to make the spectra files
+                // The working directory must be the folder that has RawConverter.exe
+                // Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
+
+                var consoleOutputFilePath = Path.Combine(fiSourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt");
+
+                var progRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = consoleOutputFilePath
+                };
+                progRunner.ErrorEvent += ProgRunner_ErrorEvent;
+
+                if (!progRunner.RunProgram(fiRawConverter.FullName, cmdStr, "RawConverter", true))
+                {
+                    // .RunProgram returned False
+                    OnErrorEvent("Error running " + Path.GetFileNameWithoutExtension(fiRawConverter.Name));
+                    return false;
+                }
+
+                if (m_DebugLevel >= 2)
+                {
+                    OnProgressUpdate(" ... MGF file created using RawConverter", 100);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception in ConvertRawToMGF: " + ex.Message);
+                return false;
+            }
+        }
+
+        private void ProgRunner_ErrorEvent(string errMsg, Exception ex)
+        {
+            if (ex == null || errMsg.Contains(ex.Message))
+            {
+                OnErrorEvent("Exception running RawConverter: " + errMsg);
+            }
+            else
+            {
+                OnErrorEvent("Exception running RawConverter: " + errMsg + "; " + ex.Message);
+            }
+        }
+    }
+}
