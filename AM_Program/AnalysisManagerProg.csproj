@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerProg</RootNamespace>
     <AssemblyName>AnalysisManagerProg</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
@@ -113,8 +113,8 @@
     <Content Include="LITENING.ICO" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="AM_Shared\AM_Shared.vbproj">
-      <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
+    <ProjectReference Include="AM_Shared\AM_Shared.csproj">
+      <Project>{18adc755-b570-4571-8ef8-a539fc9efb75}</Project>
       <Name>AM_Shared</Name>
     </ProjectReference>
   </ItemGroup>
