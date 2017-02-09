@@ -795,7 +795,7 @@ namespace AnalysisManagerProg
                 //oTool = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, oJobParams, strJobNum, m_mgrParams.GetParam("workdir"), intDebugLevel, blnMsgfPlus)
 
                 //Dim FastaFileSizeKB As Single
-                //Dim eResult As IJobParams.CloseOutType
+                //Dim eResult As CloseOutType
 
                 //' Note that FastaFilePath will be populated by this function call
                 //eResult = oTool.InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath)
@@ -1256,7 +1256,7 @@ namespace AnalysisManagerProg
                         }
                         else
                         {
-                            //'eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            //'eResult = CloseOutType.CLOSEOUT_FAILED
                             break;
                         }
                     }
@@ -1272,7 +1272,7 @@ namespace AnalysisManagerProg
                     }
                     else
                     {
-                        //'eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        //'eResult = CloseOutType.CLOSEOUT_FAILED
                         break;
                     }
                 }
@@ -1681,7 +1681,7 @@ namespace AnalysisManagerProg
             PerformResultsXfer(strTransferFolderPath, strDatasetFolderPath, strDatasetName, strInputFolderName);
         }
 
-        private IJobParams.CloseOutType PerformResultsXfer(string strTransferFolderPath, string strDatasetFolderPath, string strDatasetName, string strInputFolderName)
+        private CloseOutType PerformResultsXfer(string strTransferFolderPath, string strDatasetFolderPath, string strDatasetName, string strInputFolderName)
         {
             m_DebugLevel = 3;
 
@@ -1697,7 +1697,7 @@ namespace AnalysisManagerProg
             {
                 Msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " + FolderToMove + " not found";
                 //' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
             else if (m_DebugLevel >= 4)
             {
@@ -1727,14 +1727,14 @@ namespace AnalysisManagerProg
                             // Creation of the dataset folder failed; unable to continue
                             Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " + DatasetDir + ": folder creation failed for unknown reason";
                             //' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-                            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                            return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
                     else
                     {
                         Msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " + diDatasetFolder.Parent.FullName + "; unable to continue";
                         //' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
                 catch (Exception ex)
@@ -1742,7 +1742,7 @@ namespace AnalysisManagerProg
                     Msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " + DatasetDir + ": " + ex.Message;
                     //' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
 
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             else if (m_DebugLevel >= 4)
@@ -1756,7 +1756,7 @@ namespace AnalysisManagerProg
             {
                 Msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " + DatasetDir + " already exists";
                 //' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             //Move the directory
@@ -1773,10 +1773,10 @@ namespace AnalysisManagerProg
             {
                 Msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " + FolderToMove + ": " + ex.Message;
                 //' m_logger.PostEntry(Msg, ILogger.logMsgType.logError, clsGlobal.LOG_LOCAL_ONLY)
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private void m_FastaTools_FileGenerationStarted1(string taskMsg)
@@ -2851,9 +2851,9 @@ namespace AnalysisManagerProg
 
         private class clsResourceTestClass : clsAnalysisResources
         {
-            public override IJobParams.CloseOutType GetResources()
+            public override CloseOutType GetResources()
             {
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
         }
 

@@ -375,12 +375,12 @@ namespace AnalysisManagerProg
                         if (!MgrActiveLocal)
                         {
                             strManagerDisableReason = "Disabled locally via AnalysisManagerProg.exe.config";
-                            UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_LOCAL, strManagerDisableReason);
+                            UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, strManagerDisableReason);
                         }
                         else
                         {
                             strManagerDisableReason = "Disabled in Manager Control DB";
-                            UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_MC, strManagerDisableReason);
+                            UpdateStatusDisabled(EnumMgrStatus.DISABLED_MC, strManagerDisableReason);
                         }
 
                         LogMessage("Manager inactive: " + strManagerDisableReason);
@@ -409,7 +409,7 @@ namespace AnalysisManagerProg
                             if (blnOneTaskStarted)
                             {
                                 LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam("StepParameters", "Job") + "; see folder " + m_WorkDirPath);
-                                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
+                                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
                             }
                             else
                             {
@@ -559,7 +559,7 @@ namespace AnalysisManagerProg
                                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " + ex.Message, m_MostRecentJobInfo, true);
 
                                 // Set the job state to failed
-                                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob");
+                                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob");
 
                                 intCriticalMgrErrorCount += 1;
                                 m_NeedToAbortProcessing = true;
@@ -668,7 +668,7 @@ namespace AnalysisManagerProg
 
         private bool DoAnalysisJob()
         {
-            IJobParams.CloseOutType eToolRunnerResult = default(IJobParams.CloseOutType);
+            CloseOutType eToolRunnerResult = default(CloseOutType);
             int jobNum = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0);
             int stepNum = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0);
             int cpuLoadExpected = m_AnalysisTask.GetJobParameter("StepParameters", "CPU_Load", 1);
@@ -700,7 +700,7 @@ namespace AnalysisManagerProg
             m_StatusTools.MgrName = m_MgrName;
             m_StatusTools.ProgRunnerProcessID = 0;
             m_StatusTools.ProgRunnerCoreUsage = cpuLoadExpected;
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RETRIEVING_RESOURCES, 0, 0, "", "", m_MostRecentJobInfo, true);
+            m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RETRIEVING_RESOURCES, 0, 0, "", "", m_MostRecentJobInfo, true);
 
             var processID = Process.GetCurrentProcess().Id;
 
@@ -724,7 +724,7 @@ namespace AnalysisManagerProg
             if (!SetResourceObject())
             {
                 LogError(m_MgrName + ": Unable to set the Resource object, job " + jobNum + ", Dataset " + datasetName, true);
-                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Unable to set resource object");
+                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Unable to set resource object");
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Error encountered: Unable to set resource object");
                 return false;
@@ -734,7 +734,7 @@ namespace AnalysisManagerProg
             if (!SetToolRunnerObject())
             {
                 LogError(m_MgrName + ": Unable to set the toolRunner object, job " + jobNum + ", Dataset " + datasetName, true);
-                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Unable to set tool runner object");
+                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Unable to set tool runner object");
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Error encountered: Unable to set tool runner object");
                 return false;
@@ -744,7 +744,7 @@ namespace AnalysisManagerProg
             {
                 if (this.TraceMode)
                     ShowTraceMessage("NeedToAbortProcessing; closing job step task");
-                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Processing aborted");
+                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Processing aborted");
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
                 return false;
@@ -759,7 +759,7 @@ namespace AnalysisManagerProg
                 {
                     m_MostRecentErrorMessage = "Insufficient free space (location undefined)";
                 }
-                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage);
+                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage);
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
                 return false;
@@ -779,7 +779,7 @@ namespace AnalysisManagerProg
                     ShowTraceMessage("Getting job resources");
 
                 eToolRunnerResult = m_Resource.GetResources();
-                if (!(eToolRunnerResult == IJobParams.CloseOutType.CLOSEOUT_SUCCESS))
+                if (!(eToolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS))
                 {
                     m_MostRecentErrorMessage = "GetResources returned result: " + eToolRunnerResult.ToString();
                     if (this.TraceMode)
@@ -802,7 +802,7 @@ namespace AnalysisManagerProg
             {
                 LogError("clsMainProcess.DoAnalysisJob(), Getting resources, " + ex.Message, ex);
 
-                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception getting resources");
+                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception getting resources");
 
                 if (m_MgrErrorCleanup.CleanWorkDir())
                 {
@@ -818,14 +818,14 @@ namespace AnalysisManagerProg
             }
 
             // Run the job
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, 0);
+            m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, 0);
             try
             {
                 if (this.TraceMode)
                     ShowTraceMessage("Running the step tool");
 
                 eToolRunnerResult = m_ToolRunner.RunTool();
-                if (eToolRunnerResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     m_MostRecentErrorMessage = m_ToolRunner.Message;
 
@@ -852,7 +852,7 @@ namespace AnalysisManagerProg
                         LogError("clsMainProcess.DoAnalysisJob(), Exception examining MostRecentErrorMessage", ex);
                     }
 
-                    if (eToolRunnerResult == IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE)
+                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE)
                     {
                         m_NeedToAbortProcessing = true;
                     }
@@ -870,7 +870,7 @@ namespace AnalysisManagerProg
                     m_NeedToAbortProcessing = true;
                     if (this.TraceMode)
                         ShowTraceMessage("ToolRunner.NeedToAbortProcessing = True; closing job step task");
-                    m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
+                    m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
                 }
             }
             catch (Exception ex)
@@ -882,7 +882,7 @@ namespace AnalysisManagerProg
                     m_NeedToAbortProcessing = true;
                 }
 
-                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Exception running tool", m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
+                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception running tool", m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
 
                 blnRunToolError = true;
             }
@@ -905,13 +905,13 @@ namespace AnalysisManagerProg
                         m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                     }
 
-                    if (eToolRunnerResult == IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES && m_AnalysisTask.GetParam("StepTool").ToLower() == "sequest")
+                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DTA_FILES && m_AnalysisTask.GetParam("StepTool").ToLower() == "sequest")
                     {
                         // This was a Sequest job, but no .DTA files were found
                         // Return True; do not count this as a manager failure
                         return true;
                     }
-                    else if (eToolRunnerResult == IJobParams.CloseOutType.CLOSEOUT_NO_DATA)
+                    else if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
                     {
                         // Return True; do not count this as a manager failure
                         return true;
@@ -930,14 +930,14 @@ namespace AnalysisManagerProg
             }
 
             // Close out the job
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.CLOSING, IStatusFile.EnumTaskStatusDetail.CLOSING, 100);
+            m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.CLOSING, EnumTaskStatusDetail.CLOSING, 100);
             try
             {
                 if (this.TraceMode)
                     ShowTraceMessage("Task completed successfully; closing the job step task");
 
                 //Close out the job as a success
-                m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_SUCCESS, string.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
+                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_SUCCESS, string.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
                 LogMessage(m_MgrName + ": Completed job " + jobNum);
 
                 UpdateStatusIdle("Completed job " + jobNum + ", step " + stepNum);
@@ -969,7 +969,7 @@ namespace AnalysisManagerProg
                         if (!m_MgrErrorCleanup.CleanWorkDir(1))
                         {
                             LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam("StepParameters", "Job"));
-                            m_AnalysisTask.CloseTask(IJobParams.CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
+                            m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
                             m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                             return false;
                         }
@@ -1186,7 +1186,7 @@ namespace AnalysisManagerProg
         /// <param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public string[] DetermineRecentErrorMessages(int intErrorMessageCountToReturn, ref string strMostRecentJobInfo)
+        public List<string> DetermineRecentErrorMessages(int intErrorMessageCountToReturn, ref string strMostRecentJobInfo)
         {
             // This regex will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
             const string ERROR_MATCH_REGEX = "^([^,]+),(.+), Error, *$";
@@ -1414,7 +1414,7 @@ namespace AnalysisManagerProg
                 }
             }
 
-            return strRecentErrorMessages;
+            return strRecentErrorMessages.ToList();
         }
 
         private void DetermineRecentErrorCacheError(Match objMatch, string strErrorMessage, Hashtable htUniqueErrorMessages, Queue qErrorMsgQueue, int intMaxErrorMessageCountToReturn)
@@ -1608,9 +1608,9 @@ namespace AnalysisManagerProg
                     JobStep = 0,
                     Tool = "",
                     MgrName = m_MgrName,
-                    MgrStatus = IStatusFile.EnumMgrStatus.RUNNING,
-                    TaskStatus = IStatusFile.EnumTaskStatus.NO_TASK,
-                    TaskStatusDetail = IStatusFile.EnumTaskStatusDetail.NO_TASK
+                    MgrStatus = EnumMgrStatus.RUNNING,
+                    TaskStatus = EnumTaskStatus.NO_TASK,
+                    TaskStatusDetail = EnumTaskStatusDetail.NO_TASK
                 };
 
                 UpdateStatusToolLoggingSettings(m_StatusTools);
@@ -1834,7 +1834,7 @@ namespace AnalysisManagerProg
                     {
                         //Manager has been deactivated, so report this
                         LogMessage(m_MgrSettings.ErrMsg);
-                        UpdateStatusDisabled(IStatusFile.EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally");
+                        UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally");
                     }
                     else
                     {
@@ -2032,10 +2032,9 @@ namespace AnalysisManagerProg
 
         private void UpdateClose(string ManagerCloseMessage)
         {
-            string[] strErrorMessages = null;
-            strErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
+            var recentErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
 
-            m_StatusTools.UpdateClose(ManagerCloseMessage, ref strErrorMessages, m_MostRecentJobInfo, true);
+            m_StatusTools.UpdateClose(ManagerCloseMessage, recentErrorMessages, m_MostRecentJobInfo, true);
         }
 
         /// <summary>
@@ -2084,28 +2083,25 @@ namespace AnalysisManagerProg
             return blnSuccess;
         }
 
-        private void UpdateStatusDisabled(IStatusFile.EnumMgrStatus managerStatus, string managerDisableMessage)
+        private void UpdateStatusDisabled(EnumMgrStatus managerStatus, string managerDisableMessage)
         {
-            string[] strErrorMessages = null;
-            strErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
-            m_StatusTools.UpdateDisabled(managerStatus, managerDisableMessage, ref strErrorMessages, m_MostRecentJobInfo);
+            var recentErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
+            m_StatusTools.UpdateDisabled(managerStatus, managerDisableMessage, recentErrorMessages, m_MostRecentJobInfo);
             Console.WriteLine(managerDisableMessage);
         }
 
         private void UpdateStatusFlagFileExists()
         {
-            string[] strErrorMessages = null;
-            strErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
-            m_StatusTools.UpdateFlagFileExists(ref strErrorMessages, m_MostRecentJobInfo);
+            var recentErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
+            m_StatusTools.UpdateFlagFileExists(recentErrorMessages, m_MostRecentJobInfo);
             Console.WriteLine("Flag file exists");
         }
 
         private void UpdateStatusIdle(string ManagerIdleMessage)
         {
-            string[] strErrorMessages = null;
-            strErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
+            var recentErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
 
-            m_StatusTools.UpdateIdle(ManagerIdleMessage, ref strErrorMessages, m_MostRecentJobInfo, true);
+            m_StatusTools.UpdateIdle(ManagerIdleMessage, recentErrorMessages, m_MostRecentJobInfo, true);
         }
 
         private void UpdateStatusToolLoggingSettings(clsStatusFile objStatusFile)

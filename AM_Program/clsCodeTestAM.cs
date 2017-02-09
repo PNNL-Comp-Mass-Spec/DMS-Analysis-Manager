@@ -40,12 +40,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Runs the analysis tool
         /// </summary>
-        /// <returns>IJobParams.CloseOutType value indicating success or failure</returns>
+        /// <returns>CloseOutType value indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
             bool blnProcessingError = false;
-            IJobParams.CloseOutType eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            CloseOutType eReturnCode = CloseOutType.CLOSEOUT_FAILED;
 
             // Create some dummy results files
             string strSubFolderPath = null;
@@ -68,8 +68,8 @@ namespace AnalysisManagerProg
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the result folder,
-                //  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
             }
 
             //Add the current job data to the summary file
@@ -84,19 +84,19 @@ namespace AnalysisManagerProg
             PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
             var Result = MakeResultsFolder();
-            if (Result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 //MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder";
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             Result = MoveResultFiles();
-            if (Result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 //MoveResultFiles moves the result files to the result folder
                 m_message = "Error moving files into results folder";
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Move the Plots folder to the result files folder
@@ -107,24 +107,24 @@ namespace AnalysisManagerProg
             strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
             diPlotsFolder.MoveTo(strTargetFolderPath);
 
-            if (blnProcessingError | eReturnCode == IJobParams.CloseOutType.CLOSEOUT_FAILED)
+            if (blnProcessingError | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Try to save whatever files were moved into the results folder
                 clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName));
 
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             Result = CopyResultsFolderToServer();
-            if (Result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 //TODO: What do we do here?
                 // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 return Result;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private bool CreateTestFiles(string strFolderPath, int intFilesToCreate, string strFileNameBase)
