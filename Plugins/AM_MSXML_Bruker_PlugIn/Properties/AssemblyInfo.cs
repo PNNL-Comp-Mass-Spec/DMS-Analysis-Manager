@@ -1,32 +1,35 @@
-﻿Imports System.Reflection
-Imports System.Runtime.InteropServices
+﻿using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
-' General Information about an assembly is controlled through the following 
-' set of attributes. Change these attribute values to modify the information
-' associated with an assembly.
+// General Information about an assembly is controlled through the following 
+// set of attributes. Change these attribute values to modify the information
+// associated with an assembly.
+[assembly: AssemblyTitle("AnalysisManagerMsXmlBrukerPlugIn")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("Battelle PNNL")]
+[assembly: AssemblyProduct("AnalysisManagerMsXmlBrukerPlugIn")]
+[assembly: AssemblyCopyright("Copyright © Battelle PNNL 2017")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
 
-' Review the values of the assembly attributes
+// Setting ComVisible to false makes the types in this assembly not visible 
+// to COM components.  If you need to access a type in this assembly from 
+// COM, set the ComVisible attribute to true on that type.
+[assembly: ComVisible(false)]
 
-<Assembly: AssemblyTitle("AnalysisManagerMsXmlBrukerPlugIn")> 
-<Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("Battelle PNNL")> 
-<Assembly: AssemblyProduct("AnalysisManagerMsXmlBrukerPlugIn")> 
-<Assembly: AssemblyCopyright("Copyright © Battelle PNNL 2011")> 
-<Assembly: AssemblyTrademark("")> 
+// The following GUID is for the ID of the typelib if this project is exposed to COM
+[assembly: Guid("fdbe6515-ec17-4582-a239-a4380d77cb38")]
 
-<Assembly: ComVisible(False)> 
-
-'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("601e93eb-d5eb-4e98-bce8-a8638f3a19dd")> 
-
-' Version information for an assembly consists of the following four values:
-'
-'      Major Version
-'      Minor Version 
-'      Build Number
-'      Revision
-'
-' You can specify all the values or you can default the Build and Revision Numbers 
-' by using the '*' as shown below:
-
-<Assembly: AssemblyVersion("1.1.*")> 
+// Version information for an assembly consists of the following four values:
+//
+//      Major Version
+//      Minor Version 
+//      Build Number
+//      Revision
+//
+// You can specify all the values or you can default the Build and Revision Numbers 
+// by using the '*' as shown below:
+// [assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("1.1.*")]

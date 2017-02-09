@@ -1,223 +1,260 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 03/30/2011
-'
-' Uses CompassXport to create a .mzXML or .mzML file
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 03/30/2011
+//
+// Uses CompassXport to create a .mzXML or .mzML file
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.IO
+namespace AnalysisManagerMsXmlBrukerPlugIn
+{
+    public class clsCompassXportRunner : clsEventNotifier
+    {
+        #region "Enums"
 
-Public Class clsCompassXportRunner
-    Inherits clsEventNotifier
+        public enum MSXMLOutputTypeConstants
+        {
+            Invalid = -1,
+            mzXML = 0,
+            mzData = 1,
+            mzML = 2,
+            JCAMP = 3,
+            CSV = 4
+        }
 
-#Region "Enums"
-    Public Enum MSXMLOutputTypeConstants
-        Invalid = -1
-        mzXML = 0
-        mzData = 1
-        mzML = 2
-        JCAMP = 3
-        CSV = 4
-    End Enum
-#End Region
+        #endregion
 
-#Region "Module Variables"
-    Private ReadOnly mWorkDir As String
-    Private ReadOnly mCompassXportProgramPath As String
-    Private ReadOnly mDatasetName As String
-    Private mOutputType As MSXMLOutputTypeConstants
-    Private ReadOnly mCentroidMSXML As Boolean
+        #region "Module Variables"
 
-    Private mErrorMessage As String = String.Empty
+        private readonly string mWorkDir;
+        private readonly string mCompassXportProgramPath;
+        private readonly string mDatasetName;
+        private MSXMLOutputTypeConstants mOutputType;
+        private readonly bool mCentroidMSXML;
 
-    Public Event ProgRunnerStarting(CommandLine As String)
-    Public Event LoopWaiting()
+        private string mErrorMessage = string.Empty;
 
-#End Region
+        public event ProgRunnerStartingEventHandler ProgRunnerStarting;
 
-#Region "Properties"
-    Public ReadOnly Property ErrorMessage() As String
-        Get
-            If mErrorMessage Is Nothing Then
-                Return String.Empty
-            Else
-                Return mErrorMessage
-            End If
-        End Get
-    End Property
-#End Region
+        public delegate void ProgRunnerStartingEventHandler(string CommandLine);
 
-#Region "Methods"
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <remarks>Presently not used</remarks>
-    Public Sub New(WorkDir As String,
-                   CompassXportProgramPath As String,
-                   DatasetName As String,
-                   eOutputType As MSXMLOutputTypeConstants,
-                   CentroidMSXML As Boolean)
+        public event LoopWaitingEventHandler LoopWaiting;
 
-        mWorkDir = WorkDir
-        mCompassXportProgramPath = CompassXportProgramPath
-        mDatasetName = DatasetName
-        mOutputType = eOutputType
-        mCentroidMSXML = CentroidMSXML
+        public delegate void LoopWaitingEventHandler();
 
-        mErrorMessage = String.Empty
-    End Sub
+        #endregion
 
-    ''' <summary>
-    ''' Generate the mzXML or mzML file
-    ''' </summary>
-    ''' <returns>True if success; false if a failure</returns>
-    ''' <remarks></remarks>
-    Public Function CreateMSXMLFile() As Boolean
-        Dim CmdStr As String
+        #region "Properties"
 
-        Dim intFormatMode As Integer
+        public string ErrorMessage
+        {
+            get
+            {
+                if (mErrorMessage == null)
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    return mErrorMessage;
+                }
+            }
+        }
 
-        Dim strSourceFolderPath As String
-        Dim strInputFilePath As String
-        Dim strOutputFilePath As String
+        #endregion
 
-        Dim blnSuccess As Boolean
+        #region "Methods"
 
-        mErrorMessage = String.Empty
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <remarks>Presently not used</remarks>
+        public clsCompassXportRunner(string WorkDir, string CompassXportProgramPath, string DatasetName, MSXMLOutputTypeConstants eOutputType,
+            bool CentroidMSXML)
+        {
+            mWorkDir = WorkDir;
+            mCompassXportProgramPath = CompassXportProgramPath;
+            mDatasetName = DatasetName;
+            mOutputType = eOutputType;
+            mCentroidMSXML = CentroidMSXML;
 
-        ' Resolve the output file format
-        If mOutputType = MSXMLOutputTypeConstants.Invalid Then
-            mOutputType = MSXMLOutputTypeConstants.mzXML
-            intFormatMode = 0
-        Else
-            intFormatMode = CInt(mOutputType)
-        End If
+            mErrorMessage = string.Empty;
+        }
 
-        Dim strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType)
+        /// <summary>
+        /// Generate the mzXML or mzML file
+        /// </summary>
+        /// <returns>True if success; false if a failure</returns>
+        /// <remarks></remarks>
+        public bool CreateMSXMLFile()
+        {
+            string CmdStr = null;
 
-        ' Define the input file path
-        strSourceFolderPath = Path.Combine(mWorkDir, mDatasetName & clsAnalysisResources.DOT_D_EXTENSION)
-        strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.baf")
+            int intFormatMode = 0;
 
-        If Not File.Exists(strInputFilePath) Then
-            ' Analysis.baf not found; look for analysis.yep instead
-            strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.yep")
+            string strSourceFolderPath = null;
+            string strInputFilePath = null;
+            string strOutputFilePath = null;
 
-            If Not File.Exists(strInputFilePath) Then
-                mErrorMessage = "Could not find analysis.baf or analysis.yep in " & mDatasetName & clsAnalysisResources.DOT_D_EXTENSION
-                Return False
-            End If
-        End If
+            bool blnSuccess = false;
 
-        ' Define the output file path
-        strOutputFilePath = Path.Combine(mWorkDir, mDatasetName & "." & strMSXmlFormatName)
+            mErrorMessage = string.Empty;
 
-        ' Verify that program file exists
-        If Not File.Exists(mCompassXportProgramPath) Then
-            mErrorMessage = "Cannot find CompassXport exe program file: " & mCompassXportProgramPath
-            Return False
-        End If
+            // Resolve the output file format
+            if (mOutputType == MSXMLOutputTypeConstants.Invalid)
+            {
+                mOutputType = MSXMLOutputTypeConstants.mzXML;
+                intFormatMode = 0;
+            }
+            else
+            {
+                intFormatMode = Convert.ToInt32(mOutputType);
+            }
 
-        Dim cmdRunner = New clsRunDosProgram(Path.GetDirectoryName(mCompassXportProgramPath))
-        AddHandler cmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
-        AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+            var strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType);
 
-        'Set up and execute a program runner to run CompassXport executable
+            // Define the input file path
+            strSourceFolderPath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_D_EXTENSION);
+            strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.baf");
 
-        CmdStr = " -mode " & intFormatMode.ToString() &
-                 " -a " & strInputFilePath &
-                 " -o " & strOutputFilePath
+            if (!File.Exists(strInputFilePath))
+            {
+                // Analysis.baf not found; look for analysis.yep instead
+                strInputFilePath = Path.Combine(strSourceFolderPath, "analysis.yep");
 
-        If mCentroidMSXML Then
-            ' Centroiding is enabled
-            CmdStr &= " -raw 0"
-        Else
-            CmdStr &= " -raw 1"
-        End If
+                if (!File.Exists(strInputFilePath))
+                {
+                    mErrorMessage = "Could not find analysis.baf or analysis.yep in " + mDatasetName + clsAnalysisResources.DOT_D_EXTENSION;
+                    return false;
+                }
+            }
 
-        RaiseEvent ProgRunnerStarting(mCompassXportProgramPath & CmdStr)
+            // Define the output file path
+            strOutputFilePath = Path.Combine(mWorkDir, mDatasetName + "." + strMSXmlFormatName);
 
-        With cmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
+            // Verify that program file exists
+            if (!File.Exists(mCompassXportProgramPath))
+            {
+                mErrorMessage = "Cannot find CompassXport exe program file: " + mCompassXportProgramPath;
+                return false;
+            }
 
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & "_ConsoleOutput.txt")
-        End With
+            var cmdRunner = new clsRunDosProgram(Path.GetDirectoryName(mCompassXportProgramPath));
+            cmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
+            cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-        blnSuccess = cmdRunner.RunProgram(mCompassXportProgramPath, CmdStr, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), True)
+            //Set up and execute a program runner to run CompassXport executable
 
-        If Not blnSuccess Then
-            If cmdRunner.ExitCode <> 0 Then
-                mErrorMessage = Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " returned a non-zero exit code: " & cmdRunner.ExitCode.ToString
-                blnSuccess = False
-            Else
-                mErrorMessage = "Call to " & Path.GetFileNameWithoutExtension(mCompassXportProgramPath) & " failed (but exit code is 0)"
-                blnSuccess = True
-            End If
-        End If
+            CmdStr = " -mode " + intFormatMode.ToString() + " -a " + strInputFilePath + " -o " + strOutputFilePath;
 
-        Return blnSuccess
+            if (mCentroidMSXML)
+            {
+                // Centroiding is enabled
+                CmdStr += " -raw 0";
+            }
+            else
+            {
+                CmdStr += " -raw 1";
+            }
 
-    End Function
+            if (ProgRunnerStarting != null)
+            {
+                ProgRunnerStarting(mCompassXportProgramPath + CmdStr);
+            }
 
-    Public Shared Function GetMsXmlOutputTypeByID(eType As MSXMLOutputTypeConstants) As String
-        Select Case eType
-            Case MSXMLOutputTypeConstants.mzXML
-                Return "mzXML"
-            Case MSXMLOutputTypeConstants.mzData
-                Return "mzData"
-            Case MSXMLOutputTypeConstants.mzML
-                Return "mzML"
-            Case MSXMLOutputTypeConstants.JCAMP
-                Return "JCAMP"
-            Case MSXMLOutputTypeConstants.CSV
-                Return "CSV"
-            Case Else
-                ' Includes MSXMLOutputTypeConstants.Invalid
-                Return ""
-        End Select
-    End Function
+            cmdRunner.CreateNoWindow = true;
+            cmdRunner.CacheStandardOutput = true;
+            cmdRunner.EchoOutputToConsole = true;
 
-    Public Shared Function GetMsXmlOutputTypeByName(strName As String) As MSXMLOutputTypeConstants
-        Select Case strName.ToLower()
-            Case "mzxml"
-                Return MSXMLOutputTypeConstants.mzXML
-            Case "mzdata"
-                Return MSXMLOutputTypeConstants.mzData
-            Case "mzml"
-                Return MSXMLOutputTypeConstants.mzML
-            Case "jcamp"
-                Return MSXMLOutputTypeConstants.JCAMP
-            Case "csv"
-                Return MSXMLOutputTypeConstants.CSV
-            Case Else
-                Return MSXMLOutputTypeConstants.Invalid
-        End Select
-    End Function
+            cmdRunner.WriteConsoleOutputToFile = true;
+            cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + "_ConsoleOutput.txt");
 
-    ''' <summary>
-    ''' Event handler for event CmdRunner.ErrorEvent
-    ''' </summary>
-    ''' <param name="strMessage"></param>
-    ''' <param name="ex"></param>
-    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
-        mErrorMessage = strMessage
-        OnErrorEvent(strMessage, ex)
-    End Sub
+            blnSuccess = cmdRunner.RunProgram(mCompassXportProgramPath, CmdStr, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), true);
 
-    ''' <summary>
-    ''' Event handler for event CmdRunner.LoopWaiting
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
-        RaiseEvent LoopWaiting()
-    End Sub
-#End Region
+            if (!blnSuccess)
+            {
+                if (cmdRunner.ExitCode != 0)
+                {
+                    mErrorMessage = Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + " returned a non-zero exit code: " +
+                                    cmdRunner.ExitCode.ToString();
+                    blnSuccess = false;
+                }
+                else
+                {
+                    mErrorMessage = "Call to " + Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + " failed (but exit code is 0)";
+                    blnSuccess = true;
+                }
+            }
 
-End Class
+            return blnSuccess;
+        }
+
+        public static string GetMsXmlOutputTypeByID(MSXMLOutputTypeConstants eType)
+        {
+            switch (eType)
+            {
+                case MSXMLOutputTypeConstants.mzXML:
+                    return "mzXML";
+                case MSXMLOutputTypeConstants.mzData:
+                    return "mzData";
+                case MSXMLOutputTypeConstants.mzML:
+                    return "mzML";
+                case MSXMLOutputTypeConstants.JCAMP:
+                    return "JCAMP";
+                case MSXMLOutputTypeConstants.CSV:
+                    return "CSV";
+                default:
+                    // Includes MSXMLOutputTypeConstants.Invalid
+                    return "";
+            }
+        }
+
+        public static MSXMLOutputTypeConstants GetMsXmlOutputTypeByName(string strName)
+        {
+            switch (strName.ToLower())
+            {
+                case "mzxml":
+                    return MSXMLOutputTypeConstants.mzXML;
+                case "mzdata":
+                    return MSXMLOutputTypeConstants.mzData;
+                case "mzml":
+                    return MSXMLOutputTypeConstants.mzML;
+                case "jcamp":
+                    return MSXMLOutputTypeConstants.JCAMP;
+                case "csv":
+                    return MSXMLOutputTypeConstants.CSV;
+                default:
+                    return MSXMLOutputTypeConstants.Invalid;
+            }
+        }
+
+        /// <summary>
+        /// Event handler for event CmdRunner.ErrorEvent
+        /// </summary>
+        /// <param name="strMessage"></param>
+        /// <param name="ex"></param>
+        private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
+        {
+            mErrorMessage = strMessage;
+            OnErrorEvent(strMessage, ex);
+        }
+
+        /// <summary>
+        /// Event handler for event CmdRunner.LoopWaiting
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            if (LoopWaiting != null)
+            {
+                LoopWaiting();
+            }
+        }
+
+        #endregion
+    }
+}

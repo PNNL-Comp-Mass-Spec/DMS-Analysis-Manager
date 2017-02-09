@@ -1,58 +1,66 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 03/30/2011
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 03/30/2011
+//
+//*********************************************************************************************************
 
-Option Strict On
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
+namespace AnalysisManagerMsXmlBrukerPlugIn
+{
+    public class clsAnalysisResourcesMSXMLBruker : clsAnalysisResources
+    {
+        #region "Methods"
 
-Public Class clsAnalysisResourcesMSXMLBruker
-    Inherits clsAnalysisResources
+        /// <summary>
+        /// Retrieves files necessary for creating the .mzXML file
+        /// </summary>
+        /// <returns>CloseOutType indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
+            //Get input data file
+            string strRawDataType = m_jobParams.GetParam("RawDataType");
+            var eRawDataType = GetRawDataType(strRawDataType);
 
-#Region "Methods"
-    ''' <summary>
-    ''' Retrieves files necessary for creating the .mzXML file
-    ''' </summary>
-    ''' <returns>CloseOutType indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function GetResources() As CloseOutType
+            switch (eRawDataType)
+            {
+                case eRawDataTypeConstants.BrukerFTFolder:
+                case eRawDataTypeConstants.BrukerTOFBaf:
+                    break;
+                // This dataset type is acceptable
+                default:
+                    m_message = "Dataset type " + strRawDataType + " is not supported";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "clsDtaGenResources.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_BRUKER_FT_FOLDER + " or " +
+                        RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+                    return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        'Get input data file
-        Dim strRawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim eRawDataType = GetRawDataType(strRawDataType)
+            if (!RetrieveSpectra(strRawDataType))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        Select Case eRawDataType
-            Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
-                ' This dataset type is acceptable
-            Case Else
-                m_message = "Dataset type " & strRawDataType & " is not supported"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_BRUKER_FT_FOLDER & " or " & RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
-                Return CloseOutType.CLOSEOUT_FAILED
+            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.SingleDataset))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        End Select
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        If Not RetrieveSpectra(strRawDataType) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.SingleDataset) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-#End Region
-
-End Class
+        #endregion
+    }
+}
