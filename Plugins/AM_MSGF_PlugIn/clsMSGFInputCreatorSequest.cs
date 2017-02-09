@@ -1,99 +1,122 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-'
-' Created 07/20/2010
-'
-' This class reads a Sequest _syn.txt file in support of creating the input file for MSGF 
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+//
+// Created 07/20/2010
+//
+// This class reads a Sequest _syn.txt file in support of creating the input file for MSGF
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
 
-Imports PHRPReader
+using PHRPReader;
 
-Public Class clsMSGFInputCreatorSequest
-    Inherits clsMSGFInputCreator
+namespace AnalysisManagerMSGFPlugin
+{
+    public class clsMSGFInputCreatorSequest : clsMSGFInputCreator
+    {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="strDatasetName">Dataset name</param>
+        /// <param name="strWorkDir">Working directory</param>
+        /// <remarks></remarks>
+        public clsMSGFInputCreatorSequest(string strDatasetName, string strWorkDir)
+            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Sequest)
+        {
+        }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="strDatasetName">Dataset name</param>
-    ''' <param name="strWorkDir">Working directory</param>
-    ''' <remarks></remarks>
-    Public Sub New(strDatasetName As String, strWorkDir As String)
+        protected override void InitializeFilePaths()
+        {
+            // Customize mPHRPResultFilePath for Sequest synopsis files
+            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPFirstHitsFileName(mDatasetName));
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPSynopsisFileName(mDatasetName));
+        }
 
-        MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Sequest)
-    End Sub
+        protected override bool PassesFilters(clsPSM objPSM)
+        {
+            double dblXCorr = 0;
+            double dblDeltaCN = 0;
 
-    Protected Overrides Sub InitializeFilePaths()
+            int intCleavageState = 0;
+            short intCleavageStateAlt = 0;
 
-        ' Customize mPHRPResultFilePath for Sequest synopsis files
-        mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPFirstHitsFileName(mDatasetName))
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPSynopsisFileName(mDatasetName))
-    End Sub
+            bool blnIsProteinTerminus = false;
+            bool blnPassesFilters = false;
 
-    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
-        Dim dblXCorr As Double
-        Dim dblDeltaCN As Double
+            // Examine the score values and possibly filter out this line
 
-        Dim intCleavageState As Integer
-        Dim intCleavageStateAlt As Short
+            // Sequest filter rules are relaxed forms of the MTS Peptide DB Minima (Peptide DB minima 6, filter set 149)
+            // All data must have DelCn <= 0.25
+            // For Partially or fully tryptic, or protein terminal;
+            //    XCorr >= 1.5 for 1+ or 2+
+            //    XCorr >= 2.2 for >=3+
+            // For non-tryptic:
+            //    XCorr >= 1.5 for 1+
+            //    XCorr >= 2.0 for 2+
+            //    XCorr >= 2.5 for >=3+
 
-        Dim blnIsProteinTerminus As Boolean
-        Dim blnPassesFilters As Boolean
+            if (objPSM.Peptide.StartsWith("-") || objPSM.Peptide.EndsWith("-"))
+            {
+                blnIsProteinTerminus = true;
+            }
+            else
+            {
+                blnIsProteinTerminus = false;
+            }
 
-        ' Examine the score values and possibly filter out this line
+            dblDeltaCN = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
+            dblXCorr = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
 
-        ' Sequest filter rules are relaxed forms of the MTS Peptide DB Minima (Peptide DB minima 6, filter set 149)
-        ' All data must have DelCn <= 0.25
-        ' For Partially or fully tryptic, or protein terminal; 
-        '    XCorr >= 1.5 for 1+ or 2+
-        '    XCorr >= 2.2 for >=3+
-        ' For non-tryptic:
-        '    XCorr >= 1.5 for 1+
-        '    XCorr >= 2.0 for 2+
-        '    XCorr >= 2.5 for >=3+
+            intCleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(objPSM.CleavageState);
+            intCleavageStateAlt = Convert.ToInt16(objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0));
 
-        If objPSM.Peptide.StartsWith("-"c) OrElse objPSM.Peptide.EndsWith("-") Then
-            blnIsProteinTerminus = True
-        Else
-            blnIsProteinTerminus = False
-        End If
+            if (intCleavageStateAlt > intCleavageState)
+            {
+                intCleavageState = intCleavageStateAlt;
+            }
 
-        dblDeltaCN = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn)
-        dblXCorr = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr)
+            if (dblDeltaCN <= 0.25)
+            {
+                if (intCleavageState >= 1 || blnIsProteinTerminus)
+                {
+                    // Partially or fully tryptic, or protein terminal
+                    if (objPSM.Charge == 1 | objPSM.Charge == 2)
+                    {
+                        if (dblXCorr >= 1.5)
+                            blnPassesFilters = true;
+                    }
+                    else
+                    {
+                        // Charge is 3 or higher (or zero)
+                        if (dblXCorr >= 2.2)
+                            blnPassesFilters = true;
+                    }
+                }
+                else
+                {
+                    // Non-tryptic
+                    if (objPSM.Charge == 1)
+                    {
+                        if (dblXCorr >= 1.5)
+                            blnPassesFilters = true;
+                    }
+                    else if (objPSM.Charge == 2)
+                    {
+                        if (dblXCorr >= 2.0)
+                            blnPassesFilters = true;
+                    }
+                    else
+                    {
+                        // Charge is 3 or higher (or zero)
+                        if (dblXCorr >= 2.5)
+                            blnPassesFilters = true;
+                    }
+                }
+            }
 
-        intCleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(objPSM.CleavageState)
-        intCleavageStateAlt = CShort(objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0))
-
-        If intCleavageStateAlt > intCleavageState Then
-            intCleavageState = intCleavageStateAlt
-        End If
-
-        If dblDeltaCN <= 0.25 Then
-            If intCleavageState >= 1 OrElse blnIsProteinTerminus Then
-                ' Partially or fully tryptic, or protein terminal
-                If objPSM.Charge = 1 Or objPSM.Charge = 2 Then
-                    If dblXCorr >= 1.5 Then blnPassesFilters = True
-                Else
-                    ' Charge is 3 or higher (or zero)
-                    If dblXCorr >= 2.2 Then blnPassesFilters = True
-                End If
-            Else
-                ' Non-tryptic
-                If objPSM.Charge = 1 Then
-                    If dblXCorr >= 1.5 Then blnPassesFilters = True
-                ElseIf objPSM.Charge = 2 Then
-                    If dblXCorr >= 2.0 Then blnPassesFilters = True
-                Else
-                    ' Charge is 3 or higher (or zero)
-                    If dblXCorr >= 2.5 Then blnPassesFilters = True
-                End If
-            End If
-        End If
-
-
-        Return blnPassesFilters
-    End Function
-End Class
+            return blnPassesFilters;
+        }
+    }
+}

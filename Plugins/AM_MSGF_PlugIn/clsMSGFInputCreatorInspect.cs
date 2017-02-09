@@ -1,57 +1,58 @@
-﻿
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-'
-' Created 07/20/2010
-'
-' This class reads an Inspect _inspect_syn.txt file in support of creating the input file for MSGF 
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+//
+// Created 07/20/2010
+//
+// This class reads an Inspect _inspect_syn.txt file in support of creating the input file for MSGF
+//
+//*********************************************************************************************************
 
-Option Strict On
+using PHRPReader;
 
-Imports PHRPReader
+namespace AnalysisManagerMSGFPlugin
+{
+    public class clsMSGFInputCreatorInspect : clsMSGFInputCreator
+    {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="strDatasetName">Dataset name</param>
+        /// <param name="strWorkDir">Working directory</param>
+        /// <remarks></remarks>
+        public clsMSGFInputCreatorInspect(string strDatasetName, string strWorkDir)
+            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Inspect)
+        {
+        }
 
-Public Class clsMSGFInputCreatorInspect
-    Inherits clsMSGFInputCreator
+        protected override void InitializeFilePaths()
+        {
+            // Customize mPHRPResultFilePath for Inspect synopsis files
+            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPFirstHitsFileName(mDatasetName));
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPSynopsisFileName(mDatasetName));
+        }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="strDatasetName">Dataset name</param>
-    ''' <param name="strWorkDir">Working directory</param>
-    ''' <remarks></remarks>
-    Public Sub New(strDatasetName As String, strWorkDir As String)
+        protected override bool PassesFilters(clsPSM objPSM)
+        {
+            double dblPValue = 0;
+            double dblTotalPRMScore = 0;
+            double dblFScore = 0;
 
-        MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Inspect)
-    End Sub
+            bool blnPassesFilters = false;
 
-    Protected Overrides Sub InitializeFilePaths()
+            // Keep Inspect results with pValue <= 0.2 Or TotalPRMScore >= 50 or FScore >= 0
+            // PHRP has likely already filtered the _inspect_syn.txt file using these filters
 
-        ' Customize mPHRPResultFilePath for Inspect synopsis files
-        mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPFirstHitsFileName(mDatasetName))
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPSynopsisFileName(mDatasetName))
-    End Sub
+            dblPValue = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue);
+            dblTotalPRMScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
+            dblFScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_FScore);
 
-    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
-        Dim dblPValue As Double
-        Dim dblTotalPRMScore As Double
-        Dim dblFScore As Double
+            if (dblPValue <= 0.2 || dblTotalPRMScore >= 50 || dblFScore >= 0)
+            {
+                blnPassesFilters = true;
+            }
 
-        Dim blnPassesFilters As Boolean
-
-        ' Keep Inspect results with pValue <= 0.2 Or TotalPRMScore >= 50 or FScore >= 0
-        ' PHRP has likely already filtered the _inspect_syn.txt file using these filters
-
-        dblPValue = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue)
-        dblTotalPRMScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore)
-        dblFScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_FScore)
-
-        If dblPValue <= 0.2 OrElse dblTotalPRMScore >= 50 OrElse dblFScore >= 0 Then
-            blnPassesFilters = True
-        End If
-
-        Return blnPassesFilters
-    End Function
-End Class
+            return blnPassesFilters;
+        }
+    }
+}

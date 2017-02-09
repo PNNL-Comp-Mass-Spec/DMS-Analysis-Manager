@@ -1,52 +1,53 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-'
-' Created 05/19/2015
-'
-' This class reads a MODPlus _syn.txt file in support of creating the input file for MSGF 
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+//
+// Created 05/19/2015
+//
+// This class reads a MODPlus _syn.txt file in support of creating the input file for MSGF
+//
+//*********************************************************************************************************
 
-Option Strict On
+using PHRPReader;
 
-Imports PHRPReader
+namespace AnalysisManagerMSGFPlugin
+{
+    public class clsMSGFInputCreatorMODPlus : clsMSGFInputCreator
+    {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="strDatasetName">Dataset name</param>
+        /// <param name="strWorkDir">Working directory</param>
+        /// <remarks></remarks>
+        public clsMSGFInputCreatorMODPlus(string strDatasetName, string strWorkDir)
+            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MODPlus)
+        {
+        }
 
-Public Class clsMSGFInputCreatorMODPlus
-    Inherits clsMSGFInputCreator
+        protected override void InitializeFilePaths()
+        {
+            // Customize mPHRPResultFilePath for MODPlus _syn.txt files
+            mPHRPFirstHitsFilePath = string.Empty;
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMODPlus.GetPHRPSynopsisFileName(mDatasetName));
+        }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="strDatasetName">Dataset name</param>
-    ''' <param name="strWorkDir">Working directory</param>
-    ''' <remarks></remarks>
-    Public Sub New(strDatasetName As String, strWorkDir As String)
+        protected override bool PassesFilters(clsPSM objPSM)
+        {
+            double dblProbability = 0;
 
-        MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MODPlus)
-    End Sub
+            bool blnPassesFilters = false;
 
-    Protected Overrides Sub InitializeFilePaths()
+            // Keep MODPlus results with Probability >= 0.05  (higher probability values are better)
+            // This will typically keep all data in the _syn.txt file
 
-        ' Customize mPHRPResultFilePath for MODPlus _syn.txt files
-        mPHRPFirstHitsFilePath = String.Empty
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMODPlus.GetPHRPSynopsisFileName(mDatasetName))
+            dblProbability = objPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_Probability, 0);
+            if (dblProbability >= 0.05)
+            {
+                blnPassesFilters = true;
+            }
 
-    End Sub
-
-    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
-        Dim dblProbability As Double
-
-        Dim blnPassesFilters As Boolean
-
-        ' Keep MODPlus results with Probability >= 0.05  (higher probability values are better)
-        ' This will typically keep all data in the _syn.txt file
-
-        dblProbability = objPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_Probability, 0)
-        If dblProbability >= 0.05 Then
-            blnPassesFilters = True
-        End If
-
-        Return blnPassesFilters
-    End Function
-End Class
+            return blnPassesFilters;
+        }
+    }
+}

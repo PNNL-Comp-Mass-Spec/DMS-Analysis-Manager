@@ -1,2686 +1,2934 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-'
-' Created 07/20/2010
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports AnalysisManagerBase
-Imports AnalysisManagerMsXmlGenPlugIn
-Imports PHRPReader
-Imports System.IO
-Imports System.Linq
-Imports System.Runtime.InteropServices
-Imports System.Threading
-Imports System.Xml
-Imports MSGFResultsSummarizer
-Imports PRISM.Processes
-
-' ReSharper disable once ClassNeverInstantiated.Global
-Public Class clsMSGFRunner
-    Inherits clsAnalysisToolRunnerBase
-
-    '*********************************************************************************************************
-    'Primary class for running MSGF
-    '*********************************************************************************************************
-
-#Region "Constants and enums"
-
-    Private Const PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD As Single = 2
-    Private Const PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED As Single = 3
-    Private Const PROGRESS_PCT_MSXML_GEN_RUNNING As Single = 6
-    Private Const PROGRESS_PCT_MZXML_CREATED As Single = 10
-    Private Const PROGRESS_PCT_MSGF_START As Single = PROGRESS_PCT_MZXML_CREATED
-    Private Const PROGRESS_PCT_MSGF_COMPLETE As Single = 95
-    Private Const PROGRESS_PCT_MSGF_POST_PROCESSING As Single = 97
-
-    Public Const MSGF_RESULT_COLUMN_SpectrumFile As String = "#SpectrumFile"
-    Public Const MSGF_RESULT_COLUMN_Title As String = "Title"
-    Public Const MSGF_RESULT_COLUMN_ScanNumber As String = "Scan#"
-    Public Const MSGF_RESULT_COLUMN_Annotation As String = "Annotation"
-    Public Const MSGF_RESULT_COLUMN_Charge As String = "Charge"
-    Public Const MSGF_RESULT_COLUMN_Protein_First As String = "Protein_First"
-    Public Const MSGF_RESULT_COLUMN_Result_ID As String = "Result_ID"
-    Public Const MSGF_RESULT_COLUMN_SpecProb As String = "SpecProb"
-    Public Const MSGF_RESULT_COLUMN_Data_Source As String = "Data_Source"
-    Public Const MSGF_RESULT_COLUMN_Collision_Mode As String = "Collision_Mode"
-
-    Public Const MSGF_PHRP_DATA_SOURCE_SYN As String = "Syn"
-    Public Const MSGF_PHRP_DATA_SOURCE_FHT As String = "FHT"
-
-    Public Const MSGF_SEGMENT_ENTRY_COUNT As Integer = 25000
-
-    ' If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
-    Public Const MSGF_SEGMENT_OVERFLOW_MARGIN As Single = 0.05
-
-    Private Const MSGF_CONSOLE_OUTPUT As String = "MSGF_ConsoleOutput.txt"
-    Private Const MSGF_JAR_NAME As String = "MSGF.jar"
-    Private Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
-
-    <Obsolete("Old, unsupported tool")>
-    Private Const MODa_JAR_NAME As String = "moda.jar"
-
-    <Obsolete("Old, unsupported tool")>
-    Private Const MODPlus_JAR_NAME As String = "modp_pnnl.jar"
-
-    Private Structure udtSegmentFileInfoType
-        Public Segment As Integer       ' Segment number
-        Public FilePath As String       ' Full path to the file
-        Public Entries As Integer       ' Number of entries in this segment
-    End Structure
-
-#End Region
-
-#Region "Module variables"
-
-    Private mETDMode As Boolean = False
-
-    Private mMSGFInputFilePath As String = String.Empty
-    Private mMSGFResultsFilePath As String = String.Empty
-    Private mCurrentMSGFResultsFilePath As String = String.Empty
-
-    Private mMSGFInputFileLineCount As Integer = 0
-    Private mMSGFLineCountPreviousSegments As Integer = 0
-
-    Private mProcessingMSGFDBCollisionModeData As Boolean
-    Private mCollisionModeIteration As Integer
-
-    Private mKeepMSGFInputFiles As Boolean = False
-
-    Private mToolVersionWritten As Boolean
-    Private mMSGFVersion As String = String.Empty
-    Private mMSGFProgLoc As String = String.Empty
-
-    Private mMSXmlGeneratorAppPath As String = String.Empty
-
-    Private mMSXmlCreator As clsMSXMLCreator
-
-    Private mUsingMSGFDB As Boolean = True
-    Private mMSGFDBVersion As String = "Unknown"
-
-    Private mJavaProgLoc As String = String.Empty
-
-    Private mConsoleOutputErrorMsg As String
-
-    Private WithEvents mMSGFInputCreator As clsMSGFInputCreator
-    Private mMSGFRunner As clsRunDosProgram
-
-    Private mMSGFInputCreatorErrorCount As Integer
-    Private mMSGFInputCreatorWarningCount As Integer
-
-#End Region
-
-#Region "Properties"
-
-#End Region
-
-#Region "Methods"
-
-    ''' <summary>
-    ''' Runs MSGF
-    ''' </summary>
-    ''' <returns>IJobParams.CloseOutType representing success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
-
-
-        ' Set this to success for now
-        Dim eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-        'Call base class for initial setup
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        Dim blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
-
-        ' Determine the raw data type
-        Dim eRawDataType = clsAnalysisResources.GetRawDataType(m_jobParams.GetParam("RawDataType"))
-
-        ' Resolve eResultType
-        Dim eResultType = clsPHRPReader.GetPeptideHitResultType(m_jobParams.GetParam("ResultType"))
-
-        If eResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
-            ' Result type is not supported
-            Dim msg = "ResultType is not supported by MSGF: " & m_jobParams.GetParam("ResultType")
-            m_message = clsGlobal.AppendToComment(m_message, msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "clsMSGFToolRunner.RunTool(); " & msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Verify that program files exist
-        If Not DefineProgramPaths() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Note: we will store the MSGF version info in the database after the program version is written to file MSGF_ConsoleOutput.txt
-        mToolVersionWritten = False
-        mMSGFVersion = String.Empty
-        mConsoleOutputErrorMsg = String.Empty
-
-        mKeepMSGFInputFiles = m_jobParams.GetJobParameter("KeepMSGFInputFile", False)
-        Dim blnDoNotFilterPeptides = m_jobParams.GetJobParameter("MSGFIgnoreFilters", False)
-        Dim blnPostProcessingError = False
-
-        Try
-            Dim blnProcessingError = False
-
-            If mUsingMSGFDB And eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-                ' Analysis tool is MSGF+ so we don't actually need to run the MSGF re-scorer
-                ' Simply copy the values from the MSGFDB result file
-
-                StoreToolVersionInfoPrecomputedProbabilities(eResultType)
-
-                If Not CreateMSGFResultsFromMSGFDBResults() Then
-                    blnProcessingError = True
-                End If
-
-            ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODa Then
-
-                ' Analysis tool is MODa, which MSGF does not support
-                ' Instead, summarize the MODa results using FDR alone
-
-                StoreToolVersionInfoPrecomputedProbabilities(eResultType)
-
-                If Not SummarizeMODaResults() Then
-                    blnProcessingError = True
-                End If
-
-            ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus Then
-
-                ' Analysis tool is MODPlus, which MSGF does not support
-                ' Instead, summarize the MODPlus results using FDR alone
-
-                StoreToolVersionInfoPrecomputedProbabilities(eResultType)
-
-                If Not SummarizeMODPlusResults() Then
-                    blnProcessingError = True
-                End If
-
-            ElseIf eResultType = clsPHRPReader.ePeptideHitResultType.MSPathFinder Then
-
-                ' Analysis tool is MSPathFinder, which MSGF does not support
-                ' Instead, summarize the MSPathFinder results using FDR alone
-
-                StoreToolVersionInfoPrecomputedProbabilities(eResultType)
-
-                If Not SummarizeMSPathFinderResults() Then
-                    blnProcessingError = True
-                End If
-
-            Else
-
-                If Not ProcessFilesWrapper(eRawDataType, eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData) Then
-                    blnProcessingError = True
-                End If
-
-                If Not blnProcessingError Then
-                    ' Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
-                    ' Will also make sure that all of the peptides have numeric SpecProb values
-                    ' For peptides where MSGF reported an error, the MSGF SpecProb will be set to 1
-                    ' If the Instrument Data was a .MGF file, then we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
-
-                    ' Sleep for 1 second to give the MSGF results file a chance to finalize
-                    Thread.Sleep(1000)
-
-                    Dim blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath, blnMGFInstrumentData)
-
-                    If Not blnSuccess Then
-                        m_message = clsGlobal.AppendToComment(m_message, "MSGF results file post-processing error")
-                        blnPostProcessingError = True
-                    End If
-
-                End If
-
-            End If
-
-            'Stop the job timer
-            m_StopTime = Date.UtcNow
-
-            If blnProcessingError Then
-                ' Something went wrong
-                ' In order to help diagnose things, we will move whatever files were created into the result folder, 
-                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            'Add the current job data to the summary file
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                     "Error creating summary file, job " & m_JobNum & ", step " &
-                                     m_jobParams.GetParam("Step"))
-            End If
-
-            'Make sure objects are released
-            Thread.Sleep(500)        ' 500 msec delay
-            clsProgRunner.GarbageCollectNow()
-
-            Dim eResult = MakeResultsFolder()
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            eResult = MoveResultFiles()
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'MoveResultFiles moves the result files to the result folder
-                m_message = "Error moving files into results folder"
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
-                ' Try to save whatever files were moved into the results folder
-                Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
-
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            eResult = CopyResultsFolderToServer()
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return eResult
-            End If
-
-            If blnPostProcessingError Then
-                ' When a post-processing error occurs, we copy the files to the server, but return CLOSEOUT_FAILED
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            End If
-
-        Catch ex As Exception
-            Dim errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " & ex.Message & "; " &
-                         clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
-            m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        'If we get to here, everything worked so exit happily
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-    End Function
-
-    Private Function AddFileNameSuffix(strFilePath As String, intSuffix As Integer) As String
-        Return AddFileNameSuffix(strFilePath, intSuffix.ToString())
-    End Function
-
-    Private Function AddFileNameSuffix(strFilePath As String, strSuffix As String) As String
-        Dim fiFile As FileInfo
-        Dim strFilePathNew As String
-
-        fiFile = New FileInfo(strFilePath)
-        strFilePathNew = Path.Combine(fiFile.DirectoryName,
-                                      Path.GetFileNameWithoutExtension(fiFile.Name) & "_" & strSuffix & fiFile.Extension)
-
-        Return strFilePathNew
-    End Function
-
-    ''' <summary>
-    ''' Examines the Sequest, X!Tandem, Inspect, or MSGFDB param file to determine if ETD mode is enabled
-    ''' </summary>
-    ''' <param name="eResultType"></param>
-    ''' <param name="strSearchToolParamFilePath"></param>
-    ''' <returns>True if success; false if an error</returns>
-    Private Function CheckETDModeEnabled(eResultType As clsPHRPReader.ePeptideHitResultType,
-                                         strSearchToolParamFilePath As String) As Boolean
-
-        Dim blnSuccess As Boolean
-
-        mETDMode = False
-        blnSuccess = False
-
-        If String.IsNullOrEmpty(strSearchToolParamFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "PeptideHit param file path is empty; unable to continue")
-            Return False
-        End If
-
-        m_StatusTools.CurrentOperation = "Checking whether ETD mode is enabled"
-
-        Select Case eResultType
-            Case clsPHRPReader.ePeptideHitResultType.Sequest
-                blnSuccess = CheckETDModeEnabledSequest(strSearchToolParamFilePath)
-
-            Case clsPHRPReader.ePeptideHitResultType.XTandem
-                blnSuccess = CheckETDModeEnabledXTandem(strSearchToolParamFilePath)
-
-            Case clsPHRPReader.ePeptideHitResultType.Inspect
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Inspect does not support ETD data processing; will set mETDMode to False")
-                blnSuccess = True
-
-            Case clsPHRPReader.ePeptideHitResultType.MSGFDB
-                blnSuccess = CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath)
-
-            Case clsPHRPReader.ePeptideHitResultType.MODa
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "MODa does not support ETD data processing; will set mETDMode to False")
-                blnSuccess = True
-
-            Case clsPHRPReader.ePeptideHitResultType.MODPlus
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "MODPlus does not support ETD data processing; will set mETDMode to False")
-                blnSuccess = True
-
-            Case Else
-                ' Unknown result type
-        End Select
-
-        If mETDMode Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                 "ETD search mode has been enabled since c and z ions were used for the peptide search")
-        End If
-
-        Return blnSuccess
-    End Function
-
-    Private Function CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath As String) As Boolean
-
-
-        Const MSGFDB_FRAG_METHOD_TAG = "FragmentationMethodID"
-
-        Dim strLineIn As String
-
-        Dim strFragMode As String
-        Dim intFragMode As Integer
-
-        Dim intCharIndex As Integer
-
-        Try
-            mETDMode = False
-
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Reading the MSGF-DB parameter file: " & strSearchToolParamFilePath)
-            End If
-
-            ' Read the data from the MSGF-DB Param file
-            Using srParamFile = New StreamReader(New FileStream(strSearchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-                Do While Not srParamFile.EndOfStream
-                    strLineIn = srParamFile.ReadLine
-
-                    If Not String.IsNullOrEmpty(strLineIn) AndAlso strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG) Then
-
-                        ' Check whether this line is FragmentationMethodID=2
-                        ' Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)  
-                        ' This mode is not yet supported
-
-                        If m_DebugLevel >= 3 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                 "MSGFDB " & MSGFDB_FRAG_METHOD_TAG & " line found: " & strLineIn)
-                        End If
-
-                        ' Look for the equals sign
-                        intCharIndex = strLineIn.IndexOf("="c)
-                        If intCharIndex > 0 Then
-                            strFragMode = strLineIn.Substring(intCharIndex + 1).Trim
-
-                            If Integer.TryParse(strFragMode, intFragMode) Then
-                                If intFragMode = 2 Then
-                                    mETDMode = True
-                                ElseIf intFragMode = 4 Then
-                                    ' ToDo: Figure out how to handle this mode
-                                    mETDMode = False
-                                Else
-                                    mETDMode = False
-                                End If
-                            End If
-
-                        Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                 "MSGFDB " & MSGFDB_FRAG_METHOD_TAG &
-                                                 " line does not have an equals sign; will assume not using ETD ions: " &
-                                                 strLineIn)
-                        End If
-
-                        ' No point in checking any further since we've parsed the ion_series line
-                        Exit Do
-
-                    End If
-
-                Loop
-
-            End Using
-
-        Catch ex As Exception
-            Dim Msg As String
-            Msg = "Error reading the MSGFDB param file: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file")
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    ''' <summary>
-    ''' Examines the Sequest param file to determine if ETD mode is enabled
-    ''' If it is, then sets mETDMode to True
-    ''' </summary>
-    ''' <param name="strSearchToolParamFilePath">Sequest parameter file to read</param>
-    ''' <returns>True if success; false if an error</returns>
-    Private Function CheckETDModeEnabledSequest(strSearchToolParamFilePath As String) As Boolean
-
-        Const SEQUEST_ION_SERIES_TAG = "ion_series"
-
-        Dim strLineIn As String
-
-        Dim strIonWeightText As String
-        Dim strIonWeights() As String
-
-        Dim dblCWeight As Double
-        Dim dblZWeight As Double
-
-        Dim intCharIndex As Integer
-
-        Try
-            mETDMode = False
-
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Reading the Sequest parameter file: " & strSearchToolParamFilePath)
-            End If
-
-            ' Read the data from the Sequest Param file
-            Using srParamFile = New StreamReader(New FileStream(strSearchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-                Do While Not srParamFile.EndOfStream
-                    strLineIn = srParamFile.ReadLine
-
-                    If Not String.IsNullOrEmpty(strLineIn) AndAlso strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG) Then
-
-                        ' This is the ion_series line
-                        ' If ETD mode is enabled, then c and z ions will have a 1 in this series of numbers:
-                        ' ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0 
-                        '
-                        ' The key to parsing this data is:
-                        ' ion_series = - - -  a   b   c  --- --- ---  x   y   z
-                        ' ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0 
-
-                        If m_DebugLevel >= 3 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                 "Sequest " & SEQUEST_ION_SERIES_TAG & " line found: " & strLineIn)
-                        End If
-
-                        ' Look for the equals sign
-                        intCharIndex = strLineIn.IndexOf("="c)
-                        If intCharIndex > 0 Then
-                            strIonWeightText = strLineIn.Substring(intCharIndex + 1).Trim
-
-                            ' Split strIonWeightText on spaces
-                            strIonWeights = strIonWeightText.Split(" "c)
-
-                            If strIonWeights.Length >= 12 Then
-                                dblCWeight = 0
-                                dblZWeight = 0
-
-                                Double.TryParse(strIonWeights(5), dblCWeight)
-                                Double.TryParse(strIonWeights(11), dblZWeight)
-
-                                If m_DebugLevel >= 3 Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                         "Sequest " & SEQUEST_ION_SERIES_TAG &
-                                                         " line has c-ion weighting = " & dblCWeight &
-                                                         " and z-ion weighting = " & dblZWeight)
-                                End If
-
-                                If dblCWeight > 0 OrElse dblZWeight > 0 Then
-                                    mETDMode = True
-                                End If
-                            Else
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                     "Sequest " & SEQUEST_ION_SERIES_TAG &
-                                                     " line does not have 11 numbers; will assume not using ETD ions: " &
-                                                     strLineIn)
-                            End If
-                        Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                 "Sequest " & SEQUEST_ION_SERIES_TAG &
-                                                 " line does not have an equals sign; will assume not using ETD ions: " &
-                                                 strLineIn)
-                        End If
-
-                        ' No point in checking any further since we've parsed the ion_series line
-                        Exit Do
-
-                    End If
-
-                Loop
-
-            End Using
-
-        Catch ex As Exception
-            Dim Msg As String
-            Msg = "Error reading the Sequest param file: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file")
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    ''' <summary>
-    ''' Examines the X!Tndem param file to determine if ETD mode is enabled
-    ''' If it is, then sets mETDMode to True
-    ''' </summary>
-    ''' <param name="strSearchToolParamFilePath">X!Tandem XML parameter file to read</param>
-    ''' <returns>True if success; false if an error</returns>
-    Private Function CheckETDModeEnabledXTandem(strSearchToolParamFilePath As String) As Boolean
-
-        Dim objParamFile As XmlDocument
-
-        Dim objSelectedNodes As XmlNodeList = Nothing
-        Dim objAttributeNode As XmlNode
-
-        Dim intSettingIndex As Integer
-        Dim intMatchIndex As Integer
-
-        Try
-            mETDMode = False
-
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Reading the X!Tandem parameter file: " & strSearchToolParamFilePath)
-            End If
-
-            ' Open the parameter file
-            ' Look for either of these lines:
-            '   <note type="input" label="scoring, c ions">yes</note>
-            '   <note type="input" label="scoring, z ions">yes</note>
-
-            objParamFile = New XmlDocument
-            objParamFile.PreserveWhitespace = True
-            objParamFile.Load(strSearchToolParamFilePath)
-
-            For intSettingIndex = 0 To 1
-                Select Case intSettingIndex
-                    Case 0
-                        objSelectedNodes =
-                            objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']")
-                    Case 1
-                        objSelectedNodes =
-                            objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']")
-                End Select
-
-                If Not objSelectedNodes Is Nothing Then
-
-                    For intMatchIndex = 0 To objSelectedNodes.Count - 1
-                        ' Make sure this node has an attribute named type with value "input"
-                        objAttributeNode = objSelectedNodes.Item(intMatchIndex).Attributes.GetNamedItem("type")
-
-                        If objAttributeNode Is Nothing Then
-                            ' Node does not have an attribute named "type"
-                        Else
-                            If objAttributeNode.Value.ToLower = "input" Then
-                                ' Valid node; examine its InnerText value
-                                If objSelectedNodes.Item(intMatchIndex).InnerText.ToLower() = "yes" Then
-                                    mETDMode = True
-                                End If
-                            End If
-                        End If
-                    Next intMatchIndex
-
-                End If
-
-                If mETDMode Then Exit For
-            Next intSettingIndex
-
-        Catch ex As Exception
-
-            Dim Msg As String
-            Msg = "Error reading the X!Tandem param file: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file")
-
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    Private Function ConvertMzMLToMzXML() As Boolean
-
-        Dim blnSuccess As Boolean
-
-        m_StatusTools.CurrentOperation = "Creating the .mzXML file"
-
-        mMSXmlCreator = New clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
-        RegisterEvents(mMSXmlCreator)
-        AddHandler mMSXmlCreator.LoopWaiting, AddressOf mMSXmlCreator_LoopWaiting
-
-        blnSuccess = mMSXmlCreator.ConvertMzMLToMzXML()
-
-        If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
-            m_message = mMSXmlCreator.ErrorMessage
-            If String.IsNullOrEmpty(m_message) Then
-                m_message = "Unknown error creating the mzXML file"
-            End If
-        End If
-
-        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
-        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION)
-
-        Return blnSuccess
-    End Function
-
-    ''' <summary>
-    ''' Creates the MSGF Input file by reading Sequest, X!Tandem, or Inspect PHRP result file and extracting the relevant information
-    ''' Uses the ModSummary.txt file to determine the dynamic and static mods used
-    ''' </summary>
-    ''' <param name="eResultType"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function CreateMSGFInputFile(
-      eResultType As clsPHRPReader.ePeptideHitResultType,
-      blnDoNotFilterPeptides As Boolean,
-      blnMGFInstrumentData As Boolean,
-      <Out()> ByRef intMSGFInputFileLineCount As Integer) As Boolean
-
-        Dim Msg As String
-
-        Dim blnSuccess = True
-
-        intMSGFInputFileLineCount = 0
-        mMSGFInputCreatorErrorCount = 0
-        mMSGFInputCreatorWarningCount = 0
-
-        ' Convert the peptide-hit result file (from PHRP) to a tab-delimited input file to be read by MSGF
-        Select Case eResultType
-            Case clsPHRPReader.ePeptideHitResultType.Sequest
-
-                ' Convert Sequest results to input format required for MSGF
-                mMSGFInputCreator = New clsMSGFInputCreatorSequest(m_Dataset, m_WorkDir)
-
-            Case clsPHRPReader.ePeptideHitResultType.XTandem
-
-                ' Convert X!Tandem results to input format required for MSGF
-                mMSGFInputCreator = New clsMSGFInputCreatorXTandem(m_Dataset, m_WorkDir)
-
-
-            Case clsPHRPReader.ePeptideHitResultType.Inspect
-
-                ' Convert Inspect results to input format required for MSGF
-                mMSGFInputCreator = New clsMSGFInputCreatorInspect(m_Dataset, m_WorkDir)
-
-            Case clsPHRPReader.ePeptideHitResultType.MSGFDB
-
-                ' Convert MSGFDB results to input format required for MSGF
-                mMSGFInputCreator = New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir)
-
-            Case clsPHRPReader.ePeptideHitResultType.MODa
-
-                ' Convert MODa results to input format required for MSGF
-                mMSGFInputCreator = New clsMSGFInputCreatorMODa(m_Dataset, m_WorkDir)
-
-            Case clsPHRPReader.ePeptideHitResultType.MODPlus
-
-                ' Convert MODPlus results to input format required for MSGF
-                mMSGFInputCreator = New clsMSGFInputCreatorMODPlus(m_Dataset, m_WorkDir)
-
-            Case Else
-                ' Should never get here; invalid result type specified
-                Msg = "Invalid PeptideHit ResultType specified: " & eResultType
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "clsMSGFToolRunner.CreateMSGFInputFile(); " & Msg)
-
-                blnSuccess = False
-        End Select
-
-        If blnSuccess Then
-
-            mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath()
-            mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath()
-
-            mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides
-            mMSGFInputCreator.MgfInstrumentData = blnMGFInstrumentData
-
-            m_StatusTools.CurrentOperation = "Creating the MSGF Input file"
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Creating the MSGF Input file")
-            End If
-
-            blnSuccess = mMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles()
-
-            intMSGFInputFileLineCount = mMSGFInputCreator.MSGFInputFileLineCount
-
-            If Not blnSuccess Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "mMSGFInputCreator.MSGFDataFileLineCount returned False")
-            Else
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "CreateMSGFInputFileUsingPHRPResultFile complete; " & intMSGFInputFileLineCount &
-                                         " lines of data")
-                End If
-            End If
-
-        End If
-
-
-        Return blnSuccess
-    End Function
-
-    Private Function SummarizeMODaResults() As Boolean
-
-        Dim blnSuccess As Boolean
-
-        ' Summarize the results to determine the number of peptides and proteins at a given FDR threshold
-        ' Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODa results
-        ' Post the results to the database
-        blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODa)
-
-        If blnSuccess Then
-            ' We didn't actually run MSGF, so these files aren't needed
-            m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt")
-            m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt")
-        End If
-
-        Return blnSuccess
-    End Function
-
-    Private Function SummarizeMODPlusResults() As Boolean
-
-        Dim blnSuccess As Boolean
-
-        ' Summarize the results to determine the number of peptides and proteins at a given FDR threshold
-        ' Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODPlus results
-        ' Post the results to the database
-        blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODPlus)
-
-        If blnSuccess Then
-            ' We didn't actually run MSGF, so these files aren't needed
-            m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt")
-            m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt")
-        End If
-
-        Return blnSuccess
-    End Function
-
-    Private Function SummarizeMSPathFinderResults() As Boolean
-        Dim blnSuccess As Boolean
-
-        ' Summarize the results to determine the number of peptides and proteins at a given FDR threshold
-        ' Will use SpecEValue in place of MSGF SpecProb
-        ' Post the results to the database
-        blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSPathFinder)
-
-        If blnSuccess Then
-            ' We didn't actually run MSGF, so these files aren't needed
-            m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt")
-            m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt")
-        End If
-
-        Return blnSuccess
-    End Function
-
-    Private Function CreateMSGFResultsFromMSGFDBResults() As Boolean
-
-        Dim objMSGFInputCreator As New clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir)
-        Dim blnSuccess As Boolean
-
-        If Not CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()) Then
-            Return False
-        End If
-
-        If Not CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_FHT.ToLower()) Then
-            Return False
-        End If
-
-        ' Summarize the results in the _syn_MSGF.txt file
-        ' Post the results to the database
-        blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFDB)
-
-        Return blnSuccess
-    End Function
-
-    Private Function CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator As clsMSGFInputCreatorMSGFDB,
-                                                          strSynOrFHT As String) As Boolean
-
-        Dim sourceFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus_" & strSynOrFHT & ".txt")
-
-        If Not File.Exists(sourceFilePath) Then
-            Dim sourceFilePathAlternate = Path.Combine(m_WorkDir, m_Dataset & "_msgfdb_" & strSynOrFHT & ".txt")
-            If Not File.Exists(sourceFilePathAlternate) Then
-                m_message = "Input file not found: " & Path.GetFileName(sourceFilePath)
-                Return False
-            End If
-            sourceFilePath = sourceFilePathAlternate
-        End If
-
-        Dim success = objMSGFInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(sourceFilePath, strSynOrFHT)
-
-        If Not success Then
-            m_message = "Error creating MSGF file for " & Path.GetFileName(sourceFilePath)
-            If Not String.IsNullOrEmpty(objMSGFInputCreator.ErrorMessage) Then
-                m_message &= ": " & objMSGFInputCreator.ErrorMessage
-            End If
-            Return False
-        Else
-            Return True
-        End If
-    End Function
-
-    Private Function CreateMzXMLFile() As Boolean
-
-        Dim blnSuccess As Boolean
-
-        m_StatusTools.CurrentOperation = "Creating the .mzXML file"
-
-        Dim strMzXmlFilePath As String
-        strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION)
-
-        If File.Exists(strMzXmlFilePath) Then
-            ' File already exists; nothing to do
-            Return True
-        End If
-
-        mMSXmlCreator = New clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams)
-        RegisterEvents(mMSXmlCreator)
-        AddHandler mMSXmlCreator.LoopWaiting, AddressOf mMSXmlCreator_LoopWaiting
-
-        blnSuccess = mMSXmlCreator.CreateMZXMLFile()
-
-        If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
-            m_message = mMSXmlCreator.ErrorMessage
-            If String.IsNullOrEmpty(m_message) Then
-                m_message = "Unknown error creating the mzXML file"
-            End If
-        End If
-
-        CopyMzXMLFileToServerCache(strMzXmlFilePath, String.Empty,
-                                   Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath),
-                                   blnPurgeOldFilesIfNeeded:=True)
-
-        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
-
-        Return blnSuccess
-    End Function
-
-    Private Function DefineProgramPaths() As Boolean
-
-        ' mJavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
-        ' Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-        mJavaProgLoc = GetJavaProgLoc()
-        If String.IsNullOrEmpty(mJavaProgLoc) Then
-            Return False
-        End If
-
-        ' Determine the path to the MSGFDB program (which contains the MSGF class); we also allow for the possibility of calling the legacy version of MSGF
-        mMSGFProgLoc = DetermineMSGFProgramLocation()
-
-        If String.IsNullOrEmpty(mMSGFProgLoc) Then
-            If String.IsNullOrEmpty(m_message) Then
-                m_message = "Error determining MSGF program location"
-            End If
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
-
-        mMSXmlGeneratorAppPath = MyBase.GetMSXmlGeneratorAppPath()
-
-        Return True
-    End Function
-
-    Private Function DetermineMSGFProgramLocation() As String
-
-        Dim strStepToolName = "MSGFDB"
-        Dim strProgLocManagerParamName = "MSGFDbProgLoc"
-        Dim strExeName As String = MSGFDB_JAR_NAME
-
-        mUsingMSGFDB = True
-
-        ' Note that as of 12/20/2011 we are using MSGFDB.jar to access the MSGF class
-        ' In order to allow the old version of MSGF to be run, we must look for parameter MSGF_Version
-
-        ' Check whether the settings file specifies that a specific version of the step tool be used
-        Dim strMSGFStepToolVersion As String = m_jobParams.GetParam("MSGF_Version")
-
-        If Not String.IsNullOrWhiteSpace(strMSGFStepToolVersion) Then
-
-            ' Specific version is defined
-            ' Check whether the version is one of the known versions for the old MSGF
-
-            If IsLegacyMSGFVersion(strMSGFStepToolVersion) Then
-                ' Use MSGF
-
-                strStepToolName = "MSGF"
-                strProgLocManagerParamName = "MSGFLoc"
-                strExeName = MSGF_JAR_NAME
-
-                mUsingMSGFDB = False
-
-            Else
-                ' Use MSGFDB
-                mUsingMSGFDB = True
-                mMSGFDBVersion = String.Copy(strMSGFStepToolVersion)
-            End If
-
-        Else
-            ' Use MSGFDB
-            mUsingMSGFDB = True
-            mMSGFDBVersion = "Production_Release"
-        End If
-
-        Return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strMSGFStepToolVersion)
-    End Function
-
-    Public Shared Function IsLegacyMSGFVersion(strStepToolVersion As String) As Boolean
-
-        Select Case strStepToolVersion.ToLower()
-            Case "v2010-11-16", "v2011-09-02", "v6393", "v6432"
-                ' Legacy MSGF
-                Return True
-
-            Case Else
-                ' Using MSGF inside MSGFDB
-                Return False
-
-        End Select
-    End Function
-
-    ''' <summary>
-    ''' Compare intPrecursorMassErrorCount to intLinesRead
-    ''' </summary>
-    ''' <param name="intLinesRead"></param>
-    ''' <param name="intPrecursorMassErrorCount"></param>
-    ''' <returns>True if more than 10% of the results have a precursor mass error</returns>
-    ''' <remarks></remarks>
-    Private Function PostProcessMSGFCheckPrecursorMassErrorCount(intLinesRead As Integer,
-                                                                 intPrecursorMassErrorCount As Integer) As Boolean
-
-        Const MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT = 10
-
-        Dim sngPercentDataPrecursorMassError As Single
-        Dim Msg As String
-        Dim blnTooManyPrecursorMassMismatches As Boolean
-
-        Try
-            ' If 10% or more of the data has a message like "N/A: precursor mass != peptide mass (3571.8857 vs 3581.9849)"
-            ' then set blnTooManyPrecursorMassMismatches to True
-
-            blnTooManyPrecursorMassMismatches = False
-
-            If intLinesRead >= 2 AndAlso intPrecursorMassErrorCount > 0 Then
-                sngPercentDataPrecursorMassError = CSng(intPrecursorMassErrorCount / intLinesRead * 100)
-
-                Msg = sngPercentDataPrecursorMassError.ToString("0.0") &
-                      "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass"
-
-                If sngPercentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT Then
-                    Msg &= "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                    blnTooManyPrecursorMassMismatches = True
-                Else
-                    Msg &= "; this is below the error threshold of " & MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT &
-                           "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg)
-                End If
-            End If
-
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        Return blnTooManyPrecursorMassMismatches
-    End Function
-
-    ''' <summary>
-    ''' Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
-    ''' Will also look for non-numeric values in the SpecProb column
-    ''' Examples:
-    '''   N/A: unrecognizable annotation
-    '''   N/A: precursor mass != peptide mass (4089.068 vs 4078.069)
-    ''' the new MSGF result files will guarantee that the SpecProb column has a number, 
-    '''   but will have an additional column called SpecProbNotes with any notes or warnings
-    ''' The synopsis-based MSGF results will be extended to include any entries skipped when
-    '''  creating the MSGF input file (to aid in linking up files later)
-    ''' </summary>
-    ''' <param name="eResultType">PHRP result type</param>
-    ''' <param name="strMSGFResultsFilePath">MSGF results file to examine</param>
-    ''' <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
-    ''' <returns>True if success; false if one or more errors</returns>
-    ''' <remarks></remarks>
-    Private Function PostProcessMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType,
-                                            strMSGFResultsFilePath As String, blnMGFInstrumentData As Boolean) As Boolean
-
-        Dim fiInputFile As FileInfo
-        Dim fiMSGFSynFile As FileInfo
-
-        Dim strMSGFSynopsisResults As String
-
-        Dim blnSuccess As Boolean
-        Dim blnFirstHitsDataPresent = False
-        Dim blnTooManyErrors = False
-
-        Try
-            If String.IsNullOrEmpty(strMSGFResultsFilePath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "MSGF Results File path is empty; unable to continue")
-                Return False
-            End If
-
-            m_StatusTools.CurrentOperation = "MSGF complete; post-processing the results"
-
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "MSGF complete; post-processing the results")
-            End If
-
-            fiInputFile = New FileInfo(strMSGFResultsFilePath)
-
-            ' Define the path to write the synopsis MSGF results to
-            strMSGFSynopsisResults = Path.Combine(fiInputFile.DirectoryName,
-                                                  Path.GetFileNameWithoutExtension(fiInputFile.Name) &
-                                                  "_PostProcess.txt")
-
-            m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING
-            m_StatusTools.UpdateAndWrite(m_progress)
-
-            blnSuccess = PostProcessMSGFResultsWork(strMSGFResultsFilePath, strMSGFSynopsisResults,
-                                                    blnMGFInstrumentData, blnFirstHitsDataPresent, blnTooManyErrors)
-
-        Catch ex As Exception
-            Dim errMsg = "Error post-processing the MSGF Results file: " & ex.Message & "; " &
-                         clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
-            m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
-
-            Return False
-        End Try
-
-        Try
-            ' Now replace the _MSGF.txt file with the _MSGF_PostProcess.txt file
-            ' For example, replace:
-            '   QC_Shew_Dataset_syn_MSGF.txt
-            ' With the contents of:
-            '   QC_Shew_Dataset_syn_MSGF_PostProcess.txt
-
-            Thread.Sleep(500)
-
-            ' Delete the original file
-            fiInputFile.Delete()
-            Thread.Sleep(500)
-
-            ' Rename the _PostProcess.txt file
-            fiMSGFSynFile = New FileInfo(strMSGFSynopsisResults)
-
-            fiMSGFSynFile.MoveTo(strMSGFResultsFilePath)
-
-        Catch ex As Exception
-            Dim errMsg = "Error replacing the original MSGF Results file with the post-processed one: " & ex.Message &
-                         "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
-            m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file")
-
-            Return False
-        End Try
-
-        If blnSuccess Then
-            ' Summarize the results in the _syn_MSGF.txt file
-            ' Post the results to the database
-            SummarizeMSGFResults(eResultType)
-        End If
-
-        If blnSuccess AndAlso blnFirstHitsDataPresent Then
-            ' Write out the First-Hits file results
-            blnSuccess = mMSGFInputCreator.CreateMSGFFirstHitsFile()
-        End If
-
-        If blnSuccess And eResultType <> clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-            blnSuccess = UpdateProteinModsFile(eResultType, strMSGFResultsFilePath)
-        End If
-
-        If blnTooManyErrors Then
-            Return False
-        Else
-            Return blnSuccess
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Process the data in strMSGFResultsFilePath to create strMSGFSynopsisResults
-    ''' </summary>
-    ''' <param name="strMSGFResultsFilePath">MSGF Results file path</param>
-    ''' <param name="strMSGFSynopsisResults">MSGF synopsis file path</param>
-    ''' <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
-    ''' <param name="blnFirstHitsDataPresent">Will be set to True if First-hits data is present</param>
-    ''' <param name="blnTooManyErrors">Will be set to True if too many errors occur</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function PostProcessMSGFResultsWork(strMSGFResultsFilePath As String, strMSGFSynopsisResults As String,
-                                                blnMGFInstrumentData As Boolean,
-                                                <Out()> ByRef blnFirstHitsDataPresent As Boolean,
-                                                <Out()> ByRef blnTooManyErrors As Boolean) As Boolean
-
-        Const MAX_ERRORS_TO_LOG = 5
-
-        Dim chSepChars = New Char() {ControlChars.Tab}
-
-        Dim strLineIn As String
-        Dim strSplitLine() As String
-
-        Dim objColumnHeaders As SortedDictionary(Of String, Integer)
-
-        Dim intLinesRead As Integer
-        Dim intSpecProbErrorCount As Integer
-        Dim intPrecursorMassErrorCount As Integer
-        Dim intMGFLookupErrorCount As Integer
-
-        Dim strOriginalPeptide As String
-        Dim strScan As String
-        Dim strCharge As String
-        Dim strProtein As String
-        Dim strPeptide As String
-        Dim strResultID As String
-        Dim strSpecProb As String
-        Dim strDataSource As String
-        Dim strNotes As String
-
-        Dim strMSGFResultData As String
-        Dim strOriginalPeptideInfo As String
-
-        Dim intResultID As Integer
-        Dim intIndex As Integer
-        Dim dblSpecProb As Double = 0
-
-        Dim objSkipList As List(Of String)
-        Dim strSkipInfo() As String
-
-        Dim blnSkipLine As Boolean
-        Dim blnHeaderLineParsed As Boolean
-
-        '''''''''''''''''''''''''''''''''''''''''''''''''''''''
-        ' Note: Do not put a Try/Catch block in this function
-        ' Allow the calling function to catch any errors
-        '''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-        ' Initialize the column mapping
-        ' Using a case-insensitive comparer
-        objColumnHeaders = New SortedDictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
-
-        ' Define the default column mapping
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpectrumFile, 0)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_Title, 1)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_ScanNumber, 2)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_Annotation, 3)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_Charge, 4)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_Protein_First, 5)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_Result_ID, 6)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_Data_Source, 7)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_Collision_Mode, 8)
-        objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 9)
-
-        ' Read the data from the MSGF Result file and
-        ' write the Synopsis MSGF Results to a new file
-        Using srMSGFResults = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)),
-              swMSGFSynFile = New StreamWriter(New FileStream(strMSGFSynopsisResults, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-            ' Write out the headers to swMSGFSynFile
-            mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile)
-
-            blnHeaderLineParsed = False
-            blnFirstHitsDataPresent = False
-            blnTooManyErrors = False
-
-            intLinesRead = 0
-            intSpecProbErrorCount = 0
-            intPrecursorMassErrorCount = 0
-            intMGFLookupErrorCount = 0
-
-            Do While Not srMSGFResults.EndOfStream
-                strLineIn = srMSGFResults.ReadLine
-                intLinesRead += 1
-                blnSkipLine = False
-
-                If Not String.IsNullOrEmpty(strLineIn) Then
-                    strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-                    If Not blnHeaderLineParsed Then
-                        If strSplitLine(0).ToLower() = MSGF_RESULT_COLUMN_SpectrumFile.ToLower() Then
-                            ' Parse the header line to confirm the column ordering
-                            clsPHRPReader.ParseColumnHeaders(strSplitLine, objColumnHeaders)
-                            blnSkipLine = True
-                        End If
-
-                        blnHeaderLineParsed = True
-                    End If
-
-                    If Not blnSkipLine AndAlso strSplitLine.Length >= 4 Then
-
-                        strOriginalPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders)
-                        strScan = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders)
-                        strCharge = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders)
-                        strProtein = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders)
-                        strPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders)
-                        strResultID = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders)
-                        strSpecProb = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders)
-                        strDataSource = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders)
-                        strNotes = String.Empty
-
-                        If blnMGFInstrumentData Then
-                            ' Update the scan number
-                            Dim intMGFScanIndex As Integer
-                            Dim intActualScanNumber = 0
-                            If Integer.TryParse(strScan, intMGFScanIndex) Then
-                                intActualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(intMGFScanIndex)
-                            End If
-
-                            If intActualScanNumber = 0 Then
-                                intMGFLookupErrorCount += 1
-
-                                ' Log the first 5 instances to the log file as warnings
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                     "Unable to determine the scan number for MGF spectrum index " &
-                                                     strScan & " on line  " & intLinesRead & " in the result file")
-                            End If
-                            strScan = intActualScanNumber.ToString()
-                        End If
-
-                        If Double.TryParse(strSpecProb, dblSpecProb) Then
-                            If strOriginalPeptide <> strPeptide Then
-                                strNotes = String.Copy(strPeptide)
-                            End If
-
-                            ' Update strSpecProb to reduce the number of significant figures
-                            strSpecProb = dblSpecProb.ToString("0.000000E+00")
-                        Else
-                            ' The specProb column does not contain a number
-                            intSpecProbErrorCount += 1
-
-                            If intSpecProbErrorCount <= MAX_ERRORS_TO_LOG Then
-                                ' Log the first 5 instances to the log file as warnings
-
-                                If strOriginalPeptide <> strPeptide Then
-                                    strOriginalPeptideInfo = ", original peptide sequence " & strOriginalPeptide
-                                Else
-                                    strOriginalPeptideInfo = String.Empty
-                                End If
-
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                     "MSGF SpecProb is not numeric on line " & intLinesRead &
-                                                     " in the result file: " & strSpecProb & " (parent peptide " &
-                                                     strPeptide & ", Scan " & strScan & ", Result_ID " & strResultID &
-                                                     strOriginalPeptideInfo & ")")
-                            End If
-
-                            If strSpecProb.Contains("precursor mass") Then
-                                intPrecursorMassErrorCount += 1
-                            End If
-
-                            If strOriginalPeptide <> strPeptide Then
-                                strNotes = strPeptide & "; " & strSpecProb
-                            Else
-                                strNotes = String.Copy(strSpecProb)
-                            End If
-
-                            ' Change the spectrum probability to 1
-                            strSpecProb = "1"
-                        End If
-
-                        strMSGFResultData = strScan & ControlChars.Tab &
-                          strCharge & ControlChars.Tab &
-                          strProtein & ControlChars.Tab &
-                          strOriginalPeptide & ControlChars.Tab &
-                          strSpecProb & ControlChars.Tab &
-                          strNotes
-
-                        ' Add this result to the cached string dictionary
-                        mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide,
-                                                              strMSGFResultData)
-
-
-                        If strDataSource = MSGF_PHRP_DATA_SOURCE_FHT Then
-                            ' First-hits file
-                            blnFirstHitsDataPresent = True
-
-                        Else
-                            ' Synopsis file
-
-                            ' Add this entry to the MSGF synopsis results
-                            ' Note that strOriginalPeptide has the original peptide sequence
-                            swMSGFSynFile.WriteLine(strResultID & ControlChars.Tab & strMSGFResultData)
-
-                            ' See if any entries were skipped when reading the synopsis file used to create the MSGF input file
-                            ' If they were, add them to the validated MSGF file (to aid in linking up files later)
-
-                            If Integer.TryParse(strResultID, intResultID) Then
-                                objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID)
-
-                                For intIndex = 0 To objSkipList.Count - 1
-
-                                    ' Split the entry on the tab character
-                                    ' The item left of the tab is the skipped result id
-                                    ' the item right of the tab is the protein corresponding to the skipped result id
-
-                                    strSkipInfo = objSkipList(intIndex).Split(chSepChars, 2)
-
-                                    swMSGFSynFile.WriteLine(
-                                      strSkipInfo(0) & ControlChars.Tab &
-                                      strScan & ControlChars.Tab &
-                                      strCharge & ControlChars.Tab &
-                                      strSkipInfo(1) & ControlChars.Tab &
-                                      strOriginalPeptide & ControlChars.Tab &
-                                      strSpecProb & ControlChars.Tab &
-                                      strNotes)
-
-                                Next
-                            End If
-                        End If
-
-                    End If
-                End If
-
-            Loop
-
-        End Using
-
-        If intSpecProbErrorCount > 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                 "MSGF SpecProb was not numeric for " & intSpecProbErrorCount &
-                                 " entries in the MSGF result file")
-        End If
-
-        If intMGFLookupErrorCount > 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "MGF Index-to-scan lookup failed for " & intMGFLookupErrorCount &
-                                 " entries in the MSGF result file")
-            If intLinesRead > 0 AndAlso intMGFLookupErrorCount / CSng(intLinesRead) > 0.1 Then
-                blnTooManyErrors = True
-            End If
-        End If
-
-        ' Check whether more than 10% of the results have a precursor mass error
-        If PostProcessMSGFCheckPrecursorMassErrorCount(intLinesRead, intPrecursorMassErrorCount) Then
-            blnTooManyErrors = True
-        End If
-
-        ' If we get here, return True
-        Return True
-    End Function
-
-    Private Function ProcessFileWithMSGF(
-      eResultType As clsPHRPReader.ePeptideHitResultType,
-      intMSGFInputFileLineCount As Integer,
-      strMSGFInputFilePath As String,
-      strMSGFResultsFilePath As String) As Boolean
-
-        Dim blnSuccess As Boolean
-
-        If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-            ' Input file may contain a mix of scan types (CID, ETD, and/or HCD)
-            ' If this is the case, then need to call MSGF twice: first for the CID and HCD spectra, then again for the ETD spectra
-            blnSuccess = RunMSGFonMSGFDB(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath)
-
-        Else
-            ' Run MSGF
-            blnSuccess = RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath)
-        End If
-
-        Return blnSuccess
-    End Function
-
-    Private Function ProcessFilesWrapper(
-      eRawDataType As clsAnalysisResources.eRawDataTypeConstants,
-      eResultType As clsPHRPReader.ePeptideHitResultType,
-      blnDoNotFilterPeptides As Boolean,
-      blnMGFInstrumentData As Boolean) As Boolean
-
-        Dim blnSuccess As Boolean
-
-        Dim Msg As String
-        Dim intMSGFInputFileLineCount As Integer
-
-        ' Parse the Sequest, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
-        Dim strSearchToolParamFilePath As String
-        strSearchToolParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
-
-        blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath)
-        If Not blnSuccess Then
-            Msg = "Error examining param file to determine if ETD mode was enabled)"
-            m_message = clsGlobal.AppendToComment(m_message, Msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "clsMSGFToolRunner.RunTool(); " & Msg)
-            Return False
-        Else
-            m_progress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD
-            m_StatusTools.UpdateAndWrite(m_progress)
-        End If
-
-        ' Create the _MSGF_input.txt file
-        blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData,
-                                         intMSGFInputFileLineCount)
-
-        If Not blnSuccess Then
-            Msg = "Error creating MSGF input file"
-            m_message = clsGlobal.AppendToComment(m_message, Msg)
-        Else
-            m_progress = PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED
-            m_StatusTools.UpdateAndWrite(m_progress)
-        End If
-
-
-        If blnSuccess Then
-            If blnMGFInstrumentData Then
-                blnSuccess = True
-            ElseIf eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzXML Then
-                blnSuccess = True
-            ElseIf eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML Then
-                blnSuccess = ConvertMzMLToMzXML()
-            Else
-                ' Possibly create the .mzXML file
-                ' We're waiting to do this until now just in case the above steps fail (since they should all run quickly)
-                blnSuccess = CreateMzXMLFile()
-            End If
-
-            If Not blnSuccess Then
-                Msg = "Error creating .mzXML file"
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
-            Else
-                m_progress = PROGRESS_PCT_MZXML_CREATED
-                m_StatusTools.UpdateAndWrite(m_progress)
-            End If
-        End If
-
-
-        If blnSuccess Then
-            Dim blnUseExistingMSGFResults = m_jobParams.GetJobParameter("UseExistingMSGFResults", False)
-
-            If blnUseExistingMSGFResults Then
-                ' Look for a file named Dataset_syn_MSGF.txt in the job's transfer folder
-                ' If that file exists, use it as the official MSGF results file
-                ' The assumption is that this file will have been created by manually running MSGF on another computer
-
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder")
-                End If
-
-                If RetrievePreGeneratedDataFile(Path.GetFileName(mMSGFResultsFilePath)) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "Pre-generated MSGF results file successfully copied to the work directory")
-                    blnSuccess = True
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "Pre-generated MSGF results file not found")
-                    blnSuccess = False
-                End If
-
-            Else
-                ' Run MSGF
-                ' Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
-                blnSuccess = ProcessFileWithMSGF(eResultType, intMSGFInputFileLineCount, mMSGFInputFilePath,
-                                                 mMSGFResultsFilePath)
-            End If
-
-            If Not blnSuccess Then
-                Msg = "Error running MSGF"
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
-            Else
-                ' MSGF successfully completed
-                If Not mKeepMSGFInputFiles Then
-                    ' Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
-                    m_jobParams.AddResultFileToSkip(Path.GetFileName(mMSGFInputFilePath))
-                End If
-
-                m_progress = PROGRESS_PCT_MSGF_COMPLETE
-                m_StatusTools.UpdateAndWrite(m_progress)
-            End If
-        End If
-
-        ' Make sure the MSGF Input Creator log file is closed
-        mMSGFInputCreator.CloseLogFileNow()
-
-        Return blnSuccess
-    End Function
-
-    ''' <summary>
-    ''' Looks for file strFileNameToFind in the transfer folder for this job
-    ''' If found, copies the file to the work directory
-    ''' </summary>
-    ''' <param name="strFileNameToFind"></param>
-    ''' <returns>True if success; false if an error</returns>
-    ''' <remarks></remarks>
-    Private Function RetrievePreGeneratedDataFile(strFileNameToFind As String) As Boolean
-
-        Dim strTransferFolderPath As String
-        Dim strInputFolderName As String
-        Dim strFolderToCheck = "??"
-        Dim strFilePathSource As String
-        Dim strFilePathTarget As String
-
-        Try
-            strTransferFolderPath = m_jobParams.GetParam("transferFolderPath")
-            strInputFolderName = m_jobParams.GetParam("inputFolderName")
-
-            strFolderToCheck = Path.Combine(Path.Combine(strTransferFolderPath, m_Dataset), strInputFolderName)
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Looking for folder " & strFolderToCheck)
-            End If
-
-            ' Look for strFileNameToFind in strFolderToCheck
-            If Directory.Exists(strFolderToCheck) Then
-                strFilePathSource = Path.Combine(strFolderToCheck, strFileNameToFind)
-
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "Looking for file " & strFilePathSource)
-                End If
-
-                If File.Exists(strFilePathSource) Then
-                    strFilePathTarget = Path.Combine(m_WorkDir, strFileNameToFind)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "Copying file " & strFilePathSource & " to " & strFilePathTarget)
-
-                    File.Copy(strFilePathSource, strFilePathTarget, True)
-
-                    ' File found and successfully copied; return true
-                    Return True
-                End If
-            End If
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                 "Exception finding file " & strFileNameToFind & " in folder " & strFolderToCheck, ex)
-            Return False
-        End Try
-
-        ' File not found
-        Return False
-    End Function
-
-    Private Function RunMSGFonMSGFDB(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String,
-                                     strMSGFResultsFilePath As String) As Boolean
-
-        Dim strLineIn As String
-        Dim intLinesRead As Integer
-
-        Dim intCollisionModeColIndex As Integer = -1
-
-        Try
-            Dim lstCIDData = New List(Of String)
-            Dim lstETDData = New List(Of String)
-
-            Using srSourceFile = New StreamReader(New FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                intLinesRead = 0
-                Do While Not srSourceFile.EndOfStream
-                    strLineIn = srSourceFile.ReadLine()
-
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-                        intLinesRead += 1
-                        Dim strSplitLine = strLineIn.Split(ControlChars.Tab).ToList()
-
-                        If intLinesRead = 1 Then
-                            ' Cache the header line
-                            lstCIDData.Add(strLineIn)
-                            lstETDData.Add(strLineIn)
-
-                            ' Confirm the column index of the Collision_Mode column
-                            For intIndex = 0 To strSplitLine.Count - 1
-                                If String.Equals(strSplitLine(intIndex), MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.CurrentCultureIgnoreCase) Then
-                                    intCollisionModeColIndex = intIndex
-                                End If
-                            Next
-
-                            If intCollisionModeColIndex < 0 Then
-                                ' Collision_Mode column not found; this is unexpected
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                     "Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue")
-                                srSourceFile.Close()
-                                Return False
-                            End If
-
-                        Else
-                            ' Read the collision mode
-
-                            If strSplitLine.Count > intCollisionModeColIndex Then
-                                If strSplitLine(intCollisionModeColIndex).ToUpper() = "ETD" Then
-                                    lstETDData.Add(strLineIn)
-                                Else
-                                    lstCIDData.Add(strLineIn)
-                                End If
-                            Else
-                                lstCIDData.Add(strLineIn)
-                            End If
-                        End If
-
-                    End If
-                Loop
-
-            End Using
-
-            mProcessingMSGFDBCollisionModeData = False
-
-            If lstCIDData.Count <= 1 And lstETDData.Count > 1 Then
-                ' Only ETD data is present
-                mETDMode = True
-                Return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath)
-
-            ElseIf lstCIDData.Count > 1 And lstETDData.Count > 1 Then
-                ' Mix of both CID and ETD data found
-
-                Dim blnSuccess As Boolean
-
-                mProcessingMSGFDBCollisionModeData = True
-
-                ' Make sure the final results file does not exist
-                If File.Exists(strMSGFResultsFilePath) Then
-                    File.Delete(strMSGFResultsFilePath)
-                End If
-
-                ' Process the CID data
-                mETDMode = False
-                mCollisionModeIteration = 1
-                blnSuccess = RunMSGFonMSGFDBCachedData(lstCIDData, strMSGFInputFilePath, strMSGFResultsFilePath, "CID")
-                If Not blnSuccess Then Return False
-
-                ' Process the ETD data
-                mETDMode = True
-                mCollisionModeIteration = 2
-                blnSuccess = RunMSGFonMSGFDBCachedData(lstETDData, strMSGFInputFilePath, strMSGFResultsFilePath, "ETD")
-                If Not blnSuccess Then Return False
-
-                Return True
-            Else
-
-                ' Only CID or HCD data is present (or no data is present)
-                mETDMode = False
-                Return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath)
-
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Exception in RunMSGFonMSGFDB", ex)
-            Return False
-        End Try
-    End Function
-
-    Private Function RunMSGFonMSGFDBCachedData(
-       lstData As List(Of String),
-       strMSGFInputFilePath As String,
-       strMSGFResultsFilePathFinal As String,
-       strCollisionMode As String) As Boolean
-
-        Dim strInputFileTempPath As String
-        Dim strResultFileTempPath As String
-
-        Dim blnSuccess As Boolean
-
-        Try
-
-            strInputFileTempPath = AddFileNameSuffix(strMSGFInputFilePath, strCollisionMode)
-            strResultFileTempPath = AddFileNameSuffix(strMSGFResultsFilePathFinal, strCollisionMode)
-
-            Using swInputFileTemp = New StreamWriter(New FileStream(strInputFileTempPath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                For Each strData As String In lstData
-                    swInputFileTemp.WriteLine(strData)
-                Next
-            End Using
-
-            blnSuccess = RunMSGF(lstData.Count - 1, strInputFileTempPath, strResultFileTempPath)
-
-            If Not blnSuccess Then
-                Return False
-            End If
-
-            Thread.Sleep(500)
-
-            ' Append the results of strResultFileTempPath to strMSGFResultsFilePath
-            If Not File.Exists(strMSGFResultsFilePathFinal) Then
-                File.Move(strResultFileTempPath, strMSGFResultsFilePathFinal)
-            Else
-                Using srTempResults = New StreamReader(New FileStream(strResultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)),
-                      swFinalResults = New StreamWriter(New FileStream(strMSGFResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read))
-
-                    ' Read and skip the first line of srTempResults (it's a header)
-                    srTempResults.ReadLine()
-
-                    ' Append the remaining lines to swFinalResults
-                    While Not srTempResults.EndOfStream
-                        swFinalResults.WriteLine(srTempResults.ReadLine)
-                    End While
-
-                End Using
-
-            End If
-
-            Thread.Sleep(500)
-
-            If Not mKeepMSGFInputFiles Then
-
-                ' Delete the temporary files
-                DeleteTemporaryfile(strInputFileTempPath)
-                DeleteTemporaryfile(strResultFileTempPath)
-
-            End If
-
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Exception in RunMSGFonMSGFDBCachedData", ex)
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    Private Function RunMSGF(intMSGFInputFileLineCount As Integer, strMSGFInputFilePath As String,
-                             strMSGFResultsFilePath As String) As Boolean
-
-        Dim intMSGFEntriesPerSegment As Integer
-        Dim blnSuccess As Boolean
-        Dim blnUseSegments As Boolean
-        Dim strSegmentUsageMessage As String
-
-        intMSGFEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT)
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                 "MSGFInputFileLineCount = " & intMSGFInputFileLineCount & "; MSGFEntriesPerSegment = " &
-                                 intMSGFEntriesPerSegment)
-        End If
-
-        If intMSGFEntriesPerSegment <= 1 Then
-            blnUseSegments = False
-            strSegmentUsageMessage = "Not using MSGF segments since MSGFEntriesPerSegment is <= 1"
-
-        ElseIf intMSGFInputFileLineCount <= intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
-            blnUseSegments = False
-            strSegmentUsageMessage = "Not using MSGF segments since MSGFInputFileLineCount is <= " &
-                                     intMSGFEntriesPerSegment & " * " &
-                                     CInt(MSGF_SEGMENT_OVERFLOW_MARGIN * 100).ToString() & "%"
-
-        Else
-            blnUseSegments = True
-            strSegmentUsageMessage = "Using MSGF segments"
-        End If
-
-        mMSGFLineCountPreviousSegments = 0
-        mMSGFInputFileLineCount = intMSGFInputFileLineCount
-        m_progress = PROGRESS_PCT_MSGF_START
-
-
-        If Not blnUseSegments Then
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strSegmentUsageMessage)
-            End If
-
-            ' Do not use segments
-            blnSuccess = RunMSGFWork(strMSGFInputFilePath, strMSGFResultsFilePath)
-
-        Else
-
-            Dim lstSegmentFileInfo As New List(Of udtSegmentFileInfoType)
-            Dim udtSegmentFile As udtSegmentFileInfoType
-            Dim lstResultFiles As List(Of String)
-            lstResultFiles = New List(Of String)
-
-            ' Split strMSGFInputFilePath into chunks with intMSGFEntriesPerSegment each
-            blnSuccess = SplitMSGFInputFile(intMSGFInputFileLineCount, strMSGFInputFilePath, intMSGFEntriesPerSegment,
-                                            lstSegmentFileInfo)
-
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                     strSegmentUsageMessage & "; segment count = " & lstSegmentFileInfo.Count)
-            End If
-
-            If blnSuccess Then
-
-                ' Call MSGF for each segment
-                For Each udtSegmentFile In lstSegmentFileInfo
-                    Dim strResultFile As String
-                    strResultFile = AddFileNameSuffix(strMSGFResultsFilePath, udtSegmentFile.Segment)
-
-                    blnSuccess = RunMSGFWork(udtSegmentFile.FilePath, strResultFile)
-
-                    If Not blnSuccess Then Exit For
-
-                    lstResultFiles.Add(strResultFile)
-                    mMSGFLineCountPreviousSegments += udtSegmentFile.Entries
-                Next
-            End If
-
-            If blnSuccess Then
-                ' Combine the results
-                blnSuccess = CombineMSGFResultFiles(strMSGFResultsFilePath, lstResultFiles)
-            End If
-
-
-            If blnSuccess Then
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "Deleting MSGF segment files")
-                End If
-
-                ' Delete the segment files
-                For Each udtSegmentFile In lstSegmentFileInfo
-                    DeleteTemporaryfile(udtSegmentFile.FilePath)
-                Next
-
-                ' Delete the result files
-                For Each strResultFile As String In lstResultFiles
-                    DeleteTemporaryfile(strResultFile)
-                Next
-            End If
-        End If
-
-        Try
-            ' Delete the Console_Output.txt file if it is empty
-            Dim fiConsoleOutputFile As FileInfo
-            fiConsoleOutputFile = New FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
-            If fiConsoleOutputFile.Exists AndAlso fiConsoleOutputFile.Length = 0 Then
-                fiConsoleOutputFile.Delete()
-            End If
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                 "Unable to delete the " & MSGF_CONSOLE_OUTPUT & " file", ex)
-        End Try
-
-        Return blnSuccess
-    End Function
-
-    Private Function RunMSGFWork(strInputFilePath As String, strResultsFilePath As String) As Boolean
-
-        Dim CmdStr As String
-        Dim intJavaMemorySize As Integer
-
-        If String.IsNullOrEmpty(strInputFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "strInputFilePath has not been defined; unable to continue")
-            Return False
-        End If
-
-        If String.IsNullOrEmpty(strResultsFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "strResultsFilePath has not been defined; unable to continue")
-            Return False
-        End If
-
-        ' Delete the output file if it already exists (MSGFDB will not overwrite it)
-        If File.Exists(strResultsFilePath) Then
-            File.Delete(strResultsFilePath)
-        End If
-
-        ' If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
-        ' Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file 
-        ' (job 611216 succeeded with a value of 5000)
-        intJavaMemorySize = m_jobParams.GetJobParameter("MSGFJavaMemorySize", 2000)
-        If intJavaMemorySize < 512 Then intJavaMemorySize = 512
-
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                 "Running MSGF on " & Path.GetFileName(strInputFilePath))
-        End If
-
-        mCurrentMSGFResultsFilePath = String.Copy(strResultsFilePath)
-
-        m_StatusTools.CurrentOperation = "Running MSGF"
-        m_StatusTools.UpdateAndWrite(m_progress)
-
-        CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M "
-
-        If mUsingMSGFDB Then
-            CmdStr &= "-cp " & PossiblyQuotePath(mMSGFProgLoc) & " ui.MSGF"
-        Else
-            CmdStr &= "-jar " & PossiblyQuotePath(mMSGFProgLoc)
-        End If
-
-        CmdStr &= " -i " & PossiblyQuotePath(strInputFilePath)           ' Input file
-        CmdStr &= " -d " & PossiblyQuotePath(m_WorkDir)                  ' Folder containing .mzXML, .mzML, or .mgf file
-        CmdStr &= " -o " & PossiblyQuotePath(strResultsFilePath)         ' Output file
-
-        ' MSGF v6432 and earlier use -m 0 for CID and -m 1 for ETD
-        ' MSGFDB v7097 and later use: 
-        '   -m 0 means as written in the spectrum or CID if no info
-        '   -m 1 means CID
-        '   -m 2 means ETD
-        '   -m 3 means HCD
-
-        Dim intMSGFDBVersion As Integer = Integer.MaxValue
-
-        If mUsingMSGFDB Then
-            If Not String.IsNullOrEmpty(mMSGFDBVersion) AndAlso mMSGFDBVersion.StartsWith("v") Then
-                If Integer.TryParse(mMSGFDBVersion.Substring(1), intMSGFDBVersion) Then
-                    ' Using a specific version of MSGFDB
-                    ' intMSGFDBVersion should now be something like 6434, 6841, 6964, 7097 etc.
-                Else
-                    ' Unable to parse out an integer from mMSGFDBVersion
-                    intMSGFDBVersion = Integer.MaxValue
-                End If
-            End If
-        End If
-
-        If mUsingMSGFDB AndAlso intMSGFDBVersion >= 7097 Then
-            ' Always use -m 0 (assuming we're sending an mzXML file to MSGFDB)
-            CmdStr &= " -m 0"   ' as-written in the input file
-        Else
-            If mETDMode Then
-                CmdStr &= " -m 1"   ' ETD fragmentation
-            Else
-                CmdStr &= " -m 0"   ' CID fragmentation
-            End If
-        End If
-
-
-        CmdStr &= " -e 1"       ' Enzyme is Trypsin; other supported enzymes are 2: Chymotrypsin, 3: Lys-C, 4: Lys-N, 5: Glu-C, 6: Arg-C, 7: Asp-N, and 8: aLP
-        CmdStr &= " -fixMod 0"  ' No fixed mods on cysteine
-        CmdStr &= " -x 0"       ' Write out all matches for each spectrum
-        CmdStr &= " -p 1"       ' SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc & " " & CmdStr)
-
-        mMSGFRunner = New clsRunDosProgram(m_WorkDir) With {
-            .CreateNoWindow = False,
-            .CacheStandardOutput = False,
-            .EchoOutputToConsole = False,
-            .WriteConsoleOutputToFile = True,
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT)
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+//
+// Created 07/20/2010
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+
+using AnalysisManagerBase;
+using AnalysisManagerMsXmlGenPlugIn;
+using PHRPReader;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Xml;
+using MSGFResultsSummarizer;
+using PRISM.Processes;
+
+namespace AnalysisManagerMSGFPlugin
+{
+    /// <summary>
+    /// Primary class for running MSGF
+    /// </summary>
+    public class clsMSGFRunner : clsAnalysisToolRunnerBase
+    {
+        #region "Constants and enums"
+
+        private const float PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD = 2;
+        private const float PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED = 3;
+        private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 6;
+        private const float PROGRESS_PCT_MZXML_CREATED = 10;
+        private const float PROGRESS_PCT_MSGF_START = PROGRESS_PCT_MZXML_CREATED;
+        private const float PROGRESS_PCT_MSGF_COMPLETE = 95;
+        private const float PROGRESS_PCT_MSGF_POST_PROCESSING = 97;
+
+        public const string MSGF_RESULT_COLUMN_SpectrumFile = "#SpectrumFile";
+        public const string MSGF_RESULT_COLUMN_Title = "Title";
+        public const string MSGF_RESULT_COLUMN_ScanNumber = "Scan#";
+        public const string MSGF_RESULT_COLUMN_Annotation = "Annotation";
+        public const string MSGF_RESULT_COLUMN_Charge = "Charge";
+        public const string MSGF_RESULT_COLUMN_Protein_First = "Protein_First";
+        public const string MSGF_RESULT_COLUMN_Result_ID = "Result_ID";
+        public const string MSGF_RESULT_COLUMN_SpecProb = "SpecProb";
+        public const string MSGF_RESULT_COLUMN_Data_Source = "Data_Source";
+        public const string MSGF_RESULT_COLUMN_Collision_Mode = "Collision_Mode";
+
+        public const string MSGF_PHRP_DATA_SOURCE_SYN = "Syn";
+        public const string MSGF_PHRP_DATA_SOURCE_FHT = "FHT";
+
+        public const int MSGF_SEGMENT_ENTRY_COUNT = 25000;
+
+        // If the final segment is less than 5% of MSGF_SEGMENT_ENTRY_COUNT then combine the data with the previous segment
+        public const float MSGF_SEGMENT_OVERFLOW_MARGIN = 0.05f;
+
+        private const string MSGF_CONSOLE_OUTPUT = "MSGF_ConsoleOutput.txt";
+        private const string MSGF_JAR_NAME = "MSGF.jar";
+        private const string MSGFDB_JAR_NAME = "MSGFDB.jar";
+
+        [Obsolete("Old, unsupported tool")]
+        private const string MODa_JAR_NAME = "moda.jar";
+
+        [Obsolete("Old, unsupported tool")]
+        private const string MODPlus_JAR_NAME = "modp_pnnl.jar";
+
+        private struct udtSegmentFileInfoType
+        {
+            // Segment number
+            public int Segment;
+            // Full path to the file
+            public string FilePath;
+            // Number of entries in this segment
+            public int Entries;
         }
-        RegisterEvents(mMSGFRunner)
-        AddHandler mMSGFRunner.LoopWaiting, AddressOf MSGFRunner_LoopWaiting
 
-        Dim blnSuccess As Boolean
-        blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", True)
+        #endregion
 
-        If Not mToolVersionWritten Then
-            If String.IsNullOrWhiteSpace(mMSGFVersion) Then
-                Dim fiConsoleOutputfile As New FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
-                If fiConsoleOutputfile.Length = 0 Then
-                    ' File is 0-bytes; delete it
-                    DeleteTemporaryfile(fiConsoleOutputfile.FullName)
-                Else
-                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
-                End If
-            End If
-            mToolVersionWritten = StoreToolVersionInfo()
-        End If
+        #region "Module variables"
 
-        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
-        End If
+        private bool mETDMode = false;
 
-        If Not blnSuccess Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Error running MSGF, job " & m_JobNum)
-        End If
+        private string mMSGFInputFilePath = string.Empty;
+        private string mMSGFResultsFilePath = string.Empty;
+        private string mCurrentMSGFResultsFilePath = string.Empty;
 
-        Return blnSuccess
-    End Function
+        private int mMSGFInputFileLineCount = 0;
+        private int mMSGFLineCountPreviousSegments = 0;
 
-    Private Function CombineMSGFResultFiles(
-      strMSGFOutputFilePath As String,
-      lstResultFiles As List(Of String)) As Boolean
+        private bool mProcessingMSGFDBCollisionModeData;
+        private int mCollisionModeIteration;
 
-        Try
+        private bool mKeepMSGFInputFiles = false;
 
-            Dim strLineIn As String
-            Dim intLinesRead As Integer
-            Dim blnHeaderWritten As Boolean
+        private bool mToolVersionWritten;
+        private string mMSGFVersion = string.Empty;
+        private string mMSGFProgLoc = string.Empty;
 
-            ' Create the output file
-            Using swOutFile = New StreamWriter(New FileStream(strMSGFOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+        private string mMSXmlGeneratorAppPath = string.Empty;
 
-                ' Step through the input files and append the results
-                blnHeaderWritten = False
-                For Each strResultFile As String In lstResultFiles
-                    Using srInFile = New StreamReader(New FileStream(strResultFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-                        intLinesRead = 0
-                        Do While Not srInFile.EndOfStream
-                            strLineIn = srInFile.ReadLine()
-                            intLinesRead += 1
+        private clsMSXMLCreator mMSXmlCreator;
 
-                            If Not blnHeaderWritten Then
-                                blnHeaderWritten = True
-                                swOutFile.WriteLine(strLineIn)
-                            Else
-                                If intLinesRead > 1 Then
-                                    swOutFile.WriteLine(strLineIn)
-                                End If
-                            End If
+        private bool mUsingMSGFDB = true;
+        private string mMSGFDBVersion = "Unknown";
 
-                        Loop
-                    End Using
+        private string mJavaProgLoc = string.Empty;
 
-                Next
+        private string mConsoleOutputErrorMsg;
 
-            End Using
+        private clsMSGFInputCreator withEventsField_mMSGFInputCreator;
 
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Exception combining MSGF result files", ex)
-            Return False
-        End Try
+        private clsMSGFInputCreator mMSGFInputCreator
+        {
+            get { return withEventsField_mMSGFInputCreator; }
+            set
+            {
+                if (withEventsField_mMSGFInputCreator != null)
+                {
+                    withEventsField_mMSGFInputCreator.ErrorEvent -= mMSGFInputCreator_ErrorEvent;
+                    withEventsField_mMSGFInputCreator.WarningEvent -= mMSGFInputCreator_WarningEvent;
+                }
+                withEventsField_mMSGFInputCreator = value;
+                if (withEventsField_mMSGFInputCreator != null)
+                {
+                    withEventsField_mMSGFInputCreator.ErrorEvent += mMSGFInputCreator_ErrorEvent;
+                    withEventsField_mMSGFInputCreator.WarningEvent += mMSGFInputCreator_WarningEvent;
+                }
+            }
+        }
 
-        Return True
-    End Function
+        private clsRunDosProgram mMSGFRunner;
 
-    Private Function LoadMSGFResults(
-      strMSGFResultsFilePath As String,
-      <Out()> ByRef lstMSGFResults As Dictionary(Of Integer, String)) As Boolean
+        private int mMSGFInputCreatorErrorCount;
+        private int mMSGFInputCreatorWarningCount;
 
-        Dim strLineIn As String
-        Dim strSplitLine() As String
-        Dim intMSGFSpecProbColIndex As Integer
+        #endregion
 
-        Dim intResultID As Integer
-        lstMSGFResults = New Dictionary(Of Integer, String)
+        #region "Methods"
 
-        Try
-            Dim blnSuccess = True
+        /// <summary>
+        /// Runs MSGF
+        /// </summary>
+        /// <returns>IJobParams.CloseOutType representing success or failure</returns>
+        /// <remarks></remarks>
+        public override IJobParams.CloseOutType RunTool()
+        {
+            // Set this to success for now
+            var eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
 
-            intMSGFSpecProbColIndex = -1
-            Using srInFile = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            //Call base class for initial setup
+            if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
+            var blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
 
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-                        strSplitLine = strLineIn.Split()
+            // Determine the raw data type
+            var eRawDataType = clsAnalysisResources.GetRawDataType(m_jobParams.GetParam("RawDataType"));
 
-                        If strSplitLine.Length > 0 Then
-                            If intMSGFSpecProbColIndex < 0 Then
-                                ' Assume this is the headerline, look for SpecProb
-                                For intIndex = 0 To strSplitLine.Length - 1
-                                    If strSplitLine(intIndex).ToLower() = "SpecProb".ToLower() Then
-                                        intMSGFSpecProbColIndex = intIndex
-                                        Exit For
-                                    End If
-                                Next
+            // Resolve eResultType
+            var eResultType = clsPHRPReader.GetPeptideHitResultType(m_jobParams.GetParam("ResultType"));
 
-                                If intMSGFSpecProbColIndex < 0 Then
-                                    ' Match not found; abort
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                         "SpecProb column not found in file " & strMSGFResultsFilePath)
-                                    blnSuccess = False
-                                    Exit Do
-                                End If
-                            Else
-                                ' Data line
-                                If Integer.TryParse(strSplitLine(0), intResultID) Then
+            if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
+            {
+                // Result type is not supported
+                var msg = "ResultType is not supported by MSGF: " + m_jobParams.GetParam("ResultType");
+                m_message = clsGlobal.AppendToComment(m_message, msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " + msg);
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-                                    If intMSGFSpecProbColIndex < strSplitLine.Length Then
-                                        Try
-                                            lstMSGFResults.Add(intResultID, strSplitLine(intMSGFSpecProbColIndex))
-                                        Catch ex As Exception
-                                            ' Ignore errors here
-                                            ' Possibly a key violation or a column index issue
-                                        End Try
-                                    End If
+            // Verify that program files exist
+            if (!DefineProgramPaths())
+            {
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
 
-                                End If
-                            End If
-                        End If
-                    End If
+            // Note: we will store the MSGF version info in the database after the program version is written to file MSGF_ConsoleOutput.txt
+            mToolVersionWritten = false;
+            mMSGFVersion = string.Empty;
+            mConsoleOutputErrorMsg = string.Empty;
 
-                Loop
+            mKeepMSGFInputFiles = m_jobParams.GetJobParameter("KeepMSGFInputFile", false);
+            var blnDoNotFilterPeptides = m_jobParams.GetJobParameter("MSGFIgnoreFilters", false);
+            var blnPostProcessingError = false;
 
-            End Using
+            try
+            {
+                var blnProcessingError = false;
 
-            Return blnSuccess
+                if (mUsingMSGFDB & eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+                {
+                    // Analysis tool is MSGF+ so we don't actually need to run the MSGF re-scorer
+                    // Simply copy the values from the MSGFDB result file
 
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Exception in LoadMSGFResults: " & ex.Message)
-            Return False
-        End Try
-    End Function
+                    StoreToolVersionInfoPrecomputedProbabilities(eResultType);
 
-    ''' <summary>
-    ''' Parse the MSGF console output file to determine the MSGF version
-    ''' </summary>
-    ''' <param name="strConsoleOutputFilePath"></param>
-    ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
+                    if (!CreateMSGFResultsFromMSGFDBResults())
+                    {
+                        blnProcessingError = true;
+                    }
+                }
+                else if (eResultType == clsPHRPReader.ePeptideHitResultType.MODa)
+                {
+                    // Analysis tool is MODa, which MSGF does not support
+                    // Instead, summarize the MODa results using FDR alone
 
-        ' Example console output
-        ' MSGF v7097 (12/29/2011)
-        ' MS-GF complete (total elapsed time: 507.68 sec)
+                    StoreToolVersionInfoPrecomputedProbabilities(eResultType);
 
-        Try
+                    if (!SummarizeMODaResults())
+                    {
+                        blnProcessingError = true;
+                    }
+                }
+                else if (eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
+                {
+                    // Analysis tool is MODPlus, which MSGF does not support
+                    // Instead, summarize the MODPlus results using FDR alone
 
-            If Not File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
+                    StoreToolVersionInfoPrecomputedProbabilities(eResultType);
+
+                    if (!SummarizeMODPlusResults())
+                    {
+                        blnProcessingError = true;
+                    }
+                }
+                else if (eResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                {
+                    // Analysis tool is MSPathFinder, which MSGF does not support
+                    // Instead, summarize the MSPathFinder results using FDR alone
+
+                    StoreToolVersionInfoPrecomputedProbabilities(eResultType);
+
+                    if (!SummarizeMSPathFinderResults())
+                    {
+                        blnProcessingError = true;
+                    }
+                }
+                else
+                {
+                    if (!ProcessFilesWrapper(eRawDataType, eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData))
+                    {
+                        blnProcessingError = true;
+                    }
+
+                    if (!blnProcessingError)
+                    {
+                        // Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
+                        // Will also make sure that all of the peptides have numeric SpecProb values
+                        // For peptides where MSGF reported an error, the MSGF SpecProb will be set to 1
+                        // If the Instrument Data was a .MGF file, then we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
+
+                        // Sleep for 1 second to give the MSGF results file a chance to finalize
+                        Thread.Sleep(1000);
+
+                        var blnSuccess = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath, blnMGFInstrumentData);
+
+                        if (!blnSuccess)
+                        {
+                            m_message = clsGlobal.AppendToComment(m_message, "MSGF results file post-processing error");
+                            blnPostProcessingError = true;
+                        }
+                    }
+                }
+
+                //Stop the job timer
+                m_StopTime = System.DateTime.UtcNow;
+
+                if (blnProcessingError)
+                {
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                //Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
+
+                //Make sure objects are released
+                Thread.Sleep(500);
+                // 500 msec delay
+                clsProgRunner.GarbageCollectNow();
+
+                var eResult = MakeResultsFolder();
+                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //MakeResultsFolder handles posting to local log, so set database error message and exit
+                    m_message = "Error making results folder";
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                eResult = MoveResultFiles();
+                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //MoveResultFiles moves the result files to the result folder
+                    m_message = "Error moving files into results folder";
+                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (blnProcessingError | eReturnCode == IJobParams.CloseOutType.CLOSEOUT_FAILED)
+                {
+                    // Try to save whatever files were moved into the results folder
+                    var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+                    objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                eResult = CopyResultsFolderToServer();
+                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    return eResult;
+                }
+
+                if (blnPostProcessingError)
+                {
+                    // When a post-processing error occurs, we copy the files to the server, but return CLOSEOUT_FAILED
+                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                var errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF");
+                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            //If we get to here, everything worked so exit happily
+            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private string AddFileNameSuffix(string strFilePath, int intSuffix)
+        {
+            return AddFileNameSuffix(strFilePath, intSuffix.ToString());
+        }
+
+        private string AddFileNameSuffix(string strFilePath, string strSuffix)
+        {
+            var fiFile = new FileInfo(strFilePath);
+            var strFilePathNew = Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) + "_" + strSuffix + fiFile.Extension);
+
+            return strFilePathNew;
+        }
+
+        /// <summary>
+        /// Examines the Sequest, X!Tandem, Inspect, or MSGFDB param file to determine if ETD mode is enabled
+        /// </summary>
+        /// <param name="eResultType"></param>
+        /// <param name="strSearchToolParamFilePath"></param>
+        /// <returns>True if success; false if an error</returns>
+        private bool CheckETDModeEnabled(clsPHRPReader.ePeptideHitResultType eResultType, string strSearchToolParamFilePath)
+        {
+            bool blnSuccess = false;
+
+            mETDMode = false;
+            blnSuccess = false;
+
+            if (string.IsNullOrEmpty(strSearchToolParamFilePath))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "PeptideHit param file path is empty; unable to continue");
+                return false;
+            }
+
+            m_StatusTools.CurrentOperation = "Checking whether ETD mode is enabled";
+
+            switch (eResultType)
+            {
+                case clsPHRPReader.ePeptideHitResultType.Sequest:
+                    blnSuccess = CheckETDModeEnabledSequest(strSearchToolParamFilePath);
+
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.XTandem:
+                    blnSuccess = CheckETDModeEnabledXTandem(strSearchToolParamFilePath);
+
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.Inspect:
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "Console output file not found: " & strConsoleOutputFilePath)
-                End If
+                        "Inspect does not support ETD data processing; will set mETDMode to False");
+                    blnSuccess = true;
 
-                Exit Sub
-            End If
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.MSGFDB:
+                    blnSuccess = CheckETDModeEnabledMSGFDB(strSearchToolParamFilePath);
 
-            If m_DebugLevel >= 3 Then
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.MODa:
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "MODa does not support ETD data processing; will set mETDMode to False");
+                    blnSuccess = true;
+
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.MODPlus:
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "MODPlus does not support ETD data processing; will set mETDMode to False");
+                    blnSuccess = true;
+
+                    break;
+                default:
+                    // Unknown result type
+                    break;
+            }
+
+            if (mETDMode)
+            {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Parsing file " & strConsoleOutputFilePath)
-            End If
-
-            Dim strLineIn As String
-            Dim intLinesRead As Integer
-            mConsoleOutputErrorMsg = String.Empty
-
-            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                intLinesRead = 0
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
-                    intLinesRead += 1
-
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        If intLinesRead <= 3 AndAlso String.IsNullOrWhiteSpace(mMSGFVersion) AndAlso strLineIn.StartsWith("MSGF v") Then
-                            ' Originally the first line was the MSGF version
-                            ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                            ' The third line is the MSGF version
-
-                            If m_DebugLevel >= 2 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF version: " & strLineIn)
-                            End If
-
-                            mMSGFVersion = String.Copy(strLineIn)
-
-                        Else
-                            If strLineIn.ToLower.Contains("error") Then
-                                If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                    mConsoleOutputErrorMsg = "Error running MSGF:"
-                                End If
-                                mConsoleOutputErrorMsg &= "; " & strLineIn
-                            End If
-                        End If
-                    End If
-                Loop
-
-            End Using
-
-        Catch ex As Exception
-            ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Error parsing console output file (" & strConsoleOutputFilePath & "): " &
-                                     ex.Message)
-            End If
-        End Try
-    End Sub
-
-
-    Private Function SplitMSGFInputFile(
-      intMSGFinputFileLineCount As Integer,
-      strMSGFInputFilePath As String,
-      intMSGFEntriesPerSegment As Integer,
-      lstSegmentFileInfo As List(Of udtSegmentFileInfoType)) As Boolean
-
-        Dim intLinesRead = 0
-        Dim strLineIn As String
-        Dim strHeaderLine As String = String.Empty
-
-        Dim intLineCountAllSegments = 0
-        Dim udtThisSegment As udtSegmentFileInfoType
-
-        Try
-            lstSegmentFileInfo.Clear()
-            If intMSGFEntriesPerSegment < 100 Then intMSGFEntriesPerSegment = 100
-
-            Using srInFile = New StreamReader(New FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-                Dim swOutFile As StreamWriter = Nothing
-
-                udtThisSegment.FilePath = String.Empty
-                udtThisSegment.Entries = 0
-                udtThisSegment.Segment = 0
-
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
-                    intLinesRead += 1
-
-                    If intLinesRead = 1 Then
-                        ' This is the header line; cache it so that we can write it out to the top of each input file
-                        strHeaderLine = String.Copy(strLineIn)
-                    End If
-
-                    If udtThisSegment.Segment = 0 OrElse udtThisSegment.Entries >= intMSGFEntriesPerSegment Then
-                        ' Need to create a new segment
-                        ' However, if the number of lines remaining to be written is less than 5% of intMSGFEntriesPerSegment then keep writing to this segment
-
-                        Dim intLineCountRemaining As Integer
-                        intLineCountRemaining = intMSGFinputFileLineCount - intLineCountAllSegments
-
-                        If udtThisSegment.Segment = 0 OrElse
-                           intLineCountRemaining > intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN Then
-
-                            If udtThisSegment.Segment > 0 Then
-                                ' Close the current segment
-                                swOutFile.Close()
-                                lstSegmentFileInfo.Add(udtThisSegment)
-                            End If
-
-                            ' Initialize a new segment
-                            udtThisSegment.Segment += 1
-                            udtThisSegment.Entries = 0
-                            udtThisSegment.FilePath = AddFileNameSuffix(strMSGFInputFilePath, udtThisSegment.Segment)
-
-                            swOutFile = New StreamWriter(New FileStream(udtThisSegment.FilePath, FileMode.Create,
-                                                                        FileAccess.Write, FileShare.Read))
-
-                            ' Write the header line to the new segment
-                            swOutFile.WriteLine(strHeaderLine)
-                        End If
-                    End If
-
-                    If intLinesRead > 1 Then
-                        swOutFile.WriteLine(strLineIn)
-                        udtThisSegment.Entries += 1
-                        intLineCountAllSegments += 1
-                    End If
-                Loop
-
-                ' Close the the output files
-                swOutFile.Close()
-                lstSegmentFileInfo.Add(udtThisSegment)
-
-            End Using
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Exception splitting MSGF input file", ex)
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Function StoreToolVersionInfo() As Boolean
-
-        Dim strToolVersionInfo As String
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                 "Determining tool version info")
-        End If
-
-        strToolVersionInfo = String.Copy(mMSGFVersion)
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(mMSGFProgLoc))
-
-        ioToolFiles.Add(New FileInfo(mMSXmlGeneratorAppPath))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Exception calling SetStepTaskToolVersion", ex)
-            Return False
-        End Try
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database when using MODa or MSGF+ probabilities to create the MSGF files
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Function StoreToolVersionInfoPrecomputedProbabilities(eResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                 "Determining tool version info")
-        End If
-
-        ' Lookup the version of AnalysisManagerMSGFPlugin
-        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerMSGFPlugin") Then
-            Return False
-        End If
-
-
-        Dim ioToolFiles As New List(Of FileInfo)
-
-        If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB Then
-            ' Store the path to MSGFDB.jar
-            ioToolFiles.Add(New FileInfo(mMSGFProgLoc))
-        End If
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-    End Function
-
-    Private Function SummarizeMSGFResults(eResultType As clsPHRPReader.ePeptideHitResultType) As Boolean
-
-        Dim objSummarizer As clsMSGFResultsSummarizer
-        Dim strConnectionString As String
-        Dim intJobNumber = 0
-        Dim blnPostResultsToDB As Boolean
-
-        Dim blnSuccess As Boolean
-
-        Try
-
-            ' Gigasax.DMS5
-            strConnectionString = m_mgrParams.GetParam("connectionstring")
-            If Integer.TryParse(m_JobNum, intJobNumber) Then
-                blnPostResultsToDB = True
-            Else
-                blnPostResultsToDB = False
-                m_message = "Job number is not numeric: " & m_JobNum &
-                            "; will not be able to post PSM results to the database"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            End If
-
-            objSummarizer = New clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString)
-            AddHandler objSummarizer.ErrorEvent, AddressOf MSGFResultsSummarizer_ErrorHandler
-
-            objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD
-
-            objSummarizer.ContactDatabase = True
-            objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB
-            objSummarizer.SaveResultsToTextFile = False
-            objSummarizer.DatasetName = m_Dataset
-
-            blnSuccess = objSummarizer.ProcessMSGFResults()
-
-            If Not blnSuccess Then
-                Dim errMsg = "Error calling ProcessMSGFResults"
-                m_message = clsGlobal.AppendToComment(m_message, errMsg)
-                If objSummarizer.ErrorMessage.Length > 0 Then
-                    errMsg &= ": " & objSummarizer.ErrorMessage
-                End If
-
-                errMsg &= "; input file name: " & objSummarizer.MSGFSynopsisFileName
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg)
-            Else
-                If objSummarizer.DatasetScanStatsLookupError Then
-                    m_message = clsGlobal.AppendToComment(m_message, objSummarizer.ErrorMessage)
-                End If
-            End If
-
-        Catch ex As Exception
-            Dim errMsg = "Exception summarizing the MSGF results"
-            m_message = clsGlobal.AppendToComment(m_message, errMsg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 errMsg & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return blnSuccess
-    End Function
-
-    Private Sub UpdateMSGFProgress(strMSGFResultsFilePath As String)
-
-        ' ReSharper disable once UseImplicitlyTypedVariableEvident
-        Static intErrorCount As Integer = 0
-
-        Dim intLineCount As Integer
-        Dim dblFraction As Double
-
-        Try
-
-            If mMSGFInputFileLineCount <= 0 Then Exit Sub
-            If Not File.Exists(strMSGFResultsFilePath) Then Exit Sub
-
-            ' Read the data from the results file
-            Using srMSGFResultsFile = New StreamReader(New FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                intLineCount = 0
-
-                Do While Not srMSGFResultsFile.EndOfStream
-                    srMSGFResultsFile.ReadLine()
-                    intLineCount += 1
-                Loop
-
-            End Using
-
-            ' Update the overall progress
-            dblFraction = (intLineCount + mMSGFLineCountPreviousSegments) / mMSGFInputFileLineCount
-
-            If mProcessingMSGFDBCollisionModeData Then
-                ' Running MSGF twice; first for CID spectra and then for ETD spectra
-                ' Divide the progress by 2, then add 0.5 if we're on the second iteration
-
-                dblFraction = dblFraction / 2.0
-                If mCollisionModeIteration > 1 Then
-                    dblFraction = dblFraction + 0.5
-                End If
-            End If
-
-            m_progress =
-                CSng(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * dblFraction)
-            m_StatusTools.UpdateAndWrite(m_progress)
-
-        Catch ex As Exception
-            ' Log errors the first 3 times they occur
-            intErrorCount += 1
-            If intErrorCount <= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Error counting the number of lines in the MSGF results file, " &
-                                     strMSGFResultsFilePath, ex)
-            End If
-        End Try
-    End Sub
-
-    Private Function UpdateProteinModsFile(eResultType As clsPHRPReader.ePeptideHitResultType,
-                                           strMSGFResultsFilePath As String) As Boolean
-        Dim Msg As String
-
-        Dim fiProteinModsFile As FileInfo
-        Dim fiProteinModsFileNew As FileInfo
-        Dim strLineIn As String
-
-        Dim lstMSGFResults As Dictionary(Of Integer, String)
-
-        Dim intMSGFSpecProbColIndex As Integer
-        Dim intResultID As Integer
-        Dim strMSGFSpecProb As String = String.Empty
-        Dim dblValue As Double
-
-        Dim blnSuccess As Boolean
-
-        Try
-            fiProteinModsFile = New FileInfo(Path.Combine(m_WorkDir,
-                                                          clsPHRPReader.GetPHRPProteinModsFileName(eResultType,
-                                                                                                   m_Dataset)))
-            fiProteinModsFileNew = New FileInfo(fiProteinModsFile.FullName & ".tmp")
-
-            If Not fiProteinModsFile.Exists Then
+                    "ETD search mode has been enabled since c and z ions were used for the peptide search");
+            }
+
+            return blnSuccess;
+        }
+
+        private bool CheckETDModeEnabledMSGFDB(string strSearchToolParamFilePath)
+        {
+            const string MSGFDB_FRAG_METHOD_TAG = "FragmentationMethodID";
+
+            string strLineIn = null;
+
+            string strFragMode = null;
+            int intFragMode = 0;
+
+            int intCharIndex = 0;
+
+            try
+            {
+                mETDMode = false;
+
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Reading the MSGF-DB parameter file: " + strSearchToolParamFilePath);
+                }
+
+                // Read the data from the MSGF-DB Param file
+                using (var srParamFile = new StreamReader(new FileStream(strSearchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srParamFile.EndOfStream)
+                    {
+                        strLineIn = srParamFile.ReadLine();
+
+                        if (!string.IsNullOrEmpty(strLineIn) && strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG))
+                        {
+                            // Check whether this line is FragmentationMethodID=2
+                            // Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)
+                            // This mode is not yet supported
+
+                            if (m_DebugLevel >= 3)
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    "MSGFDB " + MSGFDB_FRAG_METHOD_TAG + " line found: " + strLineIn);
+                            }
+
+                            // Look for the equals sign
+                            intCharIndex = strLineIn.IndexOf('=');
+                            if (intCharIndex > 0)
+                            {
+                                strFragMode = strLineIn.Substring(intCharIndex + 1).Trim();
+
+                                if (int.TryParse(strFragMode, out intFragMode))
+                                {
+                                    if (intFragMode == 2)
+                                    {
+                                        mETDMode = true;
+                                    }
+                                    else if (intFragMode == 4)
+                                    {
+                                        // ToDo: Figure out how to handle this mode
+                                        mETDMode = false;
+                                    }
+                                    else
+                                    {
+                                        mETDMode = false;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                    "MSGFDB " + MSGFDB_FRAG_METHOD_TAG +
+                                     " line does not have an equals sign; will assume not using ETD ions: " +
+                                    strLineIn);
+                            }
+
+                            // No point in checking any further since we've parsed the ion_series line
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string Msg = null;
+                Msg = "Error reading the MSGFDB param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                m_message = clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Examines the Sequest param file to determine if ETD mode is enabled
+        /// If it is, then sets mETDMode to True
+        /// </summary>
+        /// <param name="strSearchToolParamFilePath">Sequest parameter file to read</param>
+        /// <returns>True if success; false if an error</returns>
+        private bool CheckETDModeEnabledSequest(string strSearchToolParamFilePath)
+        {
+            const string SEQUEST_ION_SERIES_TAG = "ion_series";
+
+            string strLineIn = null;
+
+            string strIonWeightText = null;
+            string[] strIonWeights = null;
+
+            double dblCWeight = 0;
+            double dblZWeight = 0;
+
+            int intCharIndex = 0;
+
+            try
+            {
+                mETDMode = false;
+
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Reading the Sequest parameter file: " + strSearchToolParamFilePath);
+                }
+
+                // Read the data from the Sequest Param file
+                using (var srParamFile = new StreamReader(new FileStream(strSearchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srParamFile.EndOfStream)
+                    {
+                        strLineIn = srParamFile.ReadLine();
+
+                        if (!string.IsNullOrEmpty(strLineIn) && strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG))
+                        {
+                            // This is the ion_series line
+                            // If ETD mode is enabled, then c and z ions will have a 1 in this series of numbers:
+                            // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
+                            //
+                            // The key to parsing this data is:
+                            // ion_series = - - -  a   b   c  --- --- ---  x   y   z
+                            // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
+
+                            if (m_DebugLevel >= 3)
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    "Sequest " + SEQUEST_ION_SERIES_TAG + " line found: " + strLineIn);
+                            }
+
+                            // Look for the equals sign
+                            intCharIndex = strLineIn.IndexOf('=');
+                            if (intCharIndex > 0)
+                            {
+                                strIonWeightText = strLineIn.Substring(intCharIndex + 1).Trim();
+
+                                // Split strIonWeightText on spaces
+                                strIonWeights = strIonWeightText.Split(' ');
+
+                                if (strIonWeights.Length >= 12)
+                                {
+                                    dblCWeight = 0;
+                                    dblZWeight = 0;
+
+                                    double.TryParse(strIonWeights[5], out dblCWeight);
+                                    double.TryParse(strIonWeights[11], out dblZWeight);
+
+                                    if (m_DebugLevel >= 3)
+                                    {
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                            "Sequest " + SEQUEST_ION_SERIES_TAG + " line has c-ion weighting = " + dblCWeight +
+                                            " and z-ion weighting = " + dblZWeight);
+                                    }
+
+                                    if (dblCWeight > 0 || dblZWeight > 0)
+                                    {
+                                        mETDMode = true;
+                                    }
+                                }
+                                else
+                                {
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                        "Sequest " + SEQUEST_ION_SERIES_TAG + " line does not have 11 numbers; will assume not using ETD ions: " +
+                                        strLineIn);
+                                }
+                            }
+                            else
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                    "Sequest " + SEQUEST_ION_SERIES_TAG + " line does not have an equals sign; will assume not using ETD ions: " +
+                                    strLineIn);
+                            }
+
+                            // No point in checking any further since we've parsed the ion_series line
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string Msg = null;
+                Msg = "Error reading the Sequest param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                m_message = clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Examines the X!Tndem param file to determine if ETD mode is enabled
+        /// If it is, then sets mETDMode to True
+        /// </summary>
+        /// <param name="strSearchToolParamFilePath">X!Tandem XML parameter file to read</param>
+        /// <returns>True if success; false if an error</returns>
+        private bool CheckETDModeEnabledXTandem(string strSearchToolParamFilePath)
+        {
+            XmlNodeList objSelectedNodes = null;
+
+            int intSettingIndex = 0;
+            int intMatchIndex = 0;
+
+            try
+            {
+                mETDMode = false;
+
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Reading the X!Tandem parameter file: " + strSearchToolParamFilePath);
+                }
+
+                // Open the parameter file
+                // Look for either of these lines:
+                //   <note type="input" label="scoring, c ions">yes</note>
+                //   <note type="input" label="scoring, z ions">yes</note>
+
+                var objParamFile = new XmlDocument();
+                objParamFile.PreserveWhitespace = true;
+                objParamFile.Load(strSearchToolParamFilePath);
+
+                for (intSettingIndex = 0; intSettingIndex <= 1; intSettingIndex++)
+                {
+                    switch (intSettingIndex)
+                    {
+                        case 0:
+                            objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, c ions']");
+                            break;
+                        case 1:
+                            objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']");
+                            break;
+                    }
+
+                    if ((objSelectedNodes != null))
+                    {
+                        for (intMatchIndex = 0; intMatchIndex <= objSelectedNodes.Count - 1; intMatchIndex++)
+                        {
+                            // Make sure this node has an attribute named type with value "input"
+                            var objAttributeNode = objSelectedNodes.Item(intMatchIndex).Attributes.GetNamedItem("type");
+
+                            if (objAttributeNode == null)
+                            {
+                                // Node does not have an attribute named "type"
+                            }
+                            else
+                            {
+                                if (objAttributeNode.Value.ToLower() == "input")
+                                {
+                                    // Valid node; examine its InnerText value
+                                    if (objSelectedNodes.Item(intMatchIndex).InnerText.ToLower() == "yes")
+                                    {
+                                        mETDMode = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (mETDMode)
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                string Msg = null;
+                Msg = "Error reading the X!Tandem param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                m_message = clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file");
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ConvertMzMLToMzXML()
+        {
+            bool blnSuccess = false;
+
+            m_StatusTools.CurrentOperation = "Creating the .mzXML file";
+
+            mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
+            RegisterEvents(mMSXmlCreator);
+            mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
+
+            blnSuccess = mMSXmlCreator.ConvertMzMLToMzXML();
+
+            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            {
+                m_message = mMSXmlCreator.ErrorMessage;
+                if (string.IsNullOrEmpty(m_message))
+                {
+                    m_message = "Unknown error creating the mzXML file";
+                }
+            }
+
+            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZML_EXTENSION);
+
+            return blnSuccess;
+        }
+
+        /// <summary>
+        /// Creates the MSGF Input file by reading Sequest, X!Tandem, or Inspect PHRP result file and extracting the relevant information
+        /// Uses the ModSummary.txt file to determine the dynamic and static mods used
+        /// </summary>
+        /// <param name="eResultType"></param>
+        /// <param name="blnDoNotFilterPeptides"></param>
+        /// <param name="blnMGFInstrumentData"></param>
+        /// <param name="intMSGFInputFileLineCount"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private bool CreateMSGFInputFile(clsPHRPReader.ePeptideHitResultType eResultType, bool blnDoNotFilterPeptides, bool blnMGFInstrumentData, out int intMSGFInputFileLineCount)
+        {
+            string Msg = null;
+
+            var blnSuccess = true;
+
+            intMSGFInputFileLineCount = 0;
+            mMSGFInputCreatorErrorCount = 0;
+            mMSGFInputCreatorWarningCount = 0;
+
+            // Convert the peptide-hit result file (from PHRP) to a tab-delimited input file to be read by MSGF
+            switch (eResultType)
+            {
+                case clsPHRPReader.ePeptideHitResultType.Sequest:
+
+                    // Convert Sequest results to input format required for MSGF
+                    mMSGFInputCreator = new clsMSGFInputCreatorSequest(m_Dataset, m_WorkDir);
+
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.XTandem:
+
+                    // Convert X!Tandem results to input format required for MSGF
+                    mMSGFInputCreator = new clsMSGFInputCreatorXTandem(m_Dataset, m_WorkDir);
+
+                    break;
+
+                case clsPHRPReader.ePeptideHitResultType.Inspect:
+
+                    // Convert Inspect results to input format required for MSGF
+                    mMSGFInputCreator = new clsMSGFInputCreatorInspect(m_Dataset, m_WorkDir);
+
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.MSGFDB:
+
+                    // Convert MSGFDB results to input format required for MSGF
+                    mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
+
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.MODa:
+
+                    // Convert MODa results to input format required for MSGF
+                    mMSGFInputCreator = new clsMSGFInputCreatorMODa(m_Dataset, m_WorkDir);
+
+                    break;
+                case clsPHRPReader.ePeptideHitResultType.MODPlus:
+
+                    // Convert MODPlus results to input format required for MSGF
+                    mMSGFInputCreator = new clsMSGFInputCreatorMODPlus(m_Dataset, m_WorkDir);
+
+                    break;
+                default:
+                    // Should never get here; invalid result type specified
+                    Msg = "Invalid PeptideHit ResultType specified: " + eResultType;
+                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "clsMSGFToolRunner.CreateMSGFInputFile(); " + Msg);
+
+                    blnSuccess = false;
+                    break;
+            }
+
+            if (blnSuccess)
+            {
+                mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath;
+                mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath;
+
+                mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides;
+                mMSGFInputCreator.MgfInstrumentData = blnMGFInstrumentData;
+
+                m_StatusTools.CurrentOperation = "Creating the MSGF Input file";
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the MSGF Input file");
+                }
+
+                blnSuccess = mMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles();
+
+                intMSGFInputFileLineCount = mMSGFInputCreator.MSGFInputFileLineCount;
+
+                if (!blnSuccess)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "mMSGFInputCreator.MSGFDataFileLineCount returned False");
+                }
+                else
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "CreateMSGFInputFileUsingPHRPResultFile complete; " + intMSGFInputFileLineCount + " lines of data");
+                    }
+                }
+            }
+
+            return blnSuccess;
+        }
+
+        private bool SummarizeMODaResults()
+        {
+            bool blnSuccess = false;
+
+            // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
+            // Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODa results
+            // Post the results to the database
+            blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODa);
+
+            if (blnSuccess)
+            {
+                // We didn't actually run MSGF, so these files aren't needed
+                m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
+                m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
+            }
+
+            return blnSuccess;
+        }
+
+        private bool SummarizeMODPlusResults()
+        {
+            bool blnSuccess = false;
+
+            // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
+            // Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODPlus results
+            // Post the results to the database
+            blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODPlus);
+
+            if (blnSuccess)
+            {
+                // We didn't actually run MSGF, so these files aren't needed
+                m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
+                m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
+            }
+
+            return blnSuccess;
+        }
+
+        private bool SummarizeMSPathFinderResults()
+        {
+            bool blnSuccess = false;
+
+            // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
+            // Will use SpecEValue in place of MSGF SpecProb
+            // Post the results to the database
+            blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSPathFinder);
+
+            if (blnSuccess)
+            {
+                // We didn't actually run MSGF, so these files aren't needed
+                m_jobParams.AddResultFileToSkip("MSGF_AnalysisSummary.txt");
+                m_jobParams.AddResultFileToSkip("Tool_Version_Info_MSGF.txt");
+            }
+
+            return blnSuccess;
+        }
+
+        private bool CreateMSGFResultsFromMSGFDBResults()
+        {
+            clsMSGFInputCreatorMSGFDB objMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
+            bool blnSuccess = false;
+
+            if (!CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()))
+            {
+                return false;
+            }
+
+            if (!CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_FHT.ToLower()))
+            {
+                return false;
+            }
+
+            // Summarize the results in the _syn_MSGF.txt file
+            // Post the results to the database
+            blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFDB);
+
+            return blnSuccess;
+        }
+
+        private bool CreateMSGFResultsFromMSGFPlusResults(clsMSGFInputCreatorMSGFDB objMSGFInputCreator, string strSynOrFHT)
+        {
+            var sourceFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_" + strSynOrFHT + ".txt");
+
+            if (!File.Exists(sourceFilePath))
+            {
+                var sourceFilePathAlternate = Path.Combine(m_WorkDir, m_Dataset + "_msgfdb_" + strSynOrFHT + ".txt");
+                if (!File.Exists(sourceFilePathAlternate))
+                {
+                    m_message = "Input file not found: " + Path.GetFileName(sourceFilePath);
+                    return false;
+                }
+                sourceFilePath = sourceFilePathAlternate;
+            }
+
+            var success = objMSGFInputCreator.CreateMSGFFileUsingMSGFDBSpecProb(sourceFilePath, strSynOrFHT);
+
+            if (!success)
+            {
+                m_message = "Error creating MSGF file for " + Path.GetFileName(sourceFilePath);
+                if (!string.IsNullOrEmpty(objMSGFInputCreator.ErrorMessage))
+                {
+                    m_message += ": " + objMSGFInputCreator.ErrorMessage;
+                }
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        private bool CreateMzXMLFile()
+        {
+            bool blnSuccess = false;
+
+            m_StatusTools.CurrentOperation = "Creating the .mzXML file";
+
+            string strMzXmlFilePath = null;
+            strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+
+            if (File.Exists(strMzXmlFilePath))
+            {
+                // File already exists; nothing to do
+                return true;
+            }
+
+            mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
+            RegisterEvents(mMSXmlCreator);
+            mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
+
+            blnSuccess = mMSXmlCreator.CreateMZXMLFile();
+
+            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            {
+                m_message = mMSXmlCreator.ErrorMessage;
+                if (string.IsNullOrEmpty(m_message))
+                {
+                    m_message = "Unknown error creating the mzXML file";
+                }
+            }
+
+            CopyMzXMLFileToServerCache(strMzXmlFilePath, string.Empty, Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath), blnPurgeOldFilesIfNeeded: true);
+
+            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+
+            return blnSuccess;
+        }
+
+        private bool DefineProgramPaths()
+        {
+            // mJavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+            // Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
+            mJavaProgLoc = GetJavaProgLoc();
+            if (string.IsNullOrEmpty(mJavaProgLoc))
+            {
+                return false;
+            }
+
+            // Determine the path to the MSGFDB program (which contains the MSGF class); we also allow for the possibility of calling the legacy version of MSGF
+            mMSGFProgLoc = DetermineMSGFProgramLocation();
+
+            if (string.IsNullOrEmpty(mMSGFProgLoc))
+            {
+                if (string.IsNullOrEmpty(m_message))
+                {
+                    m_message = "Error determining MSGF program location";
+                }
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
+
+            mMSXmlGeneratorAppPath = base.GetMSXmlGeneratorAppPath();
+
+            return true;
+        }
+
+        private string DetermineMSGFProgramLocation()
+        {
+            var strStepToolName = "MSGFDB";
+            var strProgLocManagerParamName = "MSGFDbProgLoc";
+            string strExeName = MSGFDB_JAR_NAME;
+
+            mUsingMSGFDB = true;
+
+            // Note that as of 12/20/2011 we are using MSGFDB.jar to access the MSGF class
+            // In order to allow the old version of MSGF to be run, we must look for parameter MSGF_Version
+
+            // Check whether the settings file specifies that a specific version of the step tool be used
+            string strMSGFStepToolVersion = m_jobParams.GetParam("MSGF_Version");
+
+            if (!string.IsNullOrWhiteSpace(strMSGFStepToolVersion))
+            {
+                // Specific version is defined
+                // Check whether the version is one of the known versions for the old MSGF
+
+                if (IsLegacyMSGFVersion(strMSGFStepToolVersion))
+                {
+                    // Use MSGF
+
+                    strStepToolName = "MSGF";
+                    strProgLocManagerParamName = "MSGFLoc";
+                    strExeName = MSGF_JAR_NAME;
+
+                    mUsingMSGFDB = false;
+                }
+                else
+                {
+                    // Use MSGFDB
+                    mUsingMSGFDB = true;
+                    mMSGFDBVersion = string.Copy(strMSGFStepToolVersion);
+                }
+            }
+            else
+            {
+                // Use MSGFDB
+                mUsingMSGFDB = true;
+                mMSGFDBVersion = "Production_Release";
+            }
+
+            return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strMSGFStepToolVersion);
+        }
+
+        public static bool IsLegacyMSGFVersion(string strStepToolVersion)
+        {
+            switch (strStepToolVersion.ToLower())
+            {
+                case "v2010-11-16":
+                case "v2011-09-02":
+                case "v6393":
+                case "v6432":
+                    // Legacy MSGF
+
+                    return true;
+                default:
+                    // Using MSGF inside MSGFDB
+
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Compare intPrecursorMassErrorCount to intLinesRead
+        /// </summary>
+        /// <param name="intLinesRead"></param>
+        /// <param name="intPrecursorMassErrorCount"></param>
+        /// <returns>True if more than 10% of the results have a precursor mass error</returns>
+        /// <remarks></remarks>
+        private bool PostProcessMSGFCheckPrecursorMassErrorCount(int intLinesRead, int intPrecursorMassErrorCount)
+        {
+            const int MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT = 10;
+
+            float sngPercentDataPrecursorMassError = 0;
+            string Msg = null;
+            bool blnTooManyPrecursorMassMismatches = false;
+
+            try
+            {
+                // If 10% or more of the data has a message like "N/A: precursor mass != peptide mass (3571.8857 vs 3581.9849)"
+                // then set blnTooManyPrecursorMassMismatches to True
+
+                blnTooManyPrecursorMassMismatches = false;
+
+                if (intLinesRead >= 2 && intPrecursorMassErrorCount > 0)
+                {
+                    sngPercentDataPrecursorMassError = Convert.ToSingle(intPrecursorMassErrorCount / intLinesRead * 100);
+
+                    Msg = sngPercentDataPrecursorMassError.ToString("0.0") +
+                          "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass";
+
+                    if (sngPercentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT)
+                    {
+                        Msg += "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                        blnTooManyPrecursorMassMismatches = true;
+                    }
+                    else
+                    {
+                        Msg += "; this is below the error threshold of " + MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT +
+                               "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+            }
+
+            return blnTooManyPrecursorMassMismatches;
+        }
+
+        /// <summary>
+        /// Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
+        /// Will also look for non-numeric values in the SpecProb column
+        /// Examples:
+        ///   N/A: unrecognizable annotation
+        ///   N/A: precursor mass != peptide mass (4089.068 vs 4078.069)
+        /// the new MSGF result files will guarantee that the SpecProb column has a number,
+        ///   but will have an additional column called SpecProbNotes with any notes or warnings
+        /// The synopsis-based MSGF results will be extended to include any entries skipped when
+        ///  creating the MSGF input file (to aid in linking up files later)
+        /// </summary>
+        /// <param name="eResultType">PHRP result type</param>
+        /// <param name="strMSGFResultsFilePath">MSGF results file to examine</param>
+        /// <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
+        /// <returns>True if success; false if one or more errors</returns>
+        /// <remarks></remarks>
+        private bool PostProcessMSGFResults(clsPHRPReader.ePeptideHitResultType eResultType, string strMSGFResultsFilePath, bool blnMGFInstrumentData)
+        {
+            FileInfo fiInputFile;
+
+            string strMSGFSynopsisResults = null;
+
+            bool blnSuccess = false;
+            var blnFirstHitsDataPresent = false;
+            var blnTooManyErrors = false;
+
+            try
+            {
+                if (string.IsNullOrEmpty(strMSGFResultsFilePath))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "MSGF Results File path is empty; unable to continue");
+                    return false;
+                }
+
+                m_StatusTools.CurrentOperation = "MSGF complete; post-processing the results";
+
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF complete; post-processing the results");
+                }
+
+                fiInputFile = new FileInfo(strMSGFResultsFilePath);
+
+                // Define the path to write the synopsis MSGF results to
+                strMSGFSynopsisResults = Path.Combine(fiInputFile.DirectoryName, Path.GetFileNameWithoutExtension(fiInputFile.Name) + "_PostProcess.txt");
+
+                m_progress = PROGRESS_PCT_MSGF_POST_PROCESSING;
+                m_StatusTools.UpdateAndWrite(m_progress);
+
+                blnSuccess = PostProcessMSGFResultsWork(strMSGFResultsFilePath, strMSGFSynopsisResults, blnMGFInstrumentData, out blnFirstHitsDataPresent, out blnTooManyErrors);
+            }
+            catch (Exception ex)
+            {
+                var errMsg = "Error post-processing the MSGF Results file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file");
+
+                return false;
+            }
+
+            try
+            {
+                // Now replace the _MSGF.txt file with the _MSGF_PostProcess.txt file
+                // For example, replace:
+                //   QC_Shew_Dataset_syn_MSGF.txt
+                // With the contents of:
+                //   QC_Shew_Dataset_syn_MSGF_PostProcess.txt
+
+                Thread.Sleep(500);
+
+                // Delete the original file
+                fiInputFile.Delete();
+                Thread.Sleep(500);
+
+                // Rename the _PostProcess.txt file
+                var fiMSGFSynFile = new FileInfo(strMSGFSynopsisResults);
+
+                fiMSGFSynFile.MoveTo(strMSGFResultsFilePath);
+            }
+            catch (Exception ex)
+            {
+                var errMsg = "Error replacing the original MSGF Results file with the post-processed one: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file");
+
+                return false;
+            }
+
+            if (blnSuccess)
+            {
+                // Summarize the results in the _syn_MSGF.txt file
+                // Post the results to the database
+                SummarizeMSGFResults(eResultType);
+            }
+
+            if (blnSuccess && blnFirstHitsDataPresent)
+            {
+                // Write out the First-Hits file results
+                blnSuccess = mMSGFInputCreator.CreateMSGFFirstHitsFile();
+            }
+
+            if (blnSuccess & eResultType != clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            {
+                blnSuccess = UpdateProteinModsFile(eResultType, strMSGFResultsFilePath);
+            }
+
+            if (blnTooManyErrors)
+            {
+                return false;
+            }
+            else
+            {
+                return blnSuccess;
+            }
+        }
+
+        /// <summary>
+        /// Process the data in strMSGFResultsFilePath to create strMSGFSynopsisResults
+        /// </summary>
+        /// <param name="strMSGFResultsFilePath">MSGF Results file path</param>
+        /// <param name="strMSGFSynopsisResults">MSGF synopsis file path</param>
+        /// <param name="blnMGFInstrumentData">True when the instrument data file is a .mgf file</param>
+        /// <param name="blnFirstHitsDataPresent">Will be set to True if First-hits data is present</param>
+        /// <param name="blnTooManyErrors">Will be set to True if too many errors occur</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private bool PostProcessMSGFResultsWork(string strMSGFResultsFilePath, string strMSGFSynopsisResults, bool blnMGFInstrumentData,
+            out bool blnFirstHitsDataPresent, out bool blnTooManyErrors)
+        {
+            const int MAX_ERRORS_TO_LOG = 5;
+
+            var chSepChars = new char[] { '\t' };
+
+            string strLineIn = null;
+            string[] strSplitLine = null;
+
+            int intLinesRead = 0;
+            int intSpecProbErrorCount = 0;
+            int intPrecursorMassErrorCount = 0;
+            int intMGFLookupErrorCount = 0;
+
+            string strOriginalPeptide = null;
+            string strScan = null;
+            string strCharge = null;
+            string strProtein = null;
+            string strPeptide = null;
+            string strResultID = null;
+            string strSpecProb = null;
+            string strDataSource = null;
+            string strNotes = null;
+
+            string strMSGFResultData = null;
+            string strOriginalPeptideInfo = null;
+
+            int intResultID = 0;
+            double dblSpecProb = 0;
+
+            string[] strSkipInfo = null;
+
+            bool blnSkipLine = false;
+            bool blnHeaderLineParsed = false;
+
+            ///////////////////////////////////////////////////////
+            // Note: Do not put a Try/Catch block in this function
+            // Allow the calling function to catch any errors
+            ///////////////////////////////////////////////////////
+
+            // Initialize the column mapping
+            // Using a case-insensitive comparer
+            var objColumnHeaders = new SortedDictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+
+            // Define the default column mapping
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpectrumFile, 0);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Title, 1);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_ScanNumber, 2);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Annotation, 3);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Charge, 4);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Protein_First, 5);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Result_ID, 6);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Data_Source, 7);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Collision_Mode, 8);
+            objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 9);
+
+            // Read the data from the MSGF Result file and
+            // write the Synopsis MSGF Results to a new file
+            using (var srMSGFResults = new StreamReader(new FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+            using (var swMSGFSynFile = new StreamWriter(new FileStream(strMSGFSynopsisResults, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            {
+                // Write out the headers to swMSGFSynFile
+                mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile);
+
+                blnHeaderLineParsed = false;
+                blnFirstHitsDataPresent = false;
+                blnTooManyErrors = false;
+
+                intLinesRead = 0;
+                intSpecProbErrorCount = 0;
+                intPrecursorMassErrorCount = 0;
+                intMGFLookupErrorCount = 0;
+
+                while (!srMSGFResults.EndOfStream)
+                {
+                    strLineIn = srMSGFResults.ReadLine();
+                    intLinesRead += 1;
+                    blnSkipLine = false;
+
+                    if (!string.IsNullOrEmpty(strLineIn))
+                    {
+                        strSplitLine = strLineIn.Split('\t');
+
+                        if (!blnHeaderLineParsed)
+                        {
+                            if (strSplitLine[0].ToLower() == MSGF_RESULT_COLUMN_SpectrumFile.ToLower())
+                            {
+                                // Parse the header line to confirm the column ordering
+                                clsPHRPReader.ParseColumnHeaders(strSplitLine, objColumnHeaders);
+                                blnSkipLine = true;
+                            }
+
+                            blnHeaderLineParsed = true;
+                        }
+
+                        if (!blnSkipLine && strSplitLine.Length >= 4)
+                        {
+                            strOriginalPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders);
+                            strScan = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders);
+                            strCharge = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders);
+                            strProtein = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders);
+                            strPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders);
+                            strResultID = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders);
+                            strSpecProb = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders);
+                            strDataSource = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders);
+                            strNotes = string.Empty;
+
+                            if (blnMGFInstrumentData)
+                            {
+                                // Update the scan number
+                                int intMGFScanIndex = 0;
+                                var intActualScanNumber = 0;
+                                if (int.TryParse(strScan, out intMGFScanIndex))
+                                {
+                                    intActualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(intMGFScanIndex);
+                                }
+
+                                if (intActualScanNumber == 0)
+                                {
+                                    intMGFLookupErrorCount += 1;
+
+                                    // Log the first 5 instances to the log file as warnings
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                        "Unable to determine the scan number for MGF spectrum index " + strScan + " on line  " + intLinesRead +
+                                        " in the result file");
+                                }
+                                strScan = intActualScanNumber.ToString();
+                            }
+
+                            if (double.TryParse(strSpecProb, out dblSpecProb))
+                            {
+                                if (strOriginalPeptide != strPeptide)
+                                {
+                                    strNotes = string.Copy(strPeptide);
+                                }
+
+                                // Update strSpecProb to reduce the number of significant figures
+                                strSpecProb = dblSpecProb.ToString("0.000000E+00");
+                            }
+                            else
+                            {
+                                // The specProb column does not contain a number
+                                intSpecProbErrorCount += 1;
+
+                                if (intSpecProbErrorCount <= MAX_ERRORS_TO_LOG)
+                                {
+                                    // Log the first 5 instances to the log file as warnings
+
+                                    if (strOriginalPeptide != strPeptide)
+                                    {
+                                        strOriginalPeptideInfo = ", original peptide sequence " + strOriginalPeptide;
+                                    }
+                                    else
+                                    {
+                                        strOriginalPeptideInfo = string.Empty;
+                                    }
+
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                        "MSGF SpecProb is not numeric on line " + intLinesRead + " in the result file: " + strSpecProb +
+                                        " (parent peptide " + strPeptide + ", Scan " + strScan + ", Result_ID " + strResultID + strOriginalPeptideInfo +
+                                        ")");
+                                }
+
+                                if (strSpecProb.Contains("precursor mass"))
+                                {
+                                    intPrecursorMassErrorCount += 1;
+                                }
+
+                                if (strOriginalPeptide != strPeptide)
+                                {
+                                    strNotes = strPeptide + "; " + strSpecProb;
+                                }
+                                else
+                                {
+                                    strNotes = string.Copy(strSpecProb);
+                                }
+
+                                // Change the spectrum probability to 1
+                                strSpecProb = "1";
+                            }
+
+                            strMSGFResultData = strScan + "\t" + strCharge + "\t" + strProtein + "\t" + strOriginalPeptide + "\t" + strSpecProb + "\t" + strNotes;
+
+                            // Add this result to the cached string dictionary
+                            mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide, strMSGFResultData);
+
+                            if (strDataSource == MSGF_PHRP_DATA_SOURCE_FHT)
+                            {
+                                // First-hits file
+                                blnFirstHitsDataPresent = true;
+                            }
+                            else
+                            {
+                                // Synopsis file
+
+                                // Add this entry to the MSGF synopsis results
+                                // Note that strOriginalPeptide has the original peptide sequence
+                                swMSGFSynFile.WriteLine(strResultID + "\t" + strMSGFResultData);
+
+                                // See if any entries were skipped when reading the synopsis file used to create the MSGF input file
+                                // If they were, add them to the validated MSGF file (to aid in linking up files later)
+
+                                if (int.TryParse(strResultID, out intResultID))
+                                {
+                                    var objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID);
+
+                                    for (var intIndex = 0; intIndex <= objSkipList.Count - 1; intIndex++)
+                                    {
+                                        // Split the entry on the tab character
+                                        // The item left of the tab is the skipped result id
+                                        // the item right of the tab is the protein corresponding to the skipped result id
+
+                                        strSkipInfo = objSkipList[intIndex].Split(chSepChars, 2);
+
+                                        swMSGFSynFile.WriteLine(strSkipInfo[0] + "\t" + strScan + "\t" + strCharge + "\t" + strSkipInfo[1] + "\t" +
+                                                                strOriginalPeptide + "\t" + strSpecProb + "\t" + strNotes);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (intSpecProbErrorCount > 1)
+            {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                     "PHRP ProteinMods.txt file not found: " & fiProteinModsFile.Name)
-                blnSuccess = True
-            Else
-                lstMSGFResults = New Dictionary(Of Integer, String)
-                blnSuccess = LoadMSGFResults(strMSGFResultsFilePath, lstMSGFResults)
-                If Not blnSuccess Then
-                    Return False
-                End If
+                    "MSGF SpecProb was not numeric for " + intSpecProbErrorCount + " entries in the MSGF result file");
+            }
 
-                intMSGFSpecProbColIndex = -1
-                blnSuccess = True
+            if (intMGFLookupErrorCount > 1)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "MGF Index-to-scan lookup failed for " + intMGFLookupErrorCount + " entries in the MSGF result file");
+                if (intLinesRead > 0 && intMGFLookupErrorCount / Convert.ToSingle(intLinesRead) > 0.1)
+                {
+                    blnTooManyErrors = true;
+                }
+            }
 
-                Using srSource = New StreamReader(New FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)),
-                      swTarget = New StreamWriter(New FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-                    Do While Not srSource.EndOfStream
-                        strLineIn = srSource.ReadLine()
+            // Check whether more than 10% of the results have a precursor mass error
+            if (PostProcessMSGFCheckPrecursorMassErrorCount(intLinesRead, intPrecursorMassErrorCount))
+            {
+                blnTooManyErrors = true;
+            }
 
-                        If String.IsNullOrEmpty(strLineIn) Then
-                            swTarget.WriteLine()
-                        Else
-                            Dim strSplitLine = strLineIn.Split().ToList()
+            // If we get here, return True
+            return true;
+        }
 
-                            If strSplitLine.Count <= 0 Then
-                                swTarget.WriteLine()
-                            Else
+        private bool ProcessFileWithMSGF(clsPHRPReader.ePeptideHitResultType eResultType, int intMSGFInputFileLineCount, string strMSGFInputFilePath, string strMSGFResultsFilePath)
+        {
+            bool blnSuccess = false;
 
-                                If intMSGFSpecProbColIndex < 0 Then
-                                    ' Assume this is the header line, look for MSGF_SpecProb
-                                    For intIndex = 0 To strSplitLine.Count - 1
-                                        If String.Equals(strSplitLine(intIndex), "MSGF_SpecProb", StringComparison.CurrentCultureIgnoreCase) Then
-                                            intMSGFSpecProbColIndex = intIndex
-                                            Exit For
-                                        End If
-                                    Next
+            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            {
+                // Input file may contain a mix of scan types (CID, ETD, and/or HCD)
+                // If this is the case, then need to call MSGF twice: first for the CID and HCD spectra, then again for the ETD spectra
+                blnSuccess = RunMSGFonMSGFDB(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
+            }
+            else
+            {
+                // Run MSGF
+                blnSuccess = RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
+            }
 
-                                    If intMSGFSpecProbColIndex < 0 Then
-                                        ' Match not found; abort
-                                        blnSuccess = False
-                                        Exit Do
-                                    End If
-                                Else
-                                    ' Data line; determine the ResultID
-                                    If Integer.TryParse(strSplitLine(0), intResultID) Then
+            return blnSuccess;
+        }
 
-                                        ' Lookup the MSGFSpecProb value for this ResultID
-                                        If lstMSGFResults.TryGetValue(intResultID, strMSGFSpecProb) Then
-                                            ' Only update the value if strMSGFSpecProb is a number
-                                            If Double.TryParse(strMSGFSpecProb, dblValue) Then
-                                                strSplitLine(intMSGFSpecProbColIndex) = strMSGFSpecProb
-                                            End If
-                                        End If
-                                    End If
-                                End If
+        private bool ProcessFilesWrapper(clsAnalysisResources.eRawDataTypeConstants eRawDataType, clsPHRPReader.ePeptideHitResultType eResultType,
+            bool blnDoNotFilterPeptides, bool blnMGFInstrumentData)
+        {
+            bool blnSuccess = false;
 
-                                swTarget.WriteLine(clsGlobal.CollapseList(strSplitLine))
-                            End If
-                        End If
+            string Msg = null;
+            int intMSGFInputFileLineCount = 0;
 
-                    Loop
+            // Parse the Sequest, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
+            string strSearchToolParamFilePath = null;
+            strSearchToolParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"));
 
-                End Using
+            blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath);
+            if (!blnSuccess)
+            {
+                Msg = "Error examining param file to determine if ETD mode was enabled)";
+                m_message = clsGlobal.AppendToComment(m_message, Msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " + Msg);
+                return false;
+            }
+            else
+            {
+                m_progress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD;
+                m_StatusTools.UpdateAndWrite(m_progress);
+            }
 
-                If blnSuccess Then
-                    ' Replace the original file with the new one
-                    Thread.Sleep(200)
-                    clsProgRunner.GarbageCollectNow()
+            // Create the _MSGF_input.txt file
+            blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData, out intMSGFInputFileLineCount);
 
-                    Try
-                        fiProteinModsFile.Delete()
+            if (!blnSuccess)
+            {
+                Msg = "Error creating MSGF input file";
+                m_message = clsGlobal.AppendToComment(m_message, Msg);
+            }
+            else
+            {
+                m_progress = PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED;
+                m_StatusTools.UpdateAndWrite(m_progress);
+            }
 
-                        Try
-                            fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName)
-                            If m_DebugLevel >= 2 Then
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                                     "Updated MSGF_SpecProb values in the ProteinMods.txt file")
-                            End If
+            if (blnSuccess)
+            {
+                if (blnMGFInstrumentData)
+                {
+                    blnSuccess = true;
+                }
+                else if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
+                {
+                    blnSuccess = true;
+                }
+                else if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
+                {
+                    blnSuccess = ConvertMzMLToMzXML();
+                }
+                else
+                {
+                    // Possibly create the .mzXML file
+                    // We're waiting to do this until now just in case the above steps fail (since they should all run quickly)
+                    blnSuccess = CreateMzXMLFile();
+                }
 
-                            blnSuccess = True
-                        Catch ex As Exception
-                            Msg = "Error updating the ProteinMods.txt file; cannot rename new version"
-                            m_message = clsGlobal.AppendToComment(m_message, Msg)
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 Msg & ": " & ex.Message)
-                            Return False
-                        End Try
+                if (!blnSuccess)
+                {
+                    Msg = "Error creating .mzXML file";
+                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+                }
+                else
+                {
+                    m_progress = PROGRESS_PCT_MZXML_CREATED;
+                    m_StatusTools.UpdateAndWrite(m_progress);
+                }
+            }
 
-                    Catch ex As Exception
-                        Msg = "Error updating the ProteinMods.txt file; cannot delete old version"
-                        m_message = clsGlobal.AppendToComment(m_message, Msg)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                             Msg & ": " & ex.Message)
-                        Return False
-                    End Try
+            if (blnSuccess)
+            {
+                var blnUseExistingMSGFResults = m_jobParams.GetJobParameter("UseExistingMSGFResults", false);
 
-                End If
-            End If
+                if (blnUseExistingMSGFResults)
+                {
+                    // Look for a file named Dataset_syn_MSGF.txt in the job's transfer folder
+                    // If that file exists, use it as the official MSGF results file
+                    // The assumption is that this file will have been created by manually running MSGF on another computer
 
-        Catch ex As Exception
-            Msg = "Exception updating the ProteinMods.txt file"
-            m_message = clsGlobal.AppendToComment(m_message, Msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ex.Message)
-            Return False
-        End Try
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder");
+                    }
 
-        Return blnSuccess
-    End Function
+                    if (RetrievePreGeneratedDataFile(Path.GetFileName(mMSGFResultsFilePath)))
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Pre-generated MSGF results file successfully copied to the work directory");
+                        blnSuccess = true;
+                    }
+                    else
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file not found");
+                        blnSuccess = false;
+                    }
+                }
+                else
+                {
+                    // Run MSGF
+                    // Note that mMSGFInputFilePath and mMSGFResultsFilePath get populated by CreateMSGFInputFile
+                    blnSuccess = ProcessFileWithMSGF(eResultType, intMSGFInputFileLineCount, mMSGFInputFilePath, mMSGFResultsFilePath);
+                }
 
-#End Region
+                if (!blnSuccess)
+                {
+                    Msg = "Error running MSGF";
+                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+                }
+                else
+                {
+                    // MSGF successfully completed
+                    if (!mKeepMSGFInputFiles)
+                    {
+                        // Add the _MSGF_input.txt file to the list of files to delete (i.e., do not move it into the results folder)
+                        m_jobParams.AddResultFileToSkip(Path.GetFileName(mMSGFInputFilePath));
+                    }
 
-#Region "Event Handlers"
+                    m_progress = PROGRESS_PCT_MSGF_COMPLETE;
+                    m_StatusTools.UpdateAndWrite(m_progress);
+                }
+            }
 
-    Private Sub mMSXmlCreator_LoopWaiting()
+            // Make sure the MSGF Input Creator log file is closed
+            mMSGFInputCreator.CloseLogFileNow();
 
-        UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING)
+            return blnSuccess;
+        }
 
-        LogProgress("MSGF")
-    End Sub
+        /// <summary>
+        /// Looks for file strFileNameToFind in the transfer folder for this job
+        /// If found, copies the file to the work directory
+        /// </summary>
+        /// <param name="strFileNameToFind"></param>
+        /// <returns>True if success; false if an error</returns>
+        /// <remarks></remarks>
+        private bool RetrievePreGeneratedDataFile(string strFileNameToFind)
+        {
+            string strTransferFolderPath = null;
+            string strInputFolderName = null;
+            var strFolderToCheck = "??";
+            string strFilePathSource = null;
+            string strFilePathTarget = null;
 
-    ''' <summary>
-    ''' Event handler for Error Events reported by the MSGF Input Creator
-    ''' </summary>
-    ''' <param name="strErrorMessage"></param>
-    ''' <remarks></remarks>
-    Private Sub mMSGFInputCreator_ErrorEvent(strErrorMessage As String) Handles mMSGFInputCreator.ErrorEvent
-        mMSGFInputCreatorErrorCount += 1
-        If mMSGFInputCreatorErrorCount < 10 OrElse mMSGFInputCreatorErrorCount Mod 1000 = 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 "Error reported by MSGFInputCreator; " & strErrorMessage &
-                                 " (ErrorCount=" & mMSGFInputCreatorErrorCount & ")")
-        End If
-    End Sub
+            try
+            {
+                strTransferFolderPath = m_jobParams.GetParam("transferFolderPath");
+                strInputFolderName = m_jobParams.GetParam("inputFolderName");
 
-    ''' <summary>
-    ''' Event handler for Warning Events reported by the MSGF Input Creator
-    ''' </summary>
-    ''' <param name="strWarningMessage"></param>
-    ''' <remarks></remarks>
-    Private Sub mMSGFInputCreator_WarningEvent(strWarningMessage As String) Handles mMSGFInputCreator.WarningEvent
-        mMSGFInputCreatorWarningCount += 1
-        If mMSGFInputCreatorWarningCount < 10 OrElse mMSGFInputCreatorWarningCount Mod 1000 = 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                 "Warning reported by MSGFInputCreator; " & strWarningMessage &
-                                 " (WarnCount=" & mMSGFInputCreatorWarningCount & ")")
-        End If
-    End Sub
+                strFolderToCheck = Path.Combine(Path.Combine(strTransferFolderPath, m_Dataset), strInputFolderName);
 
-    ''' <summary>
-    ''' Event handler for the MSGResultsSummarizer
-    ''' </summary>
-    ''' <param name="errorMessage"></param>
-    Private Sub MSGFResultsSummarizer_ErrorHandler(errorMessage As String)
-        If Message.ToLower().Contains("permission was denied") Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage)
-        Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-        End If
-    End Sub
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for folder " + strFolderToCheck);
+                }
 
-    ''' <summary>
-    ''' Event handler that fires while MSGF is processing
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub MSGFRunner_LoopWaiting()
-        Static dtLastUpdateTime As DateTime = Date.UtcNow
-        Static dtLastConsoleOutputParse As DateTime = Date.UtcNow
+                // Look for strFileNameToFind in strFolderToCheck
+                if (Directory.Exists(strFolderToCheck))
+                {
+                    strFilePathSource = Path.Combine(strFolderToCheck, strFileNameToFind);
 
-        If Date.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
-            ' Update the MSGF progress by counting the number of lines in the _MSGF.txt file
-            UpdateMSGFProgress(mCurrentMSGFResultsFilePath)
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for file " + strFilePathSource);
+                    }
 
-            dtLastUpdateTime = Date.UtcNow
-        End If
+                    if (File.Exists(strFilePathSource))
+                    {
+                        strFilePathTarget = Path.Combine(m_WorkDir, strFileNameToFind);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Copying file " + strFilePathSource + " to " + strFilePathTarget);
 
-        If Date.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = Date.UtcNow
+                        File.Copy(strFilePathSource, strFilePathTarget, true);
 
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT))
-            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFVersion) Then
-                mToolVersionWritten = StoreToolVersionInfo()
-            End If
+                        // File found and successfully copied; return true
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    "Exception finding file " + strFileNameToFind + " in folder " + strFolderToCheck, ex);
+                return false;
+            }
 
-        End If
-    End Sub
+            // File not found
+            return false;
+        }
 
-#End Region
+        private bool RunMSGFonMSGFDB(int intMSGFInputFileLineCount, string strMSGFInputFilePath, string strMSGFResultsFilePath)
+        {
+            string strLineIn = null;
+            int intLinesRead = 0;
 
-End Class
+            int intCollisionModeColIndex = -1;
+
+            try
+            {
+                var lstCIDData = new List<string>();
+                var lstETDData = new List<string>();
+
+                using (var srSourceFile = new StreamReader(new FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    intLinesRead = 0;
+                    while (!srSourceFile.EndOfStream)
+                    {
+                        strLineIn = srSourceFile.ReadLine();
+
+                        if (!string.IsNullOrEmpty(strLineIn))
+                        {
+                            intLinesRead += 1;
+                            var strSplitLine = strLineIn.Split('\t').ToList();
+
+                            if (intLinesRead == 1)
+                            {
+                                // Cache the header line
+                                lstCIDData.Add(strLineIn);
+                                lstETDData.Add(strLineIn);
+
+                                // Confirm the column index of the Collision_Mode column
+                                for (var intIndex = 0; intIndex <= strSplitLine.Count - 1; intIndex++)
+                                {
+                                    if (string.Equals(strSplitLine[intIndex], MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.CurrentCultureIgnoreCase))
+                                    {
+                                        intCollisionModeColIndex = intIndex;
+                                    }
+                                }
+
+                                if (intCollisionModeColIndex < 0)
+                                {
+                                    // Collision_Mode column not found; this is unexpected
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                        "Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue");
+                                    srSourceFile.Close();
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                // Read the collision mode
+
+                                if (strSplitLine.Count > intCollisionModeColIndex)
+                                {
+                                    if (strSplitLine[intCollisionModeColIndex].ToUpper() == "ETD")
+                                    {
+                                        lstETDData.Add(strLineIn);
+                                    }
+                                    else
+                                    {
+                                        lstCIDData.Add(strLineIn);
+                                    }
+                                }
+                                else
+                                {
+                                    lstCIDData.Add(strLineIn);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                mProcessingMSGFDBCollisionModeData = false;
+
+                if (lstCIDData.Count <= 1 & lstETDData.Count > 1)
+                {
+                    // Only ETD data is present
+                    mETDMode = true;
+                    return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
+                }
+                else if (lstCIDData.Count > 1 & lstETDData.Count > 1)
+                {
+                    // Mix of both CID and ETD data found
+
+                    bool blnSuccess = false;
+
+                    mProcessingMSGFDBCollisionModeData = true;
+
+                    // Make sure the final results file does not exist
+                    if (File.Exists(strMSGFResultsFilePath))
+                    {
+                        File.Delete(strMSGFResultsFilePath);
+                    }
+
+                    // Process the CID data
+                    mETDMode = false;
+                    mCollisionModeIteration = 1;
+                    blnSuccess = RunMSGFonMSGFDBCachedData(lstCIDData, strMSGFInputFilePath, strMSGFResultsFilePath, "CID");
+                    if (!blnSuccess)
+                        return false;
+
+                    // Process the ETD data
+                    mETDMode = true;
+                    mCollisionModeIteration = 2;
+                    blnSuccess = RunMSGFonMSGFDBCachedData(lstETDData, strMSGFInputFilePath, strMSGFResultsFilePath, "ETD");
+                    if (!blnSuccess)
+                        return false;
+
+                    return true;
+                }
+                else
+                {
+                    // Only CID or HCD data is present (or no data is present)
+                    mETDMode = false;
+                    return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RunMSGFonMSGFDB", ex);
+                return false;
+            }
+        }
+
+        private bool RunMSGFonMSGFDBCachedData(List<string> lstData, string strMSGFInputFilePath, string strMSGFResultsFilePathFinal, string strCollisionMode)
+        {
+            string strInputFileTempPath = null;
+            string strResultFileTempPath = null;
+
+            bool blnSuccess = false;
+
+            try
+            {
+                strInputFileTempPath = AddFileNameSuffix(strMSGFInputFilePath, strCollisionMode);
+                strResultFileTempPath = AddFileNameSuffix(strMSGFResultsFilePathFinal, strCollisionMode);
+
+                using (var swInputFileTemp = new StreamWriter(new FileStream(strInputFileTempPath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    foreach (string strData in lstData)
+                    {
+                        swInputFileTemp.WriteLine(strData);
+                    }
+                }
+
+                blnSuccess = RunMSGF(lstData.Count - 1, strInputFileTempPath, strResultFileTempPath);
+
+                if (!blnSuccess)
+                {
+                    return false;
+                }
+
+                Thread.Sleep(500);
+
+                // Append the results of strResultFileTempPath to strMSGFResultsFilePath
+                if (!File.Exists(strMSGFResultsFilePathFinal))
+                {
+                    File.Move(strResultFileTempPath, strMSGFResultsFilePathFinal);
+                }
+                else
+                {
+                    using (var srTempResults = new StreamReader(new FileStream(strResultFileTempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using (var swFinalResults = new StreamWriter(new FileStream(strMSGFResultsFilePathFinal, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                    {
+                        // Read and skip the first line of srTempResults (it's a header)
+                        srTempResults.ReadLine();
+
+                        // Append the remaining lines to swFinalResults
+                        while (!srTempResults.EndOfStream)
+                        {
+                            swFinalResults.WriteLine(srTempResults.ReadLine());
+                        }
+                    }
+                }
+
+                Thread.Sleep(500);
+
+                if (!mKeepMSGFInputFiles)
+                {
+                    // Delete the temporary files
+                    DeleteTemporaryfile(strInputFileTempPath);
+                    DeleteTemporaryfile(strResultFileTempPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RunMSGFonMSGFDBCachedData", ex);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool RunMSGF(int intMSGFInputFileLineCount, string strMSGFInputFilePath, string strMSGFResultsFilePath)
+        {
+            int intMSGFEntriesPerSegment = 0;
+            bool blnSuccess = false;
+            bool blnUseSegments = false;
+            string strSegmentUsageMessage = null;
+
+            intMSGFEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT);
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "MSGFInputFileLineCount = " + intMSGFInputFileLineCount + "; MSGFEntriesPerSegment = " + intMSGFEntriesPerSegment);
+            }
+
+            if (intMSGFEntriesPerSegment <= 1)
+            {
+                blnUseSegments = false;
+                strSegmentUsageMessage = "Not using MSGF segments since MSGFEntriesPerSegment is <= 1";
+            }
+            else if (intMSGFInputFileLineCount <= intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN)
+            {
+                blnUseSegments = false;
+                strSegmentUsageMessage = "Not using MSGF segments since MSGFInputFileLineCount is <= " + intMSGFEntriesPerSegment + " * " +
+                                         Convert.ToInt32(MSGF_SEGMENT_OVERFLOW_MARGIN * 100).ToString() + "%";
+            }
+            else
+            {
+                blnUseSegments = true;
+                strSegmentUsageMessage = "Using MSGF segments";
+            }
+
+            mMSGFLineCountPreviousSegments = 0;
+            mMSGFInputFileLineCount = intMSGFInputFileLineCount;
+            m_progress = PROGRESS_PCT_MSGF_START;
+
+            if (!blnUseSegments)
+            {
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strSegmentUsageMessage);
+                }
+
+                // Do not use segments
+                blnSuccess = RunMSGFWork(strMSGFInputFilePath, strMSGFResultsFilePath);
+            }
+            else
+            {
+                List<udtSegmentFileInfoType> lstSegmentFileInfo = new List<udtSegmentFileInfoType>();
+                var lstResultFiles = new List<string>();
+
+                // Split strMSGFInputFilePath into chunks with intMSGFEntriesPerSegment each
+                blnSuccess = SplitMSGFInputFile(intMSGFInputFileLineCount, strMSGFInputFilePath, intMSGFEntriesPerSegment, lstSegmentFileInfo);
+
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        strSegmentUsageMessage + "; segment count = " + lstSegmentFileInfo.Count);
+                }
+
+                if (blnSuccess)
+                {
+                    // Call MSGF for each segment
+                    foreach (clsMSGFRunner.udtSegmentFileInfoType udtSegmentFile in lstSegmentFileInfo)
+                    {
+                        string strResultFile = null;
+                        strResultFile = AddFileNameSuffix(strMSGFResultsFilePath, udtSegmentFile.Segment);
+
+                        blnSuccess = RunMSGFWork(udtSegmentFile.FilePath, strResultFile);
+
+                        if (!blnSuccess)
+                            break;
+
+                        lstResultFiles.Add(strResultFile);
+                        mMSGFLineCountPreviousSegments += udtSegmentFile.Entries;
+                    }
+                }
+
+                if (blnSuccess)
+                {
+                    // Combine the results
+                    blnSuccess = CombineMSGFResultFiles(strMSGFResultsFilePath, lstResultFiles);
+                }
+
+                if (blnSuccess)
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting MSGF segment files");
+                    }
+
+                    // Delete the segment files
+                    foreach (clsMSGFRunner.udtSegmentFileInfoType udtSegmentFile in lstSegmentFileInfo)
+                    {
+                        DeleteTemporaryfile(udtSegmentFile.FilePath);
+                    }
+
+                    // Delete the result files
+                    foreach (string strResultFile in lstResultFiles)
+                    {
+                        DeleteTemporaryfile(strResultFile);
+                    }
+                }
+            }
+
+            try
+            {
+                // Delete the Console_Output.txt file if it is empty
+                var fiConsoleOutputFile = new FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                if (fiConsoleOutputFile.Exists && fiConsoleOutputFile.Length == 0)
+                {
+                    fiConsoleOutputFile.Delete();
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    "Unable to delete the " + MSGF_CONSOLE_OUTPUT + " file", ex);
+            }
+
+            return blnSuccess;
+        }
+
+        private bool RunMSGFWork(string strInputFilePath, string strResultsFilePath)
+        {
+            string CmdStr = null;
+            int intJavaMemorySize = 0;
+
+            if (string.IsNullOrEmpty(strInputFilePath))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "strInputFilePath has not been defined; unable to continue");
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(strResultsFilePath))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "strResultsFilePath has not been defined; unable to continue");
+                return false;
+            }
+
+            // Delete the output file if it already exists (MSGFDB will not overwrite it)
+            if (File.Exists(strResultsFilePath))
+            {
+                File.Delete(strResultsFilePath);
+            }
+
+            // If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java
+            // Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file
+            // (job 611216 succeeded with a value of 5000)
+            intJavaMemorySize = m_jobParams.GetJobParameter("MSGFJavaMemorySize", 2000);
+            if (intJavaMemorySize < 512)
+                intJavaMemorySize = 512;
+
+            if (m_DebugLevel >= 1)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    "Running MSGF on " + Path.GetFileName(strInputFilePath));
+            }
+
+            mCurrentMSGFResultsFilePath = string.Copy(strResultsFilePath);
+
+            m_StatusTools.CurrentOperation = "Running MSGF";
+            m_StatusTools.UpdateAndWrite(m_progress);
+
+            CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M ";
+
+            if (mUsingMSGFDB)
+            {
+                CmdStr += "-cp " + PossiblyQuotePath(mMSGFProgLoc) + " ui.MSGF";
+            }
+            else
+            {
+                CmdStr += "-jar " + PossiblyQuotePath(mMSGFProgLoc);
+            }
+
+            CmdStr += " -i " + PossiblyQuotePath(strInputFilePath);
+            // Input file
+            CmdStr += " -d " + PossiblyQuotePath(m_WorkDir);
+            // Folder containing .mzXML, .mzML, or .mgf file
+            CmdStr += " -o " + PossiblyQuotePath(strResultsFilePath);
+            // Output file
+
+            // MSGF v6432 and earlier use -m 0 for CID and -m 1 for ETD
+            // MSGFDB v7097 and later use:
+            //   -m 0 means as written in the spectrum or CID if no info
+            //   -m 1 means CID
+            //   -m 2 means ETD
+            //   -m 3 means HCD
+
+            int intMSGFDBVersion = int.MaxValue;
+
+            if (mUsingMSGFDB)
+            {
+                if (!string.IsNullOrEmpty(mMSGFDBVersion) && mMSGFDBVersion.StartsWith("v"))
+                {
+                    if (int.TryParse(mMSGFDBVersion.Substring(1), out intMSGFDBVersion))
+                    {
+                        // Using a specific version of MSGFDB
+                        // intMSGFDBVersion should now be something like 6434, 6841, 6964, 7097 etc.
+                    }
+                    else
+                    {
+                        // Unable to parse out an integer from mMSGFDBVersion
+                        intMSGFDBVersion = int.MaxValue;
+                    }
+                }
+            }
+
+            if (mUsingMSGFDB && intMSGFDBVersion >= 7097)
+            {
+                // Always use -m 0 (assuming we're sending an mzXML file to MSGFDB)
+                CmdStr += " -m 0";
+                // as-written in the input file
+            }
+            else
+            {
+                if (mETDMode)
+                {
+                    CmdStr += " -m 1";
+                    // ETD fragmentation
+                }
+                else
+                {
+                    CmdStr += " -m 0";
+                    // CID fragmentation
+                }
+            }
+
+            CmdStr += " -e 1";
+            // Enzyme is Trypsin; other supported enzymes are 2: Chymotrypsin, 3: Lys-C, 4: Lys-N, 5: Glu-C, 6: Arg-C, 7: Asp-N, and 8: aLP
+            CmdStr += " -fixMod 0";
+            // No fixed mods on cysteine
+            CmdStr += " -x 0";
+            // Write out all matches for each spectrum
+            CmdStr += " -p 1";
+            // SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc + " " + CmdStr);
+
+            mMSGFRunner = new clsRunDosProgram(m_WorkDir)
+            {
+                CreateNoWindow = false,
+                CacheStandardOutput = false,
+                EchoOutputToConsole = false,
+                WriteConsoleOutputToFile = true,
+                ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT)
+            };
+            RegisterEvents(mMSGFRunner);
+            mMSGFRunner.LoopWaiting += MSGFRunner_LoopWaiting;
+
+            bool blnSuccess = false;
+            blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", true);
+
+            if (!mToolVersionWritten)
+            {
+                if (string.IsNullOrWhiteSpace(mMSGFVersion))
+                {
+                    FileInfo fiConsoleOutputfile = new FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                    if (fiConsoleOutputfile.Length == 0)
+                    {
+                        // File is 0-bytes; delete it
+                        DeleteTemporaryfile(fiConsoleOutputfile.FullName);
+                    }
+                    else
+                    {
+                        ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                    }
+                }
+                mToolVersionWritten = StoreToolVersionInfo();
+            }
+
+            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+            }
+
+            if (!blnSuccess)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MSGF, job " + m_JobNum);
+            }
+
+            return blnSuccess;
+        }
+
+        private bool CombineMSGFResultFiles(string strMSGFOutputFilePath, List<string> lstResultFiles)
+        {
+            try
+            {
+                string strLineIn = null;
+                int intLinesRead = 0;
+                bool blnHeaderWritten = false;
+
+                // Create the output file
+                using (var swOutFile = new StreamWriter(new FileStream(strMSGFOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    // Step through the input files and append the results
+                    blnHeaderWritten = false;
+                    foreach (string strResultFile in lstResultFiles)
+                    {
+                        using (var srInFile = new StreamReader(new FileStream(strResultFile, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                        {
+                            intLinesRead = 0;
+                            while (!srInFile.EndOfStream)
+                            {
+                                strLineIn = srInFile.ReadLine();
+                                intLinesRead += 1;
+
+                                if (!blnHeaderWritten)
+                                {
+                                    blnHeaderWritten = true;
+                                    swOutFile.WriteLine(strLineIn);
+                                }
+                                else
+                                {
+                                    if (intLinesRead > 1)
+                                    {
+                                        swOutFile.WriteLine(strLineIn);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception combining MSGF result files", ex);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool LoadMSGFResults(string strMSGFResultsFilePath, out Dictionary<int, string> lstMSGFResults)
+        {
+            string strLineIn = null;
+            string[] strSplitLine = null;
+            int intMSGFSpecProbColIndex = 0;
+
+            int intResultID = 0;
+            lstMSGFResults = new Dictionary<int, string>();
+
+            try
+            {
+                var blnSuccess = true;
+
+                intMSGFSpecProbColIndex = -1;
+                using (var srInFile = new StreamReader(new FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+
+                        if (!string.IsNullOrEmpty(strLineIn))
+                        {
+                            strSplitLine = strLineIn.Split();
+
+                            if (strSplitLine.Length > 0)
+                            {
+                                if (intMSGFSpecProbColIndex < 0)
+                                {
+                                    // Assume this is the headerline, look for SpecProb
+                                    for (var intIndex = 0; intIndex <= strSplitLine.Length - 1; intIndex++)
+                                    {
+                                        if (strSplitLine[intIndex].ToLower() == "SpecProb".ToLower())
+                                        {
+                                            intMSGFSpecProbColIndex = intIndex;
+                                            break;
+                                        }
+                                    }
+
+                                    if (intMSGFSpecProbColIndex < 0)
+                                    {
+                                        // Match not found; abort
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                            "SpecProb column not found in file " + strMSGFResultsFilePath);
+                                        blnSuccess = false;
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    // Data line
+
+                                    if (int.TryParse(strSplitLine[0], out intResultID))
+                                    {
+                                        if (intMSGFSpecProbColIndex < strSplitLine.Length)
+                                        {
+                                            try
+                                            {
+                                                lstMSGFResults.Add(intResultID, strSplitLine[intMSGFSpecProbColIndex]);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                // Ignore errors here
+                                                // Possibly a key violation or a column index issue
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return blnSuccess;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in LoadMSGFResults: " + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Parse the MSGF console output file to determine the MSGF version
+        /// </summary>
+        /// <param name="strConsoleOutputFilePath"></param>
+        /// <remarks></remarks>
+        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        {
+            // Example console output
+            // MSGF v7097 (12/29/2011)
+            // MS-GF complete (total elapsed time: 507.68 sec)
+
+            try
+            {
+                if (!File.Exists(strConsoleOutputFilePath))
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Console output file not found: " + strConsoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                }
+
+                string strLineIn = null;
+                int intLinesRead = 0;
+                mConsoleOutputErrorMsg = string.Empty;
+
+                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    intLinesRead = 0;
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+                        intLinesRead += 1;
+
+                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        {
+                            if (intLinesRead <= 3 && string.IsNullOrWhiteSpace(mMSGFVersion) && strLineIn.StartsWith("MSGF v"))
+                            {
+                                // Originally the first line was the MSGF version
+                                // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                                // The third line is the MSGF version
+
+                                if (m_DebugLevel >= 2)
+                                {
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF version: " + strLineIn);
+                                }
+
+                                mMSGFVersion = string.Copy(strLineIn);
+                            }
+                            else
+                            {
+                                if (strLineIn.ToLower().Contains("error"))
+                                {
+                                    if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                                    {
+                                        mConsoleOutputErrorMsg = "Error running MSGF:";
+                                    }
+                                    mConsoleOutputErrorMsg += "; " + strLineIn;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
+        private bool SplitMSGFInputFile(int intMSGFinputFileLineCount, string strMSGFInputFilePath, int intMSGFEntriesPerSegment,
+            List<udtSegmentFileInfoType> lstSegmentFileInfo)
+        {
+            var intLinesRead = 0;
+            string strLineIn = null;
+            string strHeaderLine = string.Empty;
+
+            var intLineCountAllSegments = 0;
+
+            try
+            {
+                lstSegmentFileInfo.Clear();
+                if (intMSGFEntriesPerSegment < 100)
+                    intMSGFEntriesPerSegment = 100;
+
+                using (var srInFile = new StreamReader(new FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    StreamWriter swOutFile = null;
+
+                    udtSegmentFileInfoType udtThisSegment;
+                    udtThisSegment.FilePath = string.Empty;
+                    udtThisSegment.Entries = 0;
+                    udtThisSegment.Segment = 0;
+
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+                        intLinesRead += 1;
+
+                        if (intLinesRead == 1)
+                        {
+                            // This is the header line; cache it so that we can write it out to the top of each input file
+                            strHeaderLine = string.Copy(strLineIn);
+                        }
+
+                        if (udtThisSegment.Segment == 0 || udtThisSegment.Entries >= intMSGFEntriesPerSegment)
+                        {
+                            // Need to create a new segment
+                            // However, if the number of lines remaining to be written is less than 5% of intMSGFEntriesPerSegment then keep writing to this segment
+
+                            int intLineCountRemaining = 0;
+                            intLineCountRemaining = intMSGFinputFileLineCount - intLineCountAllSegments;
+
+                            if (udtThisSegment.Segment == 0 || intLineCountRemaining > intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN)
+                            {
+                                if (udtThisSegment.Segment > 0)
+                                {
+                                    // Close the current segment
+                                    swOutFile.Close();
+                                    lstSegmentFileInfo.Add(udtThisSegment);
+                                }
+
+                                // Initialize a new segment
+                                udtThisSegment.Segment += 1;
+                                udtThisSegment.Entries = 0;
+                                udtThisSegment.FilePath = AddFileNameSuffix(strMSGFInputFilePath, udtThisSegment.Segment);
+
+                                swOutFile = new StreamWriter(new FileStream(udtThisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                                // Write the header line to the new segment
+                                swOutFile.WriteLine(strHeaderLine);
+                            }
+                        }
+
+                        if (intLinesRead > 1)
+                        {
+                            swOutFile.WriteLine(strLineIn);
+                            udtThisSegment.Entries += 1;
+                            intLineCountAllSegments += 1;
+                        }
+                    }
+
+                    // Close the the output files
+                    swOutFile.Close();
+                    lstSegmentFileInfo.Add(udtThisSegment);
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception splitting MSGF input file", ex);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        private bool StoreToolVersionInfo()
+        {
+            string strToolVersionInfo = null;
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            strToolVersionInfo = string.Copy(mMSGFVersion);
+
+            // Store paths to key files in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(mMSGFProgLoc));
+
+            ioToolFiles.Add(new FileInfo(mMSXmlGeneratorAppPath));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: true);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database when using MODa or MSGF+ probabilities to create the MSGF files
+        /// </summary>
+        /// <remarks></remarks>
+        private bool StoreToolVersionInfoPrecomputedProbabilities(clsPHRPReader.ePeptideHitResultType eResultType)
+        {
+            string strToolVersionInfo = string.Empty;
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            // Lookup the version of AnalysisManagerMSGFPlugin
+            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerMSGFPlugin"))
+            {
+                return false;
+            }
+
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+
+            if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            {
+                // Store the path to MSGFDB.jar
+                ioToolFiles.Add(new FileInfo(mMSGFProgLoc));
+            }
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        private bool SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType eResultType)
+        {
+            string strConnectionString = null;
+            var intJobNumber = 0;
+            bool blnPostResultsToDB = false;
+
+            bool blnSuccess = false;
+
+            try
+            {
+                // Gigasax.DMS5
+                strConnectionString = m_mgrParams.GetParam("connectionstring");
+                if (int.TryParse(m_JobNum, out intJobNumber))
+                {
+                    blnPostResultsToDB = true;
+                }
+                else
+                {
+                    blnPostResultsToDB = false;
+                    m_message = "Job number is not numeric: " + m_JobNum + "; will not be able to post PSM results to the database";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                }
+
+                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString);
+                objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
+
+                objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
+
+                objSummarizer.ContactDatabase = true;
+                objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB;
+                objSummarizer.SaveResultsToTextFile = false;
+                objSummarizer.DatasetName = m_Dataset;
+
+                blnSuccess = objSummarizer.ProcessMSGFResults();
+
+                if (!blnSuccess)
+                {
+                    var errMsg = "Error calling ProcessMSGFResults";
+                    m_message = clsGlobal.AppendToComment(m_message, errMsg);
+                    if (objSummarizer.ErrorMessage.Length > 0)
+                    {
+                        errMsg += ": " + objSummarizer.ErrorMessage;
+                    }
+
+                    errMsg += "; input file name: " + objSummarizer.MSGFSynopsisFileName;
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                }
+                else
+                {
+                    if (objSummarizer.DatasetScanStatsLookupError)
+                    {
+                        m_message = clsGlobal.AppendToComment(m_message, objSummarizer.ErrorMessage);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var errMsg = "Exception summarizing the MSGF results";
+                m_message = clsGlobal.AppendToComment(m_message, errMsg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg + ": " + ex.Message);
+                return false;
+            }
+
+            return blnSuccess;
+        }
+
+        private int intErrorCount = 0;
+
+        private void UpdateMSGFProgress(string strMSGFResultsFilePath)
+        {
+            int intLineCount = 0;
+            double dblFraction = 0;
+
+            try
+            {
+                if (mMSGFInputFileLineCount <= 0)
+                    return;
+                if (!File.Exists(strMSGFResultsFilePath))
+                    return;
+
+                // Read the data from the results file
+                using (var srMSGFResultsFile = new StreamReader(new FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    intLineCount = 0;
+
+                    while (!srMSGFResultsFile.EndOfStream)
+                    {
+                        srMSGFResultsFile.ReadLine();
+                        intLineCount += 1;
+                    }
+                }
+
+                // Update the overall progress
+                dblFraction = (intLineCount + mMSGFLineCountPreviousSegments) / mMSGFInputFileLineCount;
+
+                if (mProcessingMSGFDBCollisionModeData)
+                {
+                    // Running MSGF twice; first for CID spectra and then for ETD spectra
+                    // Divide the progress by 2, then add 0.5 if we're on the second iteration
+
+                    dblFraction = dblFraction / 2.0;
+                    if (mCollisionModeIteration > 1)
+                    {
+                        dblFraction = dblFraction + 0.5;
+                    }
+                }
+
+                m_progress = Convert.ToSingle(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * dblFraction);
+                m_StatusTools.UpdateAndWrite(m_progress);
+            }
+            catch (Exception ex)
+            {
+                // Log errors the first 3 times they occur
+                intErrorCount += 1;
+                if (intErrorCount <= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Error counting the number of lines in the MSGF results file, " + strMSGFResultsFilePath, ex);
+                }
+            }
+        }
+
+        private bool UpdateProteinModsFile(clsPHRPReader.ePeptideHitResultType eResultType, string strMSGFResultsFilePath)
+        {
+            string Msg = null;
+            string strLineIn = null;
+
+            int intMSGFSpecProbColIndex = 0;
+            int intResultID = 0;
+            string strMSGFSpecProb = string.Empty;
+            double dblValue = 0;
+
+            bool blnSuccess = false;
+
+            try
+            {
+                var fiProteinModsFile = new FileInfo(Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_Dataset)));
+                var fiProteinModsFileNew = new FileInfo(fiProteinModsFile.FullName + ".tmp");
+
+                if (!fiProteinModsFile.Exists)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "PHRP ProteinMods.txt file not found: " + fiProteinModsFile.Name);
+                    blnSuccess = true;
+                }
+                else
+                {
+                    var lstMSGFResults = new Dictionary<int, string>();
+                    blnSuccess = LoadMSGFResults(strMSGFResultsFilePath, out lstMSGFResults);
+                    if (!blnSuccess)
+                    {
+                        return false;
+                    }
+
+                    intMSGFSpecProbColIndex = -1;
+                    blnSuccess = true;
+
+                    using (var srSource = new StreamReader(new FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    using (var swTarget = new StreamWriter(new FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        while (!srSource.EndOfStream)
+                        {
+                            strLineIn = srSource.ReadLine();
+
+                            if (string.IsNullOrEmpty(strLineIn))
+                            {
+                                swTarget.WriteLine();
+                            }
+                            else
+                            {
+                                var strSplitLine = strLineIn.Split().ToList();
+
+                                if (strSplitLine.Count <= 0)
+                                {
+                                    swTarget.WriteLine();
+                                }
+                                else
+                                {
+                                    if (intMSGFSpecProbColIndex < 0)
+                                    {
+                                        // Assume this is the header line, look for MSGF_SpecProb
+                                        for (var intIndex = 0; intIndex <= strSplitLine.Count - 1; intIndex++)
+                                        {
+                                            if (string.Equals(strSplitLine[intIndex], "MSGF_SpecProb", StringComparison.CurrentCultureIgnoreCase))
+                                            {
+                                                intMSGFSpecProbColIndex = intIndex;
+                                                break;
+                                            }
+                                        }
+
+                                        if (intMSGFSpecProbColIndex < 0)
+                                        {
+                                            // Match not found; abort
+                                            blnSuccess = false;
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Data line; determine the ResultID
+
+                                        if (int.TryParse(strSplitLine[0], out intResultID))
+                                        {
+                                            // Lookup the MSGFSpecProb value for this ResultID
+                                            if (lstMSGFResults.TryGetValue(intResultID, out strMSGFSpecProb))
+                                            {
+                                                // Only update the value if strMSGFSpecProb is a number
+                                                if (double.TryParse(strMSGFSpecProb, out dblValue))
+                                                {
+                                                    strSplitLine[intMSGFSpecProbColIndex] = strMSGFSpecProb;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    swTarget.WriteLine(clsGlobal.CollapseList(strSplitLine));
+                                }
+                            }
+                        }
+                    }
+
+                    if (blnSuccess)
+                    {
+                        // Replace the original file with the new one
+                        Thread.Sleep(200);
+                        clsProgRunner.GarbageCollectNow();
+
+                        try
+                        {
+                            fiProteinModsFile.Delete();
+
+                            try
+                            {
+                                fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
+                                if (m_DebugLevel >= 2)
+                                {
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                        "Updated MSGF_SpecProb values in the ProteinMods.txt file");
+                                }
+
+                                blnSuccess = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                Msg = "Error updating the ProteinMods.txt file; cannot rename new version";
+                                m_message = clsGlobal.AppendToComment(m_message, Msg);
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ": " + ex.Message);
+                                return false;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Msg = "Error updating the ProteinMods.txt file; cannot delete old version";
+                            m_message = clsGlobal.AppendToComment(m_message, Msg);
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ": " + ex.Message);
+                            return false;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Msg = "Exception updating the ProteinMods.txt file";
+                m_message = clsGlobal.AppendToComment(m_message, Msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ": " + ex.Message);
+                return false;
+            }
+
+            return blnSuccess;
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        private void mMSXmlCreator_LoopWaiting()
+        {
+            UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING);
+
+            LogProgress("MSGF");
+        }
+
+        /// <summary>
+        /// Event handler for Error Events reported by the MSGF Input Creator
+        /// </summary>
+        /// <param name="strErrorMessage"></param>
+        /// <remarks></remarks>
+        private void mMSGFInputCreator_ErrorEvent(string strErrorMessage)
+        {
+            mMSGFInputCreatorErrorCount += 1;
+            if (mMSGFInputCreatorErrorCount < 10 || mMSGFInputCreatorErrorCount % 1000 == 0)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Error reported by MSGFInputCreator; " + strErrorMessage + " (ErrorCount=" + mMSGFInputCreatorErrorCount + ")");
+            }
+        }
+
+        /// <summary>
+        /// Event handler for Warning Events reported by the MSGF Input Creator
+        /// </summary>
+        /// <param name="strWarningMessage"></param>
+        /// <remarks></remarks>
+        private void mMSGFInputCreator_WarningEvent(string strWarningMessage)
+        {
+            mMSGFInputCreatorWarningCount += 1;
+            if (mMSGFInputCreatorWarningCount < 10 || mMSGFInputCreatorWarningCount % 1000 == 0)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    "Warning reported by MSGFInputCreator; " + strWarningMessage + " (WarnCount=" + mMSGFInputCreatorWarningCount + ")");
+            }
+        }
+
+        /// <summary>
+        /// Event handler for the MSGResultsSummarizer
+        /// </summary>
+        /// <param name="errorMessage"></param>
+        private void MSGFResultsSummarizer_ErrorHandler(string errorMessage)
+        {
+            if (Message.ToLower().Contains("permission was denied"))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+            }
+        }
+
+        private DateTime dtLastUpdateTime = DateTime.MinValue;
+        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+
+        /// <summary>
+        /// Event handler that fires while MSGF is processing
+        /// </summary>
+        /// <remarks></remarks>
+        private void MSGFRunner_LoopWaiting()
+        {
+            if (System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20)
+            {
+                // Update the MSGF progress by counting the number of lines in the _MSGF.txt file
+                UpdateMSGFProgress(mCurrentMSGFResultsFilePath);
+
+                dtLastUpdateTime = System.DateTime.UtcNow;
+            }
+
+            if (System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            {
+                dtLastConsoleOutputParse = System.DateTime.UtcNow;
+
+                ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFVersion))
+                {
+                    mToolVersionWritten = StoreToolVersionInfo();
+                }
+            }
+        }
+
+        #endregion
+    }
+}

@@ -1,786 +1,883 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-'
-' Created 07/20/2010
-'
-' This class reads a tab-delimited text file (created by the Peptide File Extractor or by PHRP)
-' and creates a tab-delimited text file suitable for processing by MSGF
-' 
-' The class must be derived by a sub-class customized for the specific analysis tool (Sequest, X!Tandem, Inspect, etc.)
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports System.IO
-Imports MsMsDataFileReader
-Imports PHRPReader
-
-Public MustInherit Class clsMSGFInputCreator
-
-#Region "Constants"
-
-    Private Const MSGF_INPUT_FILENAME_SUFFIX As String = "_MSGF_input.txt"
-    Public Const MSGF_RESULT_FILENAME_SUFFIX As String = "_MSGF.txt"
-
-#End Region
-
-#Region "Module variables"
-
-    Protected ReadOnly mDatasetName As String
-    Protected ReadOnly mWorkDir As String
-    Private ReadOnly mPeptideHitResultType As clsPHRPReader.ePeptideHitResultType
-
-    Private ReadOnly mSkippedLineInfo As SortedDictionary(Of Integer, List(Of String))
-
-    ' This dictionary is initially populated with a string constructed using
-    ' Scan plus "_" plus charge plus "_" plus the original peptide sequence in the PHRP file
-    ' It will contain an entry for every line written to the MSGF input file
-    ' It is later updated by AddUpdateMSGFResult() to store the properly formated MSGF result line for each entry
-    ' Finally, it will be used by CreateMSGFFirstHitsFile to create the MSGF file that corresponds to the first-hits file
-    Private ReadOnly mMSGFCachedResults As SortedDictionary(Of String, String)
-
-    ' This dictionary holds a mapping between Scan plus "_" plus charge to the spectrum index in the MGF file (first spectrum has index=1)
-    ' It is only used if MGFInstrumentData=True
-    Private mScanAndChargeToMGFIndex As SortedDictionary(Of String, Integer)
-
-    ' This dictionary is the inverse of mScanAndChargeToMGFIndex
-    ' mMGFIndexToScan allows for a lookup of Scan Number given the MGF index
-    ' It is only used if MGFInstrumentData=True
-    Private mMGFIndexToScan As SortedDictionary(Of Integer, Integer)
-
-    Protected mErrorMessage As String = String.Empty
-
-    Protected mPHRPFirstHitsFilePath As String = String.Empty
-    Protected mPHRPSynopsisFilePath As String = String.Empty
-
-    Private mMSGFInputFilePath As String = String.Empty
-    Private mMSGFResultsFilePath As String = String.Empty
-
-    Private mMSGFInputFileLineCount As Integer = 0
-
-
-    ' Note that this reader is instantiated and disposed of several times
-    ' We declare it here as a classwide variable so that we can attach the event handlers
-    Private WithEvents mPHRPReader As clsPHRPReader
-
-    Private mLogFile As StreamWriter
-
-#End Region
-
-#Region "Events"
-
-    Public Event ErrorEvent(strErrorMessage As String)
-    Public Event WarningEvent(strWarningMessage As String)
-
-#End Region
-
-#Region "Properties"
-
-    Public Property DoNotFilterPeptides As Boolean
-
-    Public ReadOnly Property ErrorMessage() As String
-        Get
-            Return mErrorMessage
-        End Get
-    End Property
-
-    Public Property MgfInstrumentData As Boolean
-
-    Public ReadOnly Property MSGFInputFileLineCount() As Integer
-        Get
-            Return mMSGFInputFileLineCount
-        End Get
-    End Property
-
-    Public ReadOnly Property MSGFInputFilePath() As String
-        Get
-            Return mMSGFInputFilePath
-        End Get
-    End Property
-
-    Public ReadOnly Property MSGFResultsFilePath() As String
-        Get
-            Return mMSGFResultsFilePath
-        End Get
-    End Property
-
-    Public ReadOnly Property PHRPFirstHitsFilePath() As String
-        Get
-            Return mPHRPFirstHitsFilePath
-        End Get
-    End Property
-
-    Public ReadOnly Property PHRPSynopsisFilePath() As String
-        Get
-            Return mPHRPSynopsisFilePath
-        End Get
-    End Property
-
-#End Region
-
-    ''' <summary>
-    ''' constructor
-    ''' </summary>
-    ''' <param name="strDatasetName">Dataset Name</param>
-    ''' <param name="strWorkDir">Working directory</param>
-    ''' <param name="eResultType">PeptideHit result type</param>
-    ''' <remarks></remarks>
-    Public Sub New(strDatasetName As String, strWorkDir As String, eResultType As clsPHRPReader.ePeptideHitResultType)
-
-        mDatasetName = strDatasetName
-        mWorkDir = strWorkDir
-        mPeptideHitResultType = eResultType
-
-        mErrorMessage = String.Empty
-
-        mSkippedLineInfo = New SortedDictionary(Of Integer, List(Of String))
-
-        mMSGFCachedResults = New SortedDictionary(Of String, String)
-
-        ' Initialize the file paths
-        InitializeFilePaths()
-
-        UpdateMSGFInputOutputFilePaths()
-    End Sub
-
-#Region "Functions to be defined in derived classes"
-
-    Protected MustOverride Sub InitializeFilePaths()
-    Protected MustOverride Function PassesFilters(objPSM As clsPSM) As Boolean
-
-#End Region
-
-    Public Sub AddUpdateMSGFResult(
-      strScanNumber As String,
-      strCharge As String,
-      strPeptide As String,
-      strMSGFResultData As String)
-
-        Try
-            mMSGFCachedResults.Item(ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide)) = strMSGFResultData
-        Catch ex As Exception
-            ' Entry not found; this is unexpected; we will only report the error at the console
-            LogError("Entry not found in mMSGFCachedResults for " & ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide))
-        End Try
-    End Sub
-
-    Private Function AppendText(strText As String, strAddnl As String) As String
-        Return AppendText(strText, strAddnl, ": ")
-    End Function
-
-    Private Function AppendText(strText As String, strAddnl As String, strDelimiter As String) As String
-        If String.IsNullOrWhiteSpace(strAddnl) Then
-            Return strText
-        Else
-            Return strText & strDelimiter & strAddnl
-        End If
-    End Function
-
-    Public Sub CloseLogFileNow()
-        If Not mLogFile Is Nothing Then
-            mLogFile.Close()
-            mLogFile = Nothing
-
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-            Threading.Thread.Sleep(100)
-        End If
-    End Sub
-
-    Protected Function CombineIfValidFile(strFolder As String, strFile As String) As String
-        If Not String.IsNullOrWhiteSpace(strFile) Then
-            Return Path.Combine(strFolder, strFile)
-        Else
-            Return String.Empty
-        End If
-    End Function
-
-    Private Function ConstructMGFMappingCode(intScanNumber As Integer, intCharge As Integer) As String
-        Return intScanNumber.ToString & "_" & intCharge.ToString
-    End Function
-
-    Private Function ConstructMSGFResultCode(
-     intScanNumber As Integer,
-     intCharge As Integer,
-     strPeptide As String) As String
-
-        Return intScanNumber.ToString & "_" & intCharge.ToString & "_" & strPeptide
-    End Function
-
-    Private Function ConstructMSGFResultCode(
-     strScanNumber As String,
-     strCharge As String,
-     strPeptide As String) As String
-
-        Return strScanNumber & "_" & strCharge & "_" & strPeptide
-    End Function
-
-    Private Function CreateMGFScanToIndexMap(strMGFFilePath As String) As Boolean
-
-        Dim intSpectrumIndex = 0
-
-        Try
-
-            Dim objMGFReader As New clsMGFReader()
-
-            If Not objMGFReader.OpenFile(strMGFFilePath) Then
-                ReportError("Error opening the .MGF file")
-                Return False
-            End If
-
-            mScanAndChargeToMGFIndex = New SortedDictionary(Of String, Integer)
-            mMGFIndexToScan = New SortedDictionary(Of Integer, Integer)
-
-
-
-            While True
-                ' Read the next available spectrum
-                Dim msmsDataList As List(Of String) = Nothing
-                Dim udtSpectrumHeaderInfo As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = Nothing
-
-                Dim blnSpectrumFound = objMGFReader.ReadNextSpectrum(msmsDataList, udtSpectrumHeaderInfo)
-                If Not blnSpectrumFound Then Exit While
-
-                intSpectrumIndex += 1
-
-                If udtSpectrumHeaderInfo.ParentIonChargeCount = 0 Then
-                    Dim strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, 0)
-                    mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
-                Else
-                    For intChargeIndex = 0 To udtSpectrumHeaderInfo.ParentIonChargeCount - 1
-                        Dim strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart,
-                                                                       udtSpectrumHeaderInfo.ParentIonCharges(
-                                                                           intChargeIndex))
-                        mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex)
-                    Next
-                End If
-
-                mMGFIndexToScan.Add(intSpectrumIndex, udtSpectrumHeaderInfo.ScanNumberStart)
-
-
-            End While
-
-        Catch ex As Exception
-            ReportError("Error indexing the MGF file: " & ex.Message)
-            Return False
-        End Try
-
-        If intSpectrumIndex > 0 Then
-            Return True
-        Else
-            ReportError("No spectra were found in the MGF file")
-            Return False
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Read the first-hits file and create a new, parallel file with the MSGF results
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Function CreateMSGFFirstHitsFile() As Boolean
-
-        Const MAX_WARNINGS_TO_REPORT = 10
-
-        Dim strMSGFFirstHitsResults As String
-        Dim strPeptideResultCode As String
-
-        Dim strMSGFResultData As String = String.Empty
-
-        Dim intMissingValueCount As Integer
-        Dim strWarningMessage As String
-
-        Try
-
-            If String.IsNullOrEmpty(mPHRPFirstHitsFilePath) Then
-                ' This result type does not have a first-hits file
-                Return True
-            End If
-
-            Dim startupOptions = GetMinimalMemoryPHRPStartupOptions()
-            startupOptions.LoadModsAndSeqInfo = True
-
-            ' Open the first-hits file
-            mPHRPReader = New clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions)
-            mPHRPReader.EchoMessagesToConsole = True
-
-            If Not mPHRPReader.CanRead Then
-                ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage))
-                Return False
-            End If
-
-            ' Define the path to write the first-hits MSGF results to
-            strMSGFFirstHitsResults = Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) &
-                                      MSGF_RESULT_FILENAME_SUFFIX
-            strMSGFFirstHitsResults = Path.Combine(mWorkDir, strMSGFFirstHitsResults)
-
-            ' Create the output file
-            Using swMSGFFHTFile = New StreamWriter(New FileStream(strMSGFFirstHitsResults, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-                ' Write out the headers to swMSGFFHTFile
-                WriteMSGFResultsHeaders(swMSGFFHTFile)
-
-                intMissingValueCount = 0
-
-                Do While mPHRPReader.MoveNext()
-
-                    Dim objPSM = mPHRPReader.CurrentPSM
-
-                    strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide)
-
-                    If mMSGFCachedResults.TryGetValue(strPeptideResultCode, strMSGFResultData) Then
-                        If String.IsNullOrEmpty(strMSGFResultData) Then
-                            ' Match text is empty
-                            ' We should not write thie out to disk since it would result in empty columns
-
-                            strWarningMessage = "MSGF Results are empty for result code '" & strPeptideResultCode &
-                                                "'; this is unexpected"
-                            intMissingValueCount += 1
-                            If intMissingValueCount <= MAX_WARNINGS_TO_REPORT Then
-                                If intMissingValueCount = MAX_WARNINGS_TO_REPORT Then
-                                    strWarningMessage &= "; additional invalid entries will not be reported"
-                                End If
-                                ReportWarning(strWarningMessage)
-                            Else
-                                LogError(strWarningMessage)
-                            End If
-                        Else
-                            ' Match found; write out the result
-                            swMSGFFHTFile.WriteLine(objPSM.ResultID & ControlChars.Tab & strMSGFResultData)
-                        End If
-
-                    Else
-                        ' Match not found; this is unexpected
-
-                        strWarningMessage = "Match not found for first-hits entry with result code '" &
-                                            strPeptideResultCode & "'; this is unexpected"
-
-                        ' Report the first 10 times this happens
-                        intMissingValueCount += 1
-                        If intMissingValueCount <= MAX_WARNINGS_TO_REPORT Then
-                            If intMissingValueCount = MAX_WARNINGS_TO_REPORT Then
-                                strWarningMessage &= "; additional missing entries will not be reported"
-                            End If
-                            ReportWarning(strWarningMessage)
-                        Else
-                            LogError(strWarningMessage)
-                        End If
-
-                    End If
-
-                Loop
-
-            End Using    ' First Hits MSGF writer
-
-            mPHRPReader.Dispose()
-
-        Catch ex As Exception
-            ReportError("Error creating the MSGF first hits file: " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    ''' <summary>
-    ''' Creates the input file for MSGF
-    ''' Will contain filter passing peptides from the synopsis file, plus all peptides 
-    ''' in the first-hits file that are not filter passing in the synopsis file
-    ''' If the synopsis file does not exist, then simply processes the first-hits file
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Function CreateMSGFInputFileUsingPHRPResultFiles() As Boolean
-
-        Dim strSpectrumFileName As String
-        Dim blnSuccess = False
-
-        Try
-            If String.IsNullOrEmpty(mDatasetName) Then
-                ReportError("Dataset name is undefined; unable to continue")
-                Return False
-            End If
-
-            If String.IsNullOrEmpty(mWorkDir) Then
-                ReportError("Working directory is undefined; unable to continue")
-                Return False
-            End If
-
-            If MgfInstrumentData Then
-                strSpectrumFileName = mDatasetName & ".mgf"
-
-                ' Need to read the .mgf file and create a mapping between the actual scan number and the 1-based index of the data in the .mgf file
-                blnSuccess = CreateMGFScanToIndexMap(Path.Combine(mWorkDir, strSpectrumFileName))
-                If Not blnSuccess Then
-                    Return False
-                End If
-
-            Else
-                ' mzXML filename is dataset plus .mzXML
-                ' Note that the jrap reader used by MSGF may fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
-                strSpectrumFileName = mDatasetName & ".mzXML"
-            End If
-
-
-            ' Create the MSGF Input file that we will write data to
-            Using swMSGFInputFile = New StreamWriter(New FileStream(mMSGFInputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-                ' Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
-                ' Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
-                swMSGFInputFile.WriteLine(
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile & ControlChars.Tab &
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_Title & ControlChars.Tab &
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber & ControlChars.Tab &
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation & ControlChars.Tab &
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_Charge & ControlChars.Tab &
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_Protein_First & ControlChars.Tab &
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_Result_ID & ControlChars.Tab &
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_Data_Source & ControlChars.Tab &
-                    clsMSGFRunner.MSGF_RESULT_COLUMN_Collision_Mode)
-
-                ' Initialize some tracking variables
-                mMSGFInputFileLineCount = 1
-
-                mSkippedLineInfo.Clear()
-
-                mMSGFCachedResults.Clear()
-
-                If Not String.IsNullOrEmpty(mPHRPSynopsisFilePath) AndAlso File.Exists(mPHRPSynopsisFilePath) Then
-
-                    Dim startupOptions As clsPHRPStartupOptions = GetMinimalMemoryPHRPStartupOptions()
-                    startupOptions.LoadModsAndSeqInfo = True
-
-                    ' Read the synopsis file data
-                    mPHRPReader = New clsPHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, startupOptions)
-                    mPHRPReader.EchoMessagesToConsole = True
-
-                    ' Report any errors cached during instantiation of mPHRPReader
-                    For Each strMessage As String In mPHRPReader.ErrorMessages
-                        ReportError(strMessage)
-                    Next
-                    mErrorMessage = String.Empty
-
-                    ' Report any warnings cached during instantiation of mPHRPReader
-                    For Each strMessage As String In mPHRPReader.WarningMessages
-                        ReportWarning(strMessage)
-                    Next
-
-                    mPHRPReader.ClearErrors()
-                    mPHRPReader.ClearWarnings()
-
-                    If Not mPHRPReader.CanRead Then
-                        ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage))
-                        Return False
-                    End If
-
-                    ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strSpectrumFileName, True)
-                    mPHRPReader.Dispose()
-
-                    blnSuccess = True
-                End If
-
-                If Not String.IsNullOrEmpty(mPHRPFirstHitsFilePath) AndAlso File.Exists(mPHRPFirstHitsFilePath) Then
-                    ' Now read the first-hits file data
-
-                    Dim startupOptions As clsPHRPStartupOptions = GetMinimalMemoryPHRPStartupOptions()
-                    startupOptions.LoadModsAndSeqInfo = True
-
-                    mPHRPReader = New clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions)
-                    mPHRPReader.EchoMessagesToConsole = True
-
-                    If Not mPHRPReader.CanRead Then
-                        ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage))
-                        Return False
-                    End If
-
-                    ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strSpectrumFileName, False)
-                    mPHRPReader.Dispose()
-
-                    blnSuccess = True
-                End If
-
-            End Using
-
-            If Not blnSuccess Then
-                ReportError("Neither the _syn.txt nor the _fht.txt file was found")
-            End If
-
-        Catch ex As Exception
-            ReportError("Error reading the PHRP result file to create the MSGF Input file: " & ex.Message)
-            Return False
-        End Try
-
-        Return blnSuccess
-    End Function
-
-    Public Shared Function GetMinimalMemoryPHRPStartupOptions() As clsPHRPStartupOptions
-
-        Dim startupOptions = New clsPHRPStartupOptions() With {
-            .LoadModsAndSeqInfo = False,
-            .LoadMSGFResults = False,
-            .LoadScanStatsData = False,
-            .MaxProteinsPerPSM = 1
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+//
+// Created 07/20/2010
+//
+// This class reads a tab-delimited text file (created by the Peptide File Extractor or by PHRP)
+// and creates a tab-delimited text file suitable for processing by MSGF
+//
+// The class must be derived by a sub-class customized for the specific analysis tool (Sequest, X!Tandem, Inspect, etc.)
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+
+using System.IO;
+using MsMsDataFileReader;
+using PHRPReader;
+
+namespace AnalysisManagerMSGFPlugin
+{
+    public abstract class clsMSGFInputCreator
+    {
+        #region "Constants"
+
+        private const string MSGF_INPUT_FILENAME_SUFFIX = "_MSGF_input.txt";
+        public const string MSGF_RESULT_FILENAME_SUFFIX = "_MSGF.txt";
+
+        #endregion
+
+        #region "Module variables"
+
+        protected readonly string mDatasetName;
+        protected readonly string mWorkDir;
+
+        private readonly clsPHRPReader.ePeptideHitResultType mPeptideHitResultType;
+
+        private readonly SortedDictionary<int, List<string>> mSkippedLineInfo;
+        // This dictionary is initially populated with a string constructed using
+        // Scan plus "_" plus charge plus "_" plus the original peptide sequence in the PHRP file
+        // It will contain an entry for every line written to the MSGF input file
+        // It is later updated by AddUpdateMSGFResult() to store the properly formated MSGF result line for each entry
+        // Finally, it will be used by CreateMSGFFirstHitsFile to create the MSGF file that corresponds to the first-hits file
+
+        private readonly SortedDictionary<string, string> mMSGFCachedResults;
+        // This dictionary holds a mapping between Scan plus "_" plus charge to the spectrum index in the MGF file (first spectrum has index=1)
+        // It is only used if MGFInstrumentData=True
+
+        private SortedDictionary<string, int> mScanAndChargeToMGFIndex;
+        // This dictionary is the inverse of mScanAndChargeToMGFIndex
+        // mMGFIndexToScan allows for a lookup of Scan Number given the MGF index
+        // It is only used if MGFInstrumentData=True
+
+        private SortedDictionary<int, int> mMGFIndexToScan;
+
+        protected string mErrorMessage = string.Empty;
+        protected string mPHRPFirstHitsFilePath = string.Empty;
+
+        protected string mPHRPSynopsisFilePath = string.Empty;
+        private string mMSGFInputFilePath = string.Empty;
+
+        private string mMSGFResultsFilePath = string.Empty;
+
+        private int mMSGFInputFileLineCount = 0;
+
+        // Note that this reader is instantiated and disposed of several times
+        // We declare it here as a classwide variable so that we can attach the event handlers
+        private clsPHRPReader withEventsField_mPHRPReader;
+
+        private clsPHRPReader mPHRPReader
+        {
+            get { return withEventsField_mPHRPReader; }
+            set
+            {
+                if (withEventsField_mPHRPReader != null)
+                {
+                    withEventsField_mPHRPReader.ErrorEvent -= mPHRPReader_ErrorEvent;
+                    withEventsField_mPHRPReader.MessageEvent -= mPHRPReader_MessageEvent;
+                    withEventsField_mPHRPReader.WarningEvent -= mPHRPReader_WarningEvent;
+                }
+                withEventsField_mPHRPReader = value;
+                if (withEventsField_mPHRPReader != null)
+                {
+                    withEventsField_mPHRPReader.ErrorEvent += mPHRPReader_ErrorEvent;
+                    withEventsField_mPHRPReader.MessageEvent += mPHRPReader_MessageEvent;
+                    withEventsField_mPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
+                }
+            }
         }
 
-        Return startupOptions
-    End Function
+        private StreamWriter mLogFile;
 
-    Public Function GetSkippedInfoByResultId(intResultID As Integer) As List(Of String)
+        #endregion
 
-        Dim objSkipList As List(Of String) = Nothing
+        #region "Events"
 
-        If mSkippedLineInfo.TryGetValue(intResultID, objSkipList) Then
-            Return objSkipList
-        Else
-            Return New List(Of String)()
-        End If
-    End Function
+        public event ErrorEventEventHandler ErrorEvent;
 
-    ''' <summary>
-    ''' Determines the scan number for the given MGF file spectrum index
-    ''' </summary>
-    ''' <param name="intMGFSpectrumIndex"></param>
-    ''' <returns>Scan number if found; 0 if no match</returns>
-    ''' <remarks></remarks>
-    Public Function GetScanByMGFSpectrumIndex(intMGFSpectrumIndex As Integer) As Integer
-        Dim intScanNumber As Integer
+        public delegate void ErrorEventEventHandler(string strErrorMessage);
 
-        If mMGFIndexToScan.TryGetValue(intMGFSpectrumIndex, intScanNumber) Then
-            Return intScanNumber
-        Else
-            Return 0
-        End If
-    End Function
+        public event WarningEventEventHandler WarningEvent;
 
-    Private Sub LogError(strErrorMessage As String)
+        public delegate void WarningEventEventHandler(string strWarningMessage);
 
-        Try
-            If mLogFile Is Nothing Then
-                Dim strErrorLogFilePath As String
-                Dim blnWriteHeader = True
+        #endregion
 
-                strErrorLogFilePath = Path.Combine(mWorkDir, "MSGFInputCreator_Log.txt")
+        #region "Properties"
 
-                If File.Exists(strErrorLogFilePath) Then
-                    blnWriteHeader = False
-                End If
+        public bool DoNotFilterPeptides { get; set; }
 
-                mLogFile = New StreamWriter(New FileStream(strErrorLogFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-                mLogFile.AutoFlush = True
+        public string ErrorMessage
+        {
+            get { return mErrorMessage; }
+        }
 
-                If blnWriteHeader Then
-                    mLogFile.WriteLine("Date" & ControlChars.Tab & "Message")
-                End If
-            End If
+        public bool MgfInstrumentData { get; set; }
 
-            mLogFile.WriteLine(Date.Now.ToString("yyyy-MM-dd hh:mm:ss tt") & ControlChars.Tab & strErrorMessage)
+        public int MSGFInputFileLineCount
+        {
+            get { return mMSGFInputFileLineCount; }
+        }
 
-        Catch ex As Exception
-            RaiseEvent ErrorEvent("Error writing to MSGFInputCreator log file: " & ex.Message)
-        End Try
-    End Sub
+        public string MSGFInputFilePath
+        {
+            get { return mMSGFInputFilePath; }
+        }
 
-    ''' <summary>
-    ''' Read data from a synopsis file or first hits file
-    ''' Write filter-passing synopsis file data to the MSGF input file
-    ''' Write first-hits data to the MSGF input file only if it isn't in mMSGFCachedResults
-    ''' </summary>
-    ''' <param name="objReader"></param>
-    ''' <param name="swMSGFInputFile"></param>
-    ''' <param name="strSpectrumFileName"></param>
-    ''' <param name="blnParsingSynopsisFile"></param>
-    ''' <remarks></remarks>
-    Private Sub ReadAndStorePHRPData(
-      objReader As clsPHRPReader,
-      swMSGFInputFile As StreamWriter,
-      strSpectrumFileName As String,
-      blnParsingSynopsisFile As Boolean)
+        public string MSGFResultsFilePath
+        {
+            get { return mMSGFResultsFilePath; }
+        }
 
-        Dim strPeptideResultCode As String
-        Dim strPHRPSource As String
+        public string PHRPFirstHitsFilePath
+        {
+            get { return mPHRPFirstHitsFilePath; }
+        }
 
-        Dim blnSuccess As Boolean
+        public string PHRPSynopsisFilePath
+        {
+            get { return mPHRPSynopsisFilePath; }
+        }
 
-        Dim intResultIDPrevious = 0
-        Dim intScanNumberPrevious = 0
-        Dim intChargePrevious = 0
-        Dim strPeptidePrevious As String = String.Empty
+        #endregion
 
-        Dim strScanAndCharge As String
-        Dim intScanNumberToWrite As Integer
-        Dim intMGFIndexLookupFailureCount As Integer
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="strDatasetName">Dataset Name</param>
+        /// <param name="strWorkDir">Working directory</param>
+        /// <param name="eResultType">PeptideHit result type</param>
+        /// <remarks></remarks>
+        public clsMSGFInputCreator(string strDatasetName, string strWorkDir, clsPHRPReader.ePeptideHitResultType eResultType)
+        {
+            mDatasetName = strDatasetName;
+            mWorkDir = strWorkDir;
+            mPeptideHitResultType = eResultType;
 
-        Dim blnPassesFilters As Boolean
+            mErrorMessage = string.Empty;
 
-        Dim objSkipList As List(Of String) = Nothing
+            mSkippedLineInfo = new SortedDictionary<int, List<string>>();
 
-        If blnParsingSynopsisFile Then
-            strPHRPSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_SYN
-        Else
-            strPHRPSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_FHT
-        End If
+            mMSGFCachedResults = new SortedDictionary<string, string>();
 
-        objReader.SkipDuplicatePSMs = False
+            // Initialize the file paths
+            InitializeFilePaths();
 
-        Do While objReader.MoveNext()
+            UpdateMSGFInputOutputFilePaths();
+        }
 
-            blnSuccess = True
+        #region "Functions to be defined in derived classes"
 
-            Dim objPSM = objReader.CurrentPSM
+        protected abstract void InitializeFilePaths();
+        protected abstract bool PassesFilters(clsPSM objPSM);
 
-            ' Compute the result code; we'll use it later to search/populate mMSGFCachedResults
-            strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide)
+        #endregion
 
-            If DoNotFilterPeptides Then
-                blnPassesFilters = True
-            Else
-                blnPassesFilters = PassesFilters(objPSM)
-            End If
+        public void AddUpdateMSGFResult(string strScanNumber, string strCharge, string strPeptide, string strMSGFResultData)
+        {
+            try
+            {
+                mMSGFCachedResults[ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide)] = strMSGFResultData;
+            }
+            catch (Exception ex)
+            {
+                // Entry not found; this is unexpected; we will only report the error at the console
+                LogError("Entry not found in mMSGFCachedResults for " + ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide));
+            }
+        }
 
-            If blnParsingSynopsisFile Then
-                ' Synopsis file 
-                ' Check for duplicate lines
+        private string AppendText(string strText, string strAddnl)
+        {
+            return AppendText(strText, strAddnl, ": ");
+        }
 
-                If blnPassesFilters Then
-                    ' If this line is a duplicate of the previous line, then skip it
-                    ' This happens in Sequest _syn.txt files where the line is repeated for all protein matches
+        private string AppendText(string strText, string strAddnl, string strDelimiter)
+        {
+            if (string.IsNullOrWhiteSpace(strAddnl))
+            {
+                return strText;
+            }
+            else
+            {
+                return strText + strDelimiter + strAddnl;
+            }
+        }
 
+        public void CloseLogFileNow()
+        {
+            if ((mLogFile != null))
+            {
+                mLogFile.Close();
+                mLogFile = null;
 
-                    If intScanNumberPrevious = objPSM.ScanNumber AndAlso
-                       intChargePrevious = objPSM.Charge AndAlso
-                       strPeptidePrevious = objPSM.Peptide Then
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                System.Threading.Thread.Sleep(100);
+            }
+        }
 
-                        blnSuccess = False
+        protected string CombineIfValidFile(string strFolder, string strFile)
+        {
+            if (!string.IsNullOrWhiteSpace(strFile))
+            {
+                return Path.Combine(strFolder, strFile);
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
 
-                        If mSkippedLineInfo.TryGetValue(intResultIDPrevious, objSkipList) Then
-                            objSkipList.Add(objPSM.ResultID & ControlChars.Tab & objPSM.ProteinFirst)
-                        Else
-                            objSkipList = New List(Of String)
-                            objSkipList.Add(objPSM.ResultID & ControlChars.Tab & objPSM.ProteinFirst)
-                            mSkippedLineInfo.Add(intResultIDPrevious, objSkipList)
-                        End If
+        private string ConstructMGFMappingCode(int intScanNumber, int intCharge)
+        {
+            return intScanNumber.ToString() + "_" + intCharge.ToString();
+        }
 
-                    Else
-                        intResultIDPrevious = objPSM.ResultID
-                        intScanNumberPrevious = objPSM.ScanNumber
-                        intChargePrevious = objPSM.Charge
-                        strPeptidePrevious = String.Copy(objPSM.Peptide)
-                    End If
+        private string ConstructMSGFResultCode(int intScanNumber, int intCharge, string strPeptide)
+        {
+            return intScanNumber.ToString() + "_" + intCharge.ToString() + "_" + strPeptide;
+        }
 
-                End If
+        private string ConstructMSGFResultCode(string strScanNumber, string strCharge, string strPeptide)
+        {
+            return strScanNumber + "_" + strCharge + "_" + strPeptide;
+        }
 
-            Else
-                ' First-hits file
-                ' Use all data in the first-hits file, but skip it if it is already in mMSGFCachedResults
+        private bool CreateMGFScanToIndexMap(string strMGFFilePath)
+        {
+            var intSpectrumIndex = 0;
 
-                blnPassesFilters = True
+            try
+            {
+                clsMGFReader objMGFReader = new clsMGFReader();
 
-                If mMSGFCachedResults.ContainsKey(strPeptideResultCode) Then
-                    blnSuccess = False
-                End If
+                if (!objMGFReader.OpenFile(strMGFFilePath))
+                {
+                    ReportError("Error opening the .MGF file");
+                    return false;
+                }
 
-            End If
+                mScanAndChargeToMGFIndex = new SortedDictionary<string, int>();
+                mMGFIndexToScan = new SortedDictionary<int, int>();
 
-            If blnSuccess And blnPassesFilters Then
+                while (true)
+                {
+                    // Read the next available spectrum
+                    List<string> msmsDataList = null;
+                    clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtSpectrumHeaderInfo;
 
-                If MgfInstrumentData Then
-                    strScanAndCharge = ConstructMGFMappingCode(objPSM.ScanNumber, objPSM.Charge)
-                    If Not mScanAndChargeToMGFIndex.TryGetValue(strScanAndCharge, intScanNumberToWrite) Then
-                        ' Match not found; try searching for scan and charge 0
-                        If Not mScanAndChargeToMGFIndex.TryGetValue(ConstructMGFMappingCode(objPSM.ScanNumber, 0), intScanNumberToWrite) Then
-                            intScanNumberToWrite = 0
+                    var blnSpectrumFound = objMGFReader.ReadNextSpectrum(out msmsDataList, out udtSpectrumHeaderInfo);
+                    if (!blnSpectrumFound)
+                        break;
 
-                            intMGFIndexLookupFailureCount += 1
-                            If intMGFIndexLookupFailureCount <= 10 Then
-                                ReportError("Unable to find " & strScanAndCharge & " in mScanAndChargeToMGFIndex for peptide " & objPSM.Peptide)
-                            End If
-                        End If
-                    End If
+                    intSpectrumIndex += 1;
 
-                Else
-                    intScanNumberToWrite = objPSM.ScanNumber
-                End If
+                    if (udtSpectrumHeaderInfo.ParentIonChargeCount == 0)
+                    {
+                        var strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, 0);
+                        mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex);
+                    }
+                    else
+                    {
+                        for (var intChargeIndex = 0; intChargeIndex <= udtSpectrumHeaderInfo.ParentIonChargeCount - 1; intChargeIndex++)
+                        {
+                            var strScanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ParentIonCharges[intChargeIndex]);
+                            mScanAndChargeToMGFIndex.Add(strScanAndCharge, intSpectrumIndex);
+                        }
+                    }
 
-                ' The title column holds the original peptide sequence
-                ' If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
+                    mMGFIndexToScan.Add(intSpectrumIndex, udtSpectrumHeaderInfo.ScanNumberStart);
+                }
+            }
+            catch (Exception ex)
+            {
+                ReportError("Error indexing the MGF file: " + ex.Message);
+                return false;
+            }
 
-                ' Columns are: #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
-                swMSGFInputFile.WriteLine(
-                   strSpectrumFileName & ControlChars.Tab &
-                   objPSM.Peptide & ControlChars.Tab &
-                   intScanNumberToWrite & ControlChars.Tab &
-                   objPSM.PeptideWithNumericMods & ControlChars.Tab &
-                   objPSM.Charge & ControlChars.Tab &
-                   objPSM.ProteinFirst & ControlChars.Tab &
-                   objPSM.ResultID & ControlChars.Tab &
-                   strPHRPSource & ControlChars.Tab &
-                   objPSM.CollisionMode)
+            if (intSpectrumIndex > 0)
+            {
+                return true;
+            }
+            else
+            {
+                ReportError("No spectra were found in the MGF file");
+                return false;
+            }
+        }
 
-                mMSGFInputFileLineCount += 1
+        /// <summary>
+        /// Read the first-hits file and create a new, parallel file with the MSGF results
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public bool CreateMSGFFirstHitsFile()
+        {
+            const int MAX_WARNINGS_TO_REPORT = 10;
 
-                Try
-                    mMSGFCachedResults.Add(strPeptideResultCode, "")
-                Catch ex As Exception
-                    ' Key is already present; this is unexpected, but we can safely ignore this error
-                    LogError("Warning in ReadAndStorePHRPData: Key already defined in mMSGFCachedResults: " & strPeptideResultCode)
-                End Try
+            string strMSGFFirstHitsResults = null;
+            string strPeptideResultCode = null;
 
-            End If
+            string strMSGFResultData = string.Empty;
 
-        Loop
+            int intMissingValueCount = 0;
+            string strWarningMessage = null;
 
-        If intMGFIndexLookupFailureCount > 10 Then
-            ReportError("Was unable to find a match in mScanAndChargeToMGFIndex for " & intMGFIndexLookupFailureCount & " PSM results")
-        End If
+            try
+            {
+                if (string.IsNullOrEmpty(mPHRPFirstHitsFilePath))
+                {
+                    // This result type does not have a first-hits file
+                    return true;
+                }
 
-    End Sub
+                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                startupOptions.LoadModsAndSeqInfo = true;
 
-    Protected Sub ReportError(strErrorMessage As String)
-        mErrorMessage = strErrorMessage
-        LogError(mErrorMessage)
-        RaiseEvent ErrorEvent(mErrorMessage)
-    End Sub
+                // Open the first-hits file
+                mPHRPReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
+                mPHRPReader.EchoMessagesToConsole = true;
 
-    Private Sub ReportWarning(strWarningMessage As String)
-        LogError(strWarningMessage)
-        RaiseEvent WarningEvent(strWarningMessage)
-    End Sub
+                if (!mPHRPReader.CanRead)
+                {
+                    ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage));
+                    return false;
+                }
 
+                // Define the path to write the first-hits MSGF results to
+                strMSGFFirstHitsResults = Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) +
+                                          MSGF_RESULT_FILENAME_SUFFIX;
+                strMSGFFirstHitsResults = Path.Combine(mWorkDir, strMSGFFirstHitsResults);
 
-    ''' <summary>
-    ''' Define the MSGF input and output file paths
-    ''' </summary>
-    ''' <remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
-    Private Sub UpdateMSGFInputOutputFilePaths()
-        mMSGFInputFilePath = Path.Combine(mWorkDir,
-                                          Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) &
-                                          MSGF_INPUT_FILENAME_SUFFIX)
-        mMSGFResultsFilePath = Path.Combine(mWorkDir,
-                                            Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) &
-                                            MSGF_RESULT_FILENAME_SUFFIX)
-    End Sub
+                // Create the output file
+                using (var swMSGFFHTFile = new StreamWriter(new FileStream(strMSGFFirstHitsResults, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    // Write out the headers to swMSGFFHTFile
+                    WriteMSGFResultsHeaders(swMSGFFHTFile);
 
-    Public Sub WriteMSGFResultsHeaders(swOutFile As StreamWriter)
+                    intMissingValueCount = 0;
 
-        swOutFile.WriteLine("Result_ID" & ControlChars.Tab &
-          "Scan" & ControlChars.Tab &
-          "Charge" & ControlChars.Tab &
-          "Protein" & ControlChars.Tab &
-          "Peptide" & ControlChars.Tab &
-          "SpecProb" & ControlChars.Tab &
-          "Notes")
-    End Sub
+                    while (mPHRPReader.MoveNext())
+                    {
+                        var objPSM = mPHRPReader.CurrentPSM;
 
-    Private Sub mPHRPReader_ErrorEvent(strErrorMessage As String) Handles mPHRPReader.ErrorEvent
-        ReportError(strErrorMessage)
-    End Sub
+                        strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide);
 
-    Private Sub mPHRPReader_MessageEvent(strMessage As String) Handles mPHRPReader.MessageEvent
-        Console.WriteLine(strMessage)
-    End Sub
+                        if (mMSGFCachedResults.TryGetValue(strPeptideResultCode, out strMSGFResultData))
+                        {
+                            if (string.IsNullOrEmpty(strMSGFResultData))
+                            {
+                                // Match text is empty
+                                // We should not write thie out to disk since it would result in empty columns
 
-    Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
-        ReportWarning(strWarningMessage)
-    End Sub
-End Class
+                                strWarningMessage = "MSGF Results are empty for result code '" + strPeptideResultCode +
+                                                    "'; this is unexpected";
+                                intMissingValueCount += 1;
+                                if (intMissingValueCount <= MAX_WARNINGS_TO_REPORT)
+                                {
+                                    if (intMissingValueCount == MAX_WARNINGS_TO_REPORT)
+                                    {
+                                        strWarningMessage += "; additional invalid entries will not be reported";
+                                    }
+                                    ReportWarning(strWarningMessage);
+                                }
+                                else
+                                {
+                                    LogError(strWarningMessage);
+                                }
+                            }
+                            else
+                            {
+                                // Match found; write out the result
+                                swMSGFFHTFile.WriteLine(objPSM.ResultID + "\t" + strMSGFResultData);
+                            }
+                        }
+                        else
+                        {
+                            // Match not found; this is unexpected
+
+                            strWarningMessage = "Match not found for first-hits entry with result code '" +
+                                                strPeptideResultCode + "'; this is unexpected";
+
+                            // Report the first 10 times this happens
+                            intMissingValueCount += 1;
+                            if (intMissingValueCount <= MAX_WARNINGS_TO_REPORT)
+                            {
+                                if (intMissingValueCount == MAX_WARNINGS_TO_REPORT)
+                                {
+                                    strWarningMessage += "; additional missing entries will not be reported";
+                                }
+                                ReportWarning(strWarningMessage);
+                            }
+                            else
+                            {
+                                LogError(strWarningMessage);
+                            }
+                        }
+                    }
+                }
+                // First Hits MSGF writer
+
+                mPHRPReader.Dispose();
+            }
+            catch (Exception ex)
+            {
+                ReportError("Error creating the MSGF first hits file: " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Creates the input file for MSGF
+        /// Will contain filter passing peptides from the synopsis file, plus all peptides
+        /// in the first-hits file that are not filter passing in the synopsis file
+        /// If the synopsis file does not exist, then simply processes the first-hits file
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public bool CreateMSGFInputFileUsingPHRPResultFiles()
+        {
+            string strSpectrumFileName = null;
+            var blnSuccess = false;
+
+            try
+            {
+                if (string.IsNullOrEmpty(mDatasetName))
+                {
+                    ReportError("Dataset name is undefined; unable to continue");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(mWorkDir))
+                {
+                    ReportError("Working directory is undefined; unable to continue");
+                    return false;
+                }
+
+                if (MgfInstrumentData)
+                {
+                    strSpectrumFileName = mDatasetName + ".mgf";
+
+                    // Need to read the .mgf file and create a mapping between the actual scan number and the 1-based index of the data in the .mgf file
+                    blnSuccess = CreateMGFScanToIndexMap(Path.Combine(mWorkDir, strSpectrumFileName));
+                    if (!blnSuccess)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // mzXML filename is dataset plus .mzXML
+                    // Note that the jrap reader used by MSGF may fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
+                    strSpectrumFileName = mDatasetName + ".mzXML";
+                }
+
+                // Create the MSGF Input file that we will write data to
+                using (var swMSGFInputFile = new StreamWriter(new FileStream(mMSGFInputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    // Write out the headers:  #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
+                    // Note that we're storing the original peptide sequence in the "Title" column, while the marked up sequence (with mod masses) goes in the "Annotation" column
+                    swMSGFInputFile.WriteLine(
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_SpectrumFile + "\t" +
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_Title + "\t" +
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_ScanNumber + "\t" +
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_Annotation + "\t" +
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_Charge + "\t" +
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_Protein_First + "\t" +
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_Result_ID + "\t" +
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_Data_Source + "\t" +
+                        clsMSGFRunner.MSGF_RESULT_COLUMN_Collision_Mode);
+
+                    // Initialize some tracking variables
+                    mMSGFInputFileLineCount = 1;
+
+                    mSkippedLineInfo.Clear();
+
+                    mMSGFCachedResults.Clear();
+
+                    if (!string.IsNullOrEmpty(mPHRPSynopsisFilePath) && File.Exists(mPHRPSynopsisFilePath))
+                    {
+                        clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                        startupOptions.LoadModsAndSeqInfo = true;
+
+                        // Read the synopsis file data
+                        mPHRPReader = new clsPHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, startupOptions);
+                        mPHRPReader.EchoMessagesToConsole = true;
+
+                        // Report any errors cached during instantiation of mPHRPReader
+                        foreach (string strMessage in mPHRPReader.ErrorMessages)
+                        {
+                            ReportError(strMessage);
+                        }
+                        mErrorMessage = string.Empty;
+
+                        // Report any warnings cached during instantiation of mPHRPReader
+                        foreach (string strMessage in mPHRPReader.WarningMessages)
+                        {
+                            ReportWarning(strMessage);
+                        }
+
+                        mPHRPReader.ClearErrors();
+                        mPHRPReader.ClearWarnings();
+
+                        if (!mPHRPReader.CanRead)
+                        {
+                            ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage));
+                            return false;
+                        }
+
+                        ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strSpectrumFileName, true);
+                        mPHRPReader.Dispose();
+
+                        blnSuccess = true;
+                    }
+
+                    if (!string.IsNullOrEmpty(mPHRPFirstHitsFilePath) && File.Exists(mPHRPFirstHitsFilePath))
+                    {
+                        // Now read the first-hits file data
+
+                        clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                        startupOptions.LoadModsAndSeqInfo = true;
+
+                        mPHRPReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
+                        mPHRPReader.EchoMessagesToConsole = true;
+
+                        if (!mPHRPReader.CanRead)
+                        {
+                            ReportError(AppendText("Aborting since PHRPReader is not ready", mErrorMessage));
+                            return false;
+                        }
+
+                        ReadAndStorePHRPData(mPHRPReader, swMSGFInputFile, strSpectrumFileName, false);
+                        mPHRPReader.Dispose();
+
+                        blnSuccess = true;
+                    }
+                }
+
+                if (!blnSuccess)
+                {
+                    ReportError("Neither the _syn.txt nor the _fht.txt file was found");
+                }
+            }
+            catch (Exception ex)
+            {
+                ReportError("Error reading the PHRP result file to create the MSGF Input file: " + ex.Message);
+                return false;
+            }
+
+            return blnSuccess;
+        }
+
+        public static clsPHRPStartupOptions GetMinimalMemoryPHRPStartupOptions()
+        {
+            var startupOptions = new clsPHRPStartupOptions
+            {
+                LoadModsAndSeqInfo = false,
+                LoadMSGFResults = false,
+                LoadScanStatsData = false,
+                MaxProteinsPerPSM = 1
+            };
+
+            return startupOptions;
+        }
+
+        public List<string> GetSkippedInfoByResultId(int intResultID)
+        {
+            List<string> objSkipList = null;
+
+            if (mSkippedLineInfo.TryGetValue(intResultID, out objSkipList))
+            {
+                return objSkipList;
+            }
+            else
+            {
+                return new List<string>();
+            }
+        }
+
+        /// <summary>
+        /// Determines the scan number for the given MGF file spectrum index
+        /// </summary>
+        /// <param name="intMGFSpectrumIndex"></param>
+        /// <returns>Scan number if found; 0 if no match</returns>
+        /// <remarks></remarks>
+        public int GetScanByMGFSpectrumIndex(int intMGFSpectrumIndex)
+        {
+            int intScanNumber = 0;
+
+            if (mMGFIndexToScan.TryGetValue(intMGFSpectrumIndex, out intScanNumber))
+            {
+                return intScanNumber;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        private void LogError(string strErrorMessage)
+        {
+            try
+            {
+                if (mLogFile == null)
+                {
+                    string strErrorLogFilePath = null;
+                    var blnWriteHeader = true;
+
+                    strErrorLogFilePath = Path.Combine(mWorkDir, "MSGFInputCreator_Log.txt");
+
+                    if (File.Exists(strErrorLogFilePath))
+                    {
+                        blnWriteHeader = false;
+                    }
+
+                    mLogFile = new StreamWriter(new FileStream(strErrorLogFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
+                    mLogFile.AutoFlush = true;
+
+                    if (blnWriteHeader)
+                    {
+                        mLogFile.WriteLine("Date\tMessage");
+                    }
+                }
+
+                mLogFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") + "\t" + strErrorMessage);
+            }
+            catch (Exception ex)
+            {
+                if (ErrorEvent != null)
+                {
+                    ErrorEvent("Error writing to MSGFInputCreator log file: " + ex.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Read data from a synopsis file or first hits file
+        /// Write filter-passing synopsis file data to the MSGF input file
+        /// Write first-hits data to the MSGF input file only if it isn't in mMSGFCachedResults
+        /// </summary>
+        /// <param name="objReader"></param>
+        /// <param name="swMSGFInputFile"></param>
+        /// <param name="strSpectrumFileName"></param>
+        /// <param name="blnParsingSynopsisFile"></param>
+        /// <remarks></remarks>
+        private void ReadAndStorePHRPData(
+            clsPHRPReader objReader,
+            StreamWriter swMSGFInputFile,
+            string strSpectrumFileName,
+            bool blnParsingSynopsisFile)
+        {
+            string strPeptideResultCode = null;
+            string strPHRPSource = null;
+
+            bool blnSuccess = false;
+
+            var intResultIDPrevious = 0;
+            var intScanNumberPrevious = 0;
+            var intChargePrevious = 0;
+            string strPeptidePrevious = string.Empty;
+
+            string strScanAndCharge = null;
+            int intScanNumberToWrite = 0;
+            int intMGFIndexLookupFailureCount = 0;
+
+            bool blnPassesFilters = false;
+
+            List<string> objSkipList = null;
+
+            if (blnParsingSynopsisFile)
+            {
+                strPHRPSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_SYN;
+            }
+            else
+            {
+                strPHRPSource = clsMSGFRunner.MSGF_PHRP_DATA_SOURCE_FHT;
+            }
+
+            objReader.SkipDuplicatePSMs = false;
+
+            while (objReader.MoveNext())
+            {
+                blnSuccess = true;
+
+                var objPSM = objReader.CurrentPSM;
+
+                // Compute the result code; we'll use it later to search/populate mMSGFCachedResults
+                strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide);
+
+                if (DoNotFilterPeptides)
+                {
+                    blnPassesFilters = true;
+                }
+                else
+                {
+                    blnPassesFilters = PassesFilters(objPSM);
+                }
+
+                if (blnParsingSynopsisFile)
+                {
+                    // Synopsis file
+                    // Check for duplicate lines
+
+                    if (blnPassesFilters)
+                    {
+                        // If this line is a duplicate of the previous line, then skip it
+                        // This happens in Sequest _syn.txt files where the line is repeated for all protein matches
+
+                        if (intScanNumberPrevious == objPSM.ScanNumber &&
+                            intChargePrevious == objPSM.Charge &&
+                            strPeptidePrevious == objPSM.Peptide)
+                        {
+                            blnSuccess = false;
+
+                            if (mSkippedLineInfo.TryGetValue(intResultIDPrevious, out objSkipList))
+                            {
+                                objSkipList.Add(objPSM.ResultID + "\t" + objPSM.ProteinFirst);
+                            }
+                            else
+                            {
+                                objSkipList = new List<string>();
+                                objSkipList.Add(objPSM.ResultID + "\t" + objPSM.ProteinFirst);
+                                mSkippedLineInfo.Add(intResultIDPrevious, objSkipList);
+                            }
+                        }
+                        else
+                        {
+                            intResultIDPrevious = objPSM.ResultID;
+                            intScanNumberPrevious = objPSM.ScanNumber;
+                            intChargePrevious = objPSM.Charge;
+                            strPeptidePrevious = string.Copy(objPSM.Peptide);
+                        }
+                    }
+                }
+                else
+                {
+                    // First-hits file
+                    // Use all data in the first-hits file, but skip it if it is already in mMSGFCachedResults
+
+                    blnPassesFilters = true;
+
+                    if (mMSGFCachedResults.ContainsKey(strPeptideResultCode))
+                    {
+                        blnSuccess = false;
+                    }
+                }
+
+                if (blnSuccess & blnPassesFilters)
+                {
+                    if (MgfInstrumentData)
+                    {
+                        strScanAndCharge = ConstructMGFMappingCode(objPSM.ScanNumber, objPSM.Charge);
+                        if (!mScanAndChargeToMGFIndex.TryGetValue(strScanAndCharge, out intScanNumberToWrite))
+                        {
+                            // Match not found; try searching for scan and charge 0
+                            if (!mScanAndChargeToMGFIndex.TryGetValue(ConstructMGFMappingCode(objPSM.ScanNumber, 0), out intScanNumberToWrite))
+                            {
+                                intScanNumberToWrite = 0;
+
+                                intMGFIndexLookupFailureCount += 1;
+                                if (intMGFIndexLookupFailureCount <= 10)
+                                {
+                                    ReportError("Unable to find " + strScanAndCharge + " in mScanAndChargeToMGFIndex for peptide " + objPSM.Peptide);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        intScanNumberToWrite = objPSM.ScanNumber;
+                    }
+
+                    // The title column holds the original peptide sequence
+                    // If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
+
+                    // Columns are: #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
+                    swMSGFInputFile.WriteLine(
+                        strSpectrumFileName + "\t" +
+                        objPSM.Peptide + "\t" +
+                        intScanNumberToWrite + "\t" +
+                        objPSM.PeptideWithNumericMods + "\t" +
+                        objPSM.Charge + "\t" +
+                        objPSM.ProteinFirst + "\t" +
+                        objPSM.ResultID + "\t" +
+                        strPHRPSource + "\t" +
+                        objPSM.CollisionMode);
+
+                    mMSGFInputFileLineCount += 1;
+
+                    try
+                    {
+                        mMSGFCachedResults.Add(strPeptideResultCode, "");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Key is already present; this is unexpected, but we can safely ignore this error
+                        LogError("Warning in ReadAndStorePHRPData: Key already defined in mMSGFCachedResults: " + strPeptideResultCode);
+                    }
+                }
+            }
+
+            if (intMGFIndexLookupFailureCount > 10)
+            {
+                ReportError("Was unable to find a match in mScanAndChargeToMGFIndex for " + intMGFIndexLookupFailureCount + " PSM results");
+            }
+        }
+
+        protected void ReportError(string strErrorMessage)
+        {
+            mErrorMessage = strErrorMessage;
+            LogError(mErrorMessage);
+            if (ErrorEvent != null)
+            {
+                ErrorEvent(mErrorMessage);
+            }
+        }
+
+        private void ReportWarning(string strWarningMessage)
+        {
+            LogError(strWarningMessage);
+            if (WarningEvent != null)
+            {
+                WarningEvent(strWarningMessage);
+            }
+        }
+
+        /// <summary>
+        /// Define the MSGF input and output file paths
+        /// </summary>
+        /// <remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
+        private void UpdateMSGFInputOutputFilePaths()
+        {
+            mMSGFInputFilePath = Path.Combine(mWorkDir,
+                Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) +
+                MSGF_INPUT_FILENAME_SUFFIX);
+            mMSGFResultsFilePath = Path.Combine(mWorkDir,
+                Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) +
+                MSGF_RESULT_FILENAME_SUFFIX);
+        }
+
+        public void WriteMSGFResultsHeaders(StreamWriter swOutFile)
+        {
+            swOutFile.WriteLine("Result_ID\tScan\tCharge\tProtein\tPeptide\tSpecProb\tNotes");
+        }
+
+        private void mPHRPReader_ErrorEvent(string strErrorMessage)
+        {
+            ReportError(strErrorMessage);
+        }
+
+        private void mPHRPReader_MessageEvent(string strMessage)
+        {
+            Console.WriteLine(strMessage);
+        }
+
+        private void mPHRPReader_WarningEvent(string strWarningMessage)
+        {
+            ReportWarning(strWarningMessage);
+        }
+    }
+}

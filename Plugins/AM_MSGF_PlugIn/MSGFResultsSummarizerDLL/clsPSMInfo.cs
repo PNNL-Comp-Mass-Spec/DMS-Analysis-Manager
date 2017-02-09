@@ -1,190 +1,215 @@
-﻿Option Strict On
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
-Imports System.Linq
-Imports System.Reflection
+namespace MSGFResultsSummarizer
+{
+    public class clsPSMInfo : clsUniqueSeqInfo
+    {
+        public const double UNKNOWN_MSGF_SPECPROB = 10;
+        public const double UNKNOWN_EVALUE = double.MaxValue;
+        public const int UNKNOWN_FDR = -1;
+        public const int UNKNOWN_SEQID = -1;
 
-Public Class clsPSMInfo
-    Inherits clsUniqueSeqInfo
+        private readonly List<PSMObservation> mObservations;
 
-    Public Const UNKNOWN_MSGF_SPECPROB As Double = 10
-    Public Const UNKNOWN_EVALUE As Double = Double.MaxValue
-    Public Const UNKNOWN_FDR As Integer = -1
-    Public Const UNKNOWN_SEQID As Integer = -1
+        public override int ObsCount
+        {
+            get { return mObservations.Count; }
+        }
 
-    Private ReadOnly mObservations As List(Of PSMObservation)
+        /// <summary>
+        /// True if this is a phosphopeptide
+        /// </summary>
+        public bool Phosphopeptide { get; set; }
 
-    Public Overrides ReadOnly Property ObsCount As Integer
-        Get
-            Return mObservations.Count
-        End Get
-    End Property
+        /// <summary>
+        /// Protein name (from the _fht.txt or _syn.txt file)
+        /// </summary>
+        public string Protein { get; set; }
 
-    ''' <summary>
-    ''' True if this is a phosphopeptide
-    ''' </summary>
-    Public Property Phosphopeptide As Boolean
+        /// <summary>
+        /// First sequence ID for this normalized peptide
+        /// </summary>
+        public int SeqIdFirst { get; set; }
 
-    ''' <summary>
-    ''' Protein name (from the _fht.txt or _syn.txt file)
-    ''' </summary>
-    Public Property Protein As String
+        /// <summary>
+        /// Details for each PSM that maps to this class
+        /// </summary>
+        public List<PSMObservation> Observations
+        {
+            get { return mObservations; }
+        }
 
-    ''' <summary>
-    ''' First sequence ID for this normalized peptide
-    ''' </summary>
-    Public Property SeqIdFirst As Integer
+        public double BestMSGF
+        {
+            get
+            {
+                if (mObservations.Count == 0)
+                {
+                    return UNKNOWN_MSGF_SPECPROB;
+                }
+                else
+                {
+                    return (from item in mObservations orderby item.MSGF select item.MSGF).First();
+                }
+            }
+        }
 
-    ''' <summary>
-    ''' Details for each PSM that maps to this class
-    ''' </summary>
-    Public ReadOnly Property Observations As List(Of PSMObservation)
-        Get
-            Return mObservations
-        End Get
-    End Property
+        public double BestEValue
+        {
+            get
+            {
+                if (mObservations.Count == 0)
+                {
+                    return UNKNOWN_EVALUE;
+                }
+                else
+                {
+                    return (from item in mObservations orderby item.EValue select item.EValue).First();
+                }
+            }
+        }
 
-    Public ReadOnly Property BestMSGF As Double
-        Get
-            If mObservations.Count = 0 Then
-                Return UNKNOWN_MSGF_SPECPROB
-            Else
-                Return (From item In mObservations Order By item.MSGF Select item.MSGF).First
-            End If
-        End Get
-    End Property
+        public double BestFDR
+        {
+            get
+            {
+                if (mObservations.Count == 0)
+                {
+                    return UNKNOWN_FDR;
+                }
+                else
+                {
+                    return (from item in mObservations orderby item.FDR select item.FDR).First();
+                }
+            }
+        }
 
-    Public ReadOnly Property BestEValue As Double
-        Get
-            If mObservations.Count = 0 Then
-                Return UNKNOWN_EVALUE
-            Else
-                Return (From item In mObservations Order By item.EValue Select item.EValue).First
-            End If
-        End Get
-    End Property
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public clsPSMInfo()
+        {
+            mObservations = new List<PSMObservation>();
+            Clear();
+        }
 
-    Public ReadOnly Property BestFDR As Double
-        Get
-            If mObservations.Count = 0 Then
-                Return UNKNOWN_FDR
-            Else
-                Return (From item In mObservations Order By item.FDR Select item.FDR).First
-            End If
-        End Get
-    End Property
+        /// <summary>
+        /// Reset the fields
+        /// </summary>
+        public override void Clear()
+        {
+            base.Clear();
+            Protein = string.Empty;
+            SeqIdFirst = UNKNOWN_SEQID;
+            if ((mObservations != null))
+            {
+                mObservations.Clear();
+            }
+            Phosphopeptide = false;
+        }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    Public Sub New()
-        mObservations = New List(Of PSMObservation)
-        Clear()
-    End Sub
+        /// <summary>
+        /// Add a PSM Observation
+        /// </summary>
+        /// <param name="observation"></param>
+        public void AddObservation(PSMObservation observation)
+        {
+            mObservations.Add(observation);
+        }
 
-    ''' <summary>
-    ''' Reset the fields
-    ''' </summary>
-    Public Overrides Sub Clear()
-        MyBase.Clear()
-        Protein = String.Empty
-        SeqIdFirst = UNKNOWN_SEQID
-        If Not mObservations Is Nothing Then
-            mObservations.Clear()
-        End If
-        Phosphopeptide = False
-    End Sub
+        /// <summary>
+        /// Clone this class as a new clsUniqueSeqInfo instance
+        /// </summary>
+        /// <param name="obsCountOverride">Observation count override; ignored if less than 0</param>
+        /// <returns></returns>
+        public clsUniqueSeqInfo CloneAsSeqInfo(int obsCountOverride = -1)
+        {
+            var seqInfo = new clsUniqueSeqInfo();
 
-    ''' <summary>
-    ''' Add a PSM Observation
-    ''' </summary>
-    ''' <param name="observation"></param>
-    Public Sub AddObservation(observation As PSMObservation)
-        mObservations.Add(observation)
-    End Sub
+            if (obsCountOverride >= 0)
+            {
+                seqInfo.UpdateObservationCount(obsCountOverride);
+            }
+            else
+            {
+                seqInfo.UpdateObservationCount(this.ObsCount);
+            }
 
-    ''' <summary>
-    ''' Clone this class as a new clsUniqueSeqInfo instance
-    ''' </summary>
-    ''' <param name="obsCountOverride">Observation count override; ignored if less than 0</param>
-    ''' <returns></returns>
-    Public Function CloneAsSeqInfo(Optional obsCountOverride As Integer = -1) As clsUniqueSeqInfo
+            seqInfo.CTermK = this.CTermK;
+            seqInfo.CTermR = this.CTermR;
+            seqInfo.MissedCleavage = this.MissedCleavage;
+            seqInfo.KeratinPeptide = this.KeratinPeptide;
+            seqInfo.TrypsinPeptide = this.TrypsinPeptide;
+            seqInfo.Tryptic = this.Tryptic;
 
-        Dim seqInfo = New clsUniqueSeqInfo()
+            return seqInfo;
+        }
 
-        If obsCountOverride >= 0 Then
-            seqInfo.UpdateObservationCount(obsCountOverride)
-        Else
-            seqInfo.UpdateObservationCount(Me.ObsCount)
-        End If
+        public override void UpdateObservationCount(int observationCount)
+        {
+            throw new InvalidOperationException("Observation count cannot be updated in clsPSMInfo");
+        }
 
-        seqInfo.CTermK = Me.CTermK
-        seqInfo.CTermR = Me.CTermR
-        seqInfo.MissedCleavage = Me.MissedCleavage
-        seqInfo.KeratinPeptide = Me.KeratinPeptide
-        seqInfo.TrypsinPeptide = Me.TrypsinPeptide
-        seqInfo.Tryptic = Me.Tryptic
+        public override string ToString()
+        {
+            if (mObservations.Count == 0)
+            {
+                return string.Format("SeqID {0}, {1} (0 observations)", SeqIdFirst, Protein);
+            }
 
-        Return seqInfo
+            if (mObservations.Count == 1)
+            {
+                return string.Format("SeqID {0}, {1}, Scan {2} (1 observation)", SeqIdFirst, Protein, mObservations[0].Scan);
+            }
+            else
+            {
+                return string.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)", SeqIdFirst, Protein, mObservations[0].Scan,
+                    mObservations[mObservations.Count - 1].Scan, mObservations.Count);
+            }
+        }
 
-    End Function
+        public class PSMObservation
+        {
+            public int Scan { get; set; }
 
-    Public Overrides Sub UpdateObservationCount(observationCount As Integer)
-        Throw New InvalidOperationException("Observation count cannot be updated in clsPSMInfo")
-    End Sub
+            /// <summary>
+            /// FDR (aka QValue)
+            /// </summary>
+            public double FDR { get; set; }
 
-    Public Overrides Function ToString() As String
-        If mObservations.Count = 0 Then
-            Return String.Format("SeqID {0}, {1} (0 observations)",
-                                 SeqIdFirst, Protein)
-        End If
+            /// <summary>
+            /// MSGF SpecProb; will be UNKNOWN_MSGF_SPECPROB (10) if MSGF SpecProb is not available
+            /// </summary>
+            /// <remarks>MSPathFinder results use this field to store SpecEValue</remarks>
+            public double MSGF { get; set; }
 
-        If mObservations.Count = 1 Then
-            Return String.Format("SeqID {0}, {1}, Scan {2} (1 observation)",
-                                 SeqIdFirst, Protein, mObservations(0).Scan)
-        Else
-            Return String.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)",
-                                 SeqIdFirst, Protein, mObservations(0).Scan,
-                                 mObservations(mObservations.Count - 1).Scan, mObservations.Count)
-        End If
+            /// <summary>
+            /// Only used when MSGF SpecProb is not available
+            /// </summary>
+            public double EValue { get; set; }
 
-    End Function
+            public bool PassesFilter { get; set; }
 
-    Public Class PSMObservation
-        Public Property Scan As Integer
+            public PSMObservation()
+            {
+                Clear();
+            }
 
-        ''' <summary>
-        ''' FDR (aka QValue)
-        ''' </summary>
-        Public Property FDR As Double
+            public void Clear()
+            {
+                Scan = 0;
+                FDR = clsPSMInfo.UNKNOWN_FDR;
+                MSGF = clsPSMInfo.UNKNOWN_MSGF_SPECPROB;
+                EValue = clsPSMInfo.UNKNOWN_EVALUE;
+                PassesFilter = false;
+            }
 
-        ''' <summary>
-        ''' MSGF SpecProb; will be UNKNOWN_MSGF_SPECPROB (10) if MSGF SpecProb is not available
-        ''' </summary>
-        ''' <remarks>MSPathFinder results use this field to store SpecEValue</remarks>
-        Public Property MSGF As Double
-
-        ''' <summary>
-        ''' Only used when MSGF SpecProb is not available
-        ''' </summary>
-        Public Property EValue As Double
-
-        Public Property PassesFilter As Boolean
-
-        Public Sub New()
-            Clear()
-        End Sub
-
-        Public Sub Clear()
-            Scan = 0
-            FDR = UNKNOWN_FDR
-            MSGF = UNKNOWN_MSGF_SPECPROB
-            EValue = UNKNOWN_EVALUE
-            PassesFilter = False
-        End Sub
-
-        Public Overrides Function ToString() As String
-            Return String.Format("Scan {0}, FDR {1:F4}, MSGF {2:E3}", Scan, FDR, MSGF)
-        End Function
-    End Class
-
-End Class
+            public override string ToString()
+            {
+                return string.Format("Scan {0}, FDR {1:F4}, MSGF {2:E3}", Scan, FDR, MSGF);
+            }
+        }
+    }
+}

@@ -1,52 +1,53 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-'
-' Created 07/20/2010
-'
-' This class reads an X!Tandem _xt.txt file in support of creating the input file for MSGF 
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+//
+// Created 07/20/2010
+//
+// This class reads an X!Tandem _xt.txt file in support of creating the input file for MSGF
+//
+//*********************************************************************************************************
 
-Option Strict On
+using PHRPReader;
 
-Imports PHRPReader
+namespace AnalysisManagerMSGFPlugin
+{
+    public class clsMSGFInputCreatorXTandem : clsMSGFInputCreator
+    {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="strDatasetName">Dataset name</param>
+        /// <param name="strWorkDir">Working directory</param>
+        /// <remarks></remarks>
+        public clsMSGFInputCreatorXTandem(string strDatasetName, string strWorkDir)
+            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.XTandem)
+        {
+        }
 
-Public Class clsMSGFInputCreatorXTandem
-    Inherits clsMSGFInputCreator
+        protected override void InitializeFilePaths()
+        {
+            // Customize mPHRPResultFilePath for X!Tandem _xt.txt files
+            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPFirstHitsFileName(mDatasetName));
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPSynopsisFileName(mDatasetName));
+        }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="strDatasetName">Dataset name</param>
-    ''' <param name="strWorkDir">Working directory</param>
-    ''' <remarks></remarks>
-    Public Sub New(strDatasetName As String, strWorkDir As String)
+        protected override bool PassesFilters(clsPSM objPSM)
+        {
+            double dblLogEValue = 0;
 
-        MyBase.New(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.XTandem)
-    End Sub
+            bool blnPassesFilters = false;
 
-    Protected Overrides Sub InitializeFilePaths()
+            // Keep X!Tandem results with Peptide_Expectation_Value_Log(e) <= -0.3
+            // This will typically keep all data in the _xt.txt file
 
-        ' Customize mPHRPResultFilePath for X!Tandem _xt.txt files
-        mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPFirstHitsFileName(mDatasetName))
-        mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPSynopsisFileName(mDatasetName))
+            dblLogEValue = objPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0);
+            if (dblLogEValue <= -0.3)
+            {
+                blnPassesFilters = true;
+            }
 
-    End Sub
-
-    Protected Overrides Function PassesFilters(objPSM As clsPSM) As Boolean
-        Dim dblLogEValue As Double
-
-        Dim blnPassesFilters As Boolean
-
-        ' Keep X!Tandem results with Peptide_Expectation_Value_Log(e) <= -0.3
-        ' This will typically keep all data in the _xt.txt file
-
-        dblLogEValue = objPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0)
-        If dblLogEValue <= - 0.3 Then
-            blnPassesFilters = True
-        End If
-
-        Return blnPassesFilters
-    End Function
-End Class
+            return blnPassesFilters;
+        }
+    }
+}
