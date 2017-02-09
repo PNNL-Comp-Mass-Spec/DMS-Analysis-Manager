@@ -12,14 +12,14 @@ namespace AnalysisManager_IDM_Plugin
         #endregion
 
         #region Methods
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
 
             try
             {
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
@@ -34,7 +34,7 @@ namespace AnalysisManager_IDM_Plugin
                 if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
                 {
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 bool useExistingIDMResults = m_jobParams.GetJobParameter("UseExistingIDMResults", false);
@@ -57,7 +57,7 @@ namespace AnalysisManager_IDM_Plugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception retrieving resources", ex);
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
         #endregion
     }

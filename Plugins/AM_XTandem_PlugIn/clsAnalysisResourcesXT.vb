@@ -16,30 +16,30 @@ Public Class clsAnalysisResourcesXT
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         'Retrieve Fasta file
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return CloseOutType.CLOSEOUT_FAILED
 
         ' XTandem just copies its parameter file from the central repository
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
         'Retrieve param file
         If Not RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
         If Not RetrieveDtaFiles() Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
@@ -50,7 +50,7 @@ Public Class clsAnalysisResourcesXT
 
         If Not ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, "") Then
             m_message = "Error validating the _DTA.txt file"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Add all the extensions of the files to delete after run
@@ -62,32 +62,32 @@ Public Class clsAnalysisResourcesXT
 
         If Not ValidateDTATextFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         Dim success = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir)
         If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         success = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir)
         If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         success = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir)
         If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' set up taxonomy file to reference the organism DB file (fasta)
@@ -95,7 +95,7 @@ Public Class clsAnalysisResourcesXT
         If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed making taxonomy file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
@@ -103,10 +103,10 @@ Public Class clsAnalysisResourcesXT
         If Not success Then
             Const Msg = "clsAnalysisResourcesXT.GetResources(), failed making input file."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

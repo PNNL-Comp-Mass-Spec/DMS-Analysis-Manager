@@ -21,7 +21,7 @@ Public Class clsAnalysisResourcesMODPlus
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         Dim currentTask = "Initializing"
 
@@ -31,30 +31,30 @@ Public Class clsAnalysisResourcesMODPlus
     
             ' Retrieve shared resources, including the JobParameters file from the previous job step
             Dim result = GetSharedResources()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
             currentTask = "Retrieve Fasta and param file"
             If Not RetrieveFastaAndParamFile() Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             currentTask = "Get Input file"
 
-            Dim eResult As IJobParams.CloseOutType
+            Dim eResult As CloseOutType
             eResult = GetMsXmlFile()
 
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return eResult
             End If
             
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             m_message = "Exception in GetResources: " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function

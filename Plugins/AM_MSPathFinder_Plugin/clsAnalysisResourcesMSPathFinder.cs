@@ -21,29 +21,29 @@ namespace AnalysisManagerMSPathFinderPlugin
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
             if (!RetrieveFastaAndParamFile())
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             result = RetrieveProMexFeaturesFile();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
             result = RetrievePBFFile();
 
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
@@ -52,10 +52,10 @@ namespace AnalysisManagerMSPathFinderPlugin
             // These typically will not exist, but may exist if a search was interrupted before it finished
             if (!RetrieveExistingSearchResults())
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
         }
 
-        private IJobParams.CloseOutType RetrievePBFFile()
+        private CloseOutType RetrievePBFFile()
         {
             const string PBF_GEN_FOLDER_PREFIX = "PBF_GEN";
 
@@ -183,7 +183,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     if (!clsGlobal.GetQueryResultsTopRow(sql, dmsConnectionString, out lstResults, "RetrievePBFFile"))
                     {
                         m_message = "Error looking up the correct PBF_Gen folder name in T_Job_Steps";
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     var pbfGenFolderName = lstResults.FirstOrDefault();
@@ -191,7 +191,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     if (string.IsNullOrWhiteSpace(pbfGenFolderName))
                     {
                         m_message = "PBF_Gen folder name listed in T_Job_Steps for step " + (stepNum - 1) + " was empty";
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     m_jobParams.SetParam("InputFolderName", pbfGenFolderName);
@@ -209,24 +209,24 @@ namespace AnalysisManagerMSPathFinderPlugin
                     m_jobParams.SetParam("InputFolderName", inputFolderNameCached);
                 }
 
-                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return eResult;
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION);
 
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
                 m_message = "Exception in RetrievePBFFile: " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
         }
 
-        private IJobParams.CloseOutType RetrieveProMexFeaturesFile()
+        private CloseOutType RetrieveProMexFeaturesFile()
         {
             try
             {
@@ -235,7 +235,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 if (!FindAndRetrieveMiscFiles(fileToGet, false))
                 {
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip(DOT_MS1FT_EXTENSION);
@@ -244,10 +244,10 @@ namespace AnalysisManagerMSPathFinderPlugin
             {
                 m_message = "Exception in RetrieveProMexFeaturesFile: " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
     }
 }

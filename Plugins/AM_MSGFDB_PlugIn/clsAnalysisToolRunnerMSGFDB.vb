@@ -88,15 +88,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
         Dim blnTooManySkippedSpectra = False
 
         Try
             'Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel > 4 Then
@@ -116,7 +116,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             ' javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
             Dim javaProgLoc = GetJavaProgLoc()
             If String.IsNullOrEmpty(javaProgLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Run MSGF+ (includes indexing the fasta file)
@@ -124,7 +124,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Dim blnProcessingError = False
 
             result = RunMSGFPlus(javaProgLoc, udtHPCOptions, fiMSGFPlusResults, blnProcessingError, blnTooManySkippedSpectra)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "Unknown error running MSGF+"
                 End If
@@ -163,7 +163,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     blnProcessingError = True
                 Else
                     result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name, udtHPCOptions)
-                    If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                         If String.IsNullOrEmpty(m_message) Then
                             m_message = "Unknown error post-processing the MSGF+ results"
                         End If
@@ -208,43 +208,43 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 m_FileTools.DeleteDirectoryFiles(udtHPCOptions.WorkDirPath, False)
             End If
 
-            If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If blnProcessingError Or result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Something went wrong
                 ' In order to help diagnose things, we will move whatever files were created into the result folder, 
-                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveFolder()
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 Return result
             End If
 
         Catch ex As Exception
             LogError("Error in MSGFDbPlugin->RunTool: " & ex.Message, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         If blnTooManySkippedSpectra Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
 
@@ -280,7 +280,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
       udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
       <Out()> ByRef fiMSGFPlusResults As FileInfo,
       <Out()> ByRef blnProcessingError As Boolean,
-      <Out()> ByRef blnTooManySkippedSpectra As Boolean) As IJobParams.CloseOutType
+      <Out()> ByRef blnTooManySkippedSpectra As Boolean) As CloseOutType
 
         Dim strMSGFJarfile As String
 
@@ -297,7 +297,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         If String.IsNullOrWhiteSpace(mMSGFDbProgLoc) Then
             ' Returning CLOSEOUT_FAILED will cause the plugin to immediately exit; results and console output files will not be saved
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If udtHPCOptions.UsingHPC Then
@@ -321,7 +321,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Dim strAssumedScanType = String.Empty
 
         Dim result = DetermineAssumedScanType(strAssumedScanType, eInputFileFormat, strScanTypeFilePath)
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Immediately exit the plugin; results and console output files will not be saved
             Return result
         End If
@@ -356,7 +356,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
           fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath,
           strParameterFilePath, udtHPCOptions)
 
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Immediately exit the plugin; results and console output files will not be saved
             Return result
         End If
@@ -367,7 +367,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
         Dim strMSGFDbCmdLineOptions = String.Empty
 
         result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Immediately exit the plugin; results and console output files will not be saved
             Return result
         ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
@@ -375,7 +375,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 m_message = "Problem parsing MSGF+ parameter file"
             End If
             ' Immediately exit the plugin; results and console output files will not be saved
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
@@ -422,7 +422,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             Case Else
                 LogError("Unsupported InputFileFormat: " & eInputFileFormat)
                 ' Immediately exit the plugin; results and console output files will not be saved
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
         End Select
 
         cmdStr &= " -o " & fiMSGFPlusResults.Name
@@ -438,7 +438,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             If Not clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess) Then
                 m_message = "Not enough free memory to run MSGF+"
                 ' Immediately exit the plugin; results and console output files will not be saved
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
@@ -453,7 +453,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             blnSuccess = StartMSGFPlusHPC(javaExePath, msgfdbJarFilePath, fiMSGFPlusResults.Name, CmdStr, udtHPCOptions, criticalError)
 
             If criticalError Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
 #Else
@@ -567,7 +567,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                     ' Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
                     ' Instead, set processingError to true
                     blnProcessingError = True
-                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                    Return CloseOutType.CLOSEOUT_SUCCESS
                 End If
             End If
         Else
@@ -583,7 +583,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             ' Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
             ' Instead, set processingError to true
             blnProcessingError = True
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE
@@ -633,7 +633,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -899,10 +899,10 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
         ' Make the results folder
         Dim result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
@@ -944,7 +944,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
     Private Function DetermineAssumedScanType(
       <Out()> ByRef strAssumedScanType As String,
       <Out()> ByRef eInputFileFormat As eInputFileFormatTypes,
-      <Out()> ByRef strScanTypeFilePath As String) As IJobParams.CloseOutType
+      <Out()> ByRef strScanTypeFilePath As String) As CloseOutType
 
         Dim strScriptNameLCase As String
         strAssumedScanType = String.Empty
@@ -961,7 +961,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             ' Make sure the _DTA.txt file is valid
             If Not ValidateCDTAFile() Then
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+                Return CloseOutType.CLOSEOUT_NO_DTA_FILES
             End If
 
             strAssumedScanType = m_jobParams.GetParam("AssumedScanType")
@@ -969,13 +969,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
             If String.IsNullOrWhiteSpace(strAssumedScanType) Then
                 ' Create the ScanType file (lists scan type for each scan number)
                 If Not CreateScanTypeFile(strScanTypeFilePath) Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -1097,13 +1097,13 @@ Public Class clsAnalysisToolRunnerMSGFDB
     ''' <remarks>Assumes that the calling function has verified that resultsFileName exists</remarks>
     Private Function PostProcessMSGFDBResults(
       resultsFileName As String,
-      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As CloseOutType
 
         Dim currentTask = "Starting"
 
         Try
 
-            Dim result As IJobParams.CloseOutType
+            Dim result As CloseOutType
             Dim splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", False)
 
             If splitFastaEnabled Then
@@ -1117,7 +1117,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
             ' Gzip the output file
             currentTask = "Zipping " & resultsFileName
             result = mMSGFDBUtils.ZipOutputFile(Me, resultsFileName)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
@@ -1136,7 +1136,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
                 msgfPlusResultsFileName = ConvertMZIDToTSV(resultsFileName, udtHPCOptions)
 
                 If String.IsNullOrEmpty(msgfPlusResultsFileName) Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
             Else
@@ -1147,7 +1147,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             If skipPeptideToProteinMapping Then
                 LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True")
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Return CloseOutType.CLOSEOUT_SUCCESS
             End If
 
             ' Examine the MSGF+ TSV file to see if it's empty
@@ -1164,7 +1164,7 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
                 If dataLines <= 1 Then
                     LogWarning("MSGF+ did not identify any peptides (TSV file is empty)", True)
-                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                    Return CloseOutType.CLOSEOUT_SUCCESS
                 End If
             End Using
 
@@ -1182,15 +1182,15 @@ Public Class clsAnalysisToolRunnerMSGFDB
 
             currentTask = "Calling CreatePeptideToProteinMapping"
             result = mMSGFDBUtils.CreatePeptideToProteinMapping(msgfPlusResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS And result <> CloseOutType.CLOSEOUT_NO_DATA Then
                 Return result
             End If
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             LogError("Error in PostProcessMSGFDBResults", ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function

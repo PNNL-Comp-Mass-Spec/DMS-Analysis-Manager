@@ -28,6 +28,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 #Region "Constants"
     Public Const CONCATENATED_OUT_TEMP_FILE As String = "_out.txt.tmp"
     Protected Const MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK As Integer = 500
+    Private Const REGEX_FILE_SEPARATOR As String  = "^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$"
 #End Region
 
 #Region "Member variables"
@@ -57,29 +58,29 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' <summary>
     ''' Runs the analysis tool
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType value indicating success or failure</returns>
+    ''' <returns>CloseOutType value indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim Result As IJobParams.CloseOutType
-        Dim eReturnCode As IJobParams.CloseOutType
+        Dim Result As CloseOutType
+        Dim eReturnCode As CloseOutType
         Dim blnProcessingError = False
 
         ' Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Check whether or not we are resuming a job that stopped prematurely
         ' Look for a file named Dataset_out.txt.tmp in m_WorkDir
         ' This procedure will also de-concatenate the _dta.txt file
         If Not CheckForExistingConcatenatedOutFile() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Make sure at least one .DTA file exists
         If Not ValidateDTAFiles() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+            Return CloseOutType.CLOSEOUT_NO_DTA_FILES
         End If
 
         ' Count the number of .Dta files and cache in m_DtaCount
@@ -92,7 +93,7 @@ Public Class clsAnalysisToolRunnerSeqBase
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Making OUT files, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
         Try
             Result = MakeOUTFiles()
-            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 blnProcessingError = True
             End If
         Catch Err As Exception
@@ -107,8 +108,8 @@ Public Class clsAnalysisToolRunnerSeqBase
         If blnProcessingError Then
             ' Something went wrong
             ' In order to help diagnose things, we will move whatever files were created into the result folder, 
-            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = CloseOutType.CLOSEOUT_FAILED
         Else
             eReturnCode = Result
         End If
@@ -138,28 +139,28 @@ Public Class clsAnalysisToolRunnerSeqBase
             ' Move the source files and any results to the Failed Job folder
             ' Useful for debugging Sequest problems
             CopyFailedResultsToArchiveFolder()
-            If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If eReturnCode = CloseOutType.CLOSEOUT_SUCCESS Then
+                eReturnCode = CloseOutType.CLOSEOUT_FAILED
             End If
             Return eReturnCode
         End If
 
         Result = MakeResultsFolder()
-        If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'MakeResultsFolder handles posting to local log, so set database error message and exit
             m_message = "Error making results folder"
             Return Result
         End If
 
         Result = MoveResultFiles()
-        If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             m_message = "Error moving files into results folder"
             Return Result
         End If
 
         Result = CopyResultsFolderToServer()
-        If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return Result
         End If
@@ -361,7 +362,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
         Try
 
-            reFileSeparator = New Regex(clsSplitCattedFiles.REGEX_FILE_SEPARATOR, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
+            reFileSeparator = New Regex(REGEX_FILE_SEPARATOR, RegexOptions.CultureInvariant Or RegexOptions.Compiled)
 
             Using srInFile = New StreamReader(New FileStream(strConcatenatedTempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
@@ -388,7 +389,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
     Protected Sub CopyFailedResultsToArchiveFolder()
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -412,10 +413,10 @@ Public Class clsAnalysisToolRunnerSeqBase
 
         ' Make the results folder
         result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
@@ -445,7 +446,7 @@ Public Class clsAnalysisToolRunnerSeqBase
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Protected Overridable Function MakeOUTFiles() As IJobParams.CloseOutType
+    Protected Overridable Function MakeOUTFiles() As CloseOutType
 
         'Creates Sequest .out files from DTA files
         Dim CmdStr As String
@@ -467,7 +468,7 @@ Public Class clsAnalysisToolRunnerSeqBase
         NumFiles = DtaFiles.GetLength(0)
         If NumFiles = 0 Then
             m_message = clsGlobal.AppendToComment(m_message, "No dta files found for Sequest processing")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Set up a program runner and text file for each processor
@@ -581,7 +582,7 @@ Public Class clsAnalysisToolRunnerSeqBase
         If GetOUTFileCountRemaining() < 1 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "No OUT files created, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
             m_message = clsGlobal.AppendToComment(m_message, "No OUT files created")
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+            Return CloseOutType.CLOSEOUT_NO_OUT_FILES
         Else
             'Add .out extension to list of file extensions to delete
             m_jobParams.AddResultFileExtensionToSkip(".out")
@@ -589,7 +590,7 @@ Public Class clsAnalysisToolRunnerSeqBase
 
         'Package out files into concatenated text files 
         If Not ConcatOutFiles(m_WorkDir, m_Dataset, m_JobNum) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Try to ensure there are no open objects with file handles
@@ -598,11 +599,11 @@ Public Class clsAnalysisToolRunnerSeqBase
 
         'Zip concatenated .out files
         If Not ZipConcatOutFile(m_WorkDir, m_JobNum) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE
+            Return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE
         End If
 
         'If we got here, everything worked
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

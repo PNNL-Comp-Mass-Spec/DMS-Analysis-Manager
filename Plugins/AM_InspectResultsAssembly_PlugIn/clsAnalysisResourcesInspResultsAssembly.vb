@@ -16,13 +16,13 @@ Public Class clsAnalysisResourcesInspResultsAssembly
     ''' <summary>
     ''' Retrieves files necessary for performance of Sequest analysis
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -35,17 +35,17 @@ Public Class clsAnalysisResourcesInspResultsAssembly
         transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"))
 
         'Retrieve Fasta file (used by the PeptideToProteinMapper)
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return CloseOutType.CLOSEOUT_FAILED
 
         'Retrieve param file
         If Not RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the Inspect Input Params file
         If Not RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
@@ -56,7 +56,7 @@ Public Class clsAnalysisResourcesInspResultsAssembly
                 If m_DebugLevel >= 3 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & zippedResultName & " using folder " & transferFolderName)
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Unzip Inspect result file
@@ -74,7 +74,7 @@ Public Class clsAnalysisResourcesInspResultsAssembly
                 If m_DebugLevel >= 3 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & searchLogResultName & " using folder " & transferFolderName)
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             m_jobParams.AddResultFileExtensionToSkip(searchLogResultName)
@@ -84,12 +84,12 @@ Public Class clsAnalysisResourcesInspResultsAssembly
             ' Retrieve multi inspect result files
             If Not RetrieveMultiInspectResultFiles() Then
                 'Errors were reported in function call, so just return
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
         'All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

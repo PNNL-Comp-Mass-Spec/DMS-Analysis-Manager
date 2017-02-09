@@ -46,14 +46,14 @@ namespace AnalysisManagerPBFGenerator
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
             try
             {
                 //Call base class for initial setup
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (m_DebugLevel > 4)
@@ -67,7 +67,7 @@ namespace AnalysisManagerPBFGenerator
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Store the PBFGen version info in the database
@@ -75,7 +75,7 @@ namespace AnalysisManagerPBFGenerator
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                     LogError("Error determining PBFGen version");
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 string msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
@@ -84,7 +84,7 @@ namespace AnalysisManagerPBFGenerator
                 if (!mMSXmlCacheFolder.Exists)
                 {
                     LogError("MSXmlCache folder not found: " + msXMLCacheFolderPath);
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Create the PBF file
@@ -197,42 +197,42 @@ namespace AnalysisManagerPBFGenerator
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging problems
                     CopyFailedResultsToArchiveFolder();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt");
 
                 var result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     //MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     m_message = "Error moving files into results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
                 m_message = "Error in clsAnalysisToolRunnerPBFGenerator->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         protected void CopyFailedResultsToArchiveFolder()
@@ -256,11 +256,11 @@ namespace AnalysisManagerPBFGenerator
 
             // Make the results folder
             var result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);

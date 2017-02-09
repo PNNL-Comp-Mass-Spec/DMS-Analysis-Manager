@@ -22,11 +22,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// Do any resource-gathering tasks here
         /// </summary>
         /// <returns></returns>
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
@@ -47,13 +47,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
 
             if (!success)
-                return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES;
+                return CloseOutType.CLOSEOUT_NO_FAS_FILES;
 
             var includeMzXmlFiles = m_jobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
             success = FindInstrumentDataFiles(dataPackageInfoLoader, lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
             if (!success)
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
 
             if (includeMzXmlFiles)
             {
@@ -67,7 +67,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
 
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 

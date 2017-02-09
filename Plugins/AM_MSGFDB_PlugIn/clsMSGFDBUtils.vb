@@ -629,7 +629,7 @@ Public Class clsMSGFDBUtils
 
     Public Function CreatePeptideToProteinMapping(
       ResultsFileName As String,
-      ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
+      ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As CloseOutType
 
         Const blnResultsIncludeAutoAddedDecoyPeptides = False
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
@@ -639,7 +639,7 @@ Public Class clsMSGFDBUtils
 
     Public Function CreatePeptideToProteinMapping(
       ResultsFileName As String,
-      blnResultsIncludeAutoAddedDecoyPeptides As Boolean) As IJobParams.CloseOutType
+      blnResultsIncludeAutoAddedDecoyPeptides As Boolean) As CloseOutType
 
         Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
         Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
@@ -649,7 +649,7 @@ Public Class clsMSGFDBUtils
     Public Function CreatePeptideToProteinMapping(
       ResultsFileName As String,
       blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
-      localOrgDbFolder As String) As IJobParams.CloseOutType
+      localOrgDbFolder As String) As CloseOutType
 
         Return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile)
 
@@ -667,7 +667,7 @@ Public Class clsMSGFDBUtils
       ResultsFileName As String,
       blnResultsIncludeAutoAddedDecoyPeptides As Boolean,
       localOrgDbFolder As String,
-      ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As IJobParams.CloseOutType
+      ePeptideInputFileFormat As PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants) As CloseOutType
 
         ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
         Dim dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
@@ -691,13 +691,13 @@ Public Class clsMSGFDBUtils
             If Not fiInputFile.Exists Then
                 msg = "MS-GF+ TSV results file not found: " + strInputFilePath
                 OnErrorEvent(msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If fiInputFile.Length = 0 Then
                 msg = "MS-GF+ TSV results file is empty"
                 OnErrorEvent(msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Using srInFile = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -717,14 +717,14 @@ Public Class clsMSGFDBUtils
                 msg = "No results above threshold"
                 OnErrorEvent(msg)
 
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                Return CloseOutType.CLOSEOUT_NO_DATA
             End If
 
         Catch ex As Exception
 
             msg = "Error validating MS-GF+ results file contents in CreatePeptideToProteinMapping"
             OnErrorEvent(msg, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
 
         End Try
 
@@ -738,7 +738,7 @@ Public Class clsMSGFDBUtils
                     mErrorMessage = "Error creating a decoy version of the fasta file"
                 End If
                 OnErrorEvent(mErrorMessage)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             m_jobParams.AddResultFileToSkip(Path.GetFileName(strFastaFilePath))
@@ -824,16 +824,16 @@ Public Class clsMSGFDBUtils
 
             If blnIgnorePeptideToProteinMapperErrors Then
                 OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Return CloseOutType.CLOSEOUT_SUCCESS
             Else
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End Try
 
         If blnSuccess Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
     End Function
@@ -1144,7 +1144,7 @@ Public Class clsMSGFDBUtils
       msgfDbProgLoc As String,
       <Out()> ByRef fastaFileSizeKB As Single,
       <Out()> ByRef fastaFileIsDecoy As Boolean,
-      <Out()> ByRef fastaFilePath As String) As IJobParams.CloseOutType
+      <Out()> ByRef fastaFilePath As String) As CloseOutType
 
         Dim udtHPCOptions = New clsAnalysisResources.udtHPCOptionsType
 
@@ -1159,7 +1159,7 @@ Public Class clsMSGFDBUtils
       <Out()> ByRef fastaFileIsDecoy As Boolean,
       <Out()> ByRef fastaFilePath As String,
       strMSGFDBParameterFilePath As String,
-      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As CloseOutType
 
         Return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, fastaFileSizeKB, fastaFileIsDecoy, fastaFilePath, strMSGFDBParameterFilePath, udtHPCOptions, 0)
 
@@ -1173,9 +1173,9 @@ Public Class clsMSGFDBUtils
       <Out()> ByRef fastaFilePath As String,
       strMSGFDBParameterFilePath As String,
       udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
-      maxFastaFileSizeMB As Integer) As IJobParams.CloseOutType
+      maxFastaFileSizeMB As Integer) As CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
         Dim oRand = New Random()
 
         Dim strMgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
@@ -1202,7 +1202,7 @@ Public Class clsMSGFDBUtils
         If Not fiFastaFile.Exists Then
             ' Fasta file not found
             OnErrorEvent("Fasta file not found: " & fiFastaFile.FullName)
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         fastaFileSizeKB = CSng(fiFastaFile.Length / 1024.0)
@@ -1236,7 +1236,7 @@ Public Class clsMSGFDBUtils
             Dim tdaValue As Integer
             If Not Integer.TryParse(strTDASetting, tdaValue) Then
                 OnErrorEvent("TDA value is not numeric: " & strTDASetting)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If tdaValue = 0 Then
@@ -1291,7 +1291,7 @@ Public Class clsMSGFDBUtils
             End While
 
             If String.IsNullOrEmpty(fastaFilePathTrimmed) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Update fastaFilePath to use the path to the trimmed version
@@ -1326,9 +1326,9 @@ Public Class clsMSGFDBUtils
               strMSGFPlusIndexFilesFolderPathLegacyDB,
               udtHPCOptions)
 
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 Exit While
-            ElseIf result = IJobParams.CloseOutType.CLOSEOUT_FAILED OrElse (result <> IJobParams.CloseOutType.CLOSEOUT_FAILED And indexIteration > 2) Then
+            ElseIf result = CloseOutType.CLOSEOUT_FAILED OrElse (result <> CloseOutType.CLOSEOUT_FAILED And indexIteration > 2) Then
 
                 If Not String.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage) Then
                     OnErrorEvent(objIndexedDBCreator.ErrorMessage)
@@ -1345,7 +1345,7 @@ Public Class clsMSGFDBUtils
 
         End While
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -1941,7 +1941,7 @@ Public Class clsMSGFDBUtils
       strScanTypeFilePath As String,
       strInstrumentGroup As String,
       udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
-      <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+      <Out()> ByRef strMSGFDbCmdLineOptions As String) As CloseOutType
 
         Dim strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
 
@@ -1968,7 +1968,7 @@ Public Class clsMSGFDBUtils
       instrumentGroup As String,
       strParameterFilePath As String,
       udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
-      <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+      <Out()> ByRef strMSGFDbCmdLineOptions As String) As CloseOutType
 
         Dim overrideParams = New Dictionary(Of String, String)
 
@@ -2002,7 +2002,7 @@ Public Class clsMSGFDBUtils
       strParameterFilePath As String,
       udtHPCOptions As clsAnalysisResources.udtHPCOptionsType,
       overrideParams As Dictionary(Of String, String),
-      <Out()> ByRef strMSGFDbCmdLineOptions As String) As IJobParams.CloseOutType
+      <Out()> ByRef strMSGFDbCmdLineOptions As String) As CloseOutType
 
         Const SMALL_FASTA_FILE_THRESHOLD_KB = 20
 
@@ -2031,7 +2031,7 @@ Public Class clsMSGFDBUtils
 
         If Not File.Exists(strParameterFilePath) Then
             OnErrorEvent("Parameter file Not found:  " & strParameterFilePath)
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         'Dim strDatasetType As String
@@ -2099,7 +2099,7 @@ Public Class clsMSGFDBUtils
                                             ' Invalid string
                                             mErrorMessage = "Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, HCD, or UVPD"
                                             OnErrorEvent(mErrorMessage)
-                                            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                                            Return CloseOutType.CLOSEOUT_FAILED
                                     End Select
 
                                     OnStatusEvent("Using Fragmentation method -m " & strValue & " because of Assumed scan type " & strAssumedScanType)
@@ -2112,7 +2112,7 @@ Public Class clsMSGFDBUtils
                                 If Not String.IsNullOrWhiteSpace(strScanTypeFilePath) Then
 
                                     Dim eResult = DetermineInstrumentID(strValue, strScanTypeFilePath, instrumentGroup)
-                                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                                    If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                                         Return eResult
                                     End If
 
@@ -2196,7 +2196,7 @@ Public Class clsMSGFDBUtils
                                         mErrorMessage = "Invalid value for uniformAAProb in MS-GF+ parameter file"
                                         OnErrorEvent(mErrorMessage & ": " & strLineIn)
                                         srParamFile.Close()
-                                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                                        Return CloseOutType.CLOSEOUT_FAILED
                                     End If
                                 End If
                             End If
@@ -2220,7 +2220,7 @@ Public Class clsMSGFDBUtils
                                 mErrorMessage = "Invalid value for NumMods in MS-GF+ parameter file"
                                 OnErrorEvent(mErrorMessage & ": " & strLineIn)
                                 srParamFile.Close()
-                                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                                Return CloseOutType.CLOSEOUT_FAILED
                             End If
 
                         ElseIf clsGlobal.IsMatch(kvSetting.Key, "StaticMod") Then
@@ -2269,7 +2269,7 @@ Public Class clsMSGFDBUtils
         Catch ex As Exception
             mErrorMessage = "Exception reading MS-GF+ parameter file"
             OnErrorEvent(mErrorMessage, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         ' Define the thread count; note that MSGFDBThreads could be "all"
@@ -2343,7 +2343,7 @@ Public Class clsMSGFDBUtils
         ' Create the modification file and append the -mod switch
         ' We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation 
         If Not ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods, lstCustomAminoAcids) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Prior to MS-GF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
@@ -2372,11 +2372,11 @@ Public Class clsMSGFDBUtils
             ' Make sure the .Fasta file is not a Decoy fasta
             If fastaFileIsDecoy Then
                 OnErrorEvent("Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
 
     End Function
@@ -2389,7 +2389,7 @@ Public Class clsMSGFDBUtils
     ''' <param name="instrumentGroup"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function DetermineInstrumentID(ByRef instrumentIDCurrent As String, scanTypeFilePath As String, instrumentGroup As String) As IJobParams.CloseOutType
+    Private Function DetermineInstrumentID(ByRef instrumentIDCurrent As String, scanTypeFilePath As String, instrumentGroup As String) As CloseOutType
 
         ' InstrumentID values:
         ' #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
@@ -2427,12 +2427,12 @@ Public Class clsMSGFDBUtils
                     mErrorMessage = "LoadScanTypeFile returned false for " & Path.GetFileName(scanTypeFilePath)
                     OnErrorEvent(mErrorMessage)
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
 
             ElseIf lstLowResMSn.Count + lstHighResMSn.Count + lstHCDMSn.Count = 0 Then
                 mErrorMessage = "LoadScanTypeFile could not find any MSn spectra " & Path.GetFileName(scanTypeFilePath)
                 OnErrorEvent(mErrorMessage)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
                 ExamineScanTypes(lstLowResMSn.Count, lstHighResMSn.Count, lstHCDMSn.Count, instrumentIDNew, autoSwitchReason)
             End If
@@ -2441,7 +2441,7 @@ Public Class clsMSGFDBUtils
 
         AutoUpdateInstrumentIDIfChanged(instrumentIDCurrent, instrumentIDNew, autoSwitchReason)
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -2873,7 +2873,7 @@ Public Class clsMSGFDBUtils
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ZipOutputFile(oToolRunner As clsAnalysisToolRunnerBase, fileName As String) As IJobParams.CloseOutType
+    Public Function ZipOutputFile(oToolRunner As clsAnalysisToolRunnerBase, fileName As String) As CloseOutType
         Dim tmpFilePath As String
 
         Try
@@ -2881,12 +2881,12 @@ Public Class clsMSGFDBUtils
             tmpFilePath = Path.Combine(m_WorkDir, fileName)
             If Not File.Exists(tmpFilePath) Then
                 OnErrorEvent("MS-GF+ results file not found: " & fileName)
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+                Return CloseOutType.CLOSEOUT_NO_OUT_FILES
             End If
 
             If Not oToolRunner.GZipFile(tmpFilePath, False) Then
                 OnErrorEvent("Error zipping output files: oToolRunner.GZipFile returned false")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Add the unzipped file to .ResultFilesToSkip since we only want to keep the zipped version
@@ -2894,10 +2894,10 @@ Public Class clsMSGFDBUtils
 
         Catch ex As Exception
             OnErrorEvent("Error zipping output files", ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

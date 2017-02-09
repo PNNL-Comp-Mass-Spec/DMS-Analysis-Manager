@@ -82,7 +82,7 @@ Public Class clsAnalysisToolRunnerIDPicker
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         Dim OrgDbDir As String
         Dim strFASTAFilePath As String
@@ -92,7 +92,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         Dim ePHRPResultType As clsPHRPReader.ePeptideHitResultType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         ' As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
         Dim blnSkipIDPicker As Boolean = ALWAYS_SKIP_IDPICKER
@@ -108,8 +108,8 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         Try
             'Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel > 4 Then
@@ -124,7 +124,7 @@ Public Class clsAnalysisToolRunnerIDPicker
                 progLocQonvert = DetermineProgramLocation("IDPicker", "IDPickerProgLoc", IDPicker_Qonvert)
 
                 If String.IsNullOrWhiteSpace(progLocQonvert) Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
@@ -134,7 +134,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             ePHRPResultType = clsPHRPReader.GetPeptideHitResultType(strResultType)
             If ePHRPResultType = clsPHRPReader.ePeptideHitResultType.Unknown Then
                 m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Define the path to the synopsis file
@@ -149,7 +149,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             If Not clsAnalysisResources.ValidateFileHasData(strSynFilePath, "Synopsis file", strErrorMessage) Then
                 ' The synopsis file is empty
                 m_message = strErrorMessage
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                Return CloseOutType.CLOSEOUT_NO_DATA
             End If
 
             ' Define the path to the fasta file
@@ -162,7 +162,7 @@ Public Class clsAnalysisToolRunnerIDPicker
                 ' Fasta file not found
                 m_message = "Fasta file not found: " & fiFastaFile.Name
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " & fiFastaFile.FullName)
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             Dim blnSplitFasta = m_jobParams.GetJobParameter("SplitFasta", False)
@@ -180,7 +180,7 @@ Public Class clsAnalysisToolRunnerIDPicker
             If Not StoreToolVersionInfo(progLocQonvert, blnSkipIDPicker) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining IDPicker version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Create the PepXML file
@@ -190,7 +190,7 @@ Public Class clsAnalysisToolRunnerIDPicker
                     m_message = "Error creating PepXML file"
                 End If
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating PepXML file for job " & m_JobNum)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If blnSkipIDPicker Then
@@ -211,7 +211,7 @@ Public Class clsAnalysisToolRunnerIDPicker
                 blnSuccess = RunIDPickerWrapper(ePHRPResultType, strSynFilePath, fiFastaFile.FullName, blnProcessingError, blnCriticalError)
 
                 If blnCriticalError Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 If Not blnSuccess Then blnProcessingError = True
@@ -239,43 +239,43 @@ Public Class clsAnalysisToolRunnerIDPicker
             Threading.Thread.Sleep(500)           ' 500 msec delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
-            If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If blnProcessingError Or result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Something went wrong
                 ' In order to help diagnose things, we will move whatever files were created into the result folder, 
-                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
 
                 m_jobParams.RemoveResultFileToSkip(ASSEMBLE_GROUPING_FILENAME)
                 m_jobParams.RemoveResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME)
 
                 CopyFailedResultsToArchiveFolder()
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If Not blnSkipIDPicker Then
                 result = MoveFilesIntoIDPickerSubfolder()
-                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                     ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     m_message = "Error moving files into IDPicker subfolder"
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
             result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 Return result
             End If
@@ -283,10 +283,10 @@ Public Class clsAnalysisToolRunnerIDPicker
         Catch ex As Exception
             m_message = "Exception in IDPickerPlugin->RunTool"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+        Return CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
 
     End Function
 
@@ -369,7 +369,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     Private Sub CopyFailedResultsToArchiveFolder()
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -385,10 +385,10 @@ Public Class clsAnalysisToolRunnerIDPicker
 
         ' Make the results folder
         result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
@@ -794,7 +794,7 @@ Public Class clsAnalysisToolRunnerIDPicker
 
     End Function
 
-    Private Function MoveFilesIntoIDPickerSubfolder() As IJobParams.CloseOutType
+    Private Function MoveFilesIntoIDPickerSubfolder() As CloseOutType
 
         Dim diSourceFolder As DirectoryInfo
         Dim diTargetFolder As DirectoryInfo
@@ -860,9 +860,9 @@ Public Class clsAnalysisToolRunnerIDPicker
             Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
             objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
     End Function

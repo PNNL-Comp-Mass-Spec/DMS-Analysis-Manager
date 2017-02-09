@@ -33,20 +33,20 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Store the MSDataFileTrimmer version info in the database
         If Not StoreToolVersionInfo() Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
             m_message = "Error determining MSDataFileTrimmer version"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
 
@@ -66,7 +66,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         If Not File.Exists(progLoc) Then
             If progLoc.Length = 0 Then progLoc = "Parameter 'MSDataFileTrimmerprogloc' not defined for this manager"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find MSDataFileTrimmer program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         Dim CmdStr As String
@@ -90,7 +90,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
             ' Useful for debugging XTandem problems
             CopyFailedResultsToArchiveFolder()
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Stop the job timer
@@ -109,7 +109,7 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         MyBase.RedefineAggregationJobDatasetAndTransferFolder()
 
         result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             Return result
         End If
@@ -123,24 +123,24 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
         Next
 
         result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             Return result
         End If
 
         result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+        Return CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
 
     End Function
 
     Protected Sub CopyFailedResultsToArchiveFolder()
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -156,10 +156,10 @@ Public Class clsAnalysisToolRunnerPRIDEMzXML
 
         ' Make the results folder
         result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If

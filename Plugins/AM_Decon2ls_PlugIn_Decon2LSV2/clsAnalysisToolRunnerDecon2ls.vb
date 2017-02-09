@@ -90,7 +90,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function AssembleResults(oDeconToolsParamFileReader As clsXMLParamFileReader) As IJobParams.CloseOutType
+    Private Function AssembleResults(oDeconToolsParamFileReader As clsXMLParamFileReader) As CloseOutType
 
         Dim ScansFilePath As String
         Dim IsosFilePath As String
@@ -191,13 +191,13 @@ Public Class clsAnalysisToolRunnerDecon2ls
                 If Not File.Exists(IsosFilePath) Then
                     m_message = "DeconTools Isos file Not Found"
                     LogError(m_message, m_message & ": " & IsosFilePath)
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+                    Return CloseOutType.CLOSEOUT_NO_OUT_FILES
                 End If
 
                 ' Make sure the Isos file contains at least one row of data
                 If Not IsosFileHasData(IsosFilePath) Then
                     LogError("No results in DeconTools Isos file")
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                    Return CloseOutType.CLOSEOUT_NO_DATA
                 End If
 
             End If
@@ -205,10 +205,10 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         Catch ex As Exception
             LogError("AssembleResults error", "clsAnalysisToolRunnerDecon2lsBase.AssembleResults, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & ": " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -238,7 +238,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function CreateQCPlots() As IJobParams.CloseOutType
+    Private Function CreateQCPlots() As CloseOutType
 
         Dim blnSuccess As Boolean
 
@@ -248,21 +248,21 @@ Public Class clsAnalysisToolRunnerDecon2ls
             If Not File.Exists(strInputFilePath) Then
                 ' Do not treat this as a fatal error
                 ' It's possible that this analysis job used a parameter file that only picks peaks but doesn't deisotope, e.g. PeakPicking_NonThresholded_PeakBR2_SN7.xml
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Return CloseOutType.CLOSEOUT_SUCCESS
             End If
 
             Dim strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
             If String.IsNullOrEmpty(strMSFileInfoScannerDir) Then
                 m_message = "Manager parameter 'MSFileInfoScannerDir' is not defined"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateQCPlots: " + m_message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Dim strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
             If Not File.Exists(strMSFileInfoScannerDLLPath) Then
                 m_message = "File Not Found: " + strMSFileInfoScannerDLLPath
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateQCPlots: " + m_message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Dim objQCPlotGenerator = New clsDeconToolsQCPlotsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
@@ -285,13 +285,13 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         Catch ex As Exception
             LogError("Error in CreateQCPlots", ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         If blnSuccess Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         Else
-            Return (IJobParams.CloseOutType.CLOSEOUT_FAILED)
+            Return (CloseOutType.CLOSEOUT_FAILED)
         End If
 
 
@@ -371,15 +371,15 @@ Public Class clsAnalysisToolRunnerDecon2ls
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim eResult As IJobParams.CloseOutType
-        Dim eReturnCode As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
+        Dim eReturnCode As CloseOutType
         Dim errorMessage As String = Nothing
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If m_DebugLevel > 4 Then
@@ -395,36 +395,36 @@ Public Class clsAnalysisToolRunnerDecon2ls
                 LogError(errorMessage)
             End If
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         mRawDataType = clsAnalysisResources.GetRawDataType(mRawDataTypeName)
 
         ' Set this to success for now
-        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        eReturnCode = CloseOutType.CLOSEOUT_SUCCESS
 
         ' Run Decon2LS
         eResult = RunDecon2Ls()
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Something went wrong
             ' In order to help diagnose things, we will move whatever files were created into the eResult folder, 
-            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Error running Decon2LS"
             End If
 
-            If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+            If eResult = CloseOutType.CLOSEOUT_NO_DATA Then
                 eReturnCode = eResult
                 If String.IsNullOrWhiteSpace(m_message) Then
                     m_message = "No results in DeconTools Isos file"
                 End If
             Else
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                eReturnCode = CloseOutType.CLOSEOUT_FAILED
             End If
 
         End If
 
-        If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eResult = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Create the QC plots
             eReturnCode = CreateQCPlots()
         End If
@@ -444,7 +444,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
         Dim messageSaved = String.Copy(m_message)
 
-        If DeleteRawDataFiles(mRawDataType) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If DeleteRawDataFiles(mRawDataType) <> CloseOutType.CLOSEOUT_SUCCESS Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
             ' Don't treat this as a critical error; leave eReturnCode unchanged and restore m_message
             If Not clsGlobal.IsMatch(m_message, messageSaved) Then
@@ -464,29 +464,29 @@ Public Class clsAnalysisToolRunnerDecon2ls
         End If
 
         eResult = MakeResultsFolder()
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' MakeResultsFolder handles posting to local log, so set database error message and exit
             m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         eResult = MoveResultFiles()
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' MoveResultFiles moves the eResult files to the eResult folder
             m_message = "Error moving files into results folder"
-            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+        If eReturnCode = CloseOutType.CLOSEOUT_FAILED Then
             ' Try to save whatever files were moved into the results folder
             Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
             objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         eResult = CopyResultsFolderToServer()
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return eResult
         End If
@@ -496,7 +496,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
 
     End Function
 
-    Private Function RunDecon2Ls() As IJobParams.CloseOutType
+    Private Function RunDecon2Ls() As CloseOutType
 
         Dim strParamFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"))
         Dim blnDecon2LSError As Boolean
@@ -507,7 +507,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         oDeconToolsParamFileReader = CacheDeconToolsParamFile(strParamFilePath)
 
         If oDeconToolsParamFileReader Is Nothing Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Get file type of the raw data file
@@ -517,7 +517,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         If filetype = DeconToolsFileTypeConstants.Undefined Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " & mRawDataType)
             m_message = "Invalid raw data type specified"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Specify Input file or folder
@@ -525,7 +525,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         If String.IsNullOrWhiteSpace(mInputFilePath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while input file name: " & mRawDataType)
             m_message = "Invalid raw data type specified"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
 
@@ -534,7 +534,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
         progLoc = DetermineProgramLocation("DeconTools", "DeconToolsProgLoc", "DeconConsole.exe")
 
         If String.IsNullOrWhiteSpace(progLoc) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Store the DeconTools version info in the database
@@ -544,7 +544,7 @@ Public Class clsAnalysisToolRunnerDecon2ls
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Error determining DeconTools version"
             End If
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Reset the log file tracking variables
@@ -610,24 +610,24 @@ Public Class clsAnalysisToolRunnerDecon2ls
         End If
 
         If Not blnDecon2LSError Then
-            Dim eResult As IJobParams.CloseOutType
+            Dim eResult As CloseOutType
             eResult = AssembleResults(oDeconToolsParamFileReader)
 
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Check for no data first. If no data, then exit but still copy results to server
-                If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                If eResult = CloseOutType.CLOSEOUT_NO_DATA Then
                     Return eResult
                 End If
 
                 LogError("AssembleResults returned " & eResult.ToString)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
         If blnDecon2LSError Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
 

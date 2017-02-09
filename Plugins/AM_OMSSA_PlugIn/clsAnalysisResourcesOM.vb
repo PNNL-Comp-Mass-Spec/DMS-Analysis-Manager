@@ -16,16 +16,16 @@ Public Class clsAnalysisResourcesOM
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         'Retrieve Fasta file
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return CloseOutType.CLOSEOUT_FAILED
 
         ' OMSSA just copies its parameter file from the central repository
         '	This will eventually be replaced by Ken Auberry dll call to make param file on the fly
@@ -36,21 +36,21 @@ Public Class clsAnalysisResourcesOM
         If Not RetrieveFile(
           m_jobParams.GetParam("ParmFileName"),
           m_jobParams.GetParam("ParmFileStoragePath")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Then Return CloseOutType.CLOSEOUT_FAILED
 
         'convert the .fasta file to OMSSA format using formatdb.exe
         Dim success = ConvertOMSSAFastaFile()
         If Not success Then
             Const msg = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Retrieve settings files aka default file that will have values overwritten by parameter file values
         'Stored in same location as parameter file
         '         m_jobParams.GetParam("SettingsFileName"), _
         If Not RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, m_jobParams.GetParam("ParmFileStoragePath")) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
         m_JobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE)
 
@@ -58,14 +58,14 @@ Public Class clsAnalysisResourcesOM
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
         If Not RetrieveDtaFiles() Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         success = ConvertDtaToXml()
         If Not success Then
             Const Msg = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format."
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Add all the extensions of the files to delete after run
@@ -81,10 +81,10 @@ Public Class clsAnalysisResourcesOM
         If Not success Then
             Dim msg As String = "clsAnalysisResourcesOM.GetResources(), failed making input file: " & errorMessage
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

@@ -20,7 +20,7 @@ namespace AnalysisManager_IDM_Plugin
         #endregion
 
         #region Methods
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
             try
             {
@@ -28,9 +28,9 @@ namespace AnalysisManager_IDM_Plugin
                 bool skipIDM = false;
 
                 //Do the base class stuff
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var fiIDMResultsDB = new FileInfo(Path.Combine(m_WorkDir, EXISTING_IDM_RESULTS_FILE_NAME));
@@ -131,29 +131,29 @@ namespace AnalysisManager_IDM_Plugin
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging MultiAlign problems
                     CopyFailedResultsToArchiveFolder();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
                 m_Dataset = m_jobParams.GetParam("OutputFolderName");
                 m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                IJobParams.CloseOutType result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                CloseOutType result = MakeResultsFolder();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     return result;
                 }
 
                 result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     return result;
                 }
 
                 result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     return result;
@@ -163,10 +163,10 @@ namespace AnalysisManager_IDM_Plugin
             {
                 m_message = "Error in IDMPlugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
@@ -199,12 +199,12 @@ namespace AnalysisManager_IDM_Plugin
             */
 
             // Make the results folder
-            IJobParams.CloseOutType result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            CloseOutType result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);

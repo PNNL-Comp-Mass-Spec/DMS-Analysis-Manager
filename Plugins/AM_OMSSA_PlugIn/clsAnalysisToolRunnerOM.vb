@@ -39,32 +39,32 @@ Public Class clsAnalysisToolRunnerOM
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         Dim CmdStr As String
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim blnProcessingError As Boolean
-        Dim eReturnCode As IJobParams.CloseOutType
+        Dim eReturnCode As CloseOutType
 
         ' Set this to success for now
-        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        eReturnCode = CloseOutType.CLOSEOUT_SUCCESS
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Store the OMSSA version info in the database
         If Not StoreToolVersionInfo() Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
             m_message = "Error determining OMSSA version"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+            Return CloseOutType.CLOSEOUT_NO_DTA_FILES
         End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA")
@@ -82,7 +82,7 @@ Public Class clsAnalysisToolRunnerOM
         If Not File.Exists(progLoc) Then
             If progLoc.Length = 0 Then progLoc = "Parameter 'OMSSAprogloc' not defined for this manager"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         '--------------------------------------------------------------------------------------------
@@ -92,7 +92,7 @@ Public Class clsAnalysisToolRunnerOM
         'Dim OMSSALogFileName As String = GetOMSSALogFileName(Path.Combine(m_WorkDir, m_OMSSASetupFile))
         'If OMSSALogFileName = "" Then
         '	m_logger.PostEntry("Error getting OMSSA log file name", ILogger.logMsgType.logError, True)
-        '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        '	Return CloseOutType.CLOSEOUT_FAILED
         'End If
 
         ''Setup and start a File Watcher to monitor the OMSSA log file
@@ -139,8 +139,8 @@ Public Class clsAnalysisToolRunnerOM
         If blnProcessingError Then
             ' Something went wrong
             ' In order to help diagnose things, we will move whatever files were created into the result folder, 
-            '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = CloseOutType.CLOSEOUT_FAILED
         End If
 
 
@@ -162,41 +162,41 @@ Public Class clsAnalysisToolRunnerOM
         If Not blnProcessingError Then
             'Zip the output file
             result = ZipMainOutputFile()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 blnProcessingError = True
             End If
         End If
 
         result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'MakeResultsFolder handles posting to local log, so set database error message and exit
             m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'MoveResultFiles moves the result files to the result folder
             m_message = "Error moving files into results folder"
-            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+        If blnProcessingError Or eReturnCode = CloseOutType.CLOSEOUT_FAILED Then
             ' Try to save whatever files were moved into the results folder
             Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
             objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             Return result
         End If
 
         'If we get to here, everything worked so exit happily
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
 
     End Function
@@ -206,7 +206,7 @@ Public Class clsAnalysisToolRunnerOM
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function ZipMainOutputFile() As IJobParams.CloseOutType
+    Private Function ZipMainOutputFile() As CloseOutType
 
         'Zip the output file
         Dim strOMSSAResultsFilePath As String
@@ -216,10 +216,10 @@ Public Class clsAnalysisToolRunnerOM
 
         blnSuccess = MyBase.ZipFile(strOMSSAResultsFilePath, True)
         If Not blnSuccess Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

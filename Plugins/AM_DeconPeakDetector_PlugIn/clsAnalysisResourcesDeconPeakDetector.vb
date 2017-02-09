@@ -13,11 +13,11 @@ Imports System.IO
 Public Class clsAnalysisResourcesDeconPeakDetector
     Inherits clsAnalysisResources
     
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -31,7 +31,7 @@ Public Class clsAnalysisResourcesDeconPeakDetector
         paramFileStoragePath = Path.Combine(paramFileStoragePath, "PeakDetection")
 
         If Not RetrieveFile(peakDetectorParamFileName, paramFileStoragePath) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the instrument data file
@@ -41,14 +41,14 @@ Public Class clsAnalysisResourcesDeconPeakDetector
             End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

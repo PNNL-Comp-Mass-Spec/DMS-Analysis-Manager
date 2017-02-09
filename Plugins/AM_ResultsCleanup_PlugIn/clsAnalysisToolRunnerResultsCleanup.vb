@@ -22,29 +22,29 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 	''' </summary>
 	''' <returns>CloseOutType enum indicating success or failure</returns>
 	''' <remarks></remarks>
-	Public Overrides Function RunTool() As IJobParams.CloseOutType
+	Public Overrides Function RunTool() As CloseOutType
 
 		Try
 			'Call base class for initial setup
-			If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+				Return CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			' Store the AnalysisManager version info in the database
 			If Not StoreToolVersionInfo() Then
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
 				m_message = "Error determining AnalysisManager version"
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Return CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			' Cleanup results in the transfer directory
-			Dim Result As IJobParams.CloseOutType
+			Dim Result As CloseOutType
 			Result = PerformResultsCleanup()
-			If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+			If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
 				If String.IsNullOrEmpty(m_message) Then
 					m_message = "Unknown error calling PerformResultsCleanup"
 				End If
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Return CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			'Stop the job timer
@@ -53,19 +53,19 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 		Catch ex As Exception
 			m_message = "Error in clsAnalysisToolRunnerResultsCleanup->RunTool"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Return CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 		'If we got to here, everything worked, so exit
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Return CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
 
-	Protected Function PerformResultsCleanup() As IJobParams.CloseOutType
+	Protected Function PerformResultsCleanup() As CloseOutType
 
 		Dim strTransferDirectoryPath As String
 		Dim strResultsFolderName As String
-		Dim eResult As IJobParams.CloseOutType = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Dim eResult As CloseOutType = CloseOutType.CLOSEOUT_SUCCESS
 
 		Try
 
@@ -75,11 +75,11 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 			If String.IsNullOrWhiteSpace(strTransferDirectoryPath) Then
 				m_message = "transferFolderPath not defined"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Return CloseOutType.CLOSEOUT_FAILED
 			ElseIf String.IsNullOrWhiteSpace(strResultsFolderName) Then
 				m_message = "InputFolderName not defined"
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Return CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			Dim diTransferFolder As IO.DirectoryInfo = New IO.DirectoryInfo(strTransferDirectoryPath)
@@ -87,7 +87,7 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 			If Not diTransferFolder.Exists Then
 				m_message = "transferFolder not found at " & strTransferDirectoryPath
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-				Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+				Return CloseOutType.CLOSEOUT_FAILED
 			End If
 
 			Dim diResultsFolder As IO.DirectoryInfo
@@ -97,14 +97,14 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 		Catch ex As Exception
 			m_message = "Error in PerformResultsCleanup"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Return CloseOutType.CLOSEOUT_FAILED
 		End Try
 
 		Return eResult
 
 	End Function
 
-	Protected Function RemoveOldResultsDb3Files(ByVal diResultsFolder As IO.DirectoryInfo) As IJobParams.CloseOutType
+	Protected Function RemoveOldResultsDb3Files(ByVal diResultsFolder As IO.DirectoryInfo) As CloseOutType
 
 		Dim reStepNumber As Text.RegularExpressions.Regex
 		Dim reMatch As Text.RegularExpressions.Match
@@ -163,17 +163,17 @@ Public Class clsAnalysisToolRunnerResultsCleanup
 				Else
 					m_message = "Results folder does not have any Step_# folders"
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & diResultsFolder.FullName)
-					Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+					Return CloseOutType.CLOSEOUT_FAILED
 				End If
 			End If
 
 		Catch ex As Exception
 			m_message = "Error in RemoveOldResultsDb3Files"
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+			Return CloseOutType.CLOSEOUT_FAILED
 		End Try
 
-		Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+		Return CloseOutType.CLOSEOUT_SUCCESS
 
 	End Function
 	''' <summary>

@@ -17,13 +17,13 @@ Public Class clsAnalysisResourcesMSXMLBruker
     ''' <summary>
     ''' Retrieves files necessary for creating the .mzXML file
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -37,20 +37,20 @@ Public Class clsAnalysisResourcesMSXMLBruker
             Case Else
                 m_message = "Dataset type " & strRawDataType & " is not supported"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_BRUKER_FT_FOLDER & " or " & RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
 
         End Select
 
         If Not RetrieveSpectra(strRawDataType) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.SingleDataset) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 #End Region

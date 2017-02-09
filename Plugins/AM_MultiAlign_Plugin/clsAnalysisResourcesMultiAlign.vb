@@ -14,11 +14,11 @@ Public Class clsAnalysisResourcesMultiAlign
     Inherits clsAnalysisResources
 
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -43,14 +43,14 @@ Public Class clsAnalysisResourcesMultiAlign
         Dim fileToGet = m_DatasetName & strInputFileExtension
         If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the MultiAlign Parameter .xml file specified for this job
         Dim multialignParamFileName = m_jobParams.GetParam("ParmFileName")
         If multialignParamFileName Is Nothing OrElse multialignParamFileName.Length = 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MultiAlign ParmFileName not defined in the settings for this job; unable to continue")
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         Dim paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "MultiAlign"
@@ -62,11 +62,11 @@ Public Class clsAnalysisResourcesMultiAlign
 
         If Not CopyFileToWorkDir(multialignParamFileName, multialignParameterFileStoragePath, m_WorkingDir) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Build the MultiAlign input text file
@@ -74,10 +74,10 @@ Public Class clsAnalysisResourcesMultiAlign
 
         If Not success Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

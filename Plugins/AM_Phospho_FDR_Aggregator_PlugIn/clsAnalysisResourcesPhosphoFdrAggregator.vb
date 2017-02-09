@@ -8,11 +8,11 @@ Imports System.IO
 Public Class clsAnalysisResourcesPhosphoFdrAggregator
     Inherits clsAnalysisResources
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -34,21 +34,21 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
         Dim paramFilesCopied = 0
 
         If Not RetrieveAScoreParamfile("AScoreCIDParamFile", paramFilesCopied) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not RetrieveAScoreParamfile("AScoreETDParamFile", paramFilesCopied) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not RetrieveAScoreParamfile("AScoreHCDParamFile", paramFilesCopied) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If paramFilesCopied = 0 Then
             m_message = "One more more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
@@ -58,15 +58,15 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
         ' Retrieve the files for the jobs in the data package associated with this job
         If Not RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, dctDataPackageJobs) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Cache the data package info
         If Not CacheDataPackageInfo(dctDataPackageJobs) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

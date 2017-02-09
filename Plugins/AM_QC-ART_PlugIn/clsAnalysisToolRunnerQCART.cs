@@ -47,15 +47,15 @@ namespace AnalysisManagerQCARTPlugin
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
             try
             {
                 // Call base class for initial setup
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     DeleteLockFileIfRequired();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (m_DebugLevel > 4)
@@ -74,7 +74,7 @@ namespace AnalysisManagerQCARTPlugin
                 if (string.IsNullOrEmpty(rProgLocFromRegistry))
                 {
                     DeleteLockFileIfRequired();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (!Directory.Exists(rProgLocFromRegistry))
@@ -82,7 +82,7 @@ namespace AnalysisManagerQCARTPlugin
                     m_message = "R folder not found (path determined from the Windows Registry)";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + rProgLocFromRegistry);
                     DeleteLockFileIfRequired();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var rProgLoc = Path.Combine(rProgLocFromRegistry, "R.exe");
@@ -93,7 +93,7 @@ namespace AnalysisManagerQCARTPlugin
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining R version";
                     DeleteLockFileIfRequired();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Retrieve the baseline dataset names and corresponding Masic job numbers
@@ -102,23 +102,23 @@ namespace AnalysisManagerQCARTPlugin
                 {
                     LogError("Baseline dataset names/jobs parameter was empty; this is unexpected");
                     DeleteLockFileIfRequired();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var success = ProcessDatasetWithQCART(rProgLoc);
 
-                var eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
                 if (!success)
                 {
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
                 else
                 {
                     // Look for the result files
                     success = PostProcessResults(datasetNamesAndJobs);
                     if (!success)
-                        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 DeleteLockFileIfRequired();
@@ -144,7 +144,7 @@ namespace AnalysisManagerQCARTPlugin
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging problems
                     CopyFailedResultsToArchiveFolder();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // No need to keep several files; exclude them now
@@ -157,26 +157,26 @@ namespace AnalysisManagerQCARTPlugin
                 m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME + "out");
                 
                 var result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     m_message = "Error moving files into results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 return eReturnCode;
@@ -185,7 +185,7 @@ namespace AnalysisManagerQCARTPlugin
             {
                 m_message = "Error in QCARTPlugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
         }
@@ -269,11 +269,11 @@ namespace AnalysisManagerQCARTPlugin
 
             // Make the results folder
             var result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);

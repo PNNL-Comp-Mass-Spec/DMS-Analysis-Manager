@@ -12,24 +12,24 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisResourcesMSDeconv
     Inherits clsAnalysisResources
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         ' Make sure the machine has enough free memory to run MSDeconv
         If Not ValidateFreeMemorySize("MSDeconvJavaMemorySize", "MSDeconv") Then
             m_message = "Not enough free memory to run MSDeconv"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file")
 
         'Dim eResult = GetMzXMLFile()
-        'If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        'If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
         '	Return eResult
         'End If
 
@@ -46,10 +46,10 @@ Public Class clsAnalysisResourcesMSDeconv
         m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

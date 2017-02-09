@@ -36,7 +36,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
 
     End Function
 
-    Protected Overrides Function RunMASIC() As IJobParams.CloseOutType
+    Protected Overrides Function RunMASIC() As CloseOutType
 
         Dim strParameterFilePath As String
 
@@ -56,7 +56,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
             ' Unable to resolve the file path
             m_ErrorMessage = "Could not find " & strRawFileName & " or " & strRawFileName & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Examine the size of the .Raw file
@@ -65,7 +65,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
             ' Unable to resolve the file path
             m_ErrorMessage = "Could not find " & fiInputFile.FullName & "; unable to run MASIC"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not String.IsNullOrEmpty(strParameterFilePath) Then
@@ -81,11 +81,11 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
         'Dim fiScanStatsExOverrideFile As FileInfo = Nothing
 
         'Dim blnConvertRawToMzXML = NeedToConvertRawToMzXML(fiInputFile)
-        'Dim eCloseout As IJobParams.CloseOutType
+        'Dim eCloseout As CloseOutType
 
         'If blnConvertRawToMzXML Then
         '    eCloseout = StartConvertRawToMzXML(fiInputFile, strScanStatsFilePath, strScanStatsExFilePath, fiScanStatsOverrideFile, fiScanStatsExOverrideFile, strInputFilePath)
-        '    If eCloseout <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        '    If eCloseout <> CloseOutType.CLOSEOUT_SUCCESS Then
         '        Return eCloseout
         '    End If
         'End If
@@ -93,7 +93,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
         Dim eCloseout = MyBase.StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath)
 
         ' Deprecated in December 2016
-        'If eCloseout = IJobParams.CloseOutType.CLOSEOUT_SUCCESS AndAlso blnConvertRawToMzXML Then
+        'If eCloseout = CloseOutType.CLOSEOUT_SUCCESS AndAlso blnConvertRawToMzXML Then
         '    eCloseout = ReplaceScanStatsFiles(strScanStatsFilePath, strScanStatsExFilePath, fiScanStatsOverrideFile, fiScanStatsExOverrideFile)
         'End If
 
@@ -106,7 +106,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
       strScanStatsFilePath As String,
       strScanStatsExFilePath As String,
       fiScanStatsOverrideFile As FileInfo,
-      fiScanStatsExOverrideFile As FileInfo) As IJobParams.CloseOutType
+      fiScanStatsExOverrideFile As FileInfo) As CloseOutType
 
         Try
             ' Replace the _ScanStats.txt file created by MASIC with the ScanStats file created in clsAnalysisResourcesMASIC
@@ -135,10 +135,10 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
         Catch ex As Exception
             m_message = "Error replacing the ScanStats files created from the mzXML file with the ScanStats files created from the .Raw file"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (ReplaceScanStatsFiles): " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -182,7 +182,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
 
     End Function
 
-    Protected Overrides Function DeleteDataFile() As IJobParams.CloseOutType
+    Protected Overrides Function DeleteDataFile() As CloseOutType
 
         'Deletes the .raw file from the working directory
         Dim FoundFiles() As String
@@ -194,10 +194,10 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
             For Each MyFile In FoundFiles
                 DeleteFileWithRetries(MyFile)
             Next MyFile
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error finding .raw files to delete, job " & m_JobNum)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
@@ -209,7 +209,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
      strScanStatsExFilePath As String,
      <Out()> ByRef fiScanStatsOverrideFile As FileInfo,
      <Out()> ByRef fiScanStatsExOverrideFile As FileInfo,
-     <Out()> ByRef strInputFilePath As String) As IJobParams.CloseOutType
+     <Out()> ByRef strInputFilePath As String) As CloseOutType
 
         ' .Raw file is over 2 GB in size
         ' Will convert it to mzXML and centroid (so that MASIC will use less memory)
@@ -228,7 +228,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
             If Not fiScanStatsOverrideFile.Exists Then
                 m_message = "ScanStats file not found (should have been created by clsAnalysisResourcesMASIC)"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiScanStatsOverrideFile.FullName)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
                 Dim strScanStatsOverrideFilePath As String = strScanStatsFilePath & ".override"
                 fiScanStatsOverrideFile.MoveTo(strScanStatsOverrideFilePath)
@@ -245,7 +245,7 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
             If String.IsNullOrEmpty(strMzXMLFilePath) Then
                 If String.IsNullOrEmpty(m_message) Then m_message = "Empty path returned by ConvertRawToMzXML for " & fiInputFile.FullName
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             strInputFilePath = strMzXMLFilePath
@@ -257,10 +257,10 @@ Public Class clsAnalysisToolRunnerMASICFinnigan
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " (StartConvertRawToMzXML): " & ex.Message)
             fiScanStatsOverrideFile = Nothing
             fiScanStatsExOverrideFile = Nothing
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

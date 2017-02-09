@@ -10,12 +10,12 @@ namespace AnalysisManager_AScore_PlugIn
     public class clsAnalysisResourcesAScore : clsAnalysisResources
     {
 
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
 
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+            if (result != CloseOutType.CLOSEOUT_SUCCESS) {
                 return result;
             }
         
@@ -27,7 +27,7 @@ namespace AnalysisManager_AScore_PlugIn
             // bool blnSuccess = true;
             //  blnSuccess = RunAScoreGetResources();
             //
-            // if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            // if (!blnSuccess) return CloseOutType.CLOSEOUT_FAILED;
 
             if (m_DebugLevel > 2)
             {
@@ -39,7 +39,7 @@ namespace AnalysisManager_AScore_PlugIn
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to retrieve the fasta file; AScore results will not have protein information");		        
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>

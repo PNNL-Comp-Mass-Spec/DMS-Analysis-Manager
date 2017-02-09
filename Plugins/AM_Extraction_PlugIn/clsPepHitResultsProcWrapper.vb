@@ -74,9 +74,9 @@ Public Class clsPepHitResultsProcWrapper
     ''' <summary>
     ''' Converts Sequest, X!Tandem, Inspect, MSGDB, or MSAlign output file to a flat file
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Function ExtractDataFromResults(peptideSearchResultsFileName As String, fastaFilePath As String, resultType As String) As IJobParams.CloseOutType
+    Public Function ExtractDataFromResults(peptideSearchResultsFileName As String, fastaFilePath As String, resultType As String) As CloseOutType
         '  Let the DLL auto-determines the input filename, based on the dataset name
         Return ExtractDataFromResults(peptideSearchResultsFileName, True, True, fastaFilePath, resultType)
     End Function
@@ -84,14 +84,14 @@ Public Class clsPepHitResultsProcWrapper
     ''' <summary>
     ''' Converts Sequest, X!Tandem, Inspect, MSGF+, MSAlign, MODa, or MODPlus output file to a flat file
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType enum indicating success or failure</returns>
+    ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
     Public Function ExtractDataFromResults(
       peptideSearchResultsFileName As String,
       createFirstHitsFile As Boolean,
       createSynopsisFile As Boolean,
       fastaFilePath As String,
-      resultType As String) As IJobParams.CloseOutType
+      resultType As String) As CloseOutType
 
         Dim ModDefsFileName As String
         Dim ParamFileName As String = m_JobParams.GetParam("ParmFileName")
@@ -107,7 +107,7 @@ Public Class clsPepHitResultsProcWrapper
 
             If String.IsNullOrWhiteSpace(peptideSearchResultsFileName) Then
                 m_ErrMsg = "PeptideSearchResultsFileName is empty; unable to continue"
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             ' Define the modification definitions file name
@@ -122,7 +122,7 @@ Public Class clsPepHitResultsProcWrapper
             ' Verify that program file exists
             If Not File.Exists(progLoc) Then
                 m_ErrMsg = "PHRP not found at " & progLoc
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Set up and execute a program runner to run the PHRP
@@ -197,7 +197,7 @@ Public Class clsPepHitResultsProcWrapper
 
             If Not blnSuccess Then
                 m_ErrMsg = "Error running PHRP"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If cmdRunner.ExitCode <> 0 Then
@@ -230,7 +230,7 @@ Public Class clsPepHitResultsProcWrapper
                     m_ErrMsg &= "; Unknown error message"
                 End If
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
                 ' Make sure the key PHRP result files were created
                 Dim lstFilesToCheck As List(Of String)
@@ -265,7 +265,7 @@ Public Class clsPepHitResultsProcWrapper
                     If ioInputFile.Directory.GetFiles("*" & strFileName).Length = 0 Then
                         m_ErrMsg = "PHRP results file not found: " & strFileName
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        Return CloseOutType.CLOSEOUT_FAILED
                     End If
                 Next
             End If
@@ -280,14 +280,14 @@ Public Class clsPepHitResultsProcWrapper
         Catch ex As Exception
             Dim logMessage = "Exception while running the peptide hit results processor: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, logMessage)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         If m_DebugLevel >= 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide hit results processor complete")
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

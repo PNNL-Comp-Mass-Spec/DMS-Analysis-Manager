@@ -461,7 +461,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 5)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                mStatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
+                mStatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, mProgress);
             }
 
             if (DateTime.UtcNow.Subtract(mLastMultialignLogFileParse).TotalSeconds >= 15)

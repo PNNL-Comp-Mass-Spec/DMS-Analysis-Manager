@@ -8,11 +8,11 @@ namespace AnalysisManager_Mage_PlugIn
     // ReSharper disable once UnusedMember.Global
     public class clsAnalysisResourcesMage : clsAnalysisResourcesMAC
     {
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
@@ -32,7 +32,7 @@ namespace AnalysisManager_Mage_PlugIn
                 if (!mageOperations.Contains("ImportReporterIons"))
                 {
                     LogError("ApeWorkflowStepList contains 4plex, 6plex, or 8plex; MageOperations must contain ImportReporterIons");
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 requireMasicJobs = true;
@@ -40,7 +40,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             if (!(requireMasicJobs || requireDeconJobs))
             {
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
             // Lookup the jobs associated with this data package
@@ -48,7 +48,7 @@ namespace AnalysisManager_Mage_PlugIn
             if (dataPackageID < 0)
             {
                 LogError("DataPackageID is not defined");
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
@@ -61,13 +61,13 @@ namespace AnalysisManager_Mage_PlugIn
             if (!string.IsNullOrEmpty(errorMsg))
             {
                 LogError(errorMsg);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             if (peptideHitJobs.Count == 0)
             {
                 LogError("Data package " + dataPackageID + " does not have any PeptideHit jobs");
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             var masicJobsAreValid = true;
@@ -86,9 +86,9 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             if (masicJobsAreValid && deconJobsAreValid)
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
 
-            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            return CloseOutType.CLOSEOUT_FAILED;
         }
 
         private bool ValidateDeconJobs(int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs, List<clsDataPackageJobInfo> lstAdditionalJobs)

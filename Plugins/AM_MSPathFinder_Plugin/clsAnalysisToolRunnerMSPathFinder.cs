@@ -73,16 +73,16 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
-            IJobParams.CloseOutType result;
+            CloseOutType result;
 
             try
             {
                 // Call base class for initial setup
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (m_DebugLevel > 4)
@@ -95,7 +95,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Store the MSPathFinder version info in the database
@@ -103,13 +103,13 @@ namespace AnalysisManagerMSPathFinderPlugin
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining MSPathFinder version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 bool fastaFileIsDecoy;
                 if (!InitializeFastaFile(out fastaFileIsDecoy))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Run MSPathFinder
@@ -174,40 +174,40 @@ namespace AnalysisManagerMSPathFinderPlugin
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging problems
                     CopyFailedResultsToArchiveFolder();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     m_message = "Error moving files into results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
                 m_message = "Error in MSPathFinderPlugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private void CopyFailedResultsToArchiveFolder()
@@ -236,11 +236,11 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Make the results folder
             var result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
@@ -779,7 +779,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <param name="strCmdLineOptions">Output: MSPathFinder command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
-        public IJobParams.CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string strCmdLineOptions, out bool tdaEnabled)
+        public CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string strCmdLineOptions, out bool tdaEnabled)
         {
             var intNumMods = 0;
             var lstStaticMods = new List<string>();
@@ -795,7 +795,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             if (!File.Exists(strParameterFilePath))
             {
                 LogError("Parameter file not found", "Parameter file not found: " + strParameterFilePath);
-                return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
             var sbOptions = new StringBuilder(500);
@@ -837,7 +837,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                                     errMsg = "Invalid value for NumMods in MSPathFinder parameter file";
                                     LogError(errMsg, errMsg + ": " + strLineIn);
                                     srParamFile.Close();
-                                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                                    return CloseOutType.CLOSEOUT_FAILED;
                                 }
                             }
                             else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
@@ -862,13 +862,13 @@ namespace AnalysisManagerMSPathFinderPlugin
             {
                 m_message = "Exception reading MSPathFinder parameter file";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Create the modification file and append the -mod switch
             if (!ParseMSPathFinderModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods))
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             strCmdLineOptions = sbOptions.ToString();
@@ -881,11 +881,11 @@ namespace AnalysisManagerMSPathFinderPlugin
                 {
                     LogError(
                         "Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)");
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -1035,7 +1035,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             var eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, out strCmdLineOptions, out tdaEnabled);
 
-            if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return false;
             }

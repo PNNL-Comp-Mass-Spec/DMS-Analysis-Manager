@@ -74,21 +74,21 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
         Dim CmdStr As String
         Dim intJavaMemorySize As Integer
         Dim eMSalignVersion As eMSAlignVersionType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
         Dim blnProcessingError = False
 
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
         Dim blnSuccess As Boolean
 
         Try
             'Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel > 4 Then
@@ -101,7 +101,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
             ' Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
             Dim JavaProgLoc = GetJavaProgLoc()
             If String.IsNullOrEmpty(JavaProgLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Determine the path to the MSAlign_Histone program
@@ -109,7 +109,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
             mMSAlignProgLoc = DetermineProgramLocation("MSAlign_Histone", "MSAlignHistoneProgLoc", IO.Path.Combine("jar", MSAlign_JAR_NAME))
 
             If String.IsNullOrWhiteSpace(mMSAlignProgLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Assume v0.9
@@ -128,12 +128,12 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
             ' Copy the MS Align program files and associated files to the work directory
             ' Note that this function will update mMSAlignWorkFolderPath
             If Not CopyMSAlignProgramFiles(mMSAlignProgLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Initialize the files in the input folder
             If Not InitializeInputFolder(mMSAlignWorkFolderPath, eMSalignVersion) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Read the MSAlign Parameter File
@@ -150,7 +150,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "Problem parsing MSAlign parameter file: command line switches are not present"
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSAlign_Histone")
@@ -213,7 +213,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
                 End If
 
                 blnProcessingError = True
-                eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                eResult = CloseOutType.CLOSEOUT_FAILED
 
             Else
 
@@ -241,9 +241,9 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
                         ' Make a copy of the OUTPUT_TABLE.txt file so that we can fix the header row (creating the RESULT_TABLE_NAME_SUFFIX file)
 
                         If ValidateResultTableFile(eMSalignVersion, strResultTableSourcePath) Then
-                            eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                            eResult = CloseOutType.CLOSEOUT_SUCCESS
                         Else
-                            eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                            eResult = CloseOutType.CLOSEOUT_NO_DATA
                         End If
 
                     End If
@@ -274,33 +274,33 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
                 ' Move the source files and any results to the Failed Job folder
                 ' Useful for debugging MSAlign problems
                 CopyFailedResultsToArchiveFolder()
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         Catch ex As Exception
             m_message = "Error in MSAlignHistone->RunTool"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         Return eResult
@@ -364,7 +364,7 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
     Protected Sub CopyFailedResultsToArchiveFolder()
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -399,10 +399,10 @@ Public Class clsAnalysisToolRunnerMSAlignHistone
 
         ' Make the results folder
         result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = IO.Path.Combine(m_WorkDir, m_ResFolderName)
             End If

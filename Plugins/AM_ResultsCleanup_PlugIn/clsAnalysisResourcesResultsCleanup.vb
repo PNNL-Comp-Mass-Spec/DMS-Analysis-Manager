@@ -15,17 +15,17 @@ Public Class clsAnalysisResourcesResultsCleanup
     ''' <summary>
     ''' Obtains resources necessary for performing analysis results cleanup
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks>No resources needed for performing results transfer. Function merely meets inheritance requirements</remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

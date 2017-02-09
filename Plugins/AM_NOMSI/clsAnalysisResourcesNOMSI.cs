@@ -13,7 +13,7 @@ namespace AnalysisManagerNOMSIPlugin
 {
     public class clsAnalysisResourcesNOMSI : clsAnalysisResources
     {
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
 
             var currentTask = "Initializing";
@@ -24,7 +24,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
@@ -36,7 +36,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 if (!RetrieveFile(paramFileName, paramFileStoragePath))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Retrieve the targets file
@@ -45,7 +45,7 @@ namespace AnalysisManagerNOMSIPlugin
                 if (string.IsNullOrWhiteSpace(targetsFileName))
                 {
                     LogError("Parameter dm_target_file not found in the settings file");
-                    return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
                 currentTask = "Retrieve the transformations file";
@@ -53,12 +53,12 @@ namespace AnalysisManagerNOMSIPlugin
                 if (!Directory.Exists(paramFileStoragePath))
                 {
                     LogError("Transformations folder not found", "Transformations folder not found: " + paramFileStoragePath);
-                    return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
                 if (!RetrieveFile(targetsFileName, paramFileStoragePath))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Retrieve the zip file that has the XML files from the Bruker_Data_Analysis step
@@ -68,17 +68,17 @@ namespace AnalysisManagerNOMSIPlugin
                 if (!FindAndRetrieveMiscFiles(fileToGet, false))
                 {
                     // Errors should have already been logged
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
                 m_jobParams.AddResultFileToSkip(fileToGet);
 
                 currentTask = "Process the MyEMSL download queue";
                 if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
 
             }
             catch (Exception ex)
@@ -87,7 +87,7 @@ namespace AnalysisManagerNOMSIPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                      m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
 
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
         }

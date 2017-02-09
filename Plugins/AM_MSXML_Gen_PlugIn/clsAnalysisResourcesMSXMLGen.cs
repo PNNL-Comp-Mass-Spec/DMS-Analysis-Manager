@@ -10,9 +10,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Retrieves files necessary for creating the .mzXML file
         /// </summary>
-        /// <returns>IJobParams.CloseOutType indicating success or failure</returns>
+        /// <returns>CloseOutType indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
             var currentTask = "Initializing";
 
@@ -22,7 +22,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
@@ -40,13 +40,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     if (string.IsNullOrWhiteSpace(msXmlFormat))
                     {
                         LogError("Job parameter MSXMLOutputType must be defined in the settings file");
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     if (!msXmlFormat.ToLower().Contains("mzml"))
                     {
                         LogError("ProMex_Bruker jobs require mzML files, not " + msXmlFormat + " files");
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
 
@@ -75,7 +75,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             {
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                                     "clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.");
-                                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                                return CloseOutType.CLOSEOUT_FAILED;
                             }
                             break;
                         default:
@@ -84,7 +84,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                 "clsAnalysisResourcesMSXMLGen.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + ", " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
 
-                            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                            return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     if (m_MyEMSLUtilities.FilesToDownload.Count == 0)
@@ -112,7 +112,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
                     if (!RetrieveOrgDB(localOrgDbFolder))
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
 
                     currentTask = "Retrieve the MzML Refinery parameter file " + mzMLRefParamFile;
 
@@ -131,7 +131,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     //Retrieve param file
                     if (!RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")))
                     {
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
             }
@@ -140,10 +140,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 m_message = "Exception in GetResources: " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                     m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         #endregion

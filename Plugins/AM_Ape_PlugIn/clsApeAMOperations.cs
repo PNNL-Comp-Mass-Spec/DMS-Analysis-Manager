@@ -136,7 +136,7 @@ namespace AnalysisManager_Ape_PlugIn
             //if (System.DateTime.UtcNow.Subtract(m_LastStatusUpdateTime).TotalSeconds >= 10)
             //{
             //    m_LastStatusUpdateTime = System.DateTime.UtcNow;
-            //    m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
+            //    m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
             //}
         }
 

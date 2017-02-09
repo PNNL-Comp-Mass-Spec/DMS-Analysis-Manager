@@ -44,13 +44,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         #region Main Logic
 
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
             try
             {
                 //Do the base class stuff
                 var result = base.RunTool();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
@@ -60,7 +60,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining RepoPkgr version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var instrumentDataWarning = m_jobParams.GetJobParameter(WARNING_INSTRUMENT_DATA_MISSING, string.Empty);
@@ -74,7 +74,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 m_message = "Error in RepoPkgr Plugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
         }
 
@@ -82,7 +82,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// Find (or generate) necessary files and copy them to repository cache folder for upload
         /// </summary>
         /// <returns></returns>
-        private IJobParams.CloseOutType BuildRepoCache()
+        private CloseOutType BuildRepoCache()
         {
             SetOptions();
             SetOutputFolderPath();
@@ -100,9 +100,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
 
             if (success)
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
             else
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
         }
 
         private void CopyFastaFiles()

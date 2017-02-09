@@ -53,7 +53,7 @@ namespace AnalysisManagerQCARTPlugin
             mTargetDatasetFraction = 0;
         }
 
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
 
             var currentTask = "Initializing";
@@ -66,7 +66,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
@@ -79,7 +79,7 @@ namespace AnalysisManagerQCARTPlugin
                 var success = RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Retrieve the QC_ART R script
@@ -93,7 +93,7 @@ namespace AnalysisManagerQCARTPlugin
                 if (!success)
                 {
                     m_message = "Template QC-ART R Script not found: " + rScriptName;
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Parse the parameter file to discover the baseline datasets
@@ -114,7 +114,7 @@ namespace AnalysisManagerQCARTPlugin
                     if (string.IsNullOrWhiteSpace(m_message))
                         LogError("ParseQCARTParamFile returned false (unknown error)");
 
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Look for an existing QC-ART baseline results file for the given set of datasets
@@ -128,7 +128,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 var baselineResultsFound = FindBaselineResults(paramFilePathRemote, baselineMetadataKey, out baselineMetadataFilePath, out criticalError);
                 if (criticalError)
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
 
                 if (!baselineResultsFound)
                 {
@@ -160,7 +160,7 @@ namespace AnalysisManagerQCARTPlugin
                 success = RetrieveReporterIonsFile(currentDatasetAndJobInfo);
                 if (!success)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 if (!baselineResultsFound)
@@ -169,14 +169,14 @@ namespace AnalysisManagerQCARTPlugin
 
                     success = RetrieveDataForBaselineDatasets(paramFileName, baselineDatasets);
                     if (!success)
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
 
                     // Restore the dataset and job info using udtCurrentDatasetAndJobInfo
                     OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
 
                     success = CreateBaselineDatasetInfoFile(baselineDatasets);
                     if (!success)
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
 
                 }
 
@@ -185,7 +185,7 @@ namespace AnalysisManagerQCARTPlugin
                 success = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
                 if (!success)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Store the baseline dataset names and Masic Jobs so they can be used by clsAnalysisToolRunnerQCART
@@ -195,23 +195,23 @@ namespace AnalysisManagerQCARTPlugin
                 success = RetrieveQCMetricsFromDB(datasetNamesToRetrieveMetrics);
                 if (!success)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Customize the QC-ART R Script
                 success = CustomizeQCRScript(rScriptName, baselineResultsFound);
                 if (!success)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
 
             }
             catch (Exception ex)
             {
                 LogError("Exception in GetResources; task = " + currentTask, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
         }
@@ -879,7 +879,7 @@ namespace AnalysisManagerQCARTPlugin
                     }
 
                     // Write the header line
-                    writer.WriteLine(clsGlobal.FlattenList(headers, ','));
+                    writer.WriteLine(clsGlobal.FlattenList(headers, ","));
 
                     // Write each data line
                     foreach (DataRow row in resultSet.Rows)
@@ -916,7 +916,7 @@ namespace AnalysisManagerQCARTPlugin
                         }
 
                         datasetsMatched.Add(datasetName);
-                        writer.WriteLine(clsGlobal.FlattenList(dataValues, ','));
+                        writer.WriteLine(clsGlobal.FlattenList(dataValues, ","));
                     }
                 }
 

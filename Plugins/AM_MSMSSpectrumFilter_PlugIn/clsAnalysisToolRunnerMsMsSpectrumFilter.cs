@@ -46,12 +46,12 @@ namespace MSMSSpectrumFilterAM
         private string m_ErrMsg = string.Empty;
         // Handy place to store value so repeated calls to m_JobParams aren't required
         private string m_SettingsFileName = string.Empty;
-        private ISpectraFilter.ProcessResults m_Results;
+        private ProcessResults m_Results;
 
         private string m_DTATextFileName = string.Empty;
         private System.Threading.Thread m_thThread;
 
-        private ISpectraFilter.ProcessStatus m_FilterStatus;
+        private ProcessStatus m_FilterStatus;
 
         #region "Methods"
 
@@ -59,14 +59,14 @@ namespace MSMSSpectrumFilterAM
         {
         }
 
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
-            IJobParams.CloseOutType result;
+            CloseOutType result;
 
             //Do the base class stuff
-            if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Store the MSMSSpectrumFilter version info in the database
@@ -74,28 +74,28 @@ namespace MSMSSpectrumFilterAM
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining MSMSSpectrumFilter version";
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_STARTING;
+            m_FilterStatus = ProcessStatus.SF_STARTING;
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file");
 
             //Verify necessary files are in specified locations
             if (!InitSetup())
             {
-                m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE;
-                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                m_Results = ProcessResults.SF_FAILURE;
+                m_FilterStatus = ProcessStatus.SF_ERROR;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Filter the spectra (the process runs in a separate thread)
             m_FilterStatus = FilterDTATextFile();
 
-            if (m_FilterStatus == ISpectraFilter.ProcessStatus.SFILT_ERROR)
+            if (m_FilterStatus == ProcessStatus.SF_ERROR)
             {
-                m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE;
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                m_Results = ProcessResults.SF_FAILURE;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             if (m_DebugLevel >= 2)
@@ -104,9 +104,9 @@ namespace MSMSSpectrumFilterAM
             }
 
             // Zip the filtered _Dta.txt file
-            if (m_Results == ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED)
+            if (m_Results == ProcessResults.SF_NO_SPECTRA_ALTERED)
             {
-                result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                result = CloseOutType.CLOSEOUT_SUCCESS;
                 m_EvalMessage = "Filtered CDTA file is identical to the original file and was thus not copied to the job results folder";
             }
             else
@@ -114,10 +114,10 @@ namespace MSMSSpectrumFilterAM
                 result = ZipConcDtaFile();
             }
 
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE;
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                m_Results = ProcessResults.SF_FAILURE;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             //Stop the job timer
@@ -136,29 +136,29 @@ namespace MSMSSpectrumFilterAM
             }
 
             result = MakeResultsFolder();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 //MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder";
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             result = MoveResultFiles();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 //MoveResultFiles moves the result files to the result folder
                 m_message = "Error making results folder";
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             result = CopyResultsFolderToServer();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 //TODO: What do we do here?
                 return result;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private bool CDTAFilesMatch(string strOriginalCDTA, string strFilteredCDTA)
@@ -339,13 +339,13 @@ namespace MSMSSpectrumFilterAM
             catch (Exception ex)
             {
                 LogErrors("CountDtaFiles", "Error counting .Dta files in strDTATextFilePath", ex);
-                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                m_FilterStatus = ProcessStatus.SF_ERROR;
             }
 
             return intDTACount;
         }
 
-        protected virtual ISpectraFilter.ProcessStatus FilterDTATextFile()
+        protected virtual ProcessStatus FilterDTATextFile()
         {
             // Initializes m_MsMsSpectrumFilter, then starts a separate thread to filter the _Dta.txt file in the working folder
             // If ScanStats files are required, will first call GenerateFinniganScanStatsFiles() to generate those files using the .Raw file
@@ -373,7 +373,7 @@ namespace MSMSSpectrumFilterAM
                         m_ErrMsg = "Parameter file load error: " + strParameterFilePath;
                     }
                     LogErrors("FilterDTATextFile", m_ErrMsg, null);
-                    return ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                    return ProcessStatus.SF_ERROR;
                 }
 
                 // Set a few additional settings
@@ -399,7 +399,7 @@ namespace MSMSSpectrumFilterAM
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False");
                         }
 
-                        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                        m_FilterStatus = ProcessStatus.SF_ERROR;
                         return m_FilterStatus;
                     }
                     else
@@ -443,12 +443,12 @@ namespace MSMSSpectrumFilterAM
                 }
 
                 //If we reach here, everything must be good
-                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE;
+                m_FilterStatus = ProcessStatus.SF_COMPLETE;
             }
             catch (Exception ex)
             {
                 LogErrors("FilterDTAFilesInFolder", "Error initializing and running clsMsMsSpectrumFilter", ex);
-                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                m_FilterStatus = ProcessStatus.SF_ERROR;
             }
 
             return m_FilterStatus;
@@ -503,7 +503,7 @@ namespace MSMSSpectrumFilterAM
                         if (!File.Exists(strBakFilePath))
                         {
                             LogErrors("FilterDTATextFileWork", "CDTA .Bak file not found", null);
-                            m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED;
+                            m_Results = ProcessResults.SF_NO_FILES_CREATED;
                         }
 
                         // Compare the new _dta.txt file to the _dta.txt.bak file
@@ -523,36 +523,36 @@ namespace MSMSSpectrumFilterAM
 
                             File.Delete(strInputFilePath);
 
-                            m_Results = ISpectraFilter.ProcessResults.SFILT_NO_SPECTRA_ALTERED;
+                            m_Results = ProcessResults.SF_NO_SPECTRA_ALTERED;
                         }
                         else
                         {
                             //Count the number of .Dta files remaining in the _dta.txt file
                             if (!VerifyDtaCreation(strInputFilePath))
                             {
-                                m_Results = ISpectraFilter.ProcessResults.SFILT_NO_FILES_CREATED;
+                                m_Results = ProcessResults.SF_NO_FILES_CREATED;
                             }
                             else
                             {
-                                m_Results = ISpectraFilter.ProcessResults.SFILT_SUCCESS;
+                                m_Results = ProcessResults.SF_SUCCESS;
                             }
                         }
 
-                        m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_COMPLETE;
+                        m_FilterStatus = ProcessStatus.SF_COMPLETE;
                     }
                     else
                     {
                         if (m_MsMsSpectrumFilter.AbortProcessing)
                         {
                             LogErrors("FilterDTATextFileWork", "Processing aborted", null);
-                            m_Results = ISpectraFilter.ProcessResults.SFILT_ABORTED;
-                            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ABORTING;
+                            m_Results = ProcessResults.SF_ABORTED;
+                            m_FilterStatus = ProcessStatus.SF_ABORTING;
                         }
                         else
                         {
                             LogErrors("FilterDTATextFileWork", m_MsMsSpectrumFilter.GetErrorMessage(), null);
-                            m_Results = ISpectraFilter.ProcessResults.SFILT_FAILURE;
-                            m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                            m_Results = ProcessResults.SF_FAILURE;
+                            m_FilterStatus = ProcessStatus.SF_ERROR;
                         }
                     }
 
@@ -561,13 +561,13 @@ namespace MSMSSpectrumFilterAM
                 catch (Exception ex)
                 {
                     LogErrors("FilterDTATextFileWork", "Error performing tasks after m_MsMsSpectrumFilter.ProcessFilesWildcard completes", ex);
-                    m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                    m_FilterStatus = ProcessStatus.SF_ERROR;
                 }
             }
             catch (Exception ex)
             {
                 LogErrors("FilterDTATextFileWork", "Error calling m_MsMsSpectrumFilter.ProcessFilesWildcard", ex);
-                m_FilterStatus = ISpectraFilter.ProcessStatus.SFILT_ERROR;
+                m_FilterStatus = ProcessStatus.SF_ERROR;
             }
         }
 
@@ -845,7 +845,7 @@ namespace MSMSSpectrumFilterAM
         /// </summary>
         /// <returns>CloseoutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        protected virtual IJobParams.CloseOutType ZipConcDtaFile()
+        protected virtual CloseOutType ZipConcDtaFile()
         {
             //Zips the concatenated dta file
             string DtaFileName = m_Dataset + "_dta.txt";
@@ -859,7 +859,7 @@ namespace MSMSSpectrumFilterAM
             else
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file");
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             //Zip the file
@@ -869,17 +869,17 @@ namespace MSMSSpectrumFilterAM
                 {
                     string Msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
                 string Msg = "Exception zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         #endregion

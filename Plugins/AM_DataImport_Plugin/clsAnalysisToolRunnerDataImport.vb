@@ -27,23 +27,23 @@ Public Class clsAnalysisToolRunnerDataImport
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         Dim blnMoveFilesAfterImport As Boolean
         Dim blnSuccess As Boolean
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Try
             'Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         
             ' Store the AnalysisManagerDataImportPlugIn version info in the database
             If Not StoreToolVersionInfo() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining AnalysisManagerDataImportPlugIn version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
 
@@ -53,7 +53,7 @@ Public Class clsAnalysisToolRunnerDataImport
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "Unknown error calling PerformDataImport"
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             'Stop the job timer
@@ -64,17 +64,17 @@ Public Class clsAnalysisToolRunnerDataImport
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Delete two auto-generated files from the Results Folder since they're not necessary to keep
@@ -83,7 +83,7 @@ Public Class clsAnalysisToolRunnerDataImport
             DeleteFileFromResultFolder("JobParameters_" & m_JobNum & ".xml")
 
             result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 Return result
             End If
@@ -97,11 +97,11 @@ Public Class clsAnalysisToolRunnerDataImport
         Catch ex As Exception
             m_message = "Error in DataImportPlugin->RunTool: " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

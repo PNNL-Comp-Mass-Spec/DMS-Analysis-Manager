@@ -38,13 +38,13 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Gets all files needed by MSGF
         /// </summary>
-        /// <returns>IJobParams.CloseOutType specifying results</returns>
+        /// <returns>CloseOutType specifying results</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
@@ -59,27 +59,27 @@ namespace AnalysisManagerMSGFPlugin
                 if (!ValidateFreeMemorySize("MSGFJavaMemorySize", "MSGF"))
                 {
                     m_message = "Not enough free memory to run MSGF";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
             //Get analysis results files
             result = GetInputFiles(m_jobParams.GetParam("ResultType"));
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
         /// Retrieves input files needed for MSGF
         /// </summary>
         /// <param name="resultType">String specifying type of analysis results input to extraction process</param>
-        /// <returns>IJobParams.CloseOutType specifying results</returns>
+        /// <returns>CloseOutType specifying results</returns>
         /// <remarks></remarks>
-        private IJobParams.CloseOutType GetInputFiles(string resultType)
+        private CloseOutType GetInputFiles(string resultType)
         {
             string fileToGet = null;
             string strSynFilePath = string.Empty;
@@ -108,7 +108,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!blnSuccess)
             {
-                return (IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES);
+                return (CloseOutType.CLOSEOUT_NO_OUT_FILES);
             }
 
             // Make sure the dataset type is valid
@@ -168,7 +168,7 @@ namespace AnalysisManagerMSGFPlugin
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                                 m_message + "; must be one of the following: " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " + RAW_DATA_TYPE_DOT_MZML_FILES +
                                 ", " + RAW_DATA_TYPE_DOT_MZXML_FILES);
-                            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                            return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
             }
@@ -180,7 +180,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (!FindAndRetrieveMiscFiles(fileToGet, false))
                 {
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
                 m_jobParams.AddResultFileToSkip(fileToGet);
 
@@ -204,7 +204,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (!blnSuccess)
                 {
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
                 strSynFilePath = Path.Combine(m_WorkingDir, fileToGet);
             }
@@ -217,7 +217,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (!blnSuccess)
                 {
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
 
@@ -229,7 +229,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (!blnSuccess)
                 {
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
 
@@ -241,7 +241,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (!blnSuccess)
                 {
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
 
@@ -268,7 +268,7 @@ namespace AnalysisManagerMSGFPlugin
                     else
                     {
                         // Errors were reported in function call, so just return
-                        return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }
             }
@@ -276,7 +276,7 @@ namespace AnalysisManagerMSGFPlugin
             blnSuccess = base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
             if (!blnSuccess)
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             Int64 synFileSizeBytes = 0;
@@ -313,13 +313,13 @@ namespace AnalysisManagerMSGFPlugin
                         else
                         {
                             //Errors were reported in function call, so just return
-                            return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                            return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
                     }
                     else
                     {
                         //Errors were reported in function call, so just return
-                        return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }
             }
@@ -338,13 +338,13 @@ namespace AnalysisManagerMSGFPlugin
                         // That's OK; we'll create an empty file with just a header line
                         if (!CreateEmptyResultToSeqMapFile(fileToGet))
                         {
-                            return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                            return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
                     }
                     else
                     {
                         //Errors were reported in function call, so just return
-                        return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }
             }
@@ -360,13 +360,13 @@ namespace AnalysisManagerMSGFPlugin
                         // That's OK; we'll create an empty file with just a header line
                         if (!CreateEmptySeqToProteinMapFile(fileToGet))
                         {
-                            return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                            return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                         }
                     }
                     else
                     {
                         //Errors were reported in function call, so just return
-                        return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }
             }
@@ -392,7 +392,7 @@ namespace AnalysisManagerMSGFPlugin
                     m_message = "Instrument data not found: " + strFileToFind;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                         "clsAnalysisResourcesMSGF.GetResources: " + m_message);
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
                 else
                 {
@@ -427,7 +427,7 @@ namespace AnalysisManagerMSGFPlugin
                         if (!m_IonicZipTools.GUnzipFile(fiMzXMLFile.FullName))
                         {
                             m_message = "Error decompressing .mzXML.gz file";
-                            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                            return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
                 }
@@ -446,7 +446,7 @@ namespace AnalysisManagerMSGFPlugin
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                             "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.");
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
             }
@@ -454,7 +454,7 @@ namespace AnalysisManagerMSGFPlugin
             blnSuccess = base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
             if (!blnSuccess)
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             foreach (var entry in m_PendingFileRenames)
@@ -466,7 +466,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private bool CreateEmptyResultToSeqMapFile(string fileName)

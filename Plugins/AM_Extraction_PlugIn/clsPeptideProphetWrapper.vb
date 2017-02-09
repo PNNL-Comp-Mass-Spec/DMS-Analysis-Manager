@@ -76,7 +76,7 @@ Public Class clsPeptideProphetWrapper
         m_PeptideProphetRunnerLocation = strPeptideProphetRunnerLocation
     End Sub
 
-    Public Function CallPeptideProphet() As IJobParams.CloseOutType
+    Public Function CallPeptideProphet() As CloseOutType
 
         Dim CmdStr As String
         Dim ioInputFile As FileInfo
@@ -91,7 +91,7 @@ Public Class clsPeptideProphetWrapper
             ' verify that program file exists
             If Not File.Exists(m_PeptideProphetRunnerLocation) Then
                 m_ErrMsg = "PeptideProphetRunner not found at " & m_PeptideProphetRunnerLocation
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Set up and execute a program runner to run the Peptide Prophet Runner
@@ -112,7 +112,7 @@ Public Class clsPeptideProphetWrapper
 
             If Not mCmdRunner.RunProgram(m_PeptideProphetRunnerLocation, CmdStr, "PeptideProphetRunner", True) Then
                 m_ErrMsg = "Error running PeptideProphetRunner"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If mCmdRunner.ExitCode <> 0 Then
@@ -145,16 +145,16 @@ Public Class clsPeptideProphetWrapper
                     m_ErrMsg &= "; Unknown error message"
                 End If
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             RaiseEvent PeptideProphetRunning("Complete", 100)
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             m_ErrMsg = "Exception while running peptide prophet: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
 

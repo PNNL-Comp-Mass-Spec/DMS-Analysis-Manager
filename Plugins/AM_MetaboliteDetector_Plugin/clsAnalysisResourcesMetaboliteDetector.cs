@@ -27,7 +27,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
            
         }
 
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
 
             var currentTask = "Initializing";
@@ -38,7 +38,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
@@ -51,7 +51,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 var success = RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 
@@ -61,16 +61,16 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 success = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
                 if (!success)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
 
             }
             catch (Exception ex)
             {
                 LogError("Exception in GetResources; task = " + currentTask, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
         }

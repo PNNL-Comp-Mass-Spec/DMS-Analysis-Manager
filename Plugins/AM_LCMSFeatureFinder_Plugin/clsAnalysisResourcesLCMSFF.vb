@@ -19,13 +19,13 @@ Public Class clsAnalysisResourcesLCMSFF
     Public Const SCANS_FILE_SUFFIX As String = "_scans.csv"
     Public Const ISOS_FILE_SUFFIX As String = "_isos.csv"
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -34,14 +34,14 @@ Public Class clsAnalysisResourcesLCMSFF
         Dim strFileToGet = m_DatasetName & SCANS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         ' Retrieve Decon2LS _isos.csv files for this dataset
         strFileToGet = m_DatasetName & ISOS_FILE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
         m_jobParams.AddResultFileToSkip(strFileToGet)
 
@@ -49,7 +49,7 @@ Public Class clsAnalysisResourcesLCMSFF
         Dim strLCMSFFIniFileName = m_jobParams.GetParam("LCMSFeatureFinderIniFile")
         If strLCMSFFIniFileName Is Nothing OrElse strLCMSFFIniFileName.Length = 0 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue")
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         Dim strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "LCMSFeatureFinder"
@@ -61,7 +61,7 @@ Public Class clsAnalysisResourcesLCMSFF
 
         If Not CopyFileToWorkDir(strLCMSFFIniFileName, strFFIniFileStoragePath, m_WorkingDir) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         Dim strRawDataType As String
@@ -76,7 +76,7 @@ Public Class clsAnalysisResourcesLCMSFF
             ' IMS data; need to get the .UIMF file
             If Not RetrieveSpectra(strRawDataType) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
                 If m_DebugLevel >= 1 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved .UIMF file")
@@ -88,7 +88,7 @@ Public Class clsAnalysisResourcesLCMSFF
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Could add an extension of a file to delete, like this:
@@ -102,10 +102,10 @@ Public Class clsAnalysisResourcesLCMSFF
                 m_message = Msg
             End If
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

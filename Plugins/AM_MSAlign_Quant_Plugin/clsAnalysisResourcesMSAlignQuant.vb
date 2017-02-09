@@ -8,11 +8,11 @@ Public Class clsAnalysisResourcesMSAlignQuant
 
     Public Const MSALIGN_RESULT_TABLE_SUFFIX As String = "_MSAlign_ResultTable.txt"
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -30,13 +30,13 @@ Public Class clsAnalysisResourcesMSAlignQuant
         If String.IsNullOrEmpty(strParamFileName) Then
             m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "MSAlignQuantParamFile")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
 
         If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         ' Retrieve the MSAlign results for this job
@@ -44,7 +44,7 @@ Public Class clsAnalysisResourcesMSAlignQuant
         strMSAlignResultsTable = m_DatasetName & MSALIGN_RESULT_TABLE_SUFFIX
         If Not FindAndRetrieveMiscFiles(strMSAlignResultsTable, False) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
         m_jobParams.AddResultFileToSkip(strMSAlignResultsTable)
 
@@ -57,7 +57,7 @@ Public Class clsAnalysisResourcesMSAlignQuant
                 If RetrieveSpectra(strRawDataType) Then
 
                     If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        Return CloseOutType.CLOSEOUT_FAILED
                     End If
 
                     ' Confirm that the .Raw or .D folder was actually copied locally
@@ -65,7 +65,7 @@ Public Class clsAnalysisResourcesMSAlignQuant
                         If Not File.Exists(Path.Combine(m_WorkingDir, m_DatasetName & DOT_RAW_EXTENSION)) Then
                             m_message = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error"
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
-                            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            Return CloseOutType.CLOSEOUT_FAILED
                         End If
                         m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)	 'Raw file
 
@@ -73,25 +73,25 @@ Public Class clsAnalysisResourcesMSAlignQuant
                         If Not Directory.Exists(Path.Combine(m_WorkingDir, m_DatasetName & DOT_D_EXTENSION)) Then
                             m_message = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error"
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
-                            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            Return CloseOutType.CLOSEOUT_FAILED
                         End If
                     End If
 
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: Error occurred retrieving spectra.")
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             Case Else
                 m_message = "Dataset type " & strRawDataType & " is not supported"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message & "; must be " & RAW_DATA_TYPE_DOT_RAW_FILES & " or " & RAW_DATA_TYPE_BRUKER_FT_FOLDER)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
         End Select
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

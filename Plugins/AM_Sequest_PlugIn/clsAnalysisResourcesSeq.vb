@@ -145,7 +145,7 @@ Public Class clsAnalysisResourcesSeq
     ''' CLOSEOUT_FILE_NOT_FOUND if an existing file was not found, and 
     ''' CLOSEOUT_FAILURE if an error
     ''' </returns>
-    Protected Function CheckForExistingConcatenatedOutFile() As IJobParams.CloseOutType
+    Protected Function CheckForExistingConcatenatedOutFile() As CloseOutType
 
         Try
 
@@ -172,7 +172,7 @@ Public Class clsAnalysisResourcesSeq
                 If m_DebugLevel >= 4 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... Transfer folder not found: " & diSourceFolder.FullName)
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             Dim concatenatedTempFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE)
@@ -182,7 +182,7 @@ Public Class clsAnalysisResourcesSeq
                 If m_DebugLevel >= 4 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file not found")
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             If m_DebugLevel >= 1 Then
@@ -197,7 +197,7 @@ Public Class clsAnalysisResourcesSeq
             Dim filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "JobParameters")
             If Not filesMatch Then
                 ' Files don't match; do not resume
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             ' Compare the remote and local copies of the Sequest Parameter file
@@ -208,7 +208,7 @@ Public Class clsAnalysisResourcesSeq
             filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Sequest Parameter")
             If Not filesMatch Then
                 ' Files don't match; do not resume
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             ' Everything matches up; copy fiTempOutFile locally
@@ -227,7 +227,7 @@ Public Class clsAnalysisResourcesSeq
                 ' Error copying the file; treat this as a failed job
                 m_message = " Exception copying " & clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE & " file locally"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ... Exception copying " & fiTempOutFile.FullName & " locally; unable to resume: " & ex.Message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
             ' Look for a sequest.log.tmp file
@@ -262,12 +262,12 @@ Public Class clsAnalysisResourcesSeq
                 End Try
             End If
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             m_message = "Error in CheckForExistingConcatenatedOutFile"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CheckForExistingConcatenatedOutFile: " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
@@ -302,23 +302,23 @@ Public Class clsAnalysisResourcesSeq
     ''' <summary>
     ''' Retrieves files necessary for performance of Sequest analysis
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         ' Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
         Dim LocOrgDBFolder = m_mgrParams.GetParam("orgdbdir")
-        If Not RetrieveOrgDB(LocOrgDBFolder) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveOrgDB(LocOrgDBFolder) Then Return CloseOutType.CLOSEOUT_FAILED
 
         ' Retrieve param file
         If Not RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Make sure the Sequest parameter file is present in the parameter file storage path
@@ -328,11 +328,11 @@ Public Class clsAnalysisResourcesSeq
         ' If one exists, and if the parameter file and settings file associated with the file match the ones in the work folder, then copy it locally
         Dim eExistingOutFileResult = CheckForExistingConcatenatedOutFile()
 
-        If eExistingOutFileResult = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+        If eExistingOutFileResult = CloseOutType.CLOSEOUT_FAILED Then
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Call to CheckForExistingConcatenatedOutFile failed"
             End If
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the _DTA.txt file
@@ -340,7 +340,7 @@ Public Class clsAnalysisResourcesSeq
         ' The file will be de-concatenated by function clsAnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
         If Not RetrieveDtaFiles() Then
             ' Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' If running on a cluster, then distribute the database file across the nodes
@@ -350,12 +350,12 @@ Public Class clsAnalysisResourcesSeq
             Dim OrbDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
             If String.IsNullOrEmpty(OrbDBName) Then
                 m_message = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a fasta file"
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             If Not VerifyDatabase(OrbDBName, LocOrgDBFolder) Then
                 ' Errors were reported in function call, so just return
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         End If
@@ -367,7 +367,7 @@ Public Class clsAnalysisResourcesSeq
         m_jobParams.AddResultFileExtensionToSkip(".tmp")        ' Temp files
 
         'All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

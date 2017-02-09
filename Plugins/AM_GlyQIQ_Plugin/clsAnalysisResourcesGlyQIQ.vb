@@ -39,11 +39,11 @@ Public Class clsAnalysisResourcesGlyQIQ
     Private mGlyQIQParams As udtGlyQIQParams
 #End Region
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -62,18 +62,18 @@ Public Class clsAnalysisResourcesGlyQIQ
 
         mGlyQIQParams.WorkingParameterFolders = CreateSubFolders(coreCount)
         If mGlyQIQParams.WorkingParameterFolders.Count = 0 Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not RetrieveGlyQIQParameters(coreCount) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         If Not RetrievePeaksAndRawData() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

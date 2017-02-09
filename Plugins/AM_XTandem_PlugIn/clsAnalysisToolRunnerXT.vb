@@ -50,16 +50,16 @@ Public Class clsAnalysisToolRunnerXT
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         Dim CmdStr As String
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
         Dim blnSuccess As Boolean
         Dim blnNoResults As Boolean
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Note: we will store the XTandem version info in the database after the first line is written to file XTandem_ConsoleOutput.txt
@@ -70,7 +70,7 @@ Public Class clsAnalysisToolRunnerXT
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+            Return CloseOutType.CLOSEOUT_NO_DTA_FILES
         End If
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem")
@@ -88,18 +88,18 @@ Public Class clsAnalysisToolRunnerXT
         If progLoc.Length = 0 Then
             m_message = "Parameter 'xtprogloc' not defined for this manager"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Check whether we need to update the program location to use a specific version of X!Tandem
         progLoc = DetermineXTandemProgramLocation(progLoc)
 
         If String.IsNullOrWhiteSpace(progLoc) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         ElseIf Not File.Exists(progLoc) Then
             m_message = "Cannot find XTandem program file"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Set up and execute a program runner to run X!Tandem
@@ -140,7 +140,7 @@ Public Class clsAnalysisToolRunnerXT
             ' Useful for debugging XTandem problems
             CopyFailedResultsToArchiveFolder()
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
 
         End If
 
@@ -168,7 +168,7 @@ Public Class clsAnalysisToolRunnerXT
 
         'Zip the output file
         result = ZipMainOutputFile()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the source files and any results to the Failed Job folder
             ' Useful for debugging XTandem problems
             CopyFailedResultsToArchiveFolder()
@@ -176,29 +176,29 @@ Public Class clsAnalysisToolRunnerXT
         End If
 
         result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?           
             Return result
         End If
 
         result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return result
         End If
 
         result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return result
         End If
 
         If blnNoResults Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            Return CloseOutType.CLOSEOUT_NO_DATA
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+            Return CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
         End If
 
 
@@ -207,7 +207,7 @@ Public Class clsAnalysisToolRunnerXT
 
     Protected Sub CopyFailedResultsToArchiveFolder()
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -230,10 +230,10 @@ Public Class clsAnalysisToolRunnerXT
 
         ' Make the results folder
         result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
@@ -400,7 +400,7 @@ Public Class clsAnalysisToolRunnerXT
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function ZipMainOutputFile() As IJobParams.CloseOutType
+    Private Function ZipMainOutputFile() As CloseOutType
         Dim TmpFile As String
         Dim FileList() As String
         Dim TmpFilePath As String
@@ -413,14 +413,14 @@ Public Class clsAnalysisToolRunnerXT
                     Dim Msg As String = "Error zipping output files, job " & m_JobNum
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                     m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             Next
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         ' Make sure the XML output files have been deleted (the call to MyBase.ZipFile() above should have done this)
@@ -432,10 +432,10 @@ Public Class clsAnalysisToolRunnerXT
             Next
         Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " & m_JobNum & Err.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

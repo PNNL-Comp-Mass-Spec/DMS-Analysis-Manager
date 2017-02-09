@@ -49,8 +49,8 @@ Public Class clsAnalysisToolRunnerDtaSplit
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
-        Dim result As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
+        Dim result As CloseOutType
         Dim strCDTAFile As String
         Dim intSegmentCountToCreate As Integer
 
@@ -62,14 +62,14 @@ Public Class clsAnalysisToolRunnerDtaSplit
             If Not StoreToolVersionInfo() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining DtaSplit version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             strCDTAFile = Path.Combine(m_WorkDir, m_Dataset & "_dta.txt")
 
             ' Make sure the _DTA.txt file is valid
             If Not ValidateCDTAFile() Then
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+                Return CloseOutType.CLOSEOUT_NO_DTA_FILES
             End If
 
             Try
@@ -91,7 +91,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
 
             result = SplitCattedDtaFileIntoSegments(strCDTAFile, intSegmentCountToCreate)
 
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
@@ -106,29 +106,29 @@ Public Class clsAnalysisToolRunnerDtaSplit
             UpdateStatusRunning(100, intSegmentCountToCreate)
 
             result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
                 Return result
             End If
 
             result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
                 Return result
             End If
 
             result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
                 Return result
             End If
 
         Catch ex As Exception
             m_message = "Error in DtaSplitPlugin->RunTool: " & ex.Message
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+        Return CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
 
     End Function
 
@@ -139,7 +139,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
     ''' <param name="intSegmentCountToCreate">Number of segments to create</param>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function SplitCattedDtaFileIntoSegments(strSourceFilePath As String, intSegmentCountToCreate As Integer) As IJobParams.CloseOutType
+    Private Function SplitCattedDtaFileIntoSegments(strSourceFilePath As String, intSegmentCountToCreate As Integer) As CloseOutType
 
         Const STATUS_UPDATE_INTERVAL_SECONDS As Single = 15
 
@@ -192,10 +192,10 @@ Public Class clsAnalysisToolRunnerDtaSplit
                 Catch ex As Exception
                     If strSourceFilePath Is Nothing Then strSourceFilePath = "??"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in SplitCattedDtaFileIntoSegments renaming file: " & strSourceFilePath & " to _1_dta.txt; " & ex.Message)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End Try
 
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Return CloseOutType.CLOSEOUT_SUCCESS
             End If
 
 
@@ -215,7 +215,7 @@ Public Class clsAnalysisToolRunnerDtaSplit
 
             For intSplitFileNum = 1 To intSegmentCountToCreate
                 swOutFile(intSplitFileNum) = CreateNewSplitDTAFile(intSplitFileNum)
-                If swOutFile(intSplitFileNum) Is Nothing Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                If swOutFile(intSplitFileNum) Is Nothing Then Return CloseOutType.CLOSEOUT_FAILED
             Next
 
             ' Open the input file
@@ -270,10 +270,10 @@ Public Class clsAnalysisToolRunnerDtaSplit
         Catch ex As Exception
             If strSourceFilePath Is Nothing Then strSourceFilePath = "??"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in SplitCattedDtaFileIntoSegments reading file: " & strSourceFilePath & "; " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

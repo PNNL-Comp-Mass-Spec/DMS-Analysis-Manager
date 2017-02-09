@@ -21,7 +21,7 @@ Public Class clsAnalysisToolRunnerMASICAgilent
     Public Sub New()
     End Sub
 
-    Protected Overrides Function RunMASIC() As IJobParams.CloseOutType
+    Protected Overrides Function RunMASIC() As CloseOutType
 
         Dim strParameterFileName As String
         Dim strParameterFilePath As String
@@ -45,14 +45,14 @@ Public Class clsAnalysisToolRunnerMASICAgilent
             ' Unable to resolve the file path
             m_ErrorMessage = "Could not find " & strMgfFileName & " or " & strMgfFileName & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         Return MyBase.StartMASICAndWait(strInputFilePath, m_workdir, strParameterFilePath)
 
     End Function
 
-    Protected Overrides Function DeleteDataFile() As IJobParams.CloseOutType
+    Protected Overrides Function DeleteDataFile() As CloseOutType
 
         'Deletes the .cdf and .mgf files from the working directory
         Dim FoundFiles() As String
@@ -66,7 +66,7 @@ Public Class clsAnalysisToolRunnerMASICAgilent
             Next
         Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .cdf file, job " & m_JobNum & Err.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         'Delete the .mgf file
@@ -77,10 +77,10 @@ Public Class clsAnalysisToolRunnerMASICAgilent
             Next
         Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .mgf file, job " & m_JobNum)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

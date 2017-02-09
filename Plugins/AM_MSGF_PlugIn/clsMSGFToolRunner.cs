@@ -141,17 +141,17 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Runs MSGF
         /// </summary>
-        /// <returns>IJobParams.CloseOutType representing success or failure</returns>
+        /// <returns>CloseOutType representing success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
             // Set this to success for now
-            var eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
             //Call base class for initial setup
-            if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             var blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
@@ -168,13 +168,13 @@ namespace AnalysisManagerMSGFPlugin
                 var msg = "ResultType is not supported by MSGF: " + m_jobParams.GetParam("ResultType");
                 m_message = clsGlobal.AppendToComment(m_message, msg);
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " + msg);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Verify that program files exist
             if (!DefineProgramPaths())
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Note: we will store the MSGF version info in the database after the program version is written to file MSGF_ConsoleOutput.txt
@@ -272,8 +272,8 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 //Add the current job data to the summary file
@@ -289,32 +289,32 @@ namespace AnalysisManagerMSGFPlugin
                 clsProgRunner.GarbageCollectNow();
 
                 var eResult = MakeResultsFolder();
-                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     //MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 eResult = MoveResultFiles();
-                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     //MoveResultFiles moves the result files to the result folder
                     m_message = "Error moving files into results folder";
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (blnProcessingError | eReturnCode == IJobParams.CloseOutType.CLOSEOUT_FAILED)
+                if (blnProcessingError | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
                 {
                     // Try to save whatever files were moved into the results folder
                     var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
 
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 eResult = CopyResultsFolderToServer();
-                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     return eResult;
@@ -323,7 +323,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (blnPostProcessingError)
                 {
                     // When a post-processing error occurs, we copy the files to the server, but return CLOSEOUT_FAILED
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
@@ -331,11 +331,11 @@ namespace AnalysisManagerMSGFPlugin
                 var errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF");
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             //If we get to here, everything worked so exit happily
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private string AddFileNameSuffix(string strFilePath, int intSuffix)

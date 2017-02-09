@@ -43,15 +43,15 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
         Dim OrgDBName As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
         Dim LocalOrgDBFolder As String = m_mgrParams.GetParam("orgdbdir")
 
         'Do the base class stuff
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If m_DebugLevel > 4 Then
@@ -62,12 +62,12 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         If Not StoreToolVersionInfo() Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
             m_message = "Error determining DTA Refinery version"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Make sure the _DTA.txt file is valid
         If Not ValidateCDTAFile() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+            Return CloseOutType.CLOSEOUT_NO_DTA_FILES
         End If
 
         If m_DebugLevel >= 2 Then
@@ -90,7 +90,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         If Not File.Exists(progLoc) Then
             If progLoc.Length = 0 Then progLoc = "Parameter 'DTARefineryLoc' not defined for this manager"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find DTA_Refinery program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         Dim CmdStr As String
@@ -165,7 +165,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
             ' Useful for debugging DTA_Refinery problems
             CopyFailedResultsToArchiveFolder()
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Stop the job timer
@@ -181,7 +181,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         clsProgRunner.GarbageCollectNow()
 
         If Not ValidateDTARefineryLogFile() Then
-            result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+            result = CloseOutType.CLOSEOUT_NO_DATA
         Else
             Dim blnPostResultsToDB = True
             Dim oMassErrorExtractor = New clsDtaRefLogMassErrorExtractor(m_mgrParams, m_WorkDir, m_DebugLevel, blnPostResultsToDB)
@@ -201,7 +201,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
             result = ZipMainOutputFile()
         End If
 
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the source files and any results to the Failed Job folder
             ' Useful for debugging DTA_Refinery problems
             CopyFailedResultsToArchiveFolder()
@@ -209,32 +209,32 @@ Public Class clsAnalysisToolRunnerDtaRefinery
         End If
 
         result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             Return result
         End If
 
         result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return result
         End If
 
         result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'TODO: What do we do here?
             ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+        Return CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
 
     End Function
 
     Private Sub CopyFailedResultsToArchiveFolder()
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -257,10 +257,10 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         ' Make the results folder
         result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
@@ -405,7 +405,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function ZipMainOutputFile() As IJobParams.CloseOutType
+    Private Function ZipMainOutputFile() As CloseOutType
 
         Dim ioWorkDirectory As DirectoryInfo
         Dim ioFiles() As FileInfo
@@ -438,7 +438,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
 
         Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error deleting _om.omx file, job " & m_JobNum & Err.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         Try
@@ -449,7 +449,7 @@ Public Class clsAnalysisToolRunnerDtaRefinery
                 Dim Msg = "DTARefinery output file not found"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ioFile.Name)
                 m_message = clsGlobal.AppendToComment(m_message, Msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ioFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset & "_dta.txt"))
@@ -459,24 +459,24 @@ Public Class clsAnalysisToolRunnerDtaRefinery
                     Dim Msg = "Error zipping DTARefinery output file"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ": " & ioFile.FullName)
                     m_message = clsGlobal.AppendToComment(m_message, Msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
             Catch ex As Exception
                 Dim Msg As String = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error zipping DTARefinery output file: " & ex.Message
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Error zipping DTARefinery output file")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error renaming DTARefinery output file: " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Error renaming DTARefinery output file")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

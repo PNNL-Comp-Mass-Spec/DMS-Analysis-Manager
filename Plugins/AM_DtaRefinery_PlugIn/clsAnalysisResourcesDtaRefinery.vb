@@ -18,16 +18,16 @@ Public Class clsAnalysisResourcesDtaRefinery
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         'Retrieve Fasta file
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return CloseOutType.CLOSEOUT_FAILED
 
         'This will eventually be replaced by Ken Auberry dll call to make param file on the fly
 
@@ -37,7 +37,7 @@ Public Class clsAnalysisResourcesDtaRefinery
         Dim strParamFileName = m_jobParams.GetParam("ParmFileName")
 
         If Not RetrieveGeneratedParamFile(strParamFileName) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         Dim strParamFileStoragePathKeyName As String
@@ -53,22 +53,22 @@ Public Class clsAnalysisResourcesDtaRefinery
         'Retrieve settings files aka default file that will have values overwritten by parameter file values
         'Stored in same location as parameter file
         If Not RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, strDtaRefineryParmFileStoragePath) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
         If Not RetrieveDtaFiles() Then
             ' Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
@@ -78,23 +78,23 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         If Not ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, "") Then
             m_message = "Error validating the _DTA.txt file"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
         If Not ValidateCDTAFileSize(m_WorkingDir, Path.GetFileName(strCDTAPath)) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve DeconMSn Log file and DeconMSn Profile File
         If Not RetrieveDeconMSnLogFiles() Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' If this is a MSGFPlus script, make sure that the spectra are centroided
@@ -103,7 +103,7 @@ Public Class clsAnalysisResourcesDtaRefinery
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the _dta.txt file has centroided spectra (required by MSGF+)")
             If Not ValidateCDTAFileIsCentroided(strCDTAPath) Then
                 ' m_message is already updated
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
@@ -125,10 +125,10 @@ Public Class clsAnalysisResourcesDtaRefinery
         If Not success Then
             Dim msg As String = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " & strErrorMessage
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

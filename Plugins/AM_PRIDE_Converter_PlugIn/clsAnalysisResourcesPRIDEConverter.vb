@@ -18,11 +18,11 @@ Public Class clsAnalysisResourcesPRIDEConverter
     Public Const DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME As String = "PX_Submission_Template.px"
     Public Const PX_SUBMISSION_FILE_SUFFIX As String = ".px"
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -65,12 +65,12 @@ Public Class clsAnalysisResourcesPRIDEConverter
         Else
             If blnCreatePrideXMLFiles Then
                 If Not RetrieveMSGFReportTemplateFile() Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                    Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                 End If
             End If
 
             If Not RetrievePXSubmissionTemplateFile() Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
         End If
 
@@ -80,12 +80,12 @@ Public Class clsAnalysisResourcesPRIDEConverter
         '   prior to May 2013; we now submit .mzid.gz files, .mgf files, and instrument binary files and thus don't need the .mzXML file.
         '   However, if the MSGF+ search used searched a .mzML file and not a _dta.txt file, then we _do_ need the .mzid file)
         If Not MyBase.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, lstDataPackagePeptideHitJobs, 0, clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         ' Obtain the FASTA files (typically generated from protein collections) used for the jobs in lstDataPackagePeptideHitJobs
         If Not RetrieveFastaFiles(lstDataPackagePeptideHitJobs) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES
+            Return CloseOutType.CLOSEOUT_NO_FAS_FILES
         End If
 
         If udtOptions.RetrieveMzXMLFile Then
@@ -94,12 +94,12 @@ Public Class clsAnalysisResourcesPRIDEConverter
         End If
 
         If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         StoreDataPackageJobs(lstDataPackagePeptideHitJobs)
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

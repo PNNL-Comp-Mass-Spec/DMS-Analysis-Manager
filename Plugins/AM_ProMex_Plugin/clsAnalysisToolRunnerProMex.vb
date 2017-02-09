@@ -48,14 +48,14 @@ Public Class clsAnalysisToolRunnerProMex
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Try
             ' Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel > 4 Then
@@ -67,14 +67,14 @@ Public Class clsAnalysisToolRunnerProMex
             progLoc = DetermineProgramLocation("ProMex", "ProMexProgLoc", "ProMex.exe")
 
             If String.IsNullOrWhiteSpace(progLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Store the ProMex version info in the database
             If Not StoreToolVersionInfo(progLoc) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining ProMex version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Run ProMex
@@ -121,45 +121,45 @@ Public Class clsAnalysisToolRunnerProMex
                 ' Move the source files and any results to the Failed Job folder
                 ' Useful for debugging problems
                 CopyFailedResultsToArchiveFolder()
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays all of the parameters used
             m_jobParams.AddResultFileToSkip(mProMexParamFilePath)
 
             result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         Catch ex As Exception
             m_message = "Error in ProMexPlugin->RunTool"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
     Protected Sub CopyFailedResultsToArchiveFolder()
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -181,10 +181,10 @@ Public Class clsAnalysisToolRunnerProMex
 
         ' Make the results folder
         result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
@@ -319,7 +319,7 @@ Public Class clsAnalysisToolRunnerProMex
     ''' <param name="strCmdLineOptions">Output: MSGFDb command line arguments</param>
     ''' <returns>Options string if success; empty string if an error</returns>
     ''' <remarks></remarks>
-    Public Function ParseProMexParameterFile(<Out()> ByRef strCmdLineOptions As String) As IJobParams.CloseOutType
+    Public Function ParseProMexParameterFile(<Out()> ByRef strCmdLineOptions As String) As CloseOutType
 
         strCmdLineOptions = String.Empty
 
@@ -327,7 +327,7 @@ Public Class clsAnalysisToolRunnerProMex
 
         If Not File.Exists(mProMexParamFilePath) Then
             LogError("Parameter file not found", "Parameter file not found: " & mProMexParamFilePath)
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         Dim sbOptions = New StringBuilder(500)
@@ -366,12 +366,12 @@ Public Class clsAnalysisToolRunnerProMex
         Catch ex As Exception
             m_message = "Exception reading ProMex parameter file"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         strCmdLineOptions = sbOptions.ToString()
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -471,7 +471,7 @@ Public Class clsAnalysisToolRunnerProMex
 
         Dim eResult = ParseProMexParameterFile(strCmdLineOptions)
 
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return False
         ElseIf String.IsNullOrEmpty(strCmdLineOptions) Then
             If String.IsNullOrEmpty(m_message) Then

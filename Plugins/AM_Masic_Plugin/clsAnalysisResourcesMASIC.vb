@@ -10,13 +10,13 @@ Public Class clsAnalysisResourcesMASIC
     ''' <summary>
     ''' Retrieves files necessary for performance of Sequest analysis
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -46,11 +46,11 @@ Public Class clsAnalysisResourcesMASIC
 
         If Not RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If String.Compare(RawDataType, RAW_DATA_TYPE_DOT_RAW_FILES, True) = 0 AndAlso toolName.ToLower().StartsWith("MASIC_Finnigan".ToLower()) Then
@@ -62,7 +62,7 @@ Public Class clsAnalysisResourcesMASIC
                 ' Unable to resolve the file path
                 m_message = "Could not find " & strRawFileName & " or " & strRawFileName & STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Deprecated in December 2016
@@ -75,7 +75,7 @@ Public Class clsAnalysisResourcesMASIC
 
             '    If Not GenerateScanStatsFile(deleteRawDataFile:=False) Then
             '        ' Error message should already have been logged and stored in m_message
-            '        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            '        Return CloseOutType.CLOSEOUT_FAILED
             '    End If
 
             'End If
@@ -96,11 +96,11 @@ Public Class clsAnalysisResourcesMASIC
 
         'Retrieve param file
         If Not RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 #End Region

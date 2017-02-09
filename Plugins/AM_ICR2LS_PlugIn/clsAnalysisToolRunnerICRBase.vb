@@ -85,10 +85,10 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         mICR2LSStatus.Initialize()
     End Sub
 
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         ' Get the settings file info via the base class
-        If Not MyBase.RunTool() = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.RunTool() = CloseOutType.CLOSEOUT_SUCCESS Then Return CloseOutType.CLOSEOUT_FAILED
 
         'Start the job timer
         m_StartTime = DateTime.UtcNow
@@ -97,7 +97,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         mICR2LSStatus.Initialize()
 
         ' Remainder of tasks are in subclass (which should call this using MyBase.Runtool)
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -173,7 +173,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
     End Sub
 
-    Protected MustOverride Function DeleteDataFile() As IJobParams.CloseOutType
+    Protected MustOverride Function DeleteDataFile() As CloseOutType
 
     Private Function GetLastScanInPEKFile(pekTempFilePath As String) As Integer
 
@@ -385,9 +385,9 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
         End With
     End Sub
 
-    Protected Overridable Function PerfPostAnalysisTasks(blnCopyResultsToServer As Boolean) As IJobParams.CloseOutType
+    Protected Overridable Function PerfPostAnalysisTasks(blnCopyResultsToServer As Boolean) As CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         'Stop the job timer
         m_StopTime = DateTime.UtcNow
@@ -405,7 +405,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
         ' Get rid of raw data file
         result = DeleteDataFile()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Error deleting raw files; the error will have already been logged
             ' Since the results might still be good, we will not return an error at this point
         End If
@@ -414,21 +414,21 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
         ' Make results folder
         result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         If Not blnCopyResultsToServer Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
         result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -436,13 +436,13 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
             ' We can now safely delete the .pek.tmp file from the server
             MyBase.RemoveNonResultServerFiles()
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
         If String.IsNullOrEmpty(m_message) Then
             m_message = "Unknown error converting the .PEK file to a DeconTools-compatible _isos.csv file"
         End If
-        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Return CloseOutType.CLOSEOUT_FAILED
 
     End Function
 

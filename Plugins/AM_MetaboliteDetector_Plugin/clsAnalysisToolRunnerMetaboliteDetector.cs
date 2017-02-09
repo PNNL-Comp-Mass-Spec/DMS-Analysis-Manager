@@ -45,14 +45,14 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
             try
             {
                 // Call base class for initial setup
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (m_DebugLevel > 4)
@@ -64,7 +64,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 mMetaboliteDetectorProgLoc = DetermineProgramLocation("MetaboliteDetector", "MetaboliteDetectorProgLoc", "MetaboliteDetector.exe");
 
                 if (string.IsNullOrWhiteSpace(mMetaboliteDetectorProgLoc))
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 
 
                 // Store the MetaboliteDetector version info in the database
@@ -72,7 +72,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining MetaboliteDetector version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
 
@@ -82,18 +82,18 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 var success = ProcessDatasetWithMetaboliteDetector();
 
-                var eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
                 if (!success)
                 {
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
                 else
                 {
                     // Look for the result files
                     success = PostProcessResults();
                     if (!success)
-                        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
              
                 m_progress = PROGRESS_PCT_COMPLETE;
@@ -117,33 +117,33 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging problems
                     CopyFailedResultsToArchiveFolder();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // No need to keep several files; exclude them now
                 m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("ParmFileName"));
                 
                 var result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     m_message = "Error moving files into results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 return eReturnCode;
@@ -152,7 +152,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             {
                 m_message = "Error in MetaboliteDetectorPlugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
         }       
@@ -174,11 +174,11 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             // Make the results folder
             var result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);

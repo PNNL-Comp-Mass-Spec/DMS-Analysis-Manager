@@ -17,7 +17,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         private StreamWriter mCyclopsLogWriter;
 
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
 
             try
@@ -25,9 +25,9 @@ namespace AnalysisManager_Cyclops_PlugIn
                 bool blnSuccess;
 
                 // Do the base class stuff
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Cyclops");
@@ -45,19 +45,19 @@ namespace AnalysisManager_Cyclops_PlugIn
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Cyclops version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Determine the path to R
                 var rProgLocFromRegistry = GetRPathFromWindowsRegistry();
                 if (string.IsNullOrEmpty(rProgLocFromRegistry))
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
 
                 if (!Directory.Exists(rProgLocFromRegistry))
                 {
                     m_message = "R folder not found (path determined from the Windows Registry)";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + rProgLocFromRegistry);
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var d_Params = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -136,7 +136,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging MultiAlign problems
                     CopyFailedResultsToArchiveFolder();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
@@ -144,14 +144,14 @@ namespace AnalysisManager_Cyclops_PlugIn
                 m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
                 var result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     return result;
                 }
 
                 result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     return result;
@@ -167,7 +167,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 }
 
                 result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     return result;
@@ -178,10 +178,10 @@ namespace AnalysisManager_Cyclops_PlugIn
             {
                 m_message = "Error in CyclopsPlugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
@@ -291,11 +291,11 @@ namespace AnalysisManager_Cyclops_PlugIn
 
             // Make the results folder
             var result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);

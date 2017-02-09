@@ -16,7 +16,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
     public class clsAnalysisResourcesBrukerDAExport : clsAnalysisResources
     {
 
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
 
             var currentTask = "Initializing";
@@ -27,7 +27,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+                if (result != CloseOutType.CLOSEOUT_SUCCESS) {
                     return result;
                 }
 
@@ -37,7 +37,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (string.IsNullOrEmpty(exportScriptName))
                 {
                     LogError("BrukerSpectraExportScriptFile parameter is empty");
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Retrieve the script file
@@ -55,7 +55,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (!RetrieveFile(exportScriptName, exportScriptStoragePath))
                 {
                     // Errors should have already been logged
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Get the instrument data
@@ -76,7 +76,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             if (!RetrieveSpectra(strRawDataType))
                             {
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AnalysisManagerBrukerDAExportPlugin.GetResources: Error occurred retrieving spectra.");
-                                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                                return CloseOutType.CLOSEOUT_FAILED;
                             }
                             break;
                         default:
@@ -84,7 +84,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
                                 "AnalysisManagerBrukerDAExportPlugin.GetResources: " + m_message + "; must be " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + " or " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);
-                            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                            return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     if (m_MyEMSLUtilities.FilesToDownload.Count == 0)
@@ -150,7 +150,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 if (deleteAttemptCount <= 0)
-                    return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                    return CloseOutType.CLOSEOUT_SUCCESS;
 
                 if (deleteSuccessCount == deleteAttemptCount)
                 {
@@ -165,13 +165,13 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         $"Deleted extra files in the working directory: {deleteSuccessCount} of {deleteAttemptCount} successfully deleted");
                 }
 
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
 
             }
             catch (Exception ex)
             {
                 LogError("Exception in GetResources (task = " + currentTask + ")", ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
         }

@@ -74,8 +74,8 @@ Public Class clsAnalysisToolRunnerIN
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
-        Dim result As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
+        Dim result As CloseOutType
 
         Dim InspectDir As String
         Dim OrgDbDir As String
@@ -88,8 +88,8 @@ Public Class clsAnalysisToolRunnerIN
 
         Try
             'Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel > 4 Then
@@ -103,7 +103,7 @@ Public Class clsAnalysisToolRunnerIN
             If Not StoreToolVersionInfo(InspectDir) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining Inspect version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel >= 3 Then
@@ -112,7 +112,7 @@ Public Class clsAnalysisToolRunnerIN
 
             ' Index the fasta file to create the .trie file
             result = objIndexedDBCreator.CreateIndexedDbFiles(m_mgrParams, m_jobParams, m_DebugLevel, m_JobNum, InspectDir, OrgDbDir)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
@@ -140,7 +140,7 @@ Public Class clsAnalysisToolRunnerIN
 
             ' Make sure the _DTA.txt file is valid
             If Not ValidateCDTAFile(mInspectConcatenatedDtaFilePath) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_DTA_FILES
+                Return CloseOutType.CLOSEOUT_NO_DTA_FILES
             End If
 
             If m_DebugLevel >= 3 Then
@@ -148,7 +148,7 @@ Public Class clsAnalysisToolRunnerIN
             End If
 
             result = RunInSpecT(InspectDir)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
@@ -158,7 +158,7 @@ Public Class clsAnalysisToolRunnerIN
                 Dim blnSuccess As Boolean
                 blnSuccess = MyBase.ZipFile(mInspectResultsFilePath, True)
                 If Not blnSuccess Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
@@ -175,21 +175,21 @@ Public Class clsAnalysisToolRunnerIN
             clsProgRunner.GarbageCollectNow()
 
             result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'MoveResultFiles moves the result files to the result folder
                 m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
                 ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 Return result
@@ -197,10 +197,10 @@ Public Class clsAnalysisToolRunnerIN
 
         Catch ex As Exception
             m_message = "Error in InspectPlugin->RunTool: " & ex.Message
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+        Return CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
 
     End Function
 
@@ -450,7 +450,7 @@ Public Class clsAnalysisToolRunnerIN
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function RunInSpecT(InspectDir As String) As IJobParams.CloseOutType
+    Private Function RunInSpecT(InspectDir As String) As CloseOutType
         Dim CmdStr As String
         Dim ParamFilePath As String = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
         Dim blnSuccess As Boolean = False
@@ -458,7 +458,7 @@ Public Class clsAnalysisToolRunnerIN
         ' Build the Inspect Input Parameters file
         mInspectCustomParamFileName = BuildInspectInputFile()
         If mInspectCustomParamFileName.Length = 0 Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         mCmdRunner = New clsRunDosProgram(InspectDir)
@@ -473,7 +473,7 @@ Public Class clsAnalysisToolRunnerIN
         Dim progLoc As String = Path.Combine(InspectDir, INSPECT_EXE_NAME)
         If Not File.Exists(progLoc) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Inspect program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Create a file watcher to monitor Search Log created by Inspect
@@ -558,9 +558,9 @@ Public Class clsAnalysisToolRunnerIN
         End If
 
         If blnSuccess Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
 

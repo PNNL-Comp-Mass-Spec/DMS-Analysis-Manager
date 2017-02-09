@@ -17,13 +17,13 @@ Public Class clsAnalysisResourcesDecon2ls
     ''' <summary>
     ''' Retrieves files necessary for performance of Decon2ls analysis
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -32,7 +32,7 @@ Public Class clsAnalysisResourcesDecon2ls
         Dim msXmlOutputType As String = m_jobParams.GetParam("MSXMLOutputType")
 
         If Not String.IsNullOrWhiteSpace(msXmlOutputType) Then
-            Dim eResult As IJobParams.CloseOutType
+            Dim eResult As CloseOutType
 
             Select Case msXmlOutputType.ToLower()
                 Case "mzxml"
@@ -41,17 +41,17 @@ Public Class clsAnalysisResourcesDecon2ls
                     eResult = GetMzMLFile()
                 Case Else
                     m_message = "Unsupported value for MSXMLOutputType: " & msXmlOutputType
-                    eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    eResult = CloseOutType.CLOSEOUT_FAILED
             End Select
 
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return eResult
             End If
         Else
             ' Get input data file
             If Not RetrieveSpectra(strRawDataType) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
@@ -62,7 +62,7 @@ Public Class clsAnalysisResourcesDecon2ls
         m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION)
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the parameter file
@@ -70,15 +70,15 @@ Public Class clsAnalysisResourcesDecon2ls
         Dim paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
 
         If Not RetrieveFile(paramFileName, paramFileStoragePath) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not ValidateDeconProcessingOptions(paramFileName) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

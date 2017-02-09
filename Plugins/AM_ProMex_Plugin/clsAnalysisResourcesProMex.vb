@@ -17,11 +17,11 @@ Public Class clsAnalysisResourcesProMex
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -53,7 +53,7 @@ Public Class clsAnalysisResourcesProMex
             If String.IsNullOrEmpty(paramFileName) Then
                 m_message = "Job Parameter File name is empty"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             m_jobParams.AddAdditionalParameter("StepParameters", "ProMexParamFile", paramFileName)
@@ -65,7 +65,7 @@ Public Class clsAnalysisResourcesProMex
                 ' Settings file does not contain parameter ProMexParamFile
                 m_message = "Parameter 'ProMexParamFile' is not defined in the settings file for this job"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         End If
@@ -76,10 +76,10 @@ Public Class clsAnalysisResourcesProMex
             Else
                 m_message = clsGlobal.AppendToComment(m_message, "see the Analysis Job's settings file, entry ProMexParamFile")
             End If
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
 
         If proMexBruker Then
             ' Retrieve the mzML file
@@ -90,11 +90,11 @@ Public Class clsAnalysisResourcesProMex
             eResult = RetrievePBFFile()
         End If
 
-        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return eResult
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -112,7 +112,7 @@ Public Class clsAnalysisResourcesProMex
 
     End Function
 
-    Protected Function RetrieveMzMLFile() As IJobParams.CloseOutType
+    Protected Function RetrieveMzMLFile() As CloseOutType
 
         Dim currentTask = "Initializing"
 
@@ -122,23 +122,23 @@ Public Class clsAnalysisResourcesProMex
             currentTask = "RetrieveMzMLFile"
 
             Dim eResult = GetMzMLFile()
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return eResult
             End If
 
             m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION)
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             m_message = "Exception in RetrieveMzMLFile: " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
 
-    Protected Function RetrievePBFFile() As IJobParams.CloseOutType
+    Protected Function RetrievePBFFile() As CloseOutType
 
         Dim currentTask = "Initializing"
 
@@ -148,18 +148,18 @@ Public Class clsAnalysisResourcesProMex
             currentTask = "RetrievePBFFile"
 
             Dim eResult = GetPBFFile()
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return eResult
             End If
 
             m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION)
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             m_message = "Exception in RetrievePBFFile: " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function

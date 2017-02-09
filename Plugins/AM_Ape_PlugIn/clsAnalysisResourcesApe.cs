@@ -7,24 +7,24 @@ namespace AnalysisManager_Ape_PlugIn
     {
         public static string AppFilePath = "";
 
-        public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
+        public override AnalysisManagerBase.CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+            if (result != CloseOutType.CLOSEOUT_SUCCESS) {
                 return result;
             }
 
             var blnSuccess = RunApeGetResources();
 
-            if (!blnSuccess) return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+            if (!blnSuccess) return CloseOutType.CLOSEOUT_FAILED;
 
             if (m_DebugLevel >= 1)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
 

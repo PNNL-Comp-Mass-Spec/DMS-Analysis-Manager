@@ -111,7 +111,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Protected Overrides Function MakeOUTFiles() As IJobParams.CloseOutType
+    Protected Overrides Function MakeOUTFiles() As CloseOutType
 
         'Creates Sequest .out files from DTA files
         Dim CmdStr As String
@@ -159,7 +159,7 @@ Public Class clsAnalysisToolRunnerSeqCluster
         If Not File.Exists(ProgLoc) Then
             m_message = "Sequest .Exe not found"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & " at " & ProgLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Initialize the Out File Appender timer
@@ -316,19 +316,19 @@ Public Class clsAnalysisToolRunnerSeqCluster
         End If
 
         If blnProcessingError Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Zip concatenated .out files
         If Not ZipConcatOutFile(m_WorkDir, m_JobNum) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE
+            Return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE
         End If
 
         ' Add cluster statistics to summary file
         AddClusterStatsToSummaryFile()
 
         ' If we got here, everything worked
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

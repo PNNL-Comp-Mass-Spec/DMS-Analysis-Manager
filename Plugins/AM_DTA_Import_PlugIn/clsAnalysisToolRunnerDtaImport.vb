@@ -25,20 +25,20 @@ Public Class clsAnalysisToolRunnerDtaImport
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
-        Dim result As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
+        Dim result As CloseOutType
 
         Try
             'Start the job timer
             m_StartTime = System.DateTime.UtcNow
 
             result = CopyManualDTAs()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
                 Return result
             End If
 
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
@@ -52,14 +52,14 @@ Public Class clsAnalysisToolRunnerDtaImport
 
         Catch ex As Exception
             m_message = "Error in DtaImportPlugin->RunTool: " & ex.Message
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+        Return CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
 
     End Function
 
-    Private Function CopyManualDTAs() As IJobParams.CloseOutType
+    Private Function CopyManualDTAs() As CloseOutType
 
         Dim SourceFolderNamePath As String = String.Empty
         Dim TargetFolderNamePath As String = String.Empty
@@ -82,7 +82,7 @@ Public Class clsAnalysisToolRunnerDtaImport
                     System.IO.Directory.CreateDirectory(TargetFolderNamePath)
                 Catch ex As Exception
                     m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder on " & System.IO.Path.GetPathRoot(TargetFolderNamePath)) & ": " & ex.Message
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                     'TODO: Handle errors
                 End Try
             End If
@@ -92,7 +92,7 @@ Public Class clsAnalysisToolRunnerDtaImport
 
         Catch ex As Exception
             m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder: " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
             'TODO: Handle errors
         End Try
 
@@ -104,11 +104,11 @@ Public Class clsAnalysisToolRunnerDtaImport
             'Now move the DTA folder to succeeded folder
             My.Computer.FileSystem.MoveDirectory(SourceFolderNamePath, CompleteFolderNamePath, False)
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderNamePath) & " : " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
 

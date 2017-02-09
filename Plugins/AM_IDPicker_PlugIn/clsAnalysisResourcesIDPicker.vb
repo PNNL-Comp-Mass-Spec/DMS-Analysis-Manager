@@ -20,11 +20,11 @@ Public Class clsAnalysisResourcesIDPicker
         SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
     End Sub
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -32,14 +32,14 @@ Public Class clsAnalysisResourcesIDPicker
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 
         If Not FindAndRetrieveMiscFiles(strParamFileName, False) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
         m_jobParams.AddResultFileToSkip(strParamFileName)
 
         If Not clsAnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER Then
             ' Retrieve the IDPicker parameter file specified for this job
             If Not RetrieveIDPickerParamFile() Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
         End If
 
@@ -50,13 +50,13 @@ Public Class clsAnalysisResourcesIDPicker
 
         ' Retrieve the PSM result files, PHRP files, and MSGF file
         If Not GetInputFiles(m_DatasetName, strParamFileName, result) Then
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then result = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then result = CloseOutType.CLOSEOUT_FAILED
             Return result
         End If
 
         If mSynopsisFileIsEmpty Then
             ' Don't retrieve any additional files
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
         If Not blnMGFInstrumentData Then
@@ -69,7 +69,7 @@ Public Class clsAnalysisResourcesIDPicker
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Not retrieving MASIC files since PepXMLNoScanStats is True")
                 Else
                     Dim eResult = RetrieveMASICFilesWrapper()
-                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                         Return eResult
                     End If
                 End If
@@ -81,7 +81,7 @@ Public Class clsAnalysisResourcesIDPicker
         End If
 
         If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         Dim blnSplitFasta = m_jobParams.GetJobParameter("SplitFasta", False)
@@ -101,14 +101,14 @@ Public Class clsAnalysisResourcesIDPicker
                     m_message = "Unable to determine the legacy fasta file name"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName)
 
         Else
             ' Retrieve the Fasta file
-            If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If blnSplitFasta Then
@@ -116,7 +116,7 @@ Public Class clsAnalysisResourcesIDPicker
             m_jobParams.SetParam("SplitFasta", "True")
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -152,7 +152,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <param name="eReturnCode">Return code</param>
     ''' <returns>True if success, otherwise false</returns>
     ''' <remarks></remarks>
-    Private Function GetInputFiles(strDatasetName As String, strSearchEngineParamFileName As String, ByRef eReturnCode As IJobParams.CloseOutType) As Boolean
+    Private Function GetInputFiles(strDatasetName As String, strSearchEngineParamFileName As String, ByRef eReturnCode As CloseOutType) As Boolean
 
         ' This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
         Dim lstFileNamesToGet As SortedList(Of String, Boolean)
@@ -161,7 +161,7 @@ Public Class clsAnalysisResourcesIDPicker
         Dim strResultType As String
 
         Dim eResultType As clsPHRPReader.ePeptideHitResultType
-        eReturnCode = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        eReturnCode = CloseOutType.CLOSEOUT_SUCCESS
 
         strResultType = m_jobParams.GetParam("ResultType")
 
@@ -177,7 +177,7 @@ Public Class clsAnalysisResourcesIDPicker
           eResultType = clsPHRPReader.ePeptideHitResultType.MODPlus) Then
             m_message = "Invalid tool result type (not supported by IDPicker): " & strResultType
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+            eReturnCode = CloseOutType.CLOSEOUT_FAILED
             Return False
         End If
 
@@ -215,7 +215,7 @@ Public Class clsAnalysisResourcesIDPicker
                 ' File not found; is it required?
                 If fileRequired Then
                     'Errors were reported in function call, so just return
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                    eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                     Return False
                 End If
             End If
@@ -246,7 +246,7 @@ Public Class clsAnalysisResourcesIDPicker
 
                 If Not FindAndRetrieveMiscFiles(strFileName, False) Then
                     ' File not found
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                    eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                     Return False
                 End If
 
@@ -264,7 +264,7 @@ Public Class clsAnalysisResourcesIDPicker
             If Not fiFile.Exists Then
                 m_message = "File " & item.Key & " not found; unable to rename to " & item.Value
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                 Return False
             Else
                 Try
@@ -272,7 +272,7 @@ Public Class clsAnalysisResourcesIDPicker
                 Catch ex As Exception
                     m_message = "Error renaming file " & item.Key & " to " & item.Value
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; " & ex.Message)
-                    eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    eReturnCode = CloseOutType.CLOSEOUT_FAILED
                     Return False
                 End Try
 
@@ -318,7 +318,7 @@ Public Class clsAnalysisResourcesIDPicker
 
     End Function
 
-    Private Function RetrieveMASICFilesWrapper() As IJobParams.CloseOutType
+    Private Function RetrieveMASICFilesWrapper() As CloseOutType
 
         Dim retrievalAttempts = 0
 
@@ -326,7 +326,7 @@ Public Class clsAnalysisResourcesIDPicker
 
             retrievalAttempts += 1
             If Not RetrieveMASICFiles(m_DatasetName) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             If m_MyEMSLUtilities.FilesToDownload.Count = 0 Then
@@ -342,7 +342,7 @@ Public Class clsAnalysisResourcesIDPicker
 
         End While
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

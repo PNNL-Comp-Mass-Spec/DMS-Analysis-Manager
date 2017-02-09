@@ -39,14 +39,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
-            IJobParams.CloseOutType result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            CloseOutType result = CloseOutType.CLOSEOUT_SUCCESS;
 
             //Do the base class stuff
-            if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Store the ReAdW or MSConvert version info in the database
@@ -55,7 +55,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                     "Aborting since StoreToolVersionInfo returned false");
                 LogError("Error determining MSXMLGen version");
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             var storeInCache = m_jobParams.GetJobParameter("StoreMSXmlInCache", true);
@@ -67,23 +67,23 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (!mMSXmlCacheFolder.Exists)
                 {
                     LogError("MSXmlCache folder not found: " + msXMLCacheFolderPath);
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
-            if (CreateMSXMLFile() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (CreateMSXMLFile() != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
             if (!PostProcessMSXmlFile())
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             //Stop the job timer
@@ -97,7 +97,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             result = MakeResultsFolder();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 //MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder";
@@ -105,7 +105,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             result = MoveResultFiles();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 m_message = "Error moving files into results folder";
@@ -113,13 +113,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             result = CopyResultsFolderToServer();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 return result;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
+            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
         }
 
         /// <summary>
@@ -127,7 +127,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        private IJobParams.CloseOutType CreateMSXMLFile()
+        private CloseOutType CreateMSXMLFile()
         {
             try
             {
@@ -185,7 +185,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
                         "mMSXmlGeneratorAppPath is empty; this is unexpected");
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 string rawDataType = m_jobParams.GetParam("RawDataType");
@@ -205,7 +205,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
                     {
                         LogError("ReAdW can only be used with .Raw files, not with " + rawDataType);
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
                 else if (msXmlGenerator.ToLower().Contains("msconvert"))
@@ -226,7 +226,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 else
                 {
                     LogError("Unsupported XmlGenerator: " + msXmlGenerator);
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Attach events to msXmlGen
@@ -238,7 +238,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (!File.Exists(mMSXmlGeneratorAppPath))
                 {
                     LogError("MsXmlGenerator not found: " + mMSXmlGeneratorAppPath);
-                    return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 // Create the file
@@ -247,7 +247,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (!success)
                 {
                     LogError(msXmlGen.ErrorMessage);
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (msXmlGen.ErrorMessage.Length > 0)
@@ -258,10 +258,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
             catch (Exception ex)
             {
                 LogError("Exception in CreateMSXMLFile", ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>

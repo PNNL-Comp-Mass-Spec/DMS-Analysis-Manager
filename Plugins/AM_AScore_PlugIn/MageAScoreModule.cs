@@ -238,7 +238,7 @@ namespace AnalysisManager_AScore_PlugIn
                 {
                     try
                     {
-                        clsAnalysisToolRunnerBase.DeleteFileWithRetries(ascoreOutputFilePath, intDebugLevel: 1, MaxRetryCount: 2);
+                        clsAnalysisToolRunnerBase.DeleteFileWithRetries(ascoreOutputFilePath, debugLevel: 1, maxRetryCount: 2);
                     }
                     catch (Exception ex)
                     {
@@ -345,7 +345,7 @@ namespace AnalysisManager_AScore_PlugIn
                 Thread.Sleep(250);
                 clsProgRunner.GarbageCollectNow();
 
-                clsAnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, intDebugLevel: 1, MaxRetryCount: 2);
+                clsAnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, debugLevel: 1, maxRetryCount: 2);
             }
             catch (Exception ex)
             {

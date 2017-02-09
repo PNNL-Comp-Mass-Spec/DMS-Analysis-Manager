@@ -21,32 +21,32 @@ Public Class clsResultXferToolRunner
     ''' <summary>
     ''' Runs the results transfer tool
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim Result As IJobParams.CloseOutType
+        Dim Result As CloseOutType
 
         Try
             'Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Store the AnalysisManager version info in the database
             If Not StoreToolVersionInfo() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining AnalysisManager version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Transfer the results
             Result = PerformResultsXfer()
-            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "Unknown error calling PerformResultsXfer"
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             DeleteTransferFolderIfEmpty()
@@ -56,11 +56,11 @@ Public Class clsResultXferToolRunner
 
         Catch ex As Exception
             m_message = "Error in ResultsXferPlugin->RunTool: " & ex.Message
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         'If we got to here, everything worked, so exit
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -302,9 +302,9 @@ Public Class clsResultXferToolRunner
     ''' <summary>
     ''' Performs the results transfer
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure></returns>
+    ''' <returns>CloseOutType indicating success or failure></returns>
     ''' <remarks></remarks>
-    Protected Overridable Function PerformResultsXfer() As IJobParams.CloseOutType
+    Protected Overridable Function PerformResultsXfer() As CloseOutType
 
         Dim msg As String
         Dim FolderToMove As String
@@ -329,7 +329,7 @@ Public Class clsResultXferToolRunner
             If Not ChangeFolderPathsToLocal(serverName, transferFolderPath, datasetStoragePath) Then
                 If String.IsNullOrWhiteSpace(m_message) Then m_message = "Unknown error calling ChangeFolderPathsToLocal"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             movingLocalFiles = True
@@ -343,7 +343,7 @@ Public Class clsResultXferToolRunner
             msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " & FolderToMove & " not found"
             m_message = clsGlobal.AppendToComment(m_message, "results folder not found")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         ElseIf m_DebugLevel >= 4 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder to move: " & FolderToMove)
         End If
@@ -387,13 +387,13 @@ Public Class clsResultXferToolRunner
                         msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " & DatasetDir & ": folder creation failed for unknown reason"
                         m_message = clsGlobal.AppendToComment(m_message, "error trying to create missing dataset folder")
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        Return CloseOutType.CLOSEOUT_FAILED
                     End If
                 Else
                     msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " & diDatasetFolder.Parent.FullName & "; unable to continue"
                     m_message = clsGlobal.AppendToComment(m_message, "parent folder not found: " & diDatasetFolder.Parent.FullName)
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
             Catch ex As Exception
@@ -401,7 +401,7 @@ Public Class clsResultXferToolRunner
                 m_message = clsGlobal.AppendToComment(m_message, "exception trying to create missing dataset folder")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
 
@@ -421,7 +421,7 @@ Public Class clsResultXferToolRunner
                 msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " & DatasetDir & " already exists"
                 m_message = clsGlobal.AppendToComment(m_message, "results folder already exists at destination and overwrite is disabled")
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
@@ -433,7 +433,7 @@ Public Class clsResultXferToolRunner
 
             If movingLocalFiles Then
                 Dim success = MoveFilesLocally(FolderToMove, TargetDir, blnOverwriteExisting)
-                If Not success Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                If Not success Then Return CloseOutType.CLOSEOUT_FAILED
             Else
                 ' Call MoveDirectory, which will copy the files using locks
                 If m_DebugLevel >= 2 Then
@@ -447,7 +447,7 @@ Public Class clsResultXferToolRunner
             msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " & FolderToMove & ": " & ex.Message
             m_message = clsGlobal.AppendToComment(m_message, "exception moving results folder")
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function

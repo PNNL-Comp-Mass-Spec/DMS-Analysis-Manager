@@ -52,12 +52,12 @@ Public Class clsExtractToolRunner
     ''' <summary>
     ''' Runs the data extraction tool(s)
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType representing success or failure</returns>
+    ''' <returns>CloseOutType representing success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         Dim msg As String
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
 
         Dim strCurrentAction = "preparing for extraction"
         Dim blnProcessingError As Boolean
@@ -65,8 +65,8 @@ Public Class clsExtractToolRunner
         Try
 
             'Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel > 4 Then
@@ -77,7 +77,7 @@ Public Class clsExtractToolRunner
             If Not StoreToolVersionInfo() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 LogError("Error determining version of Data Extraction tools")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Dim orgDbDir = m_mgrParams.GetParam("orgdbdir")
@@ -98,12 +98,12 @@ Public Class clsExtractToolRunner
                     strCurrentAction = "running peptide extraction for Sequest"
                     eResult = PerformPeptideExtraction()
                     ' Check for no data first. If no data, then exit but still copy results to server
-                    If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                    If eResult = CloseOutType.CLOSEOUT_NO_DATA Then
                         Exit Select
                     End If
 
                     ' Run PHRP
-                    If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult = CloseOutType.CLOSEOUT_SUCCESS Then
                         m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE     ' 33% done
                         UpdateStatusRunning(m_progress)
 
@@ -111,7 +111,7 @@ Public Class clsExtractToolRunner
                         eResult = RunPhrpForSequest()
                     End If
 
-                    If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult = CloseOutType.CLOSEOUT_SUCCESS Then
                         m_progress = SEQUEST_PROGRESS_PHRP_DONE   ' 66% done
                         UpdateStatusRunning(m_progress)
                         strCurrentAction = "running peptide prophet for Sequest"
@@ -143,7 +143,7 @@ Public Class clsExtractToolRunner
                     ' Convert the MODa results to a tab-delimited file; do not filter out the reversed-hit proteins
                     Dim strFilteredMODaResultsFilePath As String = String.Empty
                     eResult = ConvertMODaResultsToTxt(strFilteredMODaResultsFilePath, True)
-                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                         blnProcessingError = True
                         Exit Select
                     End If
@@ -151,13 +151,13 @@ Public Class clsExtractToolRunner
                     ' Run PHRP
                     strCurrentAction = "running peptide hits result processor for MODa"
                     eResult = RunPhrpForMODa(strFilteredMODaResultsFilePath)
-                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                         blnProcessingError = True
                     End If
 
                     ' Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
                     eResult = ConvertMODaResultsToTxt(strFilteredMODaResultsFilePath, False)
-                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                         blnProcessingError = True
                         Exit Select
                     End If
@@ -167,7 +167,7 @@ Public Class clsExtractToolRunner
                     ' Convert the MODPlus results to a tab-delimited file; do not filter out the reversed-hit proteins
                     Dim strFilteredMODPlusResultsFilePath As String = String.Empty
                     eResult = ConvertMODPlusResultsToTxt(strFilteredMODPlusResultsFilePath, True)
-                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                         blnProcessingError = True
                         Exit Select
                     End If
@@ -175,13 +175,13 @@ Public Class clsExtractToolRunner
                     ' Run PHRP
                     strCurrentAction = "running peptide hits result processor for MODPlus"
                     eResult = RunPhrpForMODPlus(strFilteredMODPlusResultsFilePath)
-                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                         blnProcessingError = True
                     End If
 
                     ' Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
                     eResult = ConvertMODPlusResultsToTxt(strFilteredMODPlusResultsFilePath, False)
-                    If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                    If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                         blnProcessingError = True
                         Exit Select
                     End If
@@ -197,10 +197,10 @@ Public Class clsExtractToolRunner
                     msg = "Invalid ResultType specified: " & m_jobParams.GetParam("ResultType")
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & msg)
                     m_message = clsGlobal.AppendToComment(m_message, msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
             End Select
 
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And eResult <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS And eResult <> CloseOutType.CLOSEOUT_NO_DATA Then
                 msg = "Error " & strCurrentAction
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " & msg)
                 m_message = clsGlobal.AppendToComment(m_message, msg)
@@ -214,13 +214,13 @@ Public Class clsExtractToolRunner
             ' Stop the job timer
             m_StopTime = Date.UtcNow
 
-            Dim eReturnCode As IJobParams.CloseOutType
+            Dim eReturnCode As CloseOutType
 
             If blnProcessingError Then
                 ' Something went wrong
                 ' In order to help diagnose things, we will move whatever files were created into the Result folder, 
-                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                eReturnCode = CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Add the current job data to the summary file
@@ -229,29 +229,29 @@ Public Class clsExtractToolRunner
             End If
 
             eResult = MakeResultsFolder()
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' MakeResultsFolder handles posting to local log, so set database error message and exit
                 LogError("Error making results folder")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             eResult = MoveResultFiles()
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' MoveResultFiles moves the Result files to the Result folder
                 LogError("Error moving files into results folder")
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                eReturnCode = CloseOutType.CLOSEOUT_FAILED
             End If
 
-            If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+            If blnProcessingError Or eReturnCode = CloseOutType.CLOSEOUT_FAILED Then
                 ' Try to save whatever files were moved into the results folder
                 Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             eResult = CopyResultsFolderToServer()
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 Return eResult
             End If
@@ -264,11 +264,11 @@ Public Class clsExtractToolRunner
             msg = "Exception running extraction tool: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         ' If we got to here, everything worked so exit happily
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -278,7 +278,7 @@ Public Class clsExtractToolRunner
     ''' <param name="strFilteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
     ''' <returns>The path to the .txt file if successful; empty string if an error</returns>
     ''' <remarks></remarks>
-    Protected Function ConvertMODaResultsToTxt(<Out()> ByRef strFilteredMODaResultsFilePath As String, keepAllResults As Boolean) As IJobParams.CloseOutType
+    Protected Function ConvertMODaResultsToTxt(<Out()> ByRef strFilteredMODaResultsFilePath As String, keepAllResults As Boolean) As CloseOutType
 
         Dim fdrThreshold = m_jobParams.GetJobParameter("MODaFDRThreshold", 0.05)
         Dim decoyPrefix = m_jobParams.GetJobParameter("MODaDecoyPrefix", "Reversed_")
@@ -288,7 +288,7 @@ Public Class clsExtractToolRunner
         Return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, strFilteredMODaResultsFilePath, keepAllResults)
     End Function
 
-    Protected Function ConvertMODPlusResultsToTxt(<Out()> ByRef strFilteredMODPlusResultsFilePath As String, keepAllResults As Boolean) As IJobParams.CloseOutType
+    Protected Function ConvertMODPlusResultsToTxt(<Out()> ByRef strFilteredMODPlusResultsFilePath As String, keepAllResults As Boolean) As CloseOutType
 
         Dim fdrThreshold = m_jobParams.GetJobParameter("MODPlusDecoyFilterFDR", 0.05)
         Dim decoyPrefix = m_jobParams.GetJobParameter("MODPlusDecoyPrefix", "Reversed_")
@@ -303,7 +303,7 @@ Public Class clsExtractToolRunner
       decoyPrefixJobParam As String,
       isModPlus As Boolean,
       <Out()> ByRef strFilteredResultsFilePath As String,
-      keepAllResults As Boolean) As IJobParams.CloseOutType
+      keepAllResults As Boolean) As CloseOutType
 
         strFilteredResultsFilePath = String.Empty
 
@@ -385,7 +385,7 @@ Public Class clsExtractToolRunner
             ' JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
             Dim JavaProgLoc = GetJavaProgLoc()
             If String.IsNullOrEmpty(JavaProgLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Determine the path to the MODa or MODPlus program
@@ -432,7 +432,7 @@ Public Class clsExtractToolRunner
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " & modxFilterJarName & " failed (but exit code is 0)")
                 End If
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
 
             End If
 
@@ -443,15 +443,15 @@ Public Class clsExtractToolRunner
 
             If Not fiFilteredResultsFilePath.Exists() Then
                 LogError("Filtered " & toolName & " results file not found: " & fiFilteredResultsFilePath.Name)
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             strFilteredResultsFilePath = fiFilteredResultsFilePath.FullName
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             LogError("Error in ConvertMODaOrMODPlusResultsToTxt", ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
@@ -535,7 +535,7 @@ Public Class clsExtractToolRunner
     ''' </summary>
     ''' <param name="resultsFileName"></param>
     ''' <returns></returns>
-    Private Function CreateMSGFPlusResultsProteinToPeptideMappingFile(resultsFileName As String) As IJobParams.CloseOutType
+    Private Function CreateMSGFPlusResultsProteinToPeptideMappingFile(resultsFileName As String) As CloseOutType
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the missing _PepToProtMap.txt file")
 
@@ -556,7 +556,7 @@ Public Class clsExtractToolRunner
 
         Dim result = mMSGFDBUtils.CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
 
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS And result <> CloseOutType.CLOSEOUT_NO_DATA Then
             Return result
         End If
 
@@ -565,17 +565,17 @@ Public Class clsExtractToolRunner
                 LogError("mMSGFDBUtilsError is True after call to CreatePeptideToProteinMapping")
             End If
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
     Private Function ParallelMSGFPlusMergeTSVFiles(
      numberOfClonedSteps As Integer,
      numberOfHitsPerScanToKeep As Integer,
-     <Out()> ByRef lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
+     <Out()> ByRef lstFilterPassingPeptides As SortedSet(Of String)) As CloseOutType
 
         lstFilterPassingPeptides = New SortedSet(Of String)
         Try
@@ -628,7 +628,7 @@ Public Class clsExtractToolRunner
                                     For Each headerName In lstHeaderNames
                                         If dctHeaderMapping(headerName) < 0 Then
                                             LogError("Header " & headerName & " not found in " & Path.GetFileName(sourceFilePath) & "; unable to merge the MSGF+ .tsv files")
-                                            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                                            Return CloseOutType.CLOSEOUT_FAILED
                                         End If
                                     Next
 
@@ -729,19 +729,19 @@ Public Class clsExtractToolRunner
 
             End Using
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
 
         Catch ex As Exception
             LogError("Error in ParallelMSGFPlusMergeTSVFiles", ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
 
     Private Function ParallelMSGFPlusMergePepToProtMapFiles(
       numberOfClonedSteps As Integer,
-      lstFilterPassingPeptides As SortedSet(Of String)) As IJobParams.CloseOutType
+      lstFilterPassingPeptides As SortedSet(Of String)) As CloseOutType
 
         Try
             Dim mergedFilePath = Path.Combine(m_WorkDir, m_Dataset & "_msgfplus_PepToProtMap.txt")
@@ -829,15 +829,15 @@ Public Class clsExtractToolRunner
             Dim success = SortTextFile(fiTempFile.FullName, mergedFilePath, True)
 
             If Not success Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             LogError("Error in ParallelMSGFPlusMergePepToProtMapFiles", ex)
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
@@ -845,9 +845,9 @@ Public Class clsExtractToolRunner
     ''' <summary>
     ''' Perform peptide hit extraction for Sequest data
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType representing success or failure</returns>
+    ''' <returns>CloseOutType representing success or failure</returns>
     ''' <remarks></remarks>
-    Private Function PerformPeptideExtraction() As IJobParams.CloseOutType
+    Private Function PerformPeptideExtraction() As CloseOutType
 
         Dim msg As String
         Dim pepExtractTool As New clsPeptideExtractWrapper(m_mgrParams, m_jobParams, m_StatusTools)
@@ -861,8 +861,8 @@ Public Class clsExtractToolRunner
             Dim eResult = pepExtractTool.PerformExtraction
 
 
-            If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) And
-               (eResult <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA) Then
+            If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) And
+               (eResult <> CloseOutType.CLOSEOUT_NO_DATA) Then
                 'log error and return result calling routine handles the error appropriately
                 msg = "Error encountered during extraction"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.PerformPeptideExtraction(); " & msg)
@@ -871,7 +871,7 @@ Public Class clsExtractToolRunner
             End If
 
             'If there was a _syn.txt file created, but it contains no data, then we want to clean up and exit
-            If eResult = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+            If eResult = CloseOutType.CLOSEOUT_NO_DATA Then
                 'log error and return result calling routine handles the error appropriately
                 LogError("No results above threshold")
                 Return eResult
@@ -882,7 +882,7 @@ Public Class clsExtractToolRunner
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
@@ -890,12 +890,12 @@ Public Class clsExtractToolRunner
     ''' <summary>
     ''' Runs PeptideHitsResultsProcessor on Sequest output
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType representing success or failure</returns>
+    ''' <returns>CloseOutType representing success or failure</returns>
     ''' <remarks></remarks>
-    Private Function RunPhrpForSequest() As IJobParams.CloseOutType
+    Private Function RunPhrpForSequest() As CloseOutType
 
         Dim msg As String
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
         Dim strSynFilePath As String
 
         m_PHRP = New clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams)
@@ -916,27 +916,27 @@ Public Class clsExtractToolRunner
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+        If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
             msg = "Error running PHRP"
             If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Validate that the mass errors are within tolerance
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
         If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.Sequest, strParamFileName) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
     End Function
 
-    Private Function RunPhrpForXTandem() As IJobParams.CloseOutType
+    Private Function RunPhrpForXTandem() As CloseOutType
 
         Dim msg As String
         Dim strSynFilePath As String
@@ -955,11 +955,11 @@ Public Class clsExtractToolRunner
 
             Dim eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM)
 
-            If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+            If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
                 msg = "Error running PHRP"
                 If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         Catch ex As Exception
@@ -967,20 +967,20 @@ Public Class clsExtractToolRunner
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         ' Validate that the mass errors are within tolerance		
         ' Use input.xml for the X!Tandem parameter file
         If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.XTandem, "input.xml") Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
     End Function
 
-    Private Function RunPhrpForMSAlign() As IJobParams.CloseOutType
+    Private Function RunPhrpForMSAlign() As CloseOutType
 
         Dim msg As String
 
@@ -1003,11 +1003,11 @@ Public Class clsExtractToolRunner
 
             Dim eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSALIGN)
 
-            If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+            If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
                 msg = "Error running PHRP"
                 If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         Catch ex As Exception
@@ -1015,7 +1015,7 @@ Public Class clsExtractToolRunner
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         ' Summarize the number of PSMs in _msalign_syn.txt
@@ -1052,20 +1052,20 @@ Public Class clsExtractToolRunner
             End If
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RunPhrpForMSAlign: " & m_message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Validate that the mass errors are within tolerance
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
         If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSAlign, strParamFileName) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
     End Function
 
-    Private Function RunPhrpForMODa(strFilteredMODaResultsFilePath As String) As IJobParams.CloseOutType
+    Private Function RunPhrpForMODa(strFilteredMODaResultsFilePath As String) As CloseOutType
 
         Dim currentStep = "Initializing"
 
@@ -1089,7 +1089,7 @@ Public Class clsExtractToolRunner
 
                 If Not File.Exists(strFilteredMODaResultsFilePath) Then
                     LogError("Filtered MODa results file not found: " & Path.GetFileName(strFilteredMODaResultsFilePath))
-                    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                    Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                 End If
 
                 Dim strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_moda_syn.txt")
@@ -1102,11 +1102,11 @@ Public Class clsExtractToolRunner
 
                 Dim eResult = m_PHRP.ExtractDataFromResults(strFilteredMODaResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODA)
 
-                If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+                If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
                     msg = "Error running PHRP"
                     If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 currentStep = "Verifying results exist"
@@ -1114,7 +1114,7 @@ Public Class clsExtractToolRunner
                 ' Confirm that the synopsis file was made
                 If Not File.Exists(strSynFilePath) Then
                     LogError("Synopsis file not found: " & Path.GetFileName(strSynFilePath))
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                    Return CloseOutType.CLOSEOUT_NO_DATA
                 End If
 
                 ' Skip the _moda.id.txt file
@@ -1125,25 +1125,25 @@ Public Class clsExtractToolRunner
                  ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
             '' Validate that the mass errors are within tolerance
             'Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
             'If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODa, strParamFileName) Then
-            '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            '	Return CloseOutType.CLOSEOUT_FAILED
             'Else
-            '	Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            '	Return CloseOutType.CLOSEOUT_SUCCESS
             'End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMODa at step " & currentStep, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
 
-    Private Function RunPhrpForMODPlus(filteredMODPlusResultsFilePath As String) As IJobParams.CloseOutType
+    Private Function RunPhrpForMODPlus(filteredMODPlusResultsFilePath As String) As CloseOutType
 
         Dim currentStep = "Initializing"
 
@@ -1167,7 +1167,7 @@ Public Class clsExtractToolRunner
 
                 If Not File.Exists(filteredMODPlusResultsFilePath) Then
                     LogError("Filtered MODPlus results file not found: " & Path.GetFileName(filteredMODPlusResultsFilePath))
-                    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                    Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                 End If
 
                 Dim strSynFilePath = Path.Combine(m_WorkDir, m_Dataset & "_modp_syn.txt")
@@ -1180,11 +1180,11 @@ Public Class clsExtractToolRunner
 
                 Dim eResult = m_PHRP.ExtractDataFromResults(filteredMODPlusResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODPLUS)
 
-                If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+                If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
                     msg = "Error running PHRP"
                     If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 currentStep = "Verifying results exist"
@@ -1192,7 +1192,7 @@ Public Class clsExtractToolRunner
                 ' Confirm that the synopsis file was made
                 If Not File.Exists(strSynFilePath) Then
                     LogError("Synopsis file not found: " & Path.GetFileName(strSynFilePath))
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                    Return CloseOutType.CLOSEOUT_NO_DATA
                 End If
 
             Catch ex As Exception
@@ -1200,28 +1200,28 @@ Public Class clsExtractToolRunner
                  ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
             '' Validate that the mass errors are within tolerance
             'Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
             'If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODPlus, strParamFileName) Then
-            '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            '	Return CloseOutType.CLOSEOUT_FAILED
             'Else
-            '	Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            '	Return CloseOutType.CLOSEOUT_SUCCESS
             'End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMODPlus at step " & currentStep, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
 
-    Private Function RunPhrpForMSGFPlus() As IJobParams.CloseOutType
+    Private Function RunPhrpForMSGFPlus() As CloseOutType
 
         Dim currentStep = "Initializing"
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
 
         Dim msg As String
 
@@ -1285,7 +1285,7 @@ Public Class clsExtractToolRunner
 
                             strTargetFilePath = ConvertMZIDToTSV(suffixToAdd)
                             If String.IsNullOrEmpty(strTargetFilePath) Then
-                                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                             End If
 
                         End If
@@ -1299,7 +1299,7 @@ Public Class clsExtractToolRunner
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True")
                             Else
                                 eResult = CreateMSGFPlusResultsProteinToPeptideMappingFile(strTargetFilePath)
-                                If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                                If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                                     Return eResult
                                 End If
                             End If
@@ -1322,7 +1322,7 @@ Public Class clsExtractToolRunner
                         currentStep = "Merging the TSV files"
                         eResult = ParallelMSGFPlusMergeTSVFiles(numberOfClonedSteps, numberOfHitsPerScanToKeep, lstFilterPassingPeptides)
 
-                        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                             Return eResult
                         End If
 
@@ -1330,7 +1330,7 @@ Public Class clsExtractToolRunner
                         currentStep = "Merging the _PepToProtMap files"
                         eResult = ParallelMSGFPlusMergePepToProtMapFiles(numberOfClonedSteps, lstFilterPassingPeptides)
 
-                        If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                             Return eResult
                         End If
 
@@ -1347,11 +1347,11 @@ Public Class clsExtractToolRunner
 
                 eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, createMSGFPlusFirstHitsFile, createMSGFPlusSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFPLUS)
 
-                If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+                If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
                     msg = "Error running PHRP"
                     If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 If splitFastaEnabled Then
@@ -1371,25 +1371,25 @@ Public Class clsExtractToolRunner
                 msg = "clsExtractToolRunner.RunPhrpForMSGFPlus(); Exception running PHRP: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
             ' Validate that the mass errors are within tolerance
             Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
             If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, strParamFileName) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Return CloseOutType.CLOSEOUT_SUCCESS
             End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMSGFPlus at step " & currentStep, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
 
-    Private Function RunPHRPForMSPathFinder() As IJobParams.CloseOutType
+    Private Function RunPHRPForMSPathFinder() As CloseOutType
 
         Dim currentStep = "Initializing"
 
@@ -1416,7 +1416,7 @@ Public Class clsExtractToolRunner
                 Dim msPathFinderResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_IcTDA.tsv")
                 If Not File.Exists(msPathFinderResultsFilePath) Then
                     LogError("MSPathFinder results file not found: " & Path.GetFileName(msPathFinderResultsFilePath))
-                    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                    Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                 End If
 
                 currentStep = "Running PHRP"
@@ -1427,11 +1427,11 @@ Public Class clsExtractToolRunner
 
                 Dim eResult = m_PHRP.ExtractDataFromResults(msPathFinderResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSPATHFINDER)
 
-                If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+                If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
                     msg = "Error running PHRP"
                     If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 currentStep = "Verifying results exist"
@@ -1439,7 +1439,7 @@ Public Class clsExtractToolRunner
                 ' Confirm that the synopsis file was made
                 If Not File.Exists(strSynFilePath) Then
                     LogError("Synopsis file not found: " & Path.GetFileName(strSynFilePath))
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                    Return CloseOutType.CLOSEOUT_NO_DATA
                 End If
 
             Catch ex As Exception
@@ -1447,20 +1447,20 @@ Public Class clsExtractToolRunner
                  ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
             ' Validate that the mass errors are within tolerance
             Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
             If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSPathFinder, strParamFileName) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Return CloseOutType.CLOSEOUT_SUCCESS
             End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMODa at step " & currentStep, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
     End Function
 
@@ -1508,7 +1508,7 @@ Public Class clsExtractToolRunner
 
     End Sub
 
-    Private Function RunPhrpForInSpecT() As IJobParams.CloseOutType
+    Private Function RunPhrpForInSpecT() As CloseOutType
 
         Dim msg As String
 
@@ -1538,7 +1538,7 @@ Public Class clsExtractToolRunner
             blnSuccess = MyBase.UnzipFile(strTargetFilePath)
 
             If Not blnSuccess Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Create the First Hits files using the _inspect.txt file
@@ -1547,11 +1547,11 @@ Public Class clsExtractToolRunner
             strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset & "_inspect.txt")
             Dim eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT)
 
-            If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+            If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
                 msg = "Error running PHRP"
                 If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Delete the _inspect.txt file
@@ -1565,7 +1565,7 @@ Public Class clsExtractToolRunner
             blnSuccess = MyBase.UnzipFile(strTargetFilePath)
 
             If Not blnSuccess Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Create the Synopsis files using the _inspect.txt file
@@ -1576,11 +1576,11 @@ Public Class clsExtractToolRunner
 
             eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT)
 
-            If (eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS) Then
+            If (eResult <> CloseOutType.CLOSEOUT_SUCCESS) Then
                 msg = "Error running PHRP"
                 If Not String.IsNullOrWhiteSpace(m_PHRP.ErrMsg) Then msg &= "; " & m_PHRP.ErrMsg
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Try
@@ -1595,20 +1595,20 @@ Public Class clsExtractToolRunner
              ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         ' Validate that the mass errors are within tolerance
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
         If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.Inspect, strParamFileName) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
     End Function
 
-    Protected Function RunPeptideProphet() As IJobParams.CloseOutType
+    Protected Function RunPeptideProphet() As CloseOutType
         Const SYN_FILE_MAX_SIZE_MB = 200
         Const PEPPROPHET_RESULT_FILE_SUFFIX = "_PepProphet.txt"
 
@@ -1622,7 +1622,7 @@ Public Class clsExtractToolRunner
 
         Dim strPepProphetOutputFilePath As String
 
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
         Dim blnIgnorePeptideProphetErrors As Boolean
 
         Dim intFileIndex As Integer
@@ -1640,7 +1640,7 @@ Public Class clsExtractToolRunner
             Else
                 LogError("Cannot find PeptideProphetRunner program file: " & progLoc)
             End If
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         m_PeptideProphet = New clsPeptideProphetWrapper(progLoc)
@@ -1657,7 +1657,7 @@ Public Class clsExtractToolRunner
         If Not fiSynFile.Exists Then
             msg = "clsExtractToolRunner.RunPeptideProphet(); Syn file " & SynFile & " not found; unable to run peptide prophet"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Check the size of the Syn file
@@ -1685,10 +1685,10 @@ Public Class clsExtractToolRunner
                 If blnIgnorePeptideProphetErrors Then
                     msg &= "; Ignoring the error since 'IgnorePeptideProphetErrors' = True"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                    Return CloseOutType.CLOSEOUT_SUCCESS
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
             End If
@@ -1715,7 +1715,7 @@ Public Class clsExtractToolRunner
 
             eResult = m_PeptideProphet.CallPeptideProphet()
 
-            If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eResult = CloseOutType.CLOSEOUT_SUCCESS Then
 
                 ' Make sure the Peptide Prophet output file was actually created
                 strPepProphetOutputFilePath = Path.Combine(m_PeptideProphet.OutputFolderPath,
@@ -1740,7 +1740,7 @@ Public Class clsExtractToolRunner
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True")
                     Else
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True")
-                        eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        eResult = CloseOutType.CLOSEOUT_FAILED
                         Exit For
                     End If
                 End If
@@ -1752,14 +1752,14 @@ Public Class clsExtractToolRunner
                 If blnIgnorePeptideProphetErrors Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True")
                 Else
-                    eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    eResult = CloseOutType.CLOSEOUT_FAILED
                     Exit For
                 End If
             End If
 
         Next
 
-        If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS OrElse blnIgnorePeptideProphetErrors Then
+        If eResult = CloseOutType.CLOSEOUT_SUCCESS OrElse blnIgnorePeptideProphetErrors Then
             If strFileList.Length > 1 Then
 
                 ' Delete each of the temporary synopsis files
@@ -1790,16 +1790,16 @@ Public Class clsExtractToolRunner
                 DeleteTemporaryFiles(strFileList)
 
                 If blnSuccess Then
-                    eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                    eResult = CloseOutType.CLOSEOUT_SUCCESS
                 Else
                     msg = "Error interleaving the peptide prophet result files (FileCount=" & strFileList.Length & ")"
                     If blnIgnorePeptideProphetErrors Then
                         msg &= "; Ignoring the error since 'IgnorePeptideProphetErrors' = True"
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-                        eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                        eResult = CloseOutType.CLOSEOUT_SUCCESS
                     Else
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-                        eResult = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        eResult = CloseOutType.CLOSEOUT_FAILED
                     End If
                 End If
             End If

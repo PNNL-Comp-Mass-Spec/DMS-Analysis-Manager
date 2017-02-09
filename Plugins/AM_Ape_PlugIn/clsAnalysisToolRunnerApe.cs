@@ -12,7 +12,7 @@ namespace AnalysisManager_Ape_PlugIn
        protected string m_CurrentApeTask = string.Empty;
        protected DateTime m_LastStatusUpdateTime;
 
-       public override IJobParams.CloseOutType RunTool()
+       public override CloseOutType RunTool()
        {
             try 
             {
@@ -21,9 +21,9 @@ namespace AnalysisManager_Ape_PlugIn
                 bool blnSuccess;
 
                 //Do the base class stuff
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Store the Ape version info in the database
@@ -31,7 +31,7 @@ namespace AnalysisManager_Ape_PlugIn
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Ape version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 m_CurrentApeTask = "Running Ape";
@@ -95,15 +95,15 @@ namespace AnalysisManager_Ape_PlugIn
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging MultiAlign problems
                     CopyFailedResultsToArchiveFolder();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
                 m_Dataset = m_jobParams.GetParam("OutputFolderName");
                 m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                IJobParams.CloseOutType result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                CloseOutType result = MakeResultsFolder();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
@@ -111,7 +111,7 @@ namespace AnalysisManager_Ape_PlugIn
                 }
 
                result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     m_message = "Error moving files into results folder";
@@ -119,7 +119,7 @@ namespace AnalysisManager_Ape_PlugIn
                 }
 
                 result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     return result;
@@ -128,11 +128,11 @@ namespace AnalysisManager_Ape_PlugIn
             } catch (Exception ex) {
                 m_message = "Error in ApePlugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
 
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
@@ -183,12 +183,12 @@ namespace AnalysisManager_Ape_PlugIn
             */
             
            // Make the results folder
-            IJobParams.CloseOutType result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            CloseOutType result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);

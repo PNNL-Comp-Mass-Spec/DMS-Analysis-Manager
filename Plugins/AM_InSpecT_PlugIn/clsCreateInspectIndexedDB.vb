@@ -24,7 +24,7 @@ Public Class clsCreateInspectIndexedDB
                                          DebugLevel As Integer,
                                          JobNum As String,
                                          InspectDir As String,
-                                         OrgDbDir As String) As IJobParams.CloseOutType
+                                         OrgDbDir As String) As CloseOutType
 
         Const MAX_WAITTIME_HOURS As Single = 1.0
         Const MAX_WAITTIME_PREVENT_REPEATS As Single = 2.0
@@ -125,14 +125,14 @@ Public Class clsCreateInspectIndexedDB
                 ' Verify that python program file exists
                 If Not File.Exists(pythonProgLoc) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find python.exe program file: " & pythonProgLoc)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 ' Verify that the PrepDB python script exists
                 Dim PrebDBScriptPath As String = Path.Combine(InspectDir, PREPDB_SCRIPT)
                 If Not File.Exists(PrebDBScriptPath) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find PrepDB script: " & PrebDBScriptPath)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 ' Verify that the ShuffleDB python script exists
@@ -140,7 +140,7 @@ Public Class clsCreateInspectIndexedDB
                 If blnUseShuffledDB Then
                     If Not File.Exists(ShuffleDBScriptPath) Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find ShuffleDB script: " & ShuffleDBScriptPath)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        Return CloseOutType.CLOSEOUT_FAILED
                     End If
                 End If
 
@@ -152,7 +152,7 @@ Public Class clsCreateInspectIndexedDB
                 Dim bSuccess As Boolean
                 bSuccess = CreateLockFile(dbLockFilename)
                 If Not bSuccess Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 If DebugLevel >= 2 Then
@@ -167,7 +167,7 @@ Public Class clsCreateInspectIndexedDB
 
                 If Not objPrepDB.RunProgram(pythonProgLoc, CmdStr, "PrepDB", True) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running " & PREPDB_SCRIPT & " for " & strDBFileNameInput & " : " & JobNum)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 Else
                     If DebugLevel >= 1 Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created .trie file for " & strDBFileNameInput)
@@ -195,7 +195,7 @@ Public Class clsCreateInspectIndexedDB
 
                     If Not objShuffleDB.RunProgram(pythonProgLoc, CmdStr, "ShuffleDB", True) Then
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running " & SHUFFLEDB_SCRIPT & " for " & dbTrieFilenameBeforeShuffle & " : " & JobNum)
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        Return CloseOutType.CLOSEOUT_FAILED
                     Else
                         If DebugLevel >= 1 Then
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Shuffled .trie file created: " & dbTrieFilename)
@@ -216,11 +216,11 @@ Public Class clsCreateInspectIndexedDB
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsCreateInspectIndexedDB.CreateIndexedDbFiles, An exception has occurred: " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
 
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

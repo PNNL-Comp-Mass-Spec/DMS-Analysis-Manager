@@ -13,21 +13,21 @@ namespace AnalysisManagerPBFGenerator
 {
     public class clsAnalysisResourcesPBFGenerator : clsAnalysisResources
     {
-        public override AnalysisManagerBase.IJobParams.CloseOutType GetResources()
+        public override AnalysisManagerBase.CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
             if (!RetrieveInstrumentData())
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         protected bool RetrieveInstrumentData()

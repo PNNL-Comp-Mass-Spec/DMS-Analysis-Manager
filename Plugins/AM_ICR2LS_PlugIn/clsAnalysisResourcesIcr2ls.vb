@@ -7,41 +7,41 @@ Public Class clsAnalysisResourcesIcr2ls
     Inherits clsAnalysisResources
 
 #Region "Methods"
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         ' Retrieve param file
         If Not RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Look for an in-progress .PEK file in the transfer folder
         Dim eExistingPEKFileResult = RetrieveExistingTempPEKFile()
 
-        If eExistingPEKFileResult = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+        If eExistingPEKFileResult = CloseOutType.CLOSEOUT_FAILED Then
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Call to RetrieveExistingTempPEKFile failed"
             End If
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Get input data file
         If Not RetrieveSpectra(m_jobParams.GetParam("RawDataType")) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' NOTE: GetBrukerSerFile is not MyEMSL-compatible
         If Not GetBrukerSerFile() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -178,7 +178,7 @@ Public Class clsAnalysisResourcesIcr2ls
     ''' will use a different one; this is OK and allows us to adjust the settings mid-job.
     ''' To prevent this behavior, delete the .pek.tmp file from the transfer folder
     ''' </remarks>
-    Private Function RetrieveExistingTempPEKFile() As IJobParams.CloseOutType
+    Private Function RetrieveExistingTempPEKFile() As CloseOutType
 
         Try
 
@@ -188,7 +188,7 @@ Public Class clsAnalysisResourcesIcr2ls
             If String.IsNullOrWhiteSpace(transferFolderPath) Then
                 ' Transfer folder path is not defined
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "transferFolderPath is empty; this is unexpected")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
                 transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
                 transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))
@@ -205,7 +205,7 @@ Public Class clsAnalysisResourcesIcr2ls
                 If m_DebugLevel >= 4 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... Transfer folder not found: " & diSourceFolder.FullName)
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             Dim pekTempFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE)
@@ -215,7 +215,7 @@ Public Class clsAnalysisResourcesIcr2ls
                 If m_DebugLevel >= 4 Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE & " file not found")
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             If m_DebugLevel >= 1 Then
@@ -238,15 +238,15 @@ Public Class clsAnalysisResourcesIcr2ls
                 ' Error copying the file; treat this as a failed job
                 m_message = " Exception copying " & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE & " file locally"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ... Exception copying " & fiTempPekFile.FullName & " locally; unable to resume: " & ex.Message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             m_message = "Exception in RetrieveExistingTempPEKFile"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function

@@ -65,7 +65,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
       blnCheckForLockFile As Boolean,
       intDebugLevel As Integer,
       sngMaxWaitTimeHours As Single,
-      <Out()> ByRef diskFreeSpaceBelowThreshold As Boolean) As IJobParams.CloseOutType
+      <Out()> ByRef diskFreeSpaceBelowThreshold As Boolean) As CloseOutType
 
         Dim blnSuccess = False
 
@@ -77,7 +77,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             diRemoteIndexFolderPath = New DirectoryInfo(strRemoteIndexFolderPath)
 
             If Not diRemoteIndexFolderPath.Exists Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             If blnCheckForLockFile Then
@@ -96,7 +96,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             Dim fileSizeTotalKB As Long = 0
 
             If Not fiMSGFPlusIndexFileInfo.Exists Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             ' Read the filenames in the file
@@ -140,7 +140,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             End If
 
             If Not blnFilesAreValid Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             If intDebugLevel >= 1 AndAlso fileSizeTotalKB >= 1000 Then
@@ -172,7 +172,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             diskFreeSpaceBelowThreshold = Not clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, clsLogTools.LoggerTypes.LogFile, mErrorMessage)
 
             If diskFreeSpaceBelowThreshold Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Dim fiRemoteLockFile2 As FileInfo = Nothing
@@ -190,7 +190,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 If blnSuccess Then
                     ' Files now exist
                     DeleteLockFile(fiRemoteLockFile2)
-                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                    Return CloseOutType.CLOSEOUT_SUCCESS
                 End If
 
             End If
@@ -222,9 +222,9 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
         End Try
 
         If blnSuccess Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
     End Function
@@ -379,7 +379,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
       blnFastaFileIsDecoy As Boolean,
       strMSGFPlusIndexFilesFolderPathBase As String,
       strMSGFPlusIndexFilesFolderPathLegacyDB As String,
-      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As CloseOutType
 
         Const MAX_WAITTIME_HOURS As Single = 1.0
 
@@ -392,7 +392,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
         Dim blnMSGFPlus As Boolean
         Dim strCurrentTask = "Initializing"
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
 
         Try
             mErrorMessage = String.Empty
@@ -556,10 +556,10 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 If diskFreeSpaceBelowThreshold Then
                     ' Not enough free disk space; abort
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
-                If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                     ' Files did not exist or were out of date, or an error occurred while copying them
 
                     ' Create a remote lock file
@@ -577,14 +577,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                         blnCheckForLockFile = False
                         eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, blnUsingLegacyFasta, strRemoteIndexFolderPath, blnCheckForLockFile, intDebugLevel, sngMaxWaitTimeHours, diskFreeSpaceBelowThreshold)
 
-                        If eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                        If eResult = CloseOutType.CLOSEOUT_SUCCESS Then
                             ' Existing files were copied; this manager does not need to re-create them
                             blnReindexingRequired = False
                         End If
 
                         If diskFreeSpaceBelowThreshold Then
                             ' Not enough free disk space; abort
-                            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                            Return CloseOutType.CLOSEOUT_FAILED
                         End If
                     End If
 
@@ -600,7 +600,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                           dbSarrayFilename,
                           udtHPCOptions)
 
-                        If blnRemoteLockFileCreated AndAlso eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                        If blnRemoteLockFileCreated AndAlso eResult = CloseOutType.CLOSEOUT_SUCCESS Then
                             OnStatusEvent("Copying index files to " & strRemoteIndexFolderPath)
                             CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel)
                         End If
@@ -614,13 +614,13 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 End If
             Else
-                eResult = IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                eResult = CloseOutType.CLOSEOUT_SUCCESS
             End If
 
         Catch ex As Exception
             mErrorMessage = "Exception in .CreateIndexedDbFiles"
             OnErrorEvent(mErrorMessage & "; " & strCurrentTask, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
 
         End Try
 
@@ -639,7 +639,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
       blnFastaFileIsDecoy As Boolean,
       blnMSGFPlus As Boolean,
       dbSarrayFilename As String,
-      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As IJobParams.CloseOutType
+      udtHPCOptions As clsAnalysisResources.udtHPCOptionsType) As CloseOutType
 
         Dim strCurrentTask = String.Empty
 
@@ -652,14 +652,14 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             If Not File.Exists(JavaProgLoc) Then
                 mErrorMessage = "Cannot find Java program file"
                 OnErrorEvent(mErrorMessage & ": " & JavaProgLoc)
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
             ' Verify that the MSGFDB.Jar or MSGFPlus.jar file exists
             If Not File.Exists(msgfDbProgLoc) Then
                 mErrorMessage = "Cannot find " + Path.GetFileName(msgfDbProgLoc) & " file"
                 OnErrorEvent(mErrorMessage & ": " & msgfDbProgLoc)
-                Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
 
@@ -688,7 +688,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 ' Make sure the machine has enough free memory to run BuildSA
                 If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySizeMB, "BuildSA", False) Then
                     mErrorMessage = "Cannot run BuildSA since less than " & intJavaMemorySizeMB & " MB of free memory"
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
             End If
@@ -709,7 +709,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             If fiLockFile.Exists Then
                 If intDebugLevel >= 1 Then
                     OnStatusEvent("Warning: new lock file found: " & fiLockFile.FullName & "; aborting")
-                    Return IJobParams.CloseOutType.CLOSEOUT_NO_FAS_FILES
+                    Return CloseOutType.CLOSEOUT_NO_FAS_FILES
                 End If
             End If
 
@@ -718,7 +718,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
             strCurrentTask = "Create the local lock file: " & fiLockFile.FullName
             success = CreateLockFile(fiLockFile.FullName)
             If Not success Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Delete any existing index files (BuildSA throws an error if they exist)
@@ -805,13 +805,13 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
                 If jobID <= 0 Then
                     mErrorMessage = "BuildSA Job was not created in HPC: " & mComputeCluster.ErrorMessage
                     DeleteLockFile(fiLockFile)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 If mComputeCluster.Scheduler Is Nothing Then
                     mErrorMessage = "Error: HPC Scheduler is null for BuildSA Job"
                     DeleteLockFile(fiLockFile)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 Dim buildSAJob = mComputeCluster.Scheduler.OpenJob(jobID)
@@ -867,7 +867,7 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
 
                 OnStatusEvent(mErrorMessage)
                 DeleteLockFile(fiLockFile)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             Else
                 If intDebugLevel >= 1 Then
                     OnStatusEvent("Created suffix array files for " & fiFastaFile.Name)
@@ -885,11 +885,11 @@ Public Class clsCreateMSGFDBSuffixArrayFiles
         Catch ex As Exception
             mErrorMessage = "Exception in .CreateSuffixArrayFilesWork"
             OnErrorEvent(mErrorMessage & "; " & strCurrentTask, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
 
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

@@ -21,9 +21,9 @@ Public Class clsAnalysisResourcesMSGFDB
     ''' <summary>
     ''' Retrieves files necessary for running MSGF+
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         Dim currentTask = "Initializing"
 
@@ -32,7 +32,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
             ' Retrieve shared resources, including the JobParameters file from the previous job step
             Dim result = GetSharedResources()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
@@ -60,7 +60,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
                         CheckParentFolder(diPicFsWorkDir)
 
-                        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                        Return CloseOutType.CLOSEOUT_FAILED
                     End Try
 
                 End If
@@ -69,7 +69,7 @@ Public Class clsAnalysisResourcesMSGFDB
                 currentTask = "ValidateFreeMemorySize"
                 If Not ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGF+", False) Then
                     m_message = "Not enough free memory to run MSGFDB"
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
@@ -83,7 +83,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
             currentTask = "RetrieveOrgDB to " & localOrgDbFolder
 
-            If Not RetrieveOrgDB(localOrgDbFolder, udtHPCOptions) Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not RetrieveOrgDB(localOrgDbFolder, udtHPCOptions) Then Return CloseOutType.CLOSEOUT_FAILED
 
             LogMessage("Getting param file", 2)
 
@@ -97,7 +97,7 @@ Public Class clsAnalysisResourcesMSGFDB
             currentTask = "RetrieveGeneratedParamFile " & paramFileName
 
             If Not RetrieveGeneratedParamFile(paramFileName) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' The ToolName job parameter holds the name of the job script we are executing
@@ -115,19 +115,19 @@ Public Class clsAnalysisResourcesMSGFDB
                 currentTask = "RetrieveDtaFiles"
                 result = GetCDTAFile()
 
-                If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If result = CloseOutType.CLOSEOUT_SUCCESS Then
                     currentTask = "GetMasicFiles"
                     result = GetMasicFiles()
                 End If
 
-                If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If result = CloseOutType.CLOSEOUT_SUCCESS Then
                     currentTask = "ValidateCDTAFile"
                     result = ValidateCDTAFile()
                 End If
 
             End If
 
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
@@ -143,11 +143,11 @@ Public Class clsAnalysisResourcesMSGFDB
             m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX)
             m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX)
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             LogError("Exception in GetResources: " & ex.Message, ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
     End Function
@@ -165,7 +165,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
     End Sub
 
-    Private Function GetCDTAFile() As IJobParams.CloseOutType
+    Private Function GetCDTAFile() As CloseOutType
 
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
@@ -177,14 +177,14 @@ Public Class clsAnalysisResourcesMSGFDB
             End If
 
             ' Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
-    Private Function GetMasicFiles() As IJobParams.CloseOutType
+    Private Function GetMasicFiles() As CloseOutType
 
         Dim strAssumedScanType = m_jobParams.GetParam("AssumedScanType")
 
@@ -195,10 +195,10 @@ Public Class clsAnalysisResourcesMSGFDB
                     LogMessage("Assuming scan type is '" & strAssumedScanType & "'", 1)
                 Case Else
                     LogError("Invalid assumed scan type '" & strAssumedScanType & "'; must be CID, ETD, or HCD")
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
             End Select
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
         ' Retrieve the MASIC ScanStats.txt file (and possibly the ScanStatsEx.txt file)
@@ -207,7 +207,7 @@ Public Class clsAnalysisResourcesMSGFDB
         blnSuccess = RetrieveScanStatsFiles(createStoragePathInfoOnly:=False, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=False)
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If blnSuccess Then
@@ -222,7 +222,7 @@ Public Class clsAnalysisResourcesMSGFDB
                 blnSuccess = RetrieveScanStatsFiles(createStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
 
                 If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 If blnSuccess Then
@@ -242,7 +242,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
                     m_message &= " do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+"
 
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
             End If
@@ -250,14 +250,14 @@ Public Class clsAnalysisResourcesMSGFDB
 
         If blnSuccess Then
             LogMessage("Retrieved MASIC ScanStats and ScanStatsEx files", 1)
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
         ' _ScanStats.txt file not found
         ' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
         If Not GenerateScanStatsFile() Then
             ' Error message should already have been logged and stored in m_message
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         Dim strScanStatsFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
@@ -265,29 +265,29 @@ Public Class clsAnalysisResourcesMSGFDB
 
         If Not detailedScanTypesDefinedNewFile Then
             m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
-    Private Function ValidateCDTAFile() As IJobParams.CloseOutType
+    Private Function ValidateCDTAFile() As CloseOutType
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
         If Not ValidateCDTAFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
             ' Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Remove any spectra from the _DTA.txt file with fewer than 3 ions
         If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, m_DatasetName & "_dta.txt") Then
             ' Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Make sure that the spectra are centroided
@@ -297,10 +297,10 @@ Public Class clsAnalysisResourcesMSGFDB
 
         If Not ValidateCDTAFileIsCentroided(strCDTAPath) Then
             ' m_message is already updated
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

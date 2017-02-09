@@ -22,9 +22,9 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Retrieves files necessary for running MzRefinery
         /// </summary>
-        /// <returns>IJobParams.CloseOutType indicating success or failure</returns>
+        /// <returns>CloseOutType indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
             var currentTask = "Initializing";
 
@@ -39,15 +39,15 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (string.IsNullOrEmpty(mzRefParamFile))
                 {
                     LogError("MzRefParamFile parameter is empty");
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 currentTask = "Get Input file";
 
-                IJobParams.CloseOutType eResult = default(IJobParams.CloseOutType);
+                CloseOutType eResult = default(CloseOutType);
                 eResult = GetMsXmlFile();
 
-                if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return eResult;
                 }
@@ -59,7 +59,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (!RetrieveOrgDB(localOrgDbFolder))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Retrieve the Mz Refinery parameter file
@@ -76,7 +76,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (!RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Look for existing MSGF+ results in the transfer folder
@@ -84,17 +84,17 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (!FindExistingMSGFPlusResults(mzRefParamFile))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
                 m_message = "Exception in GetResources: " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>

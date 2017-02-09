@@ -9,11 +9,11 @@ Public Class clsAnalysisResourcesLipidMapSearch
 
     Public Const DECONTOOLS_PEAKS_FILE_SUFFIX As String = "_peaks.txt"
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -22,28 +22,28 @@ Public Class clsAnalysisResourcesLipidMapSearch
         Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
 
         If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         If Not RetrievePNNLOmicsResourceFiles("LipidToolsProgLoc") Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         ' Retrieve the .Raw file and _Peaks.txt file for this dataset
         If Not RetrieveFirstDatasetFiles() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         ' Potentially retrieve the .Raw file and _Peaks.txt file for the second dataset to be used by this job
         If Not RetrieveSecondDatasetFiles() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

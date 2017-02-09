@@ -9,7 +9,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         public static string AppFilePath = "";
 
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
 
             try
@@ -17,7 +17,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS) {
+                if (result != CloseOutType.CLOSEOUT_SUCCESS) {
                     return result;
                 }
 
@@ -45,7 +45,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 {
                     m_message = "Parameter CyclopsWorkflowName not defined in the job parameters for this job";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; unable to continue");
-                    return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
                 var strProteinProphet = m_jobParams.GetParam("RunProteinProphet");
@@ -68,7 +68,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                         if (!RetrieveOrgDB(s_FastaDir))
                         {
                             m_message = "Cyclops Resourcer failed to retrieve the path to the Fasta file to run ProteinProphet";
-                            return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                            return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
                 }
@@ -80,7 +80,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 {
                     m_message = "R Script folder not found: " + diRemoteRScriptFolder.FullName;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
-                    return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 if (m_DebugLevel >= 2)
@@ -104,24 +104,24 @@ namespace AnalysisManager_Cyclops_PlugIn
                 if (!CopyFileToWorkDir(strCyclopsWorkflowFileName, strCyclopsWorkflowDirectory, m_WorkingDir))
                 {
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, sourceFolderName), m_WorkingDir))
                 {
                     m_message = "Results.db3 file from " + sourceFolderName + " failed to copy over to working directory";
                     //Errors were reported in function call, so just return
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
             }
             catch (Exception ex)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception retrieving resources", ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
     }

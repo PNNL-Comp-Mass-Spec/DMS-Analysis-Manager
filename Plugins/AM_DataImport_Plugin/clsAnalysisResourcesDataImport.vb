@@ -12,7 +12,7 @@ Imports AnalysisManagerBase
 Public Class clsAnalysisResourcesDataImport
     Inherits clsAnalysisResources
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()

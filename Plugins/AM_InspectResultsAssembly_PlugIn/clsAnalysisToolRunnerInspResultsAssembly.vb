@@ -86,15 +86,15 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         Dim numClonedSteps As String
         Dim intNumResultFiles As Integer
 
         Dim isParallelized = False
 
-        Dim Result As IJobParams.CloseOutType
-        Dim eReturnCode As IJobParams.CloseOutType
+        Dim Result As CloseOutType
+        Dim eReturnCode As CloseOutType
 
         Dim blnProcessingError = False
         Dim blnNoDataInFilteredResults = False
@@ -114,7 +114,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If Not StoreToolVersionInfo() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining Inspect Results Assembly version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             'Determine if this is a parallelized job
@@ -127,7 +127,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
                 ' FilterInspectResultsByPValue will create file _inspect_filtered.txt
                 Result = FilterInspectResultsByPValue()
-                If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
                     blnProcessingError = True
                 End If
                 isParallelized = False
@@ -142,7 +142,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 ' AssembleResults will create _inspect.txt, _inspect_fht.txt, and _inspect_filtered.txt
                 Result = AssembleResults(intNumResultFiles)
 
-                If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
                     blnProcessingError = True
                 End If
                 isParallelized = True
@@ -151,7 +151,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If Not blnProcessingError Then
                 ' Rename and zip up files _inspect_filtered.txt and _inspect.txt
                 Result = ZipInspectResults()
-                If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
                     blnProcessingError = True
                 End If
             End If
@@ -159,9 +159,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If Not blnProcessingError Then
                 ' Create the Peptide to Protein map file
                 Result = CreatePeptideToProteinMapping()
-                If Result = IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                If Result = CloseOutType.CLOSEOUT_NO_DATA Then
                     blnNoDataInFilteredResults = True
-                ElseIf Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And Result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+                ElseIf Result <> CloseOutType.CLOSEOUT_SUCCESS And Result <> CloseOutType.CLOSEOUT_NO_DATA Then
                     blnProcessingError = True
                 End If
             End If
@@ -175,8 +175,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If blnProcessingError Then
                 ' Something went wrong
                 ' In order to help diagnose things, we will move whatever files were created into the Result folder, 
-                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                eReturnCode = CloseOutType.CLOSEOUT_FAILED
             End If
 
             'Add the current job data to the summary file
@@ -189,29 +189,29 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             clsProgRunner.GarbageCollectNow()
 
             Result = MakeResultsFolder()
-            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Result = MoveResultFiles()
-            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'MoveResultFiles moves the Result files to the Result folder
                 m_message = "Error moving files into results folder"
-                eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED
+                eReturnCode = CloseOutType.CLOSEOUT_FAILED
             End If
 
-            If blnProcessingError Or eReturnCode = IJobParams.CloseOutType.CLOSEOUT_FAILED Then
+            If blnProcessingError Or eReturnCode = CloseOutType.CLOSEOUT_FAILED Then
                 ' Try to save whatever files were moved into the results folder
                 Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Result = CopyResultsFolderToServer()
-            If Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 'TODO: What do we do here?
                 Return Result
             End If
@@ -220,12 +220,12 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             If isParallelized Then
                 If Not MyBase.RemoveNonResultServerFiles() Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting non Result files from directory on server, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
             If blnNoDataInFilteredResults Then
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                Return CloseOutType.CLOSEOUT_NO_DATA
             End If
 
         Catch ex As Exception
@@ -234,10 +234,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
             m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+        Return CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
 
     End Function
 
@@ -258,8 +258,8 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Sub
 
-    Private Function AssembleResults(intNumResultFiles As Integer) As IJobParams.CloseOutType
-        Dim result As IJobParams.CloseOutType
+    Private Function AssembleResults(intNumResultFiles As Integer) As CloseOutType
+        Dim result As CloseOutType
         Dim strFileName = ""
 
         Try
@@ -271,7 +271,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             ' Combine the individual _xx_inspect.txt files to create the single _inspect.txt file
             result = AssembleFiles(mInspectResultsFileName, ResultFileType.INSPECT_RESULT, intNumResultFiles)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
@@ -281,7 +281,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             strFileName = m_Dataset & "_error.txt"
             result = AssembleFiles(strFileName, ResultFileType.INSPECT_ERROR, intNumResultFiles)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
             m_jobParams.AddResultFileToKeep(strFileName)
@@ -293,7 +293,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             strFileName = "InspectSearchLog.txt"
             result = AssembleFiles(strFileName, ResultFileType.INSPECT_SEARCH, intNumResultFiles)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
             m_jobParams.AddResultFileToKeep(strFileName)
@@ -305,7 +305,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             strFileName = "InspectConsoleOutput.txt"
             result = AssembleFiles(strFileName, ResultFileType.INSPECT_CONSOLE, intNumResultFiles)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
             m_jobParams.AddResultFileToKeep(strFileName)
@@ -317,17 +317,17 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             ' Rescore the assembled inspect results using PValue_MinLength5.py (which is similar to PValue.py but retains peptides of length 5 or greater)
             ' This will create files _inspect_fht.txt and _inspect_filtered.txt
             result = RescoreAssembledInspectResults()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
         Catch ex As Exception
             m_message = "Error in InspectResultsAssembly->AssembleResults"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -339,7 +339,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     Private Function AssembleFiles(strCombinedFileName As String,
                                    resFileType As ResultFileType,
-                                   intNumResultFiles As Integer) As IJobParams.CloseOutType
+                                   intNumResultFiles As Integer) As CloseOutType
 
         Dim tr As StreamReader = Nothing
         Dim tw As StreamWriter
@@ -363,7 +363,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             tw = CreateNewExportFile(Path.Combine(m_WorkDir, strCombinedFileName))
             If tw Is Nothing Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             For fileNameCounter = 1 To intNumResultFiles
@@ -469,10 +469,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Catch ex As Exception
             m_message = "Error in InspectResultsAssembly->AssembleFiles"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -490,7 +490,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
     End Function
 
-    Private Function CreatePeptideToProteinMapping() As IJobParams.CloseOutType
+    Private Function CreatePeptideToProteinMapping() As CloseOutType
 
         Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
 
@@ -525,7 +525,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                 ' File is empty or only contains a header line
                 m_message = "No results above threshold"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No results above threshold; filtered inspect results file is empty")
-                Return IJobParams.CloseOutType.CLOSEOUT_NO_DATA
+                Return CloseOutType.CLOSEOUT_NO_DATA
             End If
 
         Catch ex As Exception
@@ -534,7 +534,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " &
                 m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
 
         End Try
 
@@ -583,9 +583,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
                 If blnIgnorePeptideToProteinMapperErrors Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
-                    Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                    Return CloseOutType.CLOSEOUT_SUCCESS
                 Else
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
@@ -598,13 +598,13 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             If blnIgnorePeptideToProteinMapperErrors Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Return CloseOutType.CLOSEOUT_SUCCESS
             Else
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -691,9 +691,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function FilterInspectResultsByFirstHits() As IJobParams.CloseOutType
+    Private Function FilterInspectResultsByFirstHits() As CloseOutType
 
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
 
         Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
         Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX)
@@ -712,9 +712,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function FilterInspectResultsByPValue() As IJobParams.CloseOutType
+    Private Function FilterInspectResultsByPValue() As CloseOutType
 
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
 
         Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
         Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
@@ -782,9 +782,9 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Private Function RescoreAssembledInspectResults() As IJobParams.CloseOutType
+    Private Function RescoreAssembledInspectResults() As CloseOutType
 
-        Dim eResult As IJobParams.CloseOutType
+        Dim eResult As CloseOutType
 
         Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
         Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
@@ -806,13 +806,13 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
 
             If Not fiRescoredFile.Exists Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Rescored Inspect Results file not found: " & fiRescoredFile.FullName)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If fiOriginalFile.Length = 0 Then
                 ' Assembled inspect results file is 0-bytes; this is unexpected
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Assembled Inspect Results file is 0 bytes: " & fiOriginalFile.FullName)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel >= 1 Then
@@ -822,17 +822,17 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Catch ex As Exception
             m_message = "Error in InspectResultsAssembly->RescoreAssembledInspectResults"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
     Private Function RunpValue(strInspectResultsInputFilePath As String,
                                strOutputFilePath As String,
                                blnCreateImageFiles As Boolean,
-                               blnTopHitOnly As Boolean) As IJobParams.CloseOutType
+                               blnTopHitOnly As Boolean) As CloseOutType
 
         Dim CmdStr As String
 
@@ -866,14 +866,14 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Dim progLoc As String = pythonProgLoc
         If Not File.Exists(progLoc) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find python.exe program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' verify that PValue python script exists
         Dim pvalueScriptPath As String = Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT)
         If Not File.Exists(pvalueScriptPath) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find PValue script: " & pvalueScriptPath)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Possibly required: Update the PTMods.txt file in InspectDir to contain the modification details, as defined in inspect_input.txt
@@ -941,7 +941,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Path.GetFileName(pvalueScriptPath) & " returned a non-zero exit code: " & cmdRunner.ExitCode.ToString)
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -1255,7 +1255,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function ZipInspectResults() As IJobParams.CloseOutType
+    Private Function ZipInspectResults() As CloseOutType
 
         Dim blnSuccess As Boolean
 
@@ -1270,7 +1270,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                                                  True)
 
             If Not blnSuccess Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
 
@@ -1294,7 +1294,7 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
                                      False)
 
             If Not blnSuccess Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Add the _inspect.txt file to .FilesToDelete since we only want to keep the Zipped version
@@ -1303,10 +1303,10 @@ Public Class clsAnalysisToolRunnerInspResultsAssembly
         Catch ex As Exception
             m_message = "Error in InspectResultsAssembly->ZipInspectResults"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

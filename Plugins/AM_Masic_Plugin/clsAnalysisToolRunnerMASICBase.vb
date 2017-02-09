@@ -101,9 +101,9 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
     End Sub
 
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim eStepResult As IJobParams.CloseOutType
+        Dim eStepResult As CloseOutType
 
         'Call base class for initial setup
         MyBase.RunTool()
@@ -112,7 +112,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         If Not StoreToolVersionInfo() Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
             m_message = "Error determining MASIC version"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Start the job timer
@@ -125,20 +125,20 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             ' Note that RunMASIC will populate the File Path variables, then will call 
             '  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
             eStepResult = RunMASIC()
-            If eStepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If eStepResult <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return eStepResult
             End If
         Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " & Err.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         m_progress = 100
         UpdateStatusFile()
 
         'Run the cleanup routine from the base class
-        If PerfPostAnalysisTasks("SIC") <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If PerfPostAnalysisTasks("SIC") <> CloseOutType.CLOSEOUT_SUCCESS Then
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Make the results folder
@@ -147,30 +147,30 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
         End If
 
         eStepResult = MakeResultsFolder()
-        If eStepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eStepResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             'MakeResultsFolder handles posting to local log, so set database error message and exit
             m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         eStepResult = MoveResultFiles()
-        If eStepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eStepResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             m_message = "Error moving files into results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         eStepResult = CopyResultsFolderToServer()
-        If eStepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If eStepResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
             Return eStepResult
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
-    Protected Function StartMASICAndWait(strInputFilePath As String, strOutputFolderPath As String, strParameterFilePath As String) As IJobParams.CloseOutType
+    Protected Function StartMASICAndWait(strInputFilePath As String, strOutputFolderPath As String, strParameterFilePath As String) As CloseOutType
         ' Note that this function is normally called by RunMasic() in the subclass
 
         Dim strMASICExePath As String = String.Empty
@@ -195,12 +195,12 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             strMASICExePath = m_mgrParams.GetParam("masicprogloc")
             If Not File.Exists(strMASICExePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " & strMASICExePath)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " & strMASICExePath)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         ' Call MASIC using the Program Runner class
@@ -265,19 +265,19 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank")
                 If String.IsNullOrEmpty(m_message) Then m_message = "Unknown error running MASIC"
             End If
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
             If m_DebugLevel > 0 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" & m_ProcessStep)
             End If
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
     End Function
 
-    Protected MustOverride Function RunMASIC() As IJobParams.CloseOutType
+    Protected MustOverride Function RunMASIC() As CloseOutType
 
-    Protected MustOverride Function DeleteDataFile() As IJobParams.CloseOutType
+    Protected MustOverride Function DeleteDataFile() As CloseOutType
 
     Protected Overridable Sub CalculateNewStatus(strMasicProgLoc As String)
 
@@ -346,9 +346,9 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
     End Sub
 
-    Protected Overridable Function PerfPostAnalysisTasks(ResType As String) As IJobParams.CloseOutType
+    Protected Overridable Function PerfPostAnalysisTasks(ResType As String) As CloseOutType
 
-        Dim StepResult As IJobParams.CloseOutType
+        Dim StepResult As CloseOutType
         Dim FoundFiles() As String
 
         'Stop the job timer
@@ -356,7 +356,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
 
         'Get rid of raw data file
         StepResult = DeleteDataFile()
-        If StepResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If StepResult <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return StepResult
         End If
 
@@ -373,7 +373,7 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             If Not MyBase.ZipFile(FoundFiles(0), True, Path.Combine(m_WorkDir, ZipFileName)) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error zipping " & Path.GetFileName(FoundFiles(0)) & ", job " & m_JobNum)
                 m_message = clsGlobal.AppendToComment(m_message, "Error zipping " & SICS_XML_FILE_SUFFIX & " file")
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         End If
@@ -388,10 +388,10 @@ Public MustInherit Class clsAnalysisToolRunnerMASICBase
             End If
         Catch Err As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

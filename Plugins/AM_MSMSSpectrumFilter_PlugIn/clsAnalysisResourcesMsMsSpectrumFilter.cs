@@ -25,13 +25,13 @@ namespace MSMSSpectrumFilterAM
         /// <summary>
         /// Retrieves files necessary for performance of Sequest analysis
         /// </summary>
-        /// <returns>IJobParams.CloseOutType indicating success or failure</returns>
+        /// <returns>CloseOutType indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
@@ -41,7 +41,7 @@ namespace MSMSSpectrumFilterAM
             if (!RetrieveDtaFiles())
             {
                 //Errors were reported in function call, so just return
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Add the _dta.txt file to the list of extensions to delete after the tool finishes
@@ -154,7 +154,7 @@ namespace MSMSSpectrumFilterAM
                     if (!RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.");
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
 
@@ -174,11 +174,11 @@ namespace MSMSSpectrumFilterAM
 
             if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             //All finished
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private bool FindExistingScanStatsFile(string strDatasetFolderPath)

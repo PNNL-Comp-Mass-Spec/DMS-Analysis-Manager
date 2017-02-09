@@ -35,9 +35,9 @@ Public Class clsAnalysisToolRunnerICR
     ' 
     ' 
 
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim ResCode As IJobParams.CloseOutType
+        Dim ResCode As CloseOutType
         Dim DSNamePath As String
 
         Dim UseAllScans As Boolean
@@ -62,7 +62,7 @@ Public Class clsAnalysisToolRunnerICR
 
             'Start with base class function to get settings information
             ResCode = MyBase.RunTool()
-            If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
+            If ResCode <> CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
 
             ' Store the ICR2LS version info in the database
             currentTask = "StoreToolVersionInfo"
@@ -70,7 +70,7 @@ Public Class clsAnalysisToolRunnerICR
             If Not StoreToolVersionInfo() Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining ICR2LS version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             'Verify a param file has been specified
@@ -82,7 +82,7 @@ Public Class clsAnalysisToolRunnerICR
                 'Param file wasn't specified, but is required for ICR-2LS analysis
                 m_message = "ICR-2LS Param file not found"
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ParamFilePath)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             'Add handling of settings file info here if it becomes necessary in the future
@@ -131,7 +131,7 @@ Public Class clsAnalysisToolRunnerICR
                 If blnBrukerFT Then
                     m_message = "ser file or fid file not found; unable to process with ICR-2LS"
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 Else
                     ' Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
                     '  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
@@ -170,7 +170,7 @@ Public Class clsAnalysisToolRunnerICR
                 If Not Directory.Exists(DSNamePath) Then
                     m_message = "Data file folder not found: " & DSNamePath
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 currentTask = "StartICR2LS for zippsed s-folders in " & DSNamePath
@@ -200,30 +200,30 @@ Public Class clsAnalysisToolRunnerICR
                     m_message = "Error running ICR-2LS (.Pek file not found in " & m_WorkDir & ")"
                 End If
 
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             'Run the cleanup routine from the base class
             currentTask = "PerfPostAnalysisTasks"
 
-            If PerfPostAnalysisTasks(True) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If PerfPostAnalysisTasks(True) <> CloseOutType.CLOSEOUT_SUCCESS Then
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "Error performing post analysis tasks"
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error in clsAnalysisToolRunnerICR: " & ex.Message & "; task = " & currentTask)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
 
     End Function
 
-    Protected Overrides Function DeleteDataFile() As IJobParams.CloseOutType
+    Protected Overrides Function DeleteDataFile() As CloseOutType
 
         'Deletes the dataset folder containing s-folders from the working directory
         Dim RetryCount = 0
@@ -235,7 +235,7 @@ Public Class clsAnalysisToolRunnerICR
                 If Directory.Exists(Path.Combine(m_WorkDir, m_Dataset)) Then
                     Directory.Delete(Path.Combine(m_WorkDir, m_Dataset), True)
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+                Return CloseOutType.CLOSEOUT_SUCCESS
             Catch ex As IOException
                 'If problem is locked file, retry
                 If m_DebugLevel > 0 Then
@@ -245,13 +245,13 @@ Public Class clsAnalysisToolRunnerICR
                 RetryCount += 1
             Catch ex As Exception
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting raw data files, job " & m_JobNum & ": " & ex.Message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
         End While
 
         'If we got to here, then we've exceeded the max retry limit
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Unable to delete raw data file after multiple tries, job " & m_JobNum & ", Error " & ErrMsg)
-        Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Return CloseOutType.CLOSEOUT_FAILED
 
     End Function
 

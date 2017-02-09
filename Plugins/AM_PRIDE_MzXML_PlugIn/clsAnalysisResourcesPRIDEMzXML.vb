@@ -7,11 +7,11 @@ Imports System.Collections.Generic
 Public Class clsAnalysisResourcesPRIDEMzXML
     Inherits clsAnalysisResources
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -28,7 +28,7 @@ Public Class clsAnalysisResourcesPRIDEMzXML
 
         If Not RetrieveFile(m_jobParams.GetParam("PRIDEMzXMLInputFile"), _
          m_jobParams.GetParam("transferFolderPath")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Then Return CloseOutType.CLOSEOUT_FAILED
 
         m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"))
 
@@ -38,10 +38,10 @@ Public Class clsAnalysisResourcesPRIDEMzXML
 
         If Not RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, dctDataPackageJobs) Then
             'Errors were reported in function call, so just return
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

@@ -78,16 +78,16 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
+            CloseOutType result = default(CloseOutType);
 
             try
             {
                 // Call base class for initial setup
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (m_DebugLevel > 4)
@@ -110,7 +110,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (string.IsNullOrWhiteSpace(mMSConvertProgLoc))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Determine the path to the PPM error charter program
@@ -118,14 +118,14 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (string.IsNullOrWhiteSpace(mPpmErrorCharterProgLoc))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
                 var javaProgLoc = GetJavaProgLoc();
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 string msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
@@ -134,7 +134,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (!mMSXmlCacheFolder.Exists)
                 {
                     LogError("MSXmlCache folder not found: " + msXMLCacheFolderPath);
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var msXmlFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
@@ -152,7 +152,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (fiMSGFPlusResults.Exists)
                 {
-                    result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                    result = CloseOutType.CLOSEOUT_SUCCESS;
                     skippedMSGFPlus = true;
                     m_jobParams.AddResultFileToSkip(fiMSGFPlusResults.Name);
                 }
@@ -162,7 +162,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     result = RunMSGFPlus(javaProgLoc, msXmlFileExtension, out fiMSGFPlusResults);
                 }
 
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -299,31 +299,31 @@ namespace AnalysisManagerMzRefineryPlugIn
                         // Move the source files and any results to the Failed Job folder
                         // Useful for debugging problems
                         CopyFailedResultsToArchiveFolder(msXmlFileExtension);
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
 
                 result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                     m_message = "Error moving files into results folder";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (processingError)
@@ -332,11 +332,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing failed; see results at " + m_jobParams.GetParam("transferFolderPath"));
                     if (m_UnableToUseMzRefinery)
                     {
-                        return IJobParams.CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;
+                        return CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;
                     }
                     else
                     {
-                        return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
             }
@@ -344,10 +344,10 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 m_message = "Error in MzRefineryPlugin->RunTool";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -358,7 +358,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <param name="fiMSGFPlusResults">Output: MSGF+ results file</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private IJobParams.CloseOutType RunMSGFPlus(string javaProgLoc, string msXmlFileExtension, out FileInfo fiMSGFPlusResults)
+        private CloseOutType RunMSGFPlus(string javaProgLoc, string msXmlFileExtension, out FileInfo fiMSGFPlusResults)
         {
             const string strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME;
             const string strSearchEngineName = "MSGF+";
@@ -371,7 +371,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (string.IsNullOrWhiteSpace(mMSGFPlusProgLoc))
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Note: we will store the MSGF+ version info in the database after the first line is written to file MSGFPlus_ConsoleOutput.txt
@@ -409,7 +409,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Initialize the fasta file; truncating it if it is over 50 MB in size
             var result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfplusJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath, strParameterFilePath, udtHPCOptions, maxFastaFileSizeMB);
 
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
@@ -432,7 +432,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, udtHPCOptions, overrideParams, out strMSGFPlusCmdLineOptions);
 
-            if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
@@ -442,7 +442,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     m_message = "Problem parsing MzRef parameter file to extract MGSF+ options";
                 }
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Look for extra parameters specific to MZRefinery
@@ -450,7 +450,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!success)
             {
                 m_message = "Error extracting MzRefinery options from parameter file " + Path.GetFileName(strParameterFilePath);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             var resultsFileName = m_Dataset + MSGFPLUS_MZID_SUFFIX;
@@ -483,7 +483,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess))
             {
                 m_message = "Not enough free memory to run " + strSearchEngineName;
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             success = StartMSGFPlus(javaExePath, strSearchEngineName, cmdStr);
@@ -577,18 +577,18 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     m_message = "MSGF+ results file not found: " + resultsFileName;
                 }
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             m_jobParams.AddResultFileToSkip(clsMSGFDBUtils.MOD_FILE_NAME);
 
             if (blnProcessingError)
             {
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
             else
             {
-                return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
         }
 
@@ -679,11 +679,11 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // Make the results folder
             var result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Move the result files into the result folder
                 result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Move was a success; update strFolderPathToArchive
                     strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);

@@ -10,28 +10,28 @@ Public Class clsAnalysisResourcesDtaImport
     ''' <summary>
     ''' Retrieves files necessary for performance of Sequest analysis
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         ' There are really no resources to get, so just clear the list of files to delete or keep and validate zip file
         result = ValidateDTA()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         ' All finished
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
-    Private Function ValidateDTA() As IJobParams.CloseOutType
+    Private Function ValidateDTA() As CloseOutType
 
         Dim SourceFolderNamePath As String = String.Empty
         Try
@@ -45,7 +45,7 @@ Public Class clsAnalysisResourcesDtaImport
             'Determine if Dta folder in source directory exists
             If Not System.IO.Directory.Exists(SourceFolderNamePath) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Source Directory for Manually created Dta does not exist: " & SourceFolderNamePath)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
                 'TODO: Handle errors
             End If
 
@@ -56,7 +56,7 @@ Public Class clsAnalysisResourcesDtaImport
             Dim fileName As String
             If fileEntries.Length < 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "DTA zip file was not found in source directory: " & Path.Combine(SourceFolderNamePath, zipFileName))
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             'If valid zip file is found, then uzip the contents
@@ -67,7 +67,7 @@ Public Class clsAnalysisResourcesDtaImport
                     End If
                 Else
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "An error occurred while unzipping the DTA file: " & Path.Combine(SourceFolderNamePath, zipFileName))
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             Next fileName
 
@@ -75,15 +75,15 @@ Public Class clsAnalysisResourcesDtaImport
             fileEntries = Directory.GetFiles(m_WorkingDir, txtFileName)
             If fileEntries.Length < 1 Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "DTA text file in the zip file was named incorrectly or not valid: " & Path.Combine(SourceFolderNamePath, txtFileName))
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         Catch ex As Exception
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "An exception occurred while validating manually created DTA zip file. " & SourceFolderNamePath & " : " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

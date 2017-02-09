@@ -7,11 +7,11 @@ Imports PHRPReader
 Public Class clsAnalysisResourcesSMAQC
     Inherits clsAnalysisResources
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         ' Retrieve shared resources, including the JobParameters file from the previous job step
         Dim result = GetSharedResources()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
@@ -20,30 +20,30 @@ Public Class clsAnalysisResourcesSMAQC
         Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
 
         If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE
+            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         ' Retrieve the PHRP files (for the X!Tandem, Sequest, or MSGF+ source job)
         If Not RetrievePHRPFiles() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         ' Retrieve the MASIC ScanStats.txt, ScanStatsEx.txt, and _SICstats.txt files
         If Not RetrieveMASICFiles() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         ' In use from June 2013 through November 12, 2015
         ' Retrieve the LLRC .RData files
         'If Not RetrieveLLRCFiles() Then
-        '    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+        '    Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         'End If
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 

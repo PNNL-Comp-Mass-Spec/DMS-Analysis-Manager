@@ -193,15 +193,15 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
         Dim blnSuccess As Boolean
 
         Try
             ' Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             If m_DebugLevel > 4 Then
@@ -210,14 +210,14 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
             ' Verify that program files exist
             If Not DefineProgramPaths() Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Store the PRIDE Converter version info in the database
             If Not StoreToolVersionInfo(mPrideConverterProgLoc) Then
                 LogError("Aborting since StoreToolVersionInfo returned false")
                 m_message = "Error determining PRIDE Converter version"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             mConsoleOutputErrorMsg = String.Empty
@@ -232,12 +232,12 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 Dim msg = "Error loading data package dataset info"
                 LogError(msg & ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false")
                 m_message = msg
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Initialize mDataPackagePeptideHitJobs			
             If Not LookupDataPackagePeptideHitJobs() Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Monitor the FileDownloaded event in this class
@@ -258,7 +258,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Catch ex As Exception
                 ' Folder creation error
                 LogError("Exception creating transfer directory folder", ex)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
 
             ' Read the PX_Submission_Template.px file
@@ -293,40 +293,40 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             If Not blnSuccess Or jobFailureCount > 0 Then
                 ' Something went wrong
                 ' In order to help diagnose things, we will move whatever files were created into the result folder, 
-                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveFolder()
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             DefineFilesToSkipTransfer()
 
             result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             result = CopyResultsFolderToServer(mCacheFolderPath)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                 Return result
             End If
 
         Catch ex As Exception
             LogError("Exception in PRIDEConverterPlugin->RunTool", ex)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
         ' No failures so everything must have succeeded
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -371,7 +371,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 Dim result = ProcessJob(kvJobInfo, udtFilterThresholds, objAnalysisResults, remoteTransferFolder,
                                     dctDatasetRawFilePaths, dctTemplateParameters, assumeInstrumentDataUnpurged)
 
-                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                     jobFailureCount += 1
                     If Not blnContinueOnError OrElse jobFailureCount > maxErrorCount Then Exit For
                 End If
@@ -832,7 +832,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
     Private Sub CopyFailedResultsToArchiveFolder()
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
@@ -854,10 +854,10 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         ' Make the results folder
         result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result = CloseOutType.CLOSEOUT_SUCCESS Then
             ' Move the result files into the result folder
             result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If result = CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Move was a success; update strFolderPathToArchive
                 strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
             End If
@@ -3046,7 +3046,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
       remoteTransferFolder As String,
       dctDatasetRawFilePaths As IReadOnlyDictionary(Of String, String),
       dctTemplateParameters As IReadOnlyDictionary(Of String, String),
-      assumeInstrumentDataUnpurged As Boolean) As IJobParams.CloseOutType
+      assumeInstrumentDataUnpurged As Boolean) As CloseOutType
 
         Dim blnSuccess As Boolean
         Dim resultFiles = New clsResultFileContainer()
@@ -3065,7 +3065,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 ' Create the .mzXML files if it is missing
                 blnSuccess = CreateMzXMLFileIfMissing(strDataset, objAnalysisResults, dctDatasetRawFilePaths)
                 If Not blnSuccess Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+                    Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                 End If
             End If
 
@@ -3084,7 +3084,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
 
         blnSuccess = RetrievePHRPFiles(intJob, strDataset, objAnalysisResults, remoteTransferFolder, filesCopied)
         If Not blnSuccess Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         Dim searchedMzML = False
@@ -3102,7 +3102,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             ' Convert the _dta.txt file to .mgf files
             blnSuccess = ConvertCDTAToMGF(kvJobInfo.Value, resultFiles.MGFFilePath)
             If Not blnSuccess Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         Else
             ' Store the path to the _dta.txt or .mzML.gz file
@@ -3133,7 +3133,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 If String.IsNullOrEmpty(m_message) Then
                     LogError("UpdateMzIdFiles returned false for job " & intJob & ", dataset " & strDataset)
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             resultFiles.MzIDFilePaths.Clear()
@@ -3148,7 +3148,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     If String.IsNullOrEmpty(m_message) Then
                         LogError("GZipFile returned false for " & mzidFilePath)
                     End If
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 resultFiles.MzIDFilePaths.Add(gzippedMZidFile.FullName)
@@ -3176,7 +3176,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                     If String.IsNullOrEmpty(m_message) Then
                         LogError("GZipFile returned false for " & pepXMLFile.FullName)
                     End If
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
 
                 resultFiles.PepXMLFile = gzippedMZidFile.FullName
@@ -3194,7 +3194,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
             Dim strPrideReportXMLFilePath As String = String.Empty
             blnSuccess = CreateMSGFReportFile(intJob, strDataset, udtFilterThresholds, strPrideReportXMLFilePath)
             If Not blnSuccess Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             AddToListIfNew(mPreviousDatasetFilesToDelete, strPrideReportXMLFilePath)
@@ -3203,7 +3203,7 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
                 ' Create the .msgf-Pride.xml file for this job
                 blnSuccess = CreatePrideXMLFile(intJob, strDataset, strPrideReportXMLFilePath, resultFiles.PrideXmlFilePath)
                 If Not blnSuccess Then
-                    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                    Return CloseOutType.CLOSEOUT_FAILED
                 End If
             End If
 
@@ -3212,9 +3212,9 @@ Public Class clsAnalysisToolRunnerPRIDEConverter
         blnSuccess = AppendToPXFileInfo(kvJobInfo.Value, dctDatasetRawFilePaths, resultFiles)
 
         If blnSuccess Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
     End Function
