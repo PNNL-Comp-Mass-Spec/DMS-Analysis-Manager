@@ -1,62 +1,64 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 10/12/2011
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 10/12/2011
+//
+//*********************************************************************************************************
 
-Option Strict On
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
+namespace AnalysisManagerMSAlignHistonePlugIn
+{
+    public class clsAnalysisResourcesMSAlignHistone : clsAnalysisResources
+    {
+        public const string MSDECONV_MSALIGN_FILE_SUFFIX = "_msdeconv.msalign";
 
-Public Class clsAnalysisResourcesMSAlignHistone
-    Inherits clsAnalysisResources
+        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        {
+            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+        }
 
-    Public Const MSDECONV_MSALIGN_FILE_SUFFIX As String = "_msdeconv.msalign"
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-    End Sub
+            // Make sure the machine has enough free memory to run MSAlign
+            if (!ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign"))
+            {
+                m_message = "Not enough free memory to run MSAlign";
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-    Public Overrides Function GetResources() As CloseOutType
+            // Retrieve param file
+            if (!RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+                return CloseOutType.CLOSEOUT_FAILED;
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            // Retrieve Fasta file
+            if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
+                return CloseOutType.CLOSEOUT_FAILED;
 
-        ' Make sure the machine has enough free memory to run MSAlign
-        If Not ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign") Then
-            m_message = "Not enough free memory to run MSAlign"
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            // Retrieve the MSAlign file
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files");
+            var fileToGet = m_DatasetName + MSDECONV_MSALIGN_FILE_SUFFIX;
+            if (!FindAndRetrieveMiscFiles(fileToGet, false))
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+            m_jobParams.AddResultFileToSkip(fileToGet);
 
-        ' Retrieve param file
-        If Not RetrieveFile( _
-           m_jobParams.GetParam("ParmFileName"), _
-           m_jobParams.GetParam("ParmFileStoragePath")) _
-        Then Return CloseOutType.CLOSEOUT_FAILED
+            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Retrieve Fasta file
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return CloseOutType.CLOSEOUT_FAILED
-
-        ' Retrieve the MSAlign file
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
-        dim fileToGet = m_DatasetName & MSDECONV_MSALIGN_FILE_SUFFIX
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-        End If
-        m_jobParams.AddResultFileToSkip(fileToGet)
-
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-End Class
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+    }
+}

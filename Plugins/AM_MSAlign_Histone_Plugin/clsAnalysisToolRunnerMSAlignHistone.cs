@@ -1,1287 +1,1469 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 10/12/2011
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports System.Threading
-Imports AnalysisManagerBase
-
-Public Class clsAnalysisToolRunnerMSAlignHistone
-    Inherits clsAnalysisToolRunnerBase
-
-    '*********************************************************************************************************
-    'Class for running MSAlign Histone analysis
-    '*********************************************************************************************************
-
-#Region "Constants and Enums"
-    Protected Const MSAlign_CONSOLE_OUTPUT As String = "MSAlign_ConsoleOutput.txt"
-    Protected Const MSAlign_Report_CONSOLE_OUTPUT As String = "MSAlign_Report_ConsoleOutput.txt"
-    Protected Const MSAlign_JAR_NAME As String = "MsAlignPipeline.jar"
-
-    Protected Const PROGRESS_PCT_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
-
-    Protected Const OUTPUT_FILE_EXTENSION_PTM_SEARCH As String = "PTM_SEARCH_RESULT"	' XML file created by MsAlignPipeline.jar; detailed results
-    Protected Const OUTPUT_FILE_EXTENSION_TOP_RESULT As String = "TOP_RESULT"			' XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with the top hit for each spectrum
-    Protected Const OUTPUT_FILE_EXTENSION_E_VALUE_RESULT As String = "E_VALUE_RESULT"	' XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with E-Values assigned
-    Protected Const OUTPUT_FILE_EXTENSION_OUTPUT_RESULT As String = "OUTPUT_RESULT"		' XML file created by MsAlignPipeline.jar; new version of the E_VALUE_RESULT file with Species_ID assigned
-
-    Protected Const RESULT_TABLE_FILE_EXTENSION As String = "OUTPUT_TABLE"				' Tab-delimited text file created by MsAlignPipeline.jar; same content as the OUTPUT_RESULT file
-    Protected Const RESULT_TABLE_NAME_SUFFIX As String = "_MSAlign_ResultTable.txt"		' This DMS plugin will rename the DatasetName.OUTPUT_TABLE file to DatasetName_MSAlign_ResultTable.txt
-
-    Protected Const OUTPUT_FILE_EXTENSION_FAST_FILTER_COMBINED As String = "FAST_FILTER_COMBINED"	' XML file created by MsAlignPipeline.jar; we do not keep this file
-
-
-    ' Note that newer versions are assumed to have higher enum values
-    Protected Enum eMSAlignVersionType
-        v0pt9 = 0
-    End Enum
-#End Region
-
-#Region "Structures"
-
-    Protected Structure udtInputPropertyValuesType
-        Public FastaFileName As String
-        Public SpectrumFileName As String
-        Public Sub Clear()
-            FastaFileName = String.Empty
-            SpectrumFileName = String.Empty
-        End Sub
-    End Structure
-
-#End Region
-
-#Region "Module Variables"
-
-    Protected mToolVersionWritten As Boolean
-    Protected mMSAlignVersion As String
-
-    Protected mMSAlignProgLoc As String
-    Protected mConsoleOutputErrorMsg As String
-
-    Protected mMSAlignWorkFolderPath As String
-    Protected mInputPropertyValues As udtInputPropertyValuesType
-
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Runs MSAlign tool
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
-        Dim CmdStr As String
-        Dim intJavaMemorySize As Integer
-        Dim eMSalignVersion As eMSAlignVersionType
-
-        Dim result As CloseOutType
-        Dim blnProcessingError = False
-
-        Dim eResult As CloseOutType
-        Dim blnSuccess As Boolean
-
-        Try
-            'Call base class for initial setup
-            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSAlignHistone.RunTool(): Enter")
-            End If
-
-            ' Verify that program files exist
-
-            ' JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
-            ' Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-            Dim JavaProgLoc = GetJavaProgLoc()
-            If String.IsNullOrEmpty(JavaProgLoc) Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Determine the path to the MSAlign_Histone program
-            ' Note that 
-            mMSAlignProgLoc = DetermineProgramLocation("MSAlign_Histone", "MSAlignHistoneProgLoc", IO.Path.Combine("jar", MSAlign_JAR_NAME))
-
-            If String.IsNullOrWhiteSpace(mMSAlignProgLoc) Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Assume v0.9
-            eMSalignVersion = eMSAlignVersionType.v0pt9
-
-            ' We will store the specific MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
-
-            mToolVersionWritten = False
-            mMSAlignVersion = String.Empty
-            mConsoleOutputErrorMsg = String.Empty
-
-            ' Clear InputProperties parameters
-            mInputPropertyValues.Clear()
-            mMSAlignWorkFolderPath = String.Empty
-
-            ' Copy the MS Align program files and associated files to the work directory
-            ' Note that this function will update mMSAlignWorkFolderPath
-            If Not CopyMSAlignProgramFiles(mMSAlignProgLoc) Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Initialize the files in the input folder
-            If Not InitializeInputFolder(mMSAlignWorkFolderPath, eMSalignVersion) Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Read the MSAlign Parameter File
-            Dim strParamFilePath As String = IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
-            Dim strMSAlignCmdLineOptions As String = String.Empty
-
-            blnSuccess = CreateMSAlignCommandLine(strParamFilePath, strMSAlignCmdLineOptions)
-            If Not blnSuccess Then
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Unknown error parsing the MSAlign parameter file"
-                End If
-                Return result
-            ElseIf String.IsNullOrEmpty(strMSAlignCmdLineOptions) Then
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Problem parsing MSAlign parameter file: command line switches are not present"
-                End If
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSAlign_Histone")
-
-            ' Lookup the amount of memory to reserve for Java; default to 2 GB 
-            intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000)
-            If intJavaMemorySize < 512 Then intJavaMemorySize = 512
-
-            'Set up and execute a program runner to run MSAlign_Histone
-            CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -classpath jar\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " & strMSAlignCmdLineOptions
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
-
-            Dim cmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
-            RegisterEvents(cmdRunner)
-            AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
-
-            With cmdRunner
-                .CreateNoWindow = True
-                .CacheStandardOutput = False
-                .EchoOutputToConsole = True
-
-                .WriteConsoleOutputToFile = True
-                .ConsoleOutputFilePath = IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT)
-
-            End With
-
-            m_progress = PROGRESS_PCT_STARTING
-
-            blnSuccess = cmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", True)
-
-            If Not mToolVersionWritten Then
-                If String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-                    ParseConsoleOutputFile(IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
-                End If
-                mToolVersionWritten = StoreToolVersionInfo()
-            End If
-
-            If Not blnSuccess AndAlso String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                ' Parse the console output file one more time to see if an exception was logged
-                ParseConsoleOutputFile(IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
-            End If
-
-            If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
-            End If
-
-
-            If Not blnSuccess Then
-                Dim Msg As String
-                Msg = "Error running MSAlign_Histone"
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
-
-                If cmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_Histone returned a non-zero exit code: " & cmdRunner.ExitCode.ToString)
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign_Histone failed (but exit code is 0)")
-                End If
-
-                blnProcessingError = True
-                eResult = CloseOutType.CLOSEOUT_FAILED
-
-            Else
-
-                ' Make sure the output files were created
-                If Not ValidateResultFiles() Then
-                    blnProcessingError = True
-                Else
-                    ' Create the HTML and XML files
-                    ' Need to call MsAlignPipeline.jar again, but this time with a different classpath
-
-                    blnSuccess = MakeReportFiles(JavaProgLoc, strMSAlignCmdLineOptions, intJavaMemorySize)
-                    If Not blnSuccess Then blnProcessingError = True
-
-                    ' Move the result files
-                    If Not MoveMSAlignResultFiles() Then
-                        blnProcessingError = True
-                    End If
-
-                    Dim strResultTableSourcePath As String
-                    strResultTableSourcePath = IO.Path.Combine(m_WorkDir, m_Dataset & "_" & RESULT_TABLE_FILE_EXTENSION)
-
-                    If Not blnProcessingError AndAlso IO.File.Exists(strResultTableSourcePath) Then
-
-                        ' Make sure the _OUTPUT_TABLE.txt file is not empty
-                        ' Make a copy of the OUTPUT_TABLE.txt file so that we can fix the header row (creating the RESULT_TABLE_NAME_SUFFIX file)
-
-                        If ValidateResultTableFile(eMSalignVersion, strResultTableSourcePath) Then
-                            eResult = CloseOutType.CLOSEOUT_SUCCESS
-                        Else
-                            eResult = CloseOutType.CLOSEOUT_NO_DATA
-                        End If
-
-                    End If
-
-                    m_StatusTools.UpdateAndWrite(m_progress)
-                    If m_DebugLevel >= 3 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign Search Complete")
-                    End If
-                End If
-
-            End If
-
-            m_progress = PROGRESS_PCT_COMPLETE
-
-            'Stop the job timer
-            m_StopTime = DateTime.UtcNow
-
-            'Add the current job data to the summary file
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            End If
-
-            'Make sure objects are released
-            Thread.Sleep(500)        ' 500 msec delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-            If blnProcessingError Then
-                ' Move the source files and any results to the Failed Job folder
-                ' Useful for debugging MSAlign problems
-                CopyFailedResultsToArchiveFolder()
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MakeResultsFolder()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                'MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MoveResultFiles()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                m_message = "Error moving files into results folder"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = CopyResultsFolderToServer()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-        Catch ex As Exception
-            m_message = "Error in MSAlignHistone->RunTool"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return eResult
-
-    End Function
-
-    Protected Function CopyFastaCheckResidues(strSourceFilePath As String, strTargetFilePath As String) As Boolean
-        Const RESIDUES_PER_LINE = 60
-
-        Dim oReader As ProteinFileReader.FastaFileReader
-        Dim reInvalidResidues As Text.RegularExpressions.Regex
-        Dim strProteinResidues As String
-
-        Dim intIndex As Integer
-        Dim intResidueCount As Integer
-        Dim intLength As Integer
-        Dim intWarningCount = 0
-
-        Try
-            reInvalidResidues = New Text.RegularExpressions.Regex("[BJOUXZ]", Text.RegularExpressions.RegexOptions.Compiled)
-
-            oReader = New ProteinFileReader.FastaFileReader()
-            If Not oReader.OpenFile(strSourceFilePath) Then
-                m_message = "Error opening fasta file in CopyFastaCheckResidues"
-                Return False
-            End If
-
-            Using swNewFasta = New IO.StreamWriter(New IO.FileStream(strTargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-                Do While oReader.ReadNextProteinEntry()
-
-                    swNewFasta.WriteLine(oReader.ProteinLineStartChar & oReader.HeaderLine)
-                    strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-")
-
-                    If intWarningCount < 5 AndAlso strProteinResidues.GetHashCode() <> oReader.ProteinSequence.GetHashCode() Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Changed invalid residues to '-' in protein " & oReader.ProteinName)
-                        intWarningCount += 1
-                    End If
-
-                    intIndex = 0
-                    intResidueCount = strProteinResidues.Length
-                    Do While intIndex < strProteinResidues.Length
-                        intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex)
-                        swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength))
-                        intIndex += RESIDUES_PER_LINE
-                    Loop
-
-                Loop
-            End Using
-
-            oReader.CloseFile()
-
-        Catch ex As Exception
-            m_message = "Exception in CopyFastaCheckResidues"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    Protected Sub CopyFailedResultsToArchiveFolder()
-
-        Dim result As CloseOutType
-
-        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
-
-        ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
-
-        ' Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-        Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
-
-        Try
-            IO.File.Delete(IO.Path.Combine(m_WorkDir, m_Dataset & ".mzXML"))
-
-            ' Copy any search result files that are not empty from the MSAlign folder to the work directory
-            Dim dctResultFiles As Dictionary(Of String, String)
-            dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset)
-
-            For Each kvItem As KeyValuePair(Of String, String) In dctResultFiles
-                Dim fiSearchResultFile = New IO.FileInfo(IO.Path.Combine(mMSAlignWorkFolderPath, kvItem.Key))
-
-                If fiSearchResultFile.Exists AndAlso fiSearchResultFile.Length > 0 Then
-                    fiSearchResultFile.CopyTo(IO.Path.Combine(m_WorkDir, IO.Path.GetFileName(fiSearchResultFile.Name)))
-                End If
-            Next
-
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        ' Make the results folder
-        result = MakeResultsFolder()
-        If result = CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = IO.Path.Combine(m_WorkDir, m_ResFolderName)
-            End If
-        End If
-
-        ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
-    End Sub
-
-    Private Function CopyMSAlignProgramFiles(strMSAlignJarFilePath As String) As Boolean
-
-        Dim fiMSAlignJarFile As IO.FileInfo
-        Dim diMSAlignSrc As IO.DirectoryInfo
-        Dim diMSAlignWork As IO.DirectoryInfo
-
-        Try
-            fiMSAlignJarFile = New IO.FileInfo(strMSAlignJarFilePath)
-
-            If Not fiMSAlignJarFile.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign .Jar file not found: " & fiMSAlignJarFile.FullName)
-                Return False
-            End If
-
-            ' The source folder is one level up from the .Jar file
-            diMSAlignSrc = New IO.DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName)
-            diMSAlignWork = New IO.DirectoryInfo(IO.Path.Combine(m_WorkDir, "MSAlign"))
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying MSAlign program file to the Work Directory")
-
-            ' Make sure the folder doesn't already exit
-            If diMSAlignWork.Exists Then
-                diMSAlignWork.Delete(True)
-                Thread.Sleep(500)
-            End If
-
-            ' Create the folder
-            diMSAlignWork.Create()
-            mMSAlignWorkFolderPath = diMSAlignWork.FullName
-
-            ' Create the subdirectories
-            diMSAlignWork.CreateSubdirectory("html")
-            diMSAlignWork.CreateSubdirectory("jar")
-            diMSAlignWork.CreateSubdirectory("xml")
-            diMSAlignWork.CreateSubdirectory("xsl")
-            diMSAlignWork.CreateSubdirectory("etc")
-
-            ' Copy all files in the jar and xsl folders to the target
-            Dim lstSubfolderNames = New List(Of String)
-            lstSubfolderNames.Add("jar")
-            lstSubfolderNames.Add("xsl")
-            lstSubfolderNames.Add("etc")
-
-            For Each strSubFolder As String In lstSubfolderNames
-                Dim strTargetSubfolder = IO.Path.Combine(diMSAlignWork.FullName, strSubFolder)
-
-                Dim diSubfolder As IO.DirectoryInfo()
-                diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder)
-
-                If diSubfolder.Length = 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Source MSAlign subfolder not found: " & strTargetSubfolder)
-                    Return False
-                End If
-
-                For Each fiFile As IO.FileInfo In diSubfolder(0).GetFiles()
-                    fiFile.CopyTo(IO.Path.Combine(strTargetSubfolder, fiFile.Name))
-                Next
-
-            Next
-
-            ' Copy the histone ptm XML files
-            Dim fiSourceFiles As List(Of IO.FileSystemInfo)
-            fiSourceFiles = diMSAlignSrc.GetFileSystemInfos("histone*_ptm.xml").ToList()
-
-            For Each fiFile As IO.FileInfo In fiSourceFiles
-                fiFile.CopyTo(IO.Path.Combine(diMSAlignWork.FullName, fiFile.Name))
-            Next
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CopyMSAlignProgramFiles: " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    Protected Function CreateMSAlignCommandLine(strParamFilePath As String, ByRef strCommandLine As String) As Boolean
-
-        ' MSAlign_Histone syntax
-        '
-        ' -a, --activation <CID|HCD|ETD|FILE>
-        '        MS/MS activation type: use FILE for data set with several activation types.
-        ' -c  --cutoff <float>
-        '        Cutoff value. (Use this option with -t).
-        '        Default value is 0.01.
-        ' -e  --error <integer>
-        '        Error tolerance in ppm.
-        '        Default value 15.
-        ' -m, --modification <0|1|2>
-        '        Number of modifications.
-        '        Default value: 2.
-        ' -p, --protection <C0|C57|C58>
-        '        Cystein protection.
-        '        Default value: C0.
-        ' -r, --report <integer>
-        '        Number of reported Protein-Spectrum-Matches for each spectrum.
-        '        Default value 1.
-        ' -s, --search <TARGET|TARGET+DECOY>
-        '        Searching against target or target+decoy (scrambled) protein database.
-        ' -t, --cutofftype <EVALUE|FDR>
-        '        Use either EVALUE or FDR to filter out identified Protein-Spectrum-Matches.
-        '        Default value EVALUE.
-
-
-        ' These key names must be lowercase
-        Const INSTRUMENT_ACTIVATION_TYPE_KEY = "activation"
-        Const SEARCH_TYPE_KEY = "search"
-
-        Dim strLineIn As String
-
-        Dim intEqualsIndex As Integer
-        Dim strKeyName As String
-        Dim strValue As String
-        Dim dctParameterMap As Dictionary(Of String, String)
-
-        strCommandLine = String.Empty
-
-        Try
-            ' Initialize the dictionary that maps parameter names in the parameter file to command line switches
-            dctParameterMap = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
-            dctParameterMap.Add("activation", "a")
-            dctParameterMap.Add("search", "s")
-            dctParameterMap.Add("protection", "p")
-            dctParameterMap.Add("modification", "m")
-            dctParameterMap.Add("error", "e")
-            dctParameterMap.Add("cutoffType", "t")
-            dctParameterMap.Add("cutoff", "c")
-            dctParameterMap.Add("report", "r")
-
-            ' Open the parameter file
-            Using srInFile = New IO.StreamReader(New IO.FileStream(strParamFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-
-                ' The first two parameters on the command line are Fasta File name and input file name
-                strCommandLine &= mInputPropertyValues.FastaFileName & " " & mInputPropertyValues.SpectrumFileName
-
-                ' Now append the parameters defined in the parameter file			
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
-
-                    If strLineIn.TrimStart().StartsWith("#") OrElse String.IsNullOrWhiteSpace(strLineIn) Then
-                        ' Comment line or blank line; skip it
-                    Else
-                        ' Look for an equals sign
-                        intEqualsIndex = strLineIn.IndexOf("="c)
-
-                        If intEqualsIndex > 0 Then
-                            ' Split the line on the equals sign
-                            strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd()
-                            If intEqualsIndex < strLineIn.Length - 1 Then
-                                strValue = strLineIn.Substring(intEqualsIndex + 1).Trim()
-                            Else
-                                strValue = String.Empty
-                            End If
-
-                            If strKeyName.ToLower() = INSTRUMENT_ACTIVATION_TYPE_KEY Then
-                                ' If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
-                                ' The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
-                                Dim strToolName As String
-                                strToolName = m_jobParams.GetParam("ToolName")
-
-                                If strToolName = "MSAlign_Bruker" OrElse strToolName = "MSAlign_Histone_Bruker" Then
-                                    If strValue.ToUpper() = "FILE" Then
-                                        m_message = "Must specify an explicit scan type for " & strKeyName & " in the MSAlign parameter file (CID, HCD, or ETD)"
-
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag")
-
-                                        Return False
-
-                                    End If
-                                End If
-                            End If
-
-                            If strKeyName.ToLower() = SEARCH_TYPE_KEY Then
-                                If strValue.ToUpper() = "TARGET+DECOY" Then
-                                    ' Make sure the protein collection is not a Decoy protein collection
-                                    Dim strProteinOptions As String
-                                    strProteinOptions = m_jobParams.GetParam("ProteinOptions")
-
-                                    If strProteinOptions.ToLower().Contains("seq_direction=decoy") Then
-                                        m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy"
-
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-
-                                        Return False
-                                    End If
-                                End If
-                            End If
-
-                            Dim strSwitch As String = String.Empty
-                            If dctParameterMap.TryGetValue(strKeyName, strSwitch) Then
-                                strCommandLine &= " -" & strSwitch & " " & strValue
-                            Else
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring unrecognized MSAlign_Histone parameter: " & strKeyName)
-                            End If
-
-                        Else
-                            ' Unknown line format; skip it
-                        End If
-
-                    End If
-
-                Loop
-
-            End Using
-
-        Catch ex As Exception
-            m_message = "Exception in CreateMSAlignCommandLine"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateMSAlignCommandLine: " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    Protected Function FilesMatch(strFilePath1 As String, strFilePath2 As String) As Boolean
-
-        Dim blnFilesMatch = False
-        Try
-            Dim fiFile1 = New IO.FileInfo(strFilePath1)
-            Dim fiFile2 = New IO.FileInfo(strFilePath2)
-
-            If fiFile1.Exists AndAlso fiFile2.Exists Then
-                If fiFile1.Length = fiFile2.Length Then
-
-                    blnFilesMatch = True
-
-                    Using srInfile1 = New IO.StreamReader(New IO.FileStream(fiFile1.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-                        Using srInfile2 = New IO.StreamReader(New IO.FileStream(fiFile2.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-                            Do While Not srInfile1.EndOfStream
-                                If srInfile2.EndOfStream Then
-                                    blnFilesMatch = False
-                                    Exit Do
-                                Else
-                                    If srInfile1.ReadLine() <> srInfile2.ReadLine() Then
-                                        blnFilesMatch = False
-                                        Exit Do
-                                    End If
-                                End If
-                            Loop
-                        End Using
-                    End Using
-
-                End If
-            End If
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FilesMatch: " & ex.Message)
-            blnFilesMatch = False
-        End Try
-
-        Return blnFilesMatch
-
-    End Function
-
-    Protected Function GetExpectedMSAlignResultFiles(strDatasetName As String) As Dictionary(Of String, String)
-        ' Keys in this dictionary are the expected file name
-        ' Values are the new name to rename the file to
-        Dim dctResultFiles = New Dictionary(Of String, String)
-        Dim strBaseName As String = IO.Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName)
-
-        dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_PTM_SEARCH, strDatasetName & "_PTM_Search_Result.xml")
-        dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_TOP_RESULT, String.Empty)                          ' Don't keep this file since it's virtually identical to the E_VALUE_RESULT file
-        dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_E_VALUE_RESULT, strDatasetName & "_PTM_Search_Result_EValue.xml")
-        dctResultFiles.Add(strBaseName & "." & OUTPUT_FILE_EXTENSION_OUTPUT_RESULT, strDatasetName & "_PTM_Search_Result_Final.xml")
-
-        dctResultFiles.Add(strBaseName & "." & RESULT_TABLE_FILE_EXTENSION, strDatasetName & "_" & RESULT_TABLE_FILE_EXTENSION)
-
-        Return dctResultFiles
-
-    End Function
-
-    Protected Function InitializeInputFolder(strMSAlignWorkFolderPath As String, eMSalignVersion As eMSAlignVersionType) As Boolean
-
-        Dim fiFiles() As IO.FileInfo
-
-        Try
-
-            Dim fiSourceFolder As IO.DirectoryInfo
-            fiSourceFolder = New IO.DirectoryInfo(m_WorkDir)
-
-            ' Copy the .Fasta file into the MSInput folder
-            ' MSAlign will crash if any non-standard residues are present (BJOUXZ)
-            ' Thus, we will read the source file with a reader and create a new fasta file
-
-            ' Define the path to the fasta file
-            Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
-            Dim strFASTAFilePath As String = IO.Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-
-            Dim fiFastaFile = New IO.FileInfo(strFASTAFilePath)
-
-            If Not fiFastaFile.Exists Then
-                ' Fasta file not found
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " & fiFastaFile.FullName)
-                Return False
-            End If
-
-            mInputPropertyValues.FastaFileName = String.Copy(fiFastaFile.Name)
-
-            If Not CopyFastaCheckResidues(fiFastaFile.FullName, IO.Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.FastaFileName)) Then
-                If String.IsNullOrEmpty(m_message) Then m_message = "CopyFastaCheckResidues returned false"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return False
-            End If
-
-            ' Move the _msdeconv.msalign file to the MSAlign work folder
-            fiFiles = fiSourceFolder.GetFiles("*" & clsAnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX)
-            If fiFiles.Length = 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign file not found in work directory")
-                Return False
-            Else
-                mInputPropertyValues.SpectrumFileName = String.Copy(fiFiles(0).Name)
-                fiFiles(0).MoveTo(IO.Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName))
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in InitializeMSInputFolder: " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    Protected Function MakeReportFiles(JavaProgLoc As String, strMSAlignCmdLineOptions As String, intJavaMemorySize As Integer) As Boolean
-
-        Dim CmdStr As String
-        Dim blnSuccess As Boolean
-
-        Try
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating MSAlign_Histone Report Files")
-
-
-            'Set up and execute a program runner to run MSAlign_Histone
-            CmdStr = " -Xmx" & intJavaMemorySize.ToString & "M -classpath jar\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " & strMSAlignCmdLineOptions
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc & " " & CmdStr)
-
-            Dim cmdRunner = New clsRunDosProgram(mMSAlignWorkFolderPath)
-            RegisterEvents(cmdRunner)
-            AddHandler cmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
-
-            With cmdRunner
-                .CreateNoWindow = True
-                .CacheStandardOutput = False
-                .EchoOutputToConsole = True
-
-                .WriteConsoleOutputToFile = True
-                .ConsoleOutputFilePath = IO.Path.Combine(m_WorkDir, MSAlign_Report_CONSOLE_OUTPUT)
-            End With
-
-            blnSuccess = cmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", True)
-
-            If Not blnSuccess Then
-                Dim Msg As String
-                Msg = "Error running MSAlign_Histone to create HTML and XML files"
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
-
-                If cmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign_Histone returned a non-zero exit code during report creation: " & cmdRunner.ExitCode.ToString)
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSAlign_Histone failed during report creation (but exit code is 0)")
-                End If
-            Else
-                m_jobParams.AddResultFileToSkip(MSAlign_Report_CONSOLE_OUTPUT)
-            End If
-
-        Catch ex As Exception
-            m_message = "Exception creating MSAlign_Histone HTML and XML files"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in MakeReportFiles: " & ex.Message)
-            Return False
-        End Try
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
-    ''' </summary>
-    ''' <param name="strConsoleOutputFilePath"></param>
-    ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
-
-        ' Example Console output
-        '
-        ' Start at Thu Apr 04 15:10:48 PDT 2013
-        ' MS-Align+ 0.9.0.16 2013-02-02
-        ' Fast filteration started.
-        ' Fast filteration finished.
-        ' Ptm search: Processing spectrum scan 4353...9% finished (0 minutes used).
-        ' Ptm search: Processing spectrum scan 4354...18% finished (1 minutes used).
-
-        Static reExtractPercentFinished As New Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-
-        Dim oMatch As Text.RegularExpressions.Match
-
-        Try
-            If Not IO.File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-                End If
-
-                Exit Sub
-            End If
-
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
-            End If
-
-
-            Dim strLineIn As String
-            Dim intLinesRead As Integer
-
-            Dim intProgress As Int16
-            Dim intActualProgress As Int16
-
-            mConsoleOutputErrorMsg = String.Empty
-
-            Using srInFile = New IO.StreamReader(New IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite))
-
-                intLinesRead = 0
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
-                    intLinesRead += 1
-
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
-                        If intLinesRead <= 4 AndAlso String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                            ' Originally the second line was the MSAlign version
-                            ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                            ' The fourth line is the MSAlign version
-                            If String.IsNullOrEmpty(mMSAlignVersion) AndAlso strLineIn.ToLower.Contains("ms-align") Then
-                                If m_DebugLevel >= 2 AndAlso String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign version: " & strLineIn)
-                                End If
-
-                                mMSAlignVersion = String.Copy(strLineIn)
-                            Else
-                                If strLineIn.ToLower.Contains("error") OrElse strLineIn.Contains("[ java.lang") Then
-                                    mConsoleOutputErrorMsg = "Error running MSAlign: " & strLineIn
-                                End If
-                            End If
-                        End If
-
-                        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                            mConsoleOutputErrorMsg &= "; " & strLineIn
-                        Else
-
-                            ' Update progress if the line starts with Processing spectrum
-                            If strLineIn.IndexOf("Processing spectrum", StringComparison.Ordinal) >= 0 Then
-                                oMatch = reExtractPercentFinished.Match(strLineIn)
-                                If oMatch.Success Then
-                                    If Int16.TryParse(oMatch.Groups(1).Value, intProgress) Then
-                                        intActualProgress = intProgress
-                                    End If
-                                End If
-
-                            ElseIf strLineIn.Contains("[ java.lang") Then
-                                ' This is likely an exception
-                                mConsoleOutputErrorMsg = "Error running MSAlign: " & strLineIn
-                            End If
-
-                        End If
-
-                    End If
-                Loop
-
-            End Using
-
-            If m_progress < intActualProgress Then
-                m_progress = intActualProgress
-            End If
-
-        Catch ex As Exception
-            ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-            End If
-        End Try
-
-    End Sub
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        Dim strToolVersionInfo = String.Copy(mMSAlignVersion)
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of IO.FileInfo)
-        ioToolFiles.Add(New IO.FileInfo(mMSAlignProgLoc))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Reads the console output file and removes the majority of the percent finished messages
-    ''' </summary>
-    ''' <param name="strConsoleOutputFilePath"></param>
-    ''' <remarks></remarks>
-    <Obsolete("Unused")>
-    Private Sub TrimConsoleOutputFile(strConsoleOutputFilePath As String)
-
-        Static reExtractScan As New Text.RegularExpressions.Regex("Processing spectrum scan (\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-        Dim oMatch As Text.RegularExpressions.Match
-
-        Try
-            If Not IO.File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-                End If
-
-                Exit Sub
-            End If
-
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Trimming console output file at " & strConsoleOutputFilePath)
-            End If
-
-            Dim strLineIn As String
-            Dim blnKeepLine As Boolean
-
-            Dim intScanNumber As Integer
-            Dim strMostRecentProgressLine As String = String.Empty
-            Dim strMostRecentProgressLineWritten As String = String.Empty
-
-            Dim intScanNumberOutputThreshold As Integer
-
-            Dim strTrimmedFilePath As String
-            strTrimmedFilePath = strConsoleOutputFilePath & ".trimmed"
-
-            Using srInFile = New IO.StreamReader(New IO.FileStream(strConsoleOutputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite)),
-                  swOutFile = New IO.StreamWriter(New IO.FileStream(strTrimmedFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-
-                intScanNumberOutputThreshold = 0
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
-                    blnKeepLine = True
-
-                    oMatch = reExtractScan.Match(strLineIn)
-                    If oMatch.Success Then
-                        If Integer.TryParse(oMatch.Groups(1).Value, intScanNumber) Then
-                            If intScanNumber < intScanNumberOutputThreshold Then
-                                blnKeepLine = False
-                            Else
-                                ' Write out this line and bump up intScanNumberOutputThreshold by 100
-                                intScanNumberOutputThreshold += 100
-                                strMostRecentProgressLineWritten = String.Copy(strLineIn)
-                            End If
-                        End If
-                        strMostRecentProgressLine = String.Copy(strLineIn)
-
-                    ElseIf strLineIn.StartsWith("Deconvolution finished") Then
-                        ' Possibly write out the most recent progress line
-                        If String.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) <> 0 Then
-                            swOutFile.WriteLine(strMostRecentProgressLine)
-                        End If
-                    End If
-
-                    If blnKeepLine Then
-                        swOutFile.WriteLine(strLineIn)
-                    End If
-                Loop
-
-            End Using
-
-            ' Wait 500 msec, then swap the files
-            Thread.Sleep(500)
-
-            Try
-                IO.File.Delete(strConsoleOutputFilePath)
-                IO.File.Move(strTrimmedFilePath, strConsoleOutputFilePath)
-            Catch ex As Exception
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error replacing original console output file (" & strConsoleOutputFilePath & ") with trimmed version: " & ex.Message)
-                End If
-            End Try
-
-        Catch ex As Exception
-            ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error trimming console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-            End If
-        End Try
-
-    End Sub
-
-    Protected Function MoveMSAlignResultFiles() As Boolean
-
-        Dim dctResultsFilesToMove As Dictionary(Of String, String)
-        Dim blnProcessingError = False
-
-        Dim strEValueResultFilePath As String = String.Empty
-        Dim strFinalResultFilePath As String = String.Empty
-
-        Try
-            dctResultsFilesToMove = GetExpectedMSAlignResultFiles(m_Dataset)
-
-            For Each kvItem As KeyValuePair(Of String, String) In dctResultsFilesToMove
-                Dim fiSearchResultFile = New IO.FileInfo(IO.Path.Combine(mMSAlignWorkFolderPath, kvItem.Key))
-
-                If Not fiSearchResultFile.Exists Then
-                    ' Note that ValidateResultFiles should have already logged the missing files
-
-                Else
-                    ' Copy the results file to the work directory
-                    ' Rename the file as we copy it
-
-                    If String.IsNullOrEmpty(kvItem.Value) Then
-                        ' Skip this file
-                    Else
-                        Dim strTargetFilePath As String
-                        strTargetFilePath = IO.Path.Combine(m_WorkDir, kvItem.Value)
-
-                        fiSearchResultFile.CopyTo(strTargetFilePath, True)
-
-                        If kvItem.Key.EndsWith(OUTPUT_FILE_EXTENSION_E_VALUE_RESULT) Then
-                            strEValueResultFilePath = strTargetFilePath
-                        ElseIf kvItem.Key.EndsWith(OUTPUT_FILE_EXTENSION_OUTPUT_RESULT) Then
-                            strFinalResultFilePath = strTargetFilePath
-                        End If
-
-                    End If
-
-                End If
-            Next
-
-            ' Zip the Html and XML folders
-            ZipMSAlignResultFolder("html")
-            ZipMSAlignResultFolder("XML")
-
-            ' Skip the E_VALUE_RESULT file if it is identical to the OUTPUT_RESULT file
-            If Not String.IsNullOrEmpty(strEValueResultFilePath) AndAlso Not String.IsNullOrEmpty(strFinalResultFilePath) Then
-
-                If FilesMatch(strEValueResultFilePath, strFinalResultFilePath) Then
-                    m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strEValueResultFilePath))
-                End If
-
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateAndCopyResultFiles: " & ex.Message)
-            Return False
-        End Try
-
-        If blnProcessingError Then
-            Return False
-        Else
-            Return True
-        End If
-
-    End Function
-
-    Protected Function ValidateResultFiles() As Boolean
-
-        Dim dctResultFiles As Dictionary(Of String, String)
-        Dim blnProcessingError = False
-
-        Try
-            dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset)
-
-            For Each kvItem As KeyValuePair(Of String, String) In dctResultFiles
-                Dim fiSearchResultFile = New IO.FileInfo(IO.Path.Combine(mMSAlignWorkFolderPath, kvItem.Key))
-
-                If Not fiSearchResultFile.Exists Then
-                    Dim Msg As String
-                    Msg = "MSAlign results file not found (" & kvItem.Key & ")"
-
-                    If Not blnProcessingError Then
-                        ' This is the first missing file; update the base-class comment
-                        m_message = clsGlobal.AppendToComment(m_message, Msg)
-                    End If
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & " (" & fiSearchResultFile.FullName & ")" & ", job " & m_JobNum)
-                    blnProcessingError = True
-                End If
-            Next
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateResultFiles: " & ex.Message)
-            Return False
-        End Try
-
-        If blnProcessingError Then
-            Return False
-        Else
-            Return True
-        End If
-
-    End Function
-
-    Protected Function ValidateResultTableFile(eMSalignVersion As eMSAlignVersionType, strSourceFilePath As String) As Boolean
-
-        Dim strOutputFilePath As String
-
-        Dim strLineIn As String
-        Dim blnValidDataFound As Boolean
-        Dim intLinesRead As Integer
-
-        Try
-            blnValidDataFound = False
-            intLinesRead = 0
-
-            strOutputFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & RESULT_TABLE_NAME_SUFFIX)
-
-            If Not IO.File.Exists(strSourceFilePath) Then
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign OUTPUT_TABLE file not found: " & strSourceFilePath)
-                End If
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "MSAlign OUTPUT_TABLE file not found"
-                End If
-                Return False
-            End If
-
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Validating that the MSAlign OUTPUT_TABLE file is not empty")
-            End If
-
-            ' Open the input file and
-            ' create the output file
-            Using srInFile = New IO.StreamReader(New IO.FileStream(strSourceFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.ReadWrite)),
-                  swOutFile = New IO.StreamWriter(New IO.FileStream(strOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine
-                    intLinesRead += 1
-
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-
-                        If intLinesRead = 1 AndAlso strLineIn.EndsWith("FDR" & ControlChars.Tab) Then
-                            ' The header line is missing the final column header; add it
-                            strLineIn &= "FragMethod"
-                        End If
-
-                        If Not blnValidDataFound Then
-
-                            Dim strSplitLine() As String
-                            strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-                            If strSplitLine.Length > 1 Then
-                                ' The first column has the source .msalign file name
-                                ' The second column has Prsm_ID
-
-                                ' Look for an integer in the second column
-                                Dim intValue As Integer
-                                If Integer.TryParse(strSplitLine(1), intValue) Then
-                                    ' Integer found; line is valid
-                                    blnValidDataFound = True
-                                End If
-                            End If
-
-                        End If
-
-                        swOutFile.WriteLine(strLineIn)
-                    End If
-
-                Loop
-
-            End Using
-
-            If Not blnValidDataFound Then
-                Dim Msg As String
-                Msg = "MSAlign OUTPUT_TABLE file is empty"
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
-                Return False
-            Else
-                ' Don't keep the original output table; only the new file we just created
-                m_jobParams.AddResultFileToSkip(IO.Path.GetFileName(strSourceFilePath))
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateResultTableFile: " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    Protected Function ZipMSAlignResultFolder(strFolderName As String) As Boolean
-
-        Dim objZipper As Ionic.Zip.ZipFile
-        Dim strTargetFilePath As String
-        Dim strSourceFolderPath As String
-
-        Try
-            strTargetFilePath = IO.Path.Combine(m_WorkDir, m_Dataset & "_MSAlign_Results_" & strFolderName.ToUpper() & ".zip")
-            strSourceFolderPath = IO.Path.Combine(mMSAlignWorkFolderPath, strFolderName)
-
-            ' Confirm that the folder has one or more files or subfolders
-            Dim diSourceFolder As New IO.DirectoryInfo(strSourceFolderPath)
-            If diSourceFolder.GetFileSystemInfos.Length = 0 Then
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSAlign results folder is empty; nothing to zip: " & strSourceFolderPath)
-                End If
-                Return False
-            End If
-
-            If m_DebugLevel >= 1 Then
-                Dim strLogMessage As String = "Zipping " & strFolderName.ToUpper() & " folder at " & strSourceFolderPath
-
-                If m_DebugLevel >= 2 Then
-                    strLogMessage &= ": " & strTargetFilePath
-                End If
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strLogMessage)
-
-            End If
-
-            objZipper = New Ionic.Zip.ZipFile(strTargetFilePath)
-            objZipper.AddDirectory(strSourceFolderPath)
-            objZipper.Save()
-            Thread.Sleep(500)
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ZipMSAlignResultFolder: " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-#End Region
-
-#Region "Event Handlers"
-
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
-
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
-
-        UpdateStatusFile()
-
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
-
-            ParseConsoleOutputFile(IO.Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT))
-
-            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSAlignVersion) Then
-                mToolVersionWritten = StoreToolVersionInfo()
-            End If
-
-            LogProgress("MSAlign Histone")
-        End If
-
-    End Sub
-
-#End Region
-
-End Class
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 10/12/2011
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
+using AnalysisManagerBase;
+
+namespace AnalysisManagerMSAlignHistonePlugIn
+{
+    public class clsAnalysisToolRunnerMSAlignHistone : clsAnalysisToolRunnerBase
+    {
+        //*********************************************************************************************************
+        //Class for running MSAlign Histone analysis
+        //*********************************************************************************************************
+
+        #region "Constants and Enums"
+
+        protected const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
+        protected const string MSAlign_Report_CONSOLE_OUTPUT = "MSAlign_Report_ConsoleOutput.txt";
+        protected const string MSAlign_JAR_NAME = "MsAlignPipeline.jar";
+
+        protected const float PROGRESS_PCT_STARTING = 1;
+        protected const float PROGRESS_PCT_COMPLETE = 99;
+
+        // XML file created by MsAlignPipeline.jar; detailed results
+        protected const string OUTPUT_FILE_EXTENSION_PTM_SEARCH = "PTM_SEARCH_RESULT";
+        // XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with the top hit for each spectrum
+        protected const string OUTPUT_FILE_EXTENSION_TOP_RESULT = "TOP_RESULT";
+        // XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with E-Values assigned
+        protected const string OUTPUT_FILE_EXTENSION_E_VALUE_RESULT = "E_VALUE_RESULT";
+        // XML file created by MsAlignPipeline.jar; new version of the E_VALUE_RESULT file with Species_ID assigned
+        protected const string OUTPUT_FILE_EXTENSION_OUTPUT_RESULT = "OUTPUT_RESULT";
+
+        // Tab-delimited text file created by MsAlignPipeline.jar; same content as the OUTPUT_RESULT file
+        protected const string RESULT_TABLE_FILE_EXTENSION = "OUTPUT_TABLE";
+        // This DMS plugin will rename the DatasetName.OUTPUT_TABLE file to DatasetName_MSAlign_ResultTable.txt
+        protected const string RESULT_TABLE_NAME_SUFFIX = "_MSAlign_ResultTable.txt";
+
+        // XML file created by MsAlignPipeline.jar; we do not keep this file
+        protected const string OUTPUT_FILE_EXTENSION_FAST_FILTER_COMBINED = "FAST_FILTER_COMBINED";
+
+        // Note that newer versions are assumed to have higher enum values
+        protected enum eMSAlignVersionType
+        {
+            v0pt9 = 0
+        }
+
+        #endregion
+
+        #region "Structures"
+
+        protected struct udtInputPropertyValuesType
+        {
+            public string FastaFileName;
+            public string SpectrumFileName;
+
+            public void Clear()
+            {
+                FastaFileName = string.Empty;
+                SpectrumFileName = string.Empty;
+            }
+        }
+
+        #endregion
+
+        #region "Module Variables"
+
+        protected bool mToolVersionWritten;
+        protected string mMSAlignVersion;
+
+        protected string mMSAlignProgLoc;
+        protected string mConsoleOutputErrorMsg;
+
+        protected string mMSAlignWorkFolderPath;
+        protected udtInputPropertyValuesType mInputPropertyValues;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Runs MSAlign tool
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            string CmdStr = null;
+            int intJavaMemorySize = 0;
+
+            CloseOutType result = CloseOutType.CLOSEOUT_FAILED;
+            var blnProcessingError = false;
+
+            CloseOutType eResult = CloseOutType.CLOSEOUT_SUCCESS;
+            bool blnSuccess = false;
+
+            try
+            {
+                //Call base class for initial setup
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "clsAnalysisToolRunnerMSAlignHistone.RunTool(): Enter");
+                }
+
+                // Verify that program files exist
+
+                // JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+                // Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
+                var JavaProgLoc = GetJavaProgLoc();
+                if (string.IsNullOrEmpty(JavaProgLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Determine the path to the MSAlign_Histone program
+                // Note that
+                mMSAlignProgLoc = DetermineProgramLocation("MSAlign_Histone", "MSAlignHistoneProgLoc", Path.Combine("jar", MSAlign_JAR_NAME));
+
+                if (string.IsNullOrWhiteSpace(mMSAlignProgLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Assume v0.9
+                var eMSalignVersion = eMSAlignVersionType.v0pt9;
+
+                // We will store the specific MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
+
+                mToolVersionWritten = false;
+                mMSAlignVersion = string.Empty;
+                mConsoleOutputErrorMsg = string.Empty;
+
+                // Clear InputProperties parameters
+                mInputPropertyValues.Clear();
+                mMSAlignWorkFolderPath = string.Empty;
+
+                // Copy the MS Align program files and associated files to the work directory
+                // Note that this function will update mMSAlignWorkFolderPath
+                if (!CopyMSAlignProgramFiles(mMSAlignProgLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Initialize the files in the input folder
+                if (!InitializeInputFolder(mMSAlignWorkFolderPath, eMSalignVersion))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Read the MSAlign Parameter File
+                string strParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                string strMSAlignCmdLineOptions = string.Empty;
+
+                blnSuccess = CreateMSAlignCommandLine(strParamFilePath, ref strMSAlignCmdLineOptions);
+                if (!blnSuccess)
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        m_message = "Unknown error parsing the MSAlign parameter file";
+                    }
+                    return result;
+                }
+                else if (string.IsNullOrEmpty(strMSAlignCmdLineOptions))
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        m_message = "Problem parsing MSAlign parameter file: command line switches are not present";
+                    }
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSAlign_Histone");
+
+                // Lookup the amount of memory to reserve for Java; default to 2 GB
+                intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
+                if (intJavaMemorySize < 512)
+                    intJavaMemorySize = 512;
+
+                //Set up and execute a program runner to run MSAlign_Histone
+                CmdStr = " -Xmx" + intJavaMemorySize.ToString() +
+                         "M -classpath jar\\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " + strMSAlignCmdLineOptions;
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc + " " + CmdStr);
+
+                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
+                RegisterEvents(cmdRunner);
+                cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+                cmdRunner.CreateNoWindow = true;
+                cmdRunner.CacheStandardOutput = false;
+                cmdRunner.EchoOutputToConsole = true;
+
+                cmdRunner.WriteConsoleOutputToFile = true;
+                cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT);
+
+                m_progress = PROGRESS_PCT_STARTING;
+
+                blnSuccess = cmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", true);
+
+                if (!mToolVersionWritten)
+                {
+                    if (string.IsNullOrWhiteSpace(mMSAlignVersion))
+                    {
+                        ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT));
+                    }
+                    mToolVersionWritten = StoreToolVersionInfo();
+                }
+
+                if (!blnSuccess && string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                {
+                    // Parse the console output file one more time to see if an exception was logged
+                    ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT));
+                }
+
+                if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                }
+
+                if (!blnSuccess)
+                {
+                    string Msg = null;
+                    Msg = "Error running MSAlign_Histone";
+                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+
+                    if (cmdRunner.ExitCode != 0)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "MSAlign_Histone returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+                    }
+                    else
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "Call to MSAlign_Histone failed (but exit code is 0)");
+                    }
+
+                    blnProcessingError = true;
+                    eResult = CloseOutType.CLOSEOUT_FAILED;
+                }
+                else
+                {
+                    // Make sure the output files were created
+                    if (!ValidateResultFiles())
+                    {
+                        blnProcessingError = true;
+                    }
+                    else
+                    {
+                        // Create the HTML and XML files
+                        // Need to call MsAlignPipeline.jar again, but this time with a different classpath
+
+                        blnSuccess = MakeReportFiles(JavaProgLoc, strMSAlignCmdLineOptions, intJavaMemorySize);
+                        if (!blnSuccess)
+                            blnProcessingError = true;
+
+                        // Move the result files
+                        if (!MoveMSAlignResultFiles())
+                        {
+                            blnProcessingError = true;
+                        }
+
+                        string strResultTableSourcePath = null;
+                        strResultTableSourcePath = Path.Combine(m_WorkDir, m_Dataset + "_" + RESULT_TABLE_FILE_EXTENSION);
+
+                        if (!blnProcessingError && File.Exists(strResultTableSourcePath))
+                        {
+                            // Make sure the _OUTPUT_TABLE.txt file is not empty
+                            // Make a copy of the OUTPUT_TABLE.txt file so that we can fix the header row (creating the RESULT_TABLE_NAME_SUFFIX file)
+
+                            if (ValidateResultTableFile(eMSalignVersion, strResultTableSourcePath))
+                            {
+                                eResult = CloseOutType.CLOSEOUT_SUCCESS;
+                            }
+                            else
+                            {
+                                eResult = CloseOutType.CLOSEOUT_NO_DATA;
+                            }
+                        }
+
+                        m_StatusTools.UpdateAndWrite(m_progress);
+                        if (m_DebugLevel >= 3)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign Search Complete");
+                        }
+                    }
+                }
+
+                m_progress = PROGRESS_PCT_COMPLETE;
+
+                //Stop the job timer
+                m_StopTime = DateTime.UtcNow;
+
+                //Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
+
+                //Make sure objects are released
+                Thread.Sleep(500);
+                // 500 msec delay
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                if (blnProcessingError)
+                {
+                    // Move the source files and any results to the Failed Job folder
+                    // Useful for debugging MSAlign problems
+                    CopyFailedResultsToArchiveFolder();
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = MakeResultsFolder();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //MakeResultsFolder handles posting to local log, so set database error message and exit
+                    m_message = "Error making results folder";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = MoveResultFiles();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    m_message = "Error moving files into results folder";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = CopyResultsFolderToServer();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in MSAlignHistone->RunTool";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return eResult;
+        }
+
+        protected bool CopyFastaCheckResidues(string strSourceFilePath, string strTargetFilePath)
+        {
+            const int RESIDUES_PER_LINE = 60;
+
+            string strProteinResidues = null;
+
+            int intIndex = 0;
+            int intResidueCount = 0;
+            int intLength = 0;
+            var intWarningCount = 0;
+
+            try
+            {
+                var reInvalidResidues = new Regex("[BJOUXZ]", RegexOptions.Compiled);
+
+                var oReader = new ProteinFileReader.FastaFileReader();
+                if (!oReader.OpenFile(strSourceFilePath))
+                {
+                    m_message = "Error opening fasta file in CopyFastaCheckResidues";
+                    return false;
+                }
+
+                using (var swNewFasta = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (oReader.ReadNextProteinEntry())
+                    {
+                        swNewFasta.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
+                        strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
+
+                        if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                "Changed invalid residues to '-' in protein " + oReader.ProteinName);
+                            intWarningCount += 1;
+                        }
+
+                        intIndex = 0;
+                        intResidueCount = strProteinResidues.Length;
+                        while (intIndex < strProteinResidues.Length)
+                        {
+                            intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex);
+                            swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength));
+                            intIndex += RESIDUES_PER_LINE;
+                        }
+                    }
+                }
+
+                oReader.CloseFile();
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in CopyFastaCheckResidues";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        protected void CopyFailedResultsToArchiveFolder()
+        {
+            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
+                strFailedResultsFolderPath = "??Not Defined??";
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
+
+            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
+            string strFolderPathToArchive = null;
+            strFolderPathToArchive = string.Copy(m_WorkDir);
+
+            try
+            {
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
+
+                // Copy any search result files that are not empty from the MSAlign folder to the work directory
+                var dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset);
+
+                foreach (KeyValuePair<string, string> kvItem in dctResultFiles)
+                {
+                    var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
+
+                    if (fiSearchResultFile.Exists && fiSearchResultFile.Length > 0)
+                    {
+                        fiSearchResultFile.CopyTo(Path.Combine(m_WorkDir, Path.GetFileName(fiSearchResultFile.Name)));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+            }
+
+            // Make the results folder
+            var result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the result files into the result folder
+                result = MoveResultFiles();
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Move was a success; update strFolderPathToArchive
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
+
+            // Copy the results folder to the Archive folder
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+        }
+
+        private bool CopyMSAlignProgramFiles(string strMSAlignJarFilePath)
+        {
+            try
+            {
+                var fiMSAlignJarFile = new FileInfo(strMSAlignJarFilePath);
+
+                if (!fiMSAlignJarFile.Exists)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "MSAlign .Jar file not found: " + fiMSAlignJarFile.FullName);
+                    return false;
+                }
+
+                // The source folder is one level up from the .Jar file
+                var diMSAlignSrc = new DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName);
+                var diMSAlignWork = new DirectoryInfo(Path.Combine(m_WorkDir, "MSAlign"));
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying MSAlign program file to the Work Directory");
+
+                // Make sure the folder doesn't already exit
+                if (diMSAlignWork.Exists)
+                {
+                    diMSAlignWork.Delete(true);
+                    Thread.Sleep(500);
+                }
+
+                // Create the folder
+                diMSAlignWork.Create();
+                mMSAlignWorkFolderPath = diMSAlignWork.FullName;
+
+                // Create the subdirectories
+                diMSAlignWork.CreateSubdirectory("html");
+                diMSAlignWork.CreateSubdirectory("jar");
+                diMSAlignWork.CreateSubdirectory("xml");
+                diMSAlignWork.CreateSubdirectory("xsl");
+                diMSAlignWork.CreateSubdirectory("etc");
+
+                // Copy all files in the jar and xsl folders to the target
+                var lstSubfolderNames = new List<string>();
+                lstSubfolderNames.Add("jar");
+                lstSubfolderNames.Add("xsl");
+                lstSubfolderNames.Add("etc");
+
+                foreach (string strSubFolder in lstSubfolderNames)
+                {
+                    var strTargetSubfolder = Path.Combine(diMSAlignWork.FullName, strSubFolder);
+
+                    DirectoryInfo[] diSubfolder = null;
+                    diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder);
+
+                    if (diSubfolder.Length == 0)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            "Source MSAlign subfolder not found: " + strTargetSubfolder);
+                        return false;
+                    }
+
+                    foreach (FileInfo fiFile in diSubfolder[0].GetFiles())
+                    {
+                        fiFile.CopyTo(Path.Combine(strTargetSubfolder, fiFile.Name));
+                    }
+                }
+
+                // Copy the histone ptm XML files
+                var fiSourceFiles = diMSAlignSrc.GetFileSystemInfos("histone*_ptm.xml").ToList();
+
+                foreach (FileInfo fiFile in fiSourceFiles)
+                {
+                    fiFile.CopyTo(Path.Combine(diMSAlignWork.FullName, fiFile.Name));
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception in CopyMSAlignProgramFiles: " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        protected bool CreateMSAlignCommandLine(string strParamFilePath, ref string strCommandLine)
+        {
+            // MSAlign_Histone syntax
+            //
+            // -a, --activation <CID|HCD|ETD|FILE>
+            //        MS/MS activation type: use FILE for data set with several activation types.
+            // -c  --cutoff <float>
+            //        Cutoff value. (Use this option with -t).
+            //        Default value is 0.01.
+            // -e  --error <integer>
+            //        Error tolerance in ppm.
+            //        Default value 15.
+            // -m, --modification <0|1|2>
+            //        Number of modifications.
+            //        Default value: 2.
+            // -p, --protection <C0|C57|C58>
+            //        Cystein protection.
+            //        Default value: C0.
+            // -r, --report <integer>
+            //        Number of reported Protein-Spectrum-Matches for each spectrum.
+            //        Default value 1.
+            // -s, --search <TARGET|TARGET+DECOY>
+            //        Searching against target or target+decoy (scrambled) protein database.
+            // -t, --cutofftype <EVALUE|FDR>
+            //        Use either EVALUE or FDR to filter out identified Protein-Spectrum-Matches.
+            //        Default value EVALUE.
+
+            // These key names must be lowercase
+            const string INSTRUMENT_ACTIVATION_TYPE_KEY = "activation";
+            const string SEARCH_TYPE_KEY = "search";
+
+            string strLineIn = null;
+
+            int intEqualsIndex = 0;
+            string strKeyName = null;
+            string strValue = null;
+
+            strCommandLine = string.Empty;
+
+            try
+            {
+                // Initialize the dictionary that maps parameter names in the parameter file to command line switches
+                var dctParameterMap = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+                dctParameterMap.Add("activation", "a");
+                dctParameterMap.Add("search", "s");
+                dctParameterMap.Add("protection", "p");
+                dctParameterMap.Add("modification", "m");
+                dctParameterMap.Add("error", "e");
+                dctParameterMap.Add("cutoffType", "t");
+                dctParameterMap.Add("cutoff", "c");
+                dctParameterMap.Add("report", "r");
+
+                // Open the parameter file
+                using (var srInFile = new StreamReader(new FileStream(strParamFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    // The first two parameters on the command line are Fasta File name and input file name
+                    strCommandLine += mInputPropertyValues.FastaFileName + " " + mInputPropertyValues.SpectrumFileName;
+
+                    // Now append the parameters defined in the parameter file
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+
+                        if (strLineIn.TrimStart().StartsWith("#") || string.IsNullOrWhiteSpace(strLineIn))
+                        {
+                            // Comment line or blank line; skip it
+                        }
+                        else
+                        {
+                            // Look for an equals sign
+                            intEqualsIndex = strLineIn.IndexOf('=');
+
+                            if (intEqualsIndex > 0)
+                            {
+                                // Split the line on the equals sign
+                                strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
+                                if (intEqualsIndex < strLineIn.Length - 1)
+                                {
+                                    strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
+                                }
+                                else
+                                {
+                                    strValue = string.Empty;
+                                }
+
+                                if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
+                                {
+                                    // If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
+                                    // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+                                    string strToolName = null;
+                                    strToolName = m_jobParams.GetParam("ToolName");
+
+                                    if (strToolName == "MSAlign_Bruker" || strToolName == "MSAlign_Histone_Bruker")
+                                    {
+                                        if (strValue.ToUpper() == "FILE")
+                                        {
+                                            m_message = "Must specify an explicit scan type for " + strKeyName +
+                                                        " in the MSAlign parameter file (CID, HCD, or ETD)";
+
+                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                m_message +
+                                                "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
+
+                                            return false;
+                                        }
+                                    }
+                                }
+
+                                if (strKeyName.ToLower() == SEARCH_TYPE_KEY)
+                                {
+                                    if (strValue.ToUpper() == "TARGET+DECOY")
+                                    {
+                                        // Make sure the protein collection is not a Decoy protein collection
+                                        string strProteinOptions = null;
+                                        strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+
+                                        if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
+                                        {
+                                            m_message =
+                                                "MSAlign parameter file contains searchType=TARGET+DECOY; protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
+
+                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+
+                                            return false;
+                                        }
+                                    }
+                                }
+
+                                string strSwitch = string.Empty;
+                                if (dctParameterMap.TryGetValue(strKeyName, out strSwitch))
+                                {
+                                    strCommandLine += " -" + strSwitch + " " + strValue;
+                                }
+                                else
+                                {
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                        "Ignoring unrecognized MSAlign_Histone parameter: " + strKeyName);
+                                }
+                            }
+                            else
+                            {
+                                // Unknown line format; skip it
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in CreateMSAlignCommandLine";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception in CreateMSAlignCommandLine: " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        protected bool FilesMatch(string strFilePath1, string strFilePath2)
+        {
+            var blnFilesMatch = false;
+            try
+            {
+                var fiFile1 = new FileInfo(strFilePath1);
+                var fiFile2 = new FileInfo(strFilePath2);
+
+                if (fiFile1.Exists && fiFile2.Exists)
+                {
+                    if (fiFile1.Length == fiFile2.Length)
+                    {
+                        blnFilesMatch = true;
+
+                        using (var srInfile1 = new StreamReader(new FileStream(fiFile1.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        )
+                        using (var srInfile2 = new StreamReader(new FileStream(fiFile2.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        )
+                        {
+                            while (!srInfile1.EndOfStream)
+                            {
+                                if (srInfile2.EndOfStream)
+                                {
+                                    blnFilesMatch = false;
+                                    break;
+                                }
+                                else
+                                {
+                                    if (srInfile1.ReadLine() != srInfile2.ReadLine())
+                                    {
+                                        blnFilesMatch = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FilesMatch: " + ex.Message);
+                blnFilesMatch = false;
+            }
+
+            return blnFilesMatch;
+        }
+
+        protected Dictionary<string, string> GetExpectedMSAlignResultFiles(string strDatasetName)
+        {
+            // Keys in this dictionary are the expected file name
+            // Values are the new name to rename the file to
+            var dctResultFiles = new Dictionary<string, string>();
+            string strBaseName = Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName);
+
+            dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_PTM_SEARCH, strDatasetName + "_PTM_Search_Result.xml");
+            dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_TOP_RESULT, string.Empty);
+            // Don't keep this file since it's virtually identical to the E_VALUE_RESULT file
+            dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_E_VALUE_RESULT, strDatasetName + "_PTM_Search_Result_EValue.xml");
+            dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_OUTPUT_RESULT, strDatasetName + "_PTM_Search_Result_Final.xml");
+
+            dctResultFiles.Add(strBaseName + "." + RESULT_TABLE_FILE_EXTENSION, strDatasetName + "_" + RESULT_TABLE_FILE_EXTENSION);
+
+            return dctResultFiles;
+        }
+
+        protected bool InitializeInputFolder(string strMSAlignWorkFolderPath, eMSAlignVersionType eMSalignVersion)
+        {
+            try
+            {
+                var fiSourceFolder = new DirectoryInfo(m_WorkDir);
+
+                // Copy the .Fasta file into the MSInput folder
+                // MSAlign will crash if any non-standard residues are present (BJOUXZ)
+                // Thus, we will read the source file with a reader and create a new fasta file
+
+                // Define the path to the fasta file
+                string OrgDbDir = m_mgrParams.GetParam("orgdbdir");
+                string strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+
+                var fiFastaFile = new FileInfo(strFASTAFilePath);
+
+                if (!fiFastaFile.Exists)
+                {
+                    // Fasta file not found
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " + fiFastaFile.FullName);
+                    return false;
+                }
+
+                mInputPropertyValues.FastaFileName = string.Copy(fiFastaFile.Name);
+
+                if (!CopyFastaCheckResidues(fiFastaFile.FullName, Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.FastaFileName)))
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                        m_message = "CopyFastaCheckResidues returned false";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    return false;
+                }
+
+                // Move the _msdeconv.msalign file to the MSAlign work folder
+                var fiFiles = fiSourceFolder.GetFiles("*" + clsAnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX);
+                if (fiFiles.Length == 0)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign file not found in work directory");
+                    return false;
+                }
+                else
+                {
+                    mInputPropertyValues.SpectrumFileName = string.Copy(fiFiles[0].Name);
+                    fiFiles[0].MoveTo(Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName));
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception in InitializeMSInputFolder: " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        protected bool MakeReportFiles(string JavaProgLoc, string strMSAlignCmdLineOptions, int intJavaMemorySize)
+        {
+            string CmdStr = null;
+            bool blnSuccess = false;
+
+            try
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating MSAlign_Histone Report Files");
+
+                //Set up and execute a program runner to run MSAlign_Histone
+                CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
+                         strMSAlignCmdLineOptions;
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc + " " + CmdStr);
+
+                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
+                RegisterEvents(cmdRunner);
+                cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+                cmdRunner.CreateNoWindow = true;
+                cmdRunner.CacheStandardOutput = false;
+                cmdRunner.EchoOutputToConsole = true;
+
+                cmdRunner.WriteConsoleOutputToFile = true;
+                cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSAlign_Report_CONSOLE_OUTPUT);
+
+                blnSuccess = cmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", true);
+
+                if (!blnSuccess)
+                {
+                    string Msg = null;
+                    Msg = "Error running MSAlign_Histone to create HTML and XML files";
+                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+
+                    if (cmdRunner.ExitCode != 0)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "MSAlign_Histone returned a non-zero exit code during report creation: " + cmdRunner.ExitCode.ToString());
+                    }
+                    else
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "Call to MSAlign_Histone failed during report creation (but exit code is 0)");
+                    }
+                }
+                else
+                {
+                    m_jobParams.AddResultFileToSkip(MSAlign_Report_CONSOLE_OUTPUT);
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception creating MSAlign_Histone HTML and XML files";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in MakeReportFiles: " + ex.Message);
+                return false;
+            }
+
+            return blnSuccess;
+        }
+
+        // Example Console output
+        //
+        // Start at Thu Apr 04 15:10:48 PDT 2013
+        // MS-Align+ 0.9.0.16 2013-02-02
+        // Fast filteration started.
+        // Fast filteration finished.
+        // Ptm search: Processing spectrum scan 4353...9% finished (0 minutes used).
+        // Ptm search: Processing spectrum scan 4354...18% finished (1 minutes used).
+        private Regex reExtractPercentFinished = new Regex("(\\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
+        /// </summary>
+        /// <param name="strConsoleOutputFilePath"></param>
+        /// <remarks></remarks>
+        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        {
+            try
+            {
+                if (!File.Exists(strConsoleOutputFilePath))
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Console output file not found: " + strConsoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (m_DebugLevel >= 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                }
+
+                string strLineIn = null;
+                int intLinesRead = 0;
+
+                short intProgress;
+                short intActualProgress = 0;
+
+                mConsoleOutputErrorMsg = string.Empty;
+
+                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    intLinesRead = 0;
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+                        intLinesRead += 1;
+
+                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        {
+                            if (intLinesRead <= 4 && string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                            {
+                                // Originally the second line was the MSAlign version
+                                // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                                // The fourth line is the MSAlign version
+                                if (string.IsNullOrEmpty(mMSAlignVersion) && strLineIn.ToLower().Contains("ms-align"))
+                                {
+                                    if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
+                                    {
+                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                            "MSAlign version: " + strLineIn);
+                                    }
+
+                                    mMSAlignVersion = string.Copy(strLineIn);
+                                }
+                                else
+                                {
+                                    if (strLineIn.ToLower().Contains("error") || strLineIn.Contains("[ java.lang"))
+                                    {
+                                        mConsoleOutputErrorMsg = "Error running MSAlign: " + strLineIn;
+                                    }
+                                }
+                            }
+
+                            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                            {
+                                mConsoleOutputErrorMsg += "; " + strLineIn;
+                            }
+                            else
+                            {
+                                // Update progress if the line starts with Processing spectrum
+                                if (strLineIn.IndexOf("Processing spectrum", StringComparison.Ordinal) >= 0)
+                                {
+                                    var oMatch = reExtractPercentFinished.Match(strLineIn);
+                                    if (oMatch.Success)
+                                    {
+                                        if (Int16.TryParse(oMatch.Groups[1].Value, out intProgress))
+                                        {
+                                            intActualProgress = intProgress;
+                                        }
+                                    }
+                                }
+                                else if (strLineIn.Contains("[ java.lang"))
+                                {
+                                    // This is likely an exception
+                                    mConsoleOutputErrorMsg = "Error running MSAlign: " + strLineIn;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (m_progress < intActualProgress)
+                {
+                    m_progress = intActualProgress;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        protected bool StoreToolVersionInfo()
+        {
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            var strToolVersionInfo = string.Copy(mMSAlignVersion);
+
+            // Store paths to key files in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(mMSAlignProgLoc));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        private Regex reExtractScan = new Regex("Processing spectrum scan (\\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// Reads the console output file and removes the majority of the percent finished messages
+        /// </summary>
+        /// <param name="strConsoleOutputFilePath"></param>
+        /// <remarks></remarks>
+        [Obsolete("Unused")]
+
+        private void TrimConsoleOutputFile(string strConsoleOutputFilePath)
+        {
+            try
+            {
+                if (!File.Exists(strConsoleOutputFilePath))
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Console output file not found: " + strConsoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (m_DebugLevel >= 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Trimming console output file at " + strConsoleOutputFilePath);
+                }
+
+                string strLineIn = null;
+                bool blnKeepLine = false;
+
+                int intScanNumber = 0;
+                string strMostRecentProgressLine = string.Empty;
+                string strMostRecentProgressLineWritten = string.Empty;
+
+                int intScanNumberOutputThreshold = 0;
+
+                string strTrimmedFilePath = null;
+                strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
+
+                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var swOutFile = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    intScanNumberOutputThreshold = 0;
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+                        blnKeepLine = true;
+
+                        var oMatch = reExtractScan.Match(strLineIn);
+                        if (oMatch.Success)
+                        {
+                            if (int.TryParse(oMatch.Groups[1].Value, out intScanNumber))
+                            {
+                                if (intScanNumber < intScanNumberOutputThreshold)
+                                {
+                                    blnKeepLine = false;
+                                }
+                                else
+                                {
+                                    // Write out this line and bump up intScanNumberOutputThreshold by 100
+                                    intScanNumberOutputThreshold += 100;
+                                    strMostRecentProgressLineWritten = string.Copy(strLineIn);
+                                }
+                            }
+                            strMostRecentProgressLine = string.Copy(strLineIn);
+                        }
+                        else if (strLineIn.StartsWith("Deconvolution finished"))
+                        {
+                            // Possibly write out the most recent progress line
+                            if (string.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) != 0)
+                            {
+                                swOutFile.WriteLine(strMostRecentProgressLine);
+                            }
+                        }
+
+                        if (blnKeepLine)
+                        {
+                            swOutFile.WriteLine(strLineIn);
+                        }
+                    }
+                }
+
+                // Wait 500 msec, then swap the files
+                Thread.Sleep(500);
+
+                try
+                {
+                    File.Delete(strConsoleOutputFilePath);
+                    File.Move(strTrimmedFilePath, strConsoleOutputFilePath);
+                }
+                catch (Exception ex)
+                {
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            "Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
+        protected bool MoveMSAlignResultFiles()
+        {
+            var blnProcessingError = false;
+
+            string strEValueResultFilePath = string.Empty;
+            string strFinalResultFilePath = string.Empty;
+
+            try
+            {
+                var dctResultsFilesToMove = GetExpectedMSAlignResultFiles(m_Dataset);
+
+                foreach (KeyValuePair<string, string> kvItem in dctResultsFilesToMove)
+                {
+                    var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
+
+                    if (!fiSearchResultFile.Exists)
+                    {
+                        // Note that ValidateResultFiles should have already logged the missing files
+                    }
+                    else
+                    {
+                        // Copy the results file to the work directory
+                        // Rename the file as we copy it
+
+                        if (string.IsNullOrEmpty(kvItem.Value))
+                        {
+                            // Skip this file
+                        }
+                        else
+                        {
+                            string strTargetFilePath = null;
+                            strTargetFilePath = Path.Combine(m_WorkDir, kvItem.Value);
+
+                            fiSearchResultFile.CopyTo(strTargetFilePath, true);
+
+                            if (kvItem.Key.EndsWith(OUTPUT_FILE_EXTENSION_E_VALUE_RESULT))
+                            {
+                                strEValueResultFilePath = strTargetFilePath;
+                            }
+                            else if (kvItem.Key.EndsWith(OUTPUT_FILE_EXTENSION_OUTPUT_RESULT))
+                            {
+                                strFinalResultFilePath = strTargetFilePath;
+                            }
+                        }
+                    }
+                }
+
+                // Zip the Html and XML folders
+                ZipMSAlignResultFolder("html");
+                ZipMSAlignResultFolder("XML");
+
+                // Skip the E_VALUE_RESULT file if it is identical to the OUTPUT_RESULT file
+
+                if (!string.IsNullOrEmpty(strEValueResultFilePath) && !string.IsNullOrEmpty(strFinalResultFilePath))
+                {
+                    if (FilesMatch(strEValueResultFilePath, strFinalResultFilePath))
+                    {
+                        m_jobParams.AddResultFileToSkip(Path.GetFileName(strEValueResultFilePath));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception in ValidateAndCopyResultFiles: " + ex.Message);
+                return false;
+            }
+
+            if (blnProcessingError)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        protected bool ValidateResultFiles()
+        {
+            var blnProcessingError = false;
+
+            try
+            {
+                var dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset);
+
+                foreach (KeyValuePair<string, string> kvItem in dctResultFiles)
+                {
+                    var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
+
+                    if (!fiSearchResultFile.Exists)
+                    {
+                        string Msg = null;
+                        Msg = "MSAlign results file not found (" + kvItem.Key + ")";
+
+                        if (!blnProcessingError)
+                        {
+                            // This is the first missing file; update the base-class comment
+                            m_message = clsGlobal.AppendToComment(m_message, Msg);
+                        }
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            Msg + " (" + fiSearchResultFile.FullName + ")" + ", job " + m_JobNum);
+                        blnProcessingError = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateResultFiles: " + ex.Message);
+                return false;
+            }
+
+            if (blnProcessingError)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        protected bool ValidateResultTableFile(eMSAlignVersionType eMSalignVersion, string strSourceFilePath)
+        {
+            string strOutputFilePath = null;
+
+            string strLineIn = null;
+            bool blnValidDataFound = false;
+            int intLinesRead = 0;
+
+            try
+            {
+                blnValidDataFound = false;
+                intLinesRead = 0;
+
+                strOutputFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
+
+                if (!File.Exists(strSourceFilePath))
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "MSAlign OUTPUT_TABLE file not found: " + strSourceFilePath);
+                    }
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        m_message = "MSAlign OUTPUT_TABLE file not found";
+                    }
+                    return false;
+                }
+
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        "Validating that the MSAlign OUTPUT_TABLE file is not empty");
+                }
+
+                // Open the input file and
+                // create the output file
+                using (var srInFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var swOutFile = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+                        intLinesRead += 1;
+
+                        if (!string.IsNullOrEmpty(strLineIn))
+                        {
+                            if (intLinesRead == 1 && strLineIn.EndsWith("FDR\t"))
+                            {
+                                // The header line is missing the final column header; add it
+                                strLineIn += "FragMethod";
+                            }
+
+                            if (!blnValidDataFound)
+                            {
+                                string[] strSplitLine = null;
+                                strSplitLine = strLineIn.Split('\t');
+
+                                if (strSplitLine.Length > 1)
+                                {
+                                    // The first column has the source .msalign file name
+                                    // The second column has Prsm_ID
+
+                                    // Look for an integer in the second column
+                                    int intValue = 0;
+                                    if (int.TryParse(strSplitLine[1], out intValue))
+                                    {
+                                        // Integer found; line is valid
+                                        blnValidDataFound = true;
+                                    }
+                                }
+                            }
+
+                            swOutFile.WriteLine(strLineIn);
+                        }
+                    }
+                }
+
+                if (!blnValidDataFound)
+                {
+                    string Msg = null;
+                    Msg = "MSAlign OUTPUT_TABLE file is empty";
+                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                    return false;
+                }
+                else
+                {
+                    // Don't keep the original output table; only the new file we just created
+                    m_jobParams.AddResultFileToSkip(Path.GetFileName(strSourceFilePath));
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception in ValidateResultTableFile: " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        protected bool ZipMSAlignResultFolder(string strFolderName)
+        {
+            string strTargetFilePath = null;
+            string strSourceFolderPath = null;
+
+            try
+            {
+                strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
+                strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
+
+                // Confirm that the folder has one or more files or subfolders
+                DirectoryInfo diSourceFolder = new DirectoryInfo(strSourceFolderPath);
+                if (diSourceFolder.GetFileSystemInfos().Length == 0)
+                {
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "MSAlign results folder is empty; nothing to zip: " + strSourceFolderPath);
+                    }
+                    return false;
+                }
+
+                if (m_DebugLevel >= 1)
+                {
+                    string strLogMessage = "Zipping " + strFolderName.ToUpper() + " folder at " + strSourceFolderPath;
+
+                    if (m_DebugLevel >= 2)
+                    {
+                        strLogMessage += ": " + strTargetFilePath;
+                    }
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strLogMessage);
+                }
+
+                var objZipper = new Ionic.Zip.ZipFile(strTargetFilePath);
+                objZipper.AddDirectory(strSourceFolderPath);
+                objZipper.Save();
+                Thread.Sleep(500);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception in ZipMSAlignResultFolder: " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            UpdateStatusFile();
+
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            {
+                dtLastConsoleOutputParse = DateTime.UtcNow;
+
+                ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT));
+
+                if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSAlignVersion))
+                {
+                    mToolVersionWritten = StoreToolVersionInfo();
+                }
+
+                LogProgress("MSAlign Histone");
+            }
+        }
+
+        #endregion
+    }
+}
