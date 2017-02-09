@@ -1,69 +1,82 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2006, Battelle Memorial Institute
-' Created 06/07/2006
-'
-'*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Collections.Generic;
+using System.IO;
 
-Imports System.IO
-
-Public Class clsSummaryFile
-
-    '*********************************************************************************************************
-    'Provides tools for creating an analysis job summary file
-    '*********************************************************************************************************
-
-#Region "Module Variables"
-    ' ReSharper disable once FieldCanBeMadeReadOnly.Local
-    Private m_lines As New List(Of String)
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Clears summary file data
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Sub Clear()
-        m_lines.Clear()
-    End Sub
-
-    ''' <summary>
-    ''' Writes the summary file to the specified location
-    ''' </summary>
-    ''' <param name="AnalysisSummaryFilePath">Full path of summary file to create</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Public Function SaveSummaryFile(AnalysisSummaryFilePath As String) As Boolean
-
-        Try
-            Using swSummaryFile = New StreamWriter(New FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-                For Each DumString As String In m_lines
-                    swSummaryFile.WriteLine(DumString)
-                Next
-
-            End Using
-
-            Return True
-        Catch Err As Exception
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Adds a line of data to summary file
-    ''' </summary>
-    ''' <param name="line">Data to be added</param>
-    ''' <remarks></remarks>
-    Public Sub Add(line As String)
-        m_lines.Add(line)
-    End Sub
-#End Region
-
-End Class
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2006, Battelle Memorial Institute
+// Created 06/07/2006
+//
+//*********************************************************************************************************
 
 
+namespace AnalysisManagerBase
+{
+    public class clsSummaryFile
+    {
+
+        //*********************************************************************************************************
+        //Provides tools for creating an analysis job summary file
+        //*********************************************************************************************************
+
+        #region "Module Variables"
+        // ReSharper disable once FieldCanBeMadeReadOnly.Local
+        private List<string> m_lines = new List<string>();
+
+        #endregion
+
+        #region "Methods"
+        /// <summary>
+        /// Clears summary file data
+        /// </summary>
+        /// <remarks></remarks>
+        public void Clear()
+        {
+            m_lines.Clear();
+        }
+
+        /// <summary>
+        /// Writes the summary file to the specified location
+        /// </summary>
+        /// <param name="AnalysisSummaryFilePath">Full path of summary file to create</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        public bool SaveSummaryFile(string AnalysisSummaryFilePath)
+        {
+            try
+            {
+                using (var swSummaryFile = new StreamWriter(new FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+
+                    foreach (var DumString in m_lines)
+                    {
+                        swSummaryFile.WriteLine(DumString);
+                    }
+
+                }
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Adds a line of data to summary file
+        /// </summary>
+        /// <param name="line">Data to be added</param>
+        /// <remarks></remarks>
+        public void Add(string line)
+        {
+            m_lines.Add(line);
+        }
+        #endregion
+
+    }
+    
+}

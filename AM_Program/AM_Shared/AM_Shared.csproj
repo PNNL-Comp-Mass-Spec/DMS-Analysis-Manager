@@ -1,56 +1,33 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>
-    </ProductVersion>
-    <SchemaVersion>
-    </SchemaVersion>
-    <ProjectGuid>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</ProjectGuid>
+    <ProjectGuid>{18ADC755-B570-4571-8EF8-A539FC9EFB75}</ProjectGuid>
     <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerBase</RootNamespace>
     <AssemblyName>AM_Shared</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <MyType>Windows</MyType>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
   </PropertyGroup>
-  <PropertyGroup>
-    <OptionExplicit>On</OptionExplicit>
-  </PropertyGroup>
-  <PropertyGroup>
-    <OptionCompare>Binary</OptionCompare>
-  </PropertyGroup>
-  <PropertyGroup>
-    <OptionStrict>On</OptionStrict>
-  </PropertyGroup>
-  <PropertyGroup>
-    <OptionInfer>On</OptionInfer>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DefineDebug>true</DefineDebug>
-    <DefineTrace>true</DefineTrace>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>ENABLE_MYEMSL_SEARCH</DefineConstants>
-    <DocumentationFile>AM_Shared.xml</DocumentationFile>
-    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
     <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <DefineTrace>true</DefineTrace>
-    <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>AM_Shared.xml</DocumentationFile>
-    <Optimize>true</Optimize>
-    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Apache.NMS">
@@ -65,14 +42,10 @@
     <Reference Include="FastaFileSplitterDLL">
       <HintPath>..\..\AM_Common\FastaFileSplitterDLL.dll</HintPath>
     </Reference>
-    <Reference Include="FileConcatenator">
-      <HintPath>..\..\AM_Common\FileConcatenator.dll</HintPath>
-    </Reference>
     <Reference Include="FlexibleFileSortUtility">
       <HintPath>..\..\AM_Common\FlexibleFileSortUtility.dll</HintPath>
     </Reference>
-    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\..\AM_Common\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="Ionic.Zip">
@@ -97,7 +70,6 @@
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="Protein_Exporter">
@@ -107,73 +79,66 @@
       <HintPath>..\..\AM_Common\SpectraTypeClassifier.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
     <Reference Include="System.Data.SQLite">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\System.Data.SQLite.dll</HintPath>
     </Reference>
-    <Reference Include="System.Management" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Import Include="Microsoft.VisualBasic" />
-    <Import Include="System" />
-    <Import Include="System.Collections" />
-    <Import Include="System.Collections.Generic" />
-    <Import Include="System.Data" />
-    <Import Include="System.Diagnostics" />
-    <Import Include="System.Linq" />
+    <Compile Include="clsAnalysisJob.cs" />
+    <Compile Include="clsAnalysisMgrBase.cs" />
+    <Compile Include="clsAnalysisResources.cs" />
+    <Compile Include="clsAnalysisResults.cs" />
+    <Compile Include="clsAnalysisToolRunnerBase.cs" />
+    <Compile Include="clsAssemblyTools.cs" />
+    <Compile Include="clsCDTAUtilities.cs" />
+    <Compile Include="clsDataPackageDatasetInfo.cs" />
+    <Compile Include="clsDataPackageFileHandler.cs" />
+    <Compile Include="clsDataPackageInfoLoader.cs" />
+    <Compile Include="clsDataPackageJobInfo.cs" />
+    <Compile Include="clsDBStatusLogger.cs" />
+    <Compile Include="clsDBTask.cs" />
+    <Compile Include="clsEmergencyLog.cs" />
+    <Compile Include="clsEventNotifier.cs" />
+    <Compile Include="clsFormattedXMLWriter.cs" />
+    <Compile Include="clsGlobal.cs" />
+    <Compile Include="clsIonicZipTools.cs" />
+    <Compile Include="clsLoggerBase.cs" />
+    <Compile Include="clsLogTools.cs" />
+    <Compile Include="clsLogToolsPatternLayout.cs" />
+    <Compile Include="clsMemoryUsageLogger.cs" />
+    <Compile Include="clsMessageQueueLogger.cs" />
+    <Compile Include="clsMessageSender.cs" />
+    <Compile Include="clsMyEMSLUtilities.cs" />
+    <Compile Include="clsProteinCollectionInfo.cs" />
+    <Compile Include="clsProteowizardTools.cs" />
+    <Compile Include="clsRunDosProgram.cs" />
+    <Compile Include="clsScanStatsGenerator.cs" />
+    <Compile Include="clsSplitCattedFiles.cs" />
+    <Compile Include="clsSplitFastaFileUtilities.cs" />
+    <Compile Include="clsSplitMGFFile.cs" />
+    <Compile Include="clsSqLiteUtilities.cs" />
+    <Compile Include="clsStatusFile.cs" />
+    <Compile Include="clsSummaryFile.cs" />
+    <Compile Include="clsXMLParamFileReader.cs" />
+    <Compile Include="ExceptionClasses.cs" />
+    <Compile Include="IAnalysisResources.cs" />
+    <Compile Include="IJobParams.cs" />
+    <Compile Include="IMgrParams.cs" />
+    <Compile Include="ISpectraFileProcessor.cs" />
+    <Compile Include="ISpectraFilter.cs" />
+    <Compile Include="IStatusFile.cs" />
+    <Compile Include="IToolRunner.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="clsSystemMemoryInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="clsAnalysisJob.vb" />
-    <Compile Include="clsAnalysisResources.vb" />
-    <Compile Include="clsAnalysisResults.vb" />
-    <Compile Include="clsAnalysisToolRunnerBase.vb" />
-    <Compile Include="clsAssemblyTools.vb" />
-    <Compile Include="clsCDTAUtilities.vb" />
-    <Compile Include="clsConcatToolWrapper.vb" />
-    <Compile Include="clsDataPackageDatasetInfo.vb" />
-    <Compile Include="clsDataPackageFileHandler.vb" />
-    <Compile Include="clsDataPackageInfoLoader.vb" />
-    <Compile Include="clsDataPackageJobInfo.vb" />
-    <Compile Include="clsDBStatusLogger.vb" />
-    <Compile Include="clsDBTask.vb" />
-    <Compile Include="clsAnalysisMgrBase.vb" />
-    <Compile Include="clsFormattedXMLWriter.vb" />
-    <Compile Include="clsGlobal.vb" />
-    <Compile Include="clsEventNotifier.vb" />
-    <Compile Include="clsIonicZipTools.vb" />
-    <Compile Include="clsLoggerBase.vb" />
-    <Compile Include="clsLogTools.vb" />
-    <Compile Include="clsLogToolsPatternLayout.vb" />
-    <Compile Include="clsMemoryUsageLogger.vb" />
-    <Compile Include="clsMessageQueueLogger.vb" />
-    <Compile Include="clsMessageSender.vb" />
-    <Compile Include="clsMyEMSLUtilities.vb" />
-    <Compile Include="clsProteinCollectionInfo.vb" />
-    <Compile Include="clsProteowizardTools.vb" />
-    <Compile Include="clsRunDosProgram.vb" />
-    <Compile Include="clsScanStatsGenerator.vb" />
-    <Compile Include="clsSplitCattedFiles.vb" />
-    <Compile Include="clsSplitFastaFileUtilities.vb" />
-    <Compile Include="clsSplitMGFFile.vb" />
-    <Compile Include="clsSqLiteUtilities.vb" />
-    <Compile Include="clsStatusFile.vb" />
-    <Compile Include="clsSummaryFile.vb" />
-    <Compile Include="clsXMLParamFileReader.vb" />
-    <Compile Include="ExceptionClasses.vb" />
-    <Compile Include="IAnalysisResources.vb" />
-    <Compile Include="IJobParams.vb" />
-    <Compile Include="IMgrParams.vb" />
-    <Compile Include="ISpectraFileProcessor.vb" />
-    <Compile Include="ISpectraFilter.vb" />
-    <Compile Include="IStatusFile.vb" />
-    <Compile Include="IToolRunner.vb" />
-    <Compile Include="My Project\AssemblyInfo.vb" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
 copy "AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common"</PostBuildEvent>

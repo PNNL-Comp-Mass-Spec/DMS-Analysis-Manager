@@ -1,142 +1,173 @@
 ﻿
-Public Class clsXMLParamFileReader
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
-    Protected mParamFilePath As String
-    Protected mSections As Dictionary(Of String, Dictionary(Of String, String))
+namespace AnalysisManagerBase
+{
 
-    Public ReadOnly Property ParamFilePath As String
-        Get
-            Return mParamFilePath
-        End Get
-    End Property
+    [Obsolete("Unused")]
+    public class clsXMLParamFileReader
+    {
 
-    Public ReadOnly Property ParameterCount As Integer
-        Get
-            Dim intCount As Integer = 0
+        protected string mParamFilePath;
 
-            For Each section In mSections
-                intCount += section.Value.Count
-            Next
+        protected Dictionary<string, Dictionary<string, string>> mSections;
 
-            Return intCount
-        End Get
-    End Property
+        public string ParamFilePath => mParamFilePath;
 
-    Public ReadOnly Property SectionCount As Integer
-        Get
-            Return mSections.Count
-        End Get
-    End Property
+        public int ParameterCount
+        {
+            get
+            {
+                var intCount = 0;
 
-    Public Sub New(strParamFilePath As String)
-        mParamFilePath = strParamFilePath
+                foreach (var section in mSections)
+                {
+                    intCount += section.Value.Count;
+                }
 
-        If Not IO.File.Exists(strParamFilePath) Then
-            Throw New IO.FileNotFoundException(strParamFilePath)
-        End If
+                return intCount;
+            }
+        }
 
-        mSections = CacheXMLParamFile(mParamFilePath)
-    End Sub
+        public int SectionCount => mSections.Count;
 
-    ''' <summary>
-    ''' Parse an XML parameter file with the hierarchy of Section, ParamName, ParamValue 
-    ''' </summary>
-    ''' <param name="strParamFilePath"></param>
-    ''' <returns>Dictionary object where keys are section names and values are dictionary objects of key/value pairs</returns>
-    ''' <remarks></remarks>
-    Protected Function CacheXMLParamFile(strParamFilePath As String) As Dictionary(Of String, Dictionary(Of String, String))
+        public clsXMLParamFileReader(string strParamFilePath)
+        {
+            mParamFilePath = strParamFilePath;
 
-        Dim dctSections = New Dictionary(Of String, Dictionary(Of String, String))
+            if (!System.IO.File.Exists(strParamFilePath))
+            {
+                throw new System.IO.FileNotFoundException(strParamFilePath);
+            }
 
-        ' Read the entire XML file into a Linq to XML XDocument object
-        ' Note: For this to work, the project must have a reference to System.XML.Linq
-        Dim xParamFile As Xml.Linq.XDocument = Xml.Linq.XDocument.Load(strParamFilePath)
+            mSections = CacheXMLParamFile(mParamFilePath);
+        }
 
-        Dim parameters As IEnumerable(Of Xml.Linq.XElement) = xParamFile.Elements()
+        /// <summary>
+        /// Parse an XML parameter file with the hierarchy of Section, ParamName, ParamValue 
+        /// </summary>
+        /// <param name="strParamFilePath"></param>
+        /// <returns>Dictionary object where keys are section names and values are dictionary objects of key/value pairs</returns>
+        /// <remarks></remarks>
+        protected Dictionary<string, Dictionary<string, string>> CacheXMLParamFile(string strParamFilePath)
+        {
 
-        ' Store the parameters
-        CacheXMLParseSection(parameters, dctSections)
+            var dctSections = new Dictionary<string, Dictionary<string, string>>();
 
-        Return dctSections
+            // Read the entire XML file into a Linq to XML XDocument object
+            // Note: For this to work, the project must have a reference to System.XML.Linq
+            var xParamFile = System.Xml.Linq.XDocument.Load(strParamFilePath);
 
-    End Function
+            var parameters = xParamFile.Elements();
 
-    ''' <summary>
-    ''' Parses the XML elements in parameters, populating dctParameters
-    ''' </summary>
-    ''' <param name="parameters">XML parameters to examine</param>
-    ''' <param name="dctParameters">Dictionary object where keys are section names and values are dictionary objects of key/value pairs</param>
-    ''' <remarks></remarks>
-    Protected Sub CacheXMLParseSection(parameters As IEnumerable(Of Xml.Linq.XElement), ByRef dctParameters As Dictionary(Of String, Dictionary(Of String, String)))
+            // Store the parameters
+            CacheXMLParseSection(parameters, ref dctSections);
 
-        For Each parameter In parameters
-            If parameter.Descendants.Count > 0 Then
-                ' Recursively call this function with the content
-                CacheXMLParseSection(parameter.Descendants, dctParameters)
-            Else
-                ' Store this as a parameter
-                Dim strSection As String = parameter.Parent.Name.LocalName
-                Dim strParamName As String = parameter.Name.LocalName
-                Dim strParamValue As String = parameter.Value
+            return dctSections;
 
-                Dim dctSectionSettings As Dictionary(Of String, String) = Nothing
+        }
 
-                If Not dctParameters.TryGetValue(strSection, dctSectionSettings) Then
-                    dctSectionSettings = New Dictionary(Of String, String)
-                    dctParameters.Add(strSection, dctSectionSettings)
-                End If
+        /// <summary>
+        /// Parses the XML elements in parameters, populating dctParameters
+        /// </summary>
+        /// <param name="parameters">XML parameters to examine</param>
+        /// <param name="dctParameters">Dictionary object where keys are section names and values are dictionary objects of key/value pairs</param>
+        /// <remarks></remarks>
 
-                If Not dctSectionSettings.ContainsKey(strParamName) Then
-                    dctSectionSettings.Add(strParamName, strParamValue)
-                End If
-            End If
-        Next
+        protected void CacheXMLParseSection(IEnumerable<System.Xml.Linq.XElement> parameters,
+                                            ref Dictionary<string, Dictionary<string, string>> dctParameters)
+        {
+            foreach (var parameter in parameters)
+            {
+                var descendants = parameter.Descendants().ToList();
 
-    End Sub
+                if (descendants.Count > 0)
+                {
+                    // Recursively call this function with the content
+                    CacheXMLParseSection(descendants, ref dctParameters);
+                }
+                else
+                {
+                    if (parameter.Parent == null)
+                        continue;
 
-    Public Function GetParameter(strParameterName As String, blnValueIfMissing As Boolean) As Boolean
+                    // Store this as a parameter
+                    var strSection = parameter.Parent.Name.LocalName;
+                    var strParamName = parameter.Name.LocalName;
+                    var strParamValue = parameter.Value;
 
-        Dim strValue As String = GetParameter(strParameterName, String.Empty)
+                    Dictionary<string, string> dctSectionSettings;
 
-        If String.IsNullOrEmpty(strValue) Then Return blnValueIfMissing
+                    if (!dctParameters.TryGetValue(strSection, out dctSectionSettings))
+                    {
+                        dctSectionSettings = new Dictionary<string, string>();
+                        dctParameters.Add(strSection, dctSectionSettings);
+                    }
 
-        Dim blnValue As Boolean
-        If Boolean.TryParse(strValue, blnValue) Then
-            Return blnValue
-        End If
+                    if (!dctSectionSettings.ContainsKey(strParamName))
+                    {
+                        dctSectionSettings.Add(strParamName, strParamValue);
+                    }
+                }
+            }
 
-        Return blnValueIfMissing
+        }
 
-    End Function
+        public bool GetParameter(string strParameterName, bool blnValueIfMissing)
+        {
 
-    Public Function GetParameter(strParameterName As String, strValueIfMissing As String) As String
+            var strValue = GetParameter(strParameterName, string.Empty);
 
-        For Each section In mSections
-            Dim strValue As String = String.Empty
+            if (string.IsNullOrEmpty(strValue))
+                return blnValueIfMissing;
 
-            If section.Value.TryGetValue(strParameterName, strValue) Then
-                Return strValue
-            End If
+            bool blnValue;
+            if (bool.TryParse(strValue, out blnValue))
+            {
+                return blnValue;
+            }
 
-        Next
+            return blnValueIfMissing;
 
-        Return strValueIfMissing
+        }
 
-    End Function
+        public string GetParameter(string strParameterName, string strValueIfMissing)
+        {
 
-    Public Function GetParameterBySection(strSectionName As String, strParameterName As String, strValueIfMissing As String) As String
+            foreach (var section in mSections)
+            {
+                string strValue;
 
-        Dim dctParameters = New Dictionary(Of String, String)
+                if (section.Value.TryGetValue(strParameterName, out strValue))
+                {
+                    return strValue;
+                }
 
-        If mSections.TryGetValue(strSectionName, dctParameters) Then
-            Dim strValue As String = String.Empty
+            }
 
-            If dctParameters.TryGetValue(strParameterName, strValue) Then
-                Return strValue
-            End If
-        End If
+            return strValueIfMissing;
 
-        Return strValueIfMissing
+        }
 
-    End Function
-End Class
+        public string GetParameterBySection(string strSectionName, string strParameterName, string strValueIfMissing)
+        {
+
+            Dictionary<string, string> dctParameters;
+
+            if (mSections.TryGetValue(strSectionName, out dctParameters))
+            {
+                string strValue;
+
+                if (dctParameters.TryGetValue(strParameterName, out strValue))
+                {
+                    return strValue;
+                }
+            }
+
+            return strValueIfMissing;
+
+        }
+    }
+}

@@ -1,230 +1,256 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2007, Battelle Memorial Institute
-' Created 10/26/2007
-'
-'*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Xml.XPath;
+using System.Xml;
+using System.IO;
 
-Imports System.Data.SqlClient
-Imports System.Xml.XPath
-Imports System.Xml
-Imports System.IO
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2007, Battelle Memorial Institute
+// Created 10/26/2007
+//
+//*********************************************************************************************************
 
-Public MustInherit Class clsDBTask
-    Inherits clsLoggerBase
+namespace AnalysisManagerBase
+{
+    public abstract class clsDBTask : clsLoggerBase
+    {
 
-    '*********************************************************************************************************
-    'Base class for handling task-related data
-    '*********************************************************************************************************
+        //*********************************************************************************************************
+        //Base class for handling task-related data
+        //*********************************************************************************************************
 
-#Region "Enums"
-    Public Enum RequestTaskResult
-        TaskFound = 0
-        NoTaskFound = 1
-        ResultError = 2
-        TooManyRetries = 3
-        Deadlock = 4
-    End Enum
-#End Region
+        #region "Enums"
+        public enum RequestTaskResult
+        {
+            TaskFound = 0,
+            NoTaskFound = 1,
+            ResultError = 2,
+            TooManyRetries = 3,
+            Deadlock = 4
+        }
+        #endregion
 
-#Region "Constants"
-    Public Const RET_VAL_OK As Integer = 0
-    Public Const RET_VAL_EXCESSIVE_RETRIES As Integer = -5           ' Timeout expired
-    Public Const RET_VAL_DEADLOCK As Integer = -4                    ' Transaction (Process ID 143) was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-    Public Const RET_VAL_TASK_NOT_AVAILABLE As Integer = 53000
-    Public Const DEFAULT_SP_RETRY_COUNT As Integer = 3
-#End Region
+        #region "Constants"
+        public const int RET_VAL_OK = 0;
+        // Timeout expired
+        public const int RET_VAL_EXCESSIVE_RETRIES = -5;
+        // Transaction (Process ID 143) was deadlocked on lock resources with another process and has been chosen as the deadlock victim
+        public const int RET_VAL_DEADLOCK = -4;
+        public const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
+        #endregion
+        public const int DEFAULT_SP_RETRY_COUNT = 3;
 
-#Region "Module variables"
+        #region "Module variables"
 
-    'Manager parameters
-    Protected m_MgrParams As IMgrParams
-    Protected m_ConnStr As String
-    Protected m_BrokerConnStr As String
+        /// <summary>
+        /// Manager parameters
+        /// </summary>
+        protected IMgrParams m_MgrParams;
+        protected string m_ConnStr;
 
-    'Job status
-    Protected m_TaskWasAssigned As Boolean = False
+        protected string m_BrokerConnStr;
 
-    Protected m_Xml_Text As String
+        /// <summary>
+        /// Job status
+        /// </summary>
+        protected bool m_TaskWasAssigned = false;
 
-    Public ReadOnly DMSProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
-    Public ReadOnly PipelineDBProcedureExecutor As PRISM.DataBase.clsExecuteDatabaseSP
+        protected string m_Xml_Text;
+        public readonly PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
 
-#End Region
+        public readonly PRISM.DataBase.clsExecuteDatabaseSP PipelineDBProcedureExecutor;
+        #endregion
 
-#Region "Structures"
-    Public Structure udtParameterInfoType
-        Public Section As String
-        Public ParamName As String
-        Public Value As String
-    End Structure
-#End Region
+        #region "Structures"
+        public struct udtParameterInfoType
+        {
+            public string Section;
+            public string ParamName;
+            public string Value;
+        }
+        #endregion
 
-#Region "Properties"
-    ''' <summary>
-    ''' Value showing if a transfer task was assigned
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns>TRUE if task was assigned; otherwise false</returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property TaskWasAssigned() As Boolean
-        Get
-            Return m_TaskWasAssigned
-        End Get
-    End Property
+        #region "Properties"
+        /// <summary>
+        /// Value showing if a transfer task was assigned
+        /// </summary>
+        /// <value></value>
+        /// <returns>TRUE if task was assigned; otherwise false</returns>
+        /// <remarks></remarks>
+        public bool TaskWasAssigned => m_TaskWasAssigned;
 
-    ''' <summary>
-    ''' Debug level
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks>Values from 0 (minimum output) to 5 (max detail)</remarks>
-    Public Property DebugLevel() As Short
-        Get
-            Return m_DebugLevel
-        End Get
-        Set(value As Short)
-            m_DebugLevel = value
-        End Set
-    End Property
-#End Region
+        /// <summary>
+        /// Debug level
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks>Values from 0 (minimum output) to 5 (max detail)</remarks>
+        public short DebugLevel
+        {
+            get { return m_DebugLevel; }
+            set { m_DebugLevel = value; }
+        }
+        #endregion
 
-#Region "Methods"
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="MgrParams">An IMgrParams object containing manager parameters</param>
-    ''' <remarks></remarks>
-    Protected Sub New(mgrParams As IMgrParams, debugLvl As Short)
+        #region "Methods"
+        
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrParams">An IMgrParams object containing manager parameters</param>
+        /// <param name="debugLvl">Debug level</param>
+        /// <remarks></remarks>
+        protected clsDBTask(IMgrParams mgrParams, short debugLvl)
+        {
+            m_MgrParams = mgrParams;
+            m_ConnStr = m_MgrParams.GetParam("ConnectionString");
+            // Gigasax.DMS5
+            m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring");
+            // Gigasax.DMS_Pipeline
+            m_DebugLevel = debugLvl;
 
-        m_MgrParams = mgrParams
-        m_ConnStr = m_MgrParams.GetParam("ConnectionString")               ' Gigasax.DMS5
-        m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring")   ' Gigasax.DMS_Pipeline
-        m_DebugLevel = debugLvl
+            DMSProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr);
+            PipelineDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(m_BrokerConnStr);
 
-        DMSProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr)
-        PipelineDBProcedureExecutor = New PRISM.DataBase.clsExecuteDatabaseSP(m_BrokerConnStr)
+            DMSProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
+            PipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
 
-        AddHandler DMSProcedureExecutor.DebugEvent, AddressOf ProcedureExecutor_DebugEvent
-        AddHandler PipelineDBProcedureExecutor.DebugEvent, AddressOf ProcedureExecutor_DebugEvent
+            DMSProcedureExecutor.DBErrorEvent += ProcedureExecutor_DBErrorEvent;
+            PipelineDBProcedureExecutor.DBErrorEvent += ProcedureExecutor_DBErrorEvent;
 
-        AddHandler DMSProcedureExecutor.DBErrorEvent, AddressOf ProcedureExecutor_DBErrorEvent
-        AddHandler PipelineDBProcedureExecutor.DBErrorEvent, AddressOf ProcedureExecutor_DBErrorEvent
+            if (m_DebugLevel > 1)
+            {
+                DMSProcedureExecutor.DebugMessagesEnabled = true;
+                PipelineDBProcedureExecutor.DebugMessagesEnabled = true;
+            }
 
-        If m_DebugLevel > 1 Then
-            DMSProcedureExecutor.DebugMessagesEnabled = True
-            PipelineDBProcedureExecutor.DebugMessagesEnabled = True
-        End If
+        }
 
-    End Sub
-
-    ''' <summary>
-    ''' Requests a task
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public MustOverride Function RequestTask() As RequestTaskResult
+        /// <summary>
+        /// Requests a task
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public abstract RequestTaskResult RequestTask();
 
 
-    ''' <summary>
-    ''' Closes out a task
-    ''' </summary>
-    ''' <param name="CloseOut"></param>
-    ''' <param name="CompMsg"></param>
-    ''' <remarks></remarks>
-    Public MustOverride Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String)
+        /// <summary>
+        /// Closes out a task
+        /// </summary>
+        /// <param name="CloseOut"></param>
+        /// <param name="CompMsg"></param>
+        /// <remarks></remarks>
+        public abstract void CloseTask(CloseOutType CloseOut, string CompMsg);
 
-    ''' <summary>
-    ''' Closes out a task (includes EvalCode and EvalMessgae)
-    ''' </summary>
-    ''' <param name="CloseOut"></param>
-    ''' <param name="CompMsg"></param>
-    ''' <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
-    ''' <param name="EvalMessage">Evaluation message ("" if no special message)</param>
-    ''' <remarks></remarks>
-    Public MustOverride Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String, EvalCode As Integer, EvalMessage As String)
+        /// <summary>
+        /// Closes out a task (includes EvalCode and EvalMessgae)
+        /// </summary>
+        /// <param name="CloseOut"></param>
+        /// <param name="CompMsg"></param>
+        /// <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
+        /// <param name="EvalMessage">Evaluation message ("" if no special message)</param>
+        /// <remarks></remarks>
+        public abstract void CloseTask(CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage);
 
-    Protected Function FillParamDictXml(jobParamsXML As String) As IEnumerable(Of udtParameterInfoType)
+        protected IEnumerable<udtParameterInfoType> FillParamDictXml(string jobParamsXML)
+        {
 
-        Try
-            ' Read XML string into XPathDocument object 
-            ' and set up navigation objects to traverse it
+            try
+            {
+                // Read XML string into XPathDocument object 
+                // and set up navigation objects to traverse it
 
-            Using xReader As XmlReader = New XmlTextReader(New StringReader(jobParamsXML))
+                using (XmlReader xReader = new XmlTextReader(new StringReader(jobParamsXML)))
+                {
 
-                Dim xdoc As New XPathDocument(xReader)
-                Dim xpn As XPathNavigator = xdoc.CreateNavigator()
-                Dim nodes As XPathNodeIterator = xpn.Select("//item")
+                    var xdoc = new XPathDocument(xReader);
+                    var xpn = xdoc.CreateNavigator();
+                    var nodes = xpn.Select("//item");
 
-                Dim dctParameters As New List(Of udtParameterInfoType)
-                Dim udtParamInfo As udtParameterInfoType
+                    var dctParameters = new List<udtParameterInfoType>();
 
-                ' Traverse the parsed XML document and extract the key and value for each item
-                While nodes.MoveNext()
-                    ' Extract section, key, and value from XML element and append entry to dctParameterInfo
-                    udtParamInfo.ParamName = nodes.Current.GetAttribute("key", "")
-                    udtParamInfo.Value = nodes.Current.GetAttribute("value", "")
+                    // Traverse the parsed XML document and extract the key and value for each item
+                    while (nodes.MoveNext())
+                    {
+                        // Extract section, key, and value from XML element and append entry to dctParameterInfo
+                        var udtParamInfo = new udtParameterInfoType
+                        {
+                            ParamName = nodes.Current.GetAttribute("key", ""),
+                            Value = nodes.Current.GetAttribute("value", "")
+                        };
 
-                    ' Extract the section name for the current item and dump it to output
-                    Dim nav2 As XPathNavigator = nodes.Current.Clone
-                    nav2.MoveToParent()
-                    udtParamInfo.Section = nav2.GetAttribute("name", "")
 
-                    dctParameters.Add(udtParamInfo)
+                        // Extract the section name for the current item and dump it to output
+                        var nav2 = nodes.Current.Clone();
+                        nav2.MoveToParent();
 
-                End While
+                        udtParamInfo.Section = nav2.GetAttribute("name", "");
 
-                Return dctParameters
+                        dctParameters.Add(udtParamInfo);
 
-            End Using
+                    }
 
-        Catch ex As Exception
-            LogError("clsDBTask.FillParamDict(), exception filling dictionary", ex)
-            Return Nothing
-        End Try
+                    return dctParameters;
 
-    End Function
+                }
 
-    ''' <summary>
-    ''' Debugging routine for printing SP calling params
-    ''' </summary>
-    ''' <param name="InpCmd">SQL command object containing params</param>
-    ''' <remarks></remarks>
-    Protected Sub PrintCommandParams(InpCmd As SqlCommand)
+            }
+            catch (Exception ex)
+            {
+                LogError("clsDBTask.FillParamDict(), exception filling dictionary", ex);
+                return null;
+            }
 
-        'Verify there really are command paramters
-        If InpCmd Is Nothing Then Exit Sub
-        If InpCmd.Parameters.Count < 1 Then Exit Sub
+        }
 
-        Dim MyMsg As String = ""
+        /// <summary>
+        /// Debugging routine for printing SP calling params
+        /// </summary>
+        /// <param name="InpCmd">SQL command object containing params</param>
+        /// <remarks></remarks>
+        protected void PrintCommandParams(SqlCommand InpCmd)
+        {
+            //Verify there really are command paramters
+            if (InpCmd == null)
+                return;
+            if (InpCmd.Parameters.Count < 1)
+                return;
 
-        For Each MyParam As SqlParameter In InpCmd.Parameters
-            MyMsg &= Environment.NewLine & "Name= " & MyParam.ParameterName & ControlChars.Tab & ", Value= " & clsGlobal.DbCStr(MyParam.Value)
-        Next
+            var MyMsg = "";
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" & MyMsg)
+            foreach (SqlParameter MyParam in InpCmd.Parameters)
+            {
+                MyMsg += Environment.NewLine + "Name= " + MyParam.ParameterName + "\t, Value= " + clsGlobal.DbCStr(MyParam.Value);
+            }
 
-    End Sub
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" + MyMsg);
 
-#End Region
+        }
 
-#Region "Event Handlers"
+        #endregion
 
-    Private Sub ProcedureExecutor_DebugEvent(message As String)
-        LogDebug(message, clsLogTools.LogLevels.DEBUG)
-    End Sub
+        #region "Event Handlers"
 
-    Private Sub ProcedureExecutor_DBErrorEvent(message As String)
-        If message.Contains("permission was denied") Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message)
-        End If
-        LogError(message)
-    End Sub
+        private void ProcedureExecutor_DebugEvent(string message)
+        {
+            LogDebug(message, (int)clsLogTools.LogLevels.DEBUG);
+        }
 
-#End Region
+        private void ProcedureExecutor_DBErrorEvent(string message)
+        {
+            if (message.Contains("permission was denied"))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message);
+            }
+            LogError(message);
+        }
 
-End Class
+        #endregion
 
+    }
+
+}

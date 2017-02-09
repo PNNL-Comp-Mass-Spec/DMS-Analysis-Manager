@@ -1,54 +1,73 @@
-﻿Public MustInherit Class clsEventNotifier
+﻿
+using System;
 
-#Region "Events and Event Handlers"
+namespace AnalysisManagerBase
+{
+    public abstract class clsEventNotifier
+    {
 
-    Public Event ErrorEvent(strMessage As String, ex As Exception)
-    Public Event StatusEvent(strMessage As String)
-    Public Event WarningEvent(strMessage As String)
-    Public Event ProgressUpdate(progressMessage As String, percentComplete As Single)
+        #region "Events and Event Handlers"
 
-    ''' <summary>
-    ''' Progress udpate
-    ''' </summary>
-    ''' <param name="progressMessage">Progress message</param>
-    ''' <param name="percentComplete">Value between 0 and 100</param>
-    Protected Sub OnProgressUpdate(progressMessage As String, percentComplete As Single)
-        RaiseEvent ProgressUpdate(progressMessage, percentComplete)
-    End Sub
+        public event ErrorEventEventHandler ErrorEvent;
+        public delegate void ErrorEventEventHandler(string strMessage, Exception ex);
 
-    ''' <summary>
-    ''' Report an error
-    ''' </summary>
-    ''' <param name="strMessage"></param>
-    Protected Sub OnErrorEvent(strMessage As String)
-        RaiseEvent ErrorEvent(strMessage, Nothing)
-    End Sub
+        public event StatusEventEventHandler StatusEvent;
+        public delegate void StatusEventEventHandler(string strMessage);
 
-    ''' <summary>
-    ''' Report an error
-    ''' </summary>
-    ''' <param name="strMessage"></param>
-    ''' <param name="ex">Exception (allowed to be nothing)</param>
-    Protected Sub OnErrorEvent(strMessage As String, ex As Exception)
-        RaiseEvent ErrorEvent(strMessage, ex)
-    End Sub
+        public event WarningEventEventHandler WarningEvent;
+        public delegate void WarningEventEventHandler(string strMessage);
 
-    ''' <summary>
-    ''' Report an error
-    ''' </summary>
-    ''' <param name="strMessage"></param>
-    Protected Sub OnStatusEvent(strMessage As String)
-        RaiseEvent StatusEvent(strMessage)
-    End Sub
+        public event ProgressUpdateEventHandler ProgressUpdate;
+        public delegate void ProgressUpdateEventHandler(string progressMessage, float percentComplete);
 
-    ''' <summary>
-    ''' report a warning
-    ''' </summary>
-    ''' <param name="strMessage"></param>
-    Protected Sub OnWarningEvent(strMessage As String)
-        RaiseEvent WarningEvent(strMessage)
-    End Sub
+        /// <summary>
+        /// Progress udpate
+        /// </summary>
+        /// <param name="progressMessage">Progress message</param>
+        /// <param name="percentComplete">Value between 0 and 100</param>
+        protected void OnProgressUpdate(string progressMessage, float percentComplete)
+        {
+            ProgressUpdate?.Invoke(progressMessage, percentComplete);
+        }
 
-#End Region
+        /// <summary>
+        /// Report an error
+        /// </summary>
+        /// <param name="strMessage"></param>
+        protected void OnErrorEvent(string strMessage)
+        {
+            ErrorEvent?.Invoke(strMessage, null);
+        }
 
-End Class
+        /// <summary>
+        /// Report an error
+        /// </summary>
+        /// <param name="strMessage"></param>
+        /// <param name="ex">Exception (allowed to be nothing)</param>
+        protected void OnErrorEvent(string strMessage, Exception ex)
+        {
+            ErrorEvent?.Invoke(strMessage, ex);
+        }
+
+        /// <summary>
+        /// Report an error
+        /// </summary>
+        /// <param name="strMessage"></param>
+        protected void OnStatusEvent(string strMessage)
+        {
+            StatusEvent?.Invoke(strMessage);
+        }
+
+        /// <summary>
+        /// report a warning
+        /// </summary>
+        /// <param name="strMessage"></param>
+        protected void OnWarningEvent(string strMessage)
+        {
+            WarningEvent?.Invoke(strMessage);
+        }
+
+        #endregion
+
+    }
+}

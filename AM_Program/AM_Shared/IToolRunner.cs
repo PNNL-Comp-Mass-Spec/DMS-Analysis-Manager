@@ -1,42 +1,45 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2006, Battelle Memorial Institute
-' Created 06/07/2006
-'
-'*********************************************************************************************************
 
-Option Strict On
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2006, Battelle Memorial Institute
+// Created 06/07/2006
+//
+//*********************************************************************************************************
 
-Public Interface IToolRunner
+namespace AnalysisManagerBase
+{
 
-    '*********************************************************************************************************
-    'Insert general class description here
-    '*********************************************************************************************************
+    public interface IToolRunner
+    {
 
-#Region "Properties"
-    ReadOnly Property EvalCode As Integer
-    ReadOnly Property EvalMessage As String
+        //*********************************************************************************************************
+        //Insert general class description here
+        //*********************************************************************************************************
 
-    ReadOnly Property ResFolderName() As String
+        #region "Properties"
+        int EvalCode { get; }
 
-    ' Explanation of what happened to last operation this class performed
-    ' Used to report error messages
-    ReadOnly Property Message() As String
+        string EvalMessage { get; }
 
-    ReadOnly Property NeedToAbortProcessing() As Boolean
+        string ResFolderName { get; }
+        // Explanation of what happened to last operation this class performed
+        // Used to report error messages
 
-    ' the state of completion of the job (as a percentage)
-    ReadOnly Property Progress() As Single
-#End Region
+        string Message { get; }
 
-#Region "Methods"
-    Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, summaryFile As clsSummaryFile, myEMSLUtilities As clsMyEMSLUtilities)
+        bool NeedToAbortProcessing { get; }
+        // the state of completion of the job (as a percentage)
+        #endregion
+        float Progress { get; }
 
-    Function RunTool() As IJobParams.CloseOutType
+        #region "Methods"
 
-#End Region
+        void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsSummaryFile summaryFile, clsMyEMSLUtilities myEMSLUtilities);
+        CloseOutType RunTool();
 
-End Interface
+        #endregion
 
+    }
 
+}

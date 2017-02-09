@@ -1,85 +1,93 @@
-﻿'*********************************************************************************************************
-' Written by Matt Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2008, Battelle Memorial Institute
-' Created 09/23/2008
-'
-' DAC modified for use with analysis manager 09/25/2008
-'*********************************************************************************************************
+﻿using System;
+using System.IO;
+using System.Xml;
 
-Option Strict On
+//*********************************************************************************************************
+// Written by Matt Monroe for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2008, Battelle Memorial Institute
+// Created 09/23/2008
+//
+//*********************************************************************************************************
 
-Imports System.IO
-Imports System.Xml
+namespace AnalysisManagerBase
+{
+    public class clsFormattedXMLWriter
+    {
 
-Public Class clsFormattedXMLWriter
+        //*********************************************************************************************************
+        //Writes a formatted XML file
+        //*********************************************************************************************************
 
-    '*********************************************************************************************************
-    'Writes a formatted XML file
-    '*********************************************************************************************************
+        #region "Module variables"
+        #endregion
+        string m_ErrMsg;
 
-#Region "Module variables"
-    Dim m_ErrMsg As String
-#End Region
+        #region "Properties"
+        public string ErrMsg => m_ErrMsg;
 
-#Region "Properties"
-    Public ReadOnly Property ErrMsg() As String
-        Get
-            Return m_ErrMsg
-        End Get
-    End Property
-#End Region
+        #endregion
 
-#Region "Methods"
-    Public Function WriteXMLToFile(strXMLText As String, strOutputFilePath As String) As Boolean
+        #region "Methods"
+        public bool WriteXMLToFile(string strXMLText, string strOutputFilePath)
+        {
 
-        Dim objXMLDoc As XmlDocument
-        Dim swOutfile As XmlTextWriter
+            XmlDocument objXMLDoc;
+            XmlTextWriter swOutfile;
 
-        Dim blnSuccess = False
+            var blnSuccess = false;
 
-        m_ErrMsg = ""
+            m_ErrMsg = "";
 
-        Try
-            ' Instantiate objXMLDoc
-            objXMLDoc = New XmlDocument()
-            objXMLDoc.LoadXml(strXMLText)
+            try
+            {
+                // Instantiate objXMLDoc
+                objXMLDoc = new XmlDocument();
+                objXMLDoc.LoadXml(strXMLText);
 
-        Catch ex As Exception
-            m_ErrMsg = "Error parsing the source XML text: " & ex.Message
-            Return False
-        End Try
+            }
+            catch (Exception ex)
+            {
+                m_ErrMsg = "Error parsing the source XML text: " + ex.Message;
+                return false;
+            }
 
-        Try
-            ' Initialize the XML writer
-            swOutfile = New XmlTextWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Text.Encoding.UTF8)
+            try
+            {
+                // Initialize the XML writer
+                swOutfile = new XmlTextWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), System.Text.Encoding.UTF8)
+                {
+                    Formatting = Formatting.Indented,
+                    Indentation = 2,
+                    IndentChar = ' '
+                };
 
-            ' Define the indenting
-            swOutfile.Formatting = Formatting.Indented
-            swOutfile.Indentation = 2
-            swOutfile.IndentChar = " "c
+            }
+            catch (Exception ex)
+            {
+                m_ErrMsg = "Error opening the output file (" + strOutputFilePath + ") in WriteXMLToFile: " + ex.Message;
+                return false;
+            }
 
-        Catch ex As Exception
-            m_ErrMsg = "Error opening the output file (" & strOutputFilePath & ") in WriteXMLToFile: " & ex.Message
-            Return False
-        End Try
+            try
+            {
+                // Write out the XML
+                objXMLDoc.WriteTo(swOutfile);
+                swOutfile.Close();
 
-        Try
-            ' Write out the XML
-            objXMLDoc.WriteTo(swOutfile)
-            swOutfile.Close()
+                blnSuccess = true;
 
-            blnSuccess = True
+            }
+            catch (Exception ex)
+            {
+                m_ErrMsg = "Error in WritePepXMLFile: " + ex.Message;
+                swOutfile.Close();
+            }
 
-        Catch ex As Exception
-            m_ErrMsg = "Error in WritePepXMLFile: " & ex.Message
-        Finally
-            If Not swOutfile Is Nothing Then swOutfile.Close()
-        End Try
+            return blnSuccess;
 
-        Return blnSuccess
+        }
+        #endregion
 
-    End Function
-#End Region
-
-End Class
+    }
+}

@@ -1,59 +1,60 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2006, Battelle Memorial Institute
-' Created 06/07/2006
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2006, Battelle Memorial Institute
+// Created 06/07/2006
+//*********************************************************************************************************
 
-Option Strict On
+namespace AnalysisManagerBase
+{
 
-''' <summary>
-''' Interface for analysis resources
-''' </summary>
-''' <remarks></remarks>
-Public Interface IAnalysisResources
+    /// <summary>
+    /// Interface for analysis resources
+    /// </summary>
+    /// <remarks></remarks>
+    public interface IAnalysisResources
+    {
 
-#Region "Properties"
-    ReadOnly Property Message() As String
-#End Region
+        #region "Properties"
+        string Message { get; }
+        #endregion
 
-#Region "Methods"
+        #region "Methods"
 
-    ''' <summary>
-    ''' Initialize class
-    ''' </summary>
-    ''' <param name="mgrParams">Manager parameter object</param>
-    ''' <param name="jobParams">Job parameter object</param>
-    ''' <param name="statusTools">Status tools object</param>
-    ''' <param name="myEMSLUtilities">MyEMSL download utilities</param>
-    ''' <remarks></remarks>
-    Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
+        /// <summary>
+        /// Initialize class
+        /// </summary>
+        /// <param name="mgrParams">Manager parameter object</param>
+        /// <param name="jobParams">Job parameter object</param>
+        /// <param name="statusTools">Status tools object</param>
+        /// <param name="myEMSLUtilities">MyEMSL download utilities</param>
+        /// <remarks></remarks>
 
-    ''' <summary>
-    ''' Main processing function for obtaining the required resources
-    ''' </summary>
-    ''' <returns>Status value indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Function GetResources() As IJobParams.CloseOutType
+        void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities);
+        /// <summary>
+        /// Main processing function for obtaining the required resources
+        /// </summary>
+        /// <returns>Status value indicating success or failure</returns>
+        /// <remarks></remarks>
+        CloseOutType GetResources();
 
-    ''' <summary>
-    ''' Check the status of an analysis resource option
-    ''' </summary>
-    ''' <param name="resourceOption">Option to get</param>
-    ''' <returns>The option value (true or false)</returns>
-    ''' <remarks></remarks>
-    Function GetOption(resourceOption As clsGlobal.eAnalysisResourceOptions) As Boolean
+        /// <summary>
+        /// Check the status of an analysis resource option
+        /// </summary>
+        /// <param name="resourceOption">Option to get</param>
+        /// <returns>The option value (true or false)</returns>
+        /// <remarks></remarks>
+        bool GetOption(clsGlobal.eAnalysisResourceOptions resourceOption);
 
-    ''' <summary>
-    ''' Set the status of an analysis resource option
-    ''' </summary>
-    ''' <param name="resourceOption">Option to set</param>
-    ''' <param name="enabled">True or false</param>
-    ''' <remarks></remarks>
-    Sub SetOption(resourceOption As clsGlobal.eAnalysisResourceOptions, enabled As Boolean)
+        /// <summary>
+        /// Set the status of an analysis resource option
+        /// </summary>
+        /// <param name="resourceOption">Option to set</param>
+        /// <param name="enabled">True or false</param>
+        /// <remarks></remarks>
 
-#End Region
+        void SetOption(clsGlobal.eAnalysisResourceOptions resourceOption, bool enabled);
+        #endregion
 
-End Interface
-
-
+    }
+}

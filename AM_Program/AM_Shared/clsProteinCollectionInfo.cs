@@ -1,58 +1,68 @@
-﻿Public Class clsProteinCollectionInfo
-
-    Private mOrgDBDescription As String
-
-    ''' <summary>
-    ''' Legacy Fasta file name
-    ''' </summary>
-    ''' <remarks>Will be "na" when using a protein collection</remarks>
-    Public Property LegacyFastaName As String
-
-    Public Property ProteinCollectionOptions As String
-    Public Property ProteinCollectionList As String
-
-    Public Property UsingLegacyFasta As Boolean
-    Public Property UsingSplitFasta As Boolean
-    Public Property ErrorMessage As String
-    Public Property IsValid As Boolean
-
-    Public ReadOnly Property OrgDBDescription As String
-        Get
-            Return mOrgDBDescription
-        End Get
-    End Property
-
-    Public Sub New(jobParams As IJobParams)
-
-        LegacyFastaName = jobParams.GetParam("LegacyFastaFileName")
-        ProteinCollectionOptions = jobParams.GetParam("ProteinOptions")
-        ProteinCollectionList = jobParams.GetParam("ProteinCollectionList")
-        UsingSplitFasta = jobParams.GetJobParameter("SplitFasta", False)
-
-        ' When running DTA_Refinery, we override UsingSplitFasta to false
-        If String.Equals(jobParams.GetParam("StepTool"), "DTA_Refinery") Then
-            UsingSplitFasta = False
-        End If
-
-        ' Update mOrgDBDescription and UsingLegacyFasta
-        UpdateDescription()
-
-    End Sub
-
-    Public Sub UpdateDescription()
-        If Not String.IsNullOrWhiteSpace(ProteinCollectionList) AndAlso Not ProteinCollectionList.ToLower() = "na" Then
-            mOrgDBDescription = "Protein collection: " + ProteinCollectionList + " with options " + ProteinCollectionOptions
-            UsingLegacyFasta = False
-            IsValid = True
-        ElseIf Not String.IsNullOrWhiteSpace(LegacyFastaName) AndAlso Not LegacyFastaName.ToLower() = "na" Then
-            mOrgDBDescription = "Legacy DB: " + LegacyFastaName
-            UsingLegacyFasta = True
-            IsValid = True
-        Else
-            ErrorMessage = "Both the ProteinCollectionList and LegacyFastaFileName parameters are empty or 'na'"
-            IsValid = False
-        End If
-    End Sub
+﻿
+namespace AnalysisManagerBase
+{
+    public class clsProteinCollectionInfo
+    {
 
 
-End Class
+        private string mOrgDBDescription;
+        /// <summary>
+        /// Legacy Fasta file name
+        /// </summary>
+        /// <remarks>Will be "na" when using a protein collection</remarks>
+        public string LegacyFastaName { get; set; }
+
+        public string ProteinCollectionOptions { get; set; }
+        public string ProteinCollectionList { get; set; }
+
+        public bool UsingLegacyFasta { get; set; }
+        public bool UsingSplitFasta { get; set; }
+        public string ErrorMessage { get; set; }
+        public bool IsValid { get; set; }
+
+        public string OrgDBDescription => mOrgDBDescription;
+
+
+        public clsProteinCollectionInfo(IJobParams jobParams)
+        {
+            LegacyFastaName = jobParams.GetParam("LegacyFastaFileName");
+            ProteinCollectionOptions = jobParams.GetParam("ProteinOptions");
+            ProteinCollectionList = jobParams.GetParam("ProteinCollectionList");
+            UsingSplitFasta = jobParams.GetJobParameter("SplitFasta", false);
+
+            // When running DTA_Refinery, we override UsingSplitFasta to false
+            if (string.Equals(jobParams.GetParam("StepTool"), "DTA_Refinery"))
+            {
+                UsingSplitFasta = false;
+            }
+
+            // Update mOrgDBDescription and UsingLegacyFasta
+            UpdateDescription();
+
+        }
+
+        public void UpdateDescription()
+        {
+            if (!string.IsNullOrWhiteSpace(ProteinCollectionList) && ProteinCollectionList.ToLower() != "na")
+            {
+                mOrgDBDescription = "Protein collection: " + ProteinCollectionList + " with options " + ProteinCollectionOptions;
+                UsingLegacyFasta = false;
+                IsValid = true;
+            }
+            else if (!string.IsNullOrWhiteSpace(LegacyFastaName) && LegacyFastaName.ToLower() != "na")
+            {
+                mOrgDBDescription = "Legacy DB: " + LegacyFastaName;
+                UsingLegacyFasta = true;
+                IsValid = true;
+            }
+            else
+            {
+                ErrorMessage = "Both the ProteinCollectionList and LegacyFastaFileName parameters are empty or 'na'";
+                IsValid = false;
+            }
+        }
+
+
+    }
+    
+}

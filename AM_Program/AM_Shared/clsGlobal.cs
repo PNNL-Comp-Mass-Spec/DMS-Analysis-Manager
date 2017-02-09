@@ -1,1591 +1,1891 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2007, Battelle Memorial Institute
-' Created 12/20/2007
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports System.IO
-Imports System.Threading
-Imports System.Text.RegularExpressions
-Imports System.Runtime.InteropServices
-Imports System.Data.SqlClient
-Imports System.Security.Cryptography
-
-Public Class clsGlobal
-
-#Region "Constants"
-    Public Const LOG_LOCAL_ONLY As Boolean = True
-    Public Const LOG_DATABASE As Boolean = False
-    Public Const XML_FILENAME_PREFIX As String = "JobParameters_"
-    Public Const XML_FILENAME_EXTENSION As String = "xml"
-
-    Public Const STEPTOOL_PARAMFILESTORAGEPATH_PREFIX As String = "StepTool_ParamFileStoragePath_"
-
-    Public Const SERVER_CACHE_HASHCHECK_FILE_SUFFIX As String = ".hashcheck"
-
-#End Region
-
-#Region "Enums"
-    Public Enum eAnalysisResourceOptions
-        OrgDbRequired = 0
-        MyEMSLSearchDisabled = 1
-    End Enum
-#End Region
-
-#Region "Module variables"
-    Declare Auto Function GetDiskFreeSpaceEx Lib "kernel32.dll" (
-      lpRootPathName As String,
-      ByRef lpFreeBytesAvailable As Long,
-      ByRef lpTotalNumberOfBytes As Long,
-      ByRef lpTotalNumberOfFreeBytes As Long) As Integer
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Appends a string to a job comment string
-    ''' </summary>
-    ''' <param name="baseComment">Initial comment</param>
-    ''' <param name="addnlComment">Comment to be appended</param>
-    ''' <returns>String containing both comments</returns>
-    ''' <remarks></remarks>
-    Public Shared Function AppendToComment(baseComment As String, addnlComment As String) As String
-
-        'Appends a comment string to an existing comment string
-
-        If String.IsNullOrWhiteSpace(baseComment) Then
-            Return addnlComment
-        Else
-            If String.IsNullOrWhiteSpace(addnlComment) OrElse baseComment.Contains(addnlComment) Then
-                ' Either addnlComment is empty (unlikely) or addnlComment is a duplicate comment
-                ' Return the base comment
-                Return baseComment
-            End If
-
-            ' Append a semicolon to baseComment, but only if it doesn't already end in a semicolon
-            If baseComment.TrimEnd(" "c).EndsWith(";"c) Then
-                Return baseComment & addnlComment
-            End If
-
-            Return baseComment & "; " & addnlComment
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Convert Bytes to Gigabytes
-    ''' </summary>
-    ''' <param name="bytes"></param>
-    ''' <returns></returns>
-    Public Shared Function BytesToGB(bytes As Int64) As Double
-        Return bytes / 1024.0 / 1024.0 / 1024.0
-    End Function
-
-    ''' <summary>
-    ''' Convert Bytes to Megabytes
-    ''' </summary>
-    ''' <param name="bytes"></param>
-    ''' <returns></returns>
-    Public Shared Function BytesToMB(bytes As Int64) As Double
-        Return bytes / 1024.0 / 1024.0
-    End Function
-
-    ''' <summary>
-    '''Examines intCount to determine which string to return
-    ''' </summary>
-    ''' <param name="intCount"></param>
-    ''' <param name="strTextIfOneItem"></param>
-    ''' <param name="strTextIfZeroOrMultiple"></param>
-    ''' <returns>Returns strTextIfOneItem if intCount is 1; otherwise, returns strTextIfZeroOrMultiple</returns>
-    ''' <remarks></remarks>
-    Public Shared Function CheckPlural(intCount As Integer, strTextIfOneItem As String, strTextIfZeroOrMultiple As String) As String
-
-        If intCount = 1 Then
-            Return strTextIfOneItem
-        Else
-            Return strTextIfZeroOrMultiple
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Collapse an array of items to a tab-delimited list
-    ''' </summary>
-    ''' <param name="strItems"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function CollapseLine(strItems() As String) As String
-        If strItems Is Nothing OrElse strItems.Length = 0 Then
-            Return String.Empty
-        Else
-            Return CollapseList(strItems.ToList())
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Collapse a list of items to a tab-delimited list
-    ''' </summary>
-    ''' <param name="lstFields"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function CollapseList(lstFields As List(Of String)) As String
-
-        Return FlattenList(lstFields, ControlChars.Tab)
-
-    End Function
-
-    ''' <summary>
-    ''' Decrypts password received from ini file
-    ''' </summary>
-    ''' <param name="enPwd">Encoded password</param>
-    ''' <returns>Clear text password</returns>
-    Public Shared Function DecodePassword(enPwd As String) As String
-        ' Decrypts password received from ini file
-        ' Password was created by alternately subtracting or adding 1 to the ASCII value of each character
-
-        ' Convert the password string to a character array
-        Dim pwdChars As Char() = enPwd.ToCharArray()
-        Dim pwdBytes = New List(Of Byte)
-        Dim pwdCharsAdj = New List(Of Char)
-
-        For i = 0 To pwdChars.Length - 1
-            pwdBytes.Add(Convert.ToByte(pwdChars(i)))
-        Next
-
-        ' Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
-
-        For byteCntr = 0 To pwdBytes.Count - 1
-            If (byteCntr Mod 2) = 0 Then
-                pwdBytes(byteCntr) += CByte(1)
-            Else
-                pwdBytes(byteCntr) -= CByte(1)
-            End If
-            pwdCharsAdj.Add(Convert.ToChar(pwdBytes(byteCntr)))
-        Next
-
-        Return String.Join("", pwdCharsAdj)
-
-    End Function
-
-    ''' <summary>
-    ''' Flatten a list of items into a single string, with items separated by chDelimiter
-    ''' </summary>
-    ''' <param name="lstItems"></param>
-    ''' <param name="chDelimiter"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function FlattenList(lstItems As List(Of String), chDelimiter As Char) As String
-
-        If lstItems Is Nothing OrElse lstItems.Count = 0 Then
-            Return String.Empty
-        Else
-            Return String.Join(chDelimiter, lstItems)
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Returns the directory in which the entry assembly (typically the Program .exe file) resides 
-    ''' </summary>
-    ''' <returns>Full directory path</returns>
-    Public Shared Function GetAppFolderPath() As String
-
-        Static strAppFolderPath As String = String.Empty
-
-        If String.IsNullOrEmpty(strAppFolderPath) Then
-            Dim objAssembly As Reflection.Assembly
-            objAssembly = Reflection.Assembly.GetEntryAssembly()
-
-            Dim fiAssemblyFile As FileInfo
-            fiAssemblyFile = New FileInfo(objAssembly.Location)
-
-            strAppFolderPath = fiAssemblyFile.DirectoryName
-        End If
-
-        Return strAppFolderPath
-
-    End Function
-
-    ''' <summary>
-    ''' Returns the version string of the entry assembly (typically the Program .exe file)
-    ''' </summary>
-    ''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
-    Public Shared Function GetAssemblyVersion() As String
-        Dim objEntryAssembly As Reflection.Assembly
-        objEntryAssembly = Reflection.Assembly.GetEntryAssembly()
-
-        Return GetAssemblyVersion(objEntryAssembly)
-
-    End Function
-
-    ''' <summary>
-    ''' Returns the version string of the specified assembly
-    ''' </summary>
-    ''' <returns>Assembly version, e.g. 1.0.4482.23831</returns>
-    Public Shared Function GetAssemblyVersion(objAssembly As Reflection.Assembly) As String
-        ' objAssembly.FullName typically returns something like this:
-        ' AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
-        ' 
-        ' the goal is to extract out the text after Version= but before the next comma
-
-        Dim reGetVersion = New Regex("version=([0-9.]+)", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-        Dim reMatch As Match
-        Dim strVersion As String
-
-        strVersion = objAssembly.FullName
-
-        reMatch = reGetVersion.Match(strVersion)
-
-        If reMatch.Success Then
-            strVersion = reMatch.Groups(1).Value
-        End If
-
-        Return strVersion
-
-    End Function
-
-    ''' <summary>
-    ''' Runs the specified Sql query
-    ''' </summary>
-    ''' <param name="sqlStr">Sql query</param>
-    ''' <param name="connectionString">Connection string</param>
-    ''' <param name="callingFunction">Name of the calling function</param>
-    ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
-    ''' <param name="dtResults">Datatable (Output Parameter)</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks>Uses a timeout of 30 seconds</remarks>
-    Public Shared Function GetDataTableByQuery(
-      sqlStr As String,
-      connectionString As String,
-      callingFunction As String,
-      retryCount As Short,
-      <Out()> ByRef dtResults As DataTable) As Boolean
-
-        Const timeoutSeconds = 30
-
-        Return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
-
-    End Function
-
-    ''' <summary>
-    ''' Runs the specified Sql query
-    ''' </summary>
-    ''' <param name="sqlStr">Sql query</param>
-    ''' <param name="connectionString">Connection string</param>
-    ''' <param name="callingFunction">Name of the calling function</param>
-    ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
-    ''' <param name="dtResults">Datatable (Output Parameter)</param>
-    ''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetDataTableByQuery(
-      sqlStr As String,
-      connectionString As String,
-      callingFunction As String,
-      retryCount As Short,
-      <Out()> ByRef dtResults As DataTable,
-      timeoutSeconds As Integer) As Boolean
-
-        Dim cmd = New SqlCommand(sqlStr)
-        cmd.CommandType = CommandType.Text
-
-        Return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, dtResults, timeoutSeconds)
-
-    End Function
-
-    ''' <summary>
-    ''' Runs the stored procedure or database query defined by "cmd"
-    ''' </summary>
-    ''' <param name="cmd">SqlCommand object (query or stored procedure)</param>
-    ''' <param name="connectionString">Connection string</param>
-    ''' <param name="callingFunction">Name of the calling function</param>
-    ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
-    ''' <param name="dtResults">Datatable (Output Parameter)</param>
-    ''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetDataTableByCmd(
-      cmd As SqlCommand,
-      connectionString As String,
-      callingFunction As String,
-      retryCount As Short,
-      <Out()> ByRef dtResults As DataTable,
-      timeoutSeconds As Integer) As Boolean
-
-        Dim strMsg As String
-
-        If cmd Is Nothing Then Throw New ArgumentException("command is undefined", NameOf(cmd))
-        If String.IsNullOrEmpty(connectionString) Then
-            Throw New ArgumentException("ConnectionString cannot be empty", NameOf(connectionString))
-        End If
-
-        If String.IsNullOrEmpty(callingFunction) Then callingFunction = "UnknownCaller"
-        If retryCount < 1 Then retryCount = 1
-        If timeoutSeconds < 5 Then timeoutSeconds = 5
-
-        ' When data retrieval fails, delay for 5 seconds on the first try
-        ' Double the delay time for each subsequent attempt, up to a maximum of 90 seconds between attempts
-        Dim retryDelaySeconds = 5
-
-        While retryCount > 0
-            Try
-                Using cn = New SqlConnection(connectionString)
-
-                    cmd.Connection = cn
-                    cmd.CommandTimeout = timeoutSeconds
-
-                    Using da = New SqlDataAdapter(cmd)
-                        Using ds = New DataSet
-                            da.Fill(ds)
-                            dtResults = ds.Tables(0)
-                        End Using
-                    End Using
-                End Using
-                Return True
-            Catch ex As Exception
-                retryCount -= 1S
-                If cmd.CommandType = CommandType.StoredProcedure Then
-                    strMsg = callingFunction & "; Exception running stored procedure " & cmd.CommandText
-                ElseIf cmd.CommandType = CommandType.TableDirect Then
-                    strMsg = callingFunction & "; Exception querying table " & cmd.CommandText
-                Else
-                    strMsg = callingFunction & "; Exception querying database"
-                End If
-
-                strMsg &= ": " + ex.Message + "; ConnectionString: " + connectionString
-                strMsg &= ", RetryCount = " + retryCount.ToString
-
-                If cmd.CommandType = CommandType.Text Then
-                    strMsg &= ", Query = " + cmd.CommandText
-                End If
-
-                Console.WriteLine(strMsg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg)
-                Thread.Sleep(retryDelaySeconds * 1000)
-
-                retryDelaySeconds *= 2
-                If retryDelaySeconds > 90 Then
-                    retryDelaySeconds = 90
-                End If
-
-            End Try
-        End While
-
-        dtResults = Nothing
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Run a query against a SQL Server database
-    ''' </summary>
-    ''' <param name="sqlQuery">Query to run</param>
-    ''' <param name="connectionString">Connection string</param>
-    ''' <param name="lstResults">Results, as a list of columns (first row only if multiple rows)</param>
-    ''' <param name="callingFunction">Name of the calling function (for logging purposes)</param>
-    ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
-    ''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks>
-    ''' Null values are converted to empty strings
-    ''' Numbers are converted to their string equivalent
-    ''' Use the GetDataTable functions in this class if you need to retain numeric values or null values
-    ''' </remarks>
-    Public Shared Function GetQueryResultsTopRow(
-      sqlQuery As String,
-      connectionString As String,
-      <Out()> ByRef lstResults As List(Of String),
-      callingFunction As String,
-      Optional retryCount As Short = 3,
-      Optional timeoutSeconds As Integer = 5) As Boolean
-
-        Dim lstResultTable As List(Of List(Of String)) = Nothing
-
-        Dim success = GetQueryResults(sqlQuery, connectionString, lstResultTable, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn:=1)
-
-        If success Then
-            lstResults = lstResultTable.FirstOrDefault()
-            If lstResults Is Nothing Then lstResults = New List(Of String)
-            Return True
-        Else
-            lstResults = New List(Of String)
-            Return False
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Run a query against a SQL Server database, return the results as a list of strings
-    ''' </summary>
-    ''' <param name="sqlQuery">Query to run</param>
-    ''' <param name="connectionString">Connection string</param>
-    ''' <param name="lstResults">Results (list of list of strings)</param>
-    ''' <param name="callingFunction">Name of the calling function (for logging purposes)</param>
-    ''' <param name="retryCount">Number of times to retry (in case of a problem)</param>
-    ''' <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
-    '''<param name="maxRowsToReturn">Maximum rows to return; 0 to return all rows</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks>
-    ''' Null values are converted to empty strings
-    ''' Numbers are converted to their string equivalent
-    ''' Use the GetDataTable functions in this class if you need to retain numeric values or null values
-    ''' </remarks>
-    Public Shared Function GetQueryResults(
-      sqlQuery As String,
-      connectionString As String,
-      <Out()> ByRef lstResults As List(Of List(Of String)),
-      callingFunction As String,
-      Optional retryCount As Short = 3,
-      Optional timeoutSeconds As Integer = 30,
-      Optional maxRowsToReturn As Integer = 0) As Boolean
-
-        If retryCount < 1 Then retryCount = 1
-        If timeoutSeconds < 5 Then timeoutSeconds = 5
-
-        Dim dbTools = New PRISM.DataBase.clsDBTools(connectionString)
-
-        AddHandler dbTools.ErrorEvent, AddressOf DbToolsErrorEventHandler
-
-        Dim success = dbTools.GetQueryResults(sqlQuery, lstResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn)
-
-        Return success
-
-    End Function
-
-    ''' <summary>
-    ''' Parses the .StackTrace text of the given exception to return a compact description of the current stack
-    ''' </summary>
-    ''' <param name="ex"></param>
-    ''' <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetExceptionStackTrace(ex As Exception) As String
-        Return GetExceptionStackTrace(ex, False)
-    End Function
-
-    ''' <summary>
-    ''' Parses the .StackTrace text of the given exception to return a compact description of the current stack
-    ''' </summary>
-    ''' <param name="ex"></param>
-    ''' <param name="multiLineOutput">When true, format the stack trace using newline characters instead of -:-</param>
-    ''' <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetExceptionStackTrace(ex As Exception, multiLineOutput As Boolean) As String
-        If multiLineOutput Then
-            Return PRISM.Logging.Utilities.GetExceptionStackTraceMultiLine(ex)
-        End If
-
-        Return PRISM.Logging.Utilities.GetExceptionStackTrace(ex)
-
-    End Function
-
-    Public Shared Function GetKeyValueSetting(strText As String) As KeyValuePair(Of String, String)
-
-        Dim strKey As String = String.Empty
-        Dim strValue As String = String.Empty
-
-        If Not String.IsNullOrWhiteSpace(strText) Then
-            strText = strText.Trim()
-
-            If Not strText.StartsWith("#") AndAlso strText.Contains("="c) Then
-
-                Dim intCharIndex As Integer
-                intCharIndex = strText.IndexOf("=", StringComparison.Ordinal)
-
-                If intCharIndex > 0 Then
-                    strKey = strText.Substring(0, intCharIndex).Trim()
-                    If intCharIndex < strText.Length - 1 Then
-                        strValue = strText.Substring(intCharIndex + 1).Trim()
-                    Else
-                        strValue = String.Empty
-                    End If
-                End If
-            End If
-
-        End If
-
-        Return New KeyValuePair(Of String, String)(strKey, strValue)
-    End Function
-
-    ''' <summary>
-    ''' Compare two strings (not case sensitive)
-    ''' </summary>
-    ''' <param name="strText1"></param>
-    ''' <param name="strText2"></param>
-    ''' <returns>True if they match; false if not</returns>
-    ''' <remarks>A null string is considered equivalent to an empty string.  Thus, two null strings are considered equal</remarks>
-    Public Shared Function IsMatch(strText1 As String, strText2 As String) As Boolean
-        Return IsMatch(strText1, strText2, True)
-    End Function
-
-    ''' <summary>
-    ''' Compare two strings (not case sensitive)
-    ''' </summary>
-    ''' <param name="strText1"></param>
-    ''' <param name="strText2"></param>
-    ''' <param name="treatNullAsEmptyString">When true, a null string is considered equivalent to an empty string</param>
-    ''' <returns>True if they match; false if not</returns>
-    ''' <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
-    Public Shared Function IsMatch(strText1 As String, strText2 As String, treatNullAsEmptyString As Boolean) As Boolean
-
-        If treatNullAsEmptyString AndAlso String.IsNullOrWhiteSpace(strText1) AndAlso String.IsNullOrWhiteSpace(strText2) Then
-            Return True
-        End If
-
-        If String.Compare(strText1, strText2, True) = 0 Then
-            Return True
-        Else
-            Return False
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Parses the headers in strHeaderLine to look for the names specified in lstHeaderNames
-    ''' </summary>
-    ''' <param name="strHeaderLine"></param>
-    ''' <param name="lstHeaderNames"></param>
-    ''' <returns>Dictionary with the header names and 0-based column index</returns>
-    ''' <remarks>Header names not found in strHeaderLine will have an index of -1</remarks>
-    Public Shared Function ParseHeaderLine(strHeaderLine As String, lstHeaderNames As List(Of String), isCaseSensitive As Boolean) As Dictionary(Of String, Integer)
-        Dim dctHeaderMapping = New Dictionary(Of String, Integer)
-
-        Dim lstColumns = strHeaderLine.Split(ControlChars.Tab).ToList()
-
-        For Each headerName In lstHeaderNames
-            Dim colIndex As Integer = -1
-
-            If isCaseSensitive Then
-                colIndex = lstColumns.IndexOf(headerName)
-            Else
-                For i = 0 To lstColumns.Count - 1
-                    If IsMatch(lstColumns(i), headerName) Then
-                        colIndex = i
-                        Exit For
-                    End If
-                Next
-            End If
-
-            dctHeaderMapping.Add(headerName, colIndex)
-        Next
-
-        Return dctHeaderMapping
-
-    End Function
-
-    ''' <summary>
-    ''' Examines strPath to look for spaces
-    ''' </summary>
-    ''' <param name="strPath"></param>
-    ''' <returns>strPath as-is if no spaces, otherwise strPath surrounded by double quotes </returns>
-    ''' <remarks></remarks>
-    Public Shared Function PossiblyQuotePath(strPath As String) As String
-        If String.IsNullOrWhiteSpace(strPath) Then
-            Return String.Empty
-        Else
-
-            If strPath.Contains(" ") Then
-                If Not strPath.StartsWith("""") Then
-                    strPath = """" & strPath
-                End If
-
-                If Not strPath.EndsWith("""") Then
-                    strPath &= """"
-                End If
-            End If
-
-            Return strPath
-
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Converts a string value to a boolean equivalent
-    ''' </summary>
-    ''' <param name="Value"></param>
-    ''' <returns></returns>
-    ''' <remarks>Returns false if an exception</remarks>
-    Public Shared Function CBoolSafe(Value As String) As Boolean
-        Dim blnValue As Boolean
-
-        Try
-            If String.IsNullOrEmpty(Value) Then
-                blnValue = False
-            Else
-                blnValue = CBool(Value)
-            End If
-        Catch ex As Exception
-            blnValue = False
-        End Try
-
-        Return blnValue
-
-    End Function
-
-    ''' <summary>
-    ''' Converts a string value to a boolean equivalent
-    ''' </summary>
-    ''' <param name="Value"></param>
-    ''' <param name="blnDefaultValue">Boolean value to return if Value is empty or an exception occurs</param>
-    ''' <returns></returns>
-    ''' <remarks>Returns false if an exception</remarks>
-    Public Shared Function CBoolSafe(Value As String, blnDefaultValue As Boolean) As Boolean
-        Dim blnValue As Boolean
-
-        Try
-            If String.IsNullOrEmpty(Value) Then
-                blnValue = blnDefaultValue
-            Else
-                blnValue = CBool(Value)
-            End If
-        Catch ex As Exception
-            blnValue = blnDefaultValue
-        End Try
-
-        Return blnValue
-
-    End Function
-
-    ''' <summary>
-    ''' Converts Value to an integer
-    ''' </summary>
-    ''' <param name="Value"></param>
-    ''' <param name="intDefaultValue">Integer to return if Value is not numeric</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function CIntSafe(Value As String, intDefaultValue As Integer) As Integer
-        Dim intValue As Integer
-
-        Try
-            If String.IsNullOrEmpty(Value) Then
-                intValue = intDefaultValue
-            Else
-                intValue = CInt(Value)
-            End If
-        Catch ex As Exception
-            intValue = intDefaultValue
-        End Try
-
-        Return intValue
-
-    End Function
-
-    ''' <summary>
-    ''' Converts Value to a single (aka float)
-    ''' </summary>
-    ''' <param name="Value"></param>
-    ''' <param name="sngDefaultValue">Single to return if Value is not numeric</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function CSngSafe(Value As String, sngDefaultValue As Single) As Single
-        Dim sngValue As Single
-
-        Try
-            If String.IsNullOrEmpty(Value) Then
-                sngValue = sngDefaultValue
-            Else
-                sngValue = CSng(Value)
-            End If
-
-        Catch ex As Exception
-            sngValue = sngDefaultValue
-        End Try
-
-        Return sngValue
-
-    End Function
-
-    ''' <summary>
-    ''' Copies file SourceFilePath to folder TargetFolder, renaming it to TargetFileName.
-    ''' However, if file TargetFileName already exists, then that file will first be backed up
-    ''' Furthermore, up to VersionCountToKeep old versions of the file will be kept
-    ''' </summary>
-    ''' <param name="SourceFilePath"></param>
-    ''' <param name="TargetFolder"></param>
-    ''' <param name="TargetFileName"></param>
-    ''' <param name="VersionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
-    ''' <returns>True if Success, false if failure </returns>
-    ''' <remarks></remarks>
-    Public Shared Function CopyAndRenameFileWithBackup(
-      SourceFilePath As String,
-      TargetFolder As String,
-      TargetFileName As String,
-      VersionCountToKeep As Integer) As Boolean
-
-        Dim ioSrcFile As FileInfo
-        Dim ioFileToRename As FileInfo
-
-        Dim strBaseName As String
-        Dim strBaseNameCurrent As String
-
-        Dim strNewFilePath As String
-        Dim strExtension As String
-
-        Dim intRevision As Integer
-
-        Try
-            ioSrcFile = New FileInfo(SourceFilePath)
-            If Not ioSrcFile.Exists Then
-                ' Source file not found
-                Return False
-            Else
-                strBaseName = Path.GetFileNameWithoutExtension(TargetFileName)
-                strExtension = Path.GetExtension(TargetFileName)
-                If String.IsNullOrEmpty(strExtension) Then
-                    strExtension = ".bak"
-                End If
-            End If
-
-            If VersionCountToKeep > 9 Then VersionCountToKeep = 9
-            If VersionCountToKeep < 0 Then VersionCountToKeep = 0
-
-            ' Backup any existing copies of strTargetFilePath
-            For intRevision = VersionCountToKeep - 1 To 0 Step -1
-                Try
-                    strBaseNameCurrent = String.Copy(strBaseName)
-                    If intRevision > 0 Then
-                        strBaseNameCurrent &= "_" & intRevision.ToString
-                    End If
-                    strBaseNameCurrent &= strExtension
-
-                    ioFileToRename = New FileInfo(Path.Combine(TargetFolder, strBaseNameCurrent))
-                    strNewFilePath = Path.Combine(TargetFolder, strBaseName & "_" & (intRevision + 1).ToString & strExtension)
-
-                    ' Confirm that strNewFilePath doesn't exist; delete it if it does
-                    If File.Exists(strNewFilePath) Then
-                        File.Delete(strNewFilePath)
-                    End If
-
-                    ' Rename the current file to strNewFilePath
-                    If ioFileToRename.Exists Then
-                        ioFileToRename.MoveTo(strNewFilePath)
-                    End If
-
-                Catch ex As Exception
-                    ' Ignore errors here; we'll continue on with the next file
-                End Try
-
-            Next intRevision
-
-            strNewFilePath = Path.Combine(TargetFolder, TargetFileName)
-
-            ' Now copy the file from SourceFilePath to strNewFilePath
-            ioSrcFile.CopyTo(strNewFilePath, True)
-
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Converts an database field value to a string, checking for null values
-    ''' </summary>
-    ''' <param name="InpObj"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function DbCStr(InpObj As Object) As String
-
-        'If input object is DbNull, returns "", otherwise returns String representation of object
-        If InpObj Is DBNull.Value Then
-            Return String.Empty
-        Else
-            Return CStr(InpObj)
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Converts an database field value to a single, checking for null values
-    ''' </summary>
-    ''' <param name="InpObj"></param>
-    ''' <returns></returns>
-    ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCSng(InpObj As Object) As Single
-
-        'If input object is DbNull, returns 0.0, otherwise returns Single representation of object
-        If InpObj Is DBNull.Value Then
-            Return 0.0
-        Else
-            Return CSng(InpObj)
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Converts an database field value to a double, checking for null values
-    ''' </summary>
-    ''' <param name="InpObj"></param>
-    ''' <returns></returns>
-    ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCDbl(InpObj As Object) As Double
-
-        'If input object is DbNull, returns 0.0, otherwise returns Double representation of object
-        If InpObj Is DBNull.Value Then
-            Return 0.0
-        Else
-            Return CDbl(InpObj)
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Converts an database field value to an integer (int32), checking for null values
-    ''' </summary>
-    ''' <param name="InpObj"></param>
-    ''' <returns></returns>
-    ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCInt(InpObj As Object) As Integer
-
-        'If input object is DbNull, returns 0, otherwise returns Integer representation of object
-        If InpObj Is DBNull.Value Then
-            Return 0
-        Else
-            Return CInt(InpObj)
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Converts an database field value to a long integer (int64), checking for null values
-    ''' </summary>
-    ''' <param name="InpObj"></param>
-    ''' <returns></returns>
-    ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCLng(InpObj As Object) As Long
-
-        'If input object is DbNull, returns 0, otherwise returns Integer representation of object
-        If InpObj Is DBNull.Value Then
-            Return 0
-        Else
-            Return CLng(InpObj)
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Converts an database field value to a decimal, checking for null values
-    ''' </summary>
-    ''' <param name="InpObj"></param>
-    ''' <returns></returns>
-    ''' <remarks>An exception will be thrown if the value is not numeric</remarks>
-    Public Shared Function DbCDec(InpObj As Object) As Decimal
-
-        'If input object is DbNull, returns 0, otherwise returns Decimal representation of object
-        If InpObj Is DBNull.Value Then
-            Return 0
-        Else
-            Return CDec(InpObj)
-        End If
-
-    End Function
-
-    Private Shared Function ByteArrayToString(arrInput() As Byte) As String
-        ' Converts a byte array into a hex string
-
-        Dim strOutput As New Text.StringBuilder(arrInput.Length)
-
-        For i = 0 To arrInput.Length - 1
-            strOutput.Append(arrInput(i).ToString("X2"))
-        Next
-
-        Return strOutput.ToString().ToLower()
-
-    End Function
-
-    ''' <summary>
-    ''' Computes the MD5 hash for a file
-    ''' </summary>
-    ''' <param name="strPath"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function ComputeFileHashMD5(strPath As String) As String
-
-        Dim hashValue As String
-
-        ' open file (as read-only)
-        Using objReader As Stream = New FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)
-            ' Hash contents of this stream
-            hashValue = ComputeMD5Hash(objReader)
-        End Using
-
-        Return hashValue
-
-    End Function
-
-    ''' <summary>
-    ''' Computes the MD5 hash for a string
-    ''' </summary>
-    ''' <param name="text"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function ComputeStringHashMD5(text As String) As String
-
-        Dim hashValue = ComputeMD5Hash(New MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)))
-
-        Return hashValue
-
-    End Function
-
-    ''' <summary>
-    ''' Computes the SHA-1 hash for a file
-    ''' </summary>
-    ''' <param name="strPath"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function ComputeFileHashSha1(strPath As String) As String
-
-        Dim hashValue As String
-
-        ' open file (as read-only)
-        Using objReader As Stream = New FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)
-            ' Hash contents of this stream
-            hashValue = ComputeSha1Hash(objReader)
-        End Using
-
-        Return hashValue
-
-    End Function
-
-    ''' <summary>
-    ''' Computes the SHA-1 hash for a string
-    ''' </summary>
-    ''' <param name="text"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function ComputeStringHashSha1(text As String) As String
-
-        Dim hashValue = ComputeSha1Hash(New MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)))
-
-        Return hashValue
-
-    End Function
-
-    ''' <summary>
-    ''' Computes the MD5 hash of a given stream
-    ''' </summary>
-    ''' <param name="data"></param>
-    ''' <returns>MD5 hash, as a string</returns>
-    ''' <remarks></remarks>
-    Private Shared Function ComputeMD5Hash(data As Stream) As String
-
-        Dim objMD5 As New Security.Cryptography.MD5CryptoServiceProvider
-        Return ComputeHash(objMD5, data)
-
-    End Function
-
-    ''' <summary>
-    ''' Computes the SHA-1 hash of a given stream
-    ''' </summary>
-    ''' <param name="data"></param>
-    ''' <returns>SHA1 hash, as a string</returns>
-    ''' <remarks></remarks>
-    Private Shared Function ComputeSha1Hash(data As Stream) As String
-
-        Dim objSha1 As New Security.Cryptography.SHA1CryptoServiceProvider
-        Return ComputeHash(objSha1, data)
-
-    End Function
-
-    ''' <summary>
-    ''' Use the given hash algorithm to compute a hash of the data stream
-    ''' </summary>
-    ''' <param name="hasher"></param>
-    ''' <param name="data"></param>
-    ''' <returns>Hash string</returns>
-    ''' <remarks></remarks>
-    Private Shared Function ComputeHash(hasher As HashAlgorithm, data As Stream) As String
-        ' hash contents of this stream
-        Dim arrHash = hasher.ComputeHash(data)
-
-        ' Return the hash, formatted as a string
-        Return ByteArrayToString(arrHash)
-
-    End Function
-
-    ''' <summary>
-    ''' Creates a .hashcheck file for the specified file
-    ''' The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
-    ''' </summary>
-    ''' <param name="strDataFilePath"></param>
-    ''' <param name="blnComputeMD5Hash">If True, then computes the MD5 hash</param>
-    ''' <returns>The full path to the .hashcheck file; empty string if a problem</returns>
-    ''' <remarks></remarks>
-    Public Shared Function CreateHashcheckFile(strDataFilePath As String, blnComputeMD5Hash As Boolean) As String
-
-        Dim strMD5Hash As String
-
-        If Not File.Exists(strDataFilePath) Then Return String.Empty
-
-        If blnComputeMD5Hash Then
-            strMD5Hash = ComputeFileHashMD5(strDataFilePath)
-        Else
-            strMD5Hash = String.Empty
-        End If
-
-        Return CreateHashcheckFile(strDataFilePath, strMD5Hash)
-
-    End Function
-
-    ''' <summary>
-    ''' Creates a .hashcheck file for the specified file
-    ''' The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
-    ''' </summary>
-    ''' <param name="strDataFilePath"></param>
-    ''' <param name="strMD5Hash"></param>
-    ''' <returns>The full path to the .hashcheck file; empty string if a problem</returns>
-    ''' <remarks></remarks>
-    Public Shared Function CreateHashcheckFile(strDataFilePath As String, strMD5Hash As String) As String
-
-        Dim fiDataFile As FileInfo
-        Dim strHashFilePath As String
-
-        fiDataFile = New FileInfo(strDataFilePath)
-
-        If Not fiDataFile.Exists Then Return String.Empty
-
-        strHashFilePath = fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-        If String.IsNullOrWhiteSpace(strMD5Hash) Then strMD5Hash = String.Empty
-
-        Using swOutFile = New StreamWriter(New FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swOutFile.WriteLine("# Hashcheck file created " & Date.Now().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
-            swOutFile.WriteLine("size=" & fiDataFile.Length)
-            swOutFile.WriteLine("modification_date_utc=" & fiDataFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"))
-            swOutFile.WriteLine("hash=" & strMD5Hash)
-        End Using
-
-        Return strHashFilePath
-
-    End Function
-
-    ''' <summary>
-    ''' Compares two files, byte-by-byte
-    ''' </summary>
-    ''' <param name="strFilePath1">Path to the first file</param>
-    ''' <param name="strFilePath2">Path to the second file</param>
-    ''' <returns>True if the files match; false if they don't match; also returns false if either file is missing</returns>
-    ''' <remarks></remarks>
-    Public Shared Function FilesMatch(strFilePath1 As String, strFilePath2 As String) As Boolean
-
-        Dim fiFile1 As FileInfo
-        Dim fiFile2 As FileInfo
-
-        Try
-            fiFile1 = New FileInfo(strFilePath1)
-            fiFile2 = New FileInfo(strFilePath2)
-
-            If Not fiFile1.Exists OrElse Not fiFile2.Exists Then
-                Return False
-            ElseIf fiFile1.Length <> fiFile2.Length Then
-                Return False
-            End If
-
-            Using srFile1 = New BinaryReader(New FileStream(fiFile1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                Using srFile2 = New BinaryReader(New FileStream(fiFile2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    While srFile1.BaseStream.Position < fiFile1.Length
-                        If srFile1.ReadByte <> srFile2.ReadByte Then
-                            Return False
-                        End If
-                    End While
-                End Using
-            End Using
-
-            Return True
-
-        Catch ex As Exception
-            ' Ignore errors here
-            Console.WriteLine("Error in clsGlobal.FilesMatch: " & ex.Message)
-        End Try
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
-    ''' </summary>
-    ''' <param name="strDirectoryPath"></param>
-    ''' <param name="lngFreeBytesAvailableToUser"></param>
-    ''' <param name="lngTotalDriveCapacityBytes"></param>
-    ''' <param name="lngTotalNumberOfFreeBytes"></param>
-    ''' <returns>True if success, false if a problem</returns>
-    ''' <remarks></remarks>
-    Private Shared Function GetDiskFreeSpace(
-        strDirectoryPath As String,
-        <Out()> ByRef lngFreeBytesAvailableToUser As Int64,
-        <Out()> ByRef lngTotalDriveCapacityBytes As Int64,
-        <Out()> ByRef lngTotalNumberOfFreeBytes As Int64) As Boolean
-
-        Dim intResult As Integer
-
-        intResult = GetDiskFreeSpaceEx(strDirectoryPath, lngFreeBytesAvailableToUser, lngTotalDriveCapacityBytes, lngTotalNumberOfFreeBytes)
-
-        If intResult = 0 Then
-            Return False
-        Else
-            Return True
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Replaces text in a string, ignoring case
-    ''' </summary>
-    ''' <param name="strTextToSearch"></param>
-    ''' <param name="strTextToFind"></param>
-    ''' <param name="strReplacementText"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function ReplaceIgnoreCase(strTextToSearch As String, strTextToFind As String, strReplacementText As String) As String
-
-        Dim intCharIndex As Integer
-        intCharIndex = strTextToSearch.ToLower().IndexOf(strTextToFind.ToLower(), StringComparison.Ordinal)
-
-        If intCharIndex < 0 Then
-            Return strTextToSearch
-        Else
-            Dim strNewText As String
-            If intCharIndex = 0 Then
-                strNewText = String.Empty
-            Else
-                strNewText = strTextToSearch.Substring(0, intCharIndex)
-            End If
-
-            strNewText &= strReplacementText
-
-            If intCharIndex + strTextToFind.Length < strTextToSearch.Length Then
-                strNewText &= strTextToSearch.Substring(intCharIndex + strTextToFind.Length)
-            End If
-
-            Return strNewText
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If 
-    ''' </summary>
-    ''' <param name="filePath1">First file</param>
-    ''' <param name="filePath2">Second file</param>
-    ''' <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function TextFilesMatch(filePath1 As String, filePath2 As String, ignoreWhitespace As Boolean) As Boolean
-
-        Const comparisonStartLine = 0
-        Const comparisonEndLine = 0
-
-        Return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, Nothing)
-
-    End Function
-
-
-    ''' <summary>
-    ''' Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If 
-    ''' </summary>
-    ''' <param name="filePath1">First file</param>
-    ''' <param name="filePath2">Second file</param>
-    ''' <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-    ''' <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-    ''' <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function TextFilesMatch(
-     filePath1 As String, filePath2 As String,
-     comparisonStartLine As Integer, comparisonEndLine As Integer,
-     ignoreWhitespace As Boolean) As Boolean
-
-        Return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, Nothing)
-
-    End Function
-
-    ''' <summary>
-    ''' Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number. 
-    ''' </summary>
-    ''' <param name="filePath1">First file</param>
-    ''' <param name="filePath2">Second file</param>
-    ''' <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-    ''' <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-    ''' <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-    ''' <param name="lstLineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function TextFilesMatch(
-      filePath1 As String, filePath2 As String,
-      comparisonStartLine As Integer, comparisonEndLine As Integer,
-      ignoreWhitespace As Boolean,
-      lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
-
-        Dim strLineIn1 As String
-        Dim strLineIn2 As String
-
-        Dim chWhiteSpaceChars() As Char
-        Dim intLineNumber = 0
-
-        ReDim chWhiteSpaceChars(1)
-        chWhiteSpaceChars(0) = ControlChars.Tab
-        chWhiteSpaceChars(1) = " "c
-
-        Try
-            Using srFile1 = New StreamReader(New FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read))
-                Using srFile2 = New StreamReader(New FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-                    Do While Not srFile1.EndOfStream
-                        strLineIn1 = srFile1.ReadLine
-                        intLineNumber += 1
-
-                        If comparisonEndLine > 0 AndAlso intLineNumber > comparisonEndLine Then
-                            ' No need to compare further; files match up to this point
-                            Exit Do
-                        End If
-
-                        If Not srFile2.EndOfStream Then
-                            strLineIn2 = srFile2.ReadLine
-
-                            If intLineNumber >= comparisonStartLine Then
-                                If ignoreWhitespace Then
-                                    strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
-                                    strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
-                                End If
-
-                                If strLineIn1 <> strLineIn2 Then
-                                    ' Lines don't match; are we ignoring both of them?
-                                    If TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) AndAlso
-                                       TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
-                                        ' Ignoring both lines
-                                    Else
-                                        ' Files do not match
-                                        Return False
-                                    End If
-                                End If
-                            End If
-                            Continue Do
-                        End If
-
-                        ' File1 has more lines than file2
-
-                        If Not ignoreWhitespace Then
-                            ' Files do not match
-                            Return False
-                        End If
-
-                        ' Ignoring whitespace
-                        ' If file1 only has blank lines from here on out, then the files match; otherwise, they don't
-                        ' See if the remaining lines are blank
-                        Do
-                            If strLineIn1.Length <> 0 Then
-                                If Not TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) Then
-                                    ' Files do not match
-                                    Return False
-                                End If
-                            End If
-
-                            If srFile1.EndOfStream Then
-                                Exit Do
-                            End If
-
-                            strLineIn1 = srFile1.ReadLine
-                            strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars)
-                        Loop
-
-                        Exit Do
-
-                    Loop
-
-                    If Not srFile2.EndOfStream Then
-                        ' File2 has more lines than file1
-                        If Not ignoreWhitespace Then
-                            ' Files do not match
-                            Return False
-                        End If
-
-                        ' Ignoring whitespace
-                        ' If file2 only has blank lines from here on out, then the files match; otherwise, they don't
-                        ' See if the remaining lines are blank
-                        Do
-                            strLineIn2 = srFile2.ReadLine
-                            strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars)
-
-                            If strLineIn2.Length <> 0 Then
-                                If Not TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs) Then
-                                    ' Files do not match
-                                    Return False
-                                End If
-                            End If
-                        Loop While Not srFile2.EndOfStream
-
-                    End If
-
-                End Using
-            End Using
-
-            Return True
-
-        Catch ex As Exception
-            ' Error occurred
-            Return False
-        End Try
-
-    End Function
-
-    Protected Shared Function TextFilesMatchIgnoreLine(strText As String, lstLineIgnoreRegExSpecs As List(Of Regex)) As Boolean
-
-        If Not lstLineIgnoreRegExSpecs Is Nothing Then
-            For Each matchSpec In lstLineIgnoreRegExSpecs
-                If matchSpec.Match(strText).Success Then
-                    ' Line matches; ignore it
-                    Return True
-                End If
-            Next
-        End If
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Change the host name in the given share path to use a different host
-    ''' </summary>
-    ''' <param name="sharePath"></param>
-    ''' <param name="newHostName"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function UpdateHostName(sharePath As String, newHostName As String) As String
-
-        If Not newHostName.StartsWith("\\") Then
-            Throw New NotSupportedException("\\ not found at the start of newHostName (" & newHostName & "); The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\")
-        End If
-
-        If Not newHostName.EndsWith("\") Then
-            newHostName &= "\"
-        End If
-
-        If Not sharePath.StartsWith("\\") Then
-            Throw New NotSupportedException("\\ not found at the start of sharePath (" & sharePath & "); The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\")
-        End If
-
-        Dim slashLoc = sharePath.IndexOf("\", 3, StringComparison.Ordinal)
-
-        If slashLoc < 0 Then
-            Throw New Exception("Backslash not found after the 3rd character in SharePath, " & sharePath)
-        End If
-
-        Dim sharePathNew = newHostName & sharePath.Substring(slashLoc + 1)
-
-        Return sharePathNew
-
-    End Function
-
-    ''' <summary>
-    ''' Returns True if the computer name is Pub-1000 or higher
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function UsingVirtualMachineOnPIC() As Boolean
-        Dim rePub1000 = New Regex("Pub-1\d{3,}", RegexOptions.IgnoreCase)
-
-        If rePub1000.IsMatch(Environment.MachineName) Then
-            ' The Memory performance counters are not available on Windows instances running under VMWare on PIC
-            Return True
-        Else
-            Return False
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for a .hashcheck file for the specified data file
-    ''' If found, opens the file and reads the stored values: size, modification_date_utc, and hash
-    ''' Next compares the stored values to the actual values
-    ''' Checks file size and file date, but does not compute the hash
-    ''' </summary>
-    ''' <param name="strDataFilePath">Data file to check.</param>
-    ''' <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-    ''' <param name="strErrorMessage"></param>
-    ''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
-    ''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-    Public Shared Function ValidateFileVsHashcheck(strDataFilePath As String, strHashFilePath As String, <Out()> ByRef strErrorMessage As String) As Boolean
-        Return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=False, blnCheckSize:=True)
-    End Function
-
-    ''' <summary>
-    ''' Looks for a .hashcheck file for the specified data file
-    ''' If found, opens the file and reads the stored values: size, modification_date_utc, and hash
-    ''' Next compares the stored values to the actual values
-    ''' Checks file size, plus optionally date and hash
-    ''' </summary>
-    ''' <param name="strDataFilePath">Data file to check.</param>
-    ''' <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-    ''' <param name="strErrorMessage"></param>
-    ''' <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
-    ''' <param name="blnComputeHash"></param>
-    ''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
-    ''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-    Public Shared Function ValidateFileVsHashcheck(strDataFilePath As String, strHashFilePath As String, <Out()> ByRef strErrorMessage As String, blnCheckDate As Boolean, blnComputeHash As Boolean) As Boolean
-        Return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, strErrorMessage, blnCheckDate, blnComputeHash, blnCheckSize:=True)
-    End Function
-
-    ''' <summary>
-    ''' Looks for a .hashcheck file for the specified data file
-    ''' If found, opens the file and reads the stored values: size, modification_date_utc, and hash
-    ''' Next compares the stored values to the actual values
-    ''' </summary>
-    ''' <param name="strDataFilePath">Data file to check.</param>
-    ''' <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-    ''' <param name="strErrorMessage"></param>
-    ''' <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
-    ''' <param name="blnComputeHash"></param>
-    ''' <param name="blnCheckSize"></param>
-    ''' <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
-    ''' <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-    Public Shared Function ValidateFileVsHashcheck(strDataFilePath As String, strHashFilePath As String, <Out()> ByRef strErrorMessage As String, blnCheckDate As Boolean, blnComputeHash As Boolean, blnCheckSize As Boolean) As Boolean
-
-        Dim blnValidFile = False
-        strErrorMessage = String.Empty
-
-        Dim lngExpectedFileSizeBytes As Int64 = 0
-        Dim strExpectedHash As String = String.Empty
-        Dim dtExpectedFileDate As DateTime = DateTime.MinValue
-
-        Try
-
-            Dim fiDataFile = New FileInfo(strDataFilePath)
-
-            If String.IsNullOrEmpty(strHashFilePath) Then strHashFilePath = fiDataFile.FullName & SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-            Dim fiHashCheck = New FileInfo(strHashFilePath)
-
-            If Not fiDataFile.Exists Then
-                strErrorMessage = "Data file not found at " & fiDataFile.FullName
-                Return False
-            End If
-
-            If Not fiHashCheck.Exists Then
-                strErrorMessage = "Data file at " & fiDataFile.FullName & " does not have a corresponding .hashcheck file named " & fiHashCheck.Name
-                Return False
-            End If
-
-            ' Read the details in the HashCheck file
-            Dim strLineIn As String
-            Dim strSplitLine As String()
-
-            Using srInfile = New StreamReader(New FileStream(fiHashCheck.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                While Not srInfile.EndOfStream
-                    strLineIn = srInfile.ReadLine()
-
-                    If Not String.IsNullOrWhiteSpace(strLineIn) AndAlso Not strLineIn.StartsWith("#"c) AndAlso strLineIn.Contains("="c) Then
-                        strSplitLine = strLineIn.Split("="c)
-
-                        If strSplitLine.Count >= 2 Then
-
-                            ' Set this to true for now
-                            blnValidFile = True
-
-                            Select Case strSplitLine(0).ToLower()
-                                Case "size"
-                                    Int64.TryParse(strSplitLine(1), lngExpectedFileSizeBytes)
-                                Case "modification_date_utc"
-                                    DateTime.TryParse(strSplitLine(1), dtExpectedFileDate)
-                                Case "hash"
-                                    strExpectedHash = String.Copy(strSplitLine(1))
-
-                            End Select
-                        End If
-                    End If
-
-                End While
-            End Using
-
-            If blnCheckSize AndAlso fiDataFile.Length <> lngExpectedFileSizeBytes Then
-                strErrorMessage = "File size mismatch: expecting " & lngExpectedFileSizeBytes.ToString("#,##0") & " but computed " & fiDataFile.Length.ToString("#,##0")
-                Return False
-            End If
-
-            ' Only compare dates if we are not comparing hash values
-            If Not blnComputeHash AndAlso blnCheckDate Then
-                If Math.Abs(fiDataFile.LastWriteTimeUtc.Subtract(dtExpectedFileDate).TotalSeconds) > 2 Then
-                    strErrorMessage = "File modification date mismatch: expecting " & dtExpectedFileDate.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) & " UTC but actually " & fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) & " UTC"
-                    Return False
-                End If
-            End If
-
-            If blnComputeHash Then
-                ' Compute the hash of the file
-                Dim strActualHash = ComputeFileHashMD5(strDataFilePath)
-
-                If strActualHash <> strExpectedHash Then
-                    strErrorMessage = "Hash mismatch: expecting " & strExpectedHash & " but computed " & strActualHash
-                    Return False
-                End If
-            End If
-
-        Catch ex As Exception
-            Console.WriteLine("Error in ValidateFileVsHashcheck: " & ex.Message)
-        End Try
-
-        Return blnValidFile
-
-    End Function
-
-    Public Shared Function ValidateFreeDiskSpace(directoryDescription As String, directoryPath As String, minFreeSpaceMB As Integer, eLogLocationIfNotFound As clsLogTools.LoggerTypes, <Out()> ByRef errorMessage As String) As Boolean
-
-        Dim diDirectory As DirectoryInfo
-        Dim diDrive As DriveInfo
-        Dim freeSpaceMB As Double
-
-        errorMessage = String.Empty
-
-        diDirectory = New DirectoryInfo(directoryPath)
-        If Not diDirectory.Exists Then
-            ' Example error message: Organism DB directory not found: G:\DMS_Temp_Org
-            errorMessage = directoryDescription & " not found: " & directoryPath
-            Console.WriteLine(errorMessage)
-            clsLogTools.WriteLog(eLogLocationIfNotFound, clsLogTools.LogLevels.ERROR, errorMessage)
-            Return False
-        End If
-
-        If diDirectory.Root.FullName.StartsWith("\\") OrElse Not diDirectory.Root.FullName.Contains(":") Then
-            ' Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
-            Dim lngFreeBytesAvailableToUser As Long
-            Dim lngTotalNumberOfBytes As Long
-            Dim lngTotalNumberOfFreeBytes As Long
-
-            If GetDiskFreeSpace(diDirectory.FullName, lngFreeBytesAvailableToUser, lngTotalNumberOfBytes, lngTotalNumberOfFreeBytes) Then
-                freeSpaceMB = clsGlobal.BytesToMB(lngTotalNumberOfFreeBytes)
-            Else
-                freeSpaceMB = 0
-            End If
-
-        Else
-            ' Directory is a local drive; can query with .NET
-            diDrive = New DriveInfo(diDirectory.Root.FullName)
-            freeSpaceMB = clsGlobal.BytesToMB(diDrive.TotalFreeSpace)
-        End If
-
-        If freeSpaceMB < minFreeSpaceMB Then
-            ' Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
-            errorMessage = directoryDescription & " drive has less than " & minFreeSpaceMB.ToString & " MB free: " & CInt(freeSpaceMB).ToString() & " MB"
-            Console.WriteLine(errorMessage)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Return False
-        Else
-            Return True
-        End If
-
-    End Function
-
-#End Region
-
-#Region "EventHandlers"
-
-    Private Shared Sub DbToolsErrorEventHandler(errorMessage As String)
-        Console.WriteLine(errorMessage)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-    End Sub
-
-#End Region
-
-End Class
-
-
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using PRISM.DataBase;
+using PRISM.Logging;
+
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2007, Battelle Memorial Institute
+// Created 12/20/2007
+//
+//*********************************************************************************************************
+
+namespace AnalysisManagerBase
+{
+    public class clsGlobal
+    {
+
+        #region "Constants"
+        public const bool LOG_LOCAL_ONLY = true;
+        public const bool LOG_DATABASE = false;
+        public const string XML_FILENAME_PREFIX = "JobParameters_";
+
+        public const string XML_FILENAME_EXTENSION = "xml";
+
+        public const string STEPTOOL_PARAMFILESTORAGEPATH_PREFIX = "StepTool_ParamFileStoragePath_";
+
+        public const string SERVER_CACHE_HASHCHECK_FILE_SUFFIX = ".hashcheck";
+        #endregion
+
+        #region "Enums"
+        public enum eAnalysisResourceOptions
+        {
+            OrgDbRequired = 0,
+            MyEMSLSearchDisabled = 1
+        }
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true, ExactSpelling = true)]
+        #endregion
+
+        #region "Module variables"
+        public static extern int GetDiskFreeSpaceEx(string lpRootPathName, ref long lpFreeBytesAvailable, ref long lpTotalNumberOfBytes, ref long lpTotalNumberOfFreeBytes);
+
+        private static string mAppFolderPath;
+
+        private static SystemMemoryInfo mSystemMemoryInfo;
+
+        #endregion
+
+        #region "Methods"
+        /// <summary>
+        /// Appends a string to a job comment string
+        /// </summary>
+        /// <param name="baseComment">Initial comment</param>
+        /// <param name="addnlComment">Comment to be appended</param>
+        /// <returns>String containing both comments</returns>
+        /// <remarks></remarks>
+        public static string AppendToComment(string baseComment, string addnlComment)
+        {
+
+            //Appends a comment string to an existing comment string
+
+            if (string.IsNullOrWhiteSpace(baseComment))
+            {
+                return addnlComment;
+            }
+
+            if (string.IsNullOrWhiteSpace(addnlComment) || baseComment.Contains(addnlComment))
+            {
+                // Either addnlComment is empty (unlikely) or addnlComment is a duplicate comment
+                // Return the base comment
+                return baseComment;
+            }
+
+            // Append a semicolon to baseComment, but only if it doesn't already end in a semicolon
+            if (baseComment.TrimEnd(' ').EndsWith(";"))
+            {
+                return baseComment + addnlComment;
+            }
+
+            return baseComment + "; " + addnlComment;
+        }
+
+        /// <summary>
+        /// Convert Bytes to Gigabytes
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static double BytesToGB(Int64 bytes)
+        {
+            return bytes / 1024.0 / 1024.0 / 1024.0;
+        }
+
+        /// <summary>
+        /// Convert Bytes to Megabytes
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static double BytesToMB(Int64 bytes)
+        {
+            return bytes / 1024.0 / 1024.0;
+        }
+
+        /// <summary>
+        ///Examines intCount to determine which string to return
+        /// </summary>
+        /// <param name="intCount"></param>
+        /// <param name="strTextIfOneItem"></param>
+        /// <param name="strTextIfZeroOrMultiple"></param>
+        /// <returns>Returns strTextIfOneItem if intCount is 1; otherwise, returns strTextIfZeroOrMultiple</returns>
+        /// <remarks></remarks>
+        public static string CheckPlural(int intCount, string strTextIfOneItem, string strTextIfZeroOrMultiple)
+        {
+            if (intCount == 1)
+            {
+                return strTextIfOneItem;
+            }
+
+            return strTextIfZeroOrMultiple;
+        }
+
+        /// <summary>
+        /// Collapse an array of items to a tab-delimited list
+        /// </summary>
+        /// <param name="strItems"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string CollapseLine(string[] strItems)
+        {
+            if (strItems == null || strItems.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            return CollapseList(strItems.ToList());
+        }
+
+        /// <summary>
+        /// Collapse a list of items to a tab-delimited list
+        /// </summary>
+        /// <param name="lstFields"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string CollapseList(List<string> lstFields)
+        {
+
+            return FlattenList(lstFields, "\t");
+
+        }
+
+        /// <summary>
+        /// Decrypts password received from ini file
+        /// </summary>
+        /// <param name="enPwd">Encoded password</param>
+        /// <returns>Clear text password</returns>
+        public static string DecodePassword(string enPwd)
+        {
+            // Decrypts password received from ini file
+            // Password was created by alternately subtracting or adding 1 to the ASCII value of each character
+
+            // Convert the password string to a character array
+            var pwdChars = enPwd.ToCharArray();
+            var pwdBytes = new List<byte>();
+            var pwdCharsAdj = new List<char>();
+
+            for (var i = 0; i <= pwdChars.Length - 1; i++)
+            {
+                pwdBytes.Add(Convert.ToByte(pwdChars[i]));
+            }
+
+            // Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
+
+            for (var byteCntr = 0; byteCntr <= pwdBytes.Count - 1; byteCntr++)
+            {
+                if ((byteCntr % 2) == 0)
+                {
+                    pwdBytes[byteCntr] += Convert.ToByte(1);
+                }
+                else
+                {
+                    pwdBytes[byteCntr] -= Convert.ToByte(1);
+                }
+                pwdCharsAdj.Add(Convert.ToChar(pwdBytes[byteCntr]));
+            }
+
+            return String.Join("", pwdCharsAdj);
+
+        }
+
+        /// <summary>
+        /// Flatten a list of items into a single string, with items separated by chDelimiter
+        /// </summary>
+        /// <param name="lstItems"></param>
+        /// <param name="delimiter"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string FlattenList(List<string> lstItems, string delimiter)
+        {
+            if (lstItems == null || lstItems.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return String.Join(delimiter, lstItems);
+        }
+
+        /// <summary>
+        /// Returns the directory in which the entry assembly (typically the Program .exe file) resides 
+        /// </summary>
+        /// <returns>Full directory path</returns>
+        public static string GetAppFolderPath()
+        {
+
+            if (mAppFolderPath != null)
+                return mAppFolderPath;
+
+            var objAssembly = Assembly.GetEntryAssembly();
+
+            if (objAssembly.Location == null)
+            {
+                mAppFolderPath = string.Empty;
+            }
+            else
+            {
+                var fiAssemblyFile = new FileInfo(objAssembly.Location);
+                mAppFolderPath = fiAssemblyFile.DirectoryName;
+            }
+            return mAppFolderPath;
+
+        }
+
+        /// <summary>
+        /// Returns the version string of the entry assembly (typically the Program .exe file)
+        /// </summary>
+        /// <returns>Assembly version, e.g. 1.0.4482.23831</returns>
+        public static string GetAssemblyVersion()
+        {
+            var objAssembly = Assembly.GetEntryAssembly();
+            if (objAssembly == null)
+                return string.Empty;
+
+            return GetAssemblyVersion(objAssembly);
+
+        }
+
+        /// <summary>
+        /// Returns the version string of the specified assembly
+        /// </summary>
+        /// <returns>Assembly version, e.g. 1.0.4482.23831</returns>
+        public static string GetAssemblyVersion(Assembly objAssembly)
+        {
+            // objAssembly.FullName typically returns something like this:
+            // AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
+            // 
+            // the goal is to extract out the text after Version= but before the next comma
+
+            var reGetVersion = new Regex("version=([0-9.]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var strVersion = objAssembly.FullName;
+
+            var reMatch = reGetVersion.Match(strVersion);
+
+            if (reMatch.Success)
+            {
+                strVersion = reMatch.Groups[1].Value;
+            }
+
+            return strVersion;
+
+        }
+
+        /// <summary>
+        /// Runs the specified Sql query
+        /// </summary>
+        /// <param name="sqlStr">Sql query</param>
+        /// <param name="connectionString">Connection string</param>
+        /// <param name="callingFunction">Name of the calling function</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>Uses a timeout of 30 seconds</remarks>
+        public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable dtResults)
+        {
+
+            const int timeoutSeconds = 30;
+
+            return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
+
+        }
+
+        /// <summary>
+        /// Runs the specified Sql query
+        /// </summary>
+        /// <param name="sqlStr">Sql query</param>
+        /// <param name="connectionString">Connection string</param>
+        /// <param name="callingFunction">Name of the calling function</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        public static bool GetDataTableByQuery(
+            string sqlStr, string connectionString, string callingFunction, 
+            short retryCount, out DataTable dtResults, int timeoutSeconds)
+        {
+
+            var cmd = new SqlCommand(sqlStr) {
+                CommandType = CommandType.Text
+            };
+
+            return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
+
+        }
+
+        /// <summary>
+        /// Runs the stored procedure or database query defined by "cmd"
+        /// </summary>
+        /// <param name="cmd">SqlCommand var (query or stored procedure)</param>
+        /// <param name="connectionString">Connection string</param>
+        /// <param name="callingFunction">Name of the calling function</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        public static bool GetDataTableByCmd(
+            SqlCommand cmd, 
+            string connectionString, 
+            string callingFunction, 
+            short retryCount,
+            out DataTable dtResults, 
+            int timeoutSeconds)
+        {
+
+            if (cmd == null)
+                throw new ArgumentException("command is undefined", nameof(cmd));
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ArgumentException("ConnectionString cannot be empty", nameof(connectionString));
+            }
+
+            if (string.IsNullOrEmpty(callingFunction))
+                callingFunction = "UnknownCaller";
+            if (retryCount < 1)
+                retryCount = 1;
+            if (timeoutSeconds < 5)
+                timeoutSeconds = 5;
+
+            // When data retrieval fails, delay for 5 seconds on the first try
+            // Double the delay time for each subsequent attempt, up to a maximum of 90 seconds between attempts
+            var retryDelaySeconds = 5;
+
+            while (retryCount > 0)
+            {
+                try
+                {
+                    using (var cn = new SqlConnection(connectionString))
+                    {
+
+                        cmd.Connection = cn;
+                        cmd.CommandTimeout = timeoutSeconds;
+
+                        using (var da = new SqlDataAdapter(cmd))
+                        {
+                            using (var ds = new DataSet())
+                            {
+                                da.Fill(ds);
+                                dtResults = ds.Tables[0];
+                            }
+                        }
+                    }
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    string msg;
+
+                    retryCount -= 1;
+                    if (cmd.CommandType == CommandType.StoredProcedure)
+                    {
+                        msg = callingFunction + "; Exception running stored procedure " + cmd.CommandText;
+                    }
+                    else if (cmd.CommandType == CommandType.TableDirect)
+                    {
+                        msg = callingFunction + "; Exception querying table " + cmd.CommandText;
+                    }
+                    else
+                    {
+                        msg = callingFunction + "; Exception querying database";
+                    }
+
+                    msg += ": " + ex.Message + "; ConnectionString: " + connectionString;
+                    msg += ", RetryCount = " + retryCount.ToString();
+
+                    if (cmd.CommandType == CommandType.Text)
+                    {
+                        msg += ", Query = " + cmd.CommandText;
+                    }
+
+                    Console.WriteLine(msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    Thread.Sleep(retryDelaySeconds * 1000);
+
+                    retryDelaySeconds *= 2;
+                    if (retryDelaySeconds > 90)
+                    {
+                        retryDelaySeconds = 90;
+                    }
+
+                }
+            }
+
+            dtResults = null;
+            return false;
+
+        }
+
+        /// <summary>
+        /// Run a query against a SQL Server database
+        /// </summary>
+        /// <param name="sqlQuery">Query to run</param>
+        /// <param name="connectionString">Connection string</param>
+        /// <param name="lstResults">Results, as a list of columns (first row only if multiple rows)</param>
+        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>
+        /// Null values are converted to empty strings
+        /// Numbers are converted to their string equivalent
+        /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
+        /// </remarks>
+        public static bool GetQueryResultsTopRow(
+            string sqlQuery, 
+            string connectionString, 
+            out List<string> lstResults, 
+            string callingFunction, 
+            short retryCount = 3, 
+            int timeoutSeconds = 5)
+        {
+
+            List<List<string>> lstResultTable;
+
+            var success = GetQueryResults(sqlQuery, connectionString, out lstResultTable, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn: 1);
+
+            if (success)
+            {
+                lstResults = lstResultTable.FirstOrDefault() ?? new List<string>();
+                return true;
+            }
+
+            lstResults = new List<string>();
+            return false;
+        }
+
+        /// <summary>
+        /// Run a query against a SQL Server database, return the results as a list of strings
+        /// </summary>
+        /// <param name="sqlQuery">Query to run</param>
+        /// <param name="connectionString">Connection string</param>
+        /// <param name="lstResults">Results (list of list of strings)</param>
+        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        ///<param name="maxRowsToReturn">Maximum rows to return; 0 to return all rows</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>
+        /// Null values are converted to empty strings
+        /// Numbers are converted to their string equivalent
+        /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
+        /// </remarks>
+        public static bool GetQueryResults(
+            string sqlQuery, 
+            string connectionString, 
+            out List<List<string>> lstResults, 
+            string callingFunction, 
+            short retryCount = 3, 
+            int timeoutSeconds = 30, 
+            int maxRowsToReturn = 0)
+        {
+
+            if (retryCount < 1)
+                retryCount = 1;
+            if (timeoutSeconds < 5)
+                timeoutSeconds = 5;
+
+            var dbTools = new clsDBTools(connectionString);
+
+            dbTools.ErrorEvent += DbToolsErrorEventHandler;
+
+            var success = dbTools.GetQueryResults(sqlQuery, out lstResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
+
+            return success;
+
+        }
+
+        /// <summary>
+        /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
+        /// <remarks></remarks>
+        public static string GetExceptionStackTrace(Exception ex)
+        {
+            return GetExceptionStackTrace(ex, false);
+        }
+
+        /// <summary>
+        /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <param name="multiLineOutput">When true, format the stack trace using newline characters instead of -:-</param>
+        /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
+        /// <remarks></remarks>
+        public static string GetExceptionStackTrace(Exception ex, bool multiLineOutput)
+        {
+            if (multiLineOutput)
+            {
+                return Utilities.GetExceptionStackTraceMultiLine(ex);
+            }
+
+            return Utilities.GetExceptionStackTrace(ex);
+
+        }
+
+        public static KeyValuePair<string, string> GetKeyValueSetting(string strText)
+        {
+
+            var emptyKvPair = new KeyValuePair<string, string>(string.Empty, string.Empty);
+
+            if (string.IsNullOrWhiteSpace(strText))
+                return emptyKvPair;
+
+            strText = strText.Trim();
+
+            if (strText.StartsWith("#") || !strText.Contains('='))
+                return emptyKvPair;
+
+            var intCharIndex = strText.IndexOf("=", StringComparison.Ordinal);
+
+            if (intCharIndex <= 0)
+                return emptyKvPair;
+
+            var strKey = strText.Substring(0, intCharIndex).Trim();
+            string strValue;
+
+            if (intCharIndex < strText.Length - 1)
+            {
+                strValue = strText.Substring(intCharIndex + 1).Trim();
+            }
+            else
+            {
+                strValue = string.Empty;
+            }
+
+            return new KeyValuePair<string, string>(strKey, strValue);
+        }
+
+        /// <summary>
+        /// Compare two strings (not case sensitive)
+        /// </summary>
+        /// <param name="strText1"></param>
+        /// <param name="strText2"></param>
+        /// <returns>True if they match; false if not</returns>
+        /// <remarks>A null string is considered equivalent to an empty string.  Thus, two null strings are considered equal</remarks>
+        public static bool IsMatch(string strText1, string strText2)
+        {
+            return IsMatch(strText1, strText2, true);
+        }
+
+        /// <summary>
+        /// Compare two strings (not case sensitive)
+        /// </summary>
+        /// <param name="strText1"></param>
+        /// <param name="strText2"></param>
+        /// <param name="treatNullAsEmptyString">When true, a null string is considered equivalent to an empty string</param>
+        /// <returns>True if they match; false if not</returns>
+        /// <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
+        public static bool IsMatch(string strText1, string strText2, bool treatNullAsEmptyString)
+        {
+
+            if (treatNullAsEmptyString && string.IsNullOrWhiteSpace(strText1) && string.IsNullOrWhiteSpace(strText2))
+            {
+                return true;
+            }
+
+            if (String.Compare(strText1, strText2, StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parses the headers in strHeaderLine to look for the names specified in lstHeaderNames
+        /// </summary>
+        /// <param name="strHeaderLine"></param>
+        /// <param name="lstHeaderNames"></param>
+        /// <param name="isCaseSensitive"></param>
+        /// <returns>Dictionary with the header names and 0-based column index</returns>
+        /// <remarks>Header names not found in strHeaderLine will have an index of -1</remarks>
+        public static Dictionary<string, int> ParseHeaderLine(string strHeaderLine, List<string> lstHeaderNames, bool isCaseSensitive)
+        {
+            var dctHeaderMapping = new Dictionary<string, int>();
+
+            var lstColumns = strHeaderLine.Split('\t').ToList();
+
+            foreach (var headerName in lstHeaderNames)
+            {
+                var colIndex = -1;
+
+                if (isCaseSensitive)
+                {
+                    colIndex = lstColumns.IndexOf(headerName);
+                }
+                else
+                {
+                    for (var i = 0; i <= lstColumns.Count - 1; i++)
+                    {
+                        if (IsMatch(lstColumns[i], headerName))
+                        {
+                            colIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                dctHeaderMapping.Add(headerName, colIndex);
+            }
+
+            return dctHeaderMapping;
+
+        }
+
+        /// <summary>
+        /// Examines strPath to look for spaces
+        /// </summary>
+        /// <param name="strPath"></param>
+        /// <returns>strPath as-is if no spaces, otherwise strPath surrounded by double quotes </returns>
+        /// <remarks></remarks>
+        public static string PossiblyQuotePath(string strPath)
+        {
+            if (string.IsNullOrWhiteSpace(strPath))
+            {
+                return string.Empty;
+
+            }
+
+            if (strPath.Contains(" "))
+            {
+                if (!strPath.StartsWith("\""))
+                {
+                    strPath = "\"" + strPath;
+                }
+
+                if (!strPath.EndsWith("\""))
+                {
+                    strPath += "\"";
+                }
+            }
+
+            return strPath;
+        }
+
+        /// <summary>
+        /// Converts a string value to a boolean equivalent
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        /// <remarks>Returns false if an exception</remarks>
+        public static bool CBoolSafe(string value)
+        {
+            bool blnValue;
+
+            if (Boolean.TryParse(value, out blnValue))
+                return blnValue;
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Converts a string value to a boolean equivalent
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="blnDefaultValue">Boolean value to return if value is empty or an exception occurs</param>
+        /// <returns></returns>
+        /// <remarks>Returns false if an exception</remarks>
+        public static bool CBoolSafe(string value, bool blnDefaultValue)
+        {
+            bool blnValue;
+
+            if (Boolean.TryParse(value, out blnValue))
+                return blnValue;
+
+            return blnDefaultValue;
+
+        }
+
+        /// <summary>
+        /// Converts value to an integer
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="intDefaultValue">Integer to return if value is not numeric</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static int CIntSafe(string value, int intDefaultValue)
+        {
+            int intValue;
+
+            if (Int32.TryParse(value, out intValue))
+                return intValue;
+
+            return intDefaultValue;
+
+        }
+
+        /// <summary>
+        /// Converts value to a single (aka float)
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="sngDefaultValue">Single to return if value is not numeric</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static float CSngSafe(string value, float sngDefaultValue)
+        {
+            float sngValue;
+
+            if (Single.TryParse(value, out sngValue))
+                return sngValue;
+
+            return sngDefaultValue;
+
+        }
+
+        /// <summary>
+        /// Copies file SourceFilePath to folder TargetFolder, renaming it to TargetFileName.
+        /// However, if file TargetFileName already exists, then that file will first be backed up
+        /// Furthermore, up to VersionCountToKeep old versions of the file will be kept
+        /// </summary>
+        /// <param name="SourceFilePath"></param>
+        /// <param name="TargetFolder"></param>
+        /// <param name="TargetFileName"></param>
+        /// <param name="VersionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
+        /// <returns>True if Success, false if failure </returns>
+        /// <remarks></remarks>
+        public static bool CopyAndRenameFileWithBackup(string SourceFilePath, string TargetFolder, string TargetFileName, int VersionCountToKeep)
+        {
+
+            try
+            {
+                var ioSrcFile = new FileInfo(SourceFilePath);
+                if (!ioSrcFile.Exists)
+                {
+                    // Source file not found
+                    return false;
+                }
+
+                var strBaseName = Path.GetFileNameWithoutExtension(TargetFileName);
+                if (strBaseName == null)
+                {
+                    // Cannot continue without a base filename
+                    return false;
+                }
+
+                var strExtension = Path.GetExtension(TargetFileName);
+                if (string.IsNullOrEmpty(strExtension))
+                {
+                    strExtension = ".bak";
+                }
+
+                if (VersionCountToKeep > 9)
+                    VersionCountToKeep = 9;
+                if (VersionCountToKeep < 0)
+                    VersionCountToKeep = 0;
+
+                // Backup any existing copies of strTargetFilePath
+                for (var intRevision = VersionCountToKeep - 1; intRevision >= 0; intRevision += -1)
+                {
+                    try
+                    {
+                        var strBaseNameCurrent = string.Copy(strBaseName);
+                        if (intRevision > 0)
+                        {
+                            strBaseNameCurrent += "_" + intRevision;
+                        }
+                        strBaseNameCurrent += strExtension;
+
+                        var ioFileToRename = new FileInfo(Path.Combine(TargetFolder, strBaseNameCurrent));
+                        var strNewFilePath = Path.Combine(TargetFolder, strBaseName + "_" + (intRevision + 1) + strExtension);
+
+                        // Confirm that strNewFilePath doesn't exist; delete it if it does
+                        if (File.Exists(strNewFilePath))
+                        {
+                            File.Delete(strNewFilePath);
+                        }
+
+                        // Rename the current file to strNewFilePath
+                        if (ioFileToRename.Exists)
+                        {
+                            ioFileToRename.MoveTo(strNewFilePath);
+                        }
+
+                    }
+                    catch (Exception)
+                    {
+                        // Ignore errors here; we'll continue on with the next file
+                    }
+
+                }
+
+                var strFinalFilePath = Path.Combine(TargetFolder, TargetFileName);
+
+                // Now copy the file from SourceFilePath to strNewFilePath
+                ioSrcFile.CopyTo(strFinalFilePath, true);
+
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Converts an database field value to a string, checking for null values
+        /// </summary>
+        /// <param name="InpObj"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string DbCStr(object InpObj)
+        {
+            //If input var is DbNull, returns "", otherwise returns String representation of var
+            if (ReferenceEquals(InpObj, DBNull.Value))
+            {
+                return string.Empty;
+            }
+
+            return Convert.ToString(InpObj);
+        }
+
+        /// <summary>
+        /// Converts an database field value to a single, checking for null values
+        /// </summary>
+        /// <param name="InpObj"></param>
+        /// <returns></returns>
+        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
+        public static float DbCSng(object InpObj)
+        {
+
+            //If input var is DbNull, returns "", otherwise returns String representation of var
+            if (ReferenceEquals(InpObj, DBNull.Value))
+            {
+                return (float)0.0;
+            }
+
+            return Convert.ToSingle(InpObj);
+
+        }
+
+        /// <summary>
+        /// Converts an database field value to a double, checking for null values
+        /// </summary>
+        /// <param name="InpObj"></param>
+        /// <returns></returns>
+        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
+        public static double DbCDbl(object InpObj)
+        {
+
+            //If input var is DbNull, returns "", otherwise returns String representation of var
+            if (ReferenceEquals(InpObj, DBNull.Value))
+            {
+                return 0.0;
+            }
+
+            return Convert.ToDouble(InpObj);
+
+        }
+
+        /// <summary>
+        /// Converts an database field value to an integer (int32), checking for null values
+        /// </summary>
+        /// <param name="InpObj"></param>
+        /// <returns></returns>
+        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
+        public static int DbCInt(object InpObj)
+        {
+
+            //If input var is DbNull, returns "", otherwise returns String representation of var
+            if (ReferenceEquals(InpObj, DBNull.Value))
+            {
+                return 0;
+            }
+
+            return Convert.ToInt32(InpObj);
+
+        }
+
+        /// <summary>
+        /// Converts an database field value to a long integer (int64), checking for null values
+        /// </summary>
+        /// <param name="InpObj"></param>
+        /// <returns></returns>
+        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
+        public static long DbCLng(object InpObj)
+        {
+
+            //If input var is DbNull, returns "", otherwise returns String representation of var
+            if (ReferenceEquals(InpObj, DBNull.Value))
+            {
+                return 0;
+            }
+
+            return Convert.ToInt64(InpObj);
+
+        }
+
+        /// <summary>
+        /// Converts an database field value to a decimal, checking for null values
+        /// </summary>
+        /// <param name="InpObj"></param>
+        /// <returns></returns>
+        /// <remarks>An exception will be thrown if the value is not numeric</remarks>
+        [Obsolete("Decimal data types should be avoided")]
+        public static decimal DbCDec(object InpObj)
+        {
+
+            //If input var is DbNull, returns "", otherwise returns String representation of var
+            if (ReferenceEquals(InpObj, DBNull.Value))
+            {
+                return 0;
+            }
+
+            return Convert.ToDecimal(InpObj);
+
+        }
+
+        private static string ByteArrayToString(byte[] arrInput)
+        {
+            // Converts a byte array into a hex string
+
+            var  strOutput = new StringBuilder(arrInput.Length);
+
+            for (var i = 0; i <= arrInput.Length - 1; i++)
+            {
+                strOutput.Append(arrInput[i].ToString("X2"));
+            }
+
+            return strOutput.ToString().ToLower();
+
+        }
+
+        /// <summary>
+        /// Computes the MD5 hash for a file
+        /// </summary>
+        /// <param name="strPath"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string ComputeFileHashMD5(string strPath)
+        {
+
+            string hashValue;
+
+            // open file (as read-only)
+            using (Stream objReader = new FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                // Hash contents of this stream
+                hashValue = ComputeMD5Hash(objReader);
+            }
+
+            return hashValue;
+
+        }
+
+        /// <summary>
+        /// Computes the MD5 hash for a string
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string ComputeStringHashMD5(string text)
+        {
+
+            var hashValue = ComputeMD5Hash(new MemoryStream(Encoding.UTF8.GetBytes(text)));
+
+            return hashValue;
+
+        }
+
+        /// <summary>
+        /// Computes the SHA-1 hash for a file
+        /// </summary>
+        /// <param name="strPath"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string ComputeFileHashSha1(string strPath)
+        {
+
+            string hashValue;
+
+            // open file (as read-only)
+            using (Stream objReader = new FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                // Hash contents of this stream
+                hashValue = ComputeSha1Hash(objReader);
+            }
+
+            return hashValue;
+
+        }
+
+        /// <summary>
+        /// Computes the SHA-1 hash for a string
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string ComputeStringHashSha1(string text)
+        {
+
+            var hashValue = ComputeSha1Hash(new MemoryStream(Encoding.UTF8.GetBytes(text)));
+
+            return hashValue;
+
+        }
+
+        /// <summary>
+        /// Computes the MD5 hash of a given stream
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns>MD5 hash, as a string</returns>
+        /// <remarks></remarks>
+        private static string ComputeMD5Hash(Stream data)
+        {
+
+            var objMD5 = new MD5CryptoServiceProvider();
+            return ComputeHash(objMD5, data);
+
+        }
+
+        /// <summary>
+        /// Computes the SHA-1 hash of a given stream
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns>SHA1 hash, as a string</returns>
+        /// <remarks></remarks>
+        private static string ComputeSha1Hash(Stream data)
+        {
+
+            var objSha1 = new SHA1CryptoServiceProvider();
+            return ComputeHash(objSha1, data);
+
+        }
+
+        /// <summary>
+        /// Use the given hash algorithm to compute a hash of the data stream
+        /// </summary>
+        /// <param name="hasher"></param>
+        /// <param name="data"></param>
+        /// <returns>Hash string</returns>
+        /// <remarks></remarks>
+        private static string ComputeHash(HashAlgorithm hasher, Stream data)
+        {
+            // hash contents of this stream
+            var arrHash = hasher.ComputeHash(data);
+
+            // Return the hash, formatted as a string
+            return ByteArrayToString(arrHash);
+
+        }
+
+        /// <summary>
+        /// Creates a .hashcheck file for the specified file
+        /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
+        /// </summary>
+        /// <param name="strDataFilePath"></param>
+        /// <param name="blnComputeMD5Hash">If True, then computes the MD5 hash</param>
+        /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
+        /// <remarks></remarks>
+        public static string CreateHashcheckFile(string strDataFilePath, bool blnComputeMD5Hash)
+        {
+
+            string strMD5Hash;
+
+            if (!File.Exists(strDataFilePath))
+                return string.Empty;
+
+            if (blnComputeMD5Hash)
+            {
+                strMD5Hash = ComputeFileHashMD5(strDataFilePath);
+            }
+            else
+            {
+                strMD5Hash = string.Empty;
+            }
+
+            return CreateHashcheckFile(strDataFilePath, strMD5Hash);
+
+        }
+
+        /// <summary>
+        /// Creates a .hashcheck file for the specified file
+        /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
+        /// </summary>
+        /// <param name="strDataFilePath"></param>
+        /// <param name="strMD5Hash"></param>
+        /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
+        /// <remarks></remarks>
+        public static string CreateHashcheckFile(string strDataFilePath, string strMD5Hash)
+        {
+
+            var fiDataFile = new FileInfo(strDataFilePath);
+
+            if (!fiDataFile.Exists)
+                return string.Empty;
+
+            var strHashFilePath = fiDataFile.FullName + SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+            if (string.IsNullOrWhiteSpace(strMD5Hash))
+                strMD5Hash = string.Empty;
+
+            using (var swOutFile = new StreamWriter(new FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            {
+                swOutFile.WriteLine("# Hashcheck file created " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                swOutFile.WriteLine("size=" + fiDataFile.Length);
+                swOutFile.WriteLine("modification_date_utc=" + fiDataFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"));
+                swOutFile.WriteLine("hash=" + strMD5Hash);
+            }
+
+            return strHashFilePath;
+
+        }
+
+        /// <summary>
+        /// Compares two files, byte-by-byte
+        /// </summary>
+        /// <param name="strFilePath1">Path to the first file</param>
+        /// <param name="strFilePath2">Path to the second file</param>
+        /// <returns>True if the files match; false if they don't match; also returns false if either file is missing</returns>
+        /// <remarks></remarks>
+        public static bool FilesMatch(string strFilePath1, string strFilePath2)
+        {
+
+            try
+            {
+                var fiFile1 = new FileInfo(strFilePath1);
+                var fiFile2 = new FileInfo(strFilePath2);
+
+                if (!fiFile1.Exists || !fiFile2.Exists)
+                {
+                    return false;
+                }
+
+                if (fiFile1.Length != fiFile2.Length)
+                {
+                    return false;
+                }
+
+                using (var srFile1 = new BinaryReader(new FileStream(fiFile1.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    using (var srFile2 = new BinaryReader(new FileStream(fiFile2.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    {
+                        while (srFile1.BaseStream.Position < fiFile1.Length)
+                        {
+                            if (srFile1.ReadByte() != srFile2.ReadByte())
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                Console.WriteLine("Error in clsGlobal.FilesMatch: " + ex.Message);
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
+        /// </summary>
+        /// <param name="strDirectoryPath"></param>
+        /// <param name="lngFreeBytesAvailableToUser"></param>
+        /// <param name="lngTotalDriveCapacityBytes"></param>
+        /// <param name="lngTotalNumberOfFreeBytes"></param>
+        /// <returns>True if success, false if a problem</returns>
+        /// <remarks></remarks>
+        private static bool GetDiskFreeSpace(string strDirectoryPath, out long lngFreeBytesAvailableToUser,
+            out long lngTotalDriveCapacityBytes, out long lngTotalNumberOfFreeBytes)
+        {
+
+            lngFreeBytesAvailableToUser = 0;
+            lngTotalDriveCapacityBytes = 0;
+            lngTotalNumberOfFreeBytes = 0;
+
+            var result = GetDiskFreeSpaceEx(strDirectoryPath, ref lngFreeBytesAvailableToUser, ref lngTotalDriveCapacityBytes, ref lngTotalNumberOfFreeBytes);
+
+            if (result == 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Reports the amount of free memory on this computer (in MB)
+        /// </summary>
+        /// <returns>Free memory, in MB</returns>
+        public static float GetFreeMemoryMB()
+        {
+            if (mSystemMemoryInfo == null)
+            {
+                mSystemMemoryInfo = new SystemMemoryInfo();
+                RegisterEvents(mSystemMemoryInfo);
+            }
+
+            return mSystemMemoryInfo.GetFreeMemoryMB();
+
+        }
+
+        /// <summary>
+        /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
+        /// <remarks>The message is shown in dark grey in the console.</remarks>
+        public static void LogDebug(string statusMessage, bool writeToLog = true)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine(statusMessage);
+            Console.ResetColor();
+
+            if (writeToLog)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+            }
+        }
+
+        /// <summary>
+        /// Log an error message and exception
+        /// </summary>
+        /// <param name="errorMessage">Error message (do not include ex.message)</param>
+        /// <param name="ex">Exception to log (allowed to be nothing)</param>
+        /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
+        public static void LogError(string errorMessage, Exception ex = null)
+        {
+            string formattedError;
+            if (ex == null || errorMessage.EndsWith(ex.Message))
+            {
+                formattedError = errorMessage;
+            }
+            else
+            {
+                formattedError = errorMessage + ": " + ex.Message;
+            }
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(formattedError);
+
+            if (ex != null)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine(GetExceptionStackTrace(ex, true));
+            }
+            Console.ResetColor();
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+
+        }
+
+        /// <summary>
+        /// Show a status message at the console and optionally include in the log file
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="isError">True if this is an error</param>
+        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
+        public static void LogMessage(string statusMessage, bool isError = false, bool writeToLog = true)
+        {
+            if (isError)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(statusMessage);
+                Console.ResetColor();
+            }
+            else
+            {
+                Console.WriteLine(statusMessage);
+            }
+
+            if (!writeToLog)
+                return;
+
+            if (isError)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+            }
+        }
+
+        /// <summary>
+        /// Display a warning message at the console and write to the log file
+        /// </summary>
+        /// <param name="warningMessage">Warning message</param>
+        public static void LogWarning(string warningMessage)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(warningMessage);
+            Console.ResetColor();
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+        }
+
+        /// <summary>
+        /// Replaces text in a string, ignoring case
+        /// </summary>
+        /// <param name="strTextToSearch"></param>
+        /// <param name="strTextToFind"></param>
+        /// <param name="strReplacementText"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string ReplaceIgnoreCase(string strTextToSearch, string strTextToFind, string strReplacementText)
+        {
+
+            var intCharIndex = strTextToSearch.ToLower().IndexOf(strTextToFind.ToLower(), StringComparison.Ordinal);
+
+            if (intCharIndex < 0)
+            {
+                return strTextToSearch;
+            }
+
+            string strNewText;
+            if (intCharIndex == 0)
+            {
+                strNewText = string.Empty;
+            }
+            else
+            {
+                strNewText = strTextToSearch.Substring(0, intCharIndex);
+            }
+
+            strNewText += strReplacementText;
+
+            if (intCharIndex + strTextToFind.Length < strTextToSearch.Length)
+            {
+                strNewText += strTextToSearch.Substring(intCharIndex + strTextToFind.Length);
+            }
+
+            return strNewText;
+        }
+
+        /// <summary>
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If 
+        /// </summary>
+        /// <param name="filePath1">First file</param>
+        /// <param name="filePath2">Second file</param>
+        /// <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static bool TextFilesMatch(string filePath1, string filePath2, bool ignoreWhitespace)
+        {
+
+            const int comparisonStartLine = 0;
+            const int comparisonEndLine = 0;
+
+            return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, null);
+
+        }
+
+
+        /// <summary>
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If 
+        /// </summary>
+        /// <param name="filePath1">First file</param>
+        /// <param name="filePath2">Second file</param>
+        /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
+        /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
+        /// <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static bool TextFilesMatch(string filePath1, string filePath2, int comparisonStartLine, int comparisonEndLine, bool ignoreWhitespace)
+        {
+
+            return TextFilesMatch(filePath1, filePath2, comparisonStartLine, comparisonEndLine, ignoreWhitespace, null);
+
+        }
+
+        /// <summary>
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number. 
+        /// </summary>
+        /// <param name="filePath1">First file</param>
+        /// <param name="filePath2">Second file</param>
+        /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
+        /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
+        /// <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+        /// <param name="lstLineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static bool TextFilesMatch(string filePath1, string filePath2, int comparisonStartLine, int comparisonEndLine, bool ignoreWhitespace, List<Regex> lstLineIgnoreRegExSpecs)
+        {
+
+            var chWhiteSpaceChars = new List<char>() {'\t', ' '}.ToArray();
+
+            try
+            {
+                var intLineNumber = 0;
+
+                using (var srFile1 = new StreamReader(new FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    using (var srFile2 = new StreamReader(new FileStream(filePath2, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    {
+
+                        while (!srFile1.EndOfStream)
+                        {
+                            var strLineIn1 = srFile1.ReadLine();
+                            intLineNumber += 1;
+
+                            if (comparisonEndLine > 0 && intLineNumber > comparisonEndLine)
+                            {
+                                // No need to compare further; files match up to this point
+                                break;
+                            }
+
+                            if (strLineIn1 == null)
+                                strLineIn1 = string.Empty;
+
+                            if (!srFile2.EndOfStream)
+                            {
+                                var strLineIn2 = srFile2.ReadLine();
+
+                                if (intLineNumber >= comparisonStartLine)
+                                {
+                                    if (strLineIn2 == null)
+                                        strLineIn2 = string.Empty;
+
+                                    if (ignoreWhitespace)
+                                    {
+                                        strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars);
+                                        strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars);
+                                    }
+
+                                    if (strLineIn1 != strLineIn2)
+                                    {
+                                        // Lines don't match; are we ignoring both of them?
+                                        if (TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) && TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs))
+                                        {
+                                            // Ignoring both lines
+                                        }
+                                        else
+                                        {
+                                            // Files do not match
+                                            return false;
+                                        }
+                                    }
+                                }
+                                continue;
+                            }
+
+                            // File1 has more lines than file2
+
+                            if (!ignoreWhitespace)
+                            {
+                                // Files do not match
+                                return false;
+                            }
+
+                            // Ignoring whitespace
+                            // If file1 only has blank lines from here on out, then the files match; otherwise, they don't
+                            // See if the remaining lines are blank
+                            do
+                            {
+                                if (strLineIn1.Length != 0)
+                                {
+                                    if (!TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs))
+                                    {
+                                        // Files do not match
+                                        return false;
+                                    }
+                                }
+
+                                if (srFile1.EndOfStream)
+                                {
+                                    break;
+                                }
+
+                                strLineIn1 = srFile1.ReadLine();
+                                if (strLineIn1 == null)
+                                    strLineIn1 = string.Empty;
+                                else
+                                    strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars);
+
+                            } while (true);
+
+                            break;
+
+                        }
+
+                        if (srFile2.EndOfStream)
+                            return true;
+
+                        // File2 has more lines than file1
+                        if (!ignoreWhitespace)
+                        {
+                            // Files do not match
+                            return false;
+                        }
+
+                        // Ignoring whitespace
+                        // If file2 only has blank lines from here on out, then the files match; otherwise, they don't
+                        // See if the remaining lines are blank
+                        do
+                        {
+                            var strLineExtra = srFile2.ReadLine();
+                            if (strLineExtra == null)
+                                strLineExtra = string.Empty;
+                            else
+                                strLineExtra = strLineExtra.Trim(chWhiteSpaceChars);
+
+                            if (strLineExtra.Length != 0)
+                            {
+                                if (!TextFilesMatchIgnoreLine(strLineExtra, lstLineIgnoreRegExSpecs))
+                                {
+                                    // Files do not match
+                                    return false;
+                                }
+                            }
+                        } while (!srFile2.EndOfStream);
+                    }
+                }
+
+                return true;
+
+            }
+            catch (Exception)
+            {
+                // Error occurred
+                return false;
+            }
+
+        }
+
+        protected static bool TextFilesMatchIgnoreLine(string strText, List<Regex> lstLineIgnoreRegExSpecs)
+        {
+
+            if ((lstLineIgnoreRegExSpecs != null))
+            {
+                foreach (var matchSpec in lstLineIgnoreRegExSpecs)
+                {
+                    if (matchSpec == null)
+                        continue;
+
+                    if (matchSpec.Match(strText).Success)
+                    {
+                        // Line matches; ignore it
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Change the host name in the given share path to use a different host
+        /// </summary>
+        /// <param name="sharePath"></param>
+        /// <param name="newHostName"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string UpdateHostName(string sharePath, string newHostName)
+        {
+
+            if (!newHostName.StartsWith(@"\\"))
+            {
+                throw new NotSupportedException(@"\\ not found at the start of newHostName (" + newHostName + "); " +
+                                                @"The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\");
+            }
+
+            if (!newHostName.EndsWith("\\"))
+            {
+                newHostName += "\\";
+            }
+
+            if (!sharePath.StartsWith(@"\\"))
+            {
+                throw new NotSupportedException(@"\\ not found at the start of sharePath (" + sharePath + "); " +
+                                                @"The UpdateHostName function only works with UNC paths, e.g. \\ServerName\Share\");
+            }
+
+            var slashLoc = sharePath.IndexOf("\\", 3, StringComparison.Ordinal);
+
+            if (slashLoc < 0)
+            {
+                throw new Exception("Backslash not found after the 3rd character in SharePath, " + sharePath);
+            }
+
+            var sharePathNew = newHostName + sharePath.Substring(slashLoc + 1);
+
+            return sharePathNew;
+
+        }
+
+        /// <summary>
+        /// Returns True if the computer name is Pub-1000 or higher
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static bool UsingVirtualMachineOnPIC()
+        {
+            var rePub1000 = new Regex(@"Pub-1\d{3,}", RegexOptions.IgnoreCase);
+
+            if (rePub1000.IsMatch(Environment.MachineName))
+            {
+                // The Memory performance counters are not available on Windows instances running under VMWare on PIC
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Looks for a .hashcheck file for the specified data file
+        /// If found, opens the file and reads the stored values: size, modification_date_utc, and hash
+        /// Next compares the stored values to the actual values
+        /// Checks file size and file date, but does not compute the hash
+        /// </summary>
+        /// <param name="strDataFilePath">Data file to check.</param>
+        /// <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
+        /// <param name="strErrorMessage"></param>
+        /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
+        /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+        public static bool ValidateFileVsHashcheck(string strDataFilePath, string strHashFilePath, out string strErrorMessage)
+        {
+            return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, out strErrorMessage, blnCheckDate: true, blnComputeHash: false, blnCheckSize: true);
+        }
+
+        /// <summary>
+        /// Looks for a .hashcheck file for the specified data file
+        /// If found, opens the file and reads the stored values: size, modification_date_utc, and hash
+        /// Next compares the stored values to the actual values
+        /// Checks file size, plus optionally date and hash
+        /// </summary>
+        /// <param name="strDataFilePath">Data file to check.</param>
+        /// <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
+        /// <param name="strErrorMessage"></param>
+        /// <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
+        /// <param name="blnComputeHash"></param>
+        /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
+        /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+        public static bool ValidateFileVsHashcheck(
+            string strDataFilePath, string strHashFilePath, out string strErrorMessage, 
+            bool blnCheckDate, bool blnComputeHash)
+        {
+            return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, out strErrorMessage, blnCheckDate, blnComputeHash, blnCheckSize: true);
+        }
+
+        /// <summary>
+        /// Looks for a .hashcheck file for the specified data file
+        /// If found, opens the file and reads the stored values: size, modification_date_utc, and hash
+        /// Next compares the stored values to the actual values
+        /// </summary>
+        /// <param name="strDataFilePath">Data file to check.</param>
+        /// <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
+        /// <param name="strErrorMessage"></param>
+        /// <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
+        /// <param name="blnComputeHash"></param>
+        /// <param name="blnCheckSize"></param>
+        /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
+        /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+        public static bool ValidateFileVsHashcheck(
+            string strDataFilePath, string strHashFilePath, out string strErrorMessage, 
+            bool blnCheckDate, bool blnComputeHash, bool blnCheckSize)
+        {
+
+            var blnValidFile = false;
+            strErrorMessage = string.Empty;
+
+            try
+            {
+                var fiDataFile = new FileInfo(strDataFilePath);
+
+                if (string.IsNullOrEmpty(strHashFilePath))
+                    strHashFilePath = fiDataFile.FullName + SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+                var fiHashCheck = new FileInfo(strHashFilePath);
+
+                if (!fiDataFile.Exists)
+                {
+                    strErrorMessage = "Data file not found at " + fiDataFile.FullName;
+                    return false;
+                }
+
+                if (!fiHashCheck.Exists)
+                {
+                    strErrorMessage = "Data file at " + fiDataFile.FullName + " does not have a corresponding .hashcheck file named " + fiHashCheck.Name;
+                    return false;
+                }
+
+                long lngExpectedFileSizeBytes = 0;
+                var dtExpectedFileDate = DateTime.MinValue;
+                var strExpectedHash = string.Empty;
+
+                // Read the details in the HashCheck file
+                using (var srInfile = new StreamReader(new FileStream(fiHashCheck.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srInfile.EndOfStream)
+                    {
+                        var strLineIn = srInfile.ReadLine();
+
+                        if (!string.IsNullOrWhiteSpace(strLineIn) && !strLineIn.StartsWith("#") && strLineIn.Contains('='))
+                        {
+                            var strSplitLine = strLineIn.Split('=');
+
+
+                            if (strSplitLine.Length >= 2)
+                            {
+                                // Set this to true for now
+                               blnValidFile = true;
+
+                                switch (strSplitLine[0].ToLower())
+                                {
+                                    case "size":
+                                        Int64.TryParse(strSplitLine[1], out lngExpectedFileSizeBytes);
+                                        break;
+                                    case "modification_date_utc":
+                                        DateTime.TryParse(strSplitLine[1], out dtExpectedFileDate);
+                                        break;
+                                    case "hash":
+                                        strExpectedHash = string.Copy(strSplitLine[1]);
+                                        break;
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+                if (blnCheckSize && fiDataFile.Length != lngExpectedFileSizeBytes)
+                {
+                    strErrorMessage = "File size mismatch: expecting " + lngExpectedFileSizeBytes.ToString("#,##0") + " but computed " + fiDataFile.Length.ToString("#,##0");
+                    return false;
+                }
+
+                // Only compare dates if we are not comparing hash values
+                if (!blnComputeHash && blnCheckDate)
+                {
+                    if (Math.Abs(fiDataFile.LastWriteTimeUtc.Subtract(dtExpectedFileDate).TotalSeconds) > 2)
+                    {
+                        strErrorMessage = "File modification date mismatch: expecting " + dtExpectedFileDate.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC but actually " + fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC";
+                        return false;
+                    }
+                }
+
+                if (blnComputeHash)
+                {
+                    // Compute the hash of the file
+                    var strActualHash = ComputeFileHashMD5(strDataFilePath);
+
+                    if (strActualHash != strExpectedHash)
+                    {
+                        strErrorMessage = "Hash mismatch: expecting " + strExpectedHash + " but computed " + strActualHash;
+                        return false;
+                    }
+                }
+
+                return blnValidFile;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in ValidateFileVsHashcheck: " + ex.Message);
+            }
+
+            return blnValidFile;
+
+        }
+
+        public static bool ValidateFreeDiskSpace(
+            string directoryDescription, 
+            string directoryPath, 
+            int minFreeSpaceMB, 
+            clsLogTools.LoggerTypes eLogLocationIfNotFound, 
+            out string errorMessage)
+        {
+
+            double freeSpaceMB;
+
+            errorMessage = string.Empty;
+
+            var diDirectory = new DirectoryInfo(directoryPath);
+            if (!diDirectory.Exists)
+            {
+                // Example error message: Organism DB directory not found: G:\DMS_Temp_Org
+                errorMessage = directoryDescription + " not found: " + directoryPath;
+                Console.WriteLine(errorMessage);
+                clsLogTools.WriteLog(eLogLocationIfNotFound, clsLogTools.LogLevels.ERROR, errorMessage);
+                return false;
+            }
+
+            if (diDirectory.Root.FullName.StartsWith(@"\\") || !diDirectory.Root.FullName.Contains(":"))
+            {
+                // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
+                long lngFreeBytesAvailableToUser;
+                long lngTotalNumberOfBytes;
+                long lngTotalNumberOfFreeBytes;
+
+                if (GetDiskFreeSpace(diDirectory.FullName, out lngFreeBytesAvailableToUser, out lngTotalNumberOfBytes, out lngTotalNumberOfFreeBytes))
+                {
+                    freeSpaceMB = BytesToMB(lngTotalNumberOfFreeBytes);
+                }
+                else
+                {
+                    freeSpaceMB = 0;
+                }
+
+            }
+            else
+            {
+                // Directory is a local drive; can query with .NET
+                var diDrive = new DriveInfo(diDirectory.Root.FullName);
+                freeSpaceMB = BytesToMB(diDrive.TotalFreeSpace);
+            }
+
+            if (freeSpaceMB < minFreeSpaceMB)
+            {
+                // Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
+                errorMessage = $"{directoryDescription} drive has less than {minFreeSpaceMB} MB free: {Convert.ToInt32(freeSpaceMB)} MB";
+                Console.WriteLine(errorMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                return false;
+            }
+
+            return true;
+        }
+
+        #endregion
+
+        #region "EventHandlers"
+
+        private static void DbToolsErrorEventHandler(string errorMessage)
+        {
+            LogError(errorMessage);
+        }
+
+        #endregion
+
+        #region "clsEventNotifier events"
+
+        private static void RegisterEvents(clsEventNotifier oProcessingClass)
+        {
+            oProcessingClass.StatusEvent += StatusEventHandler;
+            oProcessingClass.ErrorEvent += ErrorEventHandler;
+            oProcessingClass.WarningEvent += WarningEventHandler;
+            // Ignore: oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private static void StatusEventHandler(string statusMessage)
+        {
+            LogMessage(statusMessage);
+        }
+
+        private static void ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private static void WarningEventHandler(string warningMessage)
+        {
+            LogWarning(warningMessage);
+        }
+
+        #endregion
+    }
+}

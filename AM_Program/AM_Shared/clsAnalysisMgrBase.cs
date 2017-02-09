@@ -1,163 +1,198 @@
-﻿Public MustInherit Class clsAnalysisMgrBase
-    Inherits clsLoggerBase
+﻿
+using System;
 
-    Private m_LastLockQueueWaitTimeLog As DateTime = Date.UtcNow
-    Private m_LockQueueWaitTimeStart As DateTime = Date.UtcNow
+namespace AnalysisManagerBase
+{
 
-    Protected m_FileTools As PRISM.Files.clsFileTools
+    public abstract class clsAnalysisMgrBase : clsLoggerBase
+    {
 
-    Protected m_message As String
+        private DateTime m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
 
-    Private ReadOnly m_derivedClassName As String
+        private DateTime m_LockQueueWaitTimeStart = DateTime.UtcNow;
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="derivedClassName"></param>
-    Public Sub New(derivedClassName As String)
-        m_derivedClassName = derivedClassName
-    End Sub
+        protected PRISM.Files.clsFileTools m_FileTools;
 
-    Private Function IsLockQueueLogMessageNeeded(ByRef dtLockQueueWaitTimeStart As DateTime, ByRef dtLastLockQueueWaitTimeLog As DateTime) As Boolean
+        protected string m_message;
 
-        Dim intWaitTimeLogIntervalSeconds As Integer
+        private readonly string m_derivedClassName;
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="derivedClassName"></param>
+        protected clsAnalysisMgrBase(string derivedClassName)
+        {
+            m_derivedClassName = derivedClassName;
+        }
 
-        If dtLockQueueWaitTimeStart = DateTime.MinValue Then dtLockQueueWaitTimeStart = Date.UtcNow()
+        private bool IsLockQueueLogMessageNeeded(ref DateTime dtLockQueueWaitTimeStart, ref DateTime dtLastLockQueueWaitTimeLog)
+        {
 
-        Select Case Date.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes
-            Case Is >= 30
-                intWaitTimeLogIntervalSeconds = 240
-            Case Is >= 15
-                intWaitTimeLogIntervalSeconds = 120
-            Case Is >= 5
-                intWaitTimeLogIntervalSeconds = 60
-            Case Else
-                intWaitTimeLogIntervalSeconds = 30
-        End Select
+            int intWaitTimeLogIntervalSeconds;
 
-        If Date.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds Then
-            Return True
-        Else
-            Return False
-        End If
+            if (dtLockQueueWaitTimeStart == DateTime.MinValue)
+                dtLockQueueWaitTimeStart = DateTime.UtcNow;
 
-    End Function
+            var waitTimeMinutes = DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes;
 
-    Protected Sub InitFileTools(mgrName As String, debugLevel As Short)
-        ResetTimestampForQueueWaitTimeLogging()
-        m_FileTools = New PRISM.Files.clsFileTools(mgrName, debugLevel)
-        AddHandler m_FileTools.LockQueueTimedOut, AddressOf m_FileTools_LockQueueTimedOut
-        AddHandler m_FileTools.LockQueueWaitComplete, AddressOf m_FileTools_LockQueueWaitComplete
-        AddHandler m_FileTools.WaitingForLockQueue, AddressOf m_FileTools_WaitingForLockQueue
-        AddHandler m_FileTools.DebugEvent, AddressOf m_FileTools_DebugEvent
-        AddHandler m_FileTools.WarningEvent, AddressOf m_FileTools_WarningEvent
-    End Sub
+            if (waitTimeMinutes >= 30)
+            {
+                intWaitTimeLogIntervalSeconds = 240;
+            } else if (waitTimeMinutes >= 15)
+            {
+                intWaitTimeLogIntervalSeconds = 120;
+            } else if (waitTimeMinutes >= 5)
+            {
+                intWaitTimeLogIntervalSeconds = 60;
+            }
+            else
+            {
+                intWaitTimeLogIntervalSeconds = 30;
+            }
 
-    ''' <summary>
-    ''' Update m_message with an error message and record the error in the manager's log file
-    ''' </summary>
-    ''' <param name="errorMessage">Error message</param>
-    ''' <param name="logToDb">When true, log the message to the database and the local log file</param>
-    Protected Overrides Sub LogError(errorMessage As String, Optional logToDb As Boolean = False)
-        m_message = clsGlobal.AppendToComment(m_message, errorMessage)
-        MyBase.LogError(errorMessage, logToDb)
-    End Sub
+            if (DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds)
+            {
+                return true;
+            }
 
-    ''' <summary>
-    ''' Update m_message with an error message and record the error in the manager's log file
-    ''' </summary>
-    ''' <param name="errorMessage">Error message</param>
-    ''' <param name="ex">Exception to log</param>
-    Protected Overrides Sub LogError(errorMessage As String, ex As Exception)
-        m_message = clsGlobal.AppendToComment(m_message, errorMessage)
-        MyBase.LogError(errorMessage, ex)
-    End Sub
+            return false;
+        }
 
-    ''' <summary>
-    ''' Update m_message with an error message and record the error in the manager's log file
-    ''' Also write the detailed error message to the local log file
-    ''' </summary>
-    ''' <param name="errorMessage">Error message</param>
-    ''' <param name="detailedMessage">Detailed error message</param>
-    Protected Overloads Sub LogError(errorMessage As String, detailedMessage As String, Optional logToDb As Boolean = False)
-        Me.LogError(errorMessage, logToDb)
+        protected void InitFileTools(string mgrName, short debugLevel)
+        {
+            ResetTimestampForQueueWaitTimeLogging();
+            m_FileTools = new PRISM.Files.clsFileTools(mgrName, debugLevel);
+            m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
+            m_FileTools.LockQueueWaitComplete += m_FileTools_LockQueueWaitComplete;
+            m_FileTools.WaitingForLockQueue += m_FileTools_WaitingForLockQueue;
+            m_FileTools.DebugEvent += m_FileTools_DebugEvent;
+            m_FileTools.WarningEvent += m_FileTools_WarningEvent;
+        }
 
-        If Not String.IsNullOrEmpty(detailedMessage) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage)
-            Console.ForegroundColor = ConsoleColor.Magenta
-            Console.WriteLine(detailedMessage)
-            Console.ResetColor()
-        End If
+        /// <summary>
+        /// Update m_message with an error message and record the error in the manager's log file
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
+        protected override void LogError(string errorMessage, bool logToDb = false)
+        {
+            m_message = clsGlobal.AppendToComment(m_message, errorMessage);
+            base.LogError(errorMessage, logToDb);
+        }
 
-    End Sub
+        /// <summary>
+        /// Update m_message with an error message and record the error in the manager's log file
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="ex">Exception to log</param>
+        protected override void LogError(string errorMessage, Exception ex)
+        {
+            m_message = clsGlobal.AppendToComment(m_message, errorMessage);
+            base.LogError(errorMessage, ex);
+        }
 
-    Protected Sub ResetTimestampForQueueWaitTimeLogging()
-        m_LastLockQueueWaitTimeLog = Date.UtcNow
-        m_LockQueueWaitTimeStart = Date.UtcNow
-    End Sub
+        /// <summary>
+        /// Update m_message with an error message and record the error in the manager's log file
+        /// Also write the detailed error message to the local log file
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="detailedMessage">Detailed error message</param>
+        /// <param name="logToDb">True to log this error to the database</param>
+        protected void LogError(string errorMessage, string detailedMessage, bool logToDb = false)
+        {
+            this.LogError(errorMessage, logToDb);
 
-#Region "Event Handlers"
+            if (string.IsNullOrEmpty(detailedMessage))
+                return;
 
-    Private Sub m_FileTools_DebugEvent(currentTask As String, taskDetail As String)
-        If m_DebugLevel >= 1 Then
-            Console.WriteLine("  " & currentTask)
-            Console.WriteLine("   " & taskDetail)
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage);
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine(detailedMessage);
+            Console.ResetColor();
+        }
 
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask & "; " & taskDetail)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask)
-            End If
-        End If
-    End Sub
+        protected void ResetTimestampForQueueWaitTimeLogging()
+        {
+            m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
+            m_LockQueueWaitTimeStart = DateTime.UtcNow;
+        }
 
-    Private Sub m_FileTools_WarningEvent(warningMessage As String, warningDetail As String)
-        If m_DebugLevel >= 1 Then
-            Console.WriteLine(warningMessage)
-            Console.WriteLine("  " & warningDetail)
+        #region "Event Handlers"
 
-            Dim msg As String
-            If m_DebugLevel >= 2 Then
-                msg = warningMessage & "; " & warningDetail
-            Else
-                msg = warningMessage
-            End If
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-        End If
-    End Sub
+        private void m_FileTools_DebugEvent(string currentTask, string taskDetail)
+        {
+            if (m_DebugLevel >= 1)
+            {
+                Console.WriteLine("  " + currentTask);
+                Console.WriteLine("   " + taskDetail);
 
-    Private Sub m_FileTools_LockQueueTimedOut(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double)
-        If m_DebugLevel >= 1 Then
-            Dim msg = "Lockfile queue timed out after " & waitTimeMinutes.ToString("0") & " minutes " &
-                "(" & m_derivedClassName & "); Source=" & sourceFilePath & ", Target=" & targetFilePath
-            Console.WriteLine(msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg)
-        End If
-    End Sub
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask + "; " + taskDetail);
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask);
+                }
+            }
+        }
 
-    Private Sub m_FileTools_LockQueueWaitComplete(sourceFilePath As String, targetFilePath As String, waitTimeMinutes As Double)
-        If m_DebugLevel >= 1 AndAlso waitTimeMinutes >= 1 Then
-            Dim msg = "Exited lockfile queue after " & waitTimeMinutes.ToString("0") & " minutes (" & m_derivedClassName & "); will now copy file"
-            Console.WriteLine(msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-        End If
-    End Sub
+        private void m_FileTools_WarningEvent(string warningMessage, string warningDetail)
+        {
+            if (m_DebugLevel >= 1)
+            {
+                Console.WriteLine(warningMessage);
+                Console.WriteLine("  " + warningDetail);
 
-    Private Sub m_FileTools_WaitingForLockQueue(sourceFilePath As String, targetFilePath As String, backlogSourceMB As Integer, backlogTargetMB As Integer)
+                string msg;
+                if (m_DebugLevel >= 2)
+                {
+                    msg = warningMessage + "; " + warningDetail;
+                }
+                else
+                {
+                    msg = warningMessage;
+                }
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+            }
+        }
 
-        If IsLockQueueLogMessageNeeded(m_LockQueueWaitTimeStart, m_LastLockQueueWaitTimeLog) Then
-            m_LastLockQueueWaitTimeLog = Date.UtcNow
-            If m_DebugLevel >= 1 Then
-                Dim msg = "Waiting for lockfile queue to fall below threshold (" & m_derivedClassName & "); " &
-                    "SourceBacklog=" & backlogSourceMB & " MB, " &
-                    "TargetBacklog=" & backlogTargetMB & " MB, " &
-                    "Source=" & sourceFilePath & ", Target=" & targetFilePath
-                Console.WriteLine(msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-            End If
-        End If
+        private void m_FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
+        {
+            if (m_DebugLevel >= 1)
+            {
+                var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + m_derivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
+                Console.WriteLine(msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+            }
+        }
 
-    End Sub
+        private void m_FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
+        {
+            if (m_DebugLevel >= 1 && waitTimeMinutes >= 1)
+            {
+                var msg = "Exited lockfile queue after " + waitTimeMinutes.ToString("0") + " minutes (" + m_derivedClassName + "); will now copy file";
+                Console.WriteLine(msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            }
+        }
 
-#End Region
-End Class
+
+        private void m_FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
+        {
+            if (IsLockQueueLogMessageNeeded(ref m_LockQueueWaitTimeStart, ref m_LastLockQueueWaitTimeLog))
+            {
+                m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
+                if (m_DebugLevel >= 1)
+                {
+                    var msg = "Waiting for lockfile queue to fall below threshold (" + m_derivedClassName + "); " + "SourceBacklog=" + backlogSourceMB + " MB, " + "TargetBacklog=" + backlogTargetMB + " MB, " + "Source=" + sourceFilePath + ", Target=" + targetFilePath;
+                    Console.WriteLine(msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                }
+            }
+
+        }
+
+        #endregion
+    }
+}

@@ -1,277 +1,354 @@
-﻿Imports System.IO
-Imports System.Reflection
-Imports System.Security
-Imports log4net.Core
-Imports log4net.Layout
-Imports log4net.Layout.Pattern
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Security;
+using log4net.Core;
+using log4net.Layout;
+using log4net.Layout.Pattern;
 
-''' <summary>
-''' Custom formatter for LogForNET
-''' Displays the full stack trace when the calling method includes an exception
-''' </summary>
-''' <remarks>
-''' Modelled after code at http://stackoverflow.com/questions/1906227/does-log4net-support-including-the-call-stack-in-a-log-message
-''' </remarks>
-Public Class CustomPatternLayout
-    Inherits PatternLayout
-    Public Sub New()
-        Me.AddConverter("stack", GetType(StackTraceConverter))
-    End Sub
-End Class
+namespace AnalysisManagerBase
+{
+    /// <summary>
+    /// Custom formatter for LogForNET
+    /// Displays the full stack trace when the calling method includes an exception
+    /// </summary>
+    /// <remarks>
+    /// Modelled after code at http://stackoverflow.com/questions/1906227/does-log4net-support-including-the-call-stack-in-a-log-message
+    /// </remarks>
+    public class CustomPatternLayout : PatternLayout
+    {
+        public CustomPatternLayout()
+        {
+            AddConverter("stack", typeof(StackTraceConverter));
+        }
+    }
 
-Friend Class StackTraceConverter
-    Inherits PatternLayoutConverter
-    Private Shared ReadOnly _assembly As Assembly = GetType(PatternLayoutConverter).Assembly
+    internal class StackTraceConverter : PatternLayoutConverter
+    {
 
-    Public ReadOnly Property StackTraceIncludesFilenames As Boolean
+        private static readonly Assembly _assembly = typeof(PatternLayoutConverter).Assembly;
+        public bool StackTraceIncludesFilenames { get; }
 
-    ''' <summary>
-    ''' When true, include method arguments in the stack trace
-    ''' </summary>
-    ''' <returns></returns>
-    Public ReadOnly Property StackTraceIncludesMethodArgs As Boolean
+        /// <summary>
+        /// When true, include method arguments in the stack trace
+        /// </summary>
+        /// <returns></returns>
+        public bool StackTraceIncludesMethodArgs { get; }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    Public Sub New()
-        MyBase.IgnoresException = False
-        StackTraceIncludesFilenames = True
-        StackTraceIncludesMethodArgs = False
-    End Sub
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public StackTraceConverter()
+        {
+            base.IgnoresException = false;
+            StackTraceIncludesFilenames = true;
+            StackTraceIncludesMethodArgs = false;
+        }
 
-    ''' <summary>
-    ''' Appends details about the exception to the writer
-    ''' </summary>
-    ''' <param name="writer"></param>
-    ''' <param name="loggingEvent"></param>
-    Protected Overrides Sub Convert(writer As TextWriter, loggingEvent As LoggingEvent)
-        Dim ex = loggingEvent.ExceptionObject
-        If ex Is Nothing Then
-            Return
-        End If
+        /// <summary>
+        /// Appends details about the exception to the writer
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="loggingEvent"></param>
+        protected override void Convert(TextWriter writer, LoggingEvent loggingEvent)
+        {
+            var ex = loggingEvent.ExceptionObject;
+            if (ex == null)
+            {
+                return;
+            }
 
-        Dim displayFilenames = StackTraceIncludesFilenames
-        Dim exceptionWritten = False
+            var displayFilenames = StackTraceIncludesFilenames;
+            var exceptionWritten = false;
 
-        ' Setting this to 3 prevents the stack trace from including this method, the calling method, or the method above that
-        Const parentMethodsToSkip = 3
+            // Setting this to 3 prevents the stack trace from including this method, the calling method, or the method above that
+            const int parentMethodsToSkip = 3;
 
-        Try
-            ' Note that the request for filenames (when displayFilenames is true) may fail
-            Dim stack = New StackTrace(displayFilenames)
+            try
+            {
+                // Note that the request for filenames (when displayFilenames is true) may fail
+                var stack = new StackTrace(displayFilenames);
 
-            Dim basePath As String
-            If displayFilenames Then
-                basePath = GetBasePath(stack, parentMethodsToSkip)
-                ' When writing the exception, replace basePath with an empty string
-                ' Also replacing " in \" with " in "
-                writer.WriteLine(ex.ToString().Replace(basePath, String.Empty).Replace(" in " & Path.DirectorySeparatorChar, " in "))
-            Else
-                basePath = String.Empty
-                writer.WriteLine(ex.ToString())
-            End If
-            exceptionWritten = True
+                string basePath;
+                if (displayFilenames)
+                {
+                    basePath = GetBasePath(stack, parentMethodsToSkip);
+                    // When writing the exception, replace basePath with an empty string
+                    // Also replacing " in \" with " in "
+                    writer.WriteLine(ex.ToString().Replace(basePath, string.Empty).Replace(" in " + Path.DirectorySeparatorChar, " in "));
+                }
+                else
+                {
+                    basePath = string.Empty;
+                    writer.WriteLine(ex.ToString());
+                }
+                exceptionWritten = true;
 
-            Dim skip = 0
-            For i = 0 To stack.FrameCount - 1
-                Dim sf = stack.GetFrame(i)
-                Dim mb = sf.GetMethod()
-                If mb Is Nothing Then Continue For
+                var skip = 0;
+                for (var i = 0; i <= stack.FrameCount - 1; i++)
+                {
+                    var sf = stack.GetFrame(i);
+                    var mb = sf.GetMethod();
+                    if (mb == null)
+                        continue;
 
-                Dim t = mb.DeclaringType
-                If t.Assembly = _assembly Then Continue For
+                    var t = mb.DeclaringType;
+                    if (t == null)
+                        continue;
 
-                ' This skips the current method and the method catching the exception
-                ' parentMethodsToSkip will typically be 2 or 3
-                If skip < parentMethodsToSkip Then
-                    skip += 1
-                    Continue For
-                End If
-                writer.Write("   at ")
+                    if (t.Assembly == _assembly)
+                        continue;
 
-                ' if there is a type (non global method) print it
-                If t IsNot Nothing Then
-                    writer.Write(t.FullName.Replace("+"c, "."c))
-                    writer.Write(".")
-                End If
-                writer.Write(mb.Name)
+                    // This skips the current method and the method catching the exception
+                    // parentMethodsToSkip will typically be 2 or 3
+                    if (skip < parentMethodsToSkip)
+                    {
+                        skip += 1;
+                        continue;
+                    }
+                    writer.Write("   at ");
 
-                ' deal with the generic portion of the method
-                If TypeOf mb Is MethodInfo AndAlso mb.IsGenericMethod Then
-                    Dim typars As Type() = DirectCast(mb, MethodInfo).GetGenericArguments()
-                    writer.Write("[")
-                    Dim k = 0
-                    Dim fFirstTyParam = True
-                    While k < typars.Length
-                        If fFirstTyParam = False Then
-                            writer.Write(",")
-                        Else
-                            fFirstTyParam = False
-                        End If
+                    // if there is a type (non global method) print it
+                    writer.Write(t.FullName.Replace('+', '.'));
+                    writer.Write(".");
+                    writer.Write(mb.Name);
 
-                        writer.Write(typars(k).Name)
-                        k += 1
-                    End While
-                    writer.Write("]")
-                End If
+                    // deal with the generic portion of the method
+                    var info = mb as MethodInfo;
+                    if (info != null && info.IsGenericMethod)
+                    {
+                        var typars = info.GetGenericArguments();
+                        writer.Write("[");
+                        var k = 0;
+                        var fFirstTyParam = true;
+                        while (k < typars.Length)
+                        {
+                            if (fFirstTyParam == false)
+                            {
+                                writer.Write(",");
+                            }
+                            else
+                            {
+                                fFirstTyParam = false;
+                            }
 
-                ' Optionally include method arguments
-                If StackTraceIncludesMethodArgs Then
-                    writer.Write("(")
-                    Dim pi As ParameterInfo() = mb.GetParameters()
-                    Dim fFirstParam = True
-                    For j = 0 To pi.Length - 1
-                        If fFirstParam = False Then
-                            writer.Write(", ")
-                        Else
-                            fFirstParam = False
-                        End If
+                            writer.Write(typars[k].Name);
+                            k += 1;
+                        }
+                        writer.Write("]");
+                    }
 
-                        Dim typeName = "<UnknownType>"
-                        If pi(j).ParameterType IsNot Nothing Then
-                            typeName = pi(j).ParameterType.Name
-                        End If
-                        writer.Write(typeName + " " + pi(j).Name)
-                    Next
-                    writer.Write(")")
-                End If
+                    // Optionally include method arguments
+                    if (StackTraceIncludesMethodArgs)
+                    {
+                        writer.Write("(");
+                        var pi = mb.GetParameters();
+                        var fFirstParam = true;
+                        for (var j = 0; j <= pi.Length - 1; j++)
+                        {
+                            if (fFirstParam == false)
+                            {
+                                writer.Write(", ");
+                            }
+                            else
+                            {
+                                fFirstParam = false;
+                            }
 
-                ' source location printing
-                If displayFilenames AndAlso (sf.GetILOffset() <> -1) Then
-                    ' If we don't have a PDB or PDB-reading is disabled for the module, the file name will be null
-                    Dim filePath As String = Nothing
+                            var typeName = "<UnknownType>";
+                            if (pi[j].ParameterType != null)
+                            {
+                                typeName = pi[j].ParameterType.Name;
+                            }
+                            writer.Write(typeName + " " + pi[j].Name);
+                        }
+                        writer.Write(")");
+                    }
 
-                    ' Getting the filename from a StackFrame is a privileged operation
-                    ' We won't want to disclose full path names to arbitrarily untrusted code.  
-                    ' Rather than just omit this we could probably trim to just the filename so it's still mostly useful
-                    Try
-                        filePath = sf.GetFileName()
-                    Catch generatedExceptionName As SecurityException
-                        ' If the demand for displaying filenames fails, it won't succeed later in the loop.  
-                        ' Avoid repeated exceptions by not trying again.
-                        displayFilenames = False
-                    End Try
+                    // source location printing
+                    if (displayFilenames && (sf.GetILOffset() != -1))
+                    {
+                        // If we don't have a PDB or PDB-reading is disabled for the module, the file name will be null
+                        string filePath = null;
 
-                    If filePath IsNot Nothing Then
-                        Dim trimmedFilePath As String
-                        If filePath.StartsWith(basePath, StringComparison.InvariantCultureIgnoreCase) Then
-                            If filePath.Substring(basePath.Length).StartsWith(Path.DirectorySeparatorChar) OrElse
-                               filePath.Substring(basePath.Length).StartsWith(Path.AltDirectorySeparatorChar) Then
-                                trimmedFilePath = filePath.Substring(basePath.Length + 1)
-                            Else
-                                trimmedFilePath = filePath.Substring(basePath.Length)
-                            End If
-                        Else
-                            trimmedFilePath = filePath
-                        End If
+                        // Getting the filename from a StackFrame is a privileged operation
+                        // We won't want to disclose full path names to arbitrarily untrusted code.  
+                        // Rather than just omit this we could probably trim to just the filename so it's still mostly useful
+                        try
+                        {
+                            filePath = sf.GetFileName();
+                        }
+                        catch (SecurityException)
+                        {
+                            // If the demand for displaying filenames fails, it won't succeed later in the loop.  
+                            // Avoid repeated exceptions by not trying again.
+                            displayFilenames = false;
+                        }
 
-                        ' Append " in c:\tmp\MyFile.cs:line 5"
-                        writer.Write(" in {0}:line {1}", trimmedFilePath, sf.GetFileLineNumber())
-                    End If
-                End If
-                writer.WriteLine()
+                        if (filePath != null)
+                        {
+                            string trimmedFilePath;
+                            if (filePath.StartsWith(basePath, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                if (filePath.Substring(basePath.Length).StartsWith(Path.DirectorySeparatorChar.ToString()) || 
+                                    filePath.Substring(basePath.Length).StartsWith(Path.AltDirectorySeparatorChar.ToString()))
+                                {
+                                    trimmedFilePath = filePath.Substring(basePath.Length + 1);
+                                }
+                                else
+                                {
+                                    trimmedFilePath = filePath.Substring(basePath.Length);
+                                }
+                            }
+                            else
+                            {
+                                trimmedFilePath = filePath;
+                            }
 
-            Next
+                            // Append " in c:\tmp\MyFile.cs:line 5"
+                            writer.Write(" in {0}:line {1}", trimmedFilePath, sf.GetFileLineNumber());
+                        }
+                    }
+                    writer.WriteLine();
 
-        Catch ex2 As Exception
-            writer.WriteLine()
-            If Not exceptionWritten Then
-                writer.WriteLine(ex.ToString())
-            End If
+                }
 
-            writer.WriteLine("Exception logging the exception: " & ex2.Message)
-        End Try
+            }
+            catch (Exception ex2)
+            {
+                writer.WriteLine();
+                if (!exceptionWritten)
+                {
+                    writer.WriteLine(ex.ToString());
+                }
 
-    End Sub
+                writer.WriteLine("Exception logging the exception: " + ex2.Message);
+            }
 
-    ''' <summary>
-    ''' Examine the file paths associated with each level of the stack trace
-    ''' Determine the folder path in common with all of the file paths
-    ''' </summary>
-    ''' <param name="stack"></param>
-    ''' <param name="parentMethodsToSkip"></param>
-    ''' <returns>Base folder path</returns>
-    Private Function GetBasePath(stack As StackTrace, parentMethodsToSkip As Integer) As String
+        }
 
-        ' This list tracks the file paths associated with the methods in the call stack
-        Dim stackTraceFiles = New List(Of String)
+        /// <summary>
+        /// Examine the file paths associated with each level of the stack trace
+        /// Determine the folder path in common with all of the file paths
+        /// </summary>
+        /// <param name="stack"></param>
+        /// <param name="parentMethodsToSkip"></param>
+        /// <returns>Base folder path</returns>
+        private string GetBasePath(StackTrace stack, int parentMethodsToSkip)
+        {
 
-        Dim skip = 0
-        For i = 0 To stack.FrameCount - 1
-            Dim sf = stack.GetFrame(i)
-            Dim mb = sf.GetMethod()
-            If mb Is Nothing Then Continue For
+            // This list tracks the file paths associated with the methods in the call stack
+            var stackTraceFiles = new List<string>();
 
-            Dim t = mb.DeclaringType
-            If t.Assembly = _assembly Then Continue For
+            var skip = 0;
+            for (var i = 0; i <= stack.FrameCount - 1; i++)
+            {
+                var sf = stack.GetFrame(i);
+                var mb = sf.GetMethod();
+                if (mb == null)
+                    continue;
 
-            ' This skips the current method plus any parent methods
-            If skip < 1 + parentMethodsToSkip Then
-                skip += 1
-                Continue For
-            End If
+                var t = mb.DeclaringType;
 
-            If (sf.GetILOffset() <> -1) Then
-                ' If we don't have a PDB or PDB-reading is disabled for the module, the file name will be null
-                Dim filePath As String
+                if (t == null)
+                    continue;
 
-                Try
-                    filePath = sf.GetFileName()
-                Catch generatedExceptionName As SecurityException
-                    ' If the demand for displaying filenames fails, it won't succeed later in the loop.  
-                    ' Abort looking up filenames for methods in the call stack
-                    Exit For
-                End Try
+                if (t.Assembly == _assembly)
+                    continue;
 
-                If filePath IsNot Nothing Then
-                    stackTraceFiles.Add(filePath)
-                End If
-            End If
+                // This skips the current method plus any parent methods
+                if (skip < 1 + parentMethodsToSkip)
+                {
+                    skip += 1;
+                    continue;
+                }
 
-        Next
+                if ((sf.GetILOffset() != -1))
+                {
+                    // If we don't have a PDB or PDB-reading is disabled for the module, the file name will be null
+                    string filePath;
 
-        If stackTraceFiles.Count = 0 Then
-            Return String.Empty
-        End If
+                    try
+                    {
+                        filePath = sf.GetFileName();
+                    }
+                    catch (SecurityException)
+                    {
+                        // If the demand for displaying filenames fails, it won't succeed later in the loop.  
+                        // Abort looking up filenames for methods in the call stack
+                        break;
+                    }
 
-        ' Find the path portion that is in common with all of the files in stackTraceFiles
-        stackTraceFiles.Sort()
+                    if (filePath != null)
+                    {
+                        stackTraceFiles.Add(filePath);
+                    }
+                }
 
-        Dim sourceFileFirst = New FileInfo(stackTraceFiles.First())
-        Dim basePath = sourceFileFirst.Directory.FullName
+            }
 
-        If stackTraceFiles.Count = 1 Then
-            Return basePath
-        End If
+            if (stackTraceFiles.Count == 0)
+            {
+                return string.Empty;
+            }
 
-        For Each filePath In stackTraceFiles
-            Dim sourceFile = New FileInfo(filePath)
-            Dim basePathCompare = sourceFile.Directory.FullName
-            Dim charsToCompare = Math.Min(basePath.Length, basePathCompare.Length)
-            Dim i = 0
+            // Find the path portion that is in common with all of the files in stackTraceFiles
+            stackTraceFiles.Sort();
 
-            If String.Equals(basePath.Substring(0, charsToCompare), basePathCompare.Substring(0, charsToCompare), StringComparison.InvariantCultureIgnoreCase) Then
-                ' The path portions are equal; no need for character-by-character comparison
-                i = charsToCompare
-            Else
+            var sourceFileFirst = new FileInfo(stackTraceFiles.First());
 
-                While i < charsToCompare
-                    If basePath(i) <> basePathCompare(i) Then
-                        ' Difference found
-                        Exit While
-                    End If
-                    i += 1
-                End While
+            if (sourceFileFirst.Directory == null)
+                return string.Empty;
 
-            End If
+            var basePath = sourceFileFirst.Directory.FullName;
 
-            If i < basePath.Length Then
-                basePath = basePath.Substring(0, i)
-            End If
-        Next
+            if (stackTraceFiles.Count == 1)
+            {
+                return basePath;
+            }
 
-        Return basePath
+            foreach (var filePath in stackTraceFiles)
+            {
+                var sourceFile = new FileInfo(filePath);
+                if (sourceFile.Directory == null)
+                    continue;
 
-    End Function
-End Class
+                var basePathCompare = sourceFile.Directory.FullName;
+                var charsToCompare = Math.Min(basePath.Length, basePathCompare.Length);
+                var i = 0;
+
+                if (string.Equals(basePath.Substring(0, charsToCompare), basePathCompare.Substring(0, charsToCompare), StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // The path portions are equal; no need for character-by-character comparison
+                    i = charsToCompare;
+
+                }
+                else
+                {
+                    while (i < charsToCompare)
+                    {
+                        if (basePath[i] != basePathCompare[i])
+                        {
+                            // Difference found
+                            break;
+                        }
+                        i += 1;
+                    }
+
+                }
+
+                if (i < basePath.Length)
+                {
+                    basePath = basePath.Substring(0, i);
+                }
+            }
+
+            return basePath;
+
+        }
+    }
+    
+}

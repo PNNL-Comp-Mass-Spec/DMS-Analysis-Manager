@@ -1,175 +1,195 @@
-﻿Option Strict On
+﻿
+using System;
+using System.IO;
 
-Imports System.IO
+namespace AnalysisManagerBase
+{
+    public class clsScanStatsGenerator
+    {
 
-Public Class clsScanStatsGenerator
+        protected int mDebugLevel;
+        protected string mErrorMessage;
 
-    Protected mDebugLevel As Integer
-    Protected mErrorMessage As String
-    Protected mMSFileInfoScannerDLLPath As String
+        protected string mMSFileInfoScannerDLLPath;
+        private MSFileInfoScannerInterfaces.iMSFileInfoScanner mMSFileInfoScanner;
 
-    Protected WithEvents mMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner
-    Protected mMSFileInfoScannerErrorCount As Integer
+        protected int mMSFileInfoScannerErrorCount;
+        public string ErrorMessage => mErrorMessage;
 
-    Public ReadOnly Property ErrorMessage As String
-        Get
-            Return mErrorMessage
-        End Get
-    End Property
+        public int MSFileInfoScannerErrorCount => mMSFileInfoScannerErrorCount;
 
-    Public ReadOnly Property MSFileInfoScannerErrorCount As Integer
-        Get
-            Return mMSFileInfoScannerErrorCount
-        End Get
-    End Property
+        /// <summary>
+        /// When ScanStart is > 0, will start processing at the specified scan number
+        /// </summary>
+        public int ScanStart { get; set; }
 
-    ''' <summary>
-    ''' When ScanStart is > 0, will start processing at the specified scan number
-    ''' </summary>
-    Public Property ScanStart As Integer
+        /// <summary>
+        /// When ScanEnd is > 0, will stop processing at the specified scan number
+        /// </summary>
+        public int ScanEnd { get; set; }
 
-    ''' <summary>
-    ''' When ScanEnd is > 0, will stop processing at the specified scan number
-    ''' </summary>
-    Public Property ScanEnd As Integer
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="msFileInfoScannerDLLPath"></param>
+        /// <param name="debugLevel"></param>
+        /// <remarks></remarks>
+        public clsScanStatsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
+        {
+            mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;
+            mDebugLevel = debugLevel;
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="msFileInfoScannerDLLPath"></param>
-    ''' <param name="debugLevel"></param>
-    ''' <remarks></remarks>
-    Public Sub New(msFileInfoScannerDLLPath As String, debugLevel As Integer)
-        mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath
-        mDebugLevel = debugLevel
+            mErrorMessage = string.Empty;
+            ScanStart = 0;
+            ScanEnd = 0;
+        }
 
-        mErrorMessage = String.Empty
-        ScanStart = 0
-        ScanEnd = 0
-    End Sub
+        /// <summary>
+        /// Create the ScanStats file for the given dataset file
+        /// </summary>
+        /// <param name="strInputFilePath">Dataset file</param>
+        /// <param name="strOutputFolderPath">Output folder</param>
+        /// <returns></returns>
+        /// <remarks>Will list DatasetID as 0 in the output file</remarks>
+        public bool GenerateScanStatsFile(string strInputFilePath, string strOutputFolderPath)
+        {
+            return GenerateScanStatsFile(strInputFilePath, strOutputFolderPath, 0);
+        }
 
-    ''' <summary>
-    ''' Create the ScanStats file for the given dataset file
-    ''' </summary>
-    ''' <param name="strInputFilePath">Dataset file</param>
-    ''' <param name="strOutputFolderPath">Output folder</param>
-    ''' <returns></returns>
-    ''' <remarks>Will list DatasetID as 0 in the output file</remarks>
-    Public Function GenerateScanStatsFile(strInputFilePath As String, strOutputFolderPath As String) As Boolean
-        Return GenerateScanStatsFile(strInputFilePath, strOutputFolderPath, 0)
-    End Function
+        /// <summary>
+        /// Create the ScanStats file for the given dataset file
+        /// </summary>
+        /// <param name="strInputFilePath">Dataset file</param>
+        /// <param name="strOutputFolderPath">Output folder</param>
+        /// <param name="intDatasetID">Dataset ID</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public bool GenerateScanStatsFile(string strInputFilePath, string strOutputFolderPath, int intDatasetID)
+        {
 
-    ''' <summary>
-    ''' Create the ScanStats file for the given dataset file
-    ''' </summary>
-    ''' <param name="strInputFilePath">Dataset file</param>
-    ''' <param name="strOutputFolderPath">Output folder</param>
-    ''' <param name="intDatasetID">Dataset ID</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Function GenerateScanStatsFile(strInputFilePath As String, strOutputFolderPath As String, intDatasetID As Integer) As Boolean
+            try
+            {
+                mMSFileInfoScannerErrorCount = 0;
 
-        Dim blnSuccess As Boolean
+                // Initialize the MSFileScanner class					
+                mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath);
 
-        Try
+                mMSFileInfoScanner.ErrorEvent += mMSFileInfoScanner_ErrorEvent;
+                mMSFileInfoScanner.MessageEvent += mMSFileInfoScanner_MessageEvent;
 
-            mMSFileInfoScannerErrorCount = 0
+                mMSFileInfoScanner.CheckFileIntegrity = false;
+                mMSFileInfoScanner.CreateDatasetInfoFile = false;
+                mMSFileInfoScanner.CreateScanStatsFile = true;
+                mMSFileInfoScanner.SaveLCMS2DPlots = false;
+                mMSFileInfoScanner.SaveTICAndBPIPlots = false;
+                mMSFileInfoScanner.CheckCentroidingStatus = false;
 
-            ' Initialize the MSFileScanner class					
-            mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath)
+                mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
+                mMSFileInfoScanner.DatasetIDOverride = intDatasetID;
 
-            mMSFileInfoScanner.CheckFileIntegrity = False
-            mMSFileInfoScanner.CreateDatasetInfoFile = False
-            mMSFileInfoScanner.CreateScanStatsFile = True
-            mMSFileInfoScanner.SaveLCMS2DPlots = False
-            mMSFileInfoScanner.SaveTICAndBPIPlots = False
-            mMSFileInfoScanner.CheckCentroidingStatus = False
+                if (ScanStart > 0 | ScanEnd > 0)
+                {
+                    mMSFileInfoScanner.ScanStart = ScanStart;
+                    mMSFileInfoScanner.ScanEnd = ScanEnd;
+                }
 
-            mMSFileInfoScanner.UpdateDatasetStatsTextFile = False
-            mMSFileInfoScanner.DatasetIDOverride = intDatasetID
+                var success = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath);
 
-            If Me.ScanStart > 0 Or Me.ScanEnd > 0 Then
-                mMSFileInfoScanner.ScanStart = Me.ScanStart
-                mMSFileInfoScanner.ScanEnd = Me.ScanEnd
-            End If
+                if (success)
+                    return true;
 
-            blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath)
+                mErrorMessage = "Error generating ScanStats file using " + strInputFilePath;
+                var strMsgAddnl = mMSFileInfoScanner.GetErrorMessage();
 
-            If Not blnSuccess Then
-                mErrorMessage = "Error generating ScanStats file using " & strInputFilePath
-                Dim strMsgAddnl As String = mMSFileInfoScanner.GetErrorMessage
+                if (!string.IsNullOrEmpty(strMsgAddnl))
+                {
+                    mErrorMessage = mErrorMessage + ": " + strMsgAddnl;
+                }
+                return false;
 
-                If Not String.IsNullOrEmpty(strMsgAddnl) Then
-                    mErrorMessage = mErrorMessage & ": " & strMsgAddnl
-                End If
-            End If
+            }
+            catch (Exception ex)
+            {
+                mErrorMessage = "Exception in GenerateScanStatsFile: " + ex.Message;
+                return false;
+            }
 
-        Catch ex As Exception
-            mErrorMessage = "Exception in GenerateScanStatsFile: " & ex.Message
-            Return False
-        End Try
+        }
 
-        Return blnSuccess
+        protected MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
+        {
+            const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
-    End Function
+            MSFileInfoScannerInterfaces.iMSFileInfoScanner objMSFileInfoScanner = null;
 
-    Protected Function LoadMSFileInfoScanner(strMSFileInfoScannerDLLPath As String) As MSFileInfoScannerInterfaces.iMSFileInfoScanner
-        Const MsDataFileReaderClass As String = "MSFileInfoScanner.clsMSFileInfoScanner"
+            try
+            {
+                if (!File.Exists(strMSFileInfoScannerDLLPath))
+                {
+                    var msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
+                    Console.WriteLine(msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                }
+                else
+                {
+                    var obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath);
+                    if (obj != null)
+                    {
+                        objMSFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner)obj;
+                        var msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
+                        if (mDebugLevel >= 2)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        }
+                    }
 
-        Dim objMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner = Nothing
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
+                Console.WriteLine(msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            }
 
-        Try
-            If Not File.Exists(strMSFileInfoScannerDLLPath) Then
-                Dim msg = "DLL not found: " + strMSFileInfoScannerDLLPath
-                Console.WriteLine(msg)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-            Else
-                Dim obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath)
-                If obj IsNot Nothing Then
-                    objMSFileInfoScanner = DirectCast(obj, MSFileInfoScannerInterfaces.iMSFileInfoScanner)
-                    Dim msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath
-                    If mDebugLevel >= 2 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                    End If
-                End If
+            return objMSFileInfoScanner;
+        }
 
-            End If
-        Catch ex As Exception
-            Dim msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message
-            Console.WriteLine(msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-        End Try
+        protected object LoadObject(string className, string strDLLFilePath)
+        {
+            try
+            {
+                // Dynamically load the specified class from strDLLFilePath
+                var assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath);
+                var dllType = assem.GetType(className, false, true);
+                var obj = Activator.CreateInstance(dllType);
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
+                Console.WriteLine(msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                return null;
+            }
+        }
 
-        Return objMSFileInfoScanner
-    End Function
+        protected void mMSFileInfoScanner_ErrorEvent(string Message)
+        {
+            mMSFileInfoScannerErrorCount += 1;
+            var msg = "MSFileInfoScanner error: " + Message;
+            Console.WriteLine(msg);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+        }
 
-    Protected Function LoadObject(className As String, strDLLFilePath As String) As Object
-        Dim obj As Object = Nothing
-        Try
-            ' Dynamically load the specified class from strDLLFilePath
-            Dim assem As Reflection.Assembly
-            assem = Reflection.Assembly.LoadFrom(strDLLFilePath)
-            Dim dllType As Type = assem.[GetType](className, False, True)
-            obj = Activator.CreateInstance(dllType)
-        Catch ex As Exception
-            Dim msg As String = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message
-            Console.WriteLine(msg)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-        End Try
-        Return obj
-    End Function
+        protected void mMSFileInfoScanner_MessageEvent(string Message)
+        {
+            if (mDebugLevel >= 3)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " + Message);
+            }
+        }
 
-    Protected Sub mMSFileInfoScanner_ErrorEvent(Message As String) Handles mMSFileInfoScanner.ErrorEvent
-        mMSFileInfoScannerErrorCount += 1
-        Dim msg = "MSFileInfoScanner error: " & Message
-        Console.WriteLine(msg)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-    End Sub
+    }   
 
-    Protected Sub mMSFileInfoScanner_MessageEvent(Message As String) Handles mMSFileInfoScanner.MessageEvent
-        If mDebugLevel >= 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & Message)
-        End If
-    End Sub
-
-End Class
+}

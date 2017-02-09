@@ -1,143 +1,147 @@
-﻿Imports PHRPReader
+﻿using PHRPReader;
 
-Public Class clsDataPackageJobInfo
 
-    Private ReadOnly mJob As Integer
+namespace AnalysisManagerBase
+{
+    public class clsDataPackageJobInfo
+    {
 
-    Private ReadOnly mDataset As String
 
-    ' ReSharper disable once ConvertToVbAutoProperty
-    Public ReadOnly Property Job As Integer
-        Get
-            Return mJob
-        End Get
-    End Property
+        private readonly int mJob;
 
-    ' ReSharper disable once ConvertToVbAutoProperty
-    Public ReadOnly Property Dataset As String
-        Get
-            Return mDataset
-        End Get
-    End Property
+        private readonly string mDataset;
+        // ReSharper disable once ConvertToVbAutoProperty
+        public int Job
+        {
+            get { return mJob; }
+        }
 
-    Public Property DatasetID As Integer
+        // ReSharper disable once ConvertToVbAutoProperty
+        public string Dataset
+        {
+            get { return mDataset; }
+        }
 
-    Public Property Instrument As String
+        public int DatasetID { get; set; }
 
-    Public Property InstrumentGroup As String
+        public string Instrument { get; set; }
 
-    Public Property Experiment As String
+        public string InstrumentGroup { get; set; }
 
-    Public Property Experiment_Reason As String
+        public string Experiment { get; set; }
 
-    Public Property Experiment_Comment As String
+        public string Experiment_Reason { get; set; }
 
-    Public Property Experiment_Organism As String
+        public string Experiment_Comment { get; set; }
 
-    ''' <summary>
-    ''' NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Property Experiment_NEWT_ID As Integer
+        public string Experiment_Organism { get; set; }
 
-    ''' <summary>
-    ''' NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Property Experiment_NEWT_Name As String
+        /// <summary>
+        /// NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public int Experiment_NEWT_ID { get; set; }
 
-    Public Property Tool As String
+        /// <summary>
+        /// NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public string Experiment_NEWT_Name { get; set; }
 
-    ''' <summary>
-    ''' Number of steps in a split fasta job
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks>0 if not a split fasta job</remarks>
-    Public Property NumberOfClonedSteps As Integer
+        public string Tool { get; set; }
 
-    Public Property ResultType As String
+        /// <summary>
+        /// Number of steps in a split fasta job
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks>0 if not a split fasta job</remarks>
+        public int NumberOfClonedSteps { get; set; }
 
-    Public Property PeptideHitResultType As clsPHRPReader.ePeptideHitResultType
+        public string ResultType { get; set; }
 
-    Public Property SettingsFileName As String
+        public clsPHRPReader.ePeptideHitResultType PeptideHitResultType { get; set; }
 
-    Public Property ParameterFileName As String
+        public string SettingsFileName { get; set; }
 
-    ''' <summary>
-    ''' Generated Fasta File Name or legacy fasta file name
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks>
-    ''' For jobs where ProteinCollectionList = 'na', this is the legacy fasta file name
-    ''' Otherwise, this is the generated fasta file name (or "na")
-    ''' </remarks>
-    Public Property OrganismDBName As String
+        public string ParameterFileName { get; set; }
 
-    Public Property LegacyFastaFileName As String
+        /// <summary>
+        /// Generated Fasta File Name or legacy fasta file name
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks>
+        /// For jobs where ProteinCollectionList = 'na', this is the legacy fasta file name
+        /// Otherwise, this is the generated fasta file name (or "na")
+        /// </remarks>
+        public string OrganismDBName { get; set; }
 
-    Public Property ProteinCollectionList As String
+        public string LegacyFastaFileName { get; set; }
 
-    Public Property ProteinOptions As String
+        public string ProteinCollectionList { get; set; }
 
-    ''' <summary>
-    ''' The folder (on the storage server) just above the dataset folder
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property ServerStoragePath As String
+        public string ProteinOptions { get; set; }
 
-    ''' <summary>
-    ''' The folder (in the archive) just above the dataset folder
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property ArchiveStoragePath As String
+        /// <summary>
+        /// The folder (on the storage server) just above the dataset folder
+        /// </summary>
+        /// <returns></returns>
+        public string ServerStoragePath { get; set; }
 
-    Public Property ResultsFolderName As String
+        /// <summary>
+        /// The folder (in the archive) just above the dataset folder
+        /// </summary>
+        /// <returns></returns>
+        public string ArchiveStoragePath { get; set; }
 
-    Public Property DatasetFolderName As String
+        public string ResultsFolderName { get; set; }
 
-    Public Property SharedResultsFolder As String
+        public string DatasetFolderName { get; set; }
 
-    Public Property RawDataType As String
+        public string SharedResultsFolder { get; set; }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Sub New(job As Integer, datasetName As String)
-        mJob = job
-        mDataset = datasetName
+        public string RawDataType { get; set; }
 
-        DatasetID = 0
-        Instrument = ""
-        InstrumentGroup = ""
-        Experiment = ""
-        Experiment_Reason = ""
-        Experiment_Comment = ""
-        Experiment_Organism = ""
-        Experiment_NEWT_ID = 0
-        Experiment_NEWT_Name = ""
-        Tool = ""
-        NumberOfClonedSteps = 0
-        ResultType = ""
-        PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown
-        SettingsFileName = ""
-        ParameterFileName = ""
-        OrganismDBName = ""
-        LegacyFastaFileName = ""
-        ProteinCollectionList = ""
-        ProteinOptions = ""
-        ServerStoragePath = ""
-        ArchiveStoragePath = ""
-        ResultsFolderName = ""
-        DatasetFolderName = ""
-        SharedResultsFolder = ""
-        RawDataType = ""
-    End Sub
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <remarks></remarks>
+        public clsDataPackageJobInfo(int job, string datasetName)
+        {
+            mJob = job;
+            mDataset = datasetName;
 
-End Class
+            DatasetID = 0;
+            Instrument = "";
+            InstrumentGroup = "";
+            Experiment = "";
+            Experiment_Reason = "";
+            Experiment_Comment = "";
+            Experiment_Organism = "";
+            Experiment_NEWT_ID = 0;
+            Experiment_NEWT_Name = "";
+            Tool = "";
+            NumberOfClonedSteps = 0;
+            ResultType = "";
+            PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown;
+            SettingsFileName = "";
+            ParameterFileName = "";
+            OrganismDBName = "";
+            LegacyFastaFileName = "";
+            ProteinCollectionList = "";
+            ProteinOptions = "";
+            ServerStoragePath = "";
+            ArchiveStoragePath = "";
+            ResultsFolderName = "";
+            DatasetFolderName = "";
+            SharedResultsFolder = "";
+            RawDataType = "";
+        }
+
+    }
+}

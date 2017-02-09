@@ -8,6 +8,7 @@
 
 Option Strict On
 
+Imports AM_Shared
 Imports FileConcatenator
 Imports System.Threading
 

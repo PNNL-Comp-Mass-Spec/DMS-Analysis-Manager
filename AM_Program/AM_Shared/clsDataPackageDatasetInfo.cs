@@ -1,76 +1,80 @@
-﻿Public Class clsDataPackageDatasetInfo
+﻿
+namespace AnalysisManagerBase
+{
+    public class clsDataPackageDatasetInfo
+    {
 
-    Private ReadOnly mDataset As String
-    Private ReadOnly mDatasetID As Integer
+        private readonly string mDataset;
 
-    ' ReSharper disable once ConvertToVbAutoProperty
-    Public ReadOnly Property Dataset As String
-        Get
-            Return mDataset
-        End Get
-    End Property
+        private readonly int mDatasetID;
+        // ReSharper disable once ConvertToVbAutoProperty
+        public string Dataset
+        {
+            get { return mDataset; }
+        }
 
-    ' ReSharper disable once ConvertToVbAutoProperty
-    Public ReadOnly Property DatasetID As Integer
-        Get
-            Return mDatasetID
-        End Get
-    End Property
+        // ReSharper disable once ConvertToVbAutoProperty
+        public int DatasetID
+        {
+            get { return mDatasetID; }
+        }
 
-    Public Property Instrument As String
+        public string Instrument { get; set; }
 
-    Public Property InstrumentGroup As String
+        public string InstrumentGroup { get; set; }
 
-    Public Property Experiment As String
+        public string Experiment { get; set; }
 
-    Public Property Experiment_Reason As String
+        public string Experiment_Reason { get; set; }
 
-    Public Property Experiment_Comment As String
+        public string Experiment_Comment { get; set; }
 
-    Public Property Experiment_Organism As String
+        public string Experiment_Organism { get; set; }
 
-    ''' <summary>
-    ''' NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Property Experiment_NEWT_ID As Integer
+        /// <summary>
+        /// NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public int Experiment_NEWT_ID { get; set; }
 
-    ''' <summary>
-    ''' NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Property Experiment_NEWT_Name As String
+        /// <summary>
+        /// NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public string Experiment_NEWT_Name { get; set; }
 
-    Public Property ServerStoragePath As String
+        public string ServerStoragePath { get; set; }
 
-    Public Property ArchiveStoragePath As String
+        public string ArchiveStoragePath { get; set; }
 
-    Public Property RawDataType As String
+        public string RawDataType { get; set; }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Sub New(datasetName As String, datasetId As Integer)
-        mDataset = datasetName
-        mDatasetID = datasetId
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <remarks></remarks>
+        public clsDataPackageDatasetInfo(string datasetName, int datasetId)
+        {
+            mDataset = datasetName;
+            mDatasetID = datasetId;
 
-        Instrument = ""
-        InstrumentGroup = ""
-        Experiment = ""
-        Experiment_Reason = ""
-        Experiment_Comment = ""
-        Experiment_Organism = ""
-        Experiment_NEWT_ID = 0
-        Experiment_NEWT_Name = ""
-        ServerStoragePath = ""
-        ArchiveStoragePath = ""
-        RawDataType = ""
+            Instrument = "";
+            InstrumentGroup = "";
+            Experiment = "";
+            Experiment_Reason = "";
+            Experiment_Comment = "";
+            Experiment_Organism = "";
+            Experiment_NEWT_ID = 0;
+            Experiment_NEWT_Name = "";
+            ServerStoragePath = "";
+            ArchiveStoragePath = "";
+            RawDataType = "";
 
-    End Sub
+        }
 
-End Class
+    }
+}

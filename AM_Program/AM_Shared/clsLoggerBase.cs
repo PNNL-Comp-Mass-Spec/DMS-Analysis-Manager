@@ -1,119 +1,99 @@
 ﻿
-Public MustInherit Class clsLoggerBase
+using System;
 
-    ''' <summary>
-    ''' Debug level
-    ''' Values from 0 (minimum output) to 5 (max detail)
-    ''' </summary>
-    Protected m_DebugLevel As Short = 1
+namespace AnalysisManagerBase
+{
 
-    ''' <summary>
-    ''' Log an error message, optionally logging to the database in addition to the log file
-    ''' </summary>
-    ''' <param name="errorMessage">Error message</param>
-    ''' <param name="logToDb">When true, log the message to the database and the local log file</param>
-    ''' <remarks>The error is shown in red in the console</remarks>
-    Protected Overridable Sub LogError(errorMessage As String, Optional logToDb As Boolean = False)
-        Console.ForegroundColor = ConsoleColor.Red
-        Console.WriteLine(errorMessage)
-        Console.ResetColor()
+    public abstract class clsLoggerBase
+    {
 
-        Dim loggerType As clsLogTools.LoggerTypes
-        If logToDb Then
-            loggerType = clsLogTools.LoggerTypes.LogDb
-        Else
-            loggerType = clsLogTools.LoggerTypes.LogFile
-        End If
+        /// <summary>
+        /// Debug level
+        /// Values from 0 (minimum output) to 5 (max detail)
+        /// </summary>
+        protected short m_DebugLevel = 1;
 
-        clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage)
-    End Sub
+        /// <summary>
+        /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="logFileDebugLevel">
+        /// Log level for whether to log to disk: 
+        /// 0 to always log
+        /// 1 to log if m_DebugLevel is >= 1
+        /// 2 to log if m_DebugLevel is >= 2
+        /// 10 to not log to disk
+        /// </param>
+        /// <remarks>The message is shown in dark grey in the console.</remarks>
+        protected void LogDebug(string statusMessage, int logFileDebugLevel = 0)
+        {
+            var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= m_DebugLevel));
+            clsGlobal.LogDebug(statusMessage, writeToLog);
+        }
 
-    ''' <summary>
-    ''' Log an error message and exception
-    ''' </summary>
-    ''' <param name="errorMessage">Error message (do not include ex.message)</param>
-    ''' <param name="ex">Exception to log (allowed to be nothing)</param>
-    ''' <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
-    Protected Overridable Sub LogError(errorMessage As String, ex As Exception)
-        Dim formattedError As String
-        If ex Is Nothing OrElse errorMessage.EndsWith(ex.Message) Then
-            formattedError = errorMessage
-        Else
-            formattedError = errorMessage & ": " & ex.Message
-        End If
-        Console.ForegroundColor = ConsoleColor.Red
-        Console.WriteLine(formattedError)
+        /// <summary>
+        /// Log an error message, optionally logging to the database in addition to the log file
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
+        /// <remarks>The error is shown in red in the console</remarks>
+        protected virtual void LogError(string errorMessage, bool logToDb = false)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(errorMessage);
+            Console.ResetColor();
 
-        If Not ex Is Nothing Then
-            Console.ForegroundColor = ConsoleColor.Cyan
-            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, True))
-        End If
-        Console.ResetColor()
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex)
-    End Sub
+            clsLogTools.LoggerTypes loggerType;
+            if (logToDb)
+            {
+                loggerType = clsLogTools.LoggerTypes.LogDb;
+            }
+            else
+            {
+                loggerType = clsLogTools.LoggerTypes.LogFile;
+            }
 
-    ''' <summary>
-    ''' Log a warning message
-    ''' </summary>
-    ''' <param name="warningMessage">Warning message</param>
-    ''' <remarks>The warning is shown in yellow in the console.</remarks>
-    Protected Sub LogWarning(warningMessage As String)
-        Console.ForegroundColor = ConsoleColor.Yellow
-        Console.WriteLine(warningMessage)
-        Console.ResetColor()
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-    End Sub
+            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
+        }
 
-    ''' <summary>
-    ''' Show a status message at the console and optionally include in the log file, tagging it as a debug message
-    ''' </summary>
-    ''' <param name="statusMessage">Status message</param>
-    ''' <param name="logFileDebugLevel">
-    ''' Log level for whether to log to disk: 
-    ''' 0 to always log
-    ''' 1 to log if m_DebugLevel is >= 1
-    ''' 2 to log if m_DebugLevel is >= 2
-    ''' 10 to not log to disk
-    ''' </param>
-    ''' <remarks>The message is shown in dark grey in the console.</remarks>
-    Protected Sub LogDebug(statusMessage As String, Optional logFileDebugLevel As Integer = 0)
-        Console.ForegroundColor = ConsoleColor.DarkGray
-        Console.WriteLine(statusMessage)
-        Console.ResetColor()
+        /// <summary>
+        /// Log an error message and exception
+        /// </summary>
+        /// <param name="errorMessage">Error message (do not include ex.message)</param>
+        /// <param name="ex">Exception to log (allowed to be nothing)</param>
+        /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
+        protected virtual void LogError(string errorMessage, Exception ex)
+        {
+            clsGlobal.LogError(errorMessage, ex);
+        }
 
-        If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage)
-        End If
-    End Sub
+        /// <summary>
+        /// Show a status message at the console and optionally include in the log file
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="logFileDebugLevel">
+        /// Log level for whether to log to disk: 
+        /// 0 to always log
+        /// 1 to log if m_DebugLevel is >= 1
+        /// 2 to log if m_DebugLevel is >= 2
+        /// 10 to not log to disk
+        /// </param>
+        /// <param name="isError">True if this is an error</param>
+        protected void LogMessage(string statusMessage, int logFileDebugLevel = 0, bool isError = false)
+        {
+            var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= m_DebugLevel));
+            clsGlobal.LogMessage(statusMessage, isError, writeToLog);
+        }
 
-    ''' <summary>
-    ''' Show a status message at the console and optionally include in the log file
-    ''' </summary>
-    ''' <param name="statusMessage">Status message</param>
-    ''' <param name="logFileDebugLevel">
-    ''' Log level for whether to log to disk: 
-    ''' 0 to always log
-    ''' 1 to log if m_DebugLevel is >= 1
-    ''' 2 to log if m_DebugLevel is >= 2
-    ''' 10 to not log to disk
-    ''' </param>
-    ''' <param name="isError">True if this is an error</param>
-    Protected Sub LogMessage(statusMessage As String, Optional logFileDebugLevel As Integer = 0, Optional isError As Boolean = False)
-        If isError Then
-            Console.ForegroundColor = ConsoleColor.Red
-            Console.WriteLine(statusMessage)
-            Console.ResetColor()
-        Else
-            Console.WriteLine(statusMessage)
-        End If
+        /// <summary>
+        /// Display a warning message at the console and write to the log file
+        /// </summary>
+        /// <param name="warningMessage">Warning message</param>
+        /// <remarks>The warning is shown in yellow in the console.</remarks>
+        protected void LogWarning(string warningMessage)
+        {
+            clsGlobal.LogWarning(warningMessage);
+        }
 
-        If logFileDebugLevel < 10 AndAlso (logFileDebugLevel = 0 OrElse logFileDebugLevel <= m_DebugLevel) Then
-            If isError Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage)
-            End If
-        End If
-    End Sub
-
-End Class
+    }
+}

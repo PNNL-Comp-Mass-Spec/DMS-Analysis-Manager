@@ -1,7807 +1,8907 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2007, Battelle Memorial Institute
-' Created 12/19/2007
-'*********************************************************************************************************
 
-Option Strict On
-
-Imports PHRPReader
-Imports System.IO
-Imports System.Runtime.InteropServices
-Imports System.Text.RegularExpressions
-Imports System.Threading
-Imports System.Xml
-Imports System.Xml.Linq
-Imports MyEMSLReader
-Imports ParamFileGenerator.MakeParams
-
-Public MustInherit Class clsAnalysisResources
-    Inherits clsAnalysisMgrBase
-    Implements IAnalysisResources
-
-    '*********************************************************************************************************
-    'Base class for job resource class
-    '*********************************************************************************************************
-
-#Region "Constants"
-    Protected Const DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 15
-    Protected Const DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS As Integer = 5
-
-    ''' <summary>
-    ''' Maximum number of attempts to find a folder or file
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Const DEFAULT_MAX_RETRY_COUNT As Integer = 3
-
-    Protected Const FASTA_GEN_TIMEOUT_INTERVAL_MINUTES As Integer = 65
-
-    Public Const MYEMSL_PATH_FLAG As String = clsMyEMSLUtilities.MYEMSL_PATH_FLAG
-
-    Protected Const FORCE_WINHPC_FS As Boolean = True
-
-    ' Define the maximum file size to process using IonicZip; 
-    '  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
-    '  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
-    '   SharpZipLib unzips the file in 130 seconds
-    '   WinRar      unzips the file in 120 seconds
-    '   PKZipC      unzips the file in  84 seconds
-    '
-    ' Re-tested on 1/7/2011 with a 611 MB file
-    '   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
-    '   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
-    '   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
-    '   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
-    '
-    ' For smaller files, the speed differences are much less noticable
-
-    Protected Const IONIC_ZIP_MAX_FILESIZE_MB As Integer = 1280
-
-    ' Note: All of the RAW_DATA_TYPE constants need to be all lowercase
-    '
-    Public Const RAW_DATA_TYPE_DOT_D_FOLDERS As String = "dot_d_folders"                'Agilent ion trap data, Agilent TOF data
-    Public Const RAW_DATA_TYPE_ZIPPED_S_FOLDERS As String = "zipped_s_folders"          'FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
-    Public Const RAW_DATA_TYPE_DOT_RAW_FOLDER As String = "dot_raw_folder"              'Micromass QTOF data
-    Public Const RAW_DATA_TYPE_DOT_RAW_FILES As String = "dot_raw_files"                'Finnigan ion trap/LTQ-FT data
-    Public Const RAW_DATA_TYPE_DOT_WIFF_FILES As String = "dot_wiff_files"              'Agilent/QSTAR TOF data
-    Public Const RAW_DATA_TYPE_DOT_UIMF_FILES As String = "dot_uimf_files"              'IMS_UIMF (IMS_Agilent_TOF in DMS)
-    Public Const RAW_DATA_TYPE_DOT_MZXML_FILES As String = "dot_mzxml_files"            'mzXML
-    Public Const RAW_DATA_TYPE_DOT_MZML_FILES As String = "dot_mzml_files"              'mzML
-
-    ' 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
-    ' Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
-
-    ' 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
-    ' Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
-    ' 15T datasets also have raw_data_type "bruker_ft"
-    ' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
-    Public Const RAW_DATA_TYPE_BRUKER_FT_FOLDER As String = "bruker_ft"
-
-    ' The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
-    ' Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
-    Public Const RAW_DATA_TYPE_BRUKER_MALDI_SPOT As String = "bruker_maldi_spot"
-
-    ' The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
-    ' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
-    Public Const RAW_DATA_TYPE_BRUKER_MALDI_IMAGING As String = "bruker_maldi_imaging"
-
-    ' The following is used by instrument Maxis_01
-    ' Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
-    Public Const RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER As String = "bruker_tof_baf"
-
-    Public Const RESULT_TYPE_SEQUEST As String = "Peptide_Hit"
-    Public Const RESULT_TYPE_XTANDEM As String = "XT_Peptide_Hit"
-    Public Const RESULT_TYPE_INSPECT As String = "IN_Peptide_Hit"
-    Public Const RESULT_TYPE_MSGFPLUS As String = "MSG_Peptide_Hit"           ' Used for MSGFDB and MSGF+
-    Public Const RESULT_TYPE_MSALIGN As String = "MSA_Peptide_Hit"
-    Public Const RESULT_TYPE_MODA As String = "MODa_Peptide_Hit"
-    Public Const RESULT_TYPE_MODPLUS As String = "MODPlus_Peptide_Hit"
-    Public Const RESULT_TYPE_MSPATHFINDER As String = "MSP_Peptide_Hit"
-
-    Public Const DOT_WIFF_EXTENSION As String = ".wiff"
-    Public Const DOT_D_EXTENSION As String = ".d"
-    Public Const DOT_RAW_EXTENSION As String = ".raw"
-    Public Const DOT_UIMF_EXTENSION As String = ".uimf"
-
-    Public Const DOT_GZ_EXTENSION As String = ".gz"
-    Public Const DOT_MZXML_EXTENSION As String = ".mzXML"
-    Public Const DOT_MZML_EXTENSION As String = ".mzML"
-
-    Public Const DOT_MGF_EXTENSION As String = ".mgf"
-    Public Const DOT_CDF_EXTENSION As String = ".cdf"
-
-    Public Const DOT_PBF_EXTENSION As String = ".pbf"
-
-    Public Const LOCK_FILE_EXTENSION As String = ".lock"
-
-    ''' <summary>
-    ''' Feature file, generated by the ProMex tool
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Const DOT_MS1FT_EXTENSION As String = ".ms1ft"
-
-    Public Const STORAGE_PATH_INFO_FILE_SUFFIX As String = "_StoragePathInfo.txt"
-
-    Public Const SCAN_STATS_FILE_SUFFIX As String = "_ScanStats.txt"
-    Public Const SCAN_STATS_EX_FILE_SUFFIX As String = "_ScanStatsEx.txt"
-
-    Public Const REPORTERIONS_FILE_SUFFIX As String = "_ReporterIons.txt"
-
-    Public Const DATA_PACKAGE_SPECTRA_FILE_SUFFIX As String = "_SpectraFile"
-
-    Public Const BRUKER_ZERO_SER_FOLDER As String = "0.ser"
-    Public Const BRUKER_SER_FILE As String = "ser"
-    Public Const BRUKER_FID_FILE As String = "fid"
-
-    Public Const JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS As String = "PackedParam_DatasetFilePaths"
-
-    ' This is used by clsAnalysisResourcesRepoPkgr
-    Public Const JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES = "PackedParam_DatasetRawDataTypes"
-
-    ' These are used by clsAnalysisResourcesPhosphoFdrAggregator
-    Public Const JOB_PARAM_DICTIONARY_JOB_DATASET_MAP As String = "PackedParam_JobDatasetMap"
-    Public Const JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP As String = "PackedParam_JobSettingsFileMap"
-    Public Const JOB_PARAM_DICTIONARY_JOB_TOOL_MAP As String = "PackedParam_JobToolNameMap"
-
-    ' This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
-    Public Const SPECTRA_ARE_NOT_CENTROIDED As String = "None of the spectra are centroided; unable to process"
-
-    Public Enum eRawDataTypeConstants
-        Unknown = 0
-        ThermoRawFile = 1
-        UIMF = 2
-        mzXML = 3
-        mzML = 4
-        AgilentDFolder = 5              ' Agilent ion trap data, Agilent TOF data
-        AgilentQStarWiffFile = 6
-        MicromassRawFolder = 7          ' Micromass QTOF data
-        ZippedSFolders = 8              ' FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
-        BrukerFTFolder = 9              ' .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
-        BrukerMALDISpot = 10            ' has a .EMF file and a single sub-folder that has an acqu file and fid file
-        BrukerMALDIImaging = 11         ' Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
-        BrukerTOFBaf = 12               ' Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
-    End Enum
-
-    Public Enum MSXMLOutputTypeConstants
-        mzXML = 0
-        mzML = 1
-    End Enum
-
-    Public Enum DataPackageFileRetrievalModeConstants
-        Undefined = 0
-        Ascore = 1
-    End Enum
-
-#End Region
-
-#Region "Structures"
-
-    Public Structure udtHPCOptionsType
-        Public HeadNode As String
-        Public UsingHPC As Boolean
-        Public SharePath As String
-        Public ResourceType As String
-        ' Obsolete parameter; no longer used: Public NodeGroup As String
-        Public MinimumMemoryMB As Integer
-        Public MinimumCores As Integer
-        Public WorkDirPath As String
-    End Structure
-
-#End Region
-
-#Region "Module variables"
-    Protected m_jobParams As IJobParams
-    Protected m_mgrParams As IMgrParams
-    Protected m_WorkingDir As String
-    Protected m_JobNum As Integer
-    Protected m_DatasetName As String
-    Protected m_MgrName As String
-
-    Protected m_StatusTools As IStatusFile      ' Might be nothing
-
-    Protected m_FastaToolsCnStr As String = ""
-    Protected m_FastaFileName As String = ""
-
-    Protected WithEvents m_FastaTools As Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS
-    Protected m_IonicZipTools As clsIonicZipTools
-
-    Protected WithEvents m_CDTAUtilities As clsCDTAUtilities
-
-    Protected WithEvents m_SplitFastaFileUtility As clsSplitFastaFileUtilities
-
-    Protected m_SplitFastaLastUpdateTime As DateTime
-    Protected m_SplitFastaLastPercentComplete As Single
-
-    Protected m_MyEMSLUtilities As clsMyEMSLUtilities
-
-    Private m_ResourceOptions As Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
-
-    Private m_AuroraAvailable As Boolean
-    Private m_MyEmslAvailable As Boolean
-
-    Private mCachedDatasetAndJobInfo As clsDataPackageJobInfo
-    Private mCachedDatasetAndJobInfoIsDefined As Boolean
-
-    Public WithEvents mSpectraTypeClassifier As SpectraTypeClassifier.clsSpectrumTypeClassifier
-
-#End Region
-
-#Region "Properties"
-
-    Public ReadOnly Property DatasetName As String
-        Get
-            Return m_DatasetName
-        End Get
-    End Property
-
-    Public ReadOnly Property DebugLevel As Short
-        Get
-            Return m_DebugLevel
-        End Get
-    End Property
-
-    Public ReadOnly Property MyEMSLAvailable() As Boolean
-        Get
-            Return m_MyEmslAvailable AndAlso Not MyEMSLSearchDisabled
-        End Get
-    End Property
-
-    Public Property MyEMSLSearchDisabled() As Boolean
-
-    Public ReadOnly Property MyEMSLUtilities As clsMyEMSLUtilities
-        Get
-            Return m_MyEMSLUtilities
-        End Get
-    End Property
-
-    ' Explanation of what happened to last operation this class performed
-    Public ReadOnly Property Message() As String Implements IAnalysisResources.Message
-        Get
-            Return m_message
-        End Get
-    End Property
-
-    Public ReadOnly Property WorkDir() As String
-        Get
-            Return m_WorkingDir
-        End Get
-    End Property
-
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Sub New()
-        MyBase.New("clsAnalysisResources")
-        m_CDTAUtilities = New clsCDTAUtilities
-    End Sub
-
-    ''' <summary>
-    ''' Initialize class
-    ''' </summary>
-    ''' <param name="mgrParams">Manager parameter object</param>
-    ''' <param name="jobParams">Job parameter object</param>
-    ''' <param name="statusTools">Object for status reporting</param>
-    ''' <param name="myEMSLUtilities">MyEMSL download Utilities (can be nothing)</param>
-    ''' <remarks></remarks>
-    Public Overridable Sub Setup(
-      mgrParams As IMgrParams,
-      jobParams As IJobParams,
-      statusTools As IStatusFile,
-      myEMSLUtilities As clsMyEMSLUtilities) Implements IAnalysisResources.Setup
-
-        m_mgrParams = mgrParams
-        m_jobParams = jobParams
-
-        m_DebugLevel = CShort(m_mgrParams.GetParam("debuglevel", 1))
-        m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring")
-        m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager")
-
-        m_WorkingDir = m_mgrParams.GetParam("workdir")
-
-        Dim jobNum = m_jobParams.GetParam("StepParameters", "Job")
-        If Not String.IsNullOrEmpty(jobNum) Then
-            Integer.TryParse(jobNum, m_JobNum)
-        End If
-
-        m_DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum")
-
-        m_IonicZipTools = New clsIonicZipTools(m_DebugLevel, m_WorkingDir)
-
-        MyBase.InitFileTools(m_MgrName, m_DebugLevel)
-
-        If myEMSLUtilities Is Nothing Then
-            m_MyEMSLUtilities = New clsMyEMSLUtilities(m_DebugLevel, m_WorkingDir)
-        Else
-            m_MyEMSLUtilities = myEMSLUtilities
-        End If
-
-        RegisterEvents(m_MyEMSLUtilities)
-
-        m_ResourceOptions = New Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, False)
-        SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, False)
-
-        m_StatusTools = statusTools
-
-        m_AuroraAvailable = m_mgrParams.GetParam("AuroraAvailable", True)
-
-        m_MyEmslAvailable = m_mgrParams.GetParam("MyEmslAvailable", True)
-
-    End Sub
-
-    Public MustOverride Function GetResources() As IJobParams.CloseOutType Implements IAnalysisResources.GetResources
-
-    Public Function GetOption(resourceOption As clsGlobal.eAnalysisResourceOptions) As Boolean Implements IAnalysisResources.GetOption
-        If m_ResourceOptions Is Nothing Then Return False
-
-        Dim enabled As Boolean
-        If m_ResourceOptions.TryGetValue(resourceOption, enabled) Then
-            Return enabled
-        Else
-            Return False
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Gets resources required by all step tools
-    ''' </summary>
-    ''' <returns>True if success, false if an error</returns>
-    Protected Function GetSharedResources() As IJobParams.CloseOutType
-
-        Dim success = GetExistingJobParametersFile()
-
-        If success Then
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-        Else
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-    End Function
-
-    Public Sub SetOption(resourceOption As clsGlobal.eAnalysisResourceOptions, enabled As Boolean) Implements IAnalysisResources.SetOption
-        If m_ResourceOptions Is Nothing Then
-            m_ResourceOptions = New Dictionary(Of clsGlobal.eAnalysisResourceOptions, Boolean)
-        End If
-
-        If m_ResourceOptions.ContainsKey(resourceOption) Then
-            m_ResourceOptions(resourceOption) = enabled
-        Else
-            m_ResourceOptions.Add(resourceOption, enabled)
-        End If
-
-        If resourceOption = clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled Then
-            MyEMSLSearchDisabled = enabled
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Add a folder or file path to a list of paths to examine
-    ''' </summary>
-    ''' <param name="lstPathsToCheck">List of Tuples where the string is a folder or file path, and the boolean is logIfMissing</param>
-    ''' <param name="folderOrFilePath">Path to add</param>
-    ''' <param name="logIfMissing">True to log a message if the path is not found</param>
-    ''' <remarks></remarks>
-    Private Sub AddPathToCheck(lstPathsToCheck As ICollection(Of Tuple(Of String, Boolean)), folderOrFilePath As String, logIfMissing As Boolean)
-        lstPathsToCheck.Add(New Tuple(Of String, Boolean)(folderOrFilePath, logIfMissing))
-    End Sub
-
-    ''' <summary>
-    ''' Add a filename extension to not move to the results folder
-    ''' </summary>
-    ''' <param name="Extension"></param>
-    ''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
-    Public Sub AddResultFileExtensionToSkip(extension As String)
-        m_jobParams.AddResultFileExtensionToSkip(extension)
-    End Sub
-
-    ''' <summary>
-    ''' Add a filename to not move to the results folder
-    ''' </summary>
-    ''' <param name="sourceFilename"></param>
-    ''' <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
-    Public Sub AddResultFileToSkip(sourceFilename As String)
-        m_jobParams.AddResultFileToSkip(sourceFilename)
-    End Sub
-
-    ''' <summary>
-    ''' Appends file specified file path to the JobInfo file for the given Job
-    ''' </summary>
-    ''' <param name="intJob"></param>
-    ''' <param name="strFilePath"></param>
-    ''' <remarks></remarks>
-    Protected Sub AppendToJobInfoFile(intJob As Integer, strFilePath As String)
-
-        Dim strJobInfoFilePath As String = clsDataPackageFileHandler.GetJobInfoFilePath(intJob, m_WorkingDir)
-
-        Using swJobInfoFile = New StreamWriter(New FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
-            swJobInfoFile.WriteLine(strFilePath)
-        End Using
-
-    End Sub
-
-    Public Sub CacheCurrentDataAndJobInfo()
-        If mCachedDatasetAndJobInfoIsDefined Then
-            Throw New Exception("Call RestoreCachedDataAndJobInfo before calling CacheCurrentDataAndJobInfo again")
-        End If
-
-        ' Cache the current dataset and job info
-        mCachedDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
-        mCachedDatasetAndJobInfoIsDefined = True
-
-    End Sub
-
-    Public Sub RestoreCachedDataAndJobInfo()
-
-        If Not mCachedDatasetAndJobInfoIsDefined Then
-            Throw New Exception("Programming error: RestoreCachedDataAndJobInfo called but mCachedDatasetAndJobInfoIsDefined is false")
-        End If
-
-        ' Restore the dataset and job info for this aggregation job
-        OverrideCurrentDatasetAndJobInfo(mCachedDatasetAndJobInfo)
-
-        mCachedDatasetAndJobInfoIsDefined = False
-
-    End Sub
-
-    ''' <summary>
-    ''' Look for a lock file named dataFilePath + ".lock"
-    ''' If found, and if less than maxWaitTimeMinutes old, waits for it to be deleted by another process or to age
-    ''' </summary>
-    ''' <param name="dataFilePath">Data file path</param>
-    ''' <param name="dataFileDescription">User friendly description of the data file, e.g. LipidMapsDB</param>
-    ''' <param name="statusTools">Status Tools object</param>
-    ''' <param name="maxWaitTimeMinutes">Maximum age of the lock file</param>
-    ''' <remarks>
-    ''' Typical steps for using lock files to assure that only one manager is creating a specific file
-    ''' 1. Call CheckForLockFile() to check for a lock file; wait for it to age
-    ''' 2. Once CheckForLockFile() exits, check for the required data file; exit the function if the desired file is found
-    ''' 3. If the file was not found, create a new lock file by calling CreateLockFile()
-    ''' 4. Do the work and create the data file, including copying to the central location
-    ''' 5. Delete the lock file by calling DeleteLockFile() or by deleting the file path returned by CreateLockFile()
-    ''' </remarks>
-    Public Shared Sub CheckForLockFile(
-       dataFilePath As String,
-       dataFileDescription As String,
-       statusTools As IStatusFile,
-       Optional maxWaitTimeMinutes As Integer = 120,
-       Optional logIntervalMinutes As Integer = 5)
-
-        Dim blnWaitingForLockFile = False
-        Dim dtLockFileCreated As DateTime
-
-        ' Look for a recent .lock file
-        Dim fiLockFile = New FileInfo(dataFilePath & LOCK_FILE_EXTENSION)
-
-        If fiLockFile.Exists Then
-            If Date.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes Then
-                blnWaitingForLockFile = True
-                dtLockFileCreated = fiLockFile.LastWriteTimeUtc
-
-                Dim debugMessage = dataFileDescription & " lock file found; will wait for file to be deleted or age; " &
-                    fiLockFile.Name & " created " & fiLockFile.LastWriteTime.ToString()
-                ' Simulate call to LogDebugMessage() since this is a shared method
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, debugMessage)
-                Console.WriteLine(debugMessage)
-            Else
-                ' Lock file has aged; delete it
-                fiLockFile.Delete()
-            End If
-        End If
-
-        If blnWaitingForLockFile Then
-
-            Dim dtLastProgressTime = Date.UtcNow
-            If logIntervalMinutes < 1 Then logIntervalMinutes = 1
-
-            Do While blnWaitingForLockFile
-                ' Wait 5 seconds
-                Thread.Sleep(5000)
-
-                fiLockFile.Refresh()
-
-                If Not fiLockFile.Exists Then
-                    blnWaitingForLockFile = False
-                ElseIf Date.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes Then
-                    blnWaitingForLockFile = False
-                Else
-                    If Date.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes Then
-                        LogDebugMessage("Waiting for lock file " & fiLockFile.Name, statusTools)
-                        dtLastProgressTime = Date.UtcNow
-                    End If
-                End If
-            Loop
-
-            fiLockFile.Refresh()
-            If fiLockFile.Exists Then
-                ' Lock file is over 2 hours old; delete it
-                DeleteLockFile(dataFilePath)
-            End If
-        End If
-
-    End Sub
-
-    ''' <summary>
-    ''' Create a new lock file named dataFilePath + ".lock"
-    ''' </summary>
-    ''' <param name="dataFilePath">Data file path</param>
-    ''' <param name="taskDescription">Description of current task; will be written the lock file, followed by " at yyyy-MM-dd hh:mm:ss tt"</param>
-    ''' <returns>Full path to the lock file</returns>
-    ''' <remarks></remarks>
-    Public Shared Function CreateLockFile(dataFilePath As String, taskDescription As String) As String
-
-        Dim strLockFilePath = dataFilePath & LOCK_FILE_EXTENSION
-        Using swLockFile = New StreamWriter(New FileStream(strLockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
-            swLockFile.WriteLine(taskDescription & " at " & Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
-        End Using
-
-        Return strLockFilePath
-
-    End Function
-
-
-    ''' <summary>
-    ''' Delete the lock file for the correspond data file
-    ''' </summary>
-    ''' <param name="dataFilePath"></param>
-    ''' <remarks></remarks>
-    Public Shared Sub DeleteLockFile(dataFilePath As String)
-
-        ' Delete the lock file
-        Try
-            Dim lockFilePath = dataFilePath & LOCK_FILE_EXTENSION
-
-            Dim fiLockFile = New FileInfo(lockFilePath)
-            If fiLockFile.Exists Then
-                fiLockFile.Delete()
-            End If
-
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-    End Sub
-    ''' <summary>
-    ''' Copies the zipped s-folders to the working directory
-    ''' </summary>
-    ''' <param name="CreateStoragePathInfoOnly">
-    ''' When true, then does not actually copy the specified files, 
-    ''' but instead creates a series of files named s*.zip_StoragePathInfo.txt, 
-    ''' and each file's first line will be the full path to the source file
-    ''' </param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Private Function CopySFoldersToWorkDir(createStoragePathInfoOnly As Boolean) As Boolean
-
-        Dim DSFolderPath As String = FindValidFolder(m_DatasetName, "s*.zip", RetrievingInstrumentDataFolder:=True)
-
-        Dim ZipFiles() As String
-        Dim DestFilePath As String
-
-        ' Verify dataset folder exists
-        If Not Directory.Exists(DSFolderPath) Then Return False
-
-        ' Get a listing of the zip files to process
-        ZipFiles = Directory.GetFiles(DSFolderPath, "s*.zip")
-        If ZipFiles.GetLength(0) < 1 Then Return False 'No zipped data files found
-
-        ' Copy each of the s*.zip files to the working directory
-        For Each ZipFilePath As String In ZipFiles
-
-            If m_DebugLevel > 3 Then
-                LogDebugMessage("Copying file " + ZipFilePath + " to work directory")
-            End If
-
-            DestFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(ZipFilePath))
-
-            If createStoragePathInfoOnly Then
-                If Not CreateStoragePathInfoFile(ZipFilePath, DestFilePath) Then
-                    LogError("Error creating storage path info file for " + ZipFilePath)
-                    Return False
-                End If
-            Else
-                If Not CopyFileWithRetry(ZipFilePath, DestFilePath, False) Then
-                    LogError("Error copying file " + ZipFilePath)
-                    Return False
-                End If
-            End If
-        Next
-
-        ' If we got to here, everything worked
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Copies a file with retries in case of failure
-    ''' </summary>
-    ''' <param name="SrcFilePath">Full path to source file</param>
-    ''' <param name="DestFilePath">Full path to destination file</param>
-    ''' <param name="Overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
-    ''' <returns>TRUE for success; FALSE for error</returns>
-    ''' <remarks>Logs copy errors</remarks>
-    Private Function CopyFileWithRetry(SrcFilePath As String, DestFilePath As String, Overwrite As Boolean) As Boolean
-        Const MaxCopyAttempts = 3
-        Return CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxCopyAttempts)
-    End Function
-
-    ''' <summary>
-    ''' Copies a file with retries in case of failure
-    ''' </summary>
-    ''' <param name="srcFilePath">Full path to source file</param>
-    ''' <param name="destFilePath">Full path to destination file</param>
-    ''' <param name="overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
-    ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-    ''' <returns>TRUE for success; FALSE for error</returns>
-    ''' <remarks>Logs copy errors</remarks>
-    Private Function CopyFileWithRetry(srcFilePath As String, destFilePath As String, overwrite As Boolean, maxCopyAttempts As Integer) As Boolean
-
-        Const RETRY_HOLDOFF_SECONDS = 15
-
-        If maxCopyAttempts < 1 Then maxCopyAttempts = 1
-        Dim retryCount As Integer = maxCopyAttempts
-
-        While retryCount > 0
-            Try
-                ResetTimestampForQueueWaitTimeLogging()
-                If m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite) Then
-                    Return True
-                Else
-                    LogMessage("CopyFileUsingLocks returned false copying " & srcFilePath & " to " & destFilePath, 0, True)
-                    Return False
-                End If
-            Catch ex As Exception
-                LogError("Exception copying file " + srcFilePath + " to " + destFilePath & "; Retry Count = " + retryCount.ToString, ex)
-
-                retryCount -= 1
-
-                If Not overwrite AndAlso File.Exists(destFilePath) Then
-                    LogMessage("Tried to overwrite an existing file when Overwrite = False: " + destFilePath, 0, True)
-                    Return False
-                End If
-
-                Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000)       'Wait several seconds before retrying
-            End Try
-        End While
-
-        'If we got to here, there were too many failures
-        If retryCount < 1 Then
-            LogError(m_message)
-            Return False
-        End If
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory
-    ''' </summary>
-    ''' <param name="sourceFileName">Name of file to copy</param>
-    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
-    ''' <param name="targetFolderPath">Destination directory for file copy</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(
-      sourceFileName As String,
-      sourceFolderPath As String,
-      targetFolderPath As String) As Boolean
-
-        Const MAX_ATTEMPTS = 3
-        Return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, maxCopyAttempts:=MAX_ATTEMPTS)
-
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory
-    ''' </summary>
-    ''' <param name="sourceFileName">Name of file to copy</param>
-    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
-    ''' <param name="targetFolderPath">Destination directory for file copy</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Public Function CopyFileToWorkDir(
-      sourceFileName As String,
-      sourceFolderPath As String,
-      targetFolderPath As String,
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
-
-        Const MAX_ATTEMPTS = 3
-        Return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, maxCopyAttempts:=MAX_ATTEMPTS)
-
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory
-    ''' </summary>
-    ''' <param name="sourceFileName">Name of file to copy</param>
-    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
-    ''' <param name="targetFolderPath">Destination directory for file copy</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(
-      sourceFileName As String,
-      sourceFolderPath As String,
-      targetFolderPath As String,
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
-      maxCopyAttempts As Integer) As Boolean
-
-        Return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, maxCopyAttempts:=maxCopyAttempts)
-
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory
-    ''' </summary>
-    ''' <param name="sourceFileName">Name of file to copy</param>
-    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
-    ''' <param name="targetFolderPath">Destination directory for file copy</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>If the file was found in MyEMSL, then InpFolder will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(
-      sourceFileName As String,
-      sourceFolderPath As String,
-      targetFolderPath As String,
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
-      createStoragePathInfoOnly As Boolean) As Boolean
-
-        Const MAX_ATTEMPTS = 3
-        Return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, eLogMsgTypeIfNotFound, createStoragePathInfoOnly, MAX_ATTEMPTS)
-
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory
-    ''' </summary>
-    ''' <param name="sourceFileName">Name of file to copy</param>
-    ''' <param name="sourceFolderPath">Path to folder where input file is located</param>
-    ''' <param name="targetFolderPath">Destination directory for file copy</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <param name="createStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
-    ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function CopyFileToWorkDir(
-      sourceFileName As String,
-      sourceFolderPath As String,
-      targetFolderPath As String,
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
-      createStoragePathInfoOnly As Boolean,
-      maxCopyAttempts As Integer) As Boolean
-
-
-        Try
-
-            Dim sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName)
-
-            If sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                Return m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath)
-            End If
-
-            Dim destFilePath = Path.Combine(targetFolderPath, sourceFileName)
-
-            'Verify source file exists
-            Const HOLDOFF_SECONDS = 1
-            Const MAX_ATTEMPTS = 1
-            If Not FileExistsWithRetry(sourceFilePath, HOLDOFF_SECONDS, eLogMsgTypeIfNotFound, MAX_ATTEMPTS) Then
-                m_message = "File not found: " + sourceFilePath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
-                If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                    LogMessage(m_message, 0, True)
-                End If
-                Return False
-            End If
-
-            If createStoragePathInfoOnly Then
-                ' Create a storage path info file
-                Return CreateStoragePathInfoFile(sourceFilePath, destFilePath)
-            End If
-
-            If CopyFileWithRetry(sourceFilePath, destFilePath, True, maxCopyAttempts) Then
-                If m_DebugLevel > 3 Then
-                    LogDebugMessage("CopyFileToWorkDir, File copied: " + sourceFilePath)
-                End If
-                Return True
-            Else
-                LogError("Error copying file " + sourceFilePath)
-                Return False
-            End If
-
-        Catch ex As Exception
-            LogError("Exception in CopyFileToWorkDir for " + Path.Combine(sourceFolderPath, sourceFileName))
-        End Try
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory
-    ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function CopyFileToWorkDirWithRename(
-      InpFile As String,
-      InpFolder As String,
-      OutDir As String) As Boolean
-        Const MaxCopyAttempts = 3
-        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory
-    ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function CopyFileToWorkDirWithRename(
-      InpFile As String,
-      InpFolder As String,
-      OutDir As String,
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
-        Const MaxCopyAttempts = 3
-        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory
-    ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' ''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function CopyFileToWorkDirWithRename(
-      InpFile As String,
-      InpFolder As String,
-      OutDir As String,
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
-      MaxCopyAttempts As Integer) As Boolean
-        Return CopyFileToWorkDirWithRename(InpFile, InpFolder, OutDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly:=False, MaxCopyAttempts:=MaxCopyAttempts)
-    End Function
-
-    ''' <summary>
-    ''' Copies specified file from storage server to local working directory, renames destination with dataset name
-    ''' </summary>
-    ''' <param name="InpFile">Name of file to copy</param>
-    ''' <param name="InpFolder">Path to folder where input file is located</param>
-    ''' <param name="OutDir">Destination directory for file copy</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the specified file, and instead creates a file named FileName_StoragePathInfo.txt, and this file's first line will be the full path to the source file</param>
-    ''' <param name="MaxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function CopyFileToWorkDirWithRename(
-      InpFile As String,
-      InpFolder As String,
-      OutDir As String,
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
-      createStoragePathInfoOnly As Boolean,
-      MaxCopyAttempts As Integer) As Boolean
-
-
-        Dim SourceFile As String = String.Empty
-        Dim DestFilePath As String
-
-        Try
-            SourceFile = Path.Combine(InpFolder, InpFile)
-
-            'Verify source file exists
-            If Not FileExistsWithRetry(SourceFile, eLogMsgTypeIfNotFound) Then
-                m_message = "File not found: " + SourceFile
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
-                If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                    LogMessage(m_message, 0, True)
-                End If
-                Return False
-            End If
-
-            Dim Fi As New FileInfo(SourceFile)
-            Dim TargetName As String = m_DatasetName + Fi.Extension
-            DestFilePath = Path.Combine(OutDir, TargetName)
-
-            If createStoragePathInfoOnly Then
-                ' Create a storage path info file
-                Return CreateStoragePathInfoFile(SourceFile, DestFilePath)
-            End If
-
-            If CopyFileWithRetry(SourceFile, DestFilePath, True, MaxCopyAttempts) Then
-                If m_DebugLevel > 3 Then
-                    LogDebugMessage("CopyFileToWorkDirWithRename, File copied: " + SourceFile)
-                End If
-                Return True
-            Else
-                LogError("Error copying file " + SourceFile)
-                Return False
-            End If
-
-        Catch ex As Exception
-            If SourceFile Is Nothing Then SourceFile = InpFile
-            If SourceFile Is Nothing Then SourceFile = "??"
-
-            LogError("Exception in CopyFileToWorkDirWithRename for " + SourceFile, ex)
-        End Try
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Creates a Fasta file based on Ken's DLL
-    ''' </summary>
-    ''' <param name="DestFolder">Folder where file will be created</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Public Function CreateFastaFile(proteinCollectionInfo As clsProteinCollectionInfo, destFolder As String) As Boolean
-
-        If m_DebugLevel >= 1 Then
-            LogMessage("Creating fasta file at " & destFolder)
-        End If
-
-        If Not Directory.Exists(destFolder) Then
-            Directory.CreateDirectory(destFolder)
-        End If
-
-        ' Instantiate fasta tool if not already done
-        If m_FastaTools Is Nothing Then
-            If String.IsNullOrWhiteSpace(m_FastaToolsCnStr) Then
-                m_message = "Protein database connection string not specified"
-                LogMessage("Error in CreateFastaFile: " + m_message, 0, True)
-                Return False
-            End If
-
-        End If
-
-        Dim retryCount = 1
-
-        While retryCount > 0
-            Try
-                m_FastaTools = New Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr)
-                Exit While
-            Catch ex As Exception
-                If retryCount > 1 Then
-                    LogError("Error instantiating clsGetFASTAFromDMS", ex)
-                    ' Sleep 20 seconds after the first failure and 30 seconds after the second failure
-                    If retryCount = 3 Then
-                        Thread.Sleep(20000)
-                    Else
-                        Thread.Sleep(30000)
-                    End If
-                Else
-                    m_message = "Error retrieving protein collection or legacy FASTA file: "
-                    If ex.Message.Contains("could not open database connection") Then
-                        m_message &= "could not open database connection"
-                    Else
-                        m_message &= ex.Message
-                    End If
-                    LogError(m_message, ex)
-                    LogDebugMessage("Connection string: " & m_FastaToolsCnStr)
-                    LogDebugMessage("Current user: " & Environment.UserName)
-                    Return False
-                End If
-                retryCount -= 1
-            End Try
-        End While
-
-        ' Initialize fasta generation state variables
-        m_FastaFileName = String.Empty
-
-        ' Set up variables for fasta creation call
-
-        If Not proteinCollectionInfo.IsValid Then
-            If String.IsNullOrWhiteSpace(proteinCollectionInfo.ErrorMessage) Then
-                m_message = "Unknown error determining the Fasta file or protein collection to use; unable to obtain Fasta file"
-            Else
-                m_message = proteinCollectionInfo.ErrorMessage & "; unable to obtain Fasta file"
-            End If
-
-            LogMessage("Error in CreateFastaFile: " + m_message, 0, True)
-            Return False
-        End If
-
-        Dim stepToolName = m_jobParams.GetJobParameter("StepTool", "Unknown")
-
-        Dim legacyFastaToUse As String
-        Dim orgDBDescription = String.Copy(proteinCollectionInfo.OrgDBDescription)
-
-        If proteinCollectionInfo.UsingSplitFasta AndAlso Not String.Equals(stepToolName, "DataExtractor", StringComparison.CurrentCultureIgnoreCase) Then
-
-            If Not proteinCollectionInfo.UsingLegacyFasta Then
-                LogError("Cannot use protein collections when running a SplitFasta job; choose a Legacy fasta file instead")
-                Return False
-            End If
-
-            ' Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName_NNx_nn.fasta
-            ' where NN is the number of total cloned steps and nn is this job's specific step number
-            Dim numberOfClonedSteps As Integer
-
-            legacyFastaToUse = GetSplitFastaFileName(m_jobParams, m_message, numberOfClonedSteps)
-
-            If String.IsNullOrEmpty(legacyFastaToUse) Then
-                ' The error should have already been logged
-                Return False
-            End If
-
-            orgDBDescription = "Legacy DB: " + legacyFastaToUse
-
-            ' Lookup connection strings
-            ' Proteinseqs.Protein_Sequences
-            Dim proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring")
-            If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
-                LogError("Error in CreateFastaFile: manager parameter fastacnstring is not defined")
-                Return False
-            End If
-
-            ' Gigasax.DMS5
-            Dim dmsConnectionString = m_mgrParams.GetParam("connectionstring")
-            If String.IsNullOrWhiteSpace(proteinSeqsDBConnectionString) Then
-                LogError("Error in CreateFastaFile: manager parameter connectionstring is not defined")
-                Return False
-            End If
-
-            ' Lookup the MSGFPlus Index Folder path
-            Dim strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\Proto-7\MSGFPlus_Index_Files")
-            If String.IsNullOrWhiteSpace(strMSGFPlusIndexFilesFolderPathLegacyDB) Then
-                strMSGFPlusIndexFilesFolderPathLegacyDB = "\\Proto-7\MSGFPlus_Index_Files\Other"
-            Else
-                strMSGFPlusIndexFilesFolderPathLegacyDB = Path.Combine(strMSGFPlusIndexFilesFolderPathLegacyDB, "Other")
-            End If
-
-            If m_DebugLevel >= 1 Then
-                LogMessage("Verifying that split fasta file exists: " & legacyFastaToUse)
-            End If
-
-            ' Make sure the original fasta file has already been split into the appropriate number parts
-            ' and that DMS knows about them
-            '
-            ' Do not use RegisterEvents with m_SplitFastaFileUtility because we handle the progress with a custom handler
-            m_SplitFastaFileUtility = New clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps, m_MgrName)
-            m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB
-
-            m_SplitFastaLastUpdateTime = Date.UtcNow
-            m_SplitFastaLastPercentComplete = 0
-
-            Dim success = m_SplitFastaFileUtility.ValidateSplitFastaFile(proteinCollectionInfo.LegacyFastaName, legacyFastaToUse)
-            If Not success Then
-                m_message = m_SplitFastaFileUtility.ErrorMessage
-                Return False
-            End If
-
-        Else
-            legacyFastaToUse = String.Copy(proteinCollectionInfo.LegacyFastaName)
-        End If
-
-        If m_DebugLevel >= 2 Then
-            LogMessage("ProteinCollectionList=" + proteinCollectionInfo.ProteinCollectionList + "; " +
-                         "CreationOpts=" + proteinCollectionInfo.ProteinCollectionOptions + "; " +
-                         "LegacyFasta=" + legacyFastaToUse)
-        End If
-
-        Try
-            Dim hashString = m_FastaTools.ExportFASTAFile(proteinCollectionInfo.ProteinCollectionList, proteinCollectionInfo.ProteinCollectionOptions, legacyFastaToUse, destFolder)
-
-            If String.IsNullOrEmpty(hashString) Then
-                ' Fasta generator returned empty hash string
-                LogError("m_FastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + orgDBDescription)
-                Return False
-            End If
-
-        Catch ex As Exception
-            If ex.Message.StartsWith("Legacy fasta file not found:") Then
-                Dim rePathMatcher = New Regex("not found: (?<SourceFolder>.+)\\")
-                Dim reMatch = rePathMatcher.Match(ex.Message)
-                If reMatch.Success Then
-                    m_message = "Legacy fasta file not found at " & reMatch.Groups("SourceFolder").Value
-                Else
-                    m_message = "Legacy fasta file not found in the organism folder for this job"
-                End If
-            Else
-                m_message = "Exception generating OrgDb file"
-            End If
-
-            LogError("Exception generating OrgDb file; " + orgDBDescription, ex)
-            Return False
-        End Try
-
-
-        If String.IsNullOrEmpty(m_FastaFileName) Then
-            ' Fasta generator never raised event FileGenerationCompleted
-            LogError("m_FastaTools did not raise event FileGenerationCompleted; unable to continue; " + orgDBDescription)
-            Return False
-        End If
-
-        Dim fiFastaFile As FileInfo
-        Dim strFastaFileMsg As String
-        fiFastaFile = New FileInfo(Path.Combine(destFolder, m_FastaFileName))
-
-        If m_DebugLevel >= 1 Then
-            ' Log the name of the .Fasta file we're using
-            LogDebugMessage("Fasta generation complete, using database: " + m_FastaFileName, Nothing)
-
-            If m_DebugLevel >= 2 Then
-                ' Also log the file creation and modification dates
-                Try
-
-                    strFastaFileMsg = "Fasta file last modified: " +
-                        GetHumanReadableTimeInterval(Date.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString()
-
-                    strFastaFileMsg &= "; file created: " +
-                        GetHumanReadableTimeInterval(Date.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString()
-
-                    strFastaFileMsg &= "; file size: " + fiFastaFile.Length.ToString() + " bytes"
-
-                    LogDebugMessage(strFastaFileMsg)
-                Catch ex As Exception
-                    ' Ignore errors here
-                End Try
-            End If
-
-        End If
-
-        ' Create/Update the .LastUsed file for the newly created Fasta File
-        Dim lastUsedFilePath = fiFastaFile.FullName & ".LastUsed"
-        Try
-            Using swLastUsedFile = New StreamWriter(New FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                swLastUsedFile.WriteLine(Date.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT))
-            End Using
-        Catch ex As Exception
-            LogMessage("Warning: unable to create a new .LastUsed file at " & lastUsedFilePath & ": " & ex.Message)
-        End Try
-
-        ' If we got to here, everything worked OK
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Creates an XML formatted settings file based on data from broker
-    ''' </summary>
-    ''' <param name="FileText">String containing XML file contents</param>
-    ''' <param name="FileNamePath">Name of file to create</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>XML handling based on code provided by Matt Monroe</remarks>
-    Private Function CreateSettingsFile(FileText As String, FileNamePath As String) As Boolean
-
-        Dim objFormattedXMLWriter As New clsFormattedXMLWriter
-
-        If Not objFormattedXMLWriter.WriteXMLToFile(FileText, FileNamePath) Then
-            LogError("Error creating settings file " + FileNamePath + ": " + objFormattedXMLWriter.ErrMsg)
-            m_message = "Error creating settings file"
-            Return False
-        Else
-            Return True
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Creates a file named DestFilePath but with "_StoragePathInfo.txt" appended to the name
-    ''' The file's contents is the path given by sourceFilePath
-    ''' </summary>
-    ''' <param name="sourceFilePath">The path to write to the StoragePathInfo file</param>
-    ''' <param name="DestFilePath">The path where the file would have been copied to</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function CreateStoragePathInfoFile(sourceFilePath As String, DestFilePath As String) As Boolean
-
-        Dim strInfoFilePath As String = String.Empty
-
-        Try
-            If sourceFilePath Is Nothing Or DestFilePath Is Nothing Then
-                Return False
-            End If
-
-            strInfoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX
-
-            Using swOutFile = New StreamWriter(New FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                swOutFile.WriteLine(sourceFilePath)
-            End Using
-
-        Catch ex As Exception
-            LogError("Exception in CreateStoragePathInfoFile for " + strInfoFilePath, ex)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Given two dates, returns the most recent date
-    ''' </summary>
-    ''' <param name="date1"></param>
-    ''' <param name="date2"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Shared Function DateMax(date1 As Date, date2 As Date) As Date
-        If date1 > date2 Then
-            Return date1
-        Else
-            Return date2
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Tries to delete the first file whose path is defined in strFilesToDelete
-    ''' If deletion succeeds, then removes the file from the queue
-    ''' </summary>
-    ''' <param name="strFilesToDelete">Queue of files to delete (full file paths)</param>
-    ''' <param name="strFileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
-    ''' <remarks></remarks>
-    Protected Sub DeleteQueuedFiles(strFilesToDelete As Queue(Of String), strFileToQueueForDeletion As String)
-
-        If strFilesToDelete.Count > 0 Then
-            ' Call the garbage collector, then try to delete the first queued file
-            ' Note, do not call WaitForPendingFinalizers since that could block this thread
-            ' Thus, do not use PRISM.Processes.clsProgRunner.GarbageCollectNow
-            GC.Collect()
-
-            Try
-                Dim strFileToDelete As String
-                strFileToDelete = strFilesToDelete.Peek()
-
-                File.Delete(strFileToDelete)
-
-                ' If we get here, then the delete succeeded, so we can dequeue the file
-                strFilesToDelete.Dequeue()
-
-            Catch ex As Exception
-                ' Exception deleting the file; ignore this error
-            End Try
-
-        End If
-
-        If Not String.IsNullOrEmpty(strFileToQueueForDeletion) Then
-            strFilesToDelete.Enqueue(strFileToQueueForDeletion)
-        End If
-
-    End Sub
-
-    Protected Sub DisableMyEMSLSearch()
-        m_MyEMSLUtilities.ClearDownloadQueue()
-        MyEMSLSearchDisabled = True
-    End Sub
-
-    ''' <summary>
-    ''' Test for file existence with a retry loop in case of temporary glitch
-    ''' </summary>
-    ''' <param name="fileName"></param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function FileExistsWithRetry(fileName As String, eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
-
-        Return FileExistsWithRetry(fileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS, eLogMsgTypeIfNotFound)
-
-    End Function
-
-    ''' <summary>
-    ''' Test for file existence with a retry loop in case of temporary glitch
-    ''' </summary>
-    ''' <param name="fileName"></param>
-    ''' <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <returns>True if the file exists, otherwise false</returns>
-    ''' <remarks></remarks>
-    Private Function FileExistsWithRetry(fileName As String, retryHoldoffSeconds As Integer, eLogMsgTypeIfNotFound As clsLogTools.LogLevels) As Boolean
-
-        Const MAX_ATTEMPTS = 3
-        Return FileExistsWithRetry(fileName, retryHoldoffSeconds, eLogMsgTypeIfNotFound, MAX_ATTEMPTS)
-
-    End Function
-
-    ''' <summary>
-    ''' Test for file existence with a retry loop in case of temporary glitch
-    ''' </summary>
-    ''' <param name="fileName"></param>
-    ''' <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <param name="maxAttempts">Maximum number of attempts</param>
-    ''' <returns>True if the file exists, otherwise false</returns>
-    ''' <remarks></remarks>
-    Private Function FileExistsWithRetry(
-      fileName As String,
-      retryHoldoffSeconds As Integer,
-      eLogMsgTypeIfNotFound As clsLogTools.LogLevels,
-      maxAttempts As Integer) As Boolean
-
-        If maxAttempts < 1 Then maxAttempts = 1
-        If maxAttempts > 10 Then maxAttempts = 10
-        Dim retryCount = maxAttempts
-
-        If retryHoldoffSeconds <= 0 Then retryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS
-        If retryHoldoffSeconds > 600 Then retryHoldoffSeconds = 600
-
-        While retryCount > 0
-            If File.Exists(fileName) Then
-                Return True
-            Else
-                If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                    ' Only log each failed attempt to find the file if eLogMsgTypeIfNotFound = ILogger.logMsgType.logError
-                    ' Otherwise, we won't log each failed attempt
-                    Dim errMsg As String = "File " + fileName + " not found. Retry count = " + retryCount.ToString
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, errMsg)
-                    If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                        LogMessage(errMsg, 0, True)
-                    End If
-                End If
-                retryCount -= 1
-                If retryCount > 0 Then
-                    Thread.Sleep(New TimeSpan(0, 0, retryHoldoffSeconds))     'Wait RetryHoldoffSeconds seconds before retrying
-                End If
-            End If
-        End While
-
-        ' If we got to here, there were too many failures
-        If retryCount < 1 Then
-            If maxAttempts = 1 Then
-                m_message = "File not found: " & fileName
-            Else
-                m_message = "File not be found after " & maxAttempts & " tries: " & fileName
-            End If
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogMsgTypeIfNotFound, m_message)
-            If eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR Then
-                LogMessage(m_message, 0, True)
-            End If
-            Return False
-        End If
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
-    ''' </summary>
-    ''' <param name="fileName">Name of file to be retrieved</param>
-    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>Logs an error if the file is not found</remarks>
-    Protected Function FindAndRetrieveMiscFiles(fileName As String, unzip As Boolean) As Boolean
-        Return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder:=True)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
-    ''' </summary>
-    ''' <param name="fileName">Name of file to be retrieved</param>
-    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>Logs an error if the file is not found</remarks>
-    Protected Function FindAndRetrieveMiscFiles(fileName As String, unzip As Boolean, searchArchivedDatasetFolder As Boolean) As Boolean
-        Return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, "")
-    End Function
-
-    ''' <summary>
-    ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
-    ''' </summary>
-    ''' <param name="fileName">Name of file to be retrieved</param>
-    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function FindAndRetrieveMiscFiles(fileName As String, unzip As Boolean, searchArchivedDatasetFolder As Boolean, logFileNotFound As Boolean) As Boolean
-        Return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, "", logFileNotFound)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
-    ''' </summary>
-    ''' <param name="fileName">Name of file to be retrieved</param>
-    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-    ''' <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>Logs an error if the file is not found</remarks>
-    Protected Function FindAndRetrieveMiscFiles(
-      fileName As String,
-      unzip As Boolean,
-      searchArchivedDatasetFolder As Boolean,
-      <Out()> ByRef sourceFolderPath As String) As Boolean
-
-        Return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, sourceFolderPath, logFileNotFound:=True)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
-    ''' </summary>
-    ''' <param name="fileName">Name of file to be retrieved</param>
-    ''' <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-    ''' <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
-    ''' <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function FindAndRetrieveMiscFiles(
-      fileName As String,
-      unzip As Boolean,
-      searchArchivedDatasetFolder As Boolean,
-      <Out()> ByRef sourceFolderPath As String,
-      logFileNotFound As Boolean) As Boolean
-
-        Const CreateStoragePathInfoFile = False
-
-        ' Look for the file in the various folders
-        ' A message will be logged if the file is not found
-        sourceFolderPath = FindDataFile(fileName, searchArchivedDatasetFolder, logFileNotFound)
-
-        ' Exit if file was not found
-        If String.IsNullOrEmpty(sourceFolderPath) Then
-            ' No folder found containing the specified file
-            sourceFolderPath = String.Empty
-            Return False
-        End If
-
-        If sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-            Return m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFolderPath)
-        End If
-
-        ' Copy the file
-        If Not CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile) Then
-            Return False
-        End If
-
-        ' Check whether unzipping was requested
-        If Not unzip Then Return True
-
-        LogMessage("Unzipping file " + fileName)
-        If UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "FindAndRetrieveMiscFiles", False) Then
-            If m_DebugLevel >= 1 Then
-                LogMessage("Unzipped file " + fileName)
-            End If
-        End If
-
-        Return True
-
-    End Function
-
-    ' ReSharper disable once UnusedMember.Global
-    ''' <summary>
-    ''' Search for the specified PHRP file and copy it to the work directory
-    ''' If the filename contains _msgfplus and the file is not found, auto looks for the _msgfdb version of the file
-    ''' </summary>
-    ''' <param name="fileToGet">File to find; if the file is found with an alternative name, this variable is updated with the new name</param>
-    ''' <param name="synopsisFileName">Synopsis file name, if known</param>
-    ''' <param name="addToResultFileSkipList">If true, add the filename to the list of files to skip copying to the result folder</param>
-    ''' <returns>True if success, false if not found</returns>
-    ''' <remarks>Used by the IDPicker and MSGF plugins</remarks>    
-    Protected Function FindAndRetrievePHRPDataFile(
-      ByRef fileToGet As String,
-      synopsisFileName As String,
-      Optional addToResultFileSkipList As Boolean = True) As Boolean
-
-        Dim blnSuccess = FindAndRetrieveMiscFiles(fileToGet, False)
-
-        If Not blnSuccess AndAlso fileToGet.ToLower().Contains("msgfplus") Then
-            If String.IsNullOrEmpty(synopsisFileName) Then synopsisFileName = "Dataset_msgfdb.txt"
-            Dim alternativeName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToGet, synopsisFileName)
-
-            If Not String.Equals(alternativeName, fileToGet) Then
-                blnSuccess = FindAndRetrieveMiscFiles(alternativeName, False)
-                If blnSuccess Then
-                    fileToGet = alternativeName
-                End If
-            End If
-        End If
-
-        If Not blnSuccess Then
-            Return False
-        End If
-
-        If addToResultFileSkipList Then
-            m_jobParams.AddResultFileToSkip(fileToGet)
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Finds the server or archive folder where specified file is located
-    ''' </summary>
-    ''' <param name="fileToFind">Name of the file to search for</param>
-    ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
-    ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Public Function FindDataFile(fileToFind As String) As String
-        Return FindDataFile(fileToFind, searchArchivedDatasetFolder:=True)
-    End Function
-
-    ''' <summary>
-    ''' Finds the server or archive folder where specified file is located
-    ''' </summary>
-    ''' <param name="FileToFind">Name of the file to search for</param>
-    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-    ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
-    ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function FindDataFile(fileToFind As String, searchArchivedDatasetFolder As Boolean) As String
-        Return FindDataFile(fileToFind, searchArchivedDatasetFolder, logFileNotFound:=True)
-    End Function
-
-    ''' <summary>
-    ''' Finds the server or archive folder where specified file is located
-    ''' </summary>
-    ''' <param name="fileToFind">Name of the file to search for</param>
-    ''' <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched (m_AuroraAvailable and MyEMSLAvailable take precedence)</param>
-    ''' <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
-    ''' <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
-    ''' <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-    Protected Function FindDataFile(fileToFind As String, searchArchivedDatasetFolder As Boolean, logFileNotFound As Boolean) As String
-
-        Try
-            ' Fill collection with possible folder locations
-            ' The order of searching is:
-            '  a. Check the "inputFolderName" and then each of the Shared Results Folders in the Transfer folder
-            '  b. Check the "inputFolderName" and then each of the Shared Results Folders in the Dataset folder
-            '  c. Check the "inputFolderName" and then each of the Shared Results Folders in MyEMSL for this dataset
-            '  d. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
-            '
-            ' Note that "SharedResultsFolders" will typically only contain one folder path, 
-            '  but can contain a comma-separated list of folders
-
-            Dim strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName")
-            Dim strInputFolderName = m_jobParams.GetParam("inputFolderName")
-
-            Dim sharedResultFolderNames = GetSharedResultFolderList().ToList()
-
-            Dim strParentFolderPaths = New List(Of String)
-            strParentFolderPaths.Add(m_jobParams.GetParam("transferFolderPath"))
-            strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"))
-
-            If searchArchivedDatasetFolder Then
-                If MyEMSLAvailable Then
-                    strParentFolderPaths.Add(MYEMSL_PATH_FLAG)
-                End If
-                If m_AuroraAvailable Then
-                    strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"))
-                End If
-            End If
-
-            Dim foldersToSearch = New List(Of String)
-
-            For Each strParentFolderPath As String In strParentFolderPaths
-
-                If Not String.IsNullOrEmpty(strParentFolderPath) Then
-                    If Not String.IsNullOrEmpty(strInputFolderName) Then
-                        ' Parent Folder \ Dataset Folder \ Input folder
-                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName))
-                    End If
-
-                    For Each strSharedFolderName As String In sharedResultFolderNames
-                        ' Parent Folder \ Dataset Folder \  Shared results folder
-                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName))
-                    Next
-
-                    ' Parent Folder \ Dataset Folder
-                    foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, String.Empty))
-                End If
-
-            Next
-
-            Dim matchingDirectory As String = String.Empty
-            Dim matchFound = False
-
-            ' Now search for FileToFind in each folder in FoldersToSearch
-            For Each folderPath In foldersToSearch
-                Try
-                    Dim diFolderToCheck = New DirectoryInfo(folderPath)
-
-                    If folderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-
-                        Dim matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileToFind, diFolderToCheck.Name, m_DatasetName, recurse:=False)
-
-                        If matchingMyEMSLFiles.Count > 0 Then
-                            matchFound = True
-
-                            ' Include the MyEMSL FileID in TempDir so that it is available for downloading
-                            matchingDirectory = DatasetInfoBase.AppendMyEMSLFileID(folderPath, matchingMyEMSLFiles.First().FileID)
-                            Exit For
-                        End If
-
-                    Else
-
-                        If diFolderToCheck.Exists Then
-                            If File.Exists(Path.Combine(folderPath, fileToFind)) Then
-                                matchFound = True
-                                matchingDirectory = folderPath
-                                Exit For
-                            End If
-                        End If
-
-                    End If
-
-                Catch ex As Exception
-                    ' Exception checking TempDir; log an error, but continue checking the other folders in FoldersToSearch
-                    LogError("Exception in FindDataFile looking for: " + fileToFind + " in " + folderPath, ex)
-                End Try
-            Next
-
-            If matchFound Then
-                If m_DebugLevel >= 2 Then
-                    LogDebugMessage("Data file found: " & fileToFind)
-                End If
-                Return matchingDirectory
-            End If
-
-            ' Data file not found
-            ' Log this as an error if SearchArchivedDatasetFolder=True
-            ' Log this as a warning if SearchArchivedDatasetFolder=False
-
-            If logFileNotFound Then
-                If searchArchivedDatasetFolder OrElse (Not m_AuroraAvailable And Not MyEMSLAvailable) Then
-                    LogError("Data file not found: " + fileToFind)
-                Else
-                    LogMessage("Warning: Data file not found (did not check archive): " + fileToFind)
-                End If
-            End If
-
-            Return String.Empty
-
-        Catch ex As Exception
-            LogError("Exception in FindDataFile looking for: " + fileToFind, ex)
-        End Try
-
-        ' We'll only get here if an exception occurs
-        Return String.Empty
-
-    End Function
-
-    Private Function FindDataFileAddFolder(
-      strParentFolderPath As String,
-      strDatasetFolderName As String,
-      strInputFolderName As String) As String
-        Dim strTargetFolderPath As String
-
-        strTargetFolderPath = Path.Combine(strParentFolderPath, strDatasetFolderName)
-        If Not String.IsNullOrEmpty(strInputFolderName) Then
-            strTargetFolderPath = Path.Combine(strTargetFolderPath, strInputFolderName)
-        End If
-
-        Return strTargetFolderPath
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for file strFileName in strFolderPath or any of its subfolders
-    ''' The filename may contain a wildcard character, in which case the first match will be returned
-    ''' </summary>
-    ''' <param name="strFolderPath">Folder path to examine</param>
-    ''' <param name="strFileName">File name to find</param>
-    ''' <returns>Full path to the file, if found; empty string if no match</returns>
-    ''' <remarks></remarks>
-    Public Shared Function FindFileInDirectoryTree(strFolderPath As String, strFileName As String) As String
-        Return FindFileInDirectoryTree(strFolderPath, strFileName, New SortedSet(Of String))
-    End Function
-
-    ''' <summary>
-    ''' Looks for file strFileName in strFolderPath or any of its subfolders
-    ''' The filename may contain a wildcard character, in which case the first match will be returned
-    ''' </summary>
-    ''' <param name="strFolderPath">Folder path to examine</param>
-    ''' <param name="strFileName">File name to find</param>
-    ''' <param name="lstFolderNamesToSkip">List of folder names that should not be examined</param>
-    ''' <returns>Full path to the file, if found; empty string if no match</returns>
-    ''' <remarks></remarks>
-    Public Shared Function FindFileInDirectoryTree(strFolderPath As String, strFileName As String, lstFolderNamesToSkip As SortedSet(Of String)) As String
-        Dim diFolder As DirectoryInfo
-        Dim fiFile As FileSystemInfo
-        Dim ioSubFolder As FileSystemInfo
-
-        Dim strFilePathMatch As String
-
-        diFolder = New DirectoryInfo(strFolderPath)
-
-        If diFolder.Exists Then
-            ' Examine the files for this folder
-            For Each fiFile In diFolder.GetFiles(strFileName)
-                strFilePathMatch = fiFile.FullName
-                Return strFilePathMatch
-            Next
-
-            ' Match not found
-            ' Recursively call this function with the subdirectories in this folder
-
-            For Each ioSubFolder In diFolder.GetDirectories
-                If Not lstFolderNamesToSkip.Contains(ioSubFolder.Name) Then
-                    strFilePathMatch = FindFileInDirectoryTree(ioSubFolder.FullName, strFileName)
-                    If Not String.IsNullOrEmpty(strFilePathMatch) Then
-                        Return strFilePathMatch
-                    End If
-                End If
-            Next
-        End If
-
-        Return String.Empty
-
-    End Function
-
-    ''' <summary>
-    ''' Determines the full path to the dataset file
-    ''' Returns a folder path for data that is stored in folders (e.g. .D folders)
-    ''' For instruments with multiple data folders, returns the path to the first folder
-    ''' For instrument with multiple zipped data files, returns the dataset folder path
-    ''' </summary>
-    ''' <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
-    ''' <param name="assumeUnpurged">
-    ''' When true, assume that the instrument data exists on the storage server 
-    ''' (and thus do not search MyEMSL or the archive for the file)
-    ''' </param>
-    ''' <returns>The full path to the dataset file or folder</returns>
-    ''' <remarks>When assumeUnpurged is true, this function returns the expected path 
-    ''' to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-    Public Function FindDatasetFileOrFolder(<Out()> ByRef blnIsFolder As Boolean, assumeUnpurged As Boolean) As String
-        Return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, blnIsFolder, assumeUnpurged:=assumeUnpurged)
-    End Function
-
-    ''' <summary>
-    ''' Determines the full path to the dataset file
-    ''' Returns a folder path for data that is stored in folders (e.g. .D folders)
-    ''' For instruments with multiple data folders, returns the path to the first folder
-    ''' For instrument with multiple zipped data files, returns the dataset folder path
-    ''' </summary>
-    ''' <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
-    ''' <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
-    ''' <param name="assumeUnpurged">
-    ''' When true, assume that the instrument data exists on the storage server 
-    ''' (and thus do not search MyEMSL or the archive for the file)
-    ''' </param>
-    ''' <returns>The full path to the dataset file or folder</returns>
-    ''' <remarks>When assumeUnpurged is true, this function returns the expected path 
-    ''' to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-    Protected Function FindDatasetFileOrFolder(
-      maxAttempts As Integer,
-      <Out()> ByRef blnIsFolder As Boolean,
-      Optional assumeUnpurged As Boolean = False) As String
-
-        Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
-        Dim eRawDataType As eRawDataTypeConstants
-        Dim strFileOrFolderPath As String = String.Empty
-
-        blnIsFolder = False
-
-        eRawDataType = GetRawDataType(RawDataType)
-        Select Case eRawDataType
-            Case eRawDataTypeConstants.AgilentDFolder           'Agilent ion trap data
-
-                If StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) OrElse
-                   StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()) Then
-                    ' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
-                    '  we would pre-process the data beforehand to create MGF files
-                    ' The following call can be used to retrieve the files
-                    strFileOrFolderPath = FindMGFFile(maxAttempts, assumeUnpurged)
-                Else
-                    ' DeconTools_V2 now supports reading the .D files directly
-                    ' Call RetrieveDotDFolder() to copy the folder and all subfolders
-                    strFileOrFolderPath = FindDotDFolder(assumeUnpurged)
-                    blnIsFolder = True
-                End If
-
-            Case eRawDataTypeConstants.AgilentQStarWiffFile         'Agilent/QSTAR TOF data
-                strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_WIFF_EXTENSION, assumeUnpurged)
-
-            Case eRawDataTypeConstants.ZippedSFolders           'FTICR data
-                strFileOrFolderPath = FindSFolders(assumeUnpurged)
-                blnIsFolder = True
-
-            Case eRawDataTypeConstants.ThermoRawFile            'Finnigan ion trap/LTQ-FT data
-                strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_RAW_EXTENSION, assumeUnpurged)
-
-            Case eRawDataTypeConstants.MicromassRawFolder           'Micromass QTOF data
-                strFileOrFolderPath = FindDotRawFolder(assumeUnpurged)
-                blnIsFolder = True
-
-            Case eRawDataTypeConstants.UIMF         'IMS UIMF data
-                strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_UIMF_EXTENSION, assumeUnpurged)
-
-            Case eRawDataTypeConstants.mzXML
-                strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_MZXML_EXTENSION, assumeUnpurged)
-
-            Case eRawDataTypeConstants.mzML
-                strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_MZML_EXTENSION, assumeUnpurged)
-
-            Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
-                ' Call RetrieveDotDFolder() to copy the folder and all subfolders
-
-                ' Both the MSXml step tool and DeconTools require the .Baf file
-                ' We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, so we need the file
-
-                strFileOrFolderPath = FindDotDFolder(assumeUnpurged)
-                blnIsFolder = True
-
-            Case eRawDataTypeConstants.BrukerMALDIImaging
-                strFileOrFolderPath = FindBrukerMALDIImagingFolders(assumeUnpurged)
-                blnIsFolder = True
-
-        End Select
-
-        Return strFileOrFolderPath
-
-    End Function
-
-    ''' <summary>
-    ''' Finds the dataset folder containing Bruker Maldi imaging .zip files
-    ''' </summary>
-    ''' <returns>The full path to the dataset folder</returns>
-    ''' <remarks></remarks>
-    Public Function FindBrukerMALDIImagingFolders(Optional assumeUnpurged As Boolean = False) As String
-
-        Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip"
-
-        ' Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
-        ' If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
-
-        Dim DSFolderPath As String
-        DSFolderPath = FindValidFolder(
-            m_DatasetName,
-            ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK,
-            RetrievingInstrumentDataFolder:=True,
-            assumeUnpurged:=assumeUnpurged)
-
-        If String.IsNullOrEmpty(DSFolderPath) Then Return String.Empty
-
-        Return DSFolderPath
-
-    End Function
-
-    ''' <summary>
-    ''' Finds a file named DatasetName.FileExtension
-    ''' </summary>
-    ''' <param name="FileExtension"></param>
-    ''' <returns>The full path to the folder; an empty string if no match</returns>
-    ''' <remarks></remarks>
-    Protected Function FindDatasetFile(FileExtension As String) As String
-        Return FindDatasetFile(DEFAULT_MAX_RETRY_COUNT, FileExtension)
-    End Function
-
-    ''' <summary>
-    ''' Finds a file named DatasetName.FileExtension
-    ''' </summary>
-    ''' <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
-    ''' <param name="FileExtension"></param>
-    ''' <returns>The full path to the folder; an empty string if no match</returns>
-    ''' <remarks></remarks>
-    Protected Function FindDatasetFile(
-     maxAttempts As Integer,
-     fileExtension As String,
-     Optional assumeUnpurged As Boolean = False) As String
-
-        If Not fileExtension.StartsWith(".") Then
-            fileExtension = "." + fileExtension
-        End If
-
-        Dim DataFileName As String = m_DatasetName + fileExtension
-        Dim validFolderFound As Boolean
-
-        Dim DSFolderPath As String = FindValidFolder(
-          m_DatasetName,
-          DataFileName,
-          folderNameToFind:="",
-          maxAttempts:=maxAttempts,
-          logFolderNotFound:=True,
-          retrievingInstrumentDataFolder:=False,
-          validFolderFound:=validFolderFound,
-          assumeUnpurged:=assumeUnpurged)
-
-        If Not String.IsNullOrEmpty(DSFolderPath) Then
-            Return Path.Combine(DSFolderPath, DataFileName)
-        Else
-            Return String.Empty
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Finds a .Raw folder below the dataset folder
-    ''' </summary>
-    ''' <returns>The full path to the folder; an empty string if no match</returns>
-    ''' <remarks></remarks>
-    Protected Function FindDotDFolder(Optional assumeUnpurged As Boolean = False) As String
-        Return FindDotXFolder(DOT_D_EXTENSION, assumeUnpurged)
-    End Function
-
-    ''' <summary>
-    ''' Finds a .D folder below the dataset folder
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function FindDotRawFolder(Optional assumeUnpurged As Boolean = False) As String
-        Return FindDotXFolder(DOT_RAW_EXTENSION, assumeUnpurged)
-    End Function
-
-    ''' <summary>
-    ''' Finds a subfolder (typically Dataset.D or Dataset.Raw) below the dataset folder
-    ''' </summary>
-    ''' <param name="FolderExtension"></param>
-    ''' <returns>The full path to the folder; an empty string if no match</returns>
-    ''' <remarks></remarks>
-    Protected Function FindDotXFolder(folderExtension As String, assumeUnpurged As Boolean) As String
-
-        If Not folderExtension.StartsWith(".") Then
-            folderExtension = "." + folderExtension
-        End If
-
-        Dim validFolderFound As Boolean
-
-        Dim FileNameToFind As String = String.Empty
-        Dim FolderExtensionWildcard As String = "*" + folderExtension
-
-        Dim ServerPath As String = FindValidFolder(
-            m_DatasetName,
-            FileNameToFind,
-            FolderExtensionWildcard,
-            DEFAULT_MAX_RETRY_COUNT,
-            logFolderNotFound:=True,
-            retrievingInstrumentDataFolder:=True,
-            validFolderFound:=validFolderFound,
-            assumeUnpurged:=assumeUnpurged)
-
-        If (ServerPath.StartsWith(MYEMSL_PATH_FLAG)) Then
-            Return ServerPath
-        End If
-
-        Dim diDatasetFolder = New DirectoryInfo(ServerPath)
-
-        'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-        For Each diSubFolder As DirectoryInfo In diDatasetFolder.GetDirectories(FolderExtensionWildcard)
-            Return diSubFolder.FullName
-        Next
-
-        ' No match found
-        Return String.Empty
-
-    End Function
-
-    ''' <summary>
-    ''' Finds the dataset folder containing either a 0.ser subfolder or containing zipped S-folders
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function FindSFolders(Optional assumeUnpurged As Boolean = False) As String
-
-        ' First Check for the existence of a 0.ser Folder
-        Dim FileNameToFind As String = String.Empty
-        Dim validFolderFound As Boolean
-
-        Dim DSFolderPath As String = FindValidFolder(
-            m_DatasetName,
-            FileNameToFind,
-            BRUKER_ZERO_SER_FOLDER,
-            DEFAULT_MAX_RETRY_COUNT,
-            logFolderNotFound:=True,
-            retrievingInstrumentDataFolder:=True,
-            validFolderFound:=validFolderFound,
-            assumeUnpurged:=assumeUnpurged)
-
-        If Not String.IsNullOrEmpty(DSFolderPath) Then
-            Return Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER)
-        End If
-
-        ' The 0.ser folder does not exist; look for zipped s-folders
-        DSFolderPath = FindValidFolder(m_DatasetName, "s*.zip", RetrievingInstrumentDataFolder:=True, assumeUnpurged:=assumeUnpurged)
-
-        Return DSFolderPath
-
-    End Function
-
-    ''' <summary>
-    ''' Finds the best .mgf file for the current dataset
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function FindMGFFile(maxAttempts As Integer, assumeUnpurged As Boolean) As String
-
-        ' Data files are in a subfolder off of the main dataset folder
-        ' Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
-
-        Dim validFolderFound As Boolean
-        Dim serverPath As String = FindValidFolder(
-            m_DatasetName,
-            "",
-            "*" + DOT_D_EXTENSION,
-            maxAttempts,
-            logFolderNotFound:=True,
-            retrievingInstrumentDataFolder:=False,
-            validFolderFound:=validFolderFound,
-            assumeUnpurged:=assumeUnpurged)
-
-        Dim diServerFolder = New DirectoryInfo(serverPath)
-
-        ' Get a list of the subfolders in the dataset folder
-        ' Go through the folders looking for a file with a ".mgf" extension
-        For Each diSubFolder As DirectoryInfo In diServerFolder.GetDirectories()
-
-            For Each fiFile As FileInfo In diSubFolder.GetFiles("*" + DOT_MGF_EXTENSION)
-                ' Return the first .mgf file that was found
-                Return fiFile.FullName
-            Next
-        Next
-
-        ' No match was found
-        Return String.Empty
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for the newest .mzXML file for this dataset
-    ''' </summary>
-    ''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
-    ''' <returns>Full path to the file, if found; empty string if no match</returns>
-    ''' <remarks>Supports both gzipped mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-    Public Function FindMZXmlFile(<Out()> ByRef strHashcheckFilePath As String) As String
-
-        ' First look in the MsXML cache folder
-        Dim strMatchingFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzXML, strHashcheckFilePath)
-
-        If Not String.IsNullOrEmpty(strMatchingFilePath) Then
-            Return strMatchingFilePath
-        End If
-
-        ' Not found in the cache; look in the dataset folder
-
-        Dim DatasetID As String = m_jobParams.GetParam("JobParameters", "DatasetID")
-
-        Const MSXmlFoldernameBase = "MSXML_Gen_1_"
-        Dim MzXMLFilename As String = m_DatasetName + ".mzXML"
-
-        Const MAX_ATTEMPTS = 1
-
-        Dim lstValuesToCheck = New List(Of Integer)
-
-        ' Initialize the values we'll look for
-        ' Note that these values are added to the list in the order of the preferred file to retrieve
-
-        '                                   ' Example folder name          CentroidMSXML  MSXMLGenerator   CentroidPeakCount    MSXMLOutputType
-        lstValuesToCheck.Add(215)           ' MSXML_Gen_1_215_DatasetID,   True           MSConvert        -1                   mzXML
-        lstValuesToCheck.Add(149)           ' MSXML_Gen_1_149_DatasetID,   True           MSConvert        1000                 mzXML
-        lstValuesToCheck.Add(148)           ' MSXML_Gen_1_148_DatasetID,   True           MSConvert        500                  mzXML
-        lstValuesToCheck.Add(154)           ' MSXML_Gen_1_154_DatasetID,   True           MSConvert        250                  mzXML
-        lstValuesToCheck.Add(132)           ' MSXML_Gen_1_132_DatasetID,   True           MSConvert        150                  mzXML
-        lstValuesToCheck.Add(93)            ' MSXML_Gen_1_93_DatasetID,    True           ReadW.exe        n/a                  mzXML
-        lstValuesToCheck.Add(126)           ' MSXML_Gen_1_126_DatasetID,   True           ReadW.exe        n/a                  mzXML; ReAdW_Version=v2.1
-        lstValuesToCheck.Add(177)           ' MSXML_Gen_1_177_DatasetID,   False          MSConvert.exe    n/a                  mzXML
-        lstValuesToCheck.Add(39)            ' MSXML_Gen_1_39_DatasetID,    False          ReadW.exe        n/a                  mzXML
-
-        strHashcheckFilePath = String.Empty
-
-        For Each intVersion As Integer In lstValuesToCheck
-
-            Dim msXmlFoldername = MSXmlFoldernameBase + intVersion.ToString() + "_" + DatasetID
-
-            ' Look for the MSXmlFolder
-            ' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-            Dim ServerPath As String = FindValidFolder(m_DatasetName, "", MSXmlFoldername, MAX_ATTEMPTS, False, retrievingInstrumentDataFolder:=False)
-
-            If String.IsNullOrEmpty(ServerPath) Then
-                Continue For
-            End If
-
-            If ServerPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                ' File found in MyEMSL
-                ' Determine the MyEMSL FileID by searching for the expected file in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles
-
-                Dim myEmslFileID As Int64 = 0
-
-                For Each udtArchivedFile In m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles
-                    Dim fiArchivedFile As New FileInfo(udtArchivedFile.FileInfo.RelativePathWindows)
-                    If clsGlobal.IsMatch(fiArchivedFile.Name, MzXMLFilename) Then
-                        myEmslFileID = udtArchivedFile.FileID
-                        Exit For
-                    End If
-                Next
-
-                If myEmslFileID > 0 Then
-                    Return Path.Combine(ServerPath, MSXmlFoldername, DatasetInfoBase.AppendMyEMSLFileID(MzXMLFilename, myEmslFileID))
-                End If
-            Else
-
-                ' Due to quirks with how FindValidFolder behaves, we need to confirm that the mzXML file actually exists
-                Dim diFolderInfo As DirectoryInfo
-                diFolderInfo = New DirectoryInfo(ServerPath)
-
-                If diFolderInfo.Exists Then
-
-                    'See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
-                    Dim diSubfolders() As DirectoryInfo = diFolderInfo.GetDirectories(MSXmlFoldername)
-                    If diSubfolders.Length > 0 Then
-
-                        ' MSXmlFolder found; return the path to the file     
-                        Return Path.Combine(diSubfolders(0).FullName, MzXMLFilename)
-
-                    End If
-
-                End If
-
-            End If
-
-        Next
-
-        ' If we get here, then no match was found
-        Return String.Empty
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for the newest mzXML or mzML file for this dataset
-    ''' </summary>
-    ''' <param name="msXmlType">File type to find (mzXML or mzML)</param>
-    ''' <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
-    ''' <returns>Full path to the file if a match; empty string if no match</returns>
-    ''' <remarks>Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-    Protected Function FindMsXmlFileInCache(msXmlType As MSXMLOutputTypeConstants, <Out()> ByRef strHashcheckFilePath As String) As String
-
-        Dim MsXMLFilename As String = m_DatasetName
-        strHashcheckFilePath = String.Empty
-
-        Select Case msXmlType
-            Case MSXMLOutputTypeConstants.mzXML
-                MsXMLFilename &= DOT_MZXML_EXTENSION & DOT_GZ_EXTENSION
-            Case MSXMLOutputTypeConstants.mzML
-                ' All MzML files should be gzipped
-                MsXMLFilename &= DOT_MZML_EXTENSION & DOT_GZ_EXTENSION
-            Case Else
-                Throw New ArgumentOutOfRangeException(NameOf(msXmlType), "Unsupported enum value for MSXMLOutputTypeConstants: " & msXmlType)
-        End Select
-
-        ' Lookup the MSXML cache path (typically \\Proto-11\MSXML_Cache )
-        Dim strMSXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
-        Dim diCacheFolder = New DirectoryInfo(strMSXMLCacheFolderPath)
-
-        If Not diCacheFolder.Exists Then
-            LogMessage("Warning: Cache folder not found: " & strMSXMLCacheFolderPath)
-            Return String.Empty
-        End If
-
-        ' Determine the YearQuarter code for this dataset
-        Dim strDatasetStoragePath As String = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
-        If String.IsNullOrEmpty(strDatasetStoragePath) AndAlso (m_AuroraAvailable OrElse MyEMSLAvailable) Then
-            strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
-        End If
-
-        Dim strYearQuarter As String = GetDatasetYearQuarter(strDatasetStoragePath)
-
-        Dim lstMatchingFiles = New List(Of FileInfo)
-
-        If String.IsNullOrEmpty(strYearQuarter) Then
-
-            ' Perform an exhaustive recursive search of the MSXML file cache
-            Dim lstFilesToAppend = diCacheFolder.GetFiles(MsXMLFilename, SearchOption.AllDirectories)
-
-            If lstFilesToAppend.Count = 0 AndAlso msXmlType = MSXMLOutputTypeConstants.mzXML Then
-                ' Older .mzXML files were not gzipped
-                lstFilesToAppend = diCacheFolder.GetFiles(m_DatasetName & DOT_MZXML_EXTENSION, SearchOption.AllDirectories)
-            End If
-
-            Dim query = (From item In lstFilesToAppend Select item Order By item.LastWriteTimeUtc Descending).Take(1)
-
-            lstMatchingFiles.AddRange(query)
-
-        Else
-
-            ' Look for the file in the top level subfolders of the MSXML file cache
-            For Each diToolFolder In diCacheFolder.GetDirectories()
-                Dim lstSubFolders = diToolFolder.GetDirectories(strYearQuarter)
-
-                If lstSubFolders.Count > 0 Then
-
-                    Dim lstFilesToAppend = lstSubFolders.First.GetFiles(MsXMLFilename, SearchOption.TopDirectoryOnly)
-                    If lstFilesToAppend.Count = 0 AndAlso msXmlType = MSXMLOutputTypeConstants.mzXML Then
-                        ' Older .mzXML files were not gzipped
-                        lstFilesToAppend = lstSubFolders.First.GetFiles(m_DatasetName & DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly)
-                    End If
-
-                    Dim query = (From item In lstFilesToAppend Select item Order By item.LastWriteTimeUtc Descending).Take(1)
-                    lstMatchingFiles.AddRange(query)
-
-                End If
-
-            Next
-
-        End If
-
-        If lstMatchingFiles.Count = 0 Then
-            Return String.Empty
-        End If
-
-        ' One or more matches were found; select the newest one 
-        Dim sortQuery = (From item In lstMatchingFiles Select item Order By item.LastWriteTimeUtc Descending).Take(1)
-        Dim matchedFilePath = sortQuery.First().FullName
-
-        ' Confirm that the file has a .hashcheck file and that the information in the .hashcheck file matches the file
-        Dim errorMessage As String = String.Empty
-        strHashcheckFilePath = matchedFilePath & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-
-        If clsGlobal.ValidateFileVsHashcheck(matchedFilePath, strHashcheckFilePath, errorMessage) Then
-            Return matchedFilePath
-        Else
-            LogMessage("Warning: " & errorMessage)
-            Return String.Empty
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Determines the most appropriate folder to use to obtain dataset files from
-    ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-    ''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-    ''' </summary>
-    ''' <param name="DSName">Name of the dataset</param>
-    ''' <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-    Protected Function FindValidFolder(DSName As String, FileNameToFind As String) As String
-
-        Return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=False)
-
-    End Function
-
-    ''' <summary>
-    ''' Determines the most appropriate folder to use to obtain dataset files from
-    ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-    ''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-    ''' </summary>
-    ''' <param name="DSName">Name of the dataset</param>
-    ''' <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-    Protected Function FindValidFolder(
-      DSName As String,
-      FileNameToFind As String,
-      RetrievingInstrumentDataFolder As Boolean) As String
-
-        Const folderNameToFind = ""
-        Return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder)
-
-    End Function
-
-
-    ''' <summary>
-    ''' Determines the most appropriate folder to use to obtain dataset files from
-    ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-    ''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-    ''' </summary>
-    ''' <param name="DSName">Name of the dataset</param>
-    ''' <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-    Protected Function FindValidFolder(
-      DSName As String,
-      FileNameToFind As String,
-      RetrievingInstrumentDataFolder As Boolean,
-      assumeUnpurged As Boolean) As String
-
-        Const folderNameToFind = ""
-        Dim validFolderFound As Boolean
-        Return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True,
-                               retrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder, validFolderFound:=validFolderFound,
-                               assumeUnpurged:=assumeUnpurged)
-
-    End Function
-
-    ''' <summary>
-    ''' Determines the most appropriate folder to use to obtain dataset files from
-    ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-    ''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-    ''' </summary>
-    ''' <param name="DSName">Name of the dataset</param>
-    ''' <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-    Protected Function FindValidFolder(
-      DSName As String,
-      FileNameToFind As String,
-      FolderNameToFind As String) As String
-
-        Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=False)
-
-    End Function
-
-    ''' <summary>
-    ''' Determines the most appropriate folder to use to obtain dataset files from
-    ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-    ''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-    ''' </summary>
-    ''' <param name="DSName">Name of the dataset</param>
-    ''' <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-    ''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-    Protected Function FindValidFolder(
-      DSName As String,
-      FileNameToFind As String,
-      FolderNameToFind As String,
-      RetrievingInstrumentDataFolder As Boolean) As String
-
-        Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT, logFolderNotFound:=True, retrievingInstrumentDataFolder:=RetrievingInstrumentDataFolder)
-
-    End Function
-
-    ''' <summary>
-    ''' Determines the most appropriate folder to use to obtain dataset files from
-    ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-    ''' If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-    ''' </summary>
-    ''' <param name="DSName">Name of the dataset</param>
-    ''' <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-    ''' <param name="MaxRetryCount">Maximum number of attempts</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-    Protected Function FindValidFolder(
-      DSName As String,
-      FileNameToFind As String,
-      FolderNameToFind As String,
-      MaxRetryCount As Integer) As String
-
-        Return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount, logFolderNotFound:=True, retrievingInstrumentDataFolder:=False)
-
-    End Function
-
-    ''' <summary>
-    ''' Determines the most appropriate folder to use to obtain dataset files from
-    ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-    ''' If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
-    ''' </summary>
-    ''' <param name="DSName">Name of the dataset</param>
-    ''' <param name="FileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="FolderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-    ''' <param name="MaxRetryCount">Maximum number of attempts</param>
-    ''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
-    ''' <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
-    Protected Function FindValidFolder(
-      dsName As String,
-      fileNameToFind As String,
-      folderNameToFind As String,
-      maxRetryCount As Integer,
-      logFolderNotFound As Boolean,
-      retrievingInstrumentDataFolder As Boolean) As String
-
-        Dim validFolderFound As Boolean
-        Return FindValidFolder(dsName, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound, retrievingInstrumentDataFolder, validFolderFound, assumeUnpurged:=False)
-
-    End Function
-
-    ''' <summary>
-    ''' Determines the most appropriate folder to use to obtain dataset files from
-    ''' Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-    ''' If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
-    ''' </summary>
-    ''' <param name="dsName">Name of the dataset</param>
-    ''' <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-    ''' <param name="maxAttempts">Maximum number of attempts</param>
-    ''' <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
-    ''' <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-    ''' <param name="validFolderFound">Output parameter: True if a valid folder is ultimately found, otherwise false</param>
-    ''' <param name="assumeUnpurged">When true, this function returns the path to the dataset folder on the storage server</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
-    Public Function FindValidFolder(
-      dsName As String,
-      fileNameToFind As String,
-      folderNameToFind As String,
-      maxAttempts As Integer,
-      logFolderNotFound As Boolean,
-      retrievingInstrumentDataFolder As Boolean,
-      <Out()> ByRef validFolderFound As Boolean,
-      assumeUnpurged As Boolean) As String
-
-        Dim strBestPath As String = String.Empty
-
-        ' The tuples in this list are the path to check, and True if we should warn that the folder was not found
-        Dim lstPathsToCheck = New List(Of Tuple(Of String, Boolean))
-
-        Dim blnValidFolder As Boolean
-        Dim blnFileNotFoundEncountered As Boolean
-
-        validFolderFound = False
-
-        Try
-            If fileNameToFind Is Nothing Then fileNameToFind = String.Empty
-            If folderNameToFind Is Nothing Then folderNameToFind = String.Empty
-
-            If assumeUnpurged Then
-                maxAttempts = 1
-                logFolderNotFound = False
-            End If
-
-            Dim instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0)
-
-            If retrievingInstrumentDataFolder AndAlso instrumentDataPurged <> 0 AndAlso Not assumeUnpurged Then
-                ' The instrument data is purged and we're retrieving instrument data
-                ' Skip the primary dataset folder since the primary data files were most likely purged
-            Else
-                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName), True)
-            End If
-
-            If MyEMSLAvailable AndAlso Not assumeUnpurged Then
-                ' \\MyEMSL
-                AddPathToCheck(lstPathsToCheck, MYEMSL_PATH_FLAG, False)
-            End If
-
-            ' Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
-#If DISABLE_MYEMSL_SEARCH Then
-            If m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe") Then
-                lstPathsToCheck.Remove(MYEMSL_PATH_FLAG)
-            End If
-#End If
-            If (m_AuroraAvailable OrElse Not MyEMSLAvailable) AndAlso Not assumeUnpurged Then
-                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), True)
-            End If
-
-            AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName), False)
-
-            blnFileNotFoundEncountered = False
-
-            strBestPath = lstPathsToCheck.First().Item1
-            For Each pathToCheck In lstPathsToCheck
-                Try
-                    If m_DebugLevel > 3 Then
-                        Dim Msg As String = "FindValidDatasetFolder, Looking for folder " + pathToCheck.Item1
-                        LogDebugMessage(Msg)
-                    End If
-
-                    If pathToCheck.Item1 = MYEMSL_PATH_FLAG Then
-
-                        Const recurseMyEMSL = False
-                        blnValidFolder = FindValidFolderMyEMSL(dsName, fileNameToFind, folderNameToFind, False, recurseMyEMSL)
-
-                    Else
-
-                        blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts,
-                                                            logFolderNotFound And pathToCheck.Item2)
-
-                        If Not blnValidFolder AndAlso Not String.IsNullOrEmpty(fileNameToFind) AndAlso Not String.IsNullOrEmpty(folderNameToFind) Then
-                            ' Look for a subfolder named folderNameToFind that contains file fileNameToFind
-                            Dim pathToCheckAlt = Path.Combine(pathToCheck.Item1, folderNameToFind)
-                            blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, String.Empty, maxAttempts,
-                                                                logFolderNotFound And pathToCheck.Item2)
-
-                            If blnValidFolder Then
-                                pathToCheck = New Tuple(Of String, Boolean)(pathToCheckAlt, pathToCheck.Item2)
-                            End If
-                        End If
-
-                    End If
-
-                    If blnValidFolder Then
-                        strBestPath = String.Copy(pathToCheck.Item1)
-                    Else
-                        blnFileNotFoundEncountered = True
-                    End If
-
-                    If blnValidFolder Then Exit For
-
-                Catch ex As Exception
-                    LogError("Exception looking for folder: " + pathToCheck.Item1, ex)
-                End Try
-            Next
-
-            If blnValidFolder Then
-
-                validFolderFound = True
-
-                If m_DebugLevel >= 4 OrElse m_DebugLevel >= 1 AndAlso blnFileNotFoundEncountered Then
-                    Dim Msg As String = "FindValidFolder, Valid dataset folder has been found:  " + strBestPath
-                    If fileNameToFind.Length > 0 Then
-                        Msg &= " (matched file " + fileNameToFind + ")"
-                    End If
-                    If folderNameToFind.Length > 0 Then
-                        Msg &= " (matched folder " + folderNameToFind + ")"
-                    End If
-                    LogDebugMessage(Msg)
-                End If
-
-            Else
-                Dim folderNotFoundMessage = "Could not find a valid dataset folder"
-                If fileNameToFind.Length > 0 Then
-                    ' Could not find a valid dataset folder containing file
-                    folderNotFoundMessage &= " containing file " + fileNameToFind
-                End If
-
-                If logFolderNotFound AndAlso m_DebugLevel >= 1 Then
-                    If assumeUnpurged Then
-                        LogMessage(folderNotFoundMessage)
-                    Else
-                        Dim msg As String = folderNotFoundMessage + ", Job " + m_jobParams.GetParam("StepParameters", "Job") + ", Dataset " + dsName
-                        LogWarning(msg)
-                    End If
-                End If
-
-                If Not assumeUnpurged Then
-                    m_message = folderNotFoundMessage
-                End If
-            End If
-
-        Catch ex As Exception
-            LogError("Exception looking for a valid dataset folder for dataset " + dsName, ex)
-            m_message = "Exception looking for a valid dataset folder"
-        End Try
-
-        Return strBestPath
-
-    End Function
-
-    ''' <summary>
-    ''' Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
-    ''' </summary>
-    ''' <param name="dataset">Dataset name</param>
-    ''' <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="subFolderName">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-    ''' <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
-    ''' <param name="recurse">True to look for fileNameToFind in all subfolders of a dataset; false to only look in the primary dataset folder</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
-    Private Function FindValidFolderMyEMSL(
-      dataset As String,
-      fileNameToFind As String,
-      subFolderName As String,
-      logFolderNotFound As Boolean,
-      recurse As Boolean) As Boolean
-
-        If String.IsNullOrEmpty(fileNameToFind) Then fileNameToFind = "*"
-
-        If m_DebugLevel > 3 Then
-            LogDebugMessage("FindValidFolderMyEMSL, querying MyEMSL for this dataset's files")
-        End If
-
-        Dim matchingMyEMSLFiles As List(Of MyEMSLReader.DatasetFolderOrFileInfo)
-
-        If String.IsNullOrEmpty(subFolderName) Then
-            ' Simply look for the file
-            matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, String.Empty, dataset, recurse)
-        Else
-            ' First look for the subfolder
-            ' If there are multiple matching subfolders, then choose the newest one
-            ' The entries in matchingMyEMSLFiles will be folder entries where the "Filename" field is the folder name while the "SubDirPath" field is any parent folders above the found folder
-            matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, subFolderName, dataset, recurse)
-        End If
-
-        If matchingMyEMSLFiles.Count > 0 Then
-            Return True
-        Else
-            If logFolderNotFound Then
-                Dim msg As String = "MyEMSL does not have any files for dataset " & dataset
-                If Not String.IsNullOrEmpty(fileNameToFind) Then
-                    msg &= " and file " & fileNameToFind
-                End If
-
-                If Not String.IsNullOrEmpty(subFolderName) Then
-                    msg &= " and subfolder " & subFolderName
-                End If
-
-                LogWarning(msg)
-            End If
-            Return False
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
-    ''' </summary>
-    ''' <param name="PathToCheck">Path to examine</param>
-    ''' <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-    ''' <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-    ''' <param name="maxAttempts">Maximum number of attempts</param>
-    ''' <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
-    ''' <returns>Path to the most appropriate dataset folder</returns>
-    ''' <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
-    Private Function FindValidFolderUNC(
-      pathToCheck As String,
-      fileNameToFind As String,
-      folderNameToFind As String,
-      maxAttempts As Integer,
-      logFolderNotFound As Boolean) As Boolean
-
-        ' First check whether this folder exists
-        ' Using a 1 second holdoff between retries
-        If Not FolderExistsWithRetry(pathToCheck, 1, maxAttempts, logFolderNotFound) Then
-            Return False
-        End If
-
-        ' Folder was found
-        Dim blnValidFolder = True
-
-        If m_DebugLevel > 3 Then
-            LogDebugMessage("FindValidFolderUNC, Folder found " + pathToCheck)
-        End If
-
-        ' Optionally look for fileNameToFind
-        If Not String.IsNullOrEmpty(fileNameToFind) Then
-
-            If fileNameToFind.Contains("*") Then
-                If m_DebugLevel > 3 Then
-                    LogDebugMessage("FindValidFolderUNC, Looking for files matching " + fileNameToFind)
-                End If
-
-                ' Wildcard in the name
-                ' Look for any files matching fileNameToFind
-                Dim objFolderInfo = New DirectoryInfo(pathToCheck)
-
-                ' Do not recurse here
-                ' If the dataset folder does not contain a target file, and if folderNameToFind is defined, 
-                ' FindValidFolder will append folderNameToFind to the dataset folder path and call this method again
-                If objFolderInfo.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length = 0 Then
-                    blnValidFolder = False
-                End If
-            Else
-                If m_DebugLevel > 3 Then
-                    LogDebugMessage("FindValidFolderUNC, Looking for file named " + fileNameToFind)
-                End If
-
-                ' Look for file fileNameToFind in this folder
-                ' Note: Using a 1 second holdoff between retries
-                Dim fileFound = FileExistsWithRetry(
-                        Path.Combine(pathToCheck, fileNameToFind),
-                        retryHoldoffSeconds:=1,
-                        eLogMsgTypeIfNotFound:=clsLogTools.LogLevels.WARN,
-                        maxAttempts:=maxAttempts)
-
-                If Not fileFound Then
-                    blnValidFolder = False
-                End If
-            End If
-        End If
-
-        ' Optionally look for folderNameToFind
-        If blnValidFolder AndAlso Not String.IsNullOrEmpty(folderNameToFind) Then
-            If folderNameToFind.Contains("*") Then
-                If m_DebugLevel > 3 Then
-                    LogDebugMessage("FindValidFolderUNC, Looking for folders matching " + folderNameToFind)
-                End If
-
-                ' Wildcard in the name
-                ' Look for any folders matching folderNameToFind
-                Dim objFolderInfo = New DirectoryInfo(pathToCheck)
-
-                If objFolderInfo.GetDirectories(folderNameToFind).Length = 0 Then
-                    blnValidFolder = False
-                End If
-            Else
-                If m_DebugLevel > 3 Then
-                    LogDebugMessage("FindValidFolderUNC, Looking for folder named " + folderNameToFind)
-                End If
-
-                ' Look for folder folderNameToFind in this folder
-                ' Note: Using a 1 second holdoff between retries
-                If Not FolderExistsWithRetry(Path.Combine(pathToCheck, folderNameToFind), 1, maxAttempts, logFolderNotFound) Then
-                    blnValidFolder = False
-                End If
-            End If
-        End If
-
-        Return blnValidFolder
-
-    End Function
-
-    ' Obsolete code:
-    '
-    ' ''' <summary>
-    ' ''' Test for folder existence with a retry loop in case of temporary glitch
-    ' ''' </summary>
-    ' ''' <param name="FolderName">Folder name to look for</param>
-    'Private Function FolderExistsWithRetry(FolderName As String) As Boolean
-    '    Return FolderExistsWithRetry(FolderName, DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS, DEFAULT_MAX_RETRY_COUNT, True)
-    'End Function
-
-    ' ''' <summary>
-    ' ''' Test for folder existence with a retry loop in case of temporary glitch
-    ' ''' </summary>
-    ' ''' <param name="FolderName">Folder name to look for</param>
-    ' ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
-    'Private Function FolderExistsWithRetry(FolderName As String, RetryHoldoffSeconds As Integer) As Boolean
-    '    Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, DEFAULT_MAX_RETRY_COUNT, True)
-    'End Function
-
-    ' ''' <summary>
-    ' ''' Test for folder existence with a retry loop in case of temporary glitch
-    ' ''' </summary>
-    ' ''' <param name="FolderName">Folder name to look for</param>
-    ' ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
-    ' ''' <param name="maxAttempts">Maximum number of attempts</param>
-    'Private Function FolderExistsWithRetry(FolderName As String, RetryHoldoffSeconds As Integer, maxAttempts As Integer) As Boolean
-    '    Return FolderExistsWithRetry(FolderName, RetryHoldoffSeconds, maxAttempts, True)
-    'End Function
-
-
-    ''' <summary>
-    ''' Test for folder existence with a retry loop in case of temporary glitch
-    ''' </summary>
-    ''' <param name="FolderName">Folder name to look for</param>
-    ''' <param name="RetryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
-    ''' <param name="maxAttempts">Maximum number of attempts</param>
-    ''' <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function FolderExistsWithRetry(
-      FolderName As String,
-      RetryHoldoffSeconds As Integer,
-      maxAttempts As Integer,
-      LogFolderNotFound As Boolean) As Boolean
-
-        If maxAttempts < 1 Then maxAttempts = 1
-        If maxAttempts > 10 Then maxAttempts = 10
-        Dim retryCount = maxAttempts
-
-        If RetryHoldoffSeconds <= 0 Then RetryHoldoffSeconds = DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS
-        If RetryHoldoffSeconds > 600 Then RetryHoldoffSeconds = 600
-
-        While retryCount > 0
-            If Directory.Exists(FolderName) Then
-                Return True
-            Else
-                If LogFolderNotFound Then
-                    If m_DebugLevel >= 2 OrElse m_DebugLevel >= 1 AndAlso retryCount = 1 Then
-                        Dim errMsg As String = "Folder " + FolderName + " not found. Retry count = " + retryCount.ToString
-                        LogWarning(errMsg)
-                    End If
-                End If
-                retryCount -= 1
-                If retryCount <= 0 Then
-                    Return False
-                Else
-                    Thread.Sleep(New TimeSpan(0, 0, RetryHoldoffSeconds))     'Wait RetryHoldoffSeconds seconds before retrying
-                End If
-            End If
-        End While
-
-        Return False
-
-    End Function
-
-
-    ''' <summary>
-    ''' Creates the _ScanStats.txt file for this job's dataset
-    ''' </summary>
-    ''' <returns>True if success, false if a problem</returns>
-    ''' <remarks>Only valid for Thermo .Raw files and .UIMF files.  Will delete the .Raw (or .UIMF) after creating the ScanStats file</remarks>
-    Protected Function GenerateScanStatsFile() As Boolean
-
-        Const deleteRawDataFile = True
-        Return GenerateScanStatsFile(deleteRawDataFile)
-
-    End Function
-
-    ''' <summary>
-    ''' Creates the _ScanStats.txt file for this job's dataset
-    ''' </summary>
-    ''' <param name="deleteRawDataFile">True to delete the .raw (or .uimf) file after creating the ScanStats file </param>
-    ''' <returns>True if success, false if a problem</returns>
-    ''' <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
-    Protected Function GenerateScanStatsFile(deleteRawDataFile As Boolean) As Boolean
-
-        Dim strRawDataType = m_jobParams.GetParam("RawDataType")
-        Dim intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0)
-
-        Dim strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir")
-        If String.IsNullOrEmpty(strMSFileInfoScannerDir) Then
-            LogError("Manager parameter 'MSFileInfoScannerDir' is not defined (GenerateScanStatsFile)")
-            Return False
-        End If
-
-        Dim strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll")
-        If Not File.Exists(strMSFileInfoScannerDLLPath) Then
-            LogError("File Not Found (GenerateScanStatsFile): " + strMSFileInfoScannerDLLPath)
-            Return False
-        End If
-
-        Dim strInputFilePath As String
-
-        ' Confirm that this dataset is a Thermo .Raw file or a .UIMF file
-        Select Case GetRawDataType(strRawDataType)
-            Case eRawDataTypeConstants.ThermoRawFile
-                strInputFilePath = m_DatasetName + DOT_RAW_EXTENSION
-            Case eRawDataTypeConstants.UIMF
-                strInputFilePath = m_DatasetName + DOT_UIMF_EXTENSION
-            Case Else
-                LogError("Invalid dataset type for auto-generating ScanStats.txt file: " + strRawDataType)
-                Return False
-        End Select
-
-        strInputFilePath = Path.Combine(m_WorkingDir, strInputFilePath)
-
-        If Not File.Exists(strInputFilePath) Then
-            If Not RetrieveSpectra(strRawDataType) Then
-                Dim strExtraMsg As String = m_message
-                m_message = "Error retrieving spectra file"
-                If Not String.IsNullOrWhiteSpace(strExtraMsg) Then
-                    m_message &= "; " + strExtraMsg
-                End If
-                LogMessage(m_message, 0, True)
-                Return False
-            End If
-
-            If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                Return False
-            End If
-        End If
-
-        ' Make sure the raw data file does not get copied to the results folder
-        m_jobParams.AddResultFileToSkip(Path.GetFileName(strInputFilePath))
-
-        Dim objScanStatsGenerator = New clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel)
-
-        ' Create the _ScanStats.txt and _ScanStatsEx.txt files
-        Dim blnSuccess = objScanStatsGenerator.GenerateScanStatsFile(strInputFilePath, m_WorkingDir, intDatasetID)
-
-        If blnSuccess Then
-            If m_DebugLevel >= 1 Then
-                LogMessage("Generated ScanStats file using " + strInputFilePath)
-            End If
-
-            Thread.Sleep(125)
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-            If deleteRawDataFile Then
-                Try
-                    File.Delete(strInputFilePath)
-                Catch ex As Exception
-                    ' Ignore errors here
-                End Try
-            End If
-
-        Else
-            LogError("Error generating ScanStats files with clsScanStatsGenerator", objScanStatsGenerator.ErrorMessage)
-            If objScanStatsGenerator.MSFileInfoScannerErrorCount > 0 Then
-                LogMessage("MSFileInfoScanner encountered " + objScanStatsGenerator.MSFileInfoScannerErrorCount.ToString() + " errors")
-            End If
-        End If
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Split apart coordinates that look like "R00X438Y093" into R, X, and Y
-    ''' </summary>
-    ''' <param name="strCoord"></param>
-    ''' <param name="R"></param>
-    ''' <param name="X"></param>
-    ''' <param name="Y"></param>
-    ''' <returns>True if success, false otherwise</returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetBrukerImagingFileCoords(
-      strCoord As String,
-      <Out()> ByRef R As Integer,
-      <Out()> ByRef X As Integer,
-      <Out()> ByRef Y As Integer) As Boolean
-
-        Static reRegExRXY As Text.RegularExpressions.Regex
-        Static reRegExRX As Text.RegularExpressions.Regex
-
-        Dim reMatch As Text.RegularExpressions.Match
-        Dim blnSuccess As Boolean
-
-        If reRegExRXY Is Nothing Then
-            reRegExRXY = New Text.RegularExpressions.Regex("R(\d+)X(\d+)Y(\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-            reRegExRX = New Text.RegularExpressions.Regex("R(\d+)X(\d+)", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
-        End If
-
-        ' Try to match names like R00X438Y093
-        reMatch = reRegExRXY.Match(strCoord)
-
-        blnSuccess = False
-
-        If reMatch.Success Then
-            ' Match succeeded; extract out the coordinates
-            If Integer.TryParse(reMatch.Groups.Item(1).Value, R) Then blnSuccess = True
-            If Integer.TryParse(reMatch.Groups.Item(2).Value, X) Then blnSuccess = True
-            Integer.TryParse(reMatch.Groups.Item(3).Value, Y)
-
-        Else
-            ' Try to match names like R00X438
-            reMatch = reRegExRX.Match(strCoord)
-
-            If reMatch.Success Then
-                If Integer.TryParse(reMatch.Groups.Item(1).Value, R) Then blnSuccess = True
-                If Integer.TryParse(reMatch.Groups.Item(2).Value, X) Then blnSuccess = True
-                Y = 0
-            Else
-                R = 0
-                X = 0
-                Y = 0
-            End If
-        End If
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for job parameters BrukerMALDI_Imaging_StartSectionX and BrukerMALDI_Imaging_EndSectionX
-    ''' If defined, then populates StartSectionX and EndSectionX with the Start and End X values to filter on
-    ''' </summary>
-    ''' <param name="objJobParams"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetBrukerImagingSectionFilter(
-      objJobParams As IJobParams,
-      <Out()> ByRef StartSectionX As Integer,
-      <Out()> ByRef EndSectionX As Integer) As Boolean
-
-        Dim blnApplySectionFilter As Boolean
-
-        Dim strParam As String
-
-        blnApplySectionFilter = False
-        StartSectionX = -1
-        EndSectionX = Int32.MaxValue
-
-        strParam = objJobParams.GetParam("MALDI_Imaging_StartSectionX")
-        If Not String.IsNullOrEmpty(strParam) Then
-            If Integer.TryParse(strParam, StartSectionX) Then
-                blnApplySectionFilter = True
-            End If
-        End If
-
-        strParam = objJobParams.GetParam("MALDI_Imaging_EndSectionX")
-        If Not String.IsNullOrEmpty(strParam) Then
-            If Integer.TryParse(strParam, EndSectionX) Then
-                blnApplySectionFilter = True
-            End If
-        End If
-
-        Return blnApplySectionFilter
-
-    End Function
-
-    Protected Function GetCurrentDatasetAndJobInfo() As clsDataPackageJobInfo
-
-        Dim jobNumber = m_jobParams.GetJobParameter("StepParameters", "Job", 0)
-        Dim dataset = m_jobParams.GetJobParameter("JobParameters", "DatasetNum", m_DatasetName)
-
-        Dim jobInfo = New clsDataPackageJobInfo(jobNumber, dataset)
-
-        With jobInfo
-            .DatasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0)
-
-            .Instrument = m_jobParams.GetJobParameter("JobParameters", "Instrument", String.Empty)
-            .InstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
-
-            .Experiment = m_jobParams.GetJobParameter("JobParameters", "Experiment", String.Empty)
-            .Experiment_Reason = String.Empty
-            .Experiment_Comment = String.Empty
-            .Experiment_Organism = String.Empty
-            .Experiment_NEWT_ID = 0
-            .Experiment_NEWT_Name = String.Empty
-
-            .Tool = m_jobParams.GetJobParameter("JobParameters", "ToolName", String.Empty)
-            .NumberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0)
-
-            .ResultType = m_jobParams.GetJobParameter("JobParameters", "ResultType", String.Empty)
-            .SettingsFileName = m_jobParams.GetJobParameter("JobParameters", "SettingsFileName", String.Empty)
-
-            .ParameterFileName = m_jobParams.GetJobParameter("PeptideSearch", "ParmFileName", String.Empty)
-
-            .LegacyFastaFileName = m_jobParams.GetJobParameter("PeptideSearch", "legacyFastaFileName", String.Empty)
-            .OrganismDBName = String.Copy(.LegacyFastaFileName)
-
-            .ProteinCollectionList = m_jobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", String.Empty)
-            .ProteinOptions = m_jobParams.GetJobParameter("PeptideSearch", "ProteinOptions", String.Empty)
-
-            .ServerStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetStoragePath", String.Empty)
-            .ArchiveStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetArchivePath", String.Empty)
-            .ResultsFolderName = m_jobParams.GetJobParameter("JobParameters", "inputFolderName", String.Empty)
-            .DatasetFolderName = m_jobParams.GetJobParameter("JobParameters", "DatasetFolderName", String.Empty)
-            .SharedResultsFolder = m_jobParams.GetJobParameter("JobParameters", "SharedResultsFolders", String.Empty)
-            .RawDataType = m_jobParams.GetJobParameter("JobParameters", "RawDataType", String.Empty)
-        End With
-
-        Return jobInfo
-
-    End Function
-
-    ''' <summary>
-    ''' Lookups up the storage path for a given data package
-    ''' </summary>
-    ''' <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
-    ''' <param name="DataPackageID">Data Package ID</param>
-    ''' <returns>Storage path if successful, empty path if an error or unknown data package</returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetDataPackageStoragePath(connectionString As String, dataPackageID As Integer) As String
-
-        'Requests Dataset information from a data package
-        Const RETRY_COUNT As Short = 3
-
-        Dim sqlStr = New Text.StringBuilder
-
-        sqlStr.Append("Select [Share Path] AS StoragePath ")
-        sqlStr.Append("From V_DMS_Data_Packages ")
-        sqlStr.Append("Where ID = " & dataPackageID.ToString())
-
-        Dim resultSet As DataTable = Nothing
-
-        ' Get a table to hold the results of the query
-        Dim success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "GetDataPackageStoragePath", RETRY_COUNT, resultSet)
-
-        If Not success Then
-            Dim errorMessage = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database"
-            ' Simulate call to LogError() since this is a shared method
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-            resultSet.Dispose()
-            Return String.Empty
-        End If
-
-        ' Verify at least one row returned
-        If resultSet.Rows.Count < 1 Then
-            ' No data was returned
-            ' Log an error
-
-            Dim errorMessage = "GetDataPackageStoragePath; Data package not found: " & dataPackageID.ToString()
-            ' Simulate call to LogError() since this is a shared method
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-            Return String.Empty
-        Else
-            Dim curRow As DataRow = resultSet.Rows(0)
-
-            Dim storagePath = clsGlobal.DbCStr(curRow(0))
-
-            resultSet.Dispose()
-            Return storagePath
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Examines the folder tree in strFolderPath to find the a folder with a name like 2013_2
-    ''' </summary>
-    ''' <param name="strFolderPath"></param>
-    ''' <returns>Matching folder name if found, otherwise an empty string</returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetDatasetYearQuarter(strFolderPath As String) As String
-
-        If String.IsNullOrEmpty(strFolderPath) Then
-            Return String.Empty
-        End If
-
-        ' RegEx to find the year_quarter folder name 
-        ' Valid matches include: 2014_1, 2014_01, 2014_4
-        Dim reYearQuarter = New Text.RegularExpressions.Regex("^[0-9]{4}_0*[1-4]$", Text.RegularExpressions.RegexOptions.Compiled)
-        Dim reMatch As Text.RegularExpressions.Match
-
-        ' Split strFolderPath on the path separator
-        Dim lstFolders = strFolderPath.Split(Path.DirectorySeparatorChar).ToList()
-        lstFolders.Reverse()
-
-        For Each strFolder As String In lstFolders
-            reMatch = reYearQuarter.Match(strFolder)
-            If reMatch.Success Then
-                Return reMatch.Value
-            End If
-        Next
-
-        Return String.Empty
-
-    End Function
-
-    ''' <summary>
-    ''' Examine the fasta file to determine the fraction of the proteins that are decoy (reverse) proteins
-    ''' </summary>
-    ''' <param name="fiFastaFile">FASTA file to examine</param>
-    ''' <param name="proteinCount">Output parameter: total protein count</param>
-    ''' <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
-    ''' <remarks>Decoy proteins start with Reversed_</remarks>
-    Public Shared Function GetDecoyFastaCompositionStats(
-      fiFastaFile As FileInfo,
-      <Out()> ByRef proteinCount As Integer) As Double
-
-        Dim decoyProteinPrefix = GetDefaultDecoyPrefixes().First()
-        Return GetDecoyFastaCompositionStats(fiFastaFile, decoyProteinPrefix, proteinCount)
-
-    End Function
-
-    ''' <summary>
-    ''' Examine the fasta file to determine the fraction of the proteins that are decoy (reverse) proteins
-    ''' </summary>
-    ''' <param name="fiFastaFile">FASTA file to examine</param>
-    ''' <param name="proteinCount">Output parameter: total protein count</param>
-    ''' <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
-    ''' <remarks>Decoy proteins start with decoyProteinPrefix</remarks>
-    Public Shared Function GetDecoyFastaCompositionStats(
-      fiFastaFile As FileInfo,
-      decoyProteinPrefix As String,
-      <Out()> ByRef proteinCount As Integer) As Double
-
-        ' Look for protein names that look like:
-        ' >decoyProteinPrefix
-        ' where
-        ' decoyProteinPrefix is typically XXX. or XXX_ or Reversed_
-
-        Dim prefixToFind = ">" & decoyProteinPrefix
-        Dim forwardProteinCount = 0
-        Dim reverseProteinCount = 0
-
-        Using srFastaFile = New StreamReader(New FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            While Not srFastaFile.EndOfStream
-                Dim dataLine = srFastaFile.ReadLine()
-                If String.IsNullOrWhiteSpace(dataLine) Then
-                    Continue While
-                End If
-
-                If dataLine.StartsWith(">") Then
-                    ' Protein header line found
-                    If dataLine.StartsWith(prefixToFind) Then
-                        reverseProteinCount += 1
-                    Else
-                        forwardProteinCount += 1
-                    End If
-                End If
-            End While
-        End Using
-
-        Dim fractionDecoy As Double = 0
-
-        proteinCount = forwardProteinCount + reverseProteinCount
-        If proteinCount > 0 Then
-            fractionDecoy = reverseProteinCount / CDbl(proteinCount)
-        End If
-
-        Return fractionDecoy
-
-    End Function
-
-    Public Shared Function GetDefaultDecoyPrefixes() As List(Of String)
-
-        ' Decoy proteins created by MSGF+ start with XXX_
-        ' Decoy proteins created by DMS start with Reversed_
-        Dim decoyPrefixes = New List(Of String) From {
-          "Reversed_",
-          "XXX_",
-          "XXX:"}
-
-        Return decoyPrefixes
-
-    End Function
-
-    ''' <summary>
-    ''' Look for a JobParameters file from the previous job step
-    ''' If found, copy to the working directory, naming in JobParameters_JobNum_PreviousStep.xml
-    ''' </summary>
-    ''' <returns>True if success, false if an error</returns>
-    Private Function GetExistingJobParametersFile() As Boolean
-
-        Try
-            Dim stepNum = m_jobParams.GetJobParameter("StepParameters", "Step", 1)
-            If stepNum = 1 Then
-                ' This is the first step; nothing to retrieve
-                Return True
-            End If
-
-            Dim transferFolderPath = GetTransferFolderPathForJobStep(useInputFolder:=True)
-            If String.IsNullOrEmpty(transferFolderPath) Then
-                ' Transfer folder parameter is empty; nothing to retrieve
-            End If
-
-            ' Construct the filename, for example JobParameters_1394245.xml
-            Dim jobParametersFilename = clsAnalysisJob.JobParametersFilename(m_JobNum)
-            Dim sourceFile = New FileInfo(Path.Combine(transferFolderPath, jobParametersFilename))
-
-            If Not sourceFile.Exists Then
-                ' File not found; nothing to copy
-                Return True
-            End If
-
-            ' Copy the file, renaming to avoid a naming collision
-            Dim destFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(sourceFile.Name) & "_PreviousStep.xml")
-            If CopyFileWithRetry(sourceFile.FullName, destFilePath, overwrite:=True, maxCopyAttempts:=3) Then
-                If m_DebugLevel > 3 Then
-                    LogDebugMessage("GetExistingJobParametersFile, File copied:  " + sourceFile.FullName)
-                End If
-            Else
-                LogError("Error in GetExistingJobParametersFile copying file " + sourceFile.FullName)
-                ' Return false
-            End If
-
-
-            Dim sourceJobParamXMLFile = New FileInfo(destFilePath)
-
-            Dim masterJobParamXMLFile = New FileInfo(Path.Combine(m_WorkingDir, clsAnalysisJob.JobParametersFilename(m_JobNum)))
-
-            If Not sourceJobParamXMLFile.Exists Then
-                ' The file wasn't copied
-                LogError("Job Parameters file from the previous job step was not found at " & sourceJobParamXMLFile.FullName)
-                Return False
-            End If
-
-            If Not masterJobParamXMLFile.Exists Then
-                ' The JobParameters XML file was not found
-                LogError("Job Parameters file not found at " & masterJobParamXMLFile.FullName)
-                Return False
-            End If
-
-            ' Update the JobParameters XML file that was created by this job step to include the information from the previous job steps
-            Dim success = MergeJobParamXMLStepParameters(sourceJobParamXMLFile.FullName, masterJobParamXMLFile.FullName)
-
-            If success Then
-                m_jobParams.AddResultFileToSkip(sourceJobParamXMLFile.Name)
-            End If
-
-            Return success
-
-        Catch ex As Exception
-            LogError("Exception in GetExistingJobParametersFile", ex)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Examine the specified DMS_Temp_Org folder to find the FASTA files and their corresponding .fasta.LastUsed or .hashcheck files
-    ''' </summary>
-    ''' <param name="diOrgDbFolder"></param>
-    ''' <returns>Dictionary of FASTA files, including the last usage date for each</returns>
-    Private Function GetFastaFilesByLastUse(diOrgDbFolder As DirectoryInfo) As Dictionary(Of FileInfo, DateTime)
-
-        ' Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .lastused file)
-        Dim dctFastaFiles = New Dictionary(Of FileInfo, DateTime)
-
-        For Each fiFile In diOrgDbFolder.GetFiles("*.fasta")
-            If Not dctFastaFiles.ContainsKey(fiFile) Then
-                Dim dtLastUsed As DateTime = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc)
-
-                ' Look for a .hashcheck file
-                Dim lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name & "*.hashcheck")
-                If lstHashCheckfiles.Count > 0 Then
-                    dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First.LastWriteTimeUtc)
-                End If
-
-                ' Look for a .LastUsed file
-                Dim lstLastUsedFiles = diOrgDbFolder.GetFiles(fiFile.Name & ".LastUsed")
-                If lstLastUsedFiles.Count > 0 Then
-                    dtLastUsed = DateMax(dtLastUsed, lstLastUsedFiles.First.LastWriteTimeUtc)
-
-                    Try
-                        ' Read the date stored in the file
-                        Using srLastUsedfile = New StreamReader(New FileStream(lstLastUsedFiles.First.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                            If Not srLastUsedfile.EndOfStream Then
-                                Dim strLastUseDate = srLastUsedfile.ReadLine()
-                                Dim dtLastUsedActual As DateTime
-                                If DateTime.TryParse(strLastUseDate, dtLastUsedActual) Then
-                                    dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual)
-                                End If
-                            End If
-                        End Using
-                    Catch ex As Exception
-                        ' Ignore errors here
-                    End Try
-
-                End If
-                dctFastaFiles.Add(fiFile, dtLastUsed)
-            End If
-        Next
-
-        Return dctFastaFiles
-
-    End Function
-
-    ''' <summary>
-    ''' Reports the amount of free memory on this computer (in MB)
-    ''' </summary>
-    ''' <returns>Free memory, in MB</returns>
-    Public Shared Function GetFreeMemoryMB() As Single
-
-        Static mFreeMemoryPerformanceCounter As PerformanceCounter
-
-        Dim sngFreeMemoryMB As Single = 0
-        Dim blnVirtualMachineOnPIC As Boolean = clsGlobal.UsingVirtualMachineOnPIC()
-
-        Try
-            If mFreeMemoryPerformanceCounter Is Nothing Then
-                mFreeMemoryPerformanceCounter = New PerformanceCounter("Memory", "Available MBytes")
-                mFreeMemoryPerformanceCounter.ReadOnly = True
-            End If
-
-            Dim intIterations = 0
-            sngFreeMemoryMB = 0
-            Do While sngFreeMemoryMB < Single.Epsilon AndAlso intIterations <= 3
-                sngFreeMemoryMB = mFreeMemoryPerformanceCounter.NextValue()
-                If sngFreeMemoryMB < Single.Epsilon Then
-                    ' You sometimes have to call .NextValue() several times before it returns a useful number
-                    ' Wait 1 second and then try again
-                    Thread.Sleep(1000)
-                End If
-                intIterations += 1
-            Loop
-
-        Catch ex As Exception
-            ' To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-            ' A possible fix for this is to add the user who is running this process to the "Performance Monitor Users" group in "Local Users and Groups" on the machine showing this error.  
-            ' Alternatively, add the user to the "Administrators" group.
-            ' In either case, you will need to reboot the computer for the change to take effect
-            If Not blnVirtualMachineOnPIC AndAlso Date.Now().Hour = 0 AndAlso Date.Now().Minute <= 30 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Error instantiating the Memory.[Available MBytes] performance counter " &
-                                     "(this message is only logged between 12 am and 12:30 am): " + ex.Message)
-            End If
-        End Try
-
-        Try
-
-            If sngFreeMemoryMB < Single.Epsilon Then
-                ' The Performance counters are still reporting a value of 0 for available memory; use an alternate method
-
-                If blnVirtualMachineOnPIC Then
-                    ' The Memory performance counters are not available on Windows instances running under VMWare on PIC
-                Else
-                    If Date.Now().Hour = 15 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                             "Performance monitor reports 0 MB available; using alternate method: " &
-                                             "Devices.ComputerInfo().AvailablePhysicalMemory " &
-                                             "(this message is only logged between 3:00 pm and 4:00 pm)")
-                    End If
-                End If
-
-                sngFreeMemoryMB = CSng(clsGlobal.BytesToMB(CLng(New Devices.ComputerInfo().AvailablePhysicalMemory)))
-
-            End If
-
-        Catch ex As Exception
-            If Date.Now().Hour = 15 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Error determining available memory using Devices.ComputerInfo().AvailablePhysicalMemory " &
-                                     "(this message is only logged between 3:00 pm and 4:00 pm): " + ex.Message)
-            End If
-        End Try
-
-        Return sngFreeMemoryMB
-
-    End Function
-
-    ''' <summary>
-    ''' Converts the given timespan to the total days, hours, minutes, or seconds as a string
-    ''' </summary>
-    ''' <param name="dtInterval">Timespan to convert</param>
-    ''' <returns>Timespan length in human readable form</returns>
-    ''' <remarks></remarks>
-    Protected Function GetHumanReadableTimeInterval(dtInterval As TimeSpan) As String
-
-        If dtInterval.TotalDays >= 1 Then
-            ' Report Days
-            Return dtInterval.TotalDays.ToString("0.00") + " days"
-        ElseIf dtInterval.TotalHours >= 1 Then
-            ' Report hours
-            Return dtInterval.TotalHours.ToString("0.00") + " hours"
-        ElseIf dtInterval.TotalMinutes >= 1 Then
-            ' Report minutes
-            Return dtInterval.TotalMinutes.ToString("0.00") + " minutes"
-        Else
-            ' Report seconds
-            Return dtInterval.TotalSeconds.ToString("0.0") + " seconds"
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Get the MSXML Cache Folder path that is appropriate for this job
-    ''' </summary>
-    ''' <param name="cacheFolderPathBase"></param>
-    ''' <param name="jobParams"></param>
-    ''' <param name="errorMessage"></param>
-    ''' <returns></returns>
-    ''' <remarks>Uses job parameter OutputFolderName, which should be something like MSXML_Gen_1_120_275966</remarks>
-    Public Shared Function GetMSXmlCacheFolderPath(
-      cacheFolderPathBase As String,
-      jobParams As IJobParams,
-      <Out()> ByRef errorMessage As String) As String
-
-        ' Lookup the output folder; e.g. MSXML_Gen_1_120_275966
-        Dim outputFolderName = jobParams.GetJobParameter("OutputFolderName", String.Empty)
-        If String.IsNullOrEmpty(outputFolderName) Then
-            errorMessage = "OutputFolderName is empty; cannot construct MSXmlCache path"
-            Return String.Empty
-        End If
-
-        Dim msXmlToolNameVersionFolder As String
-        Try
-            msXmlToolNameVersionFolder = GetMSXmlToolNameVersionFolder(outputFolderName)
-        Catch ex As Exception
-            errorMessage = "OutputFolderName is not in the expected form of ToolName_Version_DatasetID (" & outputFolderName & "); cannot construct MSXmlCache path"
-            Return String.Empty
-        End Try
-
-        Return GetMSXmlCacheFolderPath(cacheFolderPathBase, jobParams, msXmlToolNameVersionFolder, errorMessage)
-
-    End Function
-
-    ''' <summary>
-    ''' Get the path to the cache folder; used for retrieving cached .mzML files that are stored in ToolName_Version folders
-    ''' </summary>
-    ''' <param name="cacheFolderPathBase">Cache folder base, e.g. \\Proto-11\MSXML_Cache</param>
-    ''' <param name="jobParams">Job parameters</param>
-    ''' <param name="msXmlToolNameVersionFolder">ToolName_Version folder, e.g. MSXML_Gen_1_93</param>
-    ''' <param name="errorMessage">Output parameter: error message</param>
-    ''' <returns>Path to the cache folder; empty string if an error</returns>
-    ''' <remarks>Uses job parameter DatasetStoragePath to determine the Year_Quarter string to append to the end of the path</remarks>
-    Public Shared Function GetMSXmlCacheFolderPath(
-      cacheFolderPathBase As String,
-      jobParams As IJobParams,
-      msXmlToolNameVersionFolder As String,
-      <Out()> ByRef errorMessage As String) As String
-
-        errorMessage = String.Empty
-
-        Dim strDatasetStoragePath As String = jobParams.GetParam("JobParameters", "DatasetStoragePath")
-        If String.IsNullOrEmpty(strDatasetStoragePath) Then
-            strDatasetStoragePath = jobParams.GetParam("JobParameters", "DatasetArchivePath")
-        End If
-
-        If String.IsNullOrEmpty(strDatasetStoragePath) Then
-            errorMessage = "JobParameters does not contain DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path"
-            Return String.Empty
-        End If
-
-        Dim strYearQuarter As String = GetDatasetYearQuarter(strDatasetStoragePath)
-        If String.IsNullOrEmpty(strYearQuarter) Then
-            errorMessage = "Unable to extract the dataset Year_Quarter code from " & strDatasetStoragePath & "; cannot construct MSXmlCache path"
-            Return String.Empty
-        End If
-
-        ' Combine the cache folder path, ToolNameVersion, and the dataset Year_Quarter code
-        Dim targetFolderPath = Path.Combine(cacheFolderPathBase, msXmlToolNameVersionFolder, strYearQuarter)
-
-        Return targetFolderPath
-
-    End Function
-
-    ''' <summary>
-    ''' Examine a folder of the form MSXML_Gen_1_93_367204 and remove the DatasetID portion
-    ''' </summary>
-    ''' <param name="toolNameVersionDatasetIDFolder">Shared results folder name</param>
-    ''' <returns>The trimmed folder name if a valid folder; throws an exception if the folder name is not the correct format</returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetMSXmlToolNameVersionFolder(toolNameVersionDatasetIDFolder As String) As String
-
-        ' Remove the dataset ID from the end of the folder name
-        Dim reToolNameAndVersion = New Regex("^(.+\d+_\d+)_\d+$")
-        Dim reMatch = reToolNameAndVersion.Match(toolNameVersionDatasetIDFolder)
-        If Not reMatch.Success Then
-            Throw New Exception("Folder name is not in the expected form of ToolName_Version_DatasetID; unable to strip out the dataset ID")
-        End If
-
-        Return reMatch.Groups.Item(1).ToString
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieve the .mzML or .mzXML file associated with this job (based on Job Parameter MSXMLOutputType)
-    ''' </summary>
-    ''' <returns>CLOSEOUT_SUCCESS or CLOSEOUT_FAILED</returns>
-    ''' <remarks>
-    ''' If MSXMLOutputType is not defined, attempts to retrieve a .mzML file
-    ''' If the .mzML file is not found, will attempt to create it
-    ''' </remarks>
-    Protected Function GetMsXmlFile() As IJobParams.CloseOutType
-        Dim msXmlOutputType = m_jobParams.GetJobParameter("MSXMLOutputType", String.Empty)
-
-        Dim eResult As IJobParams.CloseOutType
-
-        If msXmlOutputType.ToLower() = "mzxml" Then
-            eResult = GetMzXMLFile()
-        Else
-            eResult = GetMzMLFile()
-        End If
-
-        Return eResult
-
-    End Function
-
-    Protected Function GetMzMLFile() As IJobParams.CloseOutType
-
-        LogMessage("Getting mzML file")
-
-        Dim errorMessage = String.Empty
-        Dim fileMissingFromCache = False
-        Const unzipFile = True
-
-        Dim success = RetrieveCachedMzMLFile(unzipFile, errorMessage, fileMissingFromCache)
-        If Not success Then
-            Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZML_EXTENSION)
-        End If
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Protected Function GetMzXMLFile() As IJobParams.CloseOutType
-
-        ' Retrieve the .mzXML file for this dataset
-        ' Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
-        ' Instead, use FindAndRetrieveMiscFiles 
-
-        LogMessage("Getting mzXML file")
-
-        ' Note that capitalization matters for the extension; it must be .mzXML
-        Dim FileToGet As String = m_DatasetName & DOT_MZXML_EXTENSION
-        If Not FindAndRetrieveMiscFiles(FileToGet, False) Then
-
-            ' Look for a .mzXML file in the cache instead
-
-            Dim errorMessage = String.Empty
-            Dim fileMissingFromCache = False
-            Const unzipFile = True
-
-            Dim success = RetrieveCachedMzXMLFile(unzipFile, errorMessage, fileMissingFromCache)
-            If Not success Then
-                Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION)
-            End If
-
-        End If
-        m_jobParams.AddResultFileToSkip(FileToGet)
-
-        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Protected Function GetPBFFile() As IJobParams.CloseOutType
-
-        LogMessage("Getting PBF file")
-
-        Dim errorMessage = String.Empty
-        Dim fileMissingFromCache = False
-
-        Dim success = RetrieveCachedPBFFile(errorMessage, fileMissingFromCache)
-        If Not success Then
-            Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_PBF_EXTENSION)
-        End If
-
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Protected Function HandleMsXmlRetrieveFailure(
-      fileMissingFromCache As Boolean,
-      errorMessage As String,
-      msXmlExtension As String) As IJobParams.CloseOutType
-
-        If fileMissingFromCache Then
-            If String.IsNullOrEmpty(errorMessage) Then
-                errorMessage = "Cached " & msXmlExtension & " file does not exist; will re-generate it"
-            End If
-
-            LogMessage("Warning: " & errorMessage)
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_IN_CACHE
-        End If
-
-        If String.IsNullOrEmpty(errorMessage) Then
-            errorMessage = "Unknown error in RetrieveCached" & msXmlExtension.TrimStart("."c) & "File"
-        End If
-
-        LogMessage(errorMessage, 0, True)
-        Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-
-    End Function
-
-    ''' <summary>
-    ''' Gets fake job information for a dataset that is associated with a data package yet has no analysis jobs associated with the data package
-    ''' </summary>
-    ''' <param name="udtDatasetInfo"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function GetPseudoDataPackageJobInfo(udtDatasetInfo As clsDataPackageDatasetInfo) As clsDataPackageJobInfo
-
-        ' Store the negative of the dataset ID as the job number
-        Dim jobInfo = New clsDataPackageJobInfo(-udtDatasetInfo.DatasetID, udtDatasetInfo.Dataset) With {
-            .DatasetID = udtDatasetInfo.DatasetID,
-            .Instrument = udtDatasetInfo.Instrument,
-            .InstrumentGroup = udtDatasetInfo.InstrumentGroup,
-            .Experiment = udtDatasetInfo.Experiment,
-            .Experiment_Reason = udtDatasetInfo.Experiment_Reason,
-            .Experiment_Comment = udtDatasetInfo.Experiment_Comment,
-            .Experiment_Organism = udtDatasetInfo.Experiment_Organism,
-            .Experiment_NEWT_ID = udtDatasetInfo.Experiment_NEWT_ID,
-            .Experiment_NEWT_Name = udtDatasetInfo.Experiment_NEWT_Name,
-            .Tool = "Dataset info (no tool)",
-            .NumberOfClonedSteps = 0,
-            .ResultType = "Dataset info (no type)",
-            .PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown,
-            .SettingsFileName = String.Empty,
-            .ParameterFileName = String.Empty,
-            .OrganismDBName = String.Empty,
-            .LegacyFastaFileName = String.Empty,
-            .ProteinCollectionList = String.Empty,
-            .ProteinOptions = String.Empty,
-            .ResultsFolderName = String.Empty,
-            .DatasetFolderName = udtDatasetInfo.Dataset,
-            .SharedResultsFolder = String.Empty,
-            .RawDataType = udtDatasetInfo.RawDataType
+using System;
+using System.Collections.Generic;
+using System.Data;
+using PHRPReader;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Xml;
+using System.Xml.Linq;
+using MyEMSLReader;
+using ParamFileGenerator.MakeParams;
+
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2007, Battelle Memorial Institute
+// Created 12/19/2007
+//*********************************************************************************************************
+
+namespace AnalysisManagerBase
+{
+    /// <summary>
+    /// Base class for job resource class
+    /// </summary>
+    public abstract class clsAnalysisResources : clsAnalysisMgrBase, IAnalysisResources
+    {
+
+        #region "Constants"
+        protected const int DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS = 15;
+
+        protected const int DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS = 5;
+
+        /// <summary>
+        /// Maximum number of attempts to find a folder or file
+        /// </summary>
+        /// <remarks></remarks>
+        protected const int DEFAULT_MAX_RETRY_COUNT = 3;
+
+        protected const int FASTA_GEN_TIMEOUT_INTERVAL_MINUTES = 65;
+
+        public const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
+
+        [Obsolete("Unused")]
+        protected const bool FORCE_WINHPC_FS = true;
+
+        /// <summary>
+        /// Define the maximum file size to process using IonicZip; 
+        ///  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
+        ///  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
+        ///   SharpZipLib unzips the file in 130 seconds
+        ///   WinRar      unzips the file in 120 seconds
+        ///   PKZipC      unzips the file in  84 seconds
+        ///
+        /// Re-tested on 1/7/2011 with a 611 MB file
+        ///   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
+        ///   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
+        ///   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
+        ///   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
+        ///
+        ///  For smaller files, the speed differences are much less noticable
+        /// </summary>
+        protected const int IONIC_ZIP_MAX_FILESIZE_MB = 1280;
+
+        // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
+
+        /// <summary>
+        /// Agilent ion trap data, Agilent TOF data
+        /// </summary>
+        public const string RAW_DATA_TYPE_DOT_D_FOLDERS = "dot_d_folders";
+
+        /// <summary>
+        /// FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+        /// </summary>
+        public const string RAW_DATA_TYPE_ZIPPED_S_FOLDERS = "zipped_s_folders";
+
+        /// <summary>
+        /// Micromass QTOF data
+        /// </summary>
+        public const string RAW_DATA_TYPE_DOT_RAW_FOLDER = "dot_raw_folder";
+
+        /// <summary>
+        /// Finnigan ion trap/LTQ-FT data
+        /// </summary>
+        public const string RAW_DATA_TYPE_DOT_RAW_FILES = "dot_raw_files";
+
+        /// <summary>
+        /// Agilent/QSTAR TOF data
+        /// </summary>
+        public const string RAW_DATA_TYPE_DOT_WIFF_FILES = "dot_wiff_files";
+
+        /// <summary>
+        /// IMS_UIMF (IMS_Agilent_TOF in DMS)
+        /// </summary>
+        public const string RAW_DATA_TYPE_DOT_UIMF_FILES = "dot_uimf_files";
+
+        /// <summary>
+        /// mzXML
+        /// </summary>
+        public const string RAW_DATA_TYPE_DOT_MZXML_FILES = "dot_mzxml_files";
+
+        /// <summary>
+        /// mzML
+        /// </summary>
+        public const string RAW_DATA_TYPE_DOT_MZML_FILES = "dot_mzml_files";
+
+        // 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
+        // Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
+
+        // 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
+        // Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
+        // 15T datasets also have raw_data_type "bruker_ft"
+        // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+        public const string RAW_DATA_TYPE_BRUKER_FT_FOLDER = "bruker_ft";
+
+        // The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
+        // Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
+        public const string RAW_DATA_TYPE_BRUKER_MALDI_SPOT = "bruker_maldi_spot";
+
+        // The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
+        // Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+        public const string RAW_DATA_TYPE_BRUKER_MALDI_IMAGING = "bruker_maldi_imaging";
+
+        // The following is used by instrument Maxis_01
+        // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+        public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER = "bruker_tof_baf";
+        public const string RESULT_TYPE_SEQUEST = "Peptide_Hit";
+        public const string RESULT_TYPE_XTANDEM = "XT_Peptide_Hit";
+        public const string RESULT_TYPE_INSPECT = "IN_Peptide_Hit";
+
+        // Used for MSGFDB and MSGF+
+        public const string RESULT_TYPE_MSGFPLUS = "MSG_Peptide_Hit";
+        public const string RESULT_TYPE_MSALIGN = "MSA_Peptide_Hit";
+        public const string RESULT_TYPE_MODA = "MODa_Peptide_Hit";
+        public const string RESULT_TYPE_MODPLUS = "MODPlus_Peptide_Hit";
+
+        public const string RESULT_TYPE_MSPATHFINDER = "MSP_Peptide_Hit";
+        public const string DOT_WIFF_EXTENSION = ".wiff";
+        public const string DOT_D_EXTENSION = ".d";
+        public const string DOT_RAW_EXTENSION = ".raw";
+
+        public const string DOT_UIMF_EXTENSION = ".uimf";
+        public const string DOT_GZ_EXTENSION = ".gz";
+        public const string DOT_MZXML_EXTENSION = ".mzXML";
+
+        public const string DOT_MZML_EXTENSION = ".mzML";
+        public const string DOT_MGF_EXTENSION = ".mgf";
+
+        public const string DOT_CDF_EXTENSION = ".cdf";
+
+        public const string DOT_PBF_EXTENSION = ".pbf";
+
+        public const string LOCK_FILE_EXTENSION = ".lock";
+
+        /// <summary>
+        /// Feature file, generated by the ProMex tool
+        /// </summary>
+        /// <remarks></remarks>
+        public const string DOT_MS1FT_EXTENSION = ".ms1ft";
+
+        public const string STORAGE_PATH_INFO_FILE_SUFFIX = "_StoragePathInfo.txt";
+        public const string SCAN_STATS_FILE_SUFFIX = "_ScanStats.txt";
+
+        public const string SCAN_STATS_EX_FILE_SUFFIX = "_ScanStatsEx.txt";
+
+        public const string REPORTERIONS_FILE_SUFFIX = "_ReporterIons.txt";
+
+        public const string DATA_PACKAGE_SPECTRA_FILE_SUFFIX = "_SpectraFile";
+        public const string BRUKER_ZERO_SER_FOLDER = "0.ser";
+        public const string BRUKER_SER_FILE = "ser";
+
+        public const string BRUKER_FID_FILE = "fid";
+
+        public const string JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS = "PackedParam_DatasetFilePaths";
+
+        // This is used by clsAnalysisResourcesRepoPkgr
+        public const string JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES = "PackedParam_DatasetRawDataTypes";
+
+        // These are used by clsAnalysisResourcesPhosphoFdrAggregator
+        public const string JOB_PARAM_DICTIONARY_JOB_DATASET_MAP = "PackedParam_JobDatasetMap";
+        public const string JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP = "PackedParam_JobSettingsFileMap";
+
+        public const string JOB_PARAM_DICTIONARY_JOB_TOOL_MAP = "PackedParam_JobToolNameMap";
+
+        // This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
+        public const string SPECTRA_ARE_NOT_CENTROIDED = "None of the spectra are centroided; unable to process";
+
+        public enum eRawDataTypeConstants
+        {
+            Unknown = 0,
+            ThermoRawFile = 1,
+            UIMF = 2,
+            mzXML = 3,
+            mzML = 4,
+            AgilentDFolder = 5,
+            // Agilent ion trap data, Agilent TOF data
+            AgilentQStarWiffFile = 6,
+            MicromassRawFolder = 7,
+            // Micromass QTOF data
+            ZippedSFolders = 8,
+            // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+            BrukerFTFolder = 9,
+            // .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+            BrukerMALDISpot = 10,
+            // has a .EMF file and a single sub-folder that has an acqu file and fid file
+            BrukerMALDIImaging = 11,
+            // Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+            BrukerTOFBaf = 12
+            // Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
         }
 
-        Try
-            ' Archive storage path and server storage path track the folder just above the dataset folder
-            Dim archiveFolder = New DirectoryInfo(udtDatasetInfo.ArchiveStoragePath)
-            jobInfo.ArchiveStoragePath = archiveFolder.Parent.FullName
-        Catch ex As Exception
-            Console.WriteLine("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " & udtDatasetInfo.ArchiveStoragePath)
-            jobInfo.ArchiveStoragePath = udtDatasetInfo.ArchiveStoragePath.Replace(" \ " & udtDatasetInfo.Dataset, "")
-        End Try
+        public enum MSXMLOutputTypeConstants
+        {
+            mzXML = 0,
+            mzML = 1
+        }
 
-        Try
-            Dim storageFolder = New DirectoryInfo(udtDatasetInfo.ServerStoragePath)
-            jobInfo.ServerStoragePath = storageFolder.Parent.FullName
-        Catch ex As Exception
-            Console.WriteLine("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " & udtDatasetInfo.ServerStoragePath)
-            jobInfo.ServerStoragePath = udtDatasetInfo.ServerStoragePath.Replace(" \ " & udtDatasetInfo.Dataset, "")
-        End Try
+        public enum DataPackageFileRetrievalModeConstants
+        {
+            Undefined = 0,
+            Ascore = 1
+        }
 
-        Return jobInfo
+        #endregion
 
-    End Function
+        #region "Structures"
 
-    Public Shared Function GetRawDataType(strRawDataType As String) As eRawDataTypeConstants
+        public struct udtHPCOptionsType
+        {
+            public string HeadNode;
+            public bool UsingHPC;
+            public string SharePath;
+            public string ResourceType;
+            // Obsolete parameter; no longer used: Public NodeGroup As String
+            public int MinimumMemoryMB;
+            public int MinimumCores;
+            public string WorkDirPath;
+        }
 
-        If String.IsNullOrEmpty(strRawDataType) Then
-            Return eRawDataTypeConstants.Unknown
-        End If
+        #endregion
 
-        Select Case strRawDataType.ToLower()
-            Case RAW_DATA_TYPE_DOT_D_FOLDERS
-                Return eRawDataTypeConstants.AgilentDFolder
-            Case RAW_DATA_TYPE_ZIPPED_S_FOLDERS
-                Return eRawDataTypeConstants.ZippedSFolders
-            Case RAW_DATA_TYPE_DOT_RAW_FOLDER
-                Return eRawDataTypeConstants.MicromassRawFolder
-            Case RAW_DATA_TYPE_DOT_RAW_FILES
-                Return eRawDataTypeConstants.ThermoRawFile
-            Case RAW_DATA_TYPE_DOT_WIFF_FILES
-                Return eRawDataTypeConstants.AgilentQStarWiffFile
-            Case RAW_DATA_TYPE_DOT_UIMF_FILES
-                Return eRawDataTypeConstants.UIMF
-            Case RAW_DATA_TYPE_DOT_MZXML_FILES
-                Return eRawDataTypeConstants.mzXML
-            Case RAW_DATA_TYPE_DOT_MZML_FILES
-                Return eRawDataTypeConstants.mzML
-            Case RAW_DATA_TYPE_BRUKER_FT_FOLDER
-                Return eRawDataTypeConstants.BrukerFTFolder
-            Case RAW_DATA_TYPE_BRUKER_MALDI_SPOT
-                Return eRawDataTypeConstants.BrukerMALDISpot
-            Case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING
-                Return eRawDataTypeConstants.BrukerMALDIImaging
-            Case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER
-                Return eRawDataTypeConstants.BrukerTOFBaf
-            Case Else
-                Return eRawDataTypeConstants.Unknown
-        End Select
+        #region "Module variables"
+        protected IJobParams m_jobParams;
+        protected IMgrParams m_mgrParams;
+        protected string m_WorkingDir;
+        protected int m_JobNum;
+        protected string m_DatasetName;
 
-    End Function
+        protected string m_MgrName;
+
+        /// <summary>
+        /// Might be nothing
+        /// </summary>
+        protected IStatusFile m_StatusTools;
+
+        protected string m_FastaToolsCnStr = "";
+
+        protected string m_FastaFileName = "";
+        protected Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS m_FastaTools;
 
-    Public Shared Function GetRawDataTypeName(jobParams As IJobParams, <Out()> ByRef errorMessage As String) As String
-
-        errorMessage = String.Empty
-
-        Dim msXmlOutputType As String = jobParams.GetParam("MSXMLOutputType")
-
-        If String.IsNullOrWhiteSpace(msXmlOutputType) Then
-            Return jobParams.GetParam("RawDataType")
-        Else
-            Select Case msXmlOutputType.ToLower()
-                Case "mzxml"
-                    Return RAW_DATA_TYPE_DOT_MZXML_FILES
-                Case "mzml"
-                    Return RAW_DATA_TYPE_DOT_MZML_FILES
-                Case Else
-                    Return String.Empty
-            End Select
-        End If
-
-    End Function
-
-    Protected Function GetRawDataTypeName() As String
-
-        Dim errorMessage As String = Nothing
-        Dim rawDataTypeName = GetRawDataTypeName(m_jobParams, errorMessage)
-
-        If String.IsNullOrWhiteSpace(rawDataTypeName) Then
-            If String.IsNullOrWhiteSpace(errorMessage) Then
-                LogError("Unable to determine the instrument data type using GetRawDataTypeName")
-            Else
-                LogError(errorMessage)
-            End If
-
-            Return String.Empty
-        End If
-
-        Return rawDataTypeName
-
-    End Function
-
-    Public Shared Function GetHPCOptions(jobParams As IJobParams, managerName As String) As udtHPCOptionsType
-
-        Dim stepTool = jobParams.GetJobParameter("StepTool", "Unknown_Tool")
-
-        Dim udtHPCOptions = New udtHPCOptionsType
-
-        udtHPCOptions.HeadNode = jobParams.GetJobParameter("HPCHeadNode", "")
-        If stepTool.ToLower() = "MSGFPlus_HPC".ToLower() AndAlso String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode) Then
-            ' Run this job using HPC, despite the fact that the settings file does not have the HPC settings defined
-            udtHPCOptions.HeadNode = "deception2.pnnl.gov"
-            udtHPCOptions.UsingHPC = True
-        Else
-            udtHPCOptions.UsingHPC = Not String.IsNullOrWhiteSpace(udtHPCOptions.HeadNode)
-        End If
-
-        udtHPCOptions.ResourceType = jobParams.GetJobParameter("HPCResourceType", "socket")
-        ' Obsolete parameter; no longer used: udtHPCOptions.NodeGroup = jobParams.GetJobParameter("HPCNodeGroup", "ComputeNodes")
-
-        ' Share paths used:
-        ' \\picfs\projects\DMS
-        ' \\winhpcfs\projects\DMS           (this is a Windows File System wrapper to \\picfs, which is an Isilon FS)
-
-        If FORCE_WINHPC_FS Then
-            udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\winhpcfs\projects\DMS")
-        Else
-            udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", "\\picfs.pnl.gov\projects\DMS")
-        End If
-
-
-        ' Auto-switched the share path to \\winhpcfs starting April 15, 2014
-        ' Stopped doing this April 21, 2014, because the drive was low on space
-        ' Switched back to \\winhpcfs on April 24, because the connection to picfs is unstable
-        '
-
-        If FORCE_WINHPC_FS Then
-            If udtHPCOptions.SharePath.StartsWith("\\picfs", StringComparison.CurrentCultureIgnoreCase) Then
-                ' Auto switch the share path
-                udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, "\\winhpcfs\")
-            End If
-        Else
-            If udtHPCOptions.SharePath.StartsWith("\\winhpcfs", StringComparison.CurrentCultureIgnoreCase) Then
-                ' Auto switch the share path
-                udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, "\\picfs.pnl.gov\")
-            End If
-        End If
-
-        udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("HPCMinMemoryMB", 0)
-        udtHPCOptions.MinimumCores = jobParams.GetJobParameter("HPCMinCores", 0)
-
-        If udtHPCOptions.UsingHPC AndAlso udtHPCOptions.MinimumMemoryMB <= 0 Then
-            udtHPCOptions.MinimumMemoryMB = 28000
-        End If
-
-        If udtHPCOptions.UsingHPC AndAlso udtHPCOptions.MinimumCores <= 0 Then
-            udtHPCOptions.MinimumCores = 16
-        End If
-
-        Dim mgrNameClean = String.Empty
-
-        For charIndex = 0 To managerName.Length - 1
-            If Path.GetInvalidFileNameChars.Contains(managerName.Chars(charIndex)) Then
-                mgrNameClean &= "_"
-            Else
-                mgrNameClean &= managerName.Chars(charIndex)
-            End If
-        Next
-
-        ' Example WorkDirPath: 
-        ' \\picfs.pnl.gov\projects\DMS\DMS_Work_Dir\Pub-60-3
-        ' \\winhpcfs\projects\DMS\DMS_Work_Dir\Pub-60-3
-        udtHPCOptions.WorkDirPath = Path.Combine(udtHPCOptions.SharePath, "DMS_Work_Dir", mgrNameClean)
-
-        Return udtHPCOptions
-
-    End Function
-
-    ''' <summary>
-    ''' Examines job parameter SharedResultsFolders to construct a list of the shared result folders
-    ''' </summary>
-    ''' <returns>List of folder names</returns>
-    Protected Function GetSharedResultFolderList() As IEnumerable(Of String)
-
-        Dim sharedResultFolderNames As New List(Of String)
-
-        Dim strSharedResultFolders = m_jobParams.GetParam("SharedResultsFolders")
-
-        If strSharedResultFolders.Contains(",") Then
-
-            ' Split on commas and populate sharedResultFolderNames
-            For Each strItem As String In strSharedResultFolders.Split(","c)
-                Dim strItemTrimmed = strItem.Trim()
-                If strItemTrimmed.Length > 0 Then
-                    sharedResultFolderNames.Add(strItemTrimmed)
-                End If
-            Next
-
-            ' Reverse the list so that the last item in strSharedResultFolders is the first item in sharedResultFolderNames
-            sharedResultFolderNames.Reverse()
-        Else
-            ' Just one item in strSharedResultFolders
-            sharedResultFolderNames.Add(strSharedResultFolders)
-        End If
-
-        Return sharedResultFolderNames
-
-    End Function
-
-    ''' <summary>
-    ''' Get the name of the split fasta file to use for this job
-    ''' </summary>
-    ''' <param name="jobParams"></param>
-    ''' <param name="errorMessage">Output parameter: error message</param>
-    ''' <returns>The name of the split fasta file to use</returns>
-    ''' <remarks>Returns an empty string if an error</remarks>
-    Public Shared Function GetSplitFastaFileName(jobParams As IJobParams, <Out()> ByRef errorMessage As String) As String
-        Dim numberOfClonedSteps = 0
-
-        Return GetSplitFastaFileName(jobParams, errorMessage, numberOfClonedSteps)
-
-    End Function
-
-    ''' <summary>
-    ''' Get the name of the split fasta file to use for this job
-    ''' </summary>
-    ''' <param name="jobParams"></param>
-    ''' <param name="errorMessage">Output parameter: error message</param>
-    ''' <param name="numberOfClonedSteps">Output parameter: total number of cloned steps</param>
-    ''' <returns>The name of the split fasta file to use</returns>
-    ''' <remarks>Returns an empty string if an error</remarks>
-    Public Shared Function GetSplitFastaFileName(jobParams As IJobParams, <Out()> ByRef errorMessage As String, <Out()> ByRef numberOfClonedSteps As Integer) As String
-
-        errorMessage = String.Empty
-        numberOfClonedSteps = 0
-
-        Dim legacyFastaFileName = jobParams.GetJobParameter("LegacyFastaFileName", "")
-        If String.IsNullOrEmpty(legacyFastaFileName) Then
-            errorMessage = "Parameter LegacyFastaFileName is empty for the job; cannot determine the SplitFasta file name for this job step"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-            Return String.Empty
-        End If
-
-        numberOfClonedSteps = jobParams.GetJobParameter("NumberOfClonedSteps", 0)
-        If numberOfClonedSteps = 0 Then
-            errorMessage = "Settings file is missing parameter NumberOfClonedSteps; cannot determine the SplitFasta file name for this job step"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-            Return String.Empty
-        End If
-
-        Dim iteration = GetSplitFastaIteration(jobParams, errorMessage)
-        If iteration < 1 Then
-            Dim toolName = jobParams.GetJobParameter("ToolName", String.Empty)
-            If clsGlobal.IsMatch(toolName, "Mz_Refinery") Then
-                ' Running MzRefinery
-                ' Override iteration to be 1
-                iteration = 1
-            Else
-                If String.IsNullOrEmpty(errorMessage) Then
-                    errorMessage = "GetSplitFastaIteration computed an iteration value of " & iteration & "; cannot determine the SplitFasta file name for this job step"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-                    Console.WriteLine(errorMessage)
-                End If
-                Return String.Empty
-            End If
-        End If
-
-        Dim fastaNameBase = Path.GetFileNameWithoutExtension(legacyFastaFileName)
-        Dim splitFastaName = fastaNameBase & "_" & numberOfClonedSteps.ToString() & "x_"
-
-        If numberOfClonedSteps < 10 Then
-            splitFastaName &= iteration.ToString("0") & ".fasta"
-        ElseIf numberOfClonedSteps < 100 Then
-            splitFastaName &= iteration.ToString("00") & ".fasta"
-        Else
-            splitFastaName &= iteration.ToString("000") & ".fasta"
-        End If
-
-        Return splitFastaName
-
-    End Function
-
-    Public Shared Function GetSplitFastaIteration(jobParams As IJobParams, <Out()> ByRef errorMessage As String) As Integer
-
-        errorMessage = String.Empty
-
-        Dim cloneStepRenumStart = jobParams.GetJobParameter("CloneStepRenumberStart", 0)
-        If cloneStepRenumStart = 0 Then
-            errorMessage = "Settings file is missing parameter CloneStepRenumberStart; cannot determine the SplitFasta iteration value for this job step"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-            Return 0
-        End If
-
-        Dim stepNumber = jobParams.GetJobParameter("StepParameters", "Step", 0)
-        If stepNumber = 0 Then
-            errorMessage = "Job parameter Step is missing; cannot determine the SplitFasta iteration value for this job step"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-            Return 0
-        End If
-
-        Return stepNumber - cloneStepRenumStart + 1
-
-    End Function
-
-    ''' <summary>
-    ''' Read a JobParameters XML file to find the sections named "StepParameters"
-    ''' </summary>
-    ''' <param name="doc">XDocument to scan</param>
-    ''' <returns>Dictionary where keys are the step number and values are the XElement node with the step parameters for the given step</returns>
-    Private Function GetStepParametersSections(doc As XDocument) As Dictionary(Of Integer, XElement)
-
-        Dim stepNumToParamsMap = New Dictionary(Of Integer, XElement)
-
-        Dim stepParamSections = doc.Elements("sections").Elements("section").ToList()
-        For Each section In stepParamSections
-            If Not section.HasAttributes Then Continue For
-
-            Dim nameAttrib = section.Attribute("name")
-            If nameAttrib Is Nothing Then Continue For
-
-            If Not String.Equals(nameAttrib.Value, "StepParameters") Then Continue For
-
-            Dim stepAttrib = section.Attribute("step")
-            If stepAttrib Is Nothing Then Continue For
-
-            Dim stepNumber As Integer
-            If Integer.TryParse(stepAttrib.Value, stepNumber) Then
-                ' Add or update the XML for this section
-                stepNumToParamsMap(stepNumber) = section
-            End If
-
-        Next
-
-        Return stepNumToParamsMap
-    End Function
-
-    ''' <summary>
-    ''' Get the input or output transfer folder path specific to this job step
-    ''' </summary>
-    ''' <param name="useInputFolder">True to use "InputFolderName", False to use "OutputFolderName"</param>
-    ''' <returns></returns>
-    Protected Function GetTransferFolderPathForJobStep(useInputFolder As Boolean) As String
-
-        Dim transferFolderPathBase = m_jobParams.GetParam("transferFolderPath")
-        If String.IsNullOrEmpty(transferFolderPathBase) Then
-            ' Transfer folder parameter is empty; return an empty string
-            Return String.Empty
-        End If
-
-        ' Append the dataset folder name to the transfer folder path
-        Dim datasetFolderName = m_jobParams.GetParam("StepParameters", "DatasetFolderName")
-        If String.IsNullOrWhiteSpace(datasetFolderName) Then datasetFolderName = m_DatasetName
-
-        Dim folderName As String
-
-        If useInputFolder Then
-            folderName = m_jobParams.GetParam("InputFolderName")
-        Else
-            folderName = m_jobParams.GetParam("OutputFolderName")
-        End If
-
-        If String.IsNullOrEmpty(folderName) Then
-            ' Input (or outuput) folder parameter is empty; return an empty string
-            Return String.Empty
-        End If
-
-        Dim transferFolderPath = Path.Combine(transferFolderPathBase, datasetFolderName, folderName)
-
-        Return transferFolderPath
-
-    End Function
-
-    ''' <summary>
-    ''' Looks up dataset information for a data package
-    ''' </summary>
-    ''' <param name="dctDataPackageDatasets"></param>
-    ''' <returns>True if a data package is defined and it has datasets associated with it</returns>
-    ''' <remarks></remarks>
-    Protected Function LoadDataPackageDatasetInfo(<Out> ByRef dctDataPackageDatasets As Dictionary(Of Integer, clsDataPackageDatasetInfo)) As Boolean
-
-        ' Gigasax.DMS_Pipeline
-        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
-
-        Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
-
-        If dataPackageID < 0 Then
-            dctDataPackageDatasets = New Dictionary(Of Integer, clsDataPackageDatasetInfo)
-            Return False
-        Else
-            Return LoadDataPackageDatasetInfo(connectionString, dataPackageID, dctDataPackageDatasets)
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Looks up dataset information for a data package
-    ''' </summary>
-    ''' <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
-    ''' <param name="DataPackageID">Data Package ID</param>
-    ''' <param name="dctDataPackageDatasets">Datasets associated with the given data package</param>
-    ''' <returns>True if a data package is defined and it has datasets associated with it</returns>
-    ''' <remarks></remarks>
-    Public Shared Function LoadDataPackageDatasetInfo(
-      connectionString As String,
-      dataPackageID As Integer,
-      <Out> ByRef dctDataPackageDatasets As Dictionary(Of Integer, clsDataPackageDatasetInfo)) As Boolean
-
-        ' Obtains the dataset information for a data package
-        Const RETRY_COUNT As Short = 3
-
-        dctDataPackageDatasets = New Dictionary(Of Integer, clsDataPackageDatasetInfo)
-
-        Dim sqlStr = New Text.StringBuilder
-
-        ' View V_DMS_Data_Package_Datasets is in the DMS_Pipeline database
-        ' That view references view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
-        ' That view pulls information from several tables in the DMS_Data_Package database, plus 3 views in DMS5:
-        '   V_Dataset_Folder_Path, V_Organism_Export, and V_Dataset_Archive_Path 
-        ' Experiment_NEWT_ID comes from the organism for the experiment, and actually comes from field NCBI_Taxonomy_ID in T_Organisms
-        ' 
-        sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, ")
-        sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
-        sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType")
-        sqlStr.Append(" FROM V_DMS_Data_Package_Datasets")
-        sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID.ToString())
-        sqlStr.Append(" ORDER BY Dataset")
-
-        Dim resultSet As DataTable = Nothing
-
-        ' Get a table to hold the results of the query
-        Dim success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, resultSet)
-
-        If Not success Then
-            Dim errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-            resultSet.Dispose()
-            Return False
-        End If
-
-        ' Verify at least one row returned
-        If resultSet.Rows.Count < 1 Then
-            ' No data was returned
-            Dim warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " & dataPackageID.ToString()
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage)
-            Console.WriteLine(warningMessage)
-            Return False
-        End If
-
-        For Each curRow As DataRow In resultSet.Rows
-            Dim udtDatasetInfo = ParseDataPackageDatasetInfoRow(curRow)
-
-            If Not dctDataPackageDatasets.ContainsKey(udtDatasetInfo.DatasetID) Then
-                dctDataPackageDatasets.Add(udtDatasetInfo.DatasetID, udtDatasetInfo)
-            End If
-        Next
-
-        resultSet.Dispose()
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Looks up dataset information for the data package associated with this analysis job
-    ''' </summary>
-    ''' <param name="dctDataPackageJobs"></param>
-    ''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
-    ''' <remarks></remarks>
-    Protected Function LoadDataPackageJobInfo(<Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo)) As Boolean
-
-        ' Gigasax.DMS_Pipeline
-        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
-
-        Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
-
-        If dataPackageID < 0 Then
-            dctDataPackageJobs = New Dictionary(Of Integer, clsDataPackageJobInfo)
-            Return False
-        Else
-            Return LoadDataPackageJobInfo(connectionString, dataPackageID, dctDataPackageJobs)
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Looks up job information for a data package
-    ''' </summary>
-    ''' <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
-    ''' <param name="DataPackageID">Data Package ID</param>
-    ''' <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
-    ''' <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
-    ''' <remarks></remarks>
-    Public Shared Function LoadDataPackageJobInfo(
-      ConnectionString As String,
-      DataPackageID As Integer,
-      <Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo)) As Boolean
-
-        ' Obtains the job information for a data package
-        Const RETRY_COUNT As Short = 3
-
-        dctDataPackageJobs = New Dictionary(Of Integer, clsDataPackageJobInfo)
-
-        Dim sqlStr = New Text.StringBuilder
-
-        ' Note that this queries view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database
-        ' That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
-        ' The two views have the same name, but some columns differ
-
-        sqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ")
-        sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
-        sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ")
-        sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
-        sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType")
-        sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs")
-        sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
-        sqlStr.Append(" ORDER BY Dataset, Tool")
-
-        Dim resultSet As DataTable = Nothing
-
-        ' Get a table to hold the results of the query
-        Dim success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, resultSet)
-
-        If Not success Then
-            Dim errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage)
-            Console.WriteLine(errorMessage)
-            resultSet.Dispose()
-            Return False
-        End If
-
-        ' Verify at least one row returned
-        If resultSet.Rows.Count < 1 Then
-            ' No data was returned
-            Dim warningMessage As String
-
-            ' If the data package exists and has datasets associated with it, then Log this as a warning but return true
-            ' Otherwise, log an error and return false
-
-            sqlStr.Clear()
-            sqlStr.Append(" SELECT Count(*) AS Datasets")
-            sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets")
-            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString())
-
-            ' Get a table to hold the results of the query
-            success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, resultSet)
-            If success AndAlso resultSet.Rows.Count > 0 Then
-                For Each curRow As DataRow In resultSet.Rows
-                    Dim datasetCount = clsGlobal.DbCInt(curRow(0))
-
-                    If datasetCount > 0 Then
-                        warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID &
-                            ", but it does have " & datasetCount & " dataset"
-                        If datasetCount > 1 Then warningMessage &= "s"
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage)
-                        Console.WriteLine(warningMessage)
-                        Return True
-                    End If
-                Next
-            End If
-
-            warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " & DataPackageID.ToString()
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage)
-            Console.WriteLine(warningMessage)
-            Return False
-        End If
-
-        For Each curRow As DataRow In resultSet.Rows
-            Dim dataPkgJob = ParseDataPackageJobInfoRow(curRow)
-
-            If Not dctDataPackageJobs.ContainsKey(dataPkgJob.Job) Then
-                dctDataPackageJobs.Add(dataPkgJob.Job, dataPkgJob)
-            End If
-        Next
-
-        resultSet.Dispose()
-
-        Return True
-
-    End Function
-
-    ' ReSharper disable once MemberCanBePrivate.Global
-    Protected Sub LogDebugMessage(debugMessage As String)
-        Console.WriteLine(debugMessage)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, debugMessage)
-    End Sub
-
-    Protected Shared Sub LogDebugMessage(debugMessage As String, statusTools As IStatusFile)
-        Console.WriteLine(debugMessage)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, debugMessage)
-
-        If Not statusTools Is Nothing Then
-            statusTools.CurrentOperation = debugMessage
-            statusTools.UpdateAndWrite(0)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Retrieve the information for the specified analysis job
-    ''' </summary>
-    ''' <param name="jobNumber">Job number</param>
-    ''' <param name="jobInfo">Output parameter: Job Info</param>
-    ''' <returns>True if success; false if an error</returns>
-    ''' <remarks>This procedure is used by clsAnalysisResourcesQCART</remarks>
-    Protected Function LookupJobInfo(jobNumber As Integer, <Out> ByRef jobInfo As clsDataPackageJobInfo) As Boolean
-
-        Const RETRY_COUNT = 3
-
-        Dim sqlStr = New Text.StringBuilder
-
-        ' This query uses view V_Analysis_Job_Export_DataPkg in the DMS5 database
-        sqlStr.Append("SELECT Job, Dataset, DatasetID, InstrumentName As Instrument, InstrumentGroup,")
-        sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ")
-        sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName,")
-        sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,")
-        sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, '' AS SharedResultsFolder, RawDataType ")
-        sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ")
-        sqlStr.Append("WHERE Job = " & jobNumber)
-
-        Dim resultSet As DataTable = Nothing
-        jobInfo = New clsDataPackageJobInfo(0, String.Empty)
-
-        ' Gigasax.DMS5
-        Dim dmsConnectionString = m_mgrParams.GetParam("connectionstring")
-
-        ' Get a table to hold the results of the query
-        Dim success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "LookupJobInfo", RETRY_COUNT, resultSet)
-
-        If Not success Then
-            Dim errorMessage = "LookupJobInfo; Excessive failures attempting to retrieve data package job info from database"
-            LogMessage(errorMessage, 0, True)
-            resultSet.Dispose()
-            Return False
-        End If
-
-        ' Verify at least one row returned
-        If resultSet.Rows.Count < 1 Then
-            ' No data was returned
-            LogError("Job " & jobNumber & " not found in view V_Analysis_Job_Export_DataPkg")
-            Return False
-        End If
-
-        jobInfo = ParseDataPackageJobInfoRow(resultSet.Rows.Item(0))
-
-        Return True
-
-    End Function
-
-
-    ''' <summary>
-    ''' Estimate the amount of disk space required for the FASTA file associated with this analysis job
-    ''' </summary>
-    ''' <param name="proteinCollectionInfo">Collection info object</param>
-    ''' <returns>Space required, in MB</returns>
-    ''' <remarks>Uses both m_jobParams and m_mgrParams; returns 0 if a problem (e.g. the legacy fasta file is not listed in V_Organism_DB_File_Export)</remarks>
-    Public Function LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo As clsProteinCollectionInfo) As Double
-
-        Try
-
-            Dim dmsConnectionString = m_mgrParams.GetParam("connectionstring")
-            If String.IsNullOrWhiteSpace(dmsConnectionString) Then
-                LogError("Error in LookupLegacyDBSizeWithIndices: manager parameter connectionstring is not defined")
-                Return 0
-            End If
-
-            Dim legacyFastaName As String
-            If proteinCollectionInfo.UsingSplitFasta Then
-                Dim errorMessage As String = String.Empty
-                legacyFastaName = GetSplitFastaFileName(m_jobParams, errorMessage)
-            Else
-                legacyFastaName = proteinCollectionInfo.LegacyFastaName
-            End If
-
-            Dim sqlQuery As String = "SELECT File_Size_KB FROM V_Organism_DB_File_Export WHERE (FileName = '" & legacyFastaName & "')"
-
-            ' Results, as a list of columns (first row only if multiple rows)
-            Dim lstResults = New List(Of String)
-
-            Dim success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, lstResults, "LookupLegacyDBSizeWithIndices")
-
-            If Not success OrElse lstResults Is Nothing OrElse lstResults.Count = 0 Then
-                ' Empty query results
-                Dim statusMessage = "Warning: Could not determine the legacy fasta file's size for job " & m_JobNum & ", file " & legacyFastaName
-                If proteinCollectionInfo.UsingSplitFasta Then
-                    ' Likely the FASTA file has not yet been split
-                    LogMessage(statusMessage & "; likely the split fasta file has not yet been created", 0, False)
-                Else
-                    LogMessage(statusMessage, 0, True)
-                End If
-
-                Return 0
-            End If
-
-            Dim fileSizeKB As Integer
-            If Not Integer.TryParse(lstResults.First(), fileSizeKB) Then
-                LogMessage("Legacy fasta file size is not numeric, job " & m_JobNum & ", file " & legacyFastaName & ": " & lstResults.First(), 0, True)
-                Return 0
-            End If
-
-            ' Assume that the MSGF+ index files will be 15 times larger than the legacy FASTA file itself
-            Dim fileSizeMB = (fileSizeKB + fileSizeKB * 15) / 1024.0
-
-            ' Pad the expected size by an additional 15%
-            Return fileSizeMB * 1.15
-
-        Catch ex As Exception
-            LogError("Error in LookupLegacyDBSizeWithIndices", ex)
-            Return 0
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Look for StepParameter section entries in the source file and insert them into the master file
-    ''' If the master file already has information on the given job step, information for that step is not copied from the source
-    ''' This is because the master file is assumed to be newer than the source file
-    ''' </summary>
-    ''' <param name="sourceJobParamXMLFilePath"></param>
-    ''' <param name="masterJobParamXMLFilePath"></param>
-    ''' <returns></returns>
-    Private Function MergeJobParamXMLStepParameters(sourceJobParamXMLFilePath As String, masterJobParamXMLFilePath As String) As Boolean
-
-        Try
-
-            Dim sourceDoc As XDocument = XDocument.Load(sourceJobParamXMLFilePath)
-
-            Dim masterDoc As XDocument = XDocument.Load(masterJobParamXMLFilePath)
-
-            ' Keys in the stepParamsSections dictionaries are step numbers 
-            ' Values are the XElement node with the step parameters for the given step
-
-            Dim stepParamSectionsSource = GetStepParametersSections(sourceDoc)
-
-            Dim stepParamSectionsMaster = GetStepParametersSections(masterDoc)
-
-            Dim stepParamSectionsMerged = New Dictionary(Of Integer, XElement)
-
-            ' Initialize stepParamSectionsMerged using stepParamSectionsMaster
-            For Each section In stepParamSectionsMaster
-                stepParamSectionsMerged.Add(section.Key, section.Value)
-            Next
-
-            ' Add missing steps to stepParamSectionsMerged
-            For Each section In stepParamSectionsSource
-                If Not stepParamSectionsMerged.ContainsKey(section.Key) Then
-                    stepParamSectionsMerged.Add(section.Key, section.Value)
-                End If
-            Next
-
-            ' Remove the StepParameter items from the master, then add in the merged items
-            For Each section In stepParamSectionsMaster
-                section.Value.Remove()
-            Next
-
-            Dim sectionsNode = masterDoc.Elements("sections").First()
-
-            For Each section In From item In stepParamSectionsMerged Order By item.Key Select item.Value
-                sectionsNode.Add(section)
-            Next
-
-            Dim settings = New XmlWriterSettings()
-            settings.Indent = True
-            settings.IndentChars = "  "
-            settings.OmitXmlDeclaration = True
-
-            Using fileWriter = New StreamWriter(New FileStream(masterJobParamXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
-
-                Using writer As XmlWriter = XmlWriter.Create(fileWriter, settings)
-                    masterDoc.Save(writer)
-                End Using
-
-            End Using
-
-            Return True
-
-        Catch ex As Exception
-            LogError("Error in MergeJobParamXMLStepParameters", ex)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Moves a file from one folder to another folder
-    ''' </summary>
-    ''' <param name="diSourceFolder"></param>
-    ''' <param name="diTargetFolder"></param>
-    ''' <param name="sourceFileName"></param>
-    ''' <remarks></remarks>
-    Protected Sub MoveFileToFolder(diSourceFolder As DirectoryInfo, diTargetFolder As DirectoryInfo, sourceFileName As String)
-        Dim fiSourceFile = New FileInfo(Path.Combine(diSourceFolder.FullName, sourceFileName))
-        Dim targetFilePath = Path.Combine(diTargetFolder.FullName, sourceFileName)
-        fiSourceFile.MoveTo(targetFilePath)
-    End Sub
-
-
-    ''' <summary>
-    ''' Override current job information, including dataset name, dataset ID, storage paths, Organism Name, Protein Collection, and protein options
-    ''' </summary>
-    ''' <param name="dataPkgJob"></param>
-    ''' <returns></returns>
-    ''' <remarks> Does not override the job number</remarks>
-    Public Function OverrideCurrentDatasetAndJobInfo(dataPkgJob As clsDataPackageJobInfo) As Boolean
-
-        Dim blnAggregationJob = False
-
-        If String.IsNullOrEmpty(dataPkgJob.Dataset) Then
-            LogError("OverrideCurrentDatasetAndJobInfo; Column 'Dataset' not defined for job " & dataPkgJob.Job & " in the data package")
-            Return False
-        End If
-
-        If clsGlobal.IsMatch(dataPkgJob.Dataset, "Aggregation") Then
-            blnAggregationJob = True
-        End If
-
-        If Not blnAggregationJob Then
-            ' Update job params to have the details for the current dataset
-            ' This is required so that we can use FindDataFile to find the desired files
-            If String.IsNullOrEmpty(dataPkgJob.ServerStoragePath) Then
-                LogError("OverrideCurrentDatasetAndJobInfo; Column 'ServerStoragePath' not defined for job " & dataPkgJob.Job & " in the data package")
-                Return False
-            End If
-
-            If String.IsNullOrEmpty(dataPkgJob.ArchiveStoragePath) Then
-                LogError("OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job " & dataPkgJob.Job & " in the data package")
-                Return False
-            End If
-
-            If String.IsNullOrEmpty(dataPkgJob.ResultsFolderName) Then
-                LogError("OverrideCurrentDatasetAndJobInfo; Column 'ResultsFolderName' not defined for job " & dataPkgJob.Job & " in the data package")
-                Return False
-            End If
-
-            If String.IsNullOrEmpty(dataPkgJob.DatasetFolderName) Then
-                LogError("OverrideCurrentDatasetAndJobInfo; Column 'DatasetFolderName' not defined for job " & dataPkgJob.Job & " in the data package")
-                Return False
-            End If
-        End If
-
-
-        With dataPkgJob
-
-            m_jobParams.AddDatasetInfo(.Dataset, .DatasetID)
-            m_DatasetName = String.Copy(.Dataset)
-
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetNum", .Dataset)
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetID", .DatasetID.ToString())
-
-            m_jobParams.AddAdditionalParameter("JobParameters", "Instrument", .Instrument)
-            m_jobParams.AddAdditionalParameter("JobParameters", "InstrumentGroup", .InstrumentGroup)
-
-            m_jobParams.AddAdditionalParameter("JobParameters", "ToolName", .Tool)
-            m_jobParams.AddAdditionalParameter("JobParameters", "ResultType", .ResultType)
-            m_jobParams.AddAdditionalParameter("JobParameters", "SettingsFileName", .SettingsFileName)
-
-            m_jobParams.AddAdditionalParameter("PeptideSearch", "ParmFileName", .ParameterFileName)
-
-            If String.IsNullOrWhiteSpace(.OrganismDBName) Then
-                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", "na")
-            Else
-                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", .OrganismDBName)
-            End If
-
-            If String.IsNullOrWhiteSpace(.ProteinCollectionList) OrElse .ProteinCollectionList = "na" Then
-                m_jobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", .OrganismDBName)
-            Else
-                m_jobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", "na")
-            End If
-
-            m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinCollectionList", .ProteinCollectionList)
-            m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinOptions", .ProteinOptions)
-
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetStoragePath", .ServerStoragePath)
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetArchivePath", .ArchiveStoragePath)
-            m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", .ResultsFolderName)
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetFolderName", .DatasetFolderName)
-            m_jobParams.AddAdditionalParameter("JobParameters", "SharedResultsFolders", .SharedResultsFolder)
-            m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", .RawDataType)
-
-        End With
-
-        Return True
-
-    End Function
-
-    Private Shared Function ParseDataPackageDatasetInfoRow(curRow As DataRow) As clsDataPackageDatasetInfo
-
-        Dim datasetName = clsGlobal.DbCStr(curRow("Dataset"))
-        Dim datasetId = clsGlobal.DbCInt(curRow("DatasetID"))
-
-        Dim datasetInfo = New clsDataPackageDatasetInfo(datasetName, datasetId)
-
-        datasetInfo.Instrument = clsGlobal.DbCStr(curRow("Instrument"))
-        datasetInfo.InstrumentGroup = clsGlobal.DbCStr(curRow("InstrumentGroup"))
-        datasetInfo.Experiment = clsGlobal.DbCStr(curRow("Experiment"))
-        datasetInfo.Experiment_Reason = clsGlobal.DbCStr(curRow("Experiment_Reason"))
-        datasetInfo.Experiment_Comment = clsGlobal.DbCStr(curRow("Experiment_Comment"))
-        datasetInfo.Experiment_Organism = clsGlobal.DbCStr(curRow("Organism"))
-        datasetInfo.Experiment_NEWT_ID = clsGlobal.DbCInt(curRow("Experiment_NEWT_ID"))
-        datasetInfo.Experiment_NEWT_Name = clsGlobal.DbCStr(curRow("Experiment_NEWT_Name"))
-        datasetInfo.ServerStoragePath = clsGlobal.DbCStr(curRow("Dataset_Folder_Path"))
-        datasetInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow("Archive_Folder_Path"))
-        datasetInfo.RawDataType = clsGlobal.DbCStr(curRow("RawDataType"))
-
-        Return datasetInfo
-
-    End Function
-
-    Private Shared Function ParseDataPackageJobInfoRow(curRow As DataRow) As clsDataPackageJobInfo
-
-        Dim dataPkgJob = clsGlobal.DbCInt(curRow("Job"))
-        Dim dataPkgDataset = clsGlobal.DbCStr(curRow("Dataset"))
-
-        Dim jobInfo = New clsDataPackageJobInfo(dataPkgJob, dataPkgDataset)
-
-        jobInfo.DatasetID = clsGlobal.DbCInt(curRow("DatasetID"))
-        jobInfo.Instrument = clsGlobal.DbCStr(curRow("Instrument"))
-        jobInfo.InstrumentGroup = clsGlobal.DbCStr(curRow("InstrumentGroup"))
-        jobInfo.Experiment = clsGlobal.DbCStr(curRow("Experiment"))
-        jobInfo.Experiment_Reason = clsGlobal.DbCStr(curRow("Experiment_Reason"))
-        jobInfo.Experiment_Comment = clsGlobal.DbCStr(curRow("Experiment_Comment"))
-        jobInfo.Experiment_Organism = clsGlobal.DbCStr(curRow("Organism"))
-        jobInfo.Experiment_NEWT_ID = clsGlobal.DbCInt(curRow("Experiment_NEWT_ID"))
-        jobInfo.Experiment_NEWT_Name = clsGlobal.DbCStr(curRow("Experiment_NEWT_Name"))
-        jobInfo.Tool = clsGlobal.DbCStr(curRow("Tool"))
-        jobInfo.ResultType = clsGlobal.DbCStr(curRow("ResultType"))
-        jobInfo.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(jobInfo.ResultType)
-        jobInfo.SettingsFileName = clsGlobal.DbCStr(curRow("SettingsFileName"))
-        jobInfo.ParameterFileName = clsGlobal.DbCStr(curRow("ParameterFileName"))
-        jobInfo.OrganismDBName = clsGlobal.DbCStr(curRow("OrganismDBName"))
-        jobInfo.ProteinCollectionList = clsGlobal.DbCStr(curRow("ProteinCollectionList"))
-        jobInfo.ProteinOptions = clsGlobal.DbCStr(curRow("ProteinOptions"))
-
-        ' This will be updated later for SplitFasta jobs (using function LookupJobParametersFromHistory)
-        jobInfo.NumberOfClonedSteps = 0
-
-        If String.IsNullOrWhiteSpace(jobInfo.ProteinCollectionList) OrElse jobInfo.ProteinCollectionList = "na" Then
-            jobInfo.LegacyFastaFileName = String.Copy(jobInfo.OrganismDBName)
-        Else
-            jobInfo.LegacyFastaFileName = "na"
-        End If
-
-        jobInfo.ServerStoragePath = clsGlobal.DbCStr(curRow("ServerStoragePath"))
-        jobInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow("ArchiveStoragePath"))
-        jobInfo.ResultsFolderName = clsGlobal.DbCStr(curRow("ResultsFolder"))
-        jobInfo.DatasetFolderName = clsGlobal.DbCStr(curRow("DatasetFolder"))
-        jobInfo.SharedResultsFolder = clsGlobal.DbCStr(curRow("SharedResultsFolder"))
-        jobInfo.RawDataType = clsGlobal.DbCStr(curRow("RawDataType"))
-
-        Return jobInfo
-
-    End Function
-
-    ''' <summary>
-    ''' Download any queued files from MyEMSL
-    ''' </summary>
-    ''' <returns></returns>
-    Public Function ProcessMyEMSLDownloadQueue() As Boolean
-        If m_MyEMSLUtilities.FilesToDownload.Count > 0 Then
-            If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(
-                    m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                Return False
-            End If
-        End If
-
-        Return True
-    End Function
-
-    ''' <summary>
-    ''' Download any queued files from MyEMSL
-    ''' </summary>
-    ''' <param name="downloadFolderPath"></param>
-    ''' <param name="folderLayout"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function ProcessMyEMSLDownloadQueue(downloadFolderPath As String, folderLayout As Downloader.DownloadFolderLayout) As Boolean
-        Dim success = m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(downloadFolderPath, folderLayout)
-        Return success
-    End Function
-
-    ''' <summary>
-    ''' Delete the specified FASTA file and its associated files
-    ''' </summary>
-    ''' <param name="diOrgDbFolder"></param>
-    ''' <param name="fiFileToPurge"></param>
-    ''' <param name="legacyFastaFileBaseName"></param>
-    ''' <returns>Number of bytes deleted</returns>
-    Private Function PurgeFastaFiles(diOrgDbFolder As DirectoryInfo, fiFileToPurge As FileInfo, legacyFastaFileBaseName As String) As Long
-
-        Dim baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name)
-
-        If Not String.IsNullOrWhiteSpace(legacyFastaFileBaseName) AndAlso baseName.StartsWith(legacyFastaFileBaseName) Then
-            ' The current job needs this file; do not delete it
-            Return 0
-        End If
-
-        ' Delete all files associated with this fasta file
-        Dim lstFilesToDelete = New List(Of FileInfo)
-        lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName & ".*"))
-
-        If m_DebugLevel >= 1 Then
-            Dim fileText = String.Format("{0,2} file", lstFilesToDelete.Count)
-            If lstFilesToDelete.Count <> 1 Then
-                fileText &= "s"
-            End If
-            LogDebugMessage("Deleting " & fileText & " associated with " & fiFileToPurge.FullName)
-        End If
-
-        Dim bytesDeleted As Long = 0
-
-        Try
-            For Each fiFileToDelete In lstFilesToDelete
-                Dim fileSizeBytes = fiFileToDelete.Length
-                fiFileToDelete.Delete()
-                bytesDeleted += fileSizeBytes
-            Next
-        Catch ex As Exception
-            LogError("Error in PurgeFastaFiles", ex)
-        End Try
-
-        Return bytesDeleted
-
-    End Function
-
-    ''' <summary>
-    ''' Purges old fasta files (and related suffix array files) from localOrgDbFolder
-    ''' </summary>
-    ''' <param name="localOrgDbFolder"></param>
-    ''' <param name="freeSpaceThresholdPercent">Value between 1 and 50</param>
-    ''' <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given fasta file</param>
-    ''' <param name="legacyFastaFileBaseName">
-    ''' Legacy fasta file name (without .fasta)
-    ''' For split fasta jobs, should not include the splitcount and segment number, e.g. should not include _25x_07 or _25x_08
-    ''' </param>
-    ''' <remarks></remarks>
-    Protected Sub PurgeFastaFilesIfLowFreeSpace(
-      localOrgDbFolder As String,
-      freeSpaceThresholdPercent As Integer,
-      requiredFreeSpaceMB As Double,
-      legacyFastaFileBaseName As String)
-
-        If freeSpaceThresholdPercent < 1 Then freeSpaceThresholdPercent = 1
-        If freeSpaceThresholdPercent > 50 Then freeSpaceThresholdPercent = 50
-
-        Try
-
-            Dim diOrgDbFolder = New DirectoryInfo(localOrgDbFolder)
-            If diOrgDbFolder.FullName.Length <= 2 Then
-                LogMessage("Warning: Org DB folder length is less than 3 characters; this is unexpected: " & diOrgDbFolder.FullName)
-                Exit Sub
-            End If
-
-            ' Look for file MaxDirSize.txt which defines the maximum space that the files can use
-            Dim fiMaxDirSize = New FileInfo(Path.Combine(diOrgDbFolder.FullName, "MaxDirSize.txt"))
-
-            Dim driveLetter = diOrgDbFolder.FullName.Substring(0, 2)
-
-            If (Not driveLetter.EndsWith(":")) Then
-                ' The folder is not local to this computer
-                If Not fiMaxDirSize.Exists Then
-                    LogError("Warning: Orb DB folder path does not have a colon and could not find file " & fiMaxDirSize.Name &
-                             "; cannot manage drive space usage: " & diOrgDbFolder.FullName)
-                    Exit Sub
-                End If
-
-                ' MaxDirSize.txt file found; delete the older FASTA files to free up space
-                PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName)
-                Exit Sub
-            End If
-
-            Dim localDriveInfo = New DriveInfo(driveLetter)
-            Dim percentFreeSpaceAtStart As Double = localDriveInfo.AvailableFreeSpace / CDbl(localDriveInfo.TotalSize) * 100
-
-            If (percentFreeSpaceAtStart >= freeSpaceThresholdPercent) Then
-                If m_DebugLevel >= 2 Then
-                    Dim freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
-                    LogMessage(String.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required",
-                                               localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent))
-                End If
-            Else
-                PurgeFastaFilesUsingFreeSpaceThreshold(localDriveInfo, diOrgDbFolder, legacyFastaFileBaseName,
-                                                       freeSpaceThresholdPercent, requiredFreeSpaceMB, percentFreeSpaceAtStart)
-            End If
-
-            If fiMaxDirSize.Exists Then
-                ' MaxDirSize.txt file exists; possibly delete additional FASTA files to free up space
-                PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName)
-            End If
-
-        Catch ex As Exception
-            LogError("Error in PurgeFastaFilesIfLowFreeSpace", ex)
-        End Try
-
-    End Sub
-
-    Private Sub PurgeFastaFilesUsingFreeSpaceThreshold(
-      localDriveInfo As DriveInfo,
-      diOrgDbFolder As DirectoryInfo,
-      legacyFastaFileBaseName As String,
-      freeSpaceThresholdPercent As Integer,
-      requiredFreeSpaceMB As Double,
-      percentFreeSpaceAtStart As Double)
-
-        Dim freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
-
-        Dim logInfoMessages =
-            m_DebugLevel >= 1 AndAlso freeSpaceGB < 100 OrElse
-            m_DebugLevel >= 2 AndAlso freeSpaceGB < 250 OrElse
-            m_DebugLevel >= 3
-
-        If logInfoMessages Then
-            LogMessage(String.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%",
-                                       localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent))
-        End If
-
-        ' Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
-        Dim dctFastaFiles As Dictionary(Of FileInfo, DateTime) = GetFastaFilesByLastUse(diOrgDbFolder)
-
-        Dim lstFastaFilesByLastUse = From item In dctFastaFiles Order By item.Value Select item.Key
-        Dim totalBytesPurged As Long = 0
-
-        For Each fiFileToPurge In lstFastaFilesByLastUse
-            ' Abort this process if the LastUsed date of this file is less than 5 days old
-            Dim dtLastUsed As DateTime
-            If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
-                If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
-                    If logInfoMessages Then
-                        LogMessage("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
-                                     "will not purge any more files to free disk space")
-                    End If
-                    Exit For
-                End If
-            End If
-
-            ' Delete all files associated with this fasta file
-            ' However, do not delete it if the name starts with legacyFastaFileBaseName
-            Dim bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName)
-            totalBytesPurged += bytesDeleted
-
-            ' Re-check the disk free space
-            Dim percentFreeSpace = localDriveInfo.AvailableFreeSpace / CDbl(localDriveInfo.TotalSize) * 100
-            Dim updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
-
-            If requiredFreeSpaceMB > 0 AndAlso updatedFreeSpaceGB * 1024.0 < requiredFreeSpaceMB Then
-                ' Required free space is known, and we're not yet there
-                ' Keep deleting files
-                If m_DebugLevel >= 2 Then
-                    LogDebugMessage(String.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space",
-                                                  localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace))
-                End If
-            Else
-                ' Either required free space is not known, or we have more than enough free space
-
-                If (percentFreeSpace >= freeSpaceThresholdPercent) Then
-                    ' Target threshold reached
-                    If m_DebugLevel >= 1 Then
-                        LogMessage(String.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " &
-                                                   "deleted {3:F1} GB of cached files",
-                                                   localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)))
-                    End If
-                    Exit For
-                ElseIf m_DebugLevel >= 2 Then
-                    ' Keep deleting until we reach the target threshold for free space
-                    LogDebugMessage(String.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space",
-                                                  localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace))
-                End If
-            End If
-        Next
-
-        ' We have deleted all of the files that can be deleted
-        Dim finalFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace)
-        If requiredFreeSpaceMB > 0 AndAlso finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB Then
-
-            LogMessage(String.Format("Warning: unable to delete enough files to free up the required space on {0} ({1:F1} GB vs. {2:F1} GB); " &
-                                       "deleted {3:F1} GB of cached files",
-                                       localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)))
-        End If
-
-    End Sub
-
-    ''' <summary>
-    ''' Use the space usage defined in MaxDirSize.txt to decide if any FASTA files need to be deleted
-    ''' </summary>
-    ''' <param name="fiMaxDirSize">MaxDirSize.txt file in the local organism DB folder</param>
-    ''' <param name="legacyFastaFileBaseName">Base FASTA file name for the current analysis job</param>
-    Private Sub PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize As FileInfo, legacyFastaFileBaseName As String)
-
-        Try
-            Dim diOrgDbFolder As DirectoryInfo = fiMaxDirSize.Directory
-            Dim errorSuffix = "; cannot manage drive space usage: " & diOrgDbFolder.FullName
-            Dim maxSizeGB = 0
-
-            Using reader = New StreamReader(New FileStream(fiMaxDirSize.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                While Not reader.EndOfStream
-                    Dim dataLine = reader.ReadLine
-                    If String.IsNullOrEmpty(dataLine) OrElse dataLine.StartsWith("#") Then
-                        Continue While
-                    End If
-
-                    Dim lineParts = dataLine.Split("="c)
-                    If lineParts.Count < 2 Then
-                        Continue While
-                    End If
-
-                    If String.Equals(lineParts(0), "MaxSizeGB", StringComparison.InvariantCultureIgnoreCase) Then
-                        If Not Integer.TryParse(lineParts(1), maxSizeGB) Then
-                            LogError("MaxSizeGB line does not contain an integer in " & fiMaxDirSize.FullName & errorSuffix)
-                            Exit Sub
-                        End If
-                        Exit While
-                    End If
-
-                End While
-            End Using
-
-            If maxSizeGB = 0 Then
-                LogError("MaxSizeGB line not found in " & fiMaxDirSize.FullName & errorSuffix)
-                Exit Sub
-            End If
-
-            Dim spaceUsageBytes As Long = 0
-
-            For Each fiFile In diOrgDbFolder.GetFiles("*", SearchOption.TopDirectoryOnly)
-                spaceUsageBytes += fiFile.Length
-            Next
-
-            Dim spaceUsageGB = clsGlobal.BytesToGB(spaceUsageBytes)
-            If spaceUsageGB <= maxSizeGB Then
-                ' Space usage is under the threshold
-                Dim statusMessage = String.Format("Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge",
-                                                  diOrgDbFolder.FullName, spaceUsageGB, maxSizeGB)
-                LogMessage(statusMessage, 3)
-                Exit Sub
-            End If
-
-            ' Space usage is too high; need to purge some files
-            ' Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
-            Dim dctFastaFiles As Dictionary(Of FileInfo, DateTime) = GetFastaFilesByLastUse(diOrgDbFolder)
-
-            Dim lstFastaFilesByLastUse = From item In dctFastaFiles Order By item.Value Select item.Key
-
-            Dim bytesToPurge = CLng(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024)
-            Dim totalBytesPurged As Long = 0
-
-            For Each fiFileToPurge In lstFastaFilesByLastUse
-                ' Abort this process if the LastUsed date of this file is less than 5 days old
-                Dim dtLastUsed As DateTime
-                If dctFastaFiles.TryGetValue(fiFileToPurge, dtLastUsed) Then
-                    If Date.UtcNow.Subtract(dtLastUsed).TotalDays < 5 Then
-                        LogMessage("All fasta files in " & diOrgDbFolder.FullName & " are less than 5 days old; " &
-                                     "will not purge any more files to free disk space")
-                        Exit For
-                    End If
-                End If
-
-                ' Delete all files associated with this fasta file
-                ' However, do not delete it if the name starts with legacyFastaFileBaseName
-                Dim bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName)
-                totalBytesPurged += bytesDeleted
-
-                If totalBytesPurged < bytesToPurge Then
-                    ' Keep deleting files
-                    If m_DebugLevel >= 2 Then
-                        LogDebugMessage(String.Format("Purging FASTA files: {0:F1} / {1:F1} MB deleted",
-                                                      clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)))
-                    End If
-                Else
-                    ' Enough files have been deleted
-                    LogMessage(String.Format("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
-                                               diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)))
-                    Exit Sub
-                End If
-            Next
-
-            If totalBytesPurged < bytesToPurge Then
-                LogMessage(String.Format("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " &
-                                           "deleted {2:F1} GB of cached files",
-                                           diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)))
-            End If
-
-        Catch ex As Exception
-            LogError("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex)
-        End Try
-
-    End Sub
-
-    ''' <summary>
-    ''' Looks for the specified file in the given folder
-    ''' If present, returns the full path to the file
-    ''' If not present, looks for a file named FileName_StoragePathInfo.txt; if that file is found, opens the file and reads the path
-    ''' If the file isn't found (and the _StoragePathInfo.txt file isn't present), then returns an empty string
-    ''' </summary>
-    ''' <param name="FolderPath">The folder to look in</param>
-    ''' <param name="FileName">The file name to find</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function ResolveStoragePath(FolderPath As String, FileName As String) As String
-
-        Dim strPhysicalFilePath As String = String.Empty
-        Dim strFilePath As String
-
-        Dim strLineIn As String
-
-        strFilePath = Path.Combine(FolderPath, FileName)
-
-        If File.Exists(strFilePath) Then
-            ' The desired file is located in folder FolderPath
-            strPhysicalFilePath = strFilePath
-        Else
-            ' The desired file was not found
-            strFilePath &= STORAGE_PATH_INFO_FILE_SUFFIX
-
-            If File.Exists(strFilePath) Then
-                ' The _StoragePathInfo.txt file is present
-                ' Open that file to read the file path on the first line of the file
-
-                Using srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    strLineIn = srInFile.ReadLine
-                    strPhysicalFilePath = strLineIn
-                End Using
-
-            End If
-        End If
-
-        Return strPhysicalFilePath
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
-    ''' If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
-    ''' If the file named _StoragePathInfo.txt isn't found, then looks for a ser file in the specified folder
-    ''' If found, returns the path to the ser file
-    ''' If not found, then looks for a 0.ser folder in the specified folder
-    ''' If found, returns the path to the 0.ser folder
-    ''' Otherwise, returns an empty string
-    ''' </summary>
-    ''' <param name="FolderPath">The folder to look in</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function ResolveSerStoragePath(FolderPath As String) As String
-
-        Dim diFolder As DirectoryInfo
-        Dim fiFile As FileInfo
-
-        Dim strPhysicalFilePath As String
-        Dim strFilePath As String
-
-        Dim strLineIn As String
-
-        strFilePath = Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX)
-
-        If File.Exists(strFilePath) Then
-            ' The desired file is located in folder FolderPath
-            ' The _StoragePathInfo.txt file is present
-            ' Open that file to read the file path on the first line of the file
-
-            Using srInFile = New StreamReader(New FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                strLineIn = srInFile.ReadLine
-                strPhysicalFilePath = strLineIn
-
-            End Using
-        Else
-            ' The desired file was not found
-
-            ' Look for a ser file in the dataset folder
-            strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE)
-            fiFile = New FileInfo(strPhysicalFilePath)
-
-            If Not fiFile.Exists Then
-                ' See if a folder named 0.ser exists in FolderPath
-                strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER)
-                diFolder = New DirectoryInfo(strPhysicalFilePath)
-                If Not diFolder.Exists Then
-                    strPhysicalFilePath = String.Empty
-                End If
-            End If
-
-        End If
-
-        Return strPhysicalFilePath
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieve the files specified by the file processing options parameter
-    ''' </summary>
-    ''' <param name="fileSpecList">
-    ''' File processing options, examples:
-    ''' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,sequest:_syn_ModSummary.txt:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
-    ''' sequest:_syn.txt,sequest:_syn_MSGF.txt,sequest:_fht.txt,sequest:_fht_MSGF.txt,sequest:_dta.zip,sequest:_syn_ModSummary.txt
-    ''' MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_fht.txt,MSGFPlus:_dta.zip,MSGFPlus:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt,masic_finnigan:_ReporterIons.txt:copy
-    ''' MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_syn_ModSummary.txt,MSGFPlus:_dta.zip
-    ''' </param>
-    ''' <param name="fileRetrievalMode">Used by plugins to indicate the types of files that are required (in case fileSpecList is not configured correctly for a given data package job)</param>
-    ''' <returns>True if success, false if a problem</returns>
-    ''' <remarks>
-    ''' This function is used by plugins PhosphoFDRAggregator and PRIDEMzXML
-    ''' However, PrideMzXML is dormant as of September 2013
-    ''' </remarks>
-    Protected Function RetrieveAggregateFiles(
-      fileSpecList As List(Of String),
-      fileRetrievalMode As DataPackageFileRetrievalModeConstants,
-      <Out> ByRef dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo)) As Boolean
-
-        Dim blnSuccess As Boolean
-
-        Try
-            If Not LoadDataPackageJobInfo(dctDataPackageJobs) Then
-                m_message = "Error looking up datasets and jobs using LoadDataPackageJobInfo"
-                dctDataPackageJobs = Nothing
-                Return False
-            End If
-        Catch ex As Exception
-            LogError("RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex)
-            dctDataPackageJobs = Nothing
-            Return False
-        End Try
-
-        Try
-            Dim diWorkingDirectory = New DirectoryInfo(m_WorkingDir)
-
-            ' Cache the current dataset and job info
-            Dim currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo()
-
-            For Each dataPkgJob As KeyValuePair(Of Integer, clsDataPackageJobInfo) In dctDataPackageJobs
-
-                If Not OverrideCurrentDatasetAndJobInfo(dataPkgJob.Value) Then
-                    Return False
-                End If
-
-                ' See if this job matches any of the entries in fileSpecList
-                Dim fileSpecListCurrent = New List(Of String)
-
-                For Each fileSpec As String In fileSpecList
-                    Dim fileSpecTerms = fileSpec.Trim().Split(":"c).ToList()
-                    If dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms(0).Trim().ToLower()) Then
-                        fileSpecListCurrent = fileSpecList
-                        Exit For
-                    End If
-                Next
-
-                If fileSpecListCurrent.Count = 0 Then
-                    Select Case fileRetrievalMode
-                        Case DataPackageFileRetrievalModeConstants.Ascore
-
-                            If dataPkgJob.Value.Tool.ToLower().StartsWith("msgf") Then
-                                ' MSGF+
-                                fileSpecListCurrent = New List(Of String) From {
-                                    "MSGFPlus:_msgfplus_syn.txt",
-                                    "MSGFPlus:_msgfplus_syn_ModSummary.txt",
-                                    "MSGFPlus:_dta.zip"}
-
-                            End If
-
-                            If dataPkgJob.Value.Tool.ToLower().StartsWith("sequest") Then
-                                ' Sequest
-                                fileSpecListCurrent = New List(Of String) From {
-                                    "sequest:_syn.txt",
-                                    "sequest:_syn_MSGF.txt",
-                                    "sequest:_syn_ModSummary.txt",
-                                    "sequest:_dta.zip"}
-
-                            End If
-
-                            If dataPkgJob.Value.Tool.ToLower().StartsWith("xtandem") Then
-                                ' XTandem
-                                fileSpecListCurrent = New List(Of String) From {
-                                    "xtandem:_xt_syn.txt",
-                                    "xtandem:_xt_syn_ModSummary.txt",
-                                    "xtandem:_dta.zip"}
-
-                            End If
-
-                    End Select
-                End If
-
-                If fileSpecListCurrent.Count = 0 Then
-                    Continue For
-                End If
-
-                Dim spectraFileKey = "Job" & dataPkgJob.Key & DATA_PACKAGE_SPECTRA_FILE_SUFFIX
-
-                For Each fileSpec As String In fileSpecListCurrent
-                    Dim fileSpecTerms = fileSpec.Trim().Split(":"c).ToList()
-                    Dim sourceFileName = dataPkgJob.Value.Dataset & fileSpecTerms(1).Trim()
-                    Dim sourceFolderPath = "??"
-
-                    Dim saveMode = "nocopy"
-                    If fileSpecTerms.Count > 2 Then
-                        saveMode = fileSpecTerms(2).Trim()
-                    End If
-
-                    Try
-
-                        If Not dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms(0).Trim().ToLower()) Then
-                            Continue For
-                        End If
-
-                        ' To avoid collisions, files for this job will be placed in a subfolder based on the Job number
-                        Dim diTargetFolder = New DirectoryInfo(Path.Combine(m_WorkingDir, "Job" & dataPkgJob.Key))
-                        If Not diTargetFolder.Exists Then diTargetFolder.Create()
-
-                        If sourceFileName.ToLower().EndsWith("_dta.zip") AndAlso dataPkgJob.Value.Tool.ToLower().EndsWith("_mzml") Then
-                            ' This is a .mzML job; it is not going to have a _dta.zip file
-                            ' Setting sourceFolderPath to an empty string so that GetMzMLFile will get called below
-                            sourceFolderPath = String.Empty
-                        Else
-                            sourceFolderPath = FindDataFile(sourceFileName)
-
-                            If String.IsNullOrEmpty(sourceFolderPath) Then
-                                ' Source file not found
-
-                                Dim alternateSourceFileName As String = String.Empty
-
-                                If sourceFileName.ToLower().Contains("_msgfdb") Then
-                                    ' Auto-look for the _msgfplus version of this file
-                                    alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfdb", "_msgfplus")
-                                ElseIf sourceFileName.ToLower().Contains("_msgfplus") Then
-                                    ' Auto-look for the _msgfdb version of this file
-                                    alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfplus", "_msgfdb")
-                                End If
-
-                                If Not String.IsNullOrEmpty(alternateSourceFileName) Then
-                                    sourceFolderPath = FindDataFile(alternateSourceFileName)
-                                    If Not String.IsNullOrEmpty(sourceFolderPath) Then
-                                        sourceFileName = alternateSourceFileName
-                                    End If
-                                End If
-                            End If
-
-                        End If
-
-                        If String.IsNullOrEmpty(sourceFolderPath) Then
-
-                            If sourceFileName.ToLower().EndsWith("_dta.zip") Then
-                                ' Look for a mzML.gz file instead
-
-                                Dim errorMessage As String = String.Empty
-                                Dim fileMissingFromCache As Boolean
-
-                                Dim success = RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, False, errorMessage, fileMissingFromCache)
-
-                                If Not success Then
-                                    If String.IsNullOrWhiteSpace(errorMessage) Then
-                                        errorMessage = "Unknown error looking for the .mzML file for " & dataPkgJob.Value.Dataset & ", job " & dataPkgJob.Key
-                                    End If
-
-                                    LogError(errorMessage)
-                                    Return False
-                                End If
-
-                                sourceFileName = dataPkgJob.Value.Dataset & DOT_MZML_EXTENSION & DOT_GZ_EXTENSION
-                                m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName)
-                                m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION)
-
-                                MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName)
-
-                                If m_DebugLevel >= 1 Then
-                                    LogMessage("Retrieved the .mzML file for " & dataPkgJob.Value.Dataset & ", job " & dataPkgJob.Key)
-                                End If
-
-                                Continue For
-                            End If
-
-                            m_message = "Could not find a valid folder with file " & sourceFileName & " for job " & dataPkgJob.Key
-                            If m_DebugLevel >= 1 Then
-                                LogMessage(m_message, 0, True)
-                            End If
-                            Return False
-                        End If
-
-                        If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-                            m_message = "CopyFileToWorkDir returned False for " & sourceFileName & " using folder " & sourceFolderPath & " for job " & dataPkgJob.Key
-                            If m_DebugLevel >= 1 Then
-                                LogMessage(m_message, 0, True)
-                            End If
-                            Return False
-                        End If
-
-                        If sourceFileName.EndsWith("_dta.zip") Then
-                            m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName)
-                        End If
-
-                        If saveMode.ToLower() <> "copy" Then
-                            m_jobParams.AddResultFileToSkip(sourceFileName)
-                        End If
-
-                        MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName)
-
-                        If m_DebugLevel >= 1 Then
-                            LogMessage("Copied " + sourceFileName + " from folder " + sourceFolderPath)
-                        End If
-
-                    Catch ex As Exception
-                        LogError("RetrieveAggregateFiles; Exception during copy of file: " &
-                                      sourceFileName & " from folder " & sourceFolderPath & " for job " & dataPkgJob.Key, ex)
-                        Return False
-
-                    End Try
-
-                Next
-            Next
-
-            If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                Return False
-            End If
-
-            ' Restore the dataset and job info for this aggregation job
-            OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo)
-
-            blnSuccess = True
-
-        Catch ex As Exception
-            LogError("Exception in RetrieveAggregateFiles", ex)
-            blnSuccess = False
-        End Try
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieve the dataset's cached .mzML file from the MsXML Cache
-    ''' </summary>
-    ''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
-    ''' <param name="errorMessage">Output parameter: Error message</param>
-    ''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
-    ''' <returns>True if success, false if an error or file not found</returns>
-    ''' <remarks>
-    ''' Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
-    ''' InputFolderName should be in the form MSXML_Gen_1_93_367204
-    ''' </remarks>
-    Protected Function RetrieveCachedMzMLFile(unzip As Boolean, <Out()> ByRef errorMessage As String, <Out()> ByRef fileMissingFromCache As Boolean) As Boolean
-        Return RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, unzip, errorMessage, fileMissingFromCache)
-    End Function
-
-
-    ''' <summary>
-    ''' Retrieve the dataset's cached .PBF file from the MsXML Cache
-    ''' </summary>
-    ''' <param name="errorMessage">Output parameter: Error message</param>
-    ''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
-    ''' <returns>True if success, false if an error or file not found</returns>
-    ''' <remarks>
-    ''' Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
-    ''' InputFolderName should be in the form MSXML_Gen_1_93_367204
-    ''' </remarks>
-    Protected Function RetrieveCachedPBFFile(<Out()> ByRef errorMessage As String, <Out()> ByRef fileMissingFromCache As Boolean) As Boolean
-        Const unzip = False
-        Return RetrieveCachedMSXMLFile(DOT_PBF_EXTENSION, unzip, errorMessage, fileMissingFromCache)
-    End Function
-
-
-    ''' <summary>
-    ''' Retrieve the dataset's cached .mzXML file from the MsXML Cache
-    ''' </summary>
-    ''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
-    ''' <param name="errorMessage">Output parameter: Error message</param>
-    ''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
-    ''' <returns>True if success, false if an error or file not found</returns>
-    ''' <remarks>
-    ''' Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
-    ''' InputFolderName should be in the form MSXML_Gen_1_105_367204
-    ''' </remarks>
-    Protected Function RetrieveCachedMzXMLFile(unzip As Boolean, <Out()> ByRef errorMessage As String, <Out()> ByRef fileMissingFromCache As Boolean) As Boolean
-        Return RetrieveCachedMSXMLFile(DOT_MZXML_EXTENSION, unzip, errorMessage, fileMissingFromCache)
-    End Function
-
-    ''' <summary>
-    ''' Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache (assumes the file is gzipped)
-    ''' </summary>
-    ''' <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
-    ''' <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
-    ''' <param name="errorMessage">Output parameter: Error message</param>
-    ''' <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
-    ''' <returns>True if success, false if an error or file not found</returns>
-    ''' <remarks>
-    ''' Uses the job's InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
-    ''' InputFolderName should be in the form MSXML_Gen_1_93_367204
-    ''' </remarks>
-    Protected Function RetrieveCachedMSXMLFile(
-      resultFileExtension As String,
-      unzip As Boolean,
-      <Out()> ByRef errorMessage As String,
-      <Out()> ByRef fileMissingFromCache As Boolean) As Boolean
-
-        Dim msXMLCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
-        Dim diMSXmlCacheFolder = New DirectoryInfo(msXMLCacheFolderPath)
-
-        errorMessage = String.Empty
-        fileMissingFromCache = False
-
-        If String.IsNullOrEmpty(resultFileExtension) Then
-            errorMessage = "resultFileExtension is empty; should be .mzXML or .mzML"
-            Return False
-        End If
-
-        If Not diMSXmlCacheFolder.Exists Then
-            errorMessage = "MSXmlCache folder not found: " & msXMLCacheFolderPath
-            Return False
-        End If
-
-        Dim foldersToSearch = New List(Of String)
-        foldersToSearch.Add(m_jobParams.GetJobParameter("InputFolderName", String.Empty))
-        If foldersToSearch(0).Length = 0 Then
-            foldersToSearch.Clear()
-        End If
-
-        For Each sharedResultFolder In GetSharedResultFolderList()
-            If sharedResultFolder.Trim().Length = 0 Then Continue For
-            If Not foldersToSearch.Contains(sharedResultFolder) Then
-                foldersToSearch.Add(sharedResultFolder)
-            End If
-        Next
-
-        If foldersToSearch.Count = 0 Then
-            errorMessage = "Job parameters InputFolderName and SharedResultsFolders are empty; cannot retrieve the " & resultFileExtension & " file"
-            Return False
-        End If
-
-        Dim msXmlToolNameVersionFolders As New List(Of String)
-
-        For Each folderName In foldersToSearch
-            Try
-                Dim msXmlToolNameVersionFolder = GetMSXmlToolNameVersionFolder(folderName)
-                msXmlToolNameVersionFolders.Add(msXmlToolNameVersionFolder)
-            Catch ex As Exception
-                errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" & folderName & "); " &
-                    "cannot retrieve the " & resultFileExtension & " File"
-                LogMessage(errorMessage, 0, True)
-            End Try
-        Next
-
-        If msXmlToolNameVersionFolders.Count = 0 Then
-            If String.IsNullOrEmpty(errorMessage) Then
-                errorMessage = "The input folder and shared results folder(s) were not in the expected form of ToolName_Version_DatasetID"
-                LogMessage(errorMessage, 0, True)
-            End If
-            Return False
-        Else
-            errorMessage = String.Empty
-        End If
-
-        Dim diSourceFolder As DirectoryInfo = Nothing
-
-        For Each toolNameVersionFolder In msXmlToolNameVersionFolders
-            Dim sourceFolder = GetMSXmlCacheFolderPath(diMSXmlCacheFolder.FullName, m_jobParams, toolNameVersionFolder, errorMessage)
-            If Not String.IsNullOrEmpty(errorMessage) Then
-                Continue For
-            End If
-
-            diSourceFolder = New DirectoryInfo(sourceFolder)
-            If diSourceFolder.Exists Then
-                Exit For
-            End If
-
-            If String.IsNullOrEmpty(errorMessage) Then
-                errorMessage = "Cache folder does not exist (" & sourceFolder
-            Else
-                errorMessage &= " or " & sourceFolder
-            End If
-
-        Next
-
-        If diSourceFolder Is Nothing Then
-            errorMessage &= "); will re-generate the " & resultFileExtension & " file"
-            LogMessage(errorMessage)
-            fileMissingFromCache = True
-            Return False
-        End If
-
-        Dim sourceFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName & resultFileExtension)
-        Dim expectedFileDescription = resultFileExtension
-        If resultFileExtension <> DOT_PBF_EXTENSION Then
-            sourceFilePath &= DOT_GZ_EXTENSION
-            expectedFileDescription &= DOT_GZ_EXTENSION
-        End If
-
-        Dim fiSourceFile = New FileInfo(sourceFilePath)
-        If Not fiSourceFile.Exists Then
-            errorMessage = "Cached " & expectedFileDescription & " file does not exist in " & diSourceFolder.FullName & "; will re-generate it"
-            fileMissingFromCache = True
-            Return False
-        End If
-
-        ' Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
-
-        Dim hashcheckFilePath = fiSourceFile.FullName & clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX
-
-        errorMessage = String.Empty
-        If Not clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashcheckFilePath, errorMessage) Then
-            errorMessage = "Cached " & resultFileExtension & " file does not match the hashcheck file in " & diSourceFolder.FullName & "; will re-generate it"
-            fileMissingFromCache = True
-            Return False
-        End If
-
-        If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-            errorMessage = "Error copying " + fiSourceFile.Name
-            Return False
-        End If
-
-        If fiSourceFile.Extension.ToLower() = DOT_GZ_EXTENSION Then
-            ' Do not skip all .gz files because we compress MSGF+ results using .gz and we want to keep those
-
-            m_jobParams.AddResultFileToSkip(fiSourceFile.Name)
-            m_jobParams.AddResultFileToSkip(fiSourceFile.Name.Substring(0, fiSourceFile.Name.Length - DOT_GZ_EXTENSION.Length))
-
-            If unzip Then
-                Dim localZippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name)
-
-                If Not m_IonicZipTools.GUnzipFile(localZippedFile) Then
-                    errorMessage = m_IonicZipTools.Message
-                    Return False
-                End If
-            End If
-
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
-    ''' Also creates a batch file that can be manually run to retrieve the instrument data files
-    ''' </summary>
-    ''' <param name="udtOptions">File retrieval options</param>
-    ''' <param name="lstDataPackagePeptideHitJobs">Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDataPackagePeptideHitJobPHRPFiles(
-      udtOptions As clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType,
-      ByRef lstDataPackagePeptideHitJobs As List(Of clsDataPackageJobInfo)) As Boolean
-
-        Const progressPercentAtStart As Single = 0
-        Const progressPercentAtFinish As Single = 20
-        Return RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
-    ''' Also creates a batch file that can be manually run to retrieve the instrument data files
-    ''' </summary>
-    ''' <param name="udtOptions">File retrieval options</param>
-    ''' <param name="lstDataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
-    ''' <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
-    ''' <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDataPackagePeptideHitJobPHRPFiles(
-      udtOptions As clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType,
-      <Out()> ByRef lstDataPackagePeptideHitJobs As List(Of clsDataPackageJobInfo),
-      progressPercentAtStart As Single,
-      progressPercentAtFinish As Single) As Boolean
-
-        ' Gigasax.DMS_Pipeline
-        Dim connectionString As String = m_mgrParams.GetParam("brokerconnectionstring")
-
-        Dim dataPackageID As Integer = m_jobParams.GetJobParameter("DataPackageID", -1)
-
-        Dim dataPackageFileHander = New clsDataPackageFileHandler(connectionString, dataPackageID, Me)
-        RegisterEvents(dataPackageFileHander)
-
-        Dim blnSuccess = dataPackageFileHander.RetrieveDataPackagePeptideHitJobPHRPFiles(
-            udtOptions, lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish)
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by strProgLocName
-    ''' </summary>
-    ''' <param name="strProgLocName"></param>
-    ''' <returns></returns>
-    ''' <remarks>strProgLocName is tyipcally DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
-    Protected Function RetrievePNNLOmicsResourceFiles(strProgLocName As String) As Boolean
-
-        Const OMICS_ELEMENT_DATA_FILE = "PNNLOmicsElementData.xml"
-
-        ' Copy the PNNLOmicsElementData.xml file to the working directory
-        Dim strProgLoc As String
-        Dim fiSourceFile As FileInfo
-
-        Try
-            strProgLoc = m_mgrParams.GetParam(strProgLocName)
-            If String.IsNullOrEmpty(strProgLocName) Then
-                LogError("Manager parameter " + strProgLocName + " is not defined; cannot retrieve file " & OMICS_ELEMENT_DATA_FILE)
-                Return False
-            End If
-
-            fiSourceFile = New FileInfo(Path.Combine(strProgLoc, OMICS_ELEMENT_DATA_FILE))
-
-            If Not fiSourceFile.Exists Then
-                LogError("PNNLOmics Element Data file not found at: " & fiSourceFile.FullName)
-                m_message = "PNNLOmics Element Data file not found"
-                Return False
-            End If
-
-            fiSourceFile.CopyTo(Path.Combine(m_WorkingDir, OMICS_ELEMENT_DATA_FILE))
-
-        Catch ex As Exception
-            LogError("Error copying " & OMICS_ELEMENT_DATA_FILE, ex)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
-    ''' </summary>
-    ''' <param name="FileExtension">File extension to match; must contain a period, for example ".raw"</param>
-    ''' ''' <param name="CreateStoragePathInfoOnly">If true, then create a storage path info file</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDatasetFile(FileExtension As String, createStoragePathInfoOnly As Boolean) As Boolean
-        Return RetrieveDatasetFile(FileExtension, createStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
-    ''' </summary>
-    ''' <param name="FileExtension">File extension to match; must contain a period, for example ".raw"</param>
-    ''' <param name="CreateStoragePathInfoOnly">If true, then create a storage path info file</param>
-    ''' <param name="maxAttempts">Maximum number of attempts</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDatasetFile(FileExtension As String, createStoragePathInfoOnly As Boolean, maxAttempts As Integer) As Boolean
-
-        Dim DatasetFilePath As String = FindDatasetFile(maxAttempts, FileExtension)
-        If String.IsNullOrEmpty(DatasetFilePath) Then
-            Return False
-        End If
-
-        If (DatasetFilePath.StartsWith(MYEMSL_PATH_FLAG)) Then
-            ' Queue this file for download
-            m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo)
-            Return True
-        End If
-
-        Dim fiDatasetFile = New FileInfo(DatasetFilePath)
-        If Not fiDatasetFile.Exists Then
-            LogError("Source dataset file not found: " & fiDatasetFile.FullName)
-            m_message = "Source dataset file not found"
-            Return False
-        End If
-
-        If m_DebugLevel >= 1 Then
-            LogDebugMessage("Retrieving file " & fiDatasetFile.FullName)
-        End If
-
-        If CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly) Then
-            Return True
-        Else
-            Return False
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves an Agilent ion trap .mgf file or .cdf/,mgf pair for analysis job in progress
-    ''' </summary>
-    ''' <param name="GetCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveMgfFile(GetCdfAlso As Boolean, createStoragePathInfoOnly As Boolean, maxAttempts As Integer) As Boolean
-
-        Dim strMGFFilePath As String
-        Dim fiMGFFile As FileInfo
-
-        strMGFFilePath = FindMGFFile(maxAttempts, assumeUnpurged:=False)
-
-        If String.IsNullOrEmpty(strMGFFilePath) Then
-            LogError("Source mgf file not found using FindMGFFile")
-            Return False
-        End If
-
-        fiMGFFile = New FileInfo(strMGFFilePath)
-        If Not fiMGFFile.Exists Then
-            LogError("Source mgf file not found: " & fiMGFFile.FullName)
-            m_message = "Source mgf file not found"
-            Return False
-        End If
-
-
-        'Do the copy
-        If Not CopyFileToWorkDirWithRename(fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, MaxCopyAttempts:=3) Then Return False
-
-        'If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
-        If Not GetCdfAlso Then Return True
-
-        For Each fiCDFFile As FileInfo In fiMGFFile.Directory.GetFiles("*" + DOT_CDF_EXTENSION)
-            'Copy the .cdf file that was found
-            If CopyFileToWorkDirWithRename(fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, MaxCopyAttempts:=3) Then
-                Return True
-            Else
-                If String.IsNullOrEmpty(m_message) Then
-                    LogError("Error obtaining CDF file from " & fiCDFFile.FullName)
-                End If
-                Return False
-            End If
-        Next
-
-        ' CDF file not found
-        LogError("CDF File not found")
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for the newest mzXML file for this dataset
-    ''' First looks for the newest file in \\Proto-11\MSXML_Cache
-    ''' If not found, looks in the dataset folder, looking for subfolders 
-    ''' MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
-    ''' </summary>
-    ''' <param name="CreateStoragePathInfoOnly"></param>
-    ''' <param name="sourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
-    ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    ''' <remarks>The retrieved file might be gzipped.  For MzML files, use RetrieveMzMLFile</remarks>
-    Protected Function RetrieveMZXmlFile(createStoragePathInfoOnly As Boolean, <Out()> ByRef sourceFilePath As String) As Boolean
-
-        Dim hashcheckFilePath As String = String.Empty
-        sourceFilePath = FindMZXmlFile(hashcheckFilePath)
-
-        If String.IsNullOrEmpty(sourceFilePath) Then
-            Return False
-        Else
-            Return RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, sourceFilePath, hashcheckFilePath)
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves this dataset's mzXML or mzML file
-    ''' </summary>
-    ''' <param name="CreateStoragePathInfoOnly"></param>
-    ''' <param name="sourceFilePath">Full path to the file that should be retrieved</param>
-    ''' <param name="HashcheckFilePath"></param>
-    ''' <returns>True if success, false if not retrieved or a hash error</returns>
-    ''' <remarks></remarks>
-    Public Function RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly As Boolean, sourceFilePath As String, hashcheckFilePath As String) As Boolean
-
-        Dim fiSourceFile As FileInfo
-
-        If sourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
-            Return m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath)
-        End If
-
-        fiSourceFile = New FileInfo(sourceFilePath)
-
-        If fiSourceFile.Exists Then
-            If CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly) Then
-
-                If Not String.IsNullOrEmpty(hashcheckFilePath) AndAlso File.Exists(hashcheckFilePath) Then
-                    Return RetrieveMzXMLFileVerifyHash(fiSourceFile, hashcheckFilePath, createStoragePathInfoOnly)
-                Else
-                    Return True
-                End If
-
-            End If
-        End If
-
-        If m_DebugLevel >= 1 Then
-            LogMessage("MzXML (or MzML) file not found; will need to generate it: " + fiSourceFile.Name)
-        End If
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Verify the hash value of a given .mzXML or .mzML file
-    ''' </summary>
-    ''' <param name="fiSourceFile"></param>
-    ''' <param name="HashcheckFilePath"></param>
-    ''' <param name="CreateStoragePathInfoOnly"></param>
-    ''' <returns>True if the hash of the file matches the expected hash, otherwise false</returns>
-    ''' <remarks>If createStoragePathInfoOnly is true and the source file matches the target file, the hash is not recomputed</remarks>
-    Protected Function RetrieveMzXMLFileVerifyHash(fiSourceFile As FileInfo, HashcheckFilePath As String, createStoragePathInfoOnly As Boolean) As Boolean
-
-        Dim strTargetFilePath As String
-        Dim strErrorMessage As String = String.Empty
-        Dim blnComputeHash As Boolean
-
-        If createStoragePathInfoOnly Then
-            strTargetFilePath = fiSourceFile.FullName
-            ' Don't compute the hash, since we're accessing the file over the network
-            blnComputeHash = False
-        Else
-            strTargetFilePath = Path.Combine(m_WorkingDir, fiSourceFile.Name)
-            blnComputeHash = True
-        End If
-
-        If clsGlobal.ValidateFileVsHashcheck(strTargetFilePath, HashcheckFilePath, strErrorMessage, blnCheckDate:=True, blnComputeHash:=blnComputeHash) Then
-            Return True
-        End If
-
-        LogMessage("MzXML/MzML file validation error in RetrieveMzXMLFileVerifyHash: " & strErrorMessage, 0, True)
-
-        Try
-            If createStoragePathInfoOnly Then
-                ' Delete the local StoragePathInfo file
-                Dim strStoragePathInfoFile As String = Path.Combine(m_WorkingDir, fiSourceFile.Name & STORAGE_PATH_INFO_FILE_SUFFIX)
-                If File.Exists(strStoragePathInfoFile) Then
-                    File.Delete(strStoragePathInfoFile)
-                End If
-            Else
-                ' Delete the local file to force it to be re-generated
-                File.Delete(strTargetFilePath)
-            End If
-
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        Try
-            ' Delete the remote mzXML or mzML file only if we computed the hash and we had a hash mismatch
-            If blnComputeHash Then
-                fiSourceFile.Delete()
-            End If
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for this dataset's ScanStats files (previously created by MASIC)
-    ''' Looks for the files in any SIC folder that exists for the dataset
-    ''' </summary>
-    ''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-    ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveScanStatsFiles(createStoragePathInfoOnly As Boolean) As Boolean
-
-        Const RetrieveSICStatsFile = False
-        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for this dataset's ScanStats files (previously created by MASIC)
-    ''' Looks for the files in any SIC folder that exists for the dataset
-    ''' </summary>
-    ''' <param name="CreateStoragePathInfoOnly"></param>
-    ''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-    ''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
-    ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveScanStatsFiles(createStoragePathInfoOnly As Boolean, RetrieveScanStatsFile As Boolean, RetrieveScanStatsExFile As Boolean) As Boolean
-
-        Const RetrieveSICStatsFile = False
-        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile)
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for this dataset's MASIC results files
-    ''' Looks for the files in any SIC folder that exists for the dataset
-    ''' </summary>
-    ''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
-    ''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-    ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile As Boolean, createStoragePathInfoOnly As Boolean) As Boolean
-        Return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=True)
-    End Function
-
-    ''' <summary>
-    ''' Looks for this dataset's MASIC results files
-    ''' Looks for the files in any SIC folder that exists for the dataset
-    ''' </summary>
-    ''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
-    ''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-    ''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-    ''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
-    ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveScanAndSICStatsFiles(
-      RetrieveSICStatsFile As Boolean,
-      createStoragePathInfoOnly As Boolean,
-      RetrieveScanStatsFile As Boolean,
-      RetrieveScanStatsExFile As Boolean) As Boolean
-
-        Dim lstNonCriticalFileSuffixes = New List(Of String)
-        Const RETRIEVE_REPORTERIONS_FILE = False
-
-        Return RetrieveScanAndSICStatsFiles(
-            RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile,
-            RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes)
-
-    End Function
-
-    ''' <summary>
-    ''' Looks for this dataset's MASIC results files
-    ''' Looks for the files in any SIC folder that exists for the dataset
-    ''' </summary>
-    ''' <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
-    ''' <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
-    ''' <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
-    ''' <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
-    ''' <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
-    ''' <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
-    ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveScanAndSICStatsFiles(
-      retrieveSICStatsFile As Boolean,
-      createStoragePathInfoOnly As Boolean,
-      retrieveScanStatsFile As Boolean,
-      retrieveScanStatsExFile As Boolean,
-      retrieveReporterIonsFile As Boolean,
-      lstNonCriticalFileSuffixes As List(Of String)) As Boolean
-
-        Dim ServerPath As String
-        Dim ScanStatsFilename As String
-
-        Dim BestScanStatsFileTransactionID As Int64 = 0
-
-        Const MAX_ATTEMPTS = 1
-
-        ' Look for the MASIC Results folder
-        ' If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
-        ScanStatsFilename = m_DatasetName + SCAN_STATS_FILE_SUFFIX
-        ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound:=False, retrievingInstrumentDataFolder:=False)
-
-        If String.IsNullOrEmpty(ServerPath) Then
-            m_message = "Dataset folder path not defined"
-        Else
-
-            If ServerPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                ' Find the newest _ScanStats.txt file in MyEMSL
-                Dim BestSICFolderName = String.Empty
-
-                For Each myEmslFile In m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles
-                    If myEmslFile.IsFolder Then
-                        Continue For
-                    End If
-
-                    If clsGlobal.IsMatch(myEmslFile.FileInfo.Filename, ScanStatsFilename) AndAlso
-                      myEmslFile.FileInfo.TransactionID > BestScanStatsFileTransactionID Then
-                        Dim fiScanStatsFile = New FileInfo(myEmslFile.FileInfo.RelativePathWindows)
-                        BestSICFolderName = fiScanStatsFile.Directory.Name
-                        BestScanStatsFileTransactionID = myEmslFile.FileInfo.TransactionID
-                    End If
-                Next
-
-                If BestScanStatsFileTransactionID = 0 Then
-                    m_message = "MASIC ScanStats file not found in the SIC results folder(s) in MyEMSL"
-                Else
-                    Dim bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, BestSICFolderName)
-                    Return RetrieveScanAndSICStatsFiles(
-                        bestSICFolderPath,
-                        retrieveSICStatsFile,
-                        createStoragePathInfoOnly,
-                        retrieveScanStatsFile:=retrieveScanStatsFile,
-                        retrieveScanStatsExFile:=retrieveScanStatsExFile,
-                        retrieveReporterIonsFile:=retrieveReporterIonsFile,
-                        lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
-                End If
-            Else
-                Dim diFolderInfo As DirectoryInfo
-                diFolderInfo = New DirectoryInfo(ServerPath)
-
-                If Not diFolderInfo.Exists Then
-                    m_message = "Dataset folder with MASIC files not found: " + diFolderInfo.FullName
-                Else
-
-                    ' See if the ServerPath folder actually contains a subfolder that starts with "SIC"
-                    Dim diSubfolders() As DirectoryInfo = diFolderInfo.GetDirectories("SIC*")
-                    If diSubfolders.Length = 0 Then
-                        m_message = "Dataset folder does not contain any MASIC results folders: " + diFolderInfo.FullName
-                    Else
-                        ' MASIC Results Folder Found
-                        ' If more than one folder, then use the folder with the newest _ScanStats.txt file
-                        Dim dtNewestScanStatsFileDate As DateTime
-                        Dim strNewestScanStatsFilePath As String = String.Empty
-
-                        For Each diSubFolder As DirectoryInfo In diSubfolders
-                            Dim fiSourceFile = New FileInfo(Path.Combine(diSubFolder.FullName, ScanStatsFilename))
-                            If fiSourceFile.Exists Then
-                                If String.IsNullOrEmpty(strNewestScanStatsFilePath) OrElse fiSourceFile.LastWriteTimeUtc > dtNewestScanStatsFileDate Then
-                                    strNewestScanStatsFilePath = fiSourceFile.FullName
-                                    dtNewestScanStatsFileDate = fiSourceFile.LastWriteTimeUtc
-                                End If
-                            End If
-                        Next
-
-                        If String.IsNullOrEmpty(strNewestScanStatsFilePath) Then
-                            m_message = "MASIC ScanStats file not found below " + diFolderInfo.FullName
-                        Else
-                            Dim fiSourceFile = New FileInfo(strNewestScanStatsFilePath)
-                            Dim bestSICFolderPath = fiSourceFile.Directory.FullName
-                            Return RetrieveScanAndSICStatsFiles(
-                                bestSICFolderPath,
-                                retrieveSICStatsFile,
-                                createStoragePathInfoOnly,
-                                retrieveScanStatsFile:=retrieveScanStatsFile,
-                                retrieveScanStatsExFile:=retrieveScanStatsExFile,
-                                retrieveReporterIonsFile:=retrieveReporterIonsFile,
-                                lstNonCriticalFileSuffixes:=lstNonCriticalFileSuffixes)
-                        End If
-
-                    End If
-                End If
-            End If
-        End If
-
-        If m_DebugLevel >= 1 Then
-            If String.IsNullOrEmpty(m_message) Then
-                LogMessage("RetrieveScanAndSICStatsFiles v1: Unknown Error", 0, True)
-            Else
-                LogMessage("RetrieveScanAndSICStatsFiles v1: " & m_message, 0, True)
-            End If
-        End If
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the MASIC results for this dataset using the specified folder
-    ''' </summary>
-    ''' <param name="MASICResultsFolderPath">Source folder to copy files from</param>
-    ''' <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
-    ''' <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-    ''' <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-    ''' <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
-    ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveScanAndSICStatsFiles(
-      MASICResultsFolderPath As String,
-      RetrieveSICStatsFile As Boolean,
-      createStoragePathInfoOnly As Boolean,
-      RetrieveScanStatsFile As Boolean,
-      RetrieveScanStatsExFile As Boolean) As Boolean
-
-        Dim lstNonCriticalFileSuffixes = New List(Of String)
-        Const RETRIEVE_REPORTERIONS_FILE = False
-
-        Return RetrieveScanAndSICStatsFiles(
-            MASICResultsFolderPath, RetrieveSICStatsFile, createStoragePathInfoOnly,
-            RetrieveScanStatsFile, RetrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE,
-            lstNonCriticalFileSuffixes)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the MASIC results for this dataset using the specified folder
-    ''' </summary>
-    ''' <param name="masicResultsFolderPath">Source folder to copy files from</param>
-    ''' <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
-    ''' <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
-    ''' <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
-    ''' <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
-    ''' <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
-    ''' <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
-    ''' <returns>True if the file was found and retrieved, otherwise False</returns>
-    Protected Function RetrieveScanAndSICStatsFiles(
-      masicResultsFolderPath As String,
-      retrieveSICStatsFile As Boolean,
-      createStoragePathInfoOnly As Boolean,
-      retrieveScanStatsFile As Boolean,
-      retrieveScanStatsExFile As Boolean,
-      retrieveReporterIonsFile As Boolean,
-      lstNonCriticalFileSuffixes As List(Of String)) As Boolean
-
-        Const MaxCopyAttempts = 2
-
-        ' Copy the MASIC files from the MASIC results folder
-
-        If String.IsNullOrEmpty(masicResultsFolderPath) Then
-            m_message = "MASIC Results folder path not defined"
-
-        ElseIf masicResultsFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-
-            Dim diSICFolder = New DirectoryInfo(masicResultsFolderPath)
-
-            If retrieveScanStatsFile Then
-                ' Look for and copy the _ScanStats.txt file
-                If Not RetrieveSICFileMyEMSL(m_DatasetName + SCAN_STATS_FILE_SUFFIX, diSICFolder.Name, lstNonCriticalFileSuffixes) Then
-                    Return False
-                End If
-            End If
-
-            If retrieveScanStatsExFile Then
-                ' Look for and copy the _ScanStatsEx.txt file
-                If Not RetrieveSICFileMyEMSL(m_DatasetName + SCAN_STATS_EX_FILE_SUFFIX, diSICFolder.Name, lstNonCriticalFileSuffixes) Then
-                    Return False
-                End If
-            End If
-
-
-            If retrieveSICStatsFile Then
-                ' Look for and copy the _SICStats.txt file
-                If Not RetrieveSICFileMyEMSL(m_DatasetName + "_SICStats.txt", diSICFolder.Name, lstNonCriticalFileSuffixes) Then
-                    Return False
-                End If
-            End If
-
-            If retrieveReporterIonsFile Then
-                ' Look for and copy the _SICStats.txt file
-                If Not RetrieveSICFileMyEMSL(m_DatasetName + "_ReporterIons.txt", diSICFolder.Name, lstNonCriticalFileSuffixes) Then
-                    Return False
-                End If
-            End If
-
-            ' All files have been found
-            ' The calling process should download them using ProcessMyEMSLDownloadQueue()
-            Return True
-
-        Else
-
-            Dim diFolderInfo As DirectoryInfo
-            diFolderInfo = New DirectoryInfo(masicResultsFolderPath)
-
-            If Not diFolderInfo.Exists Then
-                m_message = "MASIC Results folder not found: " + diFolderInfo.FullName
-            Else
-
-                If retrieveScanStatsFile Then
-                    ' Look for and copy the _ScanStats.txt file
-                    If Not RetrieveSICFileUNC(m_DatasetName + SCAN_STATS_FILE_SUFFIX, masicResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
-                        Return False
-                    End If
-                End If
-
-                If retrieveScanStatsExFile Then
-                    ' Look for and copy the _ScanStatsEx.txt file
-                    If Not RetrieveSICFileUNC(m_DatasetName + SCAN_STATS_EX_FILE_SUFFIX, masicResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
-                        Return False
-                    End If
-                End If
-
-                If retrieveSICStatsFile Then
-                    ' Look for and copy the _SICStats.txt file
-                    If Not RetrieveSICFileUNC(m_DatasetName + "_SICStats.txt", masicResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
-                        Return False
-                    End If
-                End If
-
-                If retrieveReporterIonsFile Then
-                    ' Look for and copy the _SICStats.txt file
-                    If Not RetrieveSICFileUNC(m_DatasetName + "_ReporterIons.txt", masicResultsFolderPath, createStoragePathInfoOnly, MaxCopyAttempts, lstNonCriticalFileSuffixes) Then
-                        Return False
-                    End If
-                End If
-
-                ' All files successfully copied
-                Return True
-
-            End If
-
-        End If
-
-        If m_DebugLevel >= 1 Then
-            If String.IsNullOrEmpty(m_message) Then
-                LogMessage("RetrieveScanAndSICStatsFiles v2: Unknown Error", 0, True)
-            Else
-                LogMessage("RetrieveScanAndSICStatsFiles v2: " & m_message, 0, True)
-            End If
-        End If
-
-        Return False
-
-    End Function
-
-    Protected Function RetrieveSICFileMyEMSL(strFileToFind As String, strSICFolderName As String, lstNonCriticalFileSuffixes As List(Of String)) As Boolean
-
-        Dim matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(strFileToFind, strSICFolderName, m_DatasetName, recurse:=False)
-
-        If matchingMyEMSLFiles.Count > 0 Then
-            If m_DebugLevel >= 3 Then
-                LogDebugMessage("Found MASIC results file in MyEMSL, " & Path.Combine(strSICFolderName, strFileToFind))
-            End If
-
-            m_MyEMSLUtilities.AddFileToDownloadQueue(matchingMyEMSLFiles.First().FileInfo)
-
-        Else
-            Dim blnIgnoreFile As Boolean
-            blnIgnoreFile = SafeToIgnore(strFileToFind, lstNonCriticalFileSuffixes)
-
-            If Not blnIgnoreFile Then
-                m_message = strFileToFind + " not found in MyEMSL, subfolder " + strSICFolderName
-                Return False
-            End If
-        End If
-
-        Return True
-
-    End Function
-
-    Protected Function RetrieveSICFileUNC(strFileToFind As String, MASICResultsFolderPath As String, createStoragePathInfoOnly As Boolean, MaxCopyAttempts As Integer, lstNonCriticalFileSuffixes As List(Of String)) As Boolean
-
-        Dim fiSourceFile = New FileInfo(Path.Combine(MASICResultsFolderPath, strFileToFind))
-
-        If m_DebugLevel >= 3 Then
-            LogDebugMessage("Copying MASIC results file: " + fiSourceFile.FullName)
-        End If
-
-        Dim blnIgnoreFile = SafeToIgnore(fiSourceFile.Name, lstNonCriticalFileSuffixes)
-
-        Dim eLogMsgTypeIfNotFound As clsLogTools.LogLevels
-        If blnIgnoreFile Then
-            eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG
-        Else
-            eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR
-        End If
-
-        Dim success = CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName,
-                                        m_WorkingDir, eLogMsgTypeIfNotFound, createStoragePathInfoOnly, MaxCopyAttempts)
-        If Not success Then
-            If blnIgnoreFile Then
-                If m_DebugLevel >= 3 Then
-                    LogDebugMessage("  File not found; this is not a problem")
-                End If
-            Else
-                LogError(strFileToFind + " not found at " + fiSourceFile.Directory.FullName)
-                Return False
-            End If
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
-    ''' </summary>
-    ''' <param name="RawDataType">Type of data to copy</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveSpectra(RawDataType As String) As Boolean
-        Const createStoragePathInfoOnly = False
-        Return RetrieveSpectra(RawDataType, createStoragePathInfoOnly)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
-    ''' </summary>
-    ''' <param name="RawDataType">Type of data to copy</param>
-    ''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveSpectra(RawDataType As String, createStoragePathInfoOnly As Boolean) As Boolean
-        Return RetrieveSpectra(RawDataType, createStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the spectra file(s) based on raw data type and puts them in the working directory
-    ''' </summary>
-    ''' <param name="RawDataType">Type of data to copy</param>
-    ''' <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
-    ''' <param name="maxAttempts">Maximum number of attempts</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Public Function RetrieveSpectra(RawDataType As String, createStoragePathInfoOnly As Boolean, maxAttempts As Integer) As Boolean
-
-        Dim blnSuccess = False
-        Dim StoragePath As String = m_jobParams.GetParam("DatasetStoragePath")
-        Dim eRawDataType As eRawDataTypeConstants
-
-        LogMessage("Retrieving spectra file(s)")
-
-        eRawDataType = GetRawDataType(RawDataType)
-        Select Case eRawDataType
-            Case eRawDataTypeConstants.AgilentDFolder           'Agilent ion trap data
-
-                If StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) OrElse
-                   StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()) Then
-                    ' For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
-                    '  we would pre-process the data beforehand to create MGF files
-                    ' The following call can be used to retrieve the files
-                    blnSuccess = RetrieveMgfFile(GetCdfAlso:=True, createStoragePathInfoOnly:=createStoragePathInfoOnly, maxAttempts:=maxAttempts)
-                Else
-                    ' DeconTools_V2 now supports reading the .D files directly
-                    ' Call RetrieveDotDFolder() to copy the folder and all subfolders
-                    blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles:=True)
-                End If
-
-            Case eRawDataTypeConstants.AgilentQStarWiffFile         'Agilent/QSTAR TOF data
-                blnSuccess = RetrieveDatasetFile(DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts)
-
-            Case eRawDataTypeConstants.ZippedSFolders           'FTICR data
-                blnSuccess = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts)
-
-            Case eRawDataTypeConstants.ThermoRawFile            'Finnigan ion trap/LTQ-FT data
-                blnSuccess = RetrieveDatasetFile(DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts)
-
-            Case eRawDataTypeConstants.MicromassRawFolder           'Micromass QTOF data
-                blnSuccess = RetrieveDotRawFolder(createStoragePathInfoOnly, maxAttempts)
-
-            Case eRawDataTypeConstants.UIMF         'IMS UIMF data
-                blnSuccess = RetrieveDatasetFile(DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts)
-
-            Case eRawDataTypeConstants.mzXML
-                blnSuccess = RetrieveDatasetFile(DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts)
-
-            Case eRawDataTypeConstants.mzML
-                blnSuccess = RetrieveDatasetFile(DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts)
-
-            Case eRawDataTypeConstants.BrukerFTFolder, eRawDataTypeConstants.BrukerTOFBaf
-                ' Call RetrieveDotDFolder() to copy the folder and all subfolders
-
-                ' Both the MSXml step tool and DeconTools require the .Baf file
-                ' We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, we need the file
-                ' In contrast, ICR-2LS only needs the ser or FID file, plus the apexAcquisition.method file in the .md folder
-
-                Dim blnSkipBAFFiles = False
-
-                Dim strStepTool = m_jobParams.GetJobParameter("StepTool", "Unknown")
-
-                If strStepTool = "ICR2LS" Then
-                    blnSkipBAFFiles = True
-                End If
-
-                blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles)
-
-            Case eRawDataTypeConstants.BrukerMALDIImaging
-                blnSuccess = RetrieveBrukerMALDIImagingFolders(UnzipOverNetwork:=True)
-
-            Case Else
-                ' RawDataType is not recognized or not supported by this function
-                If eRawDataType = eRawDataTypeConstants.Unknown Then
-                    LogError("Invalid data type specified: " + RawDataType)
-                Else
-                    LogError("Data type " + RawDataType + " is not supported by the RetrieveSpectra function")
-                End If
-        End Select
-
-        'Return the result of the spectra retrieval
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves an Agilent or Bruker .D folder for the analysis job in progress
-    ''' </summary>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDotDFolder(createStoragePathInfoOnly As Boolean, maxAttempts As Integer, blnSkipBAFFiles As Boolean) As Boolean
-
-        Dim objFileNamesToSkip As List(Of String)
-
-        objFileNamesToSkip = New List(Of String)
-        If blnSkipBAFFiles Then
-            objFileNamesToSkip.Add("analysis.baf")
-        End If
-
-        Return RetrieveDotXFolder(DOT_D_EXTENSION, createStoragePathInfoOnly, maxAttempts, objFileNamesToSkip)
-    End Function
-
-    ''' <summary>
-    ''' Retrieves a Micromass .raw folder for the analysis job in progress
-    ''' </summary>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDotRawFolder(createStoragePathInfoOnly As Boolean, maxAttempts As Integer) As Boolean
-        Return RetrieveDotXFolder(DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts, New List(Of String))
-    End Function
-
-    ''' <summary>
-    ''' Retrieves a folder with a name like Dataset.D or Dataset.Raw
-    ''' </summary>
-    ''' <param name="FolderExtension">Extension on the folder; for example, ".D"</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveDotXFolder(
-      FolderExtension As String,
-      createStoragePathInfoOnly As Boolean,
-      maxAttempts As Integer,
-      objFileNamesToSkip As List(Of String)) As Boolean
-
-        'Copies a data folder ending in FolderExtension to the working directory
-
-        'Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-        Dim DSFolderPath As String = FindDotXFolder(FolderExtension, assumeUnpurged:=False)
-
-        If String.IsNullOrEmpty(DSFolderPath) Then
-            Return False
-        End If
-
-        If (DSFolderPath.StartsWith(MYEMSL_PATH_FLAG)) Then
-            ' Queue the MyEMSL files for download
-            For Each udtArchiveFile In m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles
-                m_MyEMSLUtilities.AddFileToDownloadQueue(udtArchiveFile.FileInfo)
-            Next
-            Return True
-        End If
-
-        'Do the copy
-        Try
-            Dim diSourceFolder As DirectoryInfo
-            Dim DestFolderPath As String
-
-            diSourceFolder = New DirectoryInfo(DSFolderPath)
-            If Not diSourceFolder.Exists Then
-                LogError("Source dataset folder not found: " & diSourceFolder.FullName)
-                m_message = "Source dataset folder not found"
-                Return False
-            End If
-
-            DestFolderPath = Path.Combine(m_WorkingDir, diSourceFolder.Name)
-
-            If createStoragePathInfoOnly Then
-                CreateStoragePathInfoFile(diSourceFolder.FullName, DestFolderPath)
-            Else
-                ' Copy the directory and all subdirectories
-                ' Skip any files defined by objFileNamesToSkip
-                If m_DebugLevel >= 1 Then
-                    LogMessage("Retrieving folder " & diSourceFolder.FullName)
-                End If
-                ResetTimestampForQueueWaitTimeLogging()
-                m_FileTools.CopyDirectory(diSourceFolder.FullName, DestFolderPath, objFileNamesToSkip)
-            End If
-
-        Catch ex As Exception
-            LogError("Error copying folder " + DSFolderPath, ex)
-            Return False
-        End Try
-
-        ' If we get here, all is fine
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves a data from a Bruker MALDI imaging dataset
-    ''' The data is stored as zip files with names like 0_R00X433.zip
-    ''' This data is unzipped into a subfolder in the Chameleon cached data folder
-    ''' </summary>
-    ''' <param name="UnzipOverNetwork"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Function RetrieveBrukerMALDIImagingFolders(UnzipOverNetwork As Boolean) As Boolean
-
-        Const ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip"
-
-        Dim ChameleonCachedDataFolder As String = m_mgrParams.GetParam("ChameleonCachedDataFolder")
-        Dim diCachedDataFolder As DirectoryInfo
-
-        Dim ServerPath As String
-        Dim strUnzipFolderPathBase As String
-
-        Dim strFilesToDelete As New Queue(Of String)
-
-        Dim strZipFilePathRemote As String = String.Empty
-        Dim strZipFilePathToExtract As String
-
-        Dim blnUnzipFile As Boolean
-
-        Dim blnApplySectionFilter As Boolean
-        Dim StartSectionX As Integer
-        Dim EndSectionX As Integer
-
-        Dim CoordR As Integer, CoordX As Integer, CoordY As Integer
-
-        Try
-
-            If String.IsNullOrEmpty(ChameleonCachedDataFolder) Then
-                LogError("Chameleon cached data folder not defined; unable to unzip MALDI imaging data")
-                m_message = "Chameleon cached data folder not defined"
-                Return False
-            End If
-
-            ' Delete any subfolders at ChameleonCachedDataFolder that do not have this dataset's name
-            diCachedDataFolder = New DirectoryInfo(ChameleonCachedDataFolder)
-            If Not diCachedDataFolder.Exists Then
-                LogError("Chameleon cached data folder does not exist: " + diCachedDataFolder.FullName)
-                m_message = "Chameleon cached data folder does not exist"
-                Return False
-            Else
-                strUnzipFolderPathBase = Path.Combine(diCachedDataFolder.FullName, m_DatasetName)
-            End If
-
-            For Each diSubFolder As DirectoryInfo In diCachedDataFolder.GetDirectories()
-                If Not clsGlobal.IsMatch(diSubFolder.Name, m_DatasetName) Then
-                    ' Delete this directory
-                    Try
-                        If m_DebugLevel >= 2 Then
-                            LogMessage("Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName)
-                        End If
-
-                        If m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe") Then
-                            LogMessage(" Skipping delete since this is a development computer")
-                        Else
-                            diSubFolder.Delete(True)
-                        End If
-
-                    Catch ex As Exception
-                        LogError("Error deleting cached subfolder " + diSubFolder.FullName, ex)
-                        m_message = "Error deleting cached subfolder"
-                        Return False
-                    End Try
-                End If
-            Next
-
-            ' Delete any .mis files that do not start with this dataset's name
-            For Each fiFile As FileInfo In diCachedDataFolder.GetFiles("*.mis")
-                If Not clsGlobal.IsMatch(Path.GetFileNameWithoutExtension(fiFile.Name), m_DatasetName) Then
-                    fiFile.Delete()
-                End If
-            Next
-
-        Catch ex As Exception
-            LogError("Error cleaning out old data from the Chameleon cached data folder", ex)
-            Return False
-        End Try
-
-        ' See if any imaging section filters are defined
-        blnApplySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, StartSectionX, EndSectionX)
-
-        ' Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
-        ' If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
-        ServerPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder:=True)
-
-        Try
-
-            Dim MisFiles() As String
-            Dim strImagingSeqFilePathFinal As String
-
-            ' Look for the .mis file (ImagingSequence file) 
-            strImagingSeqFilePathFinal = Path.Combine(diCachedDataFolder.FullName, m_DatasetName + ".mis")
-
-            If Not File.Exists(strImagingSeqFilePathFinal) Then
-
-                ' Copy the .mis file (ImagingSequence file) over from the storage server
-                MisFiles = Directory.GetFiles(ServerPath, "*.mis")
-
-                If MisFiles.Length = 0 Then
-                    ' No .mis files were found; unable to continue
-                    LogError("ImagingSequence (.mis) file not found in dataset folder; unable to process MALDI imaging data")
-                    Return False
-                Else
-                    ' We'll copy the first file in MisFiles(0)
-                    ' Log a warning if we will be renaming the file
-
-                    If Not clsGlobal.IsMatch(Path.GetFileName(MisFiles(0)), strImagingSeqFilePathFinal) Then
-                        LogMessage("Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles(0)) + " to " + Path.GetFileName(strImagingSeqFilePathFinal))
-                    End If
-
-                    If Not CopyFileWithRetry(MisFiles(0), strImagingSeqFilePathFinal, True) Then
-                        ' Abort processing
-                        LogError("Error copying ImagingSequence (.mis) file; unable to process MALDI imaging data")
-                        Return False
-                    End If
-
-                End If
-            End If
-
-        Catch ex As Exception
-            LogError("Error obtaining ImagingSequence (.mis) file", ex)
-            Return False
-        End Try
-
-        Try
-
-            ' Unzip each of the *R*X*.zip files to the Chameleon cached data folder
-
-            ' However, consider limits defined by job params BrukerMALDI_Imaging_StartSectionX and BrukerMALDI_Imaging_EndSectionX
-            ' when processing the files
-
-            Dim ZipFiles() As String
-            ZipFiles = Directory.GetFiles(ServerPath, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK)
-
-            For Each strZipFilePathRemote In ZipFiles
-
-                If blnApplySectionFilter Then
-                    blnUnzipFile = False
-
-                    ' Determine the R, X, and Y coordinates for this .Zip file
-                    If GetBrukerImagingFileCoords(strZipFilePathRemote, CoordR, CoordX, CoordY) Then
-                        ' Compare to StartSectionX and EndSectionX
-                        If CoordX >= StartSectionX AndAlso CoordX <= EndSectionX Then
-                            blnUnzipFile = True
-                        End If
-                    End If
-                Else
-                    blnUnzipFile = True
-                End If
-
-                ' Open up the zip file over the network and get a listing of all of the files
-                ' If they already exist in the cached data folder, then there is no need to continue
-
-                If blnUnzipFile Then
-
-                    ' Set this to false for now
-                    blnUnzipFile = False
-
-                    Dim objZipfile As Ionic.Zip.ZipFile
-
-                    objZipfile = New Ionic.Zip.ZipFile(strZipFilePathRemote)
-
-                    For Each objEntry As Ionic.Zip.ZipEntry In objZipfile.Entries
-                        If Not objEntry.IsDirectory Then
-
-                            Dim strPathToCheck As String
-                            strPathToCheck = Path.Combine(strUnzipFolderPathBase, objEntry.FileName.Replace("/"c, "\"c))
-
-                            If Not File.Exists(strPathToCheck) Then
-                                blnUnzipFile = True
-                                Exit For
-                            End If
-                        End If
-                    Next
-                End If
-
-                If blnUnzipFile Then
-                    ' Unzip the file to the Chameleon cached data folder
-                    ' If UnzipOverNetwork=True, then we want to copy the file locally first
-
-                    If UnzipOverNetwork Then
-                        strZipFilePathToExtract = String.Copy(strZipFilePathRemote)
-                    Else
-                        Try
-
-                            ' Copy the file to the work directory on the local computer
-                            strZipFilePathToExtract = Path.Combine(m_WorkingDir, Path.GetFileName(strZipFilePathRemote))
-
-                            If m_DebugLevel >= 2 Then
-                                LogMessage("Copying " + strZipFilePathRemote)
-                            End If
-
-                            If Not CopyFileWithRetry(strZipFilePathRemote, strZipFilePathToExtract, True) Then
-                                ' Abort processing
-                                LogError("Error copying Zip file; unable to process MALDI imaging data")
-                                Return False
-                            End If
-
-                        Catch ex As Exception
-                            LogError("Error copying zipped instrument data, file " + strZipFilePathRemote, ex)
-                            Return False
-                        End Try
-                    End If
-
-                    ' Now use Ionic to unzip strZipFilePathLocal to the data cache folder
-                    ' Do not overwrite existing files (assume they're already valid)
-                    Try
-
-                        Using objZipfile = New Ionic.Zip.ZipFile(strZipFilePathToExtract)
-                            If m_DebugLevel >= 2 Then
-                                LogMessage("Unzipping " + strZipFilePathToExtract)
-                            End If
-
-                            objZipfile.ExtractAll(strUnzipFolderPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
-                        End Using
-
-                    Catch ex As Exception
-                        LogError("Error extracting zipped instrument data, file " + strZipFilePathToExtract, ex)
-                        Return False
-                    End Try
-
-                    If Not UnzipOverNetwork Then
-                        ' Need to delete the zip file that we copied locally
-                        ' However, Ionic may have a file handle open so we use a queue to keep track of files that need to be deleted
-
-                        DeleteQueuedFiles(strFilesToDelete, strZipFilePathToExtract)
-                    End If
-
-                End If
-
-            Next
-
-            If Not UnzipOverNetwork Then
-                Dim dtStartTime As DateTime = Date.UtcNow
-
-                Do While strFilesToDelete.Count > 0
-                    ' Try to process the files remaining in queue strFilesToDelete
-
-                    DeleteQueuedFiles(strFilesToDelete, String.Empty)
-
-                    If strFilesToDelete.Count > 0 Then
-                        If Date.UtcNow.Subtract(dtStartTime).TotalSeconds > 20 Then
-                            ' Stop trying to delete files; it's not worth continuing to try
-                            LogMessage("Unable to delete all of the files in queue strFilesToDelete; " &
-                                         "Queue Length = " + strFilesToDelete.Count.ToString() +
-                                         "; this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)")
-                            Exit Do
-                        End If
-
-                        Thread.Sleep(500)
-                    End If
-                Loop
-
-            End If
-
-        Catch ex As Exception
-            LogError("Error extracting zipped instrument data from " + strZipFilePathRemote, ex)
-            Return False
-        End Try
-
-        ' If we get here, all is fine
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Unzips dataset folders to working directory
-    ''' </summary>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Private Function RetrieveSFolders(createStoragePathInfoOnly As Boolean, maxAttempts As Integer) As Boolean
-
-        Dim ZipFiles() As String
-        Dim DSWorkFolder As String
-        Dim UnZipper As clsIonicZipTools
-
-        Dim sourceFilePath As String
-        Dim TargetFolderPath As String
-
-        Dim ZipFile As String
-
-        Try
-
-            'First Check for the existence of a 0.ser Folder
-            'If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
-            Dim DSFolderPath As String = FindValidFolder(
-              m_DatasetName,
-              fileNameToFind:="",
-              folderNameToFind:=BRUKER_ZERO_SER_FOLDER,
-              maxRetryCount:=maxAttempts,
-              logFolderNotFound:=True,
-              retrievingInstrumentDataFolder:=True)
-
-            If Not String.IsNullOrEmpty(DSFolderPath) Then
-                Dim diSourceFolder As DirectoryInfo
-                Dim diTargetFolder As DirectoryInfo
-                Dim fiFile As FileInfo
-
-                diSourceFolder = New DirectoryInfo(Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER))
-
-                If diSourceFolder.Exists Then
-                    If createStoragePathInfoOnly Then
-                        If CreateStoragePathInfoFile(diSourceFolder.FullName, m_WorkingDir + "\") Then
-                            Return True
-                        Else
-                            Return False
-                        End If
-                    Else
-                        ' Copy the 0.ser folder to the Work directory
-                        ' First create the 0.ser subfolder
-                        diTargetFolder = Directory.CreateDirectory(Path.Combine(m_WorkingDir, BRUKER_ZERO_SER_FOLDER))
-
-                        ' Now copy the files from the source 0.ser folder to the target folder
-                        ' Typically there will only be two files: ACQUS and ser
-                        For Each fiFile In diSourceFolder.GetFiles()
-                            If Not CopyFileToWorkDir(fiFile.Name, diSourceFolder.FullName, diTargetFolder.FullName) Then
-                                ' Error has alredy been logged
-                                Return False
-                            End If
-                        Next
-
-                        Return True
-                    End If
-                End If
-
-            End If
-
-            'If the 0.ser folder does not exist, unzip the zipped s-folders
-            'Copy the zipped s-folders from archive to work directory
-            If Not CopySFoldersToWorkDir(createStoragePathInfoOnly) Then
-                'Error messages have already been logged, so just exit
-                Return False
-            End If
-
-            If createStoragePathInfoOnly Then
-                ' Nothing was copied locally, so nothing to unzip
-                Return True
-            End If
-
-
-            ' Get a listing of the zip files to process
-            ZipFiles = Directory.GetFiles(m_WorkingDir, "s*.zip")
-            If ZipFiles.GetLength(0) < 1 Then
-                LogError("No zipped s-folders found in working directory")
-                Return False
-            End If
-
-            ' Create a dataset subdirectory under the working directory
-            DSWorkFolder = Path.Combine(m_WorkingDir, m_DatasetName)
-            Directory.CreateDirectory(DSWorkFolder)
-
-            ' Set up the unzipper
-            UnZipper = New clsIonicZipTools(m_DebugLevel, DSWorkFolder)
-
-            ' Unzip each of the zip files to the working directory
-            For Each ZipFile In ZipFiles
-                If m_DebugLevel > 3 Then
-                    LogMessage("Unzipping file " + ZipFile)
-                End If
-                Try
-                    TargetFolderPath = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(ZipFile))
-                    Directory.CreateDirectory(TargetFolderPath)
-
-                    sourceFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(ZipFile))
-
-                    If Not UnZipper.UnzipFile(sourceFilePath, TargetFolderPath) Then
-                        LogError("Error unzipping file " + ZipFile)
-                        Return False
-                    End If
-                Catch ex As Exception
-                    LogError("Exception while unzipping s-folders", ex)
-                    Return False
-                End Try
-            Next
-
-            Thread.Sleep(125)
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-            ' Delete all s*.zip files in working directory
-            For Each ZipFile In ZipFiles
-                Try
-                    File.Delete(Path.Combine(m_WorkingDir, Path.GetFileName(ZipFile)))
-                Catch ex As Exception
-                    LogError("Exception deleting file " + ZipFile, ex)
-                    Return False
-                End Try
-            Next
-
-        Catch ex As Exception
-            LogError("Error in RetrieveSFolders", ex)
-            Return False
-        End Try
-
-        ' Got to here, so everything must have worked
-        Return True
-
-    End Function
-
-    Protected Function RetrieveOrgDB(LocalOrgDBFolder As String) As Boolean
-        Dim udtHPCOptions = New udtHPCOptionsType
-        Return RetrieveOrgDB(LocalOrgDBFolder, udtHPCOptions)
-    End Function
-
-    ''' <summary>
-    ''' Uses Ken's dll to create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
-    ''' </summary>
-    ''' <param name="LocalOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
-    Protected Function RetrieveOrgDB(LocalOrgDBFolder As String, udtHPCOptions As udtHPCOptionsType) As Boolean
-
-        Console.WriteLine()
-        If m_DebugLevel >= 3 Then
-            LogMessage("Obtaining org db file")
-        End If
-
-        Try
-            Dim proteinCollectionInfo = New clsProteinCollectionInfo(m_jobParams)
-
-            Dim requiredFreeSpaceMB As Double = 0
-
-            If proteinCollectionInfo.UsingLegacyFasta Then
-                ' Estimate the drive space required to download the fasta file and its associated MSGF+ the index files
-                requiredFreeSpaceMB = LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo)
-            End If
-
-            If Not udtHPCOptions.UsingHPC Then
-                ' Delete old fasta files and suffix array files if getting low on disk space
-                ' Do not delete any files related to the current Legacy Fasta file (if defined)
-
-                Const freeSpaceThresholdPercent = 20
-
-                Dim legacyFastaFileBaseName As String = String.Empty
-                If proteinCollectionInfo.UsingLegacyFasta AndAlso
-                    Not String.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) AndAlso
-                    Not proteinCollectionInfo.LegacyFastaName.ToLower() = "na" Then
-
-                    legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName)
-                End If
-
-                PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName)
-            End If
-
-            ' Make a new fasta file from scratch
-            If Not CreateFastaFile(proteinCollectionInfo, LocalOrgDBFolder) Then
-                ' There was a problem. Log entries in lower-level routines provide documentation
-                Return False
-            End If
-
-            ' Fasta file was successfully generated. Put the name of the generated fastafile in the
-            ' job data class for other methods to use
-            If Not m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName) Then
-                LogError("Error adding parameter 'generatedFastaName' to m_jobParams")
-                Return False
-            End If
-
-            If Not udtHPCOptions.UsingHPC Then
-                ' Delete old fasta files and suffix array files if getting low on disk space
-                ' No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
-                Const freeSpaceThresholdPercent = 20
-                PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, 0, "")
-            End If
-
-        Catch ex As Exception
-            LogError("Exception in RetrieveOrgDB", ex)
-            Return False
-        End Try
-
-        'We got to here OK, so return
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Overrides base class version of the function to creates a Sequest params file compatible 
-    ''' with the Bioworks version on this System. Uses ParamFileGenerator dll provided by Ken Auberry
-    ''' </summary>
-    ''' <param name="paramFileName">Name of param file to be created</param>
-    ''' <returns>True for success; False for failure</returns>
-    Protected Function RetrieveGeneratedParamFile(paramFileName As String) As Boolean
-
-        Dim ParFileGen As IGenerateFile = Nothing
-        Dim blnSuccess As Boolean
-
-        Try
-            LogMessage("Retrieving parameter file " & paramFileName)
-
-            ParFileGen = New ParamFileGenerator.MakeParams.clsMakeParameterFile()
-            ParFileGen.TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
-
-            ' Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
-            ' Furthermore, the full path to the fasta file is only necessary when creating Sequest parameter files
-            Dim toolName = m_jobParams.GetParam("ToolName", String.Empty)
-            If String.IsNullOrWhiteSpace(toolName) Then
-                m_message = "Job parameter ToolName is empty"
-                Return False
-            End If
-
-            Dim paramFileType = SetParamfileType(toolName)
-            If paramFileType = IGenerateFile.ParamFileType.Invalid Then
-                m_message = "Tool " & toolName & " is not supported by the ParamFileGenerator; update clsAnalysisResources and ParamFileGenerator.dll"
-                Return False
-            End If
-
-            Dim fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-
-            ' Gigasax.DMS5
-            Dim connectionString = m_mgrParams.GetParam("connectionstring")
-            Dim datasetID As Integer = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0)
-
-            blnSuccess = ParFileGen.MakeFile(paramFileName, paramFileType, fastaFilePath, m_WorkingDir, connectionString, datasetID)
-
-
-            ' Examine the size of the ModDefs.txt file
-            ' Add it to the ignore list if it is empty (no point in tracking a 0-byte file)
-            Dim fiModDefs = New FileInfo(Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(paramFileName) & "_ModDefs.txt"))
-            If fiModDefs.Exists AndAlso fiModDefs.Length = 0 Then
-                m_jobParams.AddResultFileToSkip(fiModDefs.Name)
-            End If
-
-            If blnSuccess Then
-                If m_DebugLevel >= 3 Then
-                    LogMessage("Successfully retrieved param file: " + paramFileName)
-                End If
-
-                Return True
-            Else
-                LogError(m_message + ": " + ParFileGen.LastError)
-                Return False
-            End If
-
-        Catch ex As Exception
-            If String.IsNullOrWhiteSpace(m_message) Then
-                m_message = "Error retrieving parameter file"
-            End If
-
-            LogError(m_message, ex)
-
-            If Not ParFileGen Is Nothing Then
-                If Not String.IsNullOrWhiteSpace(ParFileGen.LastError) Then
-                    LogMessage("Error converting param file: " + ParFileGen.LastError, 0, True)
-                End If
-            End If
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' This is just a generic function to copy files to the working directory
-    ''' </summary>
-    ''' <param name="fileName">Name of file to be copied</param>
-    ''' <param name="sourceFolderPath">Source folder that has the file</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    Protected Function RetrieveFile(fileName As String, sourceFolderPath As String) As Boolean
-
-        'Copy the file
-        If Not CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-            Return False
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' This is just a generic function to copy files to the working directory
-    ''' </summary>
-    ''' <param name="fileName">Name of file to be copied</param>
-    ''' <param name="sourceFolderPath">Source folder that has the file</param>
-    ''' <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-    ''' <param name="eLogMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    Protected Function RetrieveFile(
-      fileName As String,
-      sourceFolderPath As String,
-      maxCopyAttempts As Integer,
-      Optional eLogMsgTypeIfNotFound As clsLogTools.LogLevels = clsLogTools.LogLevels.ERROR) As Boolean
-
-        'Copy the file
-        If maxCopyAttempts < 1 Then maxCopyAttempts = 1
-        If Not CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly:=False, maxCopyAttempts:=maxCopyAttempts) Then
-            Return False
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Finds the _DTA.txt file for this dataset
-    ''' </summary>
-    ''' <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
-    ''' <remarks></remarks>
-    Public Function FindCDTAFile(<Out()> ByRef strErrorMessage As String) As String
-
-        strErrorMessage = String.Empty
-
-        'Retrieve zipped DTA file
-        Dim sourceFileName = m_DatasetName & "_dta.zip"
-        Dim sourceFolderPath = FindDataFile(sourceFileName)
-
-        If Not String.IsNullOrEmpty(sourceFolderPath) Then
-            If sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                ' add the _dta.zip file name to the folder path found by FindDataFile
-                Return clsMyEMSLUtilities.AddFileToMyEMSLFolderPath(sourceFolderPath, sourceFileName)
-            Else
-                ' Return the path to the _dta.zip file
-                Return Path.Combine(sourceFolderPath, sourceFileName)
-            End If
-        End If
-
-        ' Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
-
-        sourceFileName = m_DatasetName + "_dta.txt"
-        sourceFolderPath = FindDataFile(sourceFileName)
-
-        If String.IsNullOrEmpty(sourceFolderPath) Then
-            ' No folder found containing the zipped DTA files; return False
-            ' (the FindDataFile procedure should have already logged an error)
-            strErrorMessage = "Could not find " + sourceFileName + " using FindDataFile"
-            Return String.Empty
-        Else
-            LogMessage("Warning: could not find the _dta.zip file, but was able to find " + sourceFileName + " in folder " + sourceFolderPath)
-
-            If sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                Return sourceFolderPath
-            Else
-                ' Return the path to the _dta.txt file
-                Return Path.Combine(sourceFolderPath, sourceFileName)
-            End If
-
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Finds the .pbf (PNNL Binary Format) file for this dataset
-    ''' </summary>
-    ''' <returns>The path to the .pbf file</returns>
-    ''' <remarks></remarks>
-    Protected Function FindPBFFile(<Out()> ByRef strErrorMessage As String) As String
-
-        Dim SourceFileName As String
-        Dim SourceFolderPath As String
-
-        strErrorMessage = String.Empty
-
-        SourceFileName = m_DatasetName + DOT_PBF_EXTENSION
-        SourceFolderPath = FindDataFile(SourceFileName)
-
-        If Not String.IsNullOrEmpty(SourceFolderPath) Then
-            If SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                Return SourceFolderPath
-            Else
-                ' Return the path to the .pbf file
-                Return Path.Combine(SourceFolderPath, SourceFileName)
-            End If
-        End If
-
-        strErrorMessage = "Could not find " + SourceFileName + " using FindDataFile"
-        Return String.Empty
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the _DTA.txt file (either zipped or unzipped).  
-    ''' </summary>
-    ''' <returns>TRUE for success, FALSE for error</returns>
-    ''' <remarks>If the _dta.zip or _dta.txt file already exists in the working folder then will not re-copy it from the remote folder</remarks>
-    Public Function RetrieveDtaFiles() As Boolean
-
-        Dim targetZipFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.zip")
-        Dim targetCDTAFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt")
-
-        If Not File.Exists(targetCDTAFilePath) And Not File.Exists(targetZipFilePath) Then
-
-            Dim strErrorMessage As String = String.Empty
-
-            ' Find the CDTA file
-            Dim sourceFilePath = FindCDTAFile(strErrorMessage)
-
-            If String.IsNullOrEmpty(sourceFilePath) Then
-                LogError(strErrorMessage)
-                Return False
-            End If
-
-            If sourceFilePath.StartsWith(MYEMSL_PATH_FLAG) Then
-                m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath)
-                If m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-                    If m_DebugLevel >= 1 Then
-                        LogMessage("Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL")
-                    End If
-                Else
-                    Return False
-                End If
-            Else
-
-                Dim fiSourceFile = New FileInfo(sourceFilePath)
-
-                ' Copy the file locally
-                If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-                    m_message = "Error copying " + fiSourceFile.Name
-                    If m_DebugLevel >= 2 Then
-                        LogMessage("CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName, 0, True)
-                    End If
-                    Return False
-                Else
-                    If m_DebugLevel >= 1 Then
-                        LogMessage("Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName)
-                    End If
-                End If
-            End If
-
-        End If
-
-        If Not File.Exists(targetCDTAFilePath) Then
-
-            If Not File.Exists(targetZipFilePath) Then
-                LogError(Path.GetFileName(targetZipFilePath) & " not found in the working directory; cannot unzip in RetrieveDtaFiles")
-                Return False
-            End If
-
-            ' Unzip concatenated DTA file
-            LogMessage("Unzipping concatenated DTA file")
-            If UnzipFileStart(targetZipFilePath, m_WorkingDir, "RetrieveDtaFiles", False) Then
-                If m_DebugLevel >= 1 Then
-                    LogDebugMessage("Concatenated DTA file unzipped")
-                End If
-            End If
-
-            ' Delete the _DTA.zip file to free up some disk space
-            Thread.Sleep(100)
-            If m_DebugLevel >= 3 Then
-                LogDebugMessage("Deleting the _DTA.zip file")
-            End If
-
-            Try
-                Thread.Sleep(125)
-                PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-                File.Delete(targetZipFilePath)
-            Catch ex As Exception
-                LogError("Error deleting the _DTA.zip file", ex)
-            End Try
-
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Retrieves zipped, concatenated OUT file, unzips, and splits into individual OUT files
-    ''' </summary>
-    ''' <param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
-    ''' <returns>TRUE for success, FALSE for error</returns>
-    ''' <remarks></remarks>
-    Protected Function RetrieveOutFiles(UnConcatenate As Boolean) As Boolean
-
-        'Retrieve zipped OUT file
-        Dim ZippedFileName As String = m_DatasetName + "_out.zip"
-        Dim ZippedFolderName As String = FindDataFile(ZippedFileName)
-
-        If ZippedFolderName = "" Then Return False 'No folder found containing the zipped OUT files
-        'Copy the file
-        If Not CopyFileToWorkDir(ZippedFileName, ZippedFolderName, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-            Return False
-        End If
-
-        'Unzip concatenated OUT file
-        LogMessage("Unzipping concatenated OUT file")
-        If UnzipFileStart(Path.Combine(m_WorkingDir, ZippedFileName), m_WorkingDir, "RetrieveOutFiles", False) Then
-            If m_DebugLevel >= 1 Then
-                LogMessage("Concatenated OUT file unzipped")
-            End If
-        End If
-
-        'Unconcatenate OUT file if needed
-        If UnConcatenate Then
-            LogMessage("Splitting concatenated OUT file")
-
-            Dim fiSourceFile As FileInfo
-            fiSourceFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName + "_out.txt"))
-
-            If Not fiSourceFile.Exists Then
-                m_message = "_OUT.txt file not found after unzipping"
-                Return False
-            ElseIf fiSourceFile.Length = 0 Then
-                m_message = "_OUT.txt file is empty (zero-bytes)"
-                Return False
-            End If
-
-            Dim FileSplitter As New clsSplitCattedFiles()
-            FileSplitter.SplitCattedOutsOnly(m_DatasetName, m_WorkingDir)
-
-            If m_DebugLevel >= 1 Then
-                LogDebugMessage("Completed splitting concatenated OUT file")
-            End If
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Creates the specified settings file from db info
-    ''' </summary>
-    ''' <returns>TRUE if file created successfully; FALSE otherwise</returns>
-    ''' <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
-    Protected Friend Function RetrieveSettingsFileFromDb() As Boolean
-
-        Dim OutputFile As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("SettingsFileName"))
-
-        Return CreateSettingsFile(m_jobParams.GetParam("ParameterXML"), OutputFile)
-
-    End Function
-
-    ''' <summary>
-    ''' Returns True if the filename ends with any of the suffixes in lstNonCriticalFileSuffixes
-    ''' </summary>
-    ''' <param name="strFileName"></param>
-    ''' <param name="lstNonCriticalFileSuffixes"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function SafeToIgnore(strFileName As String, lstNonCriticalFileSuffixes As List(Of String)) As Boolean
-
-        If Not lstNonCriticalFileSuffixes Is Nothing Then
-
-            strFileName = strFileName.ToLower()
-            For Each strSuffix As String In lstNonCriticalFileSuffixes
-                If strFileName.EndsWith(strSuffix.ToLower()) Then
-                    ' It's OK that this file is missing
-                    Return True
-                End If
-            Next
-
-        End If
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Specifies the Bioworks version for use by the Param File Generator DLL
-    ''' </summary>
-    ''' <param name="toolName">Version specified in mgr config file</param>
-    ''' <returns>IGenerateFile.ParamFileType based on input version</returns>
-    ''' <remarks></remarks>
-    Protected Function SetParamfileType(toolName As String) As IGenerateFile.ParamFileType
-
-        Dim toolNameToTypeMapping = New Dictionary(Of String, IGenerateFile.ParamFileType)(StringComparer.CurrentCultureIgnoreCase) From
-            {{"sequest", IGenerateFile.ParamFileType.BioWorks_Current},
-             {"xtandem", IGenerateFile.ParamFileType.X_Tandem},
-             {"inspect", IGenerateFile.ParamFileType.Inspect},
-             {"msgfplus", IGenerateFile.ParamFileType.MSGFPlus},
-             {"msalign_histone", IGenerateFile.ParamFileType.MSAlignHistone},
-             {"msalign", IGenerateFile.ParamFileType.MSAlign},
-             {"moda", IGenerateFile.ParamFileType.MODa},
-             {"mspathfinder", IGenerateFile.ParamFileType.MSPathFinder},
-             {"modplus", IGenerateFile.ParamFileType.MODPlus}
+        protected clsIonicZipTools m_IonicZipTools;
+
+        protected clsCDTAUtilities m_CDTAUtilities;
+
+        protected clsSplitFastaFileUtilities m_SplitFastaFileUtility;
+        protected DateTime m_SplitFastaLastUpdateTime;
+
+        protected float m_SplitFastaLastPercentComplete;
+
+        private DateTime m_LastCDTAUtilitiesUpdateTime;
+
+        private DateTime m_FastaToolsLastLogTime;
+        private double m_FastaToolFractionDoneSaved = -1;
+
+        protected clsMyEMSLUtilities m_MyEMSLUtilities;
+
+        private Dictionary<clsGlobal.eAnalysisResourceOptions, bool> m_ResourceOptions;
+        private bool m_AuroraAvailable;
+
+        private bool m_MyEmslAvailable;
+        private clsDataPackageJobInfo mCachedDatasetAndJobInfo;
+
+        private bool mCachedDatasetAndJobInfoIsDefined;
+
+        public SpectraTypeClassifier.clsSpectrumTypeClassifier mSpectraTypeClassifier;
+
+        #endregion
+
+        #region "Properties"
+
+        public string DatasetName
+        {
+            get { return m_DatasetName; }
+        }
+
+        public short DebugLevel
+        {
+            get { return m_DebugLevel; }
+        }
+
+        public bool MyEMSLAvailable
+        {
+            get { return m_MyEmslAvailable && !MyEMSLSearchDisabled; }
+        }
+
+        public bool MyEMSLSearchDisabled { get; set; }
+
+        public clsMyEMSLUtilities MyEMSLUtilities
+        {
+            get { return m_MyEMSLUtilities; }
+        }
+
+        /// <summary>
+        ///  Explanation of what happened to last operation this class performed
+        /// </summary>
+        public string Message
+        {
+            get { return m_message; }
+        }
+
+        public string WorkDir
+        {
+            get { return m_WorkingDir; }
+        }
+
+        #endregion
+
+        #region "Methods"
+        /// <summary>
+
+        /// Constructor
+        /// </summary>
+        /// <remarks></remarks>
+        public clsAnalysisResources() : base("clsAnalysisResources")
+        {
+            m_CDTAUtilities = new clsCDTAUtilities();
+            RegisterEvents(m_CDTAUtilities);
+        }
+
+        /// <summary>
+        /// Initialize class
+        /// </summary>
+        /// <param name="mgrParams">Manager parameter object</param>
+        /// <param name="jobParams">Job parameter object</param>
+        /// <param name="statusTools">Object for status reporting</param>
+        /// <param name="myEMSLUtilities">MyEMSL download Utilities (can be nothing)</param>
+        /// <remarks></remarks>
+        public virtual void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        {
+            m_mgrParams = mgrParams;
+            m_jobParams = jobParams;
+
+            m_DebugLevel = Convert.ToInt16(m_mgrParams.GetParam("debuglevel", 1));
+            m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring");
+            m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
+
+            m_WorkingDir = m_mgrParams.GetParam("workdir");
+
+            var jobNum = m_jobParams.GetParam("StepParameters", "Job");
+            if (!string.IsNullOrEmpty(jobNum))
+            {
+                int.TryParse(jobNum, out m_JobNum);
             }
 
-        Dim paramFileType As IGenerateFile.ParamFileType
-
-        If toolNameToTypeMapping.TryGetValue(toolName, paramFileType) Then
-            Return paramFileType
-        End If
-
-        Dim strToolNameLCase = toolName.ToLower()
-
-        For Each entry In toolNameToTypeMapping
-            If strToolNameLCase.Contains(entry.Key.ToLower()) Then
-                Return entry.Value
-            End If
-        Next
-
-        Return IGenerateFile.ParamFileType.Invalid
-
-    End Function
-
-    ''' <summary>
-    ''' Converts the dictionary items to a list of key/value pairs separated by an equals sign
-    ''' Next, calls StorePackedJobParameterList to store the list (items will be separated by tab characters)
-    ''' </summary>
-    ''' <param name="dctItems">Dictionary items to store as a packed job parameter</param>
-    ''' <param name="strParameterName">Packed job parameter name</param>
-    ''' <remarks></remarks>
-    Protected Sub StorePackedJobParameterDictionary(dctItems As Dictionary(Of String, Integer), strParameterName As String)
-
-        Dim lstItems = New List(Of String)
-
-        For Each item As KeyValuePair(Of String, Integer) In dctItems
-            lstItems.Add(item.Key & "=" & item.Value)
-        Next
-
-        StorePackedJobParameterList(lstItems, strParameterName)
-
-    End Sub
-    ''' <summary>
-    ''' Converts the dictionary items to a list of key/value pairs separated by an equals sign
-    ''' Next, calls StorePackedJobParameterList to store the list (items will be separated by tab characters)
-    ''' </summary>
-    ''' <param name="dctItems">Dictionary items to store as a packed job parameter</param>
-    ''' <param name="strParameterName">Packed job parameter name</param>
-    ''' <remarks></remarks>
-    Public Sub StorePackedJobParameterDictionary(dctItems As Dictionary(Of String, String), strParameterName As String)
-
-        Dim lstItems = New List(Of String)
-
-        For Each item As KeyValuePair(Of String, String) In dctItems
-            lstItems.Add(item.Key & "=" & item.Value)
-        Next
-
-        StorePackedJobParameterList(lstItems, strParameterName)
-
-    End Sub
-
-    ''' <summary>
-    ''' Convert a string list to a packed job parameter (items are separated by tab characters)
-    ''' </summary>
-    ''' <param name="lstItems">List items to store as a packed job parameter</param>
-    ''' <param name="strParameterName">Packed job parameter name</param>
-    ''' <remarks></remarks>
-    Protected Sub StorePackedJobParameterList(lstItems As List(Of String), strParameterName As String)
-
-        m_jobParams.AddAdditionalParameter("JobParameters", strParameterName, clsGlobal.FlattenList(lstItems, ControlChars.Tab))
-
-    End Sub
-
-    ''' <summary>
-    ''' Unzips all files in the specified Zip file
-    ''' If the file is less than 1.25 GB in size (IONIC_ZIP_MAX_FILESIZE_MB) then uses Ionic.Zip
-    ''' Otherwise, uses PKZipC (provided PKZipC.exe exists)
-    ''' </summary>
-    ''' <param name="zipFilePath">File to unzip</param>
-    ''' <param name="outFolderPath">Target directory for the extracted files</param>
-    ''' <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
-    ''' <param name="forceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
-    ''' <returns>True if success, otherwise false</returns>
-    ''' <remarks></remarks>
-    Public Function UnzipFileStart(
-      zipFilePath As String,
-      outFolderPath As String,
-      callingFunctionName As String,
-      forceExternalZipProgramUse As Boolean) As Boolean
-
-        Dim strUnzipperName = "??"
-
-        Try
-            If String.IsNullOrEmpty(callingFunctionName) Then
-                callingFunctionName = "??"
-            End If
-
-            If zipFilePath Is Nothing Then
-                LogError(callingFunctionName & " called UnzipFileStart with an empty file path")
-                Return False
-            End If
-
-            Dim strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram", String.Empty)
-
-            Dim fiFileInfo = New FileInfo(zipFilePath)
-            Dim fileSizeMB = clsGlobal.BytesToMB(fiFileInfo.Length)
-
-            If Not fiFileInfo.Exists Then
-                ' File not found
-                LogError("Error unzipping '" + zipFilePath + "': File not found")
-                LogMessage("CallingFunction: " & callingFunctionName)
-                Return False
-            End If
-
-            Dim blnUseExternalUnzipper As Boolean
-
-            If zipFilePath.ToLower().EndsWith(DOT_GZ_EXTENSION) Then
-                ' This is a gzipped file
-                ' Use Ionic.Zip
-                strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME
-                m_IonicZipTools.DebugLevel = m_DebugLevel
-                Return m_IonicZipTools.GUnzipFile(zipFilePath, outFolderPath)
-            End If
-
-            ' Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
-            ' However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
-            If forceExternalZipProgramUse OrElse fileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB Then
-                If strExternalUnzipperFilePath.Length > 0 AndAlso
-                   strExternalUnzipperFilePath.ToLower() <> "na" Then
-                    If File.Exists(strExternalUnzipperFilePath) Then
-                        blnUseExternalUnzipper = True
-                    End If
-                End If
-
-                If Not blnUseExternalUnzipper Then
-                    LogMessage("External zip program not found: " + strExternalUnzipperFilePath + "; will instead use Ionic.Zip")
-                End If
-            End If
-
-            If blnUseExternalUnzipper Then
-                strUnzipperName = Path.GetFileName(strExternalUnzipperFilePath)
-
-                Dim UnZipper As New PRISM.Files.ZipTools(outFolderPath, strExternalUnzipperFilePath)
-
-                Dim dtStartTime = Date.UtcNow
-                Dim blnSuccess = UnZipper.UnzipFile("", zipFilePath, outFolderPath)
-                Dim dtEndTime = Date.UtcNow
-
-                If blnSuccess Then
-                    m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, False, strUnzipperName)
-                Else
-                    LogError("Error unzipping " + Path.GetFileName(zipFilePath) + " using " + strUnzipperName)
-                    LogMessage("CallingFunction: " & callingFunctionName)
-                End If
-
-                Return blnSuccess
-            Else
-                ' Use Ionic.Zip
-                strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME
-                m_IonicZipTools.DebugLevel = m_DebugLevel
-                Dim blnSuccess = m_IonicZipTools.UnzipFile(zipFilePath, outFolderPath)
-
-                Return blnSuccess
-            End If
-
-        Catch ex As Exception
-            Dim errMsg = "Exception while unzipping '" + zipFilePath + "'"
-            If Not String.IsNullOrEmpty(strUnzipperName) Then errMsg &= " using " + strUnzipperName
-
-            LogError(errMsg, ex)
-            LogMessage("CallingFunction: " & callingFunctionName)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Update m_message, which is logged in the pipeline job steps table when the job step finishes
-    ''' </summary>
-    ''' <param name="statusMessage">New status message</param>
-    ''' <param name="appendToExisting">True to append to m_message; false to overwrite it</param>
-    Public Sub UpdateStatusMessage(statusMessage As String, Optional appendToExisting As Boolean = False)
-
-        If appendToExisting Then
-            clsGlobal.AppendToComment(m_message, statusMessage)
-        Else
-            m_message = statusMessage
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
-    ''' </summary>
-    ''' <param name="strWorkDir">Folder with the CDTA file</param>
-    ''' <param name="strInputFileName">CDTA filename</param>
-    ''' <returns>True if success; false if an error</returns>
-    Protected Function ValidateCDTAFileRemoveSparseSpectra(strWorkDir As String, strInputFileName As String) As Boolean
-        Dim blnSuccess As Boolean
-
-        blnSuccess = m_CDTAUtilities.RemoveSparseSpectra(strWorkDir, strInputFileName)
-        If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
-            m_message = "m_CDTAUtilities.RemoveSparseSpectra returned False"
-        End If
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
-    ''' </summary>
-    ''' <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
-    ''' <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
-    ''' <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
-    ''' <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
-    ''' <returns>True if success; false if an error</returns>
-    Protected Function ValidateCDTAFileScanAndCSTags(
-       strSourceFilePath As String,
-       blnReplaceSourceFile As Boolean,
-       blnDeleteSourceFileIfUpdated As Boolean,
-       strOutputFilePath As String) As Boolean
-
-        Dim blnSuccess As Boolean
-
-        blnSuccess = m_CDTAUtilities.ValidateCDTAFileScanAndCSTags(strSourceFilePath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, strOutputFilePath)
-        If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
-            m_message = "m_CDTAUtilities.ValidateCDTAFileScanAndCSTags returned False"
-        End If
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Condenses CDTA files that are over 2 GB in size
-    ''' </summary>
-    ''' <param name="strWorkDir"></param>
-    ''' <param name="strInputFileName"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function ValidateCDTAFileSize(strWorkDir As String, strInputFileName As String) As Boolean
-        Dim blnSuccess As Boolean
-
-        blnSuccess = m_CDTAUtilities.ValidateCDTAFileSize(strWorkDir, strInputFileName)
-        If Not blnSuccess AndAlso String.IsNullOrEmpty(m_message) Then
-            m_message = "m_CDTAUtilities.ValidateCDTAFileSize returned False"
-        End If
-
-        Return blnSuccess
-
-    End Function
-
-    Public Function ValidateCDTAFileIsCentroided(strCDTAPath As String) As Boolean
-
-        Try
-
-            ' Read the m/z values in the _dta.txt file
-            ' Examine the data in each spectrum to determine if it is centroided
-
-            mSpectraTypeClassifier = New SpectraTypeClassifier.clsSpectrumTypeClassifier()
-
-            Dim blnSuccess = mSpectraTypeClassifier.CheckCDTAFile(strCDTAPath)
-
-            If Not blnSuccess Then
-                If String.IsNullOrEmpty(m_message) Then
-                    LogError("SpectraTypeClassifier encountered an error while parsing the _dta.txt file")
-                End If
-
-                Return False
-            End If
-
-            Dim fractionCentroided = mSpectraTypeClassifier.FractionCentroided
-
-            Dim commentSuffix = " (" & mSpectraTypeClassifier.TotalSpectra & " total spectra)"
-
-            If fractionCentroided > 0.8 Then
-                ' At least 80% of the spectra are centroided
-
-                If fractionCentroided > 0.999 Then
-                    LogMessage("All of the spectra are centroided" & commentSuffix)
-                Else
-                    LogMessage((fractionCentroided * 100).ToString("0") & "% of the spectra are centroided" & commentSuffix)
-                End If
-
-                Return True
-
-            ElseIf fractionCentroided > 0.001 Then
-                ' Less than 80% of the spectra are centroided
-                ' Post a message similar to:
-                '   MSGF+ will likely skip 90% of the spectra because they did not appear centroided
-                m_message = "MSGF+ will likely skip " & ((1 - fractionCentroided) * 100).ToString("0") & "% of the spectra because they do not appear centroided"
-                LogMessage(m_message & commentSuffix)
-                Return False
-            Else
-                ' None of the spectra are centroided; unable to process with MSGF+
-                m_message = SPECTRA_ARE_NOT_CENTROIDED & " with MSGF+"
-                LogMessage(m_message & commentSuffix, 0, True)
-                Return False
-            End If
-
-        Catch ex As Exception
-            LogError("Exception in ValidateCDTAFileIsCentroided", ex)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Validate that the specified file exists and has at least one tab-delimited row with a numeric value in the first column
-    ''' </summary>
-    ''' <param name="strFilePath">Path to the file</param>
-    ''' <param name="strFileDescription">File description, e.g. Synopsis</param>
-    ''' <returns>True if the file has data; otherwise false</returns>
-    ''' <remarks></remarks>
-    Public Shared Function ValidateFileHasData(strFilePath As String, strFileDescription As String, <Out()> ByRef strErrorMessage As String) As Boolean
-        Const intNumericDataColIndex = 0
-        Return ValidateFileHasData(strFilePath, strFileDescription, strErrorMessage, intNumericDataColIndex)
-    End Function
-
-    ''' <summary>
-    ''' Validate that the specified file exists and has at least one tab-delimited row with a numeric value
-    ''' </summary>
-    ''' <param name="strFilePath">Path to the file</param>
-    ''' <param name="strFileDescription">File description, e.g. Synopsis</param>
-    ''' <param name="intNumericDataColIndex">Index of the numeric data column; use -1 to simply look for any text in the file</param>
-    ''' <returns>True if the file has data; otherwise false</returns>
-    ''' <remarks></remarks>
-    Public Shared Function ValidateFileHasData(strFilePath As String, strFileDescription As String, <Out()> ByRef strErrorMessage As String, intNumericDataColIndex As Integer) As Boolean
-
-        Dim fiFileInfo As FileInfo
-
-        Dim strLineIn As String
-        Dim strSplitLine() As String
-
-        Dim dblValue As Double
-        Dim blnDataFound As Boolean
-
-        strErrorMessage = String.Empty
-
-        Try
-            fiFileInfo = New FileInfo(strFilePath)
-
-            If Not fiFileInfo.Exists Then
-                strErrorMessage = strFileDescription + " file not found: " + fiFileInfo.Name
-                Return False
-            End If
-
-            If fiFileInfo.Length = 0 Then
-                strErrorMessage = strFileDescription + " file is empty (zero-bytes)"
-                Return False
-            End If
-
-            ' Open the file and confirm it has data rows
-            Using srInFile = New StreamReader(New FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                While Not srInFile.EndOfStream And Not blnDataFound
-                    strLineIn = srInFile.ReadLine()
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-                        If intNumericDataColIndex < 0 Then
-                            blnDataFound = True
-                        Else
-                            ' Split on the tab character and check if the first column is numeric
-                            strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-                            If Not strSplitLine Is Nothing AndAlso strSplitLine.Length > intNumericDataColIndex Then
-                                If Double.TryParse(strSplitLine(intNumericDataColIndex), dblValue) Then
-                                    blnDataFound = True
-                                End If
-                            End If
-
-                        End If
-                    End If
-                End While
-            End Using
-
-            If Not blnDataFound Then
-                strErrorMessage = strFileDescription + " is empty (no data)"
-            End If
-
-        Catch ex As Exception
-            strErrorMessage = "Exception validating " + strFileDescription + " file"
-            Return False
-        End Try
-
-        Return blnDataFound
-
-    End Function
-
-    ''' <summary>
-    ''' Validates that sufficient free memory is available to run Java
-    ''' </summary>
-    ''' <param name="strJavaMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) to reserve for Java</param>
-    ''' <param name="strStepToolName">Step tool name to use when posting log entries</param>
-    ''' <returns>True if sufficient free memory; false if not enough free memory</returns>
-    ''' <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
-    ''' These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
-    Protected Function ValidateFreeMemorySize(strJavaMemorySizeJobParamName As String, strStepToolName As String) As Boolean
-
-        Const blnLogFreeMemoryOnSuccess = True
-        Return ValidateFreeMemorySize(strJavaMemorySizeJobParamName, strStepToolName, blnLogFreeMemoryOnSuccess)
-
-    End Function
-
-    ''' <summary>
-    ''' Validates that sufficient free memory is available to run Java
-    ''' </summary>
-    ''' <param name="strMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
-    ''' <param name="strStepToolName">Step tool name to use when posting log entries</param>
-    ''' <param name="blnLogFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
-    ''' <returns>True if sufficient free memory; false if not enough free memory</returns>
-    ''' <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
-    ''' These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
-
-    Protected Function ValidateFreeMemorySize(strMemorySizeJobParamName As String, strStepToolName As String, blnLogFreeMemoryOnSuccess As Boolean) As Boolean
-        Dim intFreeMemoryRequiredMB As Integer
-
-        ' Lookup parameter strMemorySizeJobParamName; assume 2000 MB if not defined
-        intFreeMemoryRequiredMB = m_jobParams.GetJobParameter(strMemorySizeJobParamName, 2000)
-
-        ' Require intFreeMemoryRequiredMB be at least 0.5 GB
-        If intFreeMemoryRequiredMB < 512 Then intFreeMemoryRequiredMB = 512
-
-        If m_DebugLevel < 1 Then blnLogFreeMemoryOnSuccess = False
-
-        Return ValidateFreeMemorySize(intFreeMemoryRequiredMB, strStepToolName, blnLogFreeMemoryOnSuccess)
-
-    End Function
-
-    Public Shared Function ValidateFreeMemorySize(intFreeMemoryRequiredMB As Integer, strStepToolName As String, blnLogFreeMemoryOnSuccess As Boolean) As Boolean
-        Dim sngFreeMemoryMB As Single
-        Dim strMessage As String
-
-        sngFreeMemoryMB = GetFreeMemoryMB()
-
-        If intFreeMemoryRequiredMB >= sngFreeMemoryMB Then
-            strMessage = "Not enough free memory to run " + strStepToolName
-
-            strMessage &= "; need " + intFreeMemoryRequiredMB.ToString() + " MB but system has " + sngFreeMemoryMB.ToString("0") + " MB available"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
-            Console.WriteLine(strMessage)
-            Return False
-        Else
-            If blnLogFreeMemoryOnSuccess Then
-                strMessage = strStepToolName + " will use " + intFreeMemoryRequiredMB.ToString() + " MB; system has " + sngFreeMemoryMB.ToString("0") + " MB available"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage)
-            End If
-
-            Return True
-        End If
-    End Function
-
-#End Region
-
-#Region "Event Handlers"
-
-    Private Sub m_CDTAUtilities_ErrorEvent(errorMessage As String) Handles m_CDTAUtilities.ErrorEvent
-        LogError(errorMessage)
-    End Sub
-
-    Private Sub m_CDTAUtilities_InfoEvent(strMessage As String, intDebugLevel As Integer) Handles m_CDTAUtilities.InfoEvent
-        If m_DebugLevel >= intDebugLevel Then
-            LogMessage(strMessage)
-        End If
-    End Sub
-
-    Private Sub m_CDTAUtilities_ProgressEvent(taskDescription As String, percentComplete As Single) Handles m_CDTAUtilities.ProgressEvent
-
-        Static dtLastUpdateTime As DateTime
-
-        If m_DebugLevel >= 1 Then
-            If m_DebugLevel = 1 AndAlso Date.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 60 OrElse
-               m_DebugLevel > 1 AndAlso Date.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20 Then
-                dtLastUpdateTime = Date.UtcNow
-
-                LogDebugMessage(" ... CDTAUtilities: " & percentComplete.ToString("0.00") & "% complete")
-            End If
-        End If
-
-    End Sub
-
-    Private Sub m_CDTAUtilities_WarningEvent(strMessage As String) Handles m_CDTAUtilities.WarningEvent
-        LogWarning(strMessage)
-    End Sub
-
-    Private Sub m_FastaTools_FileGenerationCompleted(FullOutputPath As String) Handles m_FastaTools.FileGenerationCompleted
-        ' Get the name of the fasta file that was generated
-        m_FastaFileName = Path.GetFileName(FullOutputPath)
-    End Sub
-
-    Private Sub m_FastaTools_FileGenerationProgress(statusMsg As String, fractionDone As Double) Handles m_FastaTools.FileGenerationProgress
-        Const MINIMUM_LOG_INTERVAL_SEC = 10
-        Static dtLastLogTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(1, 0, 0))
-        Static dblFractionDoneSaved As Double = -1
-
-        Dim blnForcelog = m_DebugLevel >= 1 AndAlso statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT)
-
-        If m_DebugLevel >= 3 OrElse blnForcelog Then
-            ' Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
-            If blnForcelog OrElse
-               Date.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC OrElse
-               fractionDone - dblFractionDoneSaved >= 0.25 Then
-                dtLastLogTime = Date.UtcNow
-                dblFractionDoneSaved = fractionDone
-                LogDebugMessage("Generating Fasta file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg)
-            End If
-        End If
-    End Sub
-
-    Private Sub m_SplitFastaFileUtility_ErrorEvent(errorMessage As String, ex As Exception) Handles m_SplitFastaFileUtility.ErrorEvent
-        LogError(errorMessage, ex)
-    End Sub
-
-    Private Sub m_SplitFastaFileUtility_ProgressUpdate(progressMessage As String, percentComplete As Single) Handles m_SplitFastaFileUtility.ProgressUpdate
-
-        If m_DebugLevel >= 1 Then
-            If m_DebugLevel = 1 AndAlso Date.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 OrElse
-               m_DebugLevel > 1 AndAlso Date.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 OrElse
-               percentComplete >= 100 And m_SplitFastaLastPercentComplete < 100 Then
-
-                m_SplitFastaLastUpdateTime = Date.UtcNow
-                m_SplitFastaLastPercentComplete = percentComplete
-
-                If percentComplete > 0 Then
-                    LogDebugMessage(" ... " & progressMessage & ", " & percentComplete & "% complete")
-                Else
-                    LogDebugMessage(" ... SplitFastaFile: " & progressMessage)
-                End If
-
-            End If
-        End If
-    End Sub
-
-    Private Sub m_SplitFastaFileUtility_SplittingBaseFastafile(strBaseFastaFileName As String, numSplitParts As Integer) Handles m_SplitFastaFileUtility.SplittingBaseFastafile
-        LogDebugMessage("Splitting " & strBaseFastaFileName & " into " & numSplitParts & " parts")
-    End Sub
-
-#End Region
-
-#Region "clsEventNotifier events"
-
-    Protected Sub RegisterEvents(oProcessingClass As clsEventNotifier)
-        AddHandler oProcessingClass.StatusEvent, AddressOf StatusEventHandler
-        AddHandler oProcessingClass.ErrorEvent, AddressOf ErrorEventHandler
-        AddHandler oProcessingClass.WarningEvent, AddressOf WarningEventHandler
-        AddHandler oProcessingClass.ProgressUpdate, AddressOf ProgressUpdateHandler
-    End Sub
-
-    Private Sub StatusEventHandler(statusMessage As String)
-        LogMessage(statusMessage)
-    End Sub
-
-    Private Sub ErrorEventHandler(errorMessage As String, ex As Exception)
-        LogError(errorMessage, ex)
-    End Sub
-
-    Private Sub WarningEventHandler(warningMessage As String)
-        LogWarning(warningMessage)
-    End Sub
-
-    Private Sub ProgressUpdateHandler(progressMessage As String, percentComplete As Single)
-        m_StatusTools.CurrentOperation = progressMessage
-        m_StatusTools.UpdateAndWrite(percentComplete)
-    End Sub
-
-#End Region
-
-#Region "SpectraTypeClassifier Events"
-    Private Sub mSpectraTypeClassifier_ErrorEvent(strMessage As String) Handles mSpectraTypeClassifier.ErrorEvent
-
-    End Sub
-
-    Private Sub mSpectraTypeClassifier_ReadingSpectra(spectraProcessed As Integer) Handles mSpectraTypeClassifier.ReadingSpectra
-        LogDebugMessage(" ... " & spectraProcessed & " spectra parsed in the _dta.txt file")
-    End Sub
-#End Region
-
-End Class
-
-
+            m_DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum");
+
+            m_IonicZipTools = new clsIonicZipTools(m_DebugLevel, m_WorkingDir);
+            RegisterEvents(m_IonicZipTools);
+
+            InitFileTools(m_MgrName, m_DebugLevel);
+
+            if (myEMSLUtilities == null)
+            {
+                m_MyEMSLUtilities = new clsMyEMSLUtilities(m_DebugLevel, m_WorkingDir);
+            }
+            else
+            {
+                m_MyEMSLUtilities = myEMSLUtilities;
+            }
+
+            RegisterEvents(m_MyEMSLUtilities);
+
+            m_ResourceOptions = new Dictionary<clsGlobal.eAnalysisResourceOptions, bool>();
+            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, false);
+            SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, false);
+
+            m_StatusTools = statusTools;
+
+            m_AuroraAvailable = m_mgrParams.GetParam("AuroraAvailable", true);
+
+            m_MyEmslAvailable = m_mgrParams.GetParam("MyEmslAvailable", true);
+
+        }
+
+        public abstract CloseOutType GetResources();
+
+        public bool GetOption(clsGlobal.eAnalysisResourceOptions resourceOption)
+        {
+            if (m_ResourceOptions == null)
+                return false;
+
+            bool enabled = false;
+            if (m_ResourceOptions.TryGetValue(resourceOption, out enabled))
+            {
+                return enabled;
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Gets resources required by all step tools
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        protected CloseOutType GetSharedResources()
+        {
+
+            var success = GetExistingJobParametersFile();
+
+            if (success)
+            {
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            else
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+        }
+
+
+
+
+        public void SetOption(clsGlobal.eAnalysisResourceOptions resourceOption, bool enabled)
+        {
+            if (m_ResourceOptions == null)
+            {
+                m_ResourceOptions = new Dictionary<clsGlobal.eAnalysisResourceOptions, bool>();
+            }
+
+            if (m_ResourceOptions.ContainsKey(resourceOption))
+            {
+                m_ResourceOptions[resourceOption] = enabled;
+            }
+            else
+            {
+                m_ResourceOptions.Add(resourceOption, enabled);
+            }
+
+            if (resourceOption == clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled)
+            {
+                MyEMSLSearchDisabled = enabled;
+            }
+        }
+
+        /// <summary>
+        /// Add a folder or file path to a list of paths to examine
+        /// </summary>
+        /// <param name="lstPathsToCheck">List of Tuples where the string is a folder or file path, and the boolean is logIfMissing</param>
+        /// <param name="folderOrFilePath">Path to add</param>
+        /// <param name="logIfMissing">True to log a message if the path is not found</param>
+        /// <remarks></remarks>
+        private void AddPathToCheck(ICollection<Tuple<string, bool>> lstPathsToCheck, string folderOrFilePath, bool logIfMissing)
+        {
+            lstPathsToCheck.Add(new Tuple<string, bool>(folderOrFilePath, logIfMissing));
+        }
+
+        /// <summary>
+        /// Add a filename extension to not move to the results folder
+        /// </summary>
+        /// <param name="Extension"></param>
+        /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
+        public void AddResultFileExtensionToSkip(string extension)
+        {
+            m_jobParams.AddResultFileExtensionToSkip(extension);
+        }
+
+        /// <summary>
+        /// Add a filename to not move to the results folder
+        /// </summary>
+        /// <param name="sourceFilename"></param>
+        /// <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
+        public void AddResultFileToSkip(string sourceFilename)
+        {
+            m_jobParams.AddResultFileToSkip(sourceFilename);
+        }
+
+        /// <summary>
+        /// Appends file specified file path to the JobInfo file for the given Job
+        /// </summary>
+        /// <param name="intJob"></param>
+        /// <param name="strFilePath"></param>
+        /// <remarks></remarks>
+        protected void AppendToJobInfoFile(int intJob, string strFilePath)
+        {
+            string strJobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(intJob, m_WorkingDir);
+
+            using (var swJobInfoFile = new StreamWriter(new FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+            {
+                swJobInfoFile.WriteLine(strFilePath);
+            }
+
+        }
+
+        public void CacheCurrentDataAndJobInfo()
+        {
+            if (mCachedDatasetAndJobInfoIsDefined)
+            {
+                throw new Exception("Call RestoreCachedDataAndJobInfo before calling CacheCurrentDataAndJobInfo again");
+            }
+
+            // Cache the current dataset and job info
+            mCachedDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
+            mCachedDatasetAndJobInfoIsDefined = true;
+
+        }
+
+
+        public void RestoreCachedDataAndJobInfo()
+        {
+            if (!mCachedDatasetAndJobInfoIsDefined)
+            {
+                throw new Exception("Programming error: RestoreCachedDataAndJobInfo called but mCachedDatasetAndJobInfoIsDefined is false");
+            }
+
+            // Restore the dataset and job info for this aggregation job
+            OverrideCurrentDatasetAndJobInfo(mCachedDatasetAndJobInfo);
+
+            mCachedDatasetAndJobInfoIsDefined = false;
+
+        }
+
+
+
+        /// <summary>
+        /// Look for a lock file named dataFilePath + ".lock"
+        /// If found, and if less than maxWaitTimeMinutes old, waits for it to be deleted by another process or to age
+        /// </summary>
+        /// <param name="dataFilePath">Data file path</param>
+        /// <param name="dataFileDescription">User friendly description of the data file, e.g. LipidMapsDB</param>
+        /// <param name="statusTools">Status Tools object</param>
+        /// <param name="maxWaitTimeMinutes">Maximum age of the lock file</param>
+        /// <remarks>
+        /// Typical steps for using lock files to assure that only one manager is creating a specific file
+        /// 1. Call CheckForLockFile() to check for a lock file; wait for it to age
+        /// 2. Once CheckForLockFile() exits, check for the required data file; exit the function if the desired file is found
+        /// 3. If the file was not found, create a new lock file by calling CreateLockFile()
+        /// 4. Do the work and create the data file, including copying to the central location
+        /// 5. Delete the lock file by calling DeleteLockFile() or by deleting the file path returned by CreateLockFile()
+        /// </remarks>
+        public static void CheckForLockFile(
+            string dataFilePath,
+            string dataFileDescription,
+            IStatusFile statusTools,
+            int maxWaitTimeMinutes = 120,
+            int logIntervalMinutes = 5)
+        {
+
+            {
+                var blnWaitingForLockFile = false;
+                DateTime dtLockFileCreated = DateTime.UtcNow;
+
+                // Look for a recent .lock file
+                var fiLockFile = new FileInfo(dataFilePath + LOCK_FILE_EXTENSION);
+
+                if (fiLockFile.Exists)
+                {
+                    if (DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes)
+                    {
+                        blnWaitingForLockFile = true;
+                        dtLockFileCreated = fiLockFile.LastWriteTimeUtc;
+
+                        var debugMessage = dataFileDescription + " lock file found; will wait for file to be deleted or age; " + fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString();
+                        // Simulate call to LogDebugMessage() since this is a shared method
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, debugMessage);
+                        Console.WriteLine(debugMessage);
+                    }
+                    else
+                    {
+                        // Lock file has aged; delete it
+                        fiLockFile.Delete();
+                    }
+                }
+
+                if (blnWaitingForLockFile)
+                {
+                    var dtLastProgressTime = DateTime.UtcNow;
+                    if (logIntervalMinutes < 1)
+                        logIntervalMinutes = 1;
+
+                    while (blnWaitingForLockFile)
+                    {
+                        // Wait 5 seconds
+                        Thread.Sleep(5000);
+
+                        fiLockFile.Refresh();
+
+                        if (!fiLockFile.Exists)
+                        {
+                            blnWaitingForLockFile = false;
+                        }
+                        else if (DateTime.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes)
+                        {
+                            blnWaitingForLockFile = false;
+                        }
+                        else
+                        {
+                            if (DateTime.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes)
+                            {
+                                LogDebugMessage("Waiting for lock file " + fiLockFile.Name, statusTools);
+                                dtLastProgressTime = DateTime.UtcNow;
+                            }
+                        }
+                    }
+
+                    fiLockFile.Refresh();
+                    if (fiLockFile.Exists)
+                    {
+                        // Lock file is over 2 hours old; delete it
+                        DeleteLockFile(dataFilePath);
+                    }
+                }
+            }
+
+
+
+        }
+
+
+
+
+        /// <summary>
+        /// Create a new lock file named dataFilePath + ".lock"
+        /// </summary>
+        /// <param name="dataFilePath">Data file path</param>
+        /// <param name="taskDescription">Description of current task; will be written the lock file, followed by " at yyyy-MM-dd hh:mm:ss tt"</param>
+        /// <returns>Full path to the lock file</returns>
+        /// <remarks></remarks>
+        public static string CreateLockFile(string dataFilePath, string taskDescription)
+        {
+
+            var strLockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
+            using (var swLockFile = new StreamWriter(new FileStream(strLockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
+            {
+                swLockFile.WriteLine(taskDescription + " at " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+            }
+
+            return strLockFilePath;
+
+        }
+
+
+        /// <summary>
+        /// Delete the lock file for the correspond data file
+        /// </summary>
+        /// <param name="dataFilePath"></param>
+        /// <remarks></remarks>
+        public static void DeleteLockFile(string dataFilePath)
+        {
+            // Delete the lock file
+            try
+            {
+                var lockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
+
+                var fiLockFile = new FileInfo(lockFilePath);
+                if (fiLockFile.Exists)
+                {
+                    fiLockFile.Delete();
+                }
+
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
+
+        }
+        /// <summary>
+        /// Copies the zipped s-folders to the working directory
+        /// </summary>
+        /// <param name="CreateStoragePathInfoOnly">
+        /// When true, then does not actually copy the specified files, 
+        /// but instead creates a series of files named s*.zip_StoragePathInfo.txt, 
+        /// and each file's first line will be the full path to the source file
+        /// </param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        private bool CopySFoldersToWorkDir(bool createStoragePathInfoOnly)
+        {
+
+            string DSFolderPath = FindValidFolder(m_DatasetName, "s*.zip", RetrievingInstrumentDataFolder: true);
+
+            string[] ZipFiles = null;
+            string DestFilePath = null;
+
+            // Verify dataset folder exists
+            if (!Directory.Exists(DSFolderPath))
+                return false;
+
+            // Get a listing of the zip files to process
+            ZipFiles = Directory.GetFiles(DSFolderPath, "s*.zip");
+            if (ZipFiles.GetLength(0) < 1)
+                return false;
+            //No zipped data files found
+
+            // Copy each of the s*.zip files to the working directory
+
+            foreach (string ZipFilePath in ZipFiles)
+            {
+                if (m_DebugLevel > 3)
+                {
+                    LogDebugMessage("Copying file " + ZipFilePath + " to work directory");
+                }
+
+                DestFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(ZipFilePath));
+
+                if (createStoragePathInfoOnly)
+                {
+                    if (!CreateStoragePathInfoFile(ZipFilePath, DestFilePath))
+                    {
+                        LogError("Error creating storage path info file for " + ZipFilePath);
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!CopyFileWithRetry(ZipFilePath, DestFilePath, false))
+                    {
+                        LogError("Error copying file " + ZipFilePath);
+                        return false;
+                    }
+                }
+            }
+
+            // If we got to here, everything worked
+            return true;
+
+        }
+
+
+
+        /// <summary>
+        /// Copies a file with retries in case of failure
+        /// </summary>
+        /// <param name="SrcFilePath">Full path to source file</param>
+        /// <param name="DestFilePath">Full path to destination file</param>
+        /// <param name="Overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
+        /// <returns>TRUE for success; FALSE for error</returns>
+        /// <remarks>Logs copy errors</remarks>
+        private bool CopyFileWithRetry(string SrcFilePath, string DestFilePath, bool Overwrite)
+        {
+            const int maxCopyAttempts = 3;
+            return CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, maxCopyAttempts);
+        }
+
+        /// <summary>
+        /// Copies a file with retries in case of failure
+        /// </summary>
+        /// <param name="srcFilePath">Full path to source file</param>
+        /// <param name="destFilePath">Full path to destination file</param>
+        /// <param name="overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
+        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+        /// <returns>TRUE for success; FALSE for error</returns>
+        /// <remarks>Logs copy errors</remarks>
+        private bool CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxCopyAttempts)
+        {
+
+            const int RETRY_HOLDOFF_SECONDS = 15;
+
+            if (maxCopyAttempts < 1)
+                maxCopyAttempts = 1;
+            int retryCount = maxCopyAttempts;
+
+            while (retryCount > 0)
+            {
+                try
+                {
+                    ResetTimestampForQueueWaitTimeLogging();
+                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        LogMessage("CopyFileUsingLocks returned false copying " + srcFilePath + " to " + destFilePath, 0, true);
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogError("Exception copying file " + srcFilePath + " to " + destFilePath + "; Retry Count = " + retryCount, ex);
+
+                    retryCount -= 1;
+
+                    if (!overwrite && File.Exists(destFilePath))
+                    {
+                        LogMessage("Tried to overwrite an existing file when Overwrite = False: " + destFilePath, 0, true);
+                        return false;
+                    }
+
+                    Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000);
+                    //Wait several seconds before retrying
+                }
+            }
+
+            //If we got to here, there were too many failures
+            if (retryCount < 1)
+            {
+                LogError(m_message);
+                return false;
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        protected bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath)
+        {
+
+            const int MAX_ATTEMPTS = 3;
+            return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
+                clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: MAX_ATTEMPTS);
+
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        {
+
+            const int MAX_ATTEMPTS = 3;
+            return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
+                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: MAX_ATTEMPTS);
+
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        protected bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound, int maxCopyAttempts)
+        {
+
+            return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
+                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
+
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        protected bool CopyFileToWorkDir(
+            string sourceFileName,
+            string sourceFolderPath,
+            string targetFolderPath,
+            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            bool createStoragePathInfoOnly)
+        {
+
+            const int MAX_ATTEMPTS = 3;
+            return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
+                logMsgTypeIfNotFound, createStoragePathInfoOnly, MAX_ATTEMPTS);
+
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <param name="createStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
+        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        protected bool CopyFileToWorkDir(
+            string sourceFileName,
+            string sourceFolderPath,
+            string targetFolderPath,
+            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            bool createStoragePathInfoOnly,
+            int maxCopyAttempts)
+        {
+
+            try
+            {
+                var sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
+
+                if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    return m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
+                }
+
+                var destFilePath = Path.Combine(targetFolderPath, sourceFileName);
+
+                //Verify source file exists
+                const int HOLDOFF_SECONDS = 1;
+                const int MAX_ATTEMPTS = 1;
+                if (!FileExistsWithRetry(sourceFilePath, HOLDOFF_SECONDS, logMsgTypeIfNotFound, MAX_ATTEMPTS))
+                {
+                    m_message = "File not found: " + sourceFilePath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logMsgTypeIfNotFound, m_message);
+                    if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
+                    {
+                        LogMessage(m_message, 0, true);
+                    }
+                    return false;
+                }
+
+                if (createStoragePathInfoOnly)
+                {
+                    // Create a storage path info file
+                    return CreateStoragePathInfoFile(sourceFilePath, destFilePath);
+                }
+
+                if (CopyFileWithRetry(sourceFilePath, destFilePath, true, maxCopyAttempts))
+                {
+                    if (m_DebugLevel > 3)
+                    {
+                        LogDebugMessage("CopyFileToWorkDir, File copied: " + sourceFilePath);
+                    }
+                    return true;
+                }
+                else
+                {
+                    LogError("Error copying file " + sourceFilePath);
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in CopyFileToWorkDir for " + Path.Combine(sourceFolderPath, sourceFileName), ex);
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool CopyFileToWorkDirWithRename(string sourceFileName, string sourceFolderPath, string targetFolderPath)
+        {
+            const int maxCopyAttempts = 3;
+            return CopyFileToWorkDirWithRename(sourceFileName, sourceFolderPath, targetFolderPath, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool CopyFileToWorkDirWithRename(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        {
+            const int maxCopyAttempts = 3;
+            return CopyFileToWorkDirWithRename(sourceFileName, sourceFolderPath, targetFolderPath,
+                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool CopyFileToWorkDirWithRename(
+            string sourceFileName,
+            string sourceFolderPath,
+            string targetFolderPath,
+            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            int maxCopyAttempts)
+        {
+            return CopyFileToWorkDirWithRename(sourceFileName, sourceFolderPath, targetFolderPath,
+                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
+        }
+
+        /// <summary>
+        /// Copies specified file from storage server to local working directory, renames destination with dataset name
+        /// </summary>
+        /// <param name="sourceFileName">Name of file to copy</param>
+        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
+        /// <param name="targetFolderPath">Destination directory for file copy</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <param name="CreateStoragePathInfoOnly">
+        /// When true, does not actually copy the specified file, and instead creates a file named FileName_StoragePathInfo.txt
+        /// The first line of the StoragePathInfo.txt file will be the full path to the source file</param>
+        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool CopyFileToWorkDirWithRename(
+            string sourceFileName,
+            string sourceFolderPath,
+            string targetFolderPath,
+            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            bool createStoragePathInfoOnly,
+            int maxCopyAttempts)
+        {
+
+            string sourceFilePath = string.Empty;
+            string destFilePath = null;
+
+            try
+            {
+                sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
+
+                //Verify source file exists
+                if (!FileExistsWithRetry(sourceFilePath, logMsgTypeIfNotFound))
+                {
+                    m_message = "File not found: " + sourceFilePath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logMsgTypeIfNotFound, m_message);
+                    if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
+                    {
+                        LogMessage(m_message, 0, true);
+                    }
+                    return false;
+                }
+
+                FileInfo sourceFile = new FileInfo(sourceFilePath);
+                string TargetName = m_DatasetName + sourceFile.Extension;
+                destFilePath = Path.Combine(targetFolderPath, TargetName);
+
+                if (createStoragePathInfoOnly)
+                {
+                    // Create a storage path info file
+                    return CreateStoragePathInfoFile(sourceFilePath, destFilePath);
+                }
+
+                if (CopyFileWithRetry(sourceFilePath, destFilePath, true, maxCopyAttempts))
+                {
+                    if (m_DebugLevel > 3)
+                    {
+                        LogDebugMessage("CopyFileToWorkDirWithRename, File copied: " + sourceFilePath);
+                    }
+                    return true;
+                }
+                else
+                {
+                    LogError("Error copying file " + sourceFilePath);
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                if (sourceFilePath == null)
+                    sourceFilePath = sourceFileName;
+
+                if (sourceFilePath == null)
+                    sourceFilePath = "??";
+
+                LogError("Exception in CopyFileToWorkDirWithRename for " + sourceFilePath, ex);
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Creates a Fasta file based on Ken's DLL
+        /// </summary>
+        /// <param name="DestFolder">Folder where file will be created</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        public bool CreateFastaFile(clsProteinCollectionInfo proteinCollectionInfo, string destFolder)
+        {
+
+
+            if (m_DebugLevel >= 1)
+            {
+                LogMessage("Creating fasta file at " + destFolder);
+            }
+
+            if (!Directory.Exists(destFolder))
+            {
+                Directory.CreateDirectory(destFolder);
+            }
+
+            // Instantiate fasta tool if not already done
+            if (m_FastaTools == null)
+            {
+                if (string.IsNullOrWhiteSpace(m_FastaToolsCnStr))
+                {
+                    m_message = "Protein database connection string not specified";
+                    LogMessage("Error in CreateFastaFile: " + m_message, 0, true);
+                    return false;
+                }
+
+            }
+
+            var retryCount = 1;
+
+            while (retryCount > 0)
+            {
+                try
+                {
+                    m_FastaTools = new Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr);
+                    break; // TODO: might not be correct. Was : Exit While
+                }
+                catch (Exception ex)
+                {
+                    if (retryCount > 1)
+                    {
+                        LogError("Error instantiating clsGetFASTAFromDMS", ex);
+                        // Sleep 20 seconds after the first failure and 30 seconds after the second failure
+                        if (retryCount == 3)
+                        {
+                            Thread.Sleep(20000);
+                        }
+                        else
+                        {
+                            Thread.Sleep(30000);
+                        }
+                    }
+                    else
+                    {
+                        m_message = "Error retrieving protein collection or legacy FASTA file: ";
+                        if (ex.Message.Contains("could not open database connection"))
+                        {
+                            m_message += "could not open database connection";
+                        }
+                        else
+                        {
+                            m_message += ex.Message;
+                        }
+                        LogError(m_message, ex);
+                        LogDebugMessage("Connection string: " + m_FastaToolsCnStr);
+                        LogDebugMessage("Current user: " + Environment.UserName);
+                        return false;
+                    }
+                    retryCount -= 1;
+                }
+            }
+
+            // Initialize fasta generation state variables
+            m_FastaFileName = string.Empty;
+
+            // Set up variables for fasta creation call
+
+            if (!proteinCollectionInfo.IsValid)
+            {
+                if (string.IsNullOrWhiteSpace(proteinCollectionInfo.ErrorMessage))
+                {
+                    m_message = "Unknown error determining the Fasta file or protein collection to use; unable to obtain Fasta file";
+                }
+                else
+                {
+                    m_message = proteinCollectionInfo.ErrorMessage + "; unable to obtain Fasta file";
+                }
+
+                LogMessage("Error in CreateFastaFile: " + m_message, 0, true);
+                return false;
+            }
+
+            var stepToolName = m_jobParams.GetJobParameter("StepTool", "Unknown");
+
+            string legacyFastaToUse = null;
+            var orgDBDescription = string.Copy(proteinCollectionInfo.OrgDBDescription);
+
+
+            if (proteinCollectionInfo.UsingSplitFasta && !string.Equals(stepToolName, "DataExtractor", StringComparison.CurrentCultureIgnoreCase))
+            {
+                if (!proteinCollectionInfo.UsingLegacyFasta)
+                {
+                    LogError("Cannot use protein collections when running a SplitFasta job; choose a Legacy fasta file instead");
+                    return false;
+                }
+
+                // Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName_NNx_nn.fasta
+                // where NN is the number of total cloned steps and nn is this job's specific step number
+                int numberOfClonedSteps = 0;
+
+                legacyFastaToUse = GetSplitFastaFileName(m_jobParams, out m_message, out numberOfClonedSteps);
+
+                if (string.IsNullOrEmpty(legacyFastaToUse))
+                {
+                    // The error should have already been logged
+                    return false;
+                }
+
+                orgDBDescription = "Legacy DB: " + legacyFastaToUse;
+
+                // Lookup connection strings
+                // Proteinseqs.Protein_Sequences
+                var proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring");
+                if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
+                {
+                    LogError("Error in CreateFastaFile: manager parameter fastacnstring is not defined");
+                    return false;
+                }
+
+                // Gigasax.DMS5
+                var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
+                if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
+                {
+                    LogError("Error in CreateFastaFile: manager parameter connectionstring is not defined");
+                    return false;
+                }
+
+                // Lookup the MSGFPlus Index Folder path
+                var strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\Proto-7\MSGFPlus_Index_Files");
+                if (string.IsNullOrWhiteSpace(strMSGFPlusIndexFilesFolderPathLegacyDB))
+                {
+                    strMSGFPlusIndexFilesFolderPathLegacyDB = @"\\Proto-7\MSGFPlus_Index_Files\Other";
+                }
+                else
+                {
+                    strMSGFPlusIndexFilesFolderPathLegacyDB = Path.Combine(strMSGFPlusIndexFilesFolderPathLegacyDB, "Other");
+                }
+
+                if (m_DebugLevel >= 1)
+                {
+                    LogMessage("Verifying that split fasta file exists: " + legacyFastaToUse);
+                }
+
+                // Make sure the original fasta file has already been split into the appropriate number parts
+                // and that DMS knows about them
+                //
+                // Do not use RegisterEvents with m_SplitFastaFileUtility because we handle the progress with a custom handler
+                m_SplitFastaFileUtility = new clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps, m_MgrName);
+
+                m_SplitFastaFileUtility.SplittingBaseFastafile += m_SplitFastaFileUtility_SplittingBaseFastaFile;
+                m_SplitFastaFileUtility.ErrorEvent += m_SplitFastaFileUtility_ErrorEvent;
+                m_SplitFastaFileUtility.ProgressUpdate += m_SplitFastaFileUtility_ProgressUpdate;
+
+                m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB;
+
+                m_SplitFastaLastUpdateTime = DateTime.UtcNow;
+                m_SplitFastaLastPercentComplete = 0;
+
+                var success = m_SplitFastaFileUtility.ValidateSplitFastaFile(proteinCollectionInfo.LegacyFastaName, legacyFastaToUse);
+                if (!success)
+                {
+                    m_message = m_SplitFastaFileUtility.ErrorMessage;
+                    return false;
+                }
+
+            }
+            else
+            {
+                legacyFastaToUse = string.Copy(proteinCollectionInfo.LegacyFastaName);
+            }
+
+            if (m_DebugLevel >= 2)
+            {
+                LogMessage("ProteinCollectionList=" + proteinCollectionInfo.ProteinCollectionList + "; " + "CreationOpts=" + proteinCollectionInfo.ProteinCollectionOptions + "; " + "LegacyFasta=" + legacyFastaToUse);
+            }
+
+            try
+            {
+                var hashString = m_FastaTools.ExportFASTAFile(proteinCollectionInfo.ProteinCollectionList, proteinCollectionInfo.ProteinCollectionOptions, legacyFastaToUse, destFolder);
+
+                if (string.IsNullOrEmpty(hashString))
+                {
+                    // Fasta generator returned empty hash string
+                    LogError("m_FastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + orgDBDescription);
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.StartsWith("Legacy fasta file not found:"))
+                {
+                    var rePathMatcher = new Regex(@"not found: (?<SourceFolder>.+)\\");
+                    var reMatch = rePathMatcher.Match(ex.Message);
+                    if (reMatch.Success)
+                    {
+                        m_message = "Legacy fasta file not found at " + reMatch.Groups["SourceFolder"].Value;
+                    }
+                    else
+                    {
+                        m_message = "Legacy fasta file not found in the organism folder for this job";
+                    }
+                }
+                else
+                {
+                    m_message = "Exception generating OrgDb file";
+                }
+
+                LogError("Exception generating OrgDb file; " + orgDBDescription, ex);
+                return false;
+            }
+
+
+            if (string.IsNullOrEmpty(m_FastaFileName))
+            {
+                // Fasta generator never raised event FileGenerationCompleted
+                LogError("m_FastaTools did not raise event FileGenerationCompleted; unable to continue; " + orgDBDescription);
+                return false;
+            }
+
+            string strFastaFileMsg = null;
+            var fiFastaFile = new FileInfo(Path.Combine(destFolder, m_FastaFileName));
+
+            if (m_DebugLevel >= 1)
+            {
+                // Log the name of the .Fasta file we're using
+                LogDebugMessage("Fasta generation complete, using database: " + m_FastaFileName, null);
+
+                if (m_DebugLevel >= 2)
+                {
+                    // Also log the file creation and modification dates
+
+                    try
+                    {
+                        strFastaFileMsg = "Fasta file last modified: " + 
+                            GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString();
+
+                        strFastaFileMsg += "; file created: " + 
+                            GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString();
+
+                        strFastaFileMsg += "; file size: " + fiFastaFile.Length.ToString() + " bytes";
+
+                        LogDebugMessage(strFastaFileMsg);
+                    }
+                    catch (Exception)
+                    {
+                        // Ignore errors here
+                    }
+                }
+
+            }
+
+            // Create/Update the .LastUsed file for the newly created Fasta File
+            var lastUsedFilePath = fiFastaFile.FullName + ".LastUsed";
+            try
+            {
+                using (var swLastUsedFile = new StreamWriter(new FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Warning: unable to create a new .LastUsed file at " + lastUsedFilePath, ex);
+            }
+
+            // If we got to here, everything worked OK
+            return true;
+
+        }
+
+        /// <summary>
+        /// Creates an XML formatted settings file based on data from broker
+        /// </summary>
+        /// <param name="FileText">String containing XML file contents</param>
+        /// <param name="FileNamePath">Name of file to create</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>XML handling based on code provided by Matt Monroe</remarks>
+        private bool CreateSettingsFile(string FileText, string FileNamePath)
+        {
+
+            clsFormattedXMLWriter objFormattedXMLWriter = new clsFormattedXMLWriter();
+
+            if (!objFormattedXMLWriter.WriteXMLToFile(FileText, FileNamePath))
+            {
+                LogError("Error creating settings file " + FileNamePath + ": " + objFormattedXMLWriter.ErrMsg);
+                m_message = "Error creating settings file";
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+
+        }
+
+        /// <summary>
+        /// Creates a file named DestFilePath but with "_StoragePathInfo.txt" appended to the name
+        /// The file's contents is the path given by sourceFilePath
+        /// </summary>
+        /// <param name="sourceFilePath">The path to write to the StoragePathInfo file</param>
+        /// <param name="DestFilePath">The path where the file would have been copied to</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected bool CreateStoragePathInfoFile(string sourceFilePath, string DestFilePath)
+        {
+
+            string strInfoFilePath = string.Empty;
+
+            try
+            {
+                if (sourceFilePath == null | DestFilePath == null)
+                {
+                    return false;
+                }
+
+                strInfoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
+
+                using (var swOutFile = new StreamWriter(new FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    swOutFile.WriteLine(sourceFilePath);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in CreateStoragePathInfoFile for " + strInfoFilePath, ex);
+                return false;
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Given two dates, returns the most recent date
+        /// </summary>
+        /// <param name="date1"></param>
+        /// <param name="date2"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected static DateTime DateMax(DateTime date1, DateTime date2)
+        {
+            if (date1 > date2)
+            {
+                return date1;
+            }
+            else
+            {
+                return date2;
+            }
+        }
+
+
+
+        /// <summary>
+        /// Tries to delete the first file whose path is defined in strFilesToDelete
+        /// If deletion succeeds, then removes the file from the queue
+        /// </summary>
+        /// <param name="strFilesToDelete">Queue of files to delete (full file paths)</param>
+        /// <param name="strFileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
+        /// <remarks></remarks>
+        protected void DeleteQueuedFiles(Queue<string> strFilesToDelete, string strFileToQueueForDeletion)
+        {
+            if (strFilesToDelete.Count > 0)
+            {
+                // Call the garbage collector, then try to delete the first queued file
+                // Note, do not call WaitForPendingFinalizers since that could block this thread
+                // Thus, do not use PRISM.Processes.clsProgRunner.GarbageCollectNow
+                GC.Collect();
+
+                try
+                {
+                    string strFileToDelete = null;
+                    strFileToDelete = strFilesToDelete.Peek();
+
+                    File.Delete(strFileToDelete);
+
+                    // If we get here, then the delete succeeded, so we can dequeue the file
+                    strFilesToDelete.Dequeue();
+
+                }
+                catch (Exception)
+                {
+                    // Exception deleting the file; ignore this error
+                }
+
+            }
+
+            if (!string.IsNullOrEmpty(strFileToQueueForDeletion))
+            {
+                strFilesToDelete.Enqueue(strFileToQueueForDeletion);
+            }
+
+        }
+
+        protected void DisableMyEMSLSearch()
+        {
+            m_MyEMSLUtilities.ClearDownloadQueue();
+            MyEMSLSearchDisabled = true;
+        }
+
+        /// <summary>
+        /// Test for file existence with a retry loop in case of temporary glitch
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private bool FileExistsWithRetry(string fileName, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        {
+
+            return FileExistsWithRetry(fileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS, logMsgTypeIfNotFound);
+
+        }
+
+        /// <summary>
+        /// Test for file existence with a retry loop in case of temporary glitch
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <returns>True if the file exists, otherwise false</returns>
+        /// <remarks></remarks>
+        private bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        {
+
+            const int MAX_ATTEMPTS = 3;
+            return FileExistsWithRetry(fileName, retryHoldoffSeconds, logMsgTypeIfNotFound, MAX_ATTEMPTS);
+
+        }
+
+        /// <summary>
+        /// Test for file existence with a retry loop in case of temporary glitch
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <param name="maxAttempts">Maximum number of attempts</param>
+        /// <returns>True if the file exists, otherwise false</returns>
+        /// <remarks></remarks>
+        private bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, clsLogTools.LogLevels logMsgTypeIfNotFound, int maxAttempts)
+        {
+
+            if (maxAttempts < 1)
+                maxAttempts = 1;
+            if (maxAttempts > 10)
+                maxAttempts = 10;
+            var retryCount = maxAttempts;
+
+            if (retryHoldoffSeconds <= 0)
+                retryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS;
+            if (retryHoldoffSeconds > 600)
+                retryHoldoffSeconds = 600;
+
+            while (retryCount > 0)
+            {
+                if (File.Exists(fileName))
+                {
+                    return true;
+                }
+                else
+                {
+                    if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
+                    {
+                        // Only log each failed attempt to find the file if logMsgTypeIfNotFound = ILogger.logMsgType.logError
+                        // Otherwise, we won't log each failed attempt
+                        string errMsg = "File " + fileName + " not found. Retry count = " + retryCount;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logMsgTypeIfNotFound, errMsg);
+                        if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
+                        {
+                            LogMessage(errMsg, 0, true);
+                        }
+                    }
+                    retryCount -= 1;
+                    if (retryCount > 0)
+                    {
+                        Thread.Sleep(new TimeSpan(0, 0, retryHoldoffSeconds));
+                        //Wait RetryHoldoffSeconds seconds before retrying
+                    }
+                }
+            }
+
+            // If we got to here, there were too many failures
+            if (retryCount < 1)
+            {
+                if (maxAttempts == 1)
+                {
+                    m_message = "File not found: " + fileName;
+                }
+                else
+                {
+                    m_message = "File not be found after " + maxAttempts + " tries: " + fileName;
+                }
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logMsgTypeIfNotFound, m_message);
+                if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
+                {
+                    LogMessage(m_message, 0, true);
+                }
+                return false;
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+        /// </summary>
+        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>Logs an error if the file is not found</remarks>
+        protected bool FindAndRetrieveMiscFiles(string fileName, bool unzip)
+        {
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder: true);
+        }
+
+        /// <summary>
+        /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+        /// </summary>
+        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>Logs an error if the file is not found</remarks>
+        protected bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder)
+        {
+            string sourceFolderPath;
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath);
+        }
+
+        /// <summary>
+        /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+        /// </summary>
+        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, bool logFileNotFound)
+        {
+            string sourceFolderPath;
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath, logFileNotFound);
+        }
+
+        /// <summary>
+        /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+        /// </summary>
+        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+        /// <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>Logs an error if the file is not found</remarks>
+        protected bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, out string sourceFolderPath)
+        {
+
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath, logFileNotFound: true);
+        }
+
+
+
+        /// <summary>
+        /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
+        /// </summary>
+        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+        /// <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
+        /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, out string sourceFolderPath, bool logFileNotFound)
+        {
+
+            const bool CreateStoragePathInfoFile = false;
+
+            // Look for the file in the various folders
+            // A message will be logged if the file is not found
+            sourceFolderPath = FindDataFile(fileName, searchArchivedDatasetFolder, logFileNotFound);
+
+            // Exit if file was not found
+            if (string.IsNullOrEmpty(sourceFolderPath))
+            {
+                // No folder found containing the specified file
+                sourceFolderPath = string.Empty;
+                return false;
+            }
+
+            if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+            {
+                return m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFolderPath);
+            }
+
+            // Copy the file
+            if (!CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile))
+            {
+                return false;
+            }
+
+            // Check whether unzipping was requested
+            if (!unzip)
+                return true;
+
+            LogMessage("Unzipping file " + fileName);
+            if (UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "FindAndRetrieveMiscFiles", false))
+            {
+                if (m_DebugLevel >= 1)
+                {
+                    LogMessage("Unzipped file " + fileName);
+                }
+            }
+
+            return true;
+
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        /// <summary>
+        /// Search for the specified PHRP file and copy it to the work directory
+        /// If the filename contains _msgfplus and the file is not found, auto looks for the _msgfdb version of the file
+        /// </summary>
+        /// <param name="fileToGet">File to find; if the file is found with an alternative name, this variable is updated with the new name</param>
+        /// <param name="synopsisFileName">Synopsis file name, if known</param>
+        /// <param name="addToResultFileSkipList">If true, add the filename to the list of files to skip copying to the result folder</param>
+        /// <returns>True if success, false if not found</returns>
+        /// <remarks>Used by the IDPicker and MSGF plugins</remarks>    
+        protected bool FindAndRetrievePHRPDataFile(ref string fileToGet, string synopsisFileName, bool addToResultFileSkipList = true)
+        {
+
+            var blnSuccess = FindAndRetrieveMiscFiles(fileToGet, false);
+
+            if (!blnSuccess && fileToGet.ToLower().Contains("msgfplus"))
+            {
+                if (string.IsNullOrEmpty(synopsisFileName))
+                    synopsisFileName = "Dataset_msgfdb.txt";
+                var alternativeName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToGet, synopsisFileName);
+
+                if (!string.Equals(alternativeName, fileToGet))
+                {
+                    blnSuccess = FindAndRetrieveMiscFiles(alternativeName, false);
+                    if (blnSuccess)
+                    {
+                        fileToGet = alternativeName;
+                    }
+                }
+            }
+
+            if (!blnSuccess)
+            {
+                return false;
+            }
+
+            if (addToResultFileSkipList)
+            {
+                m_jobParams.AddResultFileToSkip(fileToGet);
+            }
+
+            return true;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Finds the server or archive folder where specified file is located
+        /// </summary>
+        /// <param name="fileToFind">Name of the file to search for</param>
+        /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
+        /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        public string FindDataFile(string fileToFind)
+        {
+            return FindDataFile(fileToFind, searchArchivedDatasetFolder: true);
+        }
+
+        /// <summary>
+        /// Finds the server or archive folder where specified file is located
+        /// </summary>
+        /// <param name="FileToFind">Name of the file to search for</param>
+        /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
+        /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
+        /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        protected string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder)
+        {
+            return FindDataFile(fileToFind, searchArchivedDatasetFolder, logFileNotFound: true);
+        }
+
+
+
+
+        /// <summary>
+        /// Finds the server or archive folder where specified file is located
+        /// </summary>
+        /// <param name="fileToFind">Name of the file to search for</param>
+        /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched (m_AuroraAvailable and MyEMSLAvailable take precedence)</param>
+        /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
+        /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
+        /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        protected string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder, bool logFileNotFound)
+        {
+
+            try
+            {
+                // Fill collection with possible folder locations
+                // The order of searching is:
+                //  a. Check the "inputFolderName" and then each of the Shared Results Folders in the Transfer folder
+                //  b. Check the "inputFolderName" and then each of the Shared Results Folders in the Dataset folder
+                //  c. Check the "inputFolderName" and then each of the Shared Results Folders in MyEMSL for this dataset
+                //  d. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
+                //
+                // Note that "SharedResultsFolders" will typically only contain one folder path, 
+                //  but can contain a comma-separated list of folders
+
+                var strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName");
+                var strInputFolderName = m_jobParams.GetParam("inputFolderName");
+
+                var sharedResultFolderNames = GetSharedResultFolderList().ToList();
+
+                var strParentFolderPaths = new List<string>();
+                strParentFolderPaths.Add(m_jobParams.GetParam("transferFolderPath"));
+                strParentFolderPaths.Add(m_jobParams.GetParam("DatasetStoragePath"));
+
+                if (searchArchivedDatasetFolder)
+                {
+                    if (MyEMSLAvailable)
+                    {
+                        strParentFolderPaths.Add(MYEMSL_PATH_FLAG);
+                    }
+                    if (m_AuroraAvailable)
+                    {
+                        strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"));
+                    }
+                }
+
+                var foldersToSearch = new List<string>();
+
+
+                foreach (string strParentFolderPath in strParentFolderPaths)
+                {
+                    if (!string.IsNullOrEmpty(strParentFolderPath))
+                    {
+                        if (!string.IsNullOrEmpty(strInputFolderName))
+                        {
+                            // Parent Folder \ Dataset Folder \ Input folder
+                            foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName));
+                        }
+
+                        foreach (string strSharedFolderName in sharedResultFolderNames)
+                        {
+                            // Parent Folder \ Dataset Folder \  Shared results folder
+                            foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName));
+                        }
+
+                        // Parent Folder \ Dataset Folder
+                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, string.Empty));
+                    }
+
+                }
+
+                string matchingDirectory = string.Empty;
+                var matchFound = false;
+
+                // Now search for FileToFind in each folder in FoldersToSearch
+                foreach (var folderPath in foldersToSearch)
+                {
+                    try
+                    {
+                        var diFolderToCheck = new DirectoryInfo(folderPath);
+
+
+                        if (folderPath.StartsWith(MYEMSL_PATH_FLAG))
+                        {
+                            var matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileToFind, diFolderToCheck.Name, m_DatasetName, recurse: false);
+
+                            if (matchingMyEMSLFiles.Count > 0)
+                            {
+                                matchFound = true;
+
+                                // Include the MyEMSL FileID in TempDir so that it is available for downloading
+                                matchingDirectory = DatasetInfoBase.AppendMyEMSLFileID(folderPath, matchingMyEMSLFiles.First().FileID);
+                                break; // TODO: might not be correct. Was : Exit For
+                            }
+
+
+                        }
+                        else
+                        {
+                            if (diFolderToCheck.Exists)
+                            {
+                                if (File.Exists(Path.Combine(folderPath, fileToFind)))
+                                {
+                                    matchFound = true;
+                                    matchingDirectory = folderPath;
+                                    break; // TODO: might not be correct. Was : Exit For
+                                }
+                            }
+
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        // Exception checking TempDir; log an error, but continue checking the other folders in FoldersToSearch
+                        LogError("Exception in FindDataFile looking for: " + fileToFind + " in " + folderPath, ex);
+                    }
+                }
+
+                if (matchFound)
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        LogDebugMessage("Data file found: " + fileToFind);
+                    }
+                    return matchingDirectory;
+                }
+
+                // Data file not found
+                // Log this as an error if SearchArchivedDatasetFolder=True
+                // Log this as a warning if SearchArchivedDatasetFolder=False
+
+                if (logFileNotFound)
+                {
+                    if (searchArchivedDatasetFolder || (!m_AuroraAvailable & !MyEMSLAvailable))
+                    {
+                        LogError("Data file not found: " + fileToFind);
+                    }
+                    else
+                    {
+                        LogMessage("Warning: Data file not found (did not check archive): " + fileToFind);
+                    }
+                }
+
+                return string.Empty;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in FindDataFile looking for: " + fileToFind, ex);
+            }
+
+            // We'll only get here if an exception occurs
+            return string.Empty;
+
+        }
+
+
+
+        private string FindDataFileAddFolder(string strParentFolderPath, string strDatasetFolderName, string strInputFolderName)
+        {
+            string strTargetFolderPath = null;
+
+            strTargetFolderPath = Path.Combine(strParentFolderPath, strDatasetFolderName);
+            if (!string.IsNullOrEmpty(strInputFolderName))
+            {
+                strTargetFolderPath = Path.Combine(strTargetFolderPath, strInputFolderName);
+            }
+
+            return strTargetFolderPath;
+
+        }
+
+        /// <summary>
+        /// Looks for file strFileName in strFolderPath or any of its subfolders
+        /// The filename may contain a wildcard character, in which case the first match will be returned
+        /// </summary>
+        /// <param name="strFolderPath">Folder path to examine</param>
+        /// <param name="strFileName">File name to find</param>
+        /// <returns>Full path to the file, if found; empty string if no match</returns>
+        /// <remarks></remarks>
+        public static string FindFileInDirectoryTree(string strFolderPath, string strFileName)
+        {
+            return FindFileInDirectoryTree(strFolderPath, strFileName, new SortedSet<string>());
+        }
+
+
+
+        /// <summary>
+        /// Looks for file strFileName in strFolderPath or any of its subfolders
+        /// The filename may contain a wildcard character, in which case the first match will be returned
+        /// </summary>
+        /// <param name="strFolderPath">Folder path to examine</param>
+        /// <param name="strFileName">File name to find</param>
+        /// <param name="lstFolderNamesToSkip">List of folder names that should not be examined</param>
+        /// <returns>Full path to the file, if found; empty string if no match</returns>
+        /// <remarks></remarks>
+        public static string FindFileInDirectoryTree(string strFolderPath, string strFileName, SortedSet<string> lstFolderNamesToSkip)
+        {
+            string strFilePathMatch = null;
+
+            var diFolder = new DirectoryInfo(strFolderPath);
+
+            if (diFolder.Exists)
+            {
+                // Examine the files for this folder
+                foreach (var fiFile in diFolder.GetFiles(strFileName))
+                {
+                    strFilePathMatch = fiFile.FullName;
+                    return strFilePathMatch;
+                }
+
+                // Match not found
+                // Recursively call this function with the subdirectories in this folder
+
+                foreach (var ioSubFolder in diFolder.GetDirectories())
+                {
+                    if (!lstFolderNamesToSkip.Contains(ioSubFolder.Name))
+                    {
+                        strFilePathMatch = FindFileInDirectoryTree(ioSubFolder.FullName, strFileName);
+                        if (!string.IsNullOrEmpty(strFilePathMatch))
+                        {
+                            return strFilePathMatch;
+                        }
+                    }
+                }
+            }
+
+            return string.Empty;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Determines the full path to the dataset file
+        /// Returns a folder path for data that is stored in folders (e.g. .D folders)
+        /// For instruments with multiple data folders, returns the path to the first folder
+        /// For instrument with multiple zipped data files, returns the dataset folder path
+        /// </summary>
+        /// <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
+        /// <param name="assumeUnpurged">
+        /// When true, assume that the instrument data exists on the storage server 
+        /// (and thus do not search MyEMSL or the archive for the file)
+        /// </param>
+        /// <returns>The full path to the dataset file or folder</returns>
+        /// <remarks>When assumeUnpurged is true, this function returns the expected path 
+        /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
+        public string FindDatasetFileOrFolder(out bool blnIsFolder, bool assumeUnpurged)
+        {
+            return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, out blnIsFolder, assumeUnpurged: assumeUnpurged);
+        }
+
+        /// <summary>
+        /// Determines the full path to the dataset file
+        /// Returns a folder path for data that is stored in folders (e.g. .D folders)
+        /// For instruments with multiple data folders, returns the path to the first folder
+        /// For instrument with multiple zipped data files, returns the dataset folder path
+        /// </summary>
+        /// <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
+        /// <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
+        /// <param name="assumeUnpurged">
+        /// When true, assume that the instrument data exists on the storage server 
+        /// (and thus do not search MyEMSL or the archive for the file)
+        /// </param>
+        /// <returns>The full path to the dataset file or folder</returns>
+        /// <remarks>When assumeUnpurged is true, this function returns the expected path 
+        /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
+        protected string FindDatasetFileOrFolder(int maxAttempts, out bool blnIsFolder, bool assumeUnpurged = false)
+        {
+            string RawDataType = m_jobParams.GetParam("RawDataType");
+            string StoragePath = m_jobParams.GetParam("DatasetStoragePath");
+            string strFileOrFolderPath = string.Empty;
+
+            blnIsFolder = false;
+
+            var eRawDataType = GetRawDataType(RawDataType);
+            switch (eRawDataType)
+            {
+                case eRawDataTypeConstants.AgilentDFolder:
+                    //Agilent ion trap data
+
+                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) || StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()))
+                    {
+                        // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
+                        //  we would pre-process the data beforehand to create MGF files
+                        // The following call can be used to retrieve the files
+                        strFileOrFolderPath = FindMGFFile(maxAttempts, assumeUnpurged);
+                    }
+                    else
+                    {
+                        // DeconTools_V2 now supports reading the .D files directly
+                        // Call RetrieveDotDFolder() to copy the folder and all subfolders
+                        strFileOrFolderPath = FindDotDFolder(assumeUnpurged);
+                        blnIsFolder = true;
+                    }
+
+                    break;
+                case eRawDataTypeConstants.AgilentQStarWiffFile:
+                    //Agilent/QSTAR TOF data
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_WIFF_EXTENSION, assumeUnpurged);
+
+                    break;
+                case eRawDataTypeConstants.ZippedSFolders:
+                    //FTICR data
+                    strFileOrFolderPath = FindSFolders(assumeUnpurged);
+                    blnIsFolder = true;
+
+                    break;
+                case eRawDataTypeConstants.ThermoRawFile:
+                    //Finnigan ion trap/LTQ-FT data
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_RAW_EXTENSION, assumeUnpurged);
+
+                    break;
+                case eRawDataTypeConstants.MicromassRawFolder:
+                    //Micromass QTOF data
+                    strFileOrFolderPath = FindDotRawFolder(assumeUnpurged);
+                    blnIsFolder = true;
+
+                    break;
+                case eRawDataTypeConstants.UIMF:
+                    //IMS UIMF data
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_UIMF_EXTENSION, assumeUnpurged);
+
+                    break;
+                case eRawDataTypeConstants.mzXML:
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_MZXML_EXTENSION, assumeUnpurged);
+
+                    break;
+                case eRawDataTypeConstants.mzML:
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_MZML_EXTENSION, assumeUnpurged);
+
+                    break;
+                case eRawDataTypeConstants.BrukerFTFolder:
+                case eRawDataTypeConstants.BrukerTOFBaf:
+                    // Call RetrieveDotDFolder() to copy the folder and all subfolders
+
+                    // Both the MSXml step tool and DeconTools require the .Baf file
+                    // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, so we need the file
+
+                    strFileOrFolderPath = FindDotDFolder(assumeUnpurged);
+                    blnIsFolder = true;
+
+                    break;
+                case eRawDataTypeConstants.BrukerMALDIImaging:
+                    strFileOrFolderPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
+                    blnIsFolder = true;
+
+                    break;
+            }
+
+            return strFileOrFolderPath;
+        }
+
+        /// <summary>
+        /// Finds the dataset folder containing Bruker Maldi imaging .zip files
+        /// </summary>
+        /// <returns>The full path to the dataset folder</returns>
+        /// <remarks></remarks>
+        public string FindBrukerMALDIImagingFolders(bool assumeUnpurged = false)
+        {
+
+            const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
+
+            // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
+            // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
+
+            string DSFolderPath = null;
+            DSFolderPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
+
+            if (string.IsNullOrEmpty(DSFolderPath))
+                return string.Empty;
+
+            return DSFolderPath;
+
+        }
+
+        /// <summary>
+        /// Finds a file named DatasetName.FileExtension
+        /// </summary>
+        /// <param name="FileExtension"></param>
+        /// <returns>The full path to the folder; an empty string if no match</returns>
+        /// <remarks></remarks>
+        protected string FindDatasetFile(string FileExtension)
+        {
+            return FindDatasetFile(DEFAULT_MAX_RETRY_COUNT, FileExtension);
+        }
+
+        /// <summary>
+        /// Finds a file named DatasetName.FileExtension
+        /// </summary>
+        /// <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
+        /// <param name="FileExtension"></param>
+        /// <returns>The full path to the folder; an empty string if no match</returns>
+        /// <remarks></remarks>
+        protected string FindDatasetFile(int maxAttempts, string fileExtension, bool assumeUnpurged = false)
+        {
+
+            if (!fileExtension.StartsWith("."))
+            {
+                fileExtension = "." + fileExtension;
+            }
+
+            string DataFileName = m_DatasetName + fileExtension;
+            bool validFolderFound = false;
+
+            string DSFolderPath = FindValidFolder(m_DatasetName, DataFileName, folderNameToFind: "", maxAttempts: maxAttempts,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: false,
+                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
+
+            if (!string.IsNullOrEmpty(DSFolderPath))
+            {
+                return Path.Combine(DSFolderPath, DataFileName);
+            }
+            else
+            {
+                return string.Empty;
+            }
+
+        }
+
+
+
+        /// <summary>
+        /// Finds a .Raw folder below the dataset folder
+        /// </summary>
+        /// <returns>The full path to the folder; an empty string if no match</returns>
+        /// <remarks></remarks>
+        protected string FindDotDFolder(bool assumeUnpurged = false)
+        {
+            return FindDotXFolder(DOT_D_EXTENSION, assumeUnpurged);
+        }
+
+        /// <summary>
+        /// Finds a .D folder below the dataset folder
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected string FindDotRawFolder(bool assumeUnpurged = false)
+        {
+            return FindDotXFolder(DOT_RAW_EXTENSION, assumeUnpurged);
+        }
+
+        /// <summary>
+        /// Finds a subfolder (typically Dataset.D or Dataset.Raw) below the dataset folder
+        /// </summary>
+        /// <param name="FolderExtension"></param>
+        /// <returns>The full path to the folder; an empty string if no match</returns>
+        /// <remarks></remarks>
+        protected string FindDotXFolder(string folderExtension, bool assumeUnpurged)
+        {
+
+            if (!folderExtension.StartsWith("."))
+            {
+                folderExtension = "." + folderExtension;
+            }
+
+            bool validFolderFound = false;
+
+            string FileNameToFind = string.Empty;
+            string FolderExtensionWildcard = "*" + folderExtension;
+
+            string ServerPath = FindValidFolder(m_DatasetName, FileNameToFind, FolderExtensionWildcard, DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: true,
+                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
+
+            if ((ServerPath.StartsWith(MYEMSL_PATH_FLAG)))
+            {
+                return ServerPath;
+            }
+
+            var diDatasetFolder = new DirectoryInfo(ServerPath);
+
+            //Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
+            foreach (DirectoryInfo diSubFolder in diDatasetFolder.GetDirectories(FolderExtensionWildcard))
+            {
+                return diSubFolder.FullName;
+            }
+
+            // No match found
+            return string.Empty;
+
+        }
+
+        /// <summary>
+        /// Finds the dataset folder containing either a 0.ser subfolder or containing zipped S-folders
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected string FindSFolders(bool assumeUnpurged = false)
+        {
+
+            // First Check for the existence of a 0.ser Folder
+            string FileNameToFind = string.Empty;
+            bool validFolderFound = false;
+
+            string DSFolderPath = FindValidFolder(m_DatasetName, FileNameToFind, BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: true,
+                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
+
+            if (!string.IsNullOrEmpty(DSFolderPath))
+            {
+                return Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER);
+            }
+
+            // The 0.ser folder does not exist; look for zipped s-folders
+            DSFolderPath = FindValidFolder(m_DatasetName, "s*.zip", RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
+
+            return DSFolderPath;
+
+        }
+
+
+
+
+
+        /// <summary>
+        /// Finds the best .mgf file for the current dataset
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected string FindMGFFile(int maxAttempts, bool assumeUnpurged)
+        {
+
+            // Data files are in a subfolder off of the main dataset folder
+            // Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
+
+            bool validFolderFound = false;
+            string serverPath = FindValidFolder(m_DatasetName, "", "*" + DOT_D_EXTENSION, maxAttempts,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: false,
+                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
+
+            var diServerFolder = new DirectoryInfo(serverPath);
+
+            // Get a list of the subfolders in the dataset folder
+            // Go through the folders looking for a file with a ".mgf" extension
+
+            foreach (DirectoryInfo diSubFolder in diServerFolder.GetDirectories())
+            {
+                foreach (FileInfo fiFile in diSubFolder.GetFiles("*" + DOT_MGF_EXTENSION))
+                {
+                    // Return the first .mgf file that was found
+                    return fiFile.FullName;
+                }
+            }
+
+            // No match was found
+            return string.Empty;
+
+        }
+
+        /// <summary>
+        /// Looks for the newest .mzXML file for this dataset
+        /// </summary>
+        /// <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
+        /// <returns>Full path to the file, if found; empty string if no match</returns>
+        /// <remarks>Supports both gzipped mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
+        public string FindMZXmlFile(out string strHashcheckFilePath)
+        {
+
+            // First look in the MsXML cache folder
+            var strMatchingFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzXML, out strHashcheckFilePath);
+
+            if (!string.IsNullOrEmpty(strMatchingFilePath))
+            {
+                return strMatchingFilePath;
+            }
+
+            // Not found in the cache; look in the dataset folder
+
+            string DatasetID = m_jobParams.GetParam("JobParameters", "DatasetID");
+
+            const string MSXmlFoldernameBase = "MSXML_Gen_1_";
+            string MzXMLFilename = m_DatasetName + ".mzXML";
+
+            const int MAX_ATTEMPTS = 1;
+
+            var lstValuesToCheck = new List<int>();
+
+            // Initialize the values we'll look for
+            // Note that these values are added to the list in the order of the preferred file to retrieve
+
+            //                                  Example folder name          CentroidMSXML  MSXMLGenerator   CentroidPeakCount    MSXMLOutputType
+            lstValuesToCheck.Add(215);       // MSXML_Gen_1_215_DatasetID,   True           MSConvert        -1                   mzXML
+            lstValuesToCheck.Add(149);       // MSXML_Gen_1_149_DatasetID,   True           MSConvert        1000                 mzXML
+            lstValuesToCheck.Add(148);       // MSXML_Gen_1_148_DatasetID,   True           MSConvert        500                  mzXML
+            lstValuesToCheck.Add(154);       // MSXML_Gen_1_154_DatasetID,   True           MSConvert        250                  mzXML
+            lstValuesToCheck.Add(132);       // MSXML_Gen_1_132_DatasetID,   True           MSConvert        150                  mzXML
+            lstValuesToCheck.Add(93);        // MSXML_Gen_1_93_DatasetID,    True           ReadW.exe        n/a                  mzXML
+            lstValuesToCheck.Add(126);       // MSXML_Gen_1_126_DatasetID,   True           ReadW.exe        n/a                  mzXML; ReAdW_Version=v2.1
+            lstValuesToCheck.Add(177);       // MSXML_Gen_1_177_DatasetID,   False          MSConvert.exe    n/a                  mzXML
+            lstValuesToCheck.Add(39);        // MSXML_Gen_1_39_DatasetID,    False          ReadW.exe        n/a                  mzXML
+
+            strHashcheckFilePath = string.Empty;
+
+
+            foreach (int intVersion in lstValuesToCheck)
+            {
+                var msXmlFoldername = MSXmlFoldernameBase + intVersion.ToString() + "_" + DatasetID;
+
+                // Look for the MSXmlFolder
+                // If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
+                string ServerPath = FindValidFolder(m_DatasetName, "", msXmlFoldername, MAX_ATTEMPTS, false, retrievingInstrumentDataFolder: false);
+
+                if (string.IsNullOrEmpty(ServerPath))
+                {
+                    continue;
+                }
+
+                if (ServerPath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    // File found in MyEMSL
+                    // Determine the MyEMSL FileID by searching for the expected file in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles
+
+                    Int64 myEmslFileID = 0;
+
+                    foreach (var udtArchivedFile in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles)
+                    {
+                        FileInfo fiArchivedFile = new FileInfo(udtArchivedFile.FileInfo.RelativePathWindows);
+                        if (clsGlobal.IsMatch(fiArchivedFile.Name, MzXMLFilename))
+                        {
+                            myEmslFileID = udtArchivedFile.FileID;
+                            break; // TODO: might not be correct. Was : Exit For
+                        }
+                    }
+
+                    if (myEmslFileID > 0)
+                    {
+                        return Path.Combine(ServerPath, msXmlFoldername, DatasetInfoBase.AppendMyEMSLFileID(MzXMLFilename, myEmslFileID));
+                    }
+
+                }
+                else
+                {
+                    // Due to quirks with how FindValidFolder behaves, we need to confirm that the mzXML file actually exists
+                    var diFolderInfo = new DirectoryInfo(ServerPath);
+
+                    if (diFolderInfo.Exists)
+                    {
+                        //See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
+                        DirectoryInfo[] diSubfolders = diFolderInfo.GetDirectories(msXmlFoldername);
+
+                        if (diSubfolders.Length > 0)
+                        {
+                            // MSXmlFolder found; return the path to the file     
+                            return Path.Combine(diSubfolders[0].FullName, MzXMLFilename);
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+            // If we get here, then no match was found
+            return string.Empty;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Looks for the newest mzXML or mzML file for this dataset
+        /// </summary>
+        /// <param name="msXmlType">File type to find (mzXML or mzML)</param>
+        /// <param name="strHashcheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
+        /// <returns>Full path to the file if a match; empty string if no match</returns>
+        /// <remarks>Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
+        protected string FindMsXmlFileInCache(MSXMLOutputTypeConstants msXmlType, out string strHashcheckFilePath)
+        {
+
+            string MsXMLFilename = m_DatasetName;
+            strHashcheckFilePath = string.Empty;
+
+            switch (msXmlType)
+            {
+                case MSXMLOutputTypeConstants.mzXML:
+                    MsXMLFilename += DOT_MZXML_EXTENSION + DOT_GZ_EXTENSION;
+                    break;
+                case MSXMLOutputTypeConstants.mzML:
+                    // All MzML files should be gzipped
+                    MsXMLFilename += DOT_MZML_EXTENSION + DOT_GZ_EXTENSION;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(msXmlType), "Unsupported enum value for MSXMLOutputTypeConstants: " + msXmlType);
+            }
+
+            // Lookup the MSXML cache path (typically \\Proto-11\MSXML_Cache )
+            string strMSXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var diCacheFolder = new DirectoryInfo(strMSXMLCacheFolderPath);
+
+            if (!diCacheFolder.Exists)
+            {
+                LogMessage("Warning: Cache folder not found: " + strMSXMLCacheFolderPath);
+                return string.Empty;
+            }
+
+            // Determine the YearQuarter code for this dataset
+            string strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetStoragePath");
+            if (string.IsNullOrEmpty(strDatasetStoragePath) && (m_AuroraAvailable || MyEMSLAvailable))
+            {
+                strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath");
+            }
+
+            string strYearQuarter = GetDatasetYearQuarter(strDatasetStoragePath);
+
+            var lstMatchingFiles = new List<FileInfo>();
+
+
+            if (string.IsNullOrEmpty(strYearQuarter))
+            {
+                // Perform an exhaustive recursive search of the MSXML file cache
+                var lstFilesToAppend = diCacheFolder.GetFiles(MsXMLFilename, SearchOption.AllDirectories);
+
+                if (lstFilesToAppend.Length == 0 && msXmlType == MSXMLOutputTypeConstants.mzXML)
+                {
+                    // Older .mzXML files were not gzipped
+                    lstFilesToAppend = diCacheFolder.GetFiles(m_DatasetName + DOT_MZXML_EXTENSION, SearchOption.AllDirectories);
+                }
+
+                var query = (from item in lstFilesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
+
+                lstMatchingFiles.AddRange(query);
+
+
+            }
+            else
+            {
+                // Look for the file in the top level subfolders of the MSXML file cache
+                foreach (var diToolFolder in diCacheFolder.GetDirectories())
+                {
+                    var lstSubFolders = diToolFolder.GetDirectories(strYearQuarter);
+
+
+                    if (lstSubFolders.Length > 0)
+                    {
+                        var lstFilesToAppend = lstSubFolders.First().GetFiles(MsXMLFilename, SearchOption.TopDirectoryOnly);
+                        if (lstFilesToAppend.Length == 0 && msXmlType == MSXMLOutputTypeConstants.mzXML)
+                        {
+                            // Older .mzXML files were not gzipped
+                            lstFilesToAppend = lstSubFolders.First().GetFiles(m_DatasetName + DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly);
+                        }
+
+                        var query = (from item in lstFilesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
+                        lstMatchingFiles.AddRange(query);
+
+                    }
+
+                }
+
+            }
+
+            if (lstMatchingFiles.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            // One or more matches were found; select the newest one 
+            var sortQuery = (from item in lstMatchingFiles orderby item.LastWriteTimeUtc descending select item).Take(1);
+            var matchedFilePath = sortQuery.First().FullName;
+
+            // Confirm that the file has a .hashcheck file and that the information in the .hashcheck file matches the file
+            string errorMessage = string.Empty;
+            strHashcheckFilePath = matchedFilePath + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+
+            if (clsGlobal.ValidateFileVsHashcheck(matchedFilePath, strHashcheckFilePath, out errorMessage))
+            {
+                return matchedFilePath;
+            }
+            else
+            {
+                LogMessage("Warning: " + errorMessage);
+                return string.Empty;
+            }
+
+        }
+
+        /// <summary>
+        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// </summary>
+        /// <param name="DSName">Name of the dataset</param>
+        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
+        protected string FindValidFolder(string DSName, string FileNameToFind)
+        {
+
+            return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
+
+        }
+
+        /// <summary>
+        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// </summary>
+        /// <param name="DSName">Name of the dataset</param>
+        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
+        protected string FindValidFolder(string DSName, string FileNameToFind, bool RetrievingInstrumentDataFolder)
+        {
+
+            const string folderNameToFind = "";
+            return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder);
+
+        }
+
+
+        /// <summary>
+        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// </summary>
+        /// <param name="DSName">Name of the dataset</param>
+        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
+        protected string FindValidFolder(string DSName, string FileNameToFind, bool RetrievingInstrumentDataFolder, bool assumeUnpurged)
+        {
+
+            const string folderNameToFind = "";
+            bool validFolderFound = false;
+            return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder,
+                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
+
+        }
+
+        /// <summary>
+        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// </summary>
+        /// <param name="DSName">Name of the dataset</param>
+        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
+        protected string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind)
+        {
+
+            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
+
+        }
+
+        /// <summary>
+        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// </summary>
+        /// <param name="DSName">Name of the dataset</param>
+        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
+        protected string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind, bool RetrievingInstrumentDataFolder)
+        {
+
+            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder);
+
+        }
+
+        /// <summary>
+        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// </summary>
+        /// <param name="DSName">Name of the dataset</param>
+        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="MaxRetryCount">Maximum number of attempts</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
+        protected string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind, int MaxRetryCount)
+        {
+
+            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
+
+        }
+
+        /// <summary>
+        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
+        /// </summary>
+        /// <param name="DSName">Name of the dataset</param>
+        /// <param name="FileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="FolderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="MaxRetryCount">Maximum number of attempts</param>
+        /// <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
+        protected string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, int maxRetryCount, bool logFolderNotFound, bool retrievingInstrumentDataFolder)
+        {
+
+            bool validFolderFound = false;
+            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound, retrievingInstrumentDataFolder,
+                out validFolderFound, assumeUnpurged: false);
+
+        }
+
+        /// <summary>
+        /// Determines the most appropriate folder to use to obtain dataset files from
+        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
+        /// </summary>
+        /// <param name="dsName">Name of the dataset</param>
+        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="maxAttempts">Maximum number of attempts</param>
+        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <param name="validFolderFound">Output parameter: True if a valid folder is ultimately found, otherwise false</param>
+        /// <param name="assumeUnpurged">When true, this function returns the path to the dataset folder on the storage server</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
+        public string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, int maxAttempts, bool logFolderNotFound, bool retrievingInstrumentDataFolder, out bool validFolderFound, bool assumeUnpurged)
+        {
+
+            string strBestPath = string.Empty;
+
+            // The tuples in this list are the path to check, and True if we should warn that the folder was not found
+            var lstPathsToCheck = new List<Tuple<string, bool>>();
+
+            bool blnValidFolder = false;
+            bool blnFileNotFoundEncountered = false;
+
+            validFolderFound = false;
+
+            try
+            {
+                if (fileNameToFind == null)
+                    fileNameToFind = string.Empty;
+                if (folderNameToFind == null)
+                    folderNameToFind = string.Empty;
+
+                if (assumeUnpurged)
+                {
+                    maxAttempts = 1;
+                    logFolderNotFound = false;
+                }
+
+                var instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0);
+
+                if (retrievingInstrumentDataFolder && instrumentDataPurged != 0 && !assumeUnpurged)
+                {
+                    // The instrument data is purged and we're retrieving instrument data
+                    // Skip the primary dataset folder since the primary data files were most likely purged
+                }
+                else
+                {
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName), true);
+                }
+
+                if (MyEMSLAvailable && !assumeUnpurged)
+                {
+                    // \\MyEMSL
+                    AddPathToCheck(lstPathsToCheck, MYEMSL_PATH_FLAG, false);
+                }
+
+                // Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
+#if DISABLE_MYEMSL_SEARCH
+        if (m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe")) {
+            lstPathsToCheck.Remove(MYEMSL_PATH_FLAG);
+        }
+#endif
+                if ((m_AuroraAvailable || !MyEMSLAvailable) && !assumeUnpurged)
+                {
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), true);
+                }
+
+                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName), false);
+
+                blnFileNotFoundEncountered = false;
+
+                strBestPath = lstPathsToCheck.First().Item1;
+                foreach (var pathToCheck in lstPathsToCheck)
+                {
+                    try
+                    {
+                        if (m_DebugLevel > 3)
+                        {
+                            string Msg = "FindValidDatasetFolder, Looking for folder " + pathToCheck.Item1;
+                            LogDebugMessage(Msg);
+                        }
+
+                        if (pathToCheck.Item1 == MYEMSL_PATH_FLAG)
+                        {
+                            const bool recurseMyEMSL = false;
+                            blnValidFolder = FindValidFolderMyEMSL(dsName, fileNameToFind, folderNameToFind, false, recurseMyEMSL);
+
+
+                        }
+                        else
+                        {
+                            blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound & pathToCheck.Item2);
+
+                            if (!blnValidFolder && !string.IsNullOrEmpty(fileNameToFind) && !string.IsNullOrEmpty(folderNameToFind))
+                            {
+                                // Look for a subfolder named folderNameToFind that contains file fileNameToFind
+                                var pathToCheckAlt = Path.Combine(pathToCheck.Item1, folderNameToFind);
+                                blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, string.Empty, maxAttempts, logFolderNotFound & pathToCheck.Item2);
+
+                                if (blnValidFolder)
+                                {
+                                    var pathToCheckOverride = new Tuple<string, bool>(pathToCheckAlt, pathToCheck.Item2);
+                                    strBestPath = string.Copy(pathToCheck.Item1);
+                                    break;
+                                }
+                            }
+
+                        }
+
+                        if (blnValidFolder)
+                        {
+                            strBestPath = string.Copy(pathToCheck.Item1);
+                            break;
+                        }
+                        else
+                        {
+                            blnFileNotFoundEncountered = true;
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("Exception looking for folder: " + pathToCheck.Item1, ex);
+                    }
+                } // for each item in lstPathsToCheck
+
+                if (blnValidFolder)
+                {
+                    validFolderFound = true;
+
+                    if (m_DebugLevel >= 4 || m_DebugLevel >= 1 && blnFileNotFoundEncountered)
+                    {
+                        string Msg = "FindValidFolder, Valid dataset folder has been found:  " + strBestPath;
+                        if (fileNameToFind.Length > 0)
+                        {
+                            Msg += " (matched file " + fileNameToFind + ")";
+                        }
+                        if (folderNameToFind.Length > 0)
+                        {
+                            Msg += " (matched folder " + folderNameToFind + ")";
+                        }
+                        LogDebugMessage(Msg);
+                    }
+
+                }
+                else
+                {
+                    var folderNotFoundMessage = "Could not find a valid dataset folder";
+                    if (fileNameToFind.Length > 0)
+                    {
+                        // Could not find a valid dataset folder containing file
+                        folderNotFoundMessage += " containing file " + fileNameToFind;
+                    }
+
+                    if (logFolderNotFound && m_DebugLevel >= 1)
+                    {
+                        if (assumeUnpurged)
+                        {
+                            LogMessage(folderNotFoundMessage);
+                        }
+                        else
+                        {
+                            string msg = folderNotFoundMessage + ", Job " + m_jobParams.GetParam("StepParameters", "Job") + ", Dataset " + dsName;
+                            LogWarning(msg);
+                        }
+                    }
+
+                    if (!assumeUnpurged)
+                    {
+                        m_message = folderNotFoundMessage;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception looking for a valid dataset folder for dataset " + dsName, ex);
+                m_message = "Exception looking for a valid dataset folder";
+            }
+
+            return strBestPath;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
+        /// </summary>
+        /// <param name="dataset">Dataset name</param>
+        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="subFolderName">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="recurse">True to look for fileNameToFind in all subfolders of a dataset; false to only look in the primary dataset folder</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
+        private bool FindValidFolderMyEMSL(string dataset, string fileNameToFind, string subFolderName, bool logFolderNotFound, bool recurse)
+        {
+
+            if (string.IsNullOrEmpty(fileNameToFind))
+                fileNameToFind = "*";
+
+            if (m_DebugLevel > 3)
+            {
+                LogDebugMessage("FindValidFolderMyEMSL, querying MyEMSL for this dataset's files");
+            }
+
+            List<MyEMSLReader.DatasetFolderOrFileInfo> matchingMyEMSLFiles;
+
+            if (string.IsNullOrEmpty(subFolderName))
+            {
+                // Simply look for the file
+                matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, string.Empty, dataset, recurse);
+            }
+            else
+            {
+                // First look for the subfolder
+                // If there are multiple matching subfolders, then choose the newest one
+                // The entries in matchingMyEMSLFiles will be folder entries where the "Filename" field is the folder name while the "SubDirPath" field is any parent folders above the found folder
+                matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, subFolderName, dataset, recurse);
+            }
+
+            if (matchingMyEMSLFiles.Count > 0)
+            {
+                return true;
+            }
+            else
+            {
+                if (logFolderNotFound)
+                {
+                    string msg = "MyEMSL does not have any files for dataset " + dataset;
+                    if (!string.IsNullOrEmpty(fileNameToFind))
+                    {
+                        msg += " and file " + fileNameToFind;
+                    }
+
+                    if (!string.IsNullOrEmpty(subFolderName))
+                    {
+                        msg += " and subfolder " + subFolderName;
+                    }
+
+                    LogWarning(msg);
+                }
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
+        /// </summary>
+        /// <param name="PathToCheck">Path to examine</param>
+        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="maxAttempts">Maximum number of attempts</param>
+        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
+        private bool FindValidFolderUNC(string pathToCheck, string fileNameToFind, string folderNameToFind, int maxAttempts, bool logFolderNotFound)
+        {
+
+            // First check whether this folder exists
+            // Using a 1 second holdoff between retries
+            if (!FolderExistsWithRetry(pathToCheck, 1, maxAttempts, logFolderNotFound))
+            {
+                return false;
+            }
+
+            // Folder was found
+            var blnValidFolder = true;
+
+            if (m_DebugLevel > 3)
+            {
+                LogDebugMessage("FindValidFolderUNC, Folder found " + pathToCheck);
+            }
+
+            // Optionally look for fileNameToFind
+
+            if (!string.IsNullOrEmpty(fileNameToFind))
+            {
+                if (fileNameToFind.Contains("*"))
+                {
+                    if (m_DebugLevel > 3)
+                    {
+                        LogDebugMessage("FindValidFolderUNC, Looking for files matching " + fileNameToFind);
+                    }
+
+                    // Wildcard in the name
+                    // Look for any files matching fileNameToFind
+                    var objFolderInfo = new DirectoryInfo(pathToCheck);
+
+                    // Do not recurse here
+                    // If the dataset folder does not contain a target file, and if folderNameToFind is defined, 
+                    // FindValidFolder will append folderNameToFind to the dataset folder path and call this method again
+                    if (objFolderInfo.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length == 0)
+                    {
+                        blnValidFolder = false;
+                    }
+                }
+                else
+                {
+                    if (m_DebugLevel > 3)
+                    {
+                        LogDebugMessage("FindValidFolderUNC, Looking for file named " + fileNameToFind);
+                    }
+
+                    // Look for file fileNameToFind in this folder
+                    // Note: Using a 1 second holdoff between retries
+                    var fileFound = FileExistsWithRetry(Path.Combine(pathToCheck, fileNameToFind), retryHoldoffSeconds: 1, logMsgTypeIfNotFound: clsLogTools.LogLevels.WARN, maxAttempts: maxAttempts);
+
+                    if (!fileFound)
+                    {
+                        blnValidFolder = false;
+                    }
+                }
+            }
+
+            // Optionally look for folderNameToFind
+            if (blnValidFolder && !string.IsNullOrEmpty(folderNameToFind))
+            {
+                if (folderNameToFind.Contains("*"))
+                {
+                    if (m_DebugLevel > 3)
+                    {
+                        LogDebugMessage("FindValidFolderUNC, Looking for folders matching " + folderNameToFind);
+                    }
+
+                    // Wildcard in the name
+                    // Look for any folders matching folderNameToFind
+                    var objFolderInfo = new DirectoryInfo(pathToCheck);
+
+                    if (objFolderInfo.GetDirectories(folderNameToFind).Length == 0)
+                    {
+                        blnValidFolder = false;
+                    }
+                }
+                else
+                {
+                    if (m_DebugLevel > 3)
+                    {
+                        LogDebugMessage("FindValidFolderUNC, Looking for folder named " + folderNameToFind);
+                    }
+
+                    // Look for folder folderNameToFind in this folder
+                    // Note: Using a 1 second holdoff between retries
+                    if (!FolderExistsWithRetry(Path.Combine(pathToCheck, folderNameToFind), 1, maxAttempts, logFolderNotFound))
+                    {
+                        blnValidFolder = false;
+                    }
+                }
+            }
+
+            return blnValidFolder;
+
+        }
+
+        /// <summary>
+        /// Test for folder existence with a retry loop in case of temporary glitch
+        /// </summary>
+        /// <param name="folderName">Folder name to look for</param>
+        /// <param name="retryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+        /// <param name="maxAttempts">Maximum number of attempts</param>
+        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private bool FolderExistsWithRetry(string folderNamer, int retryHoldoffSeconds, int maxAttempts, bool logFolderNotFound)
+        {
+
+            if (maxAttempts < 1)
+                maxAttempts = 1;
+
+            if (maxAttempts > 10)
+                maxAttempts = 10;
+
+            var retryCount = maxAttempts;
+
+            if (retryHoldoffSeconds <= 0)
+                retryHoldoffSeconds = DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS;
+
+            if (retryHoldoffSeconds > 600)
+                retryHoldoffSeconds = 600;
+
+            while (retryCount > 0)
+            {
+                if (Directory.Exists(folderNamer))
+                {
+                    return true;
+                }
+                else
+                {
+                    if (logFolderNotFound)
+                    {
+                        if (m_DebugLevel >= 2 || m_DebugLevel >= 1 && retryCount == 1)
+                        {
+                            string errMsg = "Folder " + folderNamer + " not found. Retry count = " + retryCount;
+                            LogWarning(errMsg);
+                        }
+                    }
+                    retryCount -= 1;
+                    if (retryCount <= 0)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        Thread.Sleep(new TimeSpan(0, 0, retryHoldoffSeconds));
+                        //Wait retryHoldoffSeconds seconds before retrying
+                    }
+                }
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Creates the _ScanStats.txt file for this job's dataset
+        /// </summary>
+        /// <returns>True if success, false if a problem</returns>
+        /// <remarks>Only valid for Thermo .Raw files and .UIMF files.  Will delete the .Raw (or .UIMF) after creating the ScanStats file</remarks>
+        protected bool GenerateScanStatsFile()
+        {
+
+            const bool deleteRawDataFile = true;
+            return GenerateScanStatsFile(deleteRawDataFile);
+
+        }
+
+        /// <summary>
+        /// Creates the _ScanStats.txt file for this job's dataset
+        /// </summary>
+        /// <param name="deleteRawDataFile">True to delete the .raw (or .uimf) file after creating the ScanStats file </param>
+        /// <returns>True if success, false if a problem</returns>
+        /// <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
+        protected bool GenerateScanStatsFile(bool deleteRawDataFile)
+        {
+
+            var strRawDataType = m_jobParams.GetParam("RawDataType");
+            var intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
+
+            var strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir");
+            if (string.IsNullOrEmpty(strMSFileInfoScannerDir))
+            {
+                LogError("Manager parameter 'MSFileInfoScannerDir' is not defined (GenerateScanStatsFile)");
+                return false;
+            }
+
+            var strMSFileInfoScannerDLLPath = Path.Combine(strMSFileInfoScannerDir, "MSFileInfoScanner.dll");
+            if (!File.Exists(strMSFileInfoScannerDLLPath))
+            {
+                LogError("File Not Found (GenerateScanStatsFile): " + strMSFileInfoScannerDLLPath);
+                return false;
+            }
+
+            string strInputFilePath = null;
+
+            // Confirm that this dataset is a Thermo .Raw file or a .UIMF file
+            switch (GetRawDataType(strRawDataType))
+            {
+                case eRawDataTypeConstants.ThermoRawFile:
+                    strInputFilePath = m_DatasetName + DOT_RAW_EXTENSION;
+                    break;
+                case eRawDataTypeConstants.UIMF:
+                    strInputFilePath = m_DatasetName + DOT_UIMF_EXTENSION;
+                    break;
+                default:
+                    LogError("Invalid dataset type for auto-generating ScanStats.txt file: " + strRawDataType);
+                    return false;
+            }
+
+            strInputFilePath = Path.Combine(m_WorkingDir, strInputFilePath);
+
+            if (!File.Exists(strInputFilePath))
+            {
+                if (!RetrieveSpectra(strRawDataType))
+                {
+                    string strExtraMsg = m_message;
+                    m_message = "Error retrieving spectra file";
+                    if (!string.IsNullOrWhiteSpace(strExtraMsg))
+                    {
+                        m_message += "; " + strExtraMsg;
+                    }
+                    LogMessage(m_message, 0, true);
+                    return false;
+                }
+
+                if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                {
+                    return false;
+                }
+            }
+
+            // Make sure the raw data file does not get copied to the results folder
+            m_jobParams.AddResultFileToSkip(Path.GetFileName(strInputFilePath));
+
+            var objScanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
+
+            // Create the _ScanStats.txt and _ScanStatsEx.txt files
+            var blnSuccess = objScanStatsGenerator.GenerateScanStatsFile(strInputFilePath, m_WorkingDir, intDatasetID);
+
+            if (blnSuccess)
+            {
+                if (m_DebugLevel >= 1)
+                {
+                    LogMessage("Generated ScanStats file using " + strInputFilePath);
+                }
+
+                Thread.Sleep(125);
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                if (deleteRawDataFile)
+                {
+                    try
+                    {
+                        File.Delete(strInputFilePath);
+                    }
+                    catch (Exception)
+                    {
+                        // Ignore errors here
+                    }
+                }
+
+            }
+            else
+            {
+                LogError("Error generating ScanStats files with clsScanStatsGenerator", objScanStatsGenerator.ErrorMessage);
+                if (objScanStatsGenerator.MSFileInfoScannerErrorCount > 0)
+                {
+                    LogMessage("MSFileInfoScanner encountered " + objScanStatsGenerator.MSFileInfoScannerErrorCount.ToString() + " errors");
+                }
+            }
+
+            return blnSuccess;
+
+        }
+
+        /// <summary>
+        /// Split apart coordinates that look like "R00X438Y093" into R, X, and Y
+        /// </summary>
+        /// <param name="strCoord"></param>
+        /// <param name="R"></param>
+        /// <param name="X"></param>
+        /// <param name="Y"></param>
+        /// <returns>True if success, false otherwise</returns>
+        /// <remarks></remarks>
+        private bool GetBrukerImagingFileCoords(string strCoord, Regex reRegExRXY, Regex reRegExRX, out int R, out int X, out int Y)
+        {
+
+            bool blnSuccess = false;
+
+            // Try to match names like R00X438Y093
+            var reMatch = reRegExRXY.Match(strCoord);
+
+            blnSuccess = false;
+
+            if (reMatch.Success)
+            {
+                // Match succeeded; extract out the coordinates
+                if (int.TryParse(reMatch.Groups["R"].Value, out R))
+                    blnSuccess = true;
+                if (int.TryParse(reMatch.Groups["X"].Value, out X))
+                    blnSuccess = true;
+                int.TryParse(reMatch.Groups["Y"].Value, out Y);
+
+            }
+            else
+            {
+                // Try to match names like R00X438
+                reMatch = reRegExRX.Match(strCoord);
+
+                if (reMatch.Success)
+                {
+                    if (int.TryParse(reMatch.Groups["R"].Value, out R))
+                        blnSuccess = true;
+                    if (int.TryParse(reMatch.Groups["X"].Value, out X))
+                        blnSuccess = true;
+                    Y = 0;
+                }
+                else
+                {
+                    R = 0;
+                    X = 0;
+                    Y = 0;
+                }
+            }
+
+            return blnSuccess;
+
+        }
+
+        /// <summary>
+        /// Looks for job parameters BrukerMALDI_Imaging_StartSectionX and BrukerMALDI_Imaging_EndSectionX
+        /// If defined, then populates StartSectionX and EndSectionX with the Start and End X values to filter on
+        /// </summary>
+        /// <param name="objJobParams"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static bool GetBrukerImagingSectionFilter(IJobParams objJobParams, out int StartSectionX, out int EndSectionX)
+        {
+
+            bool blnApplySectionFilter = false;
+
+            string strParam = null;
+
+            blnApplySectionFilter = false;
+            StartSectionX = -1;
+            EndSectionX = Int32.MaxValue;
+
+            strParam = objJobParams.GetParam("MALDI_Imaging_StartSectionX");
+            if (!string.IsNullOrEmpty(strParam))
+            {
+                if (int.TryParse(strParam, out StartSectionX))
+                {
+                    blnApplySectionFilter = true;
+                }
+            }
+
+            strParam = objJobParams.GetParam("MALDI_Imaging_EndSectionX");
+            if (!string.IsNullOrEmpty(strParam))
+            {
+                if (int.TryParse(strParam, out EndSectionX))
+                {
+                    blnApplySectionFilter = true;
+                }
+            }
+
+            return blnApplySectionFilter;
+
+        }
+
+        protected clsDataPackageJobInfo GetCurrentDatasetAndJobInfo()
+        {
+
+            var jobNumber = m_jobParams.GetJobParameter("StepParameters", "Job", 0);
+            var dataset = m_jobParams.GetJobParameter("JobParameters", "DatasetNum", m_DatasetName);
+
+            var jobInfo = new clsDataPackageJobInfo(jobNumber, dataset);
+
+            jobInfo.DatasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0);
+
+            jobInfo.Instrument = m_jobParams.GetJobParameter("JobParameters", "Instrument", string.Empty);
+            jobInfo.InstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty);
+
+            jobInfo.Experiment = m_jobParams.GetJobParameter("JobParameters", "Experiment", string.Empty);
+            jobInfo.Experiment_Reason = string.Empty;
+            jobInfo.Experiment_Comment = string.Empty;
+            jobInfo.Experiment_Organism = string.Empty;
+            jobInfo.Experiment_NEWT_ID = 0;
+            jobInfo.Experiment_NEWT_Name = string.Empty;
+
+            jobInfo.Tool = m_jobParams.GetJobParameter("JobParameters", "ToolName", string.Empty);
+            jobInfo.NumberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
+
+            jobInfo.ResultType = m_jobParams.GetJobParameter("JobParameters", "ResultType", string.Empty);
+            jobInfo.SettingsFileName = m_jobParams.GetJobParameter("JobParameters", "SettingsFileName", string.Empty);
+
+            jobInfo.ParameterFileName = m_jobParams.GetJobParameter("PeptideSearch", "ParmFileName", string.Empty);
+
+            jobInfo.LegacyFastaFileName = m_jobParams.GetJobParameter("PeptideSearch", "legacyFastaFileName", string.Empty);
+            jobInfo.OrganismDBName = string.Copy(jobInfo.LegacyFastaFileName);
+
+            jobInfo.ProteinCollectionList = m_jobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", string.Empty);
+            jobInfo.ProteinOptions = m_jobParams.GetJobParameter("PeptideSearch", "ProteinOptions", string.Empty);
+
+            jobInfo.ServerStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetStoragePath", string.Empty);
+            jobInfo.ArchiveStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetArchivePath", string.Empty);
+            jobInfo.ResultsFolderName = m_jobParams.GetJobParameter("JobParameters", "inputFolderName", string.Empty);
+            jobInfo.DatasetFolderName = m_jobParams.GetJobParameter("JobParameters", "DatasetFolderName", string.Empty);
+            jobInfo.SharedResultsFolder = m_jobParams.GetJobParameter("JobParameters", "SharedResultsFolders", string.Empty);
+            jobInfo.RawDataType = m_jobParams.GetJobParameter("JobParameters", "RawDataType", string.Empty);
+
+            return jobInfo;
+
+        }
+
+        /// <summary>
+        /// Lookups up the storage path for a given data package
+        /// </summary>
+        /// <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+        /// <param name="DataPackageID">Data Package ID</param>
+        /// <returns>Storage path if successful, empty path if an error or unknown data package</returns>
+        /// <remarks></remarks>
+        public static string GetDataPackageStoragePath(string connectionString, int dataPackageID)
+        {
+
+            //Requests Dataset information from a data package
+            const short RETRY_COUNT = 3;
+
+            var sqlStr = new System.Text.StringBuilder();
+
+            sqlStr.Append("Select [Share Path] AS StoragePath ");
+            sqlStr.Append("From V_DMS_Data_Packages ");
+            sqlStr.Append("Where ID = " + dataPackageID.ToString());
+
+            DataTable resultSet = null;
+
+            // Get a table to hold the results of the query
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "GetDataPackageStoragePath", RETRY_COUNT, out resultSet);
+
+            if (!success)
+            {
+                var errorMessage = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database";
+                // Simulate call to LogError() since this is a shared method
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                Console.WriteLine(errorMessage);
+                resultSet.Dispose();
+                return string.Empty;
+            }
+
+            // Verify at least one row returned
+            if (resultSet.Rows.Count < 1)
+            {
+                // No data was returned
+                // Log an error
+
+                var errorMessage = "GetDataPackageStoragePath; Data package not found: " + dataPackageID.ToString();
+                // Simulate call to LogError() since this is a shared method
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                Console.WriteLine(errorMessage);
+                return string.Empty;
+            }
+            else
+            {
+                DataRow curRow = resultSet.Rows[0];
+
+                var storagePath = clsGlobal.DbCStr(curRow[0]);
+
+                resultSet.Dispose();
+                return storagePath;
+            }
+
+        }
+
+        /// <summary>
+        /// Examines the folder tree in strFolderPath to find the a folder with a name like 2013_2
+        /// </summary>
+        /// <param name="strFolderPath"></param>
+        /// <returns>Matching folder name if found, otherwise an empty string</returns>
+        /// <remarks></remarks>
+        public static string GetDatasetYearQuarter(string strFolderPath)
+        {
+
+            if (string.IsNullOrEmpty(strFolderPath))
+            {
+                return string.Empty;
+            }
+
+            // RegEx to find the year_quarter folder name 
+            // Valid matches include: 2014_1, 2014_01, 2014_4
+            var reYearQuarter = new Regex("^[0-9]{4}_0*[1-4]$", RegexOptions.Compiled);
+
+            // Split strFolderPath on the path separator
+            var lstFolders = strFolderPath.Split(Path.DirectorySeparatorChar).ToList();
+            lstFolders.Reverse();
+
+            foreach (string strFolder in lstFolders)
+            {
+                var reMatch = reYearQuarter.Match(strFolder);
+                if (reMatch.Success)
+                {
+                    return reMatch.Value;
+                }
+            }
+
+            return string.Empty;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Examine the fasta file to determine the fraction of the proteins that are decoy (reverse) proteins
+        /// </summary>
+        /// <param name="fiFastaFile">FASTA file to examine</param>
+        /// <param name="proteinCount">Output parameter: total protein count</param>
+        /// <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
+        /// <remarks>Decoy proteins start with Reversed_</remarks>
+        public static double GetDecoyFastaCompositionStats(FileInfo fiFastaFile, out int proteinCount)
+        {
+
+            var decoyProteinPrefix = GetDefaultDecoyPrefixes().First();
+            return GetDecoyFastaCompositionStats(fiFastaFile, decoyProteinPrefix, out proteinCount);
+
+        }
+
+        /// <summary>
+        /// Examine the fasta file to determine the fraction of the proteins that are decoy (reverse) proteins
+        /// </summary>
+        /// <param name="fiFastaFile">FASTA file to examine</param>
+        /// <param name="proteinCount">Output parameter: total protein count</param>
+        /// <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
+        /// <remarks>Decoy proteins start with decoyProteinPrefix</remarks>
+        public static double GetDecoyFastaCompositionStats(FileInfo fiFastaFile, string decoyProteinPrefix, out int proteinCount)
+        {
+
+            // Look for protein names that look like:
+            // >decoyProteinPrefix
+            // where
+            // decoyProteinPrefix is typically XXX. or XXX_ or Reversed_
+
+            var prefixToFind = ">" + decoyProteinPrefix;
+            var forwardProteinCount = 0;
+            var reverseProteinCount = 0;
+
+            using (var srFastaFile = new StreamReader(new FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                while (!srFastaFile.EndOfStream)
+                {
+                    var dataLine = srFastaFile.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                    {
+                        continue;
+                    }
+
+                    if (dataLine.StartsWith(">"))
+                    {
+                        // Protein header line found
+                        if (dataLine.StartsWith(prefixToFind))
+                        {
+                            reverseProteinCount += 1;
+                        }
+                        else
+                        {
+                            forwardProteinCount += 1;
+                        }
+                    }
+                }
+            }
+
+            double fractionDecoy = 0;
+
+            proteinCount = forwardProteinCount + reverseProteinCount;
+            if (proteinCount > 0)
+            {
+                fractionDecoy = reverseProteinCount / Convert.ToDouble(proteinCount);
+            }
+
+            return fractionDecoy;
+
+        }
+
+        public static List<string> GetDefaultDecoyPrefixes()
+        {
+
+            // Decoy proteins created by MSGF+ start with XXX_
+            // Decoy proteins created by DMS start with Reversed_
+            var decoyPrefixes = new List<string> {
+                "Reversed_",
+                "XXX_",
+                "XXX:"
+            };
+
+            return decoyPrefixes;
+
+        }
+
+        /// <summary>
+        /// Look for a JobParameters file from the previous job step
+        /// If found, copy to the working directory, naming in JobParameters_JobNum_PreviousStep.xml
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        private bool GetExistingJobParametersFile()
+        {
+
+            try
+            {
+                var stepNum = m_jobParams.GetJobParameter("StepParameters", "Step", 1);
+                if (stepNum == 1)
+                {
+                    // This is the first step; nothing to retrieve
+                    return true;
+                }
+
+                var transferFolderPath = GetTransferFolderPathForJobStep(useInputFolder: true);
+                if (string.IsNullOrEmpty(transferFolderPath))
+                {
+                    // Transfer folder parameter is empty; nothing to retrieve
+                }
+
+                // Construct the filename, for example JobParameters_1394245.xml
+                var jobParametersFilename = clsAnalysisJob.JobParametersFilename(m_JobNum);
+                var sourceFile = new FileInfo(Path.Combine(transferFolderPath, jobParametersFilename));
+
+                if (!sourceFile.Exists)
+                {
+                    // File not found; nothing to copy
+                    return true;
+                }
+
+                // Copy the file, renaming to avoid a naming collision
+                var destFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
+                if (CopyFileWithRetry(sourceFile.FullName, destFilePath, overwrite: true, maxCopyAttempts: 3))
+                {
+                    if (m_DebugLevel > 3)
+                    {
+                        LogDebugMessage("GetExistingJobParametersFile, File copied:  " + sourceFile.FullName);
+                    }
+                }
+                else
+                {
+                    LogError("Error in GetExistingJobParametersFile copying file " + sourceFile.FullName);
+                    // Return false
+                }
+
+
+                var sourceJobParamXMLFile = new FileInfo(destFilePath);
+
+                var masterJobParamXMLFile = new FileInfo(Path.Combine(m_WorkingDir, clsAnalysisJob.JobParametersFilename(m_JobNum)));
+
+                if (!sourceJobParamXMLFile.Exists)
+                {
+                    // The file wasn't copied
+                    LogError("Job Parameters file from the previous job step was not found at " + sourceJobParamXMLFile.FullName);
+                    return false;
+                }
+
+                if (!masterJobParamXMLFile.Exists)
+                {
+                    // The JobParameters XML file was not found
+                    LogError("Job Parameters file not found at " + masterJobParamXMLFile.FullName);
+                    return false;
+                }
+
+                // Update the JobParameters XML file that was created by this job step to include the information from the previous job steps
+                var success = MergeJobParamXMLStepParameters(sourceJobParamXMLFile.FullName, masterJobParamXMLFile.FullName);
+
+                if (success)
+                {
+                    m_jobParams.AddResultFileToSkip(sourceJobParamXMLFile.Name);
+                }
+
+                return success;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in GetExistingJobParametersFile", ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Examine the specified DMS_Temp_Org folder to find the FASTA files and their corresponding .fasta.LastUsed or .hashcheck files
+        /// </summary>
+        /// <param name="diOrgDbFolder"></param>
+        /// <returns>Dictionary of FASTA files, including the last usage date for each</returns>
+        private Dictionary<FileInfo, DateTime> GetFastaFilesByLastUse(DirectoryInfo diOrgDbFolder)
+        {
+
+            // Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .lastused file)
+            var dctFastaFiles = new Dictionary<FileInfo, DateTime>();
+
+            foreach (var fiFile in diOrgDbFolder.GetFiles("*.fasta"))
+            {
+                if (!dctFastaFiles.ContainsKey(fiFile))
+                {
+                    DateTime dtLastUsed = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc);
+
+                    // Look for a .hashcheck file
+                    var lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name + "*.hashcheck").ToList();
+                    if (lstHashCheckfiles.Count > 0)
+                    {
+                        dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First().LastWriteTimeUtc);
+                    }
+
+                    // Look for a .LastUsed file
+                    var lstLastUsedFiles = diOrgDbFolder.GetFiles(fiFile.Name + ".LastUsed").ToList();
+                    if (lstLastUsedFiles.Count > 0)
+                    {
+                        dtLastUsed = DateMax(dtLastUsed, lstLastUsedFiles.First().LastWriteTimeUtc);
+
+                        try
+                        {
+                            // Read the date stored in the file
+                            using (var srLastUsedfile = new StreamReader(new FileStream(lstLastUsedFiles.First().FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                            {
+                                if (!srLastUsedfile.EndOfStream)
+                                {
+                                    var strLastUseDate = srLastUsedfile.ReadLine();
+                                    DateTime dtLastUsedActual;
+                                    if (DateTime.TryParse(strLastUseDate, out dtLastUsedActual))
+                                    {
+                                        dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual);
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            // Ignore errors here
+                        }
+
+                    }
+                    dctFastaFiles.Add(fiFile, dtLastUsed);
+                }
+            }
+
+            return dctFastaFiles;
+
+        }
+
+        /// <summary>
+        /// Converts the given timespan to the total days, hours, minutes, or seconds as a string
+        /// </summary>
+        /// <param name="dtInterval">Timespan to convert</param>
+        /// <returns>Timespan length in human readable form</returns>
+        /// <remarks></remarks>
+        protected string GetHumanReadableTimeInterval(TimeSpan dtInterval)
+        {
+
+            if (dtInterval.TotalDays >= 1)
+            {
+                // Report Days
+                return dtInterval.TotalDays.ToString("0.00") + " days";
+            }
+            else if (dtInterval.TotalHours >= 1)
+            {
+                // Report hours
+                return dtInterval.TotalHours.ToString("0.00") + " hours";
+            }
+            else if (dtInterval.TotalMinutes >= 1)
+            {
+                // Report minutes
+                return dtInterval.TotalMinutes.ToString("0.00") + " minutes";
+            }
+            else
+            {
+                // Report seconds
+                return dtInterval.TotalSeconds.ToString("0.0") + " seconds";
+            }
+        }
+
+        /// <summary>
+        /// Get the MSXML Cache Folder path that is appropriate for this job
+        /// </summary>
+        /// <param name="cacheFolderPathBase"></param>
+        /// <param name="jobParams"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
+        /// <remarks>Uses job parameter OutputFolderName, which should be something like MSXML_Gen_1_120_275966</remarks>
+        public static string GetMSXmlCacheFolderPath(string cacheFolderPathBase, IJobParams jobParams, out string errorMessage)
+        {
+
+            // Lookup the output folder; e.g. MSXML_Gen_1_120_275966
+            var outputFolderName = jobParams.GetJobParameter("OutputFolderName", string.Empty);
+            if (string.IsNullOrEmpty(outputFolderName))
+            {
+                errorMessage = "OutputFolderName is empty; cannot construct MSXmlCache path";
+                return string.Empty;
+            }
+
+            string msXmlToolNameVersionFolder = null;
+            try
+            {
+                msXmlToolNameVersionFolder = GetMSXmlToolNameVersionFolder(outputFolderName);
+            }
+            catch (Exception)
+            {
+                errorMessage = "OutputFolderName is not in the expected form of ToolName_Version_DatasetID (" + outputFolderName + "); cannot construct MSXmlCache path";
+                return string.Empty;
+            }
+
+            return GetMSXmlCacheFolderPath(cacheFolderPathBase, jobParams, msXmlToolNameVersionFolder, out errorMessage);
+
+        }
+
+        /// <summary>
+        /// Get the path to the cache folder; used for retrieving cached .mzML files that are stored in ToolName_Version folders
+        /// </summary>
+        /// <param name="cacheFolderPathBase">Cache folder base, e.g. \\Proto-11\MSXML_Cache</param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="msXmlToolNameVersionFolder">ToolName_Version folder, e.g. MSXML_Gen_1_93</param>
+        /// <param name="errorMessage">Output parameter: error message</param>
+        /// <returns>Path to the cache folder; empty string if an error</returns>
+        /// <remarks>Uses job parameter DatasetStoragePath to determine the Year_Quarter string to append to the end of the path</remarks>
+        public static string GetMSXmlCacheFolderPath(string cacheFolderPathBase, IJobParams jobParams, string msXmlToolNameVersionFolder, out string errorMessage)
+        {
+
+            errorMessage = string.Empty;
+
+            string strDatasetStoragePath = jobParams.GetParam("JobParameters", "DatasetStoragePath");
+            if (string.IsNullOrEmpty(strDatasetStoragePath))
+            {
+                strDatasetStoragePath = jobParams.GetParam("JobParameters", "DatasetArchivePath");
+            }
+
+            if (string.IsNullOrEmpty(strDatasetStoragePath))
+            {
+                errorMessage = "JobParameters does not contain DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path";
+                return string.Empty;
+            }
+
+            string strYearQuarter = GetDatasetYearQuarter(strDatasetStoragePath);
+            if (string.IsNullOrEmpty(strYearQuarter))
+            {
+                errorMessage = "Unable to extract the dataset Year_Quarter code from " + strDatasetStoragePath + "; cannot construct MSXmlCache path";
+                return string.Empty;
+            }
+
+            // Combine the cache folder path, ToolNameVersion, and the dataset Year_Quarter code
+            var targetFolderPath = Path.Combine(cacheFolderPathBase, msXmlToolNameVersionFolder, strYearQuarter);
+
+            return targetFolderPath;
+
+        }
+
+        /// <summary>
+        /// Examine a folder of the form MSXML_Gen_1_93_367204 and remove the DatasetID portion
+        /// </summary>
+        /// <param name="toolNameVersionDatasetIDFolder">Shared results folder name</param>
+        /// <returns>The trimmed folder name if a valid folder; throws an exception if the folder name is not the correct format</returns>
+        /// <remarks></remarks>
+        public static string GetMSXmlToolNameVersionFolder(string toolNameVersionDatasetIDFolder)
+        {
+
+            // Remove the dataset ID from the end of the folder name
+            var reToolNameAndVersion = new Regex(@"^(?<ToolNameVersion>.+\d+_\d+)_\d+$");
+            var reMatch = reToolNameAndVersion.Match(toolNameVersionDatasetIDFolder);
+            if (!reMatch.Success)
+            {
+                throw new Exception("Folder name is not in the expected form of ToolName_Version_DatasetID; unable to strip out the dataset ID");
+            }
+
+            return reMatch.Groups["ToolNameVersion"].ToString();
+
+        }
+
+        /// <summary>
+        /// Retrieve the .mzML or .mzXML file associated with this job (based on Job Parameter MSXMLOutputType)
+        /// </summary>
+        /// <returns>CLOSEOUT_SUCCESS or CLOSEOUT_FAILED</returns>
+        /// <remarks>
+        /// If MSXMLOutputType is not defined, attempts to retrieve a .mzML file
+        /// If the .mzML file is not found, will attempt to create it
+        /// </remarks>
+        protected CloseOutType GetMsXmlFile()
+        {
+            var msXmlOutputType = m_jobParams.GetJobParameter("MSXMLOutputType", string.Empty);
+
+            CloseOutType eResult;
+
+            if (msXmlOutputType.ToLower() == "mzxml")
+            {
+                eResult = GetMzXMLFile();
+            }
+            else
+            {
+                eResult = GetMzMLFile();
+            }
+
+            return eResult;
+
+        }
+
+        protected CloseOutType GetMzMLFile()
+        {
+
+            LogMessage("Getting mzML file");
+
+            var errorMessage = string.Empty;
+            var fileMissingFromCache = false;
+            const bool unzipFile = true;
+
+            var success = RetrieveCachedMzMLFile(unzipFile, out errorMessage, out fileMissingFromCache);
+            if (!success)
+            {
+                return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZML_EXTENSION);
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+
+        }
+
+        protected CloseOutType GetMzXMLFile()
+        {
+
+            // Retrieve the .mzXML file for this dataset
+            // Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
+            // Instead, use FindAndRetrieveMiscFiles 
+
+            LogMessage("Getting mzXML file");
+
+            // Note that capitalization matters for the extension; it must be .mzXML
+            string FileToGet = m_DatasetName + DOT_MZXML_EXTENSION;
+
+            if (!FindAndRetrieveMiscFiles(FileToGet, false))
+            {
+                // Look for a .mzXML file in the cache instead
+
+                var errorMessage = string.Empty;
+                var fileMissingFromCache = false;
+                const bool unzipFile = true;
+
+                var success = RetrieveCachedMzXMLFile(unzipFile, out errorMessage, out fileMissingFromCache);
+                if (!success)
+                {
+                    return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION);
+                }
+
+            }
+            m_jobParams.AddResultFileToSkip(FileToGet);
+
+            if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+
+        }
+
+
+
+        protected CloseOutType GetPBFFile()
+        {
+
+            LogMessage("Getting PBF file");
+
+            var errorMessage = string.Empty;
+            var fileMissingFromCache = false;
+
+            var success = RetrieveCachedPBFFile(out errorMessage, out fileMissingFromCache);
+            if (!success)
+            {
+                return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_PBF_EXTENSION);
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+
+        }
+
+        protected CloseOutType HandleMsXmlRetrieveFailure(bool fileMissingFromCache, string errorMessage, string msXmlExtension)
+        {
+
+            if (fileMissingFromCache)
+            {
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = "Cached " + msXmlExtension + " file does not exist; will re-generate it";
+                }
+
+                LogMessage("Warning: " + errorMessage);
+                return CloseOutType.CLOSEOUT_FILE_NOT_IN_CACHE;
+            }
+
+            if (string.IsNullOrEmpty(errorMessage))
+            {
+                errorMessage = "Unknown error in RetrieveCached" + msXmlExtension.TrimStart('.') + "File";
+            }
+
+            LogMessage(errorMessage, 0, true);
+            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+
+        }
+
+        /// <summary>
+        /// Gets fake job information for a dataset that is associated with a data package yet has no analysis jobs associated with the data package
+        /// </summary>
+        /// <param name="udtDatasetInfo"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static clsDataPackageJobInfo GetPseudoDataPackageJobInfo(clsDataPackageDatasetInfo udtDatasetInfo)
+        {
+
+            // Store the negative of the dataset ID as the job number
+            var jobInfo = new clsDataPackageJobInfo(-udtDatasetInfo.DatasetID, udtDatasetInfo.Dataset)
+            {
+                DatasetID = udtDatasetInfo.DatasetID,
+                Instrument = udtDatasetInfo.Instrument,
+                InstrumentGroup = udtDatasetInfo.InstrumentGroup,
+                Experiment = udtDatasetInfo.Experiment,
+                Experiment_Reason = udtDatasetInfo.Experiment_Reason,
+                Experiment_Comment = udtDatasetInfo.Experiment_Comment,
+                Experiment_Organism = udtDatasetInfo.Experiment_Organism,
+                Experiment_NEWT_ID = udtDatasetInfo.Experiment_NEWT_ID,
+                Experiment_NEWT_Name = udtDatasetInfo.Experiment_NEWT_Name,
+                Tool = "Dataset info (no tool)",
+                NumberOfClonedSteps = 0,
+                ResultType = "Dataset info (no type)",
+                PeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Unknown,
+                SettingsFileName = string.Empty,
+                ParameterFileName = string.Empty,
+                OrganismDBName = string.Empty,
+                LegacyFastaFileName = string.Empty,
+                ProteinCollectionList = string.Empty,
+                ProteinOptions = string.Empty,
+                ResultsFolderName = string.Empty,
+                DatasetFolderName = udtDatasetInfo.Dataset,
+                SharedResultsFolder = string.Empty,
+                RawDataType = udtDatasetInfo.RawDataType
+            };
+
+            try
+            {
+                // Archive storage path and server storage path track the folder just above the dataset folder
+                var archiveFolder = new DirectoryInfo(udtDatasetInfo.ArchiveStoragePath);
+                jobInfo.ArchiveStoragePath = archiveFolder.Parent.FullName;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ArchiveStoragePath);
+                jobInfo.ArchiveStoragePath = udtDatasetInfo.ArchiveStoragePath.Replace(@" \ " + udtDatasetInfo.Dataset, "");
+            }
+
+            try
+            {
+                var storageFolder = new DirectoryInfo(udtDatasetInfo.ServerStoragePath);
+                jobInfo.ServerStoragePath = storageFolder.Parent.FullName;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ServerStoragePath);
+                jobInfo.ServerStoragePath = udtDatasetInfo.ServerStoragePath.Replace(@" \ " + udtDatasetInfo.Dataset, "");
+            }
+
+            return jobInfo;
+
+        }
+
+        public static eRawDataTypeConstants GetRawDataType(string strRawDataType)
+        {
+
+            if (string.IsNullOrEmpty(strRawDataType))
+            {
+                return eRawDataTypeConstants.Unknown;
+            }
+
+            switch (strRawDataType.ToLower())
+            {
+                case RAW_DATA_TYPE_DOT_D_FOLDERS:
+                    return eRawDataTypeConstants.AgilentDFolder;
+                case RAW_DATA_TYPE_ZIPPED_S_FOLDERS:
+                    return eRawDataTypeConstants.ZippedSFolders;
+                case RAW_DATA_TYPE_DOT_RAW_FOLDER:
+                    return eRawDataTypeConstants.MicromassRawFolder;
+                case RAW_DATA_TYPE_DOT_RAW_FILES:
+                    return eRawDataTypeConstants.ThermoRawFile;
+                case RAW_DATA_TYPE_DOT_WIFF_FILES:
+                    return eRawDataTypeConstants.AgilentQStarWiffFile;
+                case RAW_DATA_TYPE_DOT_UIMF_FILES:
+                    return eRawDataTypeConstants.UIMF;
+                case RAW_DATA_TYPE_DOT_MZXML_FILES:
+                    return eRawDataTypeConstants.mzXML;
+                case RAW_DATA_TYPE_DOT_MZML_FILES:
+                    return eRawDataTypeConstants.mzML;
+                case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
+                    return eRawDataTypeConstants.BrukerFTFolder;
+                case RAW_DATA_TYPE_BRUKER_MALDI_SPOT:
+                    return eRawDataTypeConstants.BrukerMALDISpot;
+                case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING:
+                    return eRawDataTypeConstants.BrukerMALDIImaging;
+                case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
+                    return eRawDataTypeConstants.BrukerTOFBaf;
+                default:
+                    return eRawDataTypeConstants.Unknown;
+            }
+
+        }
+
+        public static string GetRawDataTypeName(IJobParams jobParams, out string errorMessage)
+        {
+
+            errorMessage = string.Empty;
+
+            string msXmlOutputType = jobParams.GetParam("MSXMLOutputType");
+
+            if (string.IsNullOrWhiteSpace(msXmlOutputType))
+            {
+                return jobParams.GetParam("RawDataType");
+            }
+            else
+            {
+                switch (msXmlOutputType.ToLower())
+                {
+                    case "mzxml":
+                        return RAW_DATA_TYPE_DOT_MZXML_FILES;
+                    case "mzml":
+                        return RAW_DATA_TYPE_DOT_MZML_FILES;
+                    default:
+                        return string.Empty;
+                }
+            }
+
+        }
+
+        protected string GetRawDataTypeName()
+        {
+
+            string errorMessage = null;
+            var rawDataTypeName = GetRawDataTypeName(m_jobParams, out errorMessage);
+
+            if (string.IsNullOrWhiteSpace(rawDataTypeName))
+            {
+                if (string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    LogError("Unable to determine the instrument data type using GetRawDataTypeName");
+                }
+                else
+                {
+                    LogError(errorMessage);
+                }
+
+                return string.Empty;
+            }
+
+            return rawDataTypeName;
+
+        }
+
+        [Obsolete("Unused in 2017")]
+        public static udtHPCOptionsType GetHPCOptions(IJobParams jobParams, string managerName)
+        {
+
+            var stepTool = jobParams.GetJobParameter("StepTool", "Unknown_Tool");
+
+            var udtHPCOptions = new udtHPCOptionsType();
+
+            udtHPCOptions.HeadNode = jobParams.GetJobParameter("HPCHeadNode", "");
+            if (stepTool.ToLower() == "MSGFPlus_HPC".ToLower() && string.IsNullOrWhiteSpace(udtHPCOptions.HeadNode))
+            {
+                // Run this job using HPC, despite the fact that the settings file does not have the HPC settings defined
+                udtHPCOptions.HeadNode = "deception2.pnnl.gov";
+                udtHPCOptions.UsingHPC = true;
+            }
+            else
+            {
+                udtHPCOptions.UsingHPC = !string.IsNullOrWhiteSpace(udtHPCOptions.HeadNode);
+            }
+
+            udtHPCOptions.ResourceType = jobParams.GetJobParameter("HPCResourceType", "socket");
+            // Obsolete parameter; no longer used: udtHPCOptions.NodeGroup = jobParams.GetJobParameter("HPCNodeGroup", "ComputeNodes")
+
+            // Share paths used:
+            // \\picfs\projects\DMS
+            // \\winhpcfs\projects\DMS           (this is a Windows File System wrapper to \\picfs, which is an Isilon FS)
+
+            if (FORCE_WINHPC_FS)
+            {
+                udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", @"\\winhpcfs\projects\DMS");
+            }
+            else
+            {
+                udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", @"\\picfs.pnl.gov\projects\DMS");
+            }
+
+
+            // Auto-switched the share path to \\winhpcfs starting April 15, 2014
+            // Stopped doing this April 21, 2014, because the drive was low on space
+            // Switched back to \\winhpcfs on April 24, because the connection to picfs is unstable
+            //
+
+            if (FORCE_WINHPC_FS)
+            {
+                if (udtHPCOptions.SharePath.StartsWith(@"\\picfs", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    // Auto switch the share path
+                    udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, @"\\winhpcfs\");
+                }
+            }
+            else
+            {
+                if (udtHPCOptions.SharePath.StartsWith(@"\\winhpcfs", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    // Auto switch the share path
+                    udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, @"\\picfs.pnl.gov\");
+                }
+            }
+
+            udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("HPCMinMemoryMB", 0);
+            udtHPCOptions.MinimumCores = jobParams.GetJobParameter("HPCMinCores", 0);
+
+            if (udtHPCOptions.UsingHPC && udtHPCOptions.MinimumMemoryMB <= 0)
+            {
+                udtHPCOptions.MinimumMemoryMB = 28000;
+            }
+
+            if (udtHPCOptions.UsingHPC && udtHPCOptions.MinimumCores <= 0)
+            {
+                udtHPCOptions.MinimumCores = 16;
+            }
+
+            var mgrNameClean = string.Empty;
+
+            for (var charIndex = 0; charIndex <= managerName.Length - 1; charIndex++)
+            {
+                if (Path.GetInvalidFileNameChars().Contains(managerName[charIndex]))
+                {
+                    mgrNameClean += "_";
+                }
+                else
+                {
+                    mgrNameClean += managerName[charIndex];
+                }
+            }
+
+            // Example WorkDirPath: 
+            // \\picfs.pnl.gov\projects\DMS\DMS_Work_Dir\Pub-60-3
+            // \\winhpcfs\projects\DMS\DMS_Work_Dir\Pub-60-3
+            udtHPCOptions.WorkDirPath = Path.Combine(udtHPCOptions.SharePath, "DMS_Work_Dir", mgrNameClean);
+
+            return udtHPCOptions;
+
+        }
+
+        /// <summary>
+        /// Examines job parameter SharedResultsFolders to construct a list of the shared result folders
+        /// </summary>
+        /// <returns>List of folder names</returns>
+        protected IEnumerable<string> GetSharedResultFolderList()
+        {
+
+            List<string> sharedResultFolderNames = new List<string>();
+
+            var strSharedResultFolders = m_jobParams.GetParam("SharedResultsFolders");
+
+
+            if (strSharedResultFolders.Contains(","))
+            {
+                // Split on commas and populate sharedResultFolderNames
+                foreach (string strItem in strSharedResultFolders.Split(','))
+                {
+                    var strItemTrimmed = strItem.Trim();
+                    if (strItemTrimmed.Length > 0)
+                    {
+                        sharedResultFolderNames.Add(strItemTrimmed);
+                    }
+                }
+
+                // Reverse the list so that the last item in strSharedResultFolders is the first item in sharedResultFolderNames
+                sharedResultFolderNames.Reverse();
+            }
+            else
+            {
+                // Just one item in strSharedResultFolders
+                sharedResultFolderNames.Add(strSharedResultFolders);
+            }
+
+            return sharedResultFolderNames;
+
+        }
+
+        /// <summary>
+        /// Get the name of the split fasta file to use for this job
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <param name="errorMessage">Output parameter: error message</param>
+        /// <returns>The name of the split fasta file to use</returns>
+        /// <remarks>Returns an empty string if an error</remarks>
+        public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage)
+        {
+            var numberOfClonedSteps = 0;
+
+            return GetSplitFastaFileName(jobParams, out errorMessage, out numberOfClonedSteps);
+
+        }
+
+        /// <summary>
+        /// Get the name of the split fasta file to use for this job
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <param name="errorMessage">Output parameter: error message</param>
+        /// <param name="numberOfClonedSteps">Output parameter: total number of cloned steps</param>
+        /// <returns>The name of the split fasta file to use</returns>
+        /// <remarks>Returns an empty string if an error</remarks>
+        public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage, out int numberOfClonedSteps)
+        {
+
+            errorMessage = string.Empty;
+            numberOfClonedSteps = 0;
+
+            var legacyFastaFileName = jobParams.GetJobParameter("LegacyFastaFileName", "");
+            if (string.IsNullOrEmpty(legacyFastaFileName))
+            {
+                errorMessage = "Parameter LegacyFastaFileName is empty for the job; cannot determine the SplitFasta file name for this job step";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                Console.WriteLine(errorMessage);
+                return string.Empty;
+            }
+
+            numberOfClonedSteps = jobParams.GetJobParameter("NumberOfClonedSteps", 0);
+            if (numberOfClonedSteps == 0)
+            {
+                errorMessage = "Settings file is missing parameter NumberOfClonedSteps; cannot determine the SplitFasta file name for this job step";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                Console.WriteLine(errorMessage);
+                return string.Empty;
+            }
+
+            var iteration = GetSplitFastaIteration(jobParams, out errorMessage);
+            if (iteration < 1)
+            {
+                var toolName = jobParams.GetJobParameter("ToolName", string.Empty);
+                if (clsGlobal.IsMatch(toolName, "Mz_Refinery"))
+                {
+                    // Running MzRefinery
+                    // Override iteration to be 1
+                    iteration = 1;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(errorMessage))
+                    {
+                        errorMessage = "GetSplitFastaIteration computed an iteration value of " + iteration + "; cannot determine the SplitFasta file name for this job step";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                        Console.WriteLine(errorMessage);
+                    }
+                    return string.Empty;
+                }
+            }
+
+            var fastaNameBase = Path.GetFileNameWithoutExtension(legacyFastaFileName);
+            var splitFastaName = fastaNameBase + "_" + numberOfClonedSteps.ToString() + "x_";
+
+            if (numberOfClonedSteps < 10)
+            {
+                splitFastaName += iteration.ToString("0") + ".fasta";
+            }
+            else if (numberOfClonedSteps < 100)
+            {
+                splitFastaName += iteration.ToString("00") + ".fasta";
+            }
+            else
+            {
+                splitFastaName += iteration.ToString("000") + ".fasta";
+            }
+
+            return splitFastaName;
+
+        }
+
+        public static int GetSplitFastaIteration(IJobParams jobParams, out string errorMessage)
+        {
+
+            errorMessage = string.Empty;
+
+            var cloneStepRenumStart = jobParams.GetJobParameter("CloneStepRenumberStart", 0);
+            if (cloneStepRenumStart == 0)
+            {
+                errorMessage = "Settings file is missing parameter CloneStepRenumberStart; cannot determine the SplitFasta iteration value for this job step";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                Console.WriteLine(errorMessage);
+                return 0;
+            }
+
+            var stepNumber = jobParams.GetJobParameter("StepParameters", "Step", 0);
+            if (stepNumber == 0)
+            {
+                errorMessage = "Job parameter Step is missing; cannot determine the SplitFasta iteration value for this job step";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                Console.WriteLine(errorMessage);
+                return 0;
+            }
+
+            return stepNumber - cloneStepRenumStart + 1;
+
+        }
+
+        /// <summary>
+        /// Read a JobParameters XML file to find the sections named "StepParameters"
+        /// </summary>
+        /// <param name="doc">XDocument to scan</param>
+        /// <returns>Dictionary where keys are the step number and values are the XElement node with the step parameters for the given step</returns>
+        private Dictionary<int, XElement> GetStepParametersSections(XDocument doc)
+        {
+
+            var stepNumToParamsMap = new Dictionary<int, XElement>();
+
+            var stepParamSections = doc.Elements("sections").Elements("section").ToList();
+            foreach (var section in stepParamSections)
+            {
+                if (!section.HasAttributes)
+                    continue;
+
+                var nameAttrib = section.Attribute("name");
+                if (nameAttrib == null)
+                    continue;
+
+                if (!string.Equals(nameAttrib.Value, "StepParameters"))
+                    continue;
+
+                var stepAttrib = section.Attribute("step");
+                if (stepAttrib == null)
+                    continue;
+
+                int stepNumber = 0;
+                if (int.TryParse(stepAttrib.Value, out stepNumber))
+                {
+                    // Add or update the XML for this section
+                    stepNumToParamsMap[stepNumber] = section;
+                }
+
+            }
+
+            return stepNumToParamsMap;
+        }
+
+
+
+        /// <summary>
+        /// Get the input or output transfer folder path specific to this job step
+        /// </summary>
+        /// <param name="useInputFolder">True to use "InputFolderName", False to use "OutputFolderName"</param>
+        /// <returns></returns>
+        protected string GetTransferFolderPathForJobStep(bool useInputFolder)
+        {
+
+            var transferFolderPathBase = m_jobParams.GetParam("transferFolderPath");
+            if (string.IsNullOrEmpty(transferFolderPathBase))
+            {
+                // Transfer folder parameter is empty; return an empty string
+                return string.Empty;
+            }
+
+            // Append the dataset folder name to the transfer folder path
+            var datasetFolderName = m_jobParams.GetParam("StepParameters", "DatasetFolderName");
+            if (string.IsNullOrWhiteSpace(datasetFolderName))
+                datasetFolderName = m_DatasetName;
+
+            string folderName = null;
+
+            if (useInputFolder)
+            {
+                folderName = m_jobParams.GetParam("InputFolderName");
+            }
+            else
+            {
+                folderName = m_jobParams.GetParam("OutputFolderName");
+            }
+
+            if (string.IsNullOrEmpty(folderName))
+            {
+                // Input (or output) folder parameter is empty; return an empty string
+                return string.Empty;
+            }
+
+            var transferFolderPath = Path.Combine(transferFolderPathBase, datasetFolderName, folderName);
+
+            return transferFolderPath;
+
+        }
+
+        /// <summary>
+        /// Looks up dataset information for a data package
+        /// </summary>
+        /// <param name="dctDataPackageDatasets"></param>
+        /// <returns>True if a data package is defined and it has datasets associated with it</returns>
+        /// <remarks></remarks>
+        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
+        {
+
+            // Gigasax.DMS_Pipeline
+            string connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+
+            int dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
+
+            if (dataPackageID < 0)
+            {
+                dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+                return false;
+            }
+            else
+            {
+                return LoadDataPackageDatasetInfo(connectionString, dataPackageID, out dctDataPackageDatasets);
+            }
+        }
+
+
+        /// <summary>
+        /// Looks up dataset information for a data package
+        /// </summary>
+        /// <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+        /// <param name="DataPackageID">Data Package ID</param>
+        /// <param name="dctDataPackageDatasets">Datasets associated with the given data package</param>
+        /// <returns>True if a data package is defined and it has datasets associated with it</returns>
+        /// <remarks></remarks>
+        public static bool LoadDataPackageDatasetInfo(string connectionString, int dataPackageID, out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
+        {
+
+            // Obtains the dataset information for a data package
+            const short RETRY_COUNT = 3;
+
+            dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
+
+            var sqlStr = new System.Text.StringBuilder();
+
+            // View V_DMS_Data_Package_Datasets is in the DMS_Pipeline database
+            // That view references view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
+            // That view pulls information from several tables in the DMS_Data_Package database, plus 3 views in DMS5:
+            //   V_Dataset_Folder_Path, V_Organism_Export, and V_Dataset_Archive_Path 
+            // Experiment_NEWT_ID comes from the organism for the experiment, and actually comes from field NCBI_Taxonomy_ID in T_Organisms
+            // 
+            sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, ");
+            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
+            sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType");
+            sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
+            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID.ToString());
+            sqlStr.Append(" ORDER BY Dataset");
+
+            DataTable resultSet = null;
+
+            // Get a table to hold the results of the query
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, out resultSet);
+
+            if (!success)
+            {
+                var errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                Console.WriteLine(errorMessage);
+                resultSet.Dispose();
+                return false;
+            }
+
+            // Verify at least one row returned
+            if (resultSet.Rows.Count < 1)
+            {
+                // No data was returned
+                var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID.ToString();
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
+                Console.WriteLine(warningMessage);
+                return false;
+            }
+
+            foreach (DataRow curRow in resultSet.Rows)
+            {
+                var udtDatasetInfo = ParseDataPackageDatasetInfoRow(curRow);
+
+                if (!dctDataPackageDatasets.ContainsKey(udtDatasetInfo.DatasetID))
+                {
+                    dctDataPackageDatasets.Add(udtDatasetInfo.DatasetID, udtDatasetInfo);
+                }
+            }
+
+            resultSet.Dispose();
+            return true;
+
+        }
+
+
+        /// <summary>
+        /// Looks up dataset information for the data package associated with this analysis job
+        /// </summary>
+        /// <param name="dctDataPackageJobs"></param>
+        /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
+        /// <remarks></remarks>
+        protected bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        {
+
+            // Gigasax.DMS_Pipeline
+            string connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+
+            int dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
+
+            if (dataPackageID < 0)
+            {
+                dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+                return false;
+            }
+            else
+            {
+                return LoadDataPackageJobInfo(connectionString, dataPackageID, out dctDataPackageJobs);
+            }
+        }
+
+        /// <summary>
+        /// Looks up job information for a data package
+        /// </summary>
+        /// <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+        /// <param name="DataPackageID">Data Package ID</param>
+        /// <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
+        /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
+        /// <remarks></remarks>
+        public static bool LoadDataPackageJobInfo(string ConnectionString, int DataPackageID, out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        {
+
+
+            // Obtains the job information for a data package
+
+            {
+                const short RETRY_COUNT = 3;
+
+                dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+
+                var sqlStr = new System.Text.StringBuilder();
+
+                // Note that this queries view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database
+                // That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
+                // The two views have the same name, but some columns differ
+
+                sqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ");
+                sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
+                sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ");
+                sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
+                sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType");
+                sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
+                sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
+                sqlStr.Append(" ORDER BY Dataset, Tool");
+
+                DataTable resultSet = null;
+
+                // Get a table to hold the results of the query
+                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
+
+                if (!success)
+                {
+                    var errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                    Console.WriteLine(errorMessage);
+                    resultSet.Dispose();
+                    return false;
+                }
+
+                // Verify at least one row returned
+                if (resultSet.Rows.Count < 1)
+                {
+                    // No data was returned
+                    string warningMessage = null;
+
+                    // If the data package exists and has datasets associated with it, then Log this as a warning but return true
+                    // Otherwise, log an error and return false
+
+                    sqlStr.Clear();
+                    sqlStr.Append(" SELECT Count(*) AS Datasets");
+                    sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
+                    sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
+
+                    // Get a table to hold the results of the query
+                    success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
+                    if (success && resultSet.Rows.Count > 0)
+                    {
+                        foreach (DataRow curRow in resultSet.Rows)
+                        {
+                            var datasetCount = clsGlobal.DbCInt(curRow[0]);
+
+                            if (datasetCount > 0)
+                            {
+                                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID + ", but it does have " + datasetCount + " dataset";
+                                if (datasetCount > 1)
+                                    warningMessage += "s";
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+                                Console.WriteLine(warningMessage);
+                                return true;
+                            }
+                        }
+                    }
+
+                    warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID.ToString();
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
+                    Console.WriteLine(warningMessage);
+                    return false;
+                }
+
+                foreach (DataRow curRow in resultSet.Rows)
+                {
+                    var dataPkgJob = ParseDataPackageJobInfoRow(curRow);
+
+                    if (!dctDataPackageJobs.ContainsKey(dataPkgJob.Job))
+                    {
+                        dctDataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
+                    }
+                }
+
+                resultSet.Dispose();
+
+                return true;
+            }
+
+        }
+
+        // ReSharper disable once MemberCanBePrivate.Global
+        protected void LogDebugMessage(string debugMessage)
+        {
+            clsGlobal.LogDebug(debugMessage);
+        }
+
+        protected static void LogDebugMessage(string debugMessage, IStatusFile statusTools)
+        {
+            clsGlobal.LogDebug(debugMessage);
+
+            if ((statusTools != null))
+            {
+                statusTools.CurrentOperation = debugMessage;
+                statusTools.UpdateAndWrite(0);
+            }
+        }
+
+        /// <summary>
+        /// Retrieve the information for the specified analysis job
+        /// </summary>
+        /// <param name="jobNumber">Job number</param>
+        /// <param name="jobInfo">Output parameter: Job Info</param>
+        /// <returns>True if success; false if an error</returns>
+        /// <remarks>This procedure is used by clsAnalysisResourcesQCART</remarks>
+        protected bool LookupJobInfo(int jobNumber, out clsDataPackageJobInfo jobInfo)
+        {
+
+            const int RETRY_COUNT = 3;
+
+            var sqlStr = new System.Text.StringBuilder();
+
+            // This query uses view V_Analysis_Job_Export_DataPkg in the DMS5 database
+            sqlStr.Append("SELECT Job, Dataset, DatasetID, InstrumentName As Instrument, InstrumentGroup,");
+            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
+            sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName,");
+            sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
+            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, '' AS SharedResultsFolder, RawDataType ");
+            sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ");
+            sqlStr.Append("WHERE Job = " + jobNumber);
+
+            DataTable resultSet = null;
+            jobInfo = new clsDataPackageJobInfo(0, string.Empty);
+
+            // Gigasax.DMS5
+            var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
+
+            // Get a table to hold the results of the query
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "LookupJobInfo", RETRY_COUNT, out resultSet);
+
+            if (!success)
+            {
+                var errorMessage = "LookupJobInfo; Excessive failures attempting to retrieve data package job info from database";
+                LogMessage(errorMessage, 0, true);
+                resultSet.Dispose();
+                return false;
+            }
+
+            // Verify at least one row returned
+            if (resultSet.Rows.Count < 1)
+            {
+                // No data was returned
+                LogError("Job " + jobNumber + " not found in view V_Analysis_Job_Export_DataPkg");
+                return false;
+            }
+
+            jobInfo = ParseDataPackageJobInfoRow(resultSet.Rows[0]);
+
+            return true;
+
+        }
+
+
+
+        /// <summary>
+        /// Estimate the amount of disk space required for the FASTA file associated with this analysis job
+        /// </summary>
+        /// <param name="proteinCollectionInfo">Collection info object</param>
+        /// <returns>Space required, in MB</returns>
+        /// <remarks>Uses both m_jobParams and m_mgrParams; returns 0 if a problem (e.g. the legacy fasta file is not listed in V_Organism_DB_File_Export)</remarks>
+        public double LookupLegacyDBDiskSpaceRequiredMB(clsProteinCollectionInfo proteinCollectionInfo)
+        {
+
+
+            try
+            {
+                var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
+                if (string.IsNullOrWhiteSpace(dmsConnectionString))
+                {
+                    LogError("Error in LookupLegacyDBSizeWithIndices: manager parameter connectionstring is not defined");
+                    return 0;
+                }
+
+                string legacyFastaName = null;
+                if (proteinCollectionInfo.UsingSplitFasta)
+                {
+                    string errorMessage = string.Empty;
+                    legacyFastaName = GetSplitFastaFileName(m_jobParams, out errorMessage);
+                }
+                else
+                {
+                    legacyFastaName = proteinCollectionInfo.LegacyFastaName;
+                }
+
+                string sqlQuery = "SELECT File_Size_KB FROM V_Organism_DB_File_Export WHERE (FileName = '" + legacyFastaName + "')";
+
+                // Results, as a list of columns (first row only if multiple rows)
+                var lstResults = new List<string>();
+
+                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out lstResults, "LookupLegacyDBSizeWithIndices");
+
+                if (!success || lstResults == null || lstResults.Count == 0)
+                {
+                    // Empty query results
+                    var statusMessage = "Warning: Could not determine the legacy fasta file's size for job " + m_JobNum + ", file " + legacyFastaName;
+                    if (proteinCollectionInfo.UsingSplitFasta)
+                    {
+                        // Likely the FASTA file has not yet been split
+                        LogMessage(statusMessage + "; likely the split fasta file has not yet been created", 0, false);
+                    }
+                    else
+                    {
+                        LogMessage(statusMessage, 0, true);
+                    }
+
+                    return 0;
+                }
+
+                int fileSizeKB = 0;
+                if (!int.TryParse(lstResults.First(), out fileSizeKB))
+                {
+                    LogMessage("Legacy fasta file size is not numeric, job " + m_JobNum + ", file " + legacyFastaName + ": " + lstResults.First(), 0, true);
+                    return 0;
+                }
+
+                // Assume that the MSGF+ index files will be 15 times larger than the legacy FASTA file itself
+                var fileSizeMB = (fileSizeKB + fileSizeKB * 15) / 1024.0;
+
+                // Pad the expected size by an additional 15%
+                return fileSizeMB * 1.15;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in LookupLegacyDBSizeWithIndices", ex);
+                return 0;
+            }
+
+        }
+
+        /// <summary>
+        /// Look for StepParameter section entries in the source file and insert them into the master file
+        /// If the master file already has information on the given job step, information for that step is not copied from the source
+        /// This is because the master file is assumed to be newer than the source file
+        /// </summary>
+        /// <param name="sourceJobParamXMLFilePath"></param>
+        /// <param name="masterJobParamXMLFilePath"></param>
+        /// <returns></returns>
+        private bool MergeJobParamXMLStepParameters(string sourceJobParamXMLFilePath, string masterJobParamXMLFilePath)
+        {
+
+
+            try
+            {
+                XDocument sourceDoc = XDocument.Load(sourceJobParamXMLFilePath);
+
+                XDocument masterDoc = XDocument.Load(masterJobParamXMLFilePath);
+
+                // Keys in the stepParamsSections dictionaries are step numbers 
+                // Values are the XElement node with the step parameters for the given step
+
+                var stepParamSectionsSource = GetStepParametersSections(sourceDoc);
+
+                var stepParamSectionsMaster = GetStepParametersSections(masterDoc);
+
+                var stepParamSectionsMerged = new Dictionary<int, XElement>();
+
+                // Initialize stepParamSectionsMerged using stepParamSectionsMaster
+                foreach (var section in stepParamSectionsMaster)
+                {
+
+                    stepParamSectionsMerged.Add(section.Key, section.Value);
+                }
+
+                // Add missing steps to stepParamSectionsMerged
+                foreach (var section in stepParamSectionsSource)
+                {
+                    if (!stepParamSectionsMerged.ContainsKey(section.Key))
+                    {
+                        stepParamSectionsMerged.Add(section.Key, section.Value);
+                    }
+                }
+
+                // Remove the StepParameter items from the master, then add in the merged items
+                foreach (var section in stepParamSectionsMaster)
+                {
+                    section.Value.Remove();
+                }
+
+                var sectionsNode = masterDoc.Elements("sections").First();
+
+                foreach (var section in from item in stepParamSectionsMerged orderby item.Key select item.Value)
+                {
+                    sectionsNode.Add(section);
+                }
+
+                var settings = new XmlWriterSettings();
+                settings.Indent = true;
+                settings.IndentChars = "  ";
+                settings.OmitXmlDeclaration = true;
+
+                using (var fileWriter = new StreamWriter(new FileStream(masterJobParamXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+
+                    using (XmlWriter writer = XmlWriter.Create(fileWriter, settings))
+                    {
+                        masterDoc.Save(writer);
+                    }
+
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MergeJobParamXMLStepParameters", ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Moves a file from one folder to another folder
+        /// </summary>
+        /// <param name="diSourceFolder"></param>
+        /// <param name="diTargetFolder"></param>
+        /// <param name="sourceFileName"></param>
+        /// <remarks></remarks>
+        protected void MoveFileToFolder(DirectoryInfo diSourceFolder, DirectoryInfo diTargetFolder, string sourceFileName)
+        {
+            var fiSourceFile = new FileInfo(Path.Combine(diSourceFolder.FullName, sourceFileName));
+            var targetFilePath = Path.Combine(diTargetFolder.FullName, sourceFileName);
+            fiSourceFile.MoveTo(targetFilePath);
+        }
+
+
+        /// <summary>
+        /// Override current job information, including dataset name, dataset ID, storage paths, Organism Name, Protein Collection, and protein options
+        /// </summary>
+        /// <param name="dataPkgJob"></param>
+        /// <returns></returns>
+        /// <remarks> Does not override the job number</remarks>
+        public bool OverrideCurrentDatasetAndJobInfo(clsDataPackageJobInfo dataPkgJob)
+        {
+
+            var blnAggregationJob = false;
+
+            if (string.IsNullOrEmpty(dataPkgJob.Dataset))
+            {
+                LogError("OverrideCurrentDatasetAndJobInfo; Column 'Dataset' not defined for job " + dataPkgJob.Job + " in the data package");
+                return false;
+            }
+
+            if (clsGlobal.IsMatch(dataPkgJob.Dataset, "Aggregation"))
+            {
+                blnAggregationJob = true;
+            }
+
+            if (!blnAggregationJob)
+            {
+                // Update job params to have the details for the current dataset
+                // This is required so that we can use FindDataFile to find the desired files
+                if (string.IsNullOrEmpty(dataPkgJob.ServerStoragePath))
+                {
+                    LogError("OverrideCurrentDatasetAndJobInfo; Column 'ServerStoragePath' not defined for job " + dataPkgJob.Job + " in the data package");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(dataPkgJob.ArchiveStoragePath))
+                {
+                    LogError("OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job " + dataPkgJob.Job + " in the data package");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(dataPkgJob.ResultsFolderName))
+                {
+                    LogError("OverrideCurrentDatasetAndJobInfo; Column 'ResultsFolderName' not defined for job " + dataPkgJob.Job + " in the data package");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(dataPkgJob.DatasetFolderName))
+                {
+                    LogError("OverrideCurrentDatasetAndJobInfo; Column 'DatasetFolderName' not defined for job " + dataPkgJob.Job + " in the data package");
+                    return false;
+                }
+            }
+
+
+            m_jobParams.AddDatasetInfo(dataPkgJob.Dataset, dataPkgJob.DatasetID);
+            m_DatasetName = string.Copy(dataPkgJob.Dataset);
+
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetNum", dataPkgJob.Dataset);
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetID", dataPkgJob.DatasetID.ToString());
+
+            m_jobParams.AddAdditionalParameter("JobParameters", "Instrument", dataPkgJob.Instrument);
+            m_jobParams.AddAdditionalParameter("JobParameters", "InstrumentGroup", dataPkgJob.InstrumentGroup);
+
+            m_jobParams.AddAdditionalParameter("JobParameters", "ToolName", dataPkgJob.Tool);
+            m_jobParams.AddAdditionalParameter("JobParameters", "ResultType", dataPkgJob.ResultType);
+            m_jobParams.AddAdditionalParameter("JobParameters", "SettingsFileName", dataPkgJob.SettingsFileName);
+
+            m_jobParams.AddAdditionalParameter("PeptideSearch", "ParmFileName", dataPkgJob.ParameterFileName);
+
+            if (string.IsNullOrWhiteSpace(dataPkgJob.OrganismDBName))
+            {
+                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", "na");
+            }
+            else
+            {
+                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", dataPkgJob.OrganismDBName);
+            }
+
+            if (string.IsNullOrWhiteSpace(dataPkgJob.ProteinCollectionList) || dataPkgJob.ProteinCollectionList == "na")
+            {
+                m_jobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", dataPkgJob.OrganismDBName);
+            }
+            else
+            {
+                m_jobParams.AddAdditionalParameter("PeptideSearch", "legacyFastaFileName", "na");
+            }
+
+            m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinCollectionList", dataPkgJob.ProteinCollectionList);
+            m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinOptions", dataPkgJob.ProteinOptions);
+
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetStoragePath", dataPkgJob.ServerStoragePath);
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetArchivePath", dataPkgJob.ArchiveStoragePath);
+            m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", dataPkgJob.ResultsFolderName);
+            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetFolderName", dataPkgJob.DatasetFolderName);
+            m_jobParams.AddAdditionalParameter("JobParameters", "SharedResultsFolders", dataPkgJob.SharedResultsFolder);
+            m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", dataPkgJob.RawDataType);
+
+
+            return true;
+
+        }
+
+        private static clsDataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
+        {
+
+            var datasetName = clsGlobal.DbCStr(curRow["Dataset"]);
+            var datasetId = clsGlobal.DbCInt(curRow["DatasetID"]);
+
+            var datasetInfo = new clsDataPackageDatasetInfo(datasetName, datasetId);
+
+            datasetInfo.Instrument = clsGlobal.DbCStr(curRow["Instrument"]);
+            datasetInfo.InstrumentGroup = clsGlobal.DbCStr(curRow["InstrumentGroup"]);
+            datasetInfo.Experiment = clsGlobal.DbCStr(curRow["Experiment"]);
+            datasetInfo.Experiment_Reason = clsGlobal.DbCStr(curRow["Experiment_Reason"]);
+            datasetInfo.Experiment_Comment = clsGlobal.DbCStr(curRow["Experiment_Comment"]);
+            datasetInfo.Experiment_Organism = clsGlobal.DbCStr(curRow["Organism"]);
+            datasetInfo.Experiment_NEWT_ID = clsGlobal.DbCInt(curRow["Experiment_NEWT_ID"]);
+            datasetInfo.Experiment_NEWT_Name = clsGlobal.DbCStr(curRow["Experiment_NEWT_Name"]);
+            datasetInfo.ServerStoragePath = clsGlobal.DbCStr(curRow["Dataset_Folder_Path"]);
+            datasetInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow["Archive_Folder_Path"]);
+            datasetInfo.RawDataType = clsGlobal.DbCStr(curRow["RawDataType"]);
+
+            return datasetInfo;
+
+        }
+
+
+
+
+        private static clsDataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
+        {
+
+            var dataPkgJob = clsGlobal.DbCInt(curRow["Job"]);
+            var dataPkgDataset = clsGlobal.DbCStr(curRow["Dataset"]);
+
+            var jobInfo = new clsDataPackageJobInfo(dataPkgJob, dataPkgDataset);
+
+            jobInfo.DatasetID = clsGlobal.DbCInt(curRow["DatasetID"]);
+            jobInfo.Instrument = clsGlobal.DbCStr(curRow["Instrument"]);
+            jobInfo.InstrumentGroup = clsGlobal.DbCStr(curRow["InstrumentGroup"]);
+            jobInfo.Experiment = clsGlobal.DbCStr(curRow["Experiment"]);
+            jobInfo.Experiment_Reason = clsGlobal.DbCStr(curRow["Experiment_Reason"]);
+            jobInfo.Experiment_Comment = clsGlobal.DbCStr(curRow["Experiment_Comment"]);
+            jobInfo.Experiment_Organism = clsGlobal.DbCStr(curRow["Organism"]);
+            jobInfo.Experiment_NEWT_ID = clsGlobal.DbCInt(curRow["Experiment_NEWT_ID"]);
+            jobInfo.Experiment_NEWT_Name = clsGlobal.DbCStr(curRow["Experiment_NEWT_Name"]);
+            jobInfo.Tool = clsGlobal.DbCStr(curRow["Tool"]);
+            jobInfo.ResultType = clsGlobal.DbCStr(curRow["ResultType"]);
+            jobInfo.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(jobInfo.ResultType);
+            jobInfo.SettingsFileName = clsGlobal.DbCStr(curRow["SettingsFileName"]);
+            jobInfo.ParameterFileName = clsGlobal.DbCStr(curRow["ParameterFileName"]);
+            jobInfo.OrganismDBName = clsGlobal.DbCStr(curRow["OrganismDBName"]);
+            jobInfo.ProteinCollectionList = clsGlobal.DbCStr(curRow["ProteinCollectionList"]);
+            jobInfo.ProteinOptions = clsGlobal.DbCStr(curRow["ProteinOptions"]);
+
+            // This will be updated later for SplitFasta jobs (using function LookupJobParametersFromHistory)
+            jobInfo.NumberOfClonedSteps = 0;
+
+            if (string.IsNullOrWhiteSpace(jobInfo.ProteinCollectionList) || jobInfo.ProteinCollectionList == "na")
+            {
+                jobInfo.LegacyFastaFileName = string.Copy(jobInfo.OrganismDBName);
+            }
+            else
+            {
+                jobInfo.LegacyFastaFileName = "na";
+            }
+
+            jobInfo.ServerStoragePath = clsGlobal.DbCStr(curRow["ServerStoragePath"]);
+            jobInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow["ArchiveStoragePath"]);
+            jobInfo.ResultsFolderName = clsGlobal.DbCStr(curRow["ResultsFolder"]);
+            jobInfo.DatasetFolderName = clsGlobal.DbCStr(curRow["DatasetFolder"]);
+            jobInfo.SharedResultsFolder = clsGlobal.DbCStr(curRow["SharedResultsFolder"]);
+            jobInfo.RawDataType = clsGlobal.DbCStr(curRow["RawDataType"]);
+
+            return jobInfo;
+
+        }
+
+        /// <summary>
+        /// Download any queued files from MyEMSL
+        /// </summary>
+        /// <returns></returns>
+        public bool ProcessMyEMSLDownloadQueue()
+        {
+            if (m_MyEMSLUtilities.FilesToDownload.Count > 0)
+            {
+                if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Download any queued files from MyEMSL
+        /// </summary>
+        /// <param name="downloadFolderPath"></param>
+        /// <param name="folderLayout"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected bool ProcessMyEMSLDownloadQueue(string downloadFolderPath, Downloader.DownloadFolderLayout folderLayout)
+        {
+            var success = m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(downloadFolderPath, folderLayout);
+            return success;
+        }
+
+
+
+
+        /// <summary>
+        /// Delete the specified FASTA file and its associated files
+        /// </summary>
+        /// <param name="diOrgDbFolder"></param>
+        /// <param name="fiFileToPurge"></param>
+        /// <param name="legacyFastaFileBaseName"></param>
+        /// <returns>Number of bytes deleted</returns>
+        private long PurgeFastaFiles(DirectoryInfo diOrgDbFolder, FileInfo fiFileToPurge, string legacyFastaFileBaseName)
+        {
+
+            var baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name);
+
+            if (!string.IsNullOrWhiteSpace(legacyFastaFileBaseName) && baseName.StartsWith(legacyFastaFileBaseName))
+            {
+                // The current job needs this file; do not delete it
+                return 0;
+            }
+
+            // Delete all files associated with this fasta file
+            var lstFilesToDelete = new List<FileInfo>();
+            lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName + ".*"));
+
+            if (m_DebugLevel >= 1)
+            {
+                var fileText = string.Format("{0,2} file", lstFilesToDelete.Count);
+                if (lstFilesToDelete.Count != 1)
+                {
+                    fileText += "s";
+                }
+                LogDebugMessage("Deleting " + fileText + " associated with " + fiFileToPurge.FullName);
+            }
+
+            long bytesDeleted = 0;
+
+            try
+            {
+                foreach (var fiFileToDelete in lstFilesToDelete)
+                {
+                    var fileSizeBytes = fiFileToDelete.Length;
+                    fiFileToDelete.Delete();
+                    bytesDeleted += fileSizeBytes;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PurgeFastaFiles", ex);
+            }
+
+            return bytesDeleted;
+
+        }
+
+        /// <summary>
+        /// Purges old fasta files (and related suffix array files) from localOrgDbFolder
+        /// </summary>
+        /// <param name="localOrgDbFolder"></param>
+        /// <param name="freeSpaceThresholdPercent">Value between 1 and 50</param>
+        /// <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given fasta file</param>
+        /// <param name="legacyFastaFileBaseName">
+        /// Legacy fasta file name (without .fasta)
+        /// For split fasta jobs, should not include the splitcount and segment number, e.g. should not include _25x_07 or _25x_08
+        /// </param>
+        /// <remarks></remarks>
+        protected void PurgeFastaFilesIfLowFreeSpace(string localOrgDbFolder, int freeSpaceThresholdPercent, double requiredFreeSpaceMB, string legacyFastaFileBaseName)
+        {
+
+
+
+            {
+                if (freeSpaceThresholdPercent < 1)
+                    freeSpaceThresholdPercent = 1;
+                if (freeSpaceThresholdPercent > 50)
+                    freeSpaceThresholdPercent = 50;
+
+
+                try
+                {
+                    var diOrgDbFolder = new DirectoryInfo(localOrgDbFolder);
+                    if (diOrgDbFolder.FullName.Length <= 2)
+                    {
+                        LogMessage("Warning: Org DB folder length is less than 3 characters; this is unexpected: " + diOrgDbFolder.FullName);
+                        return;
+                    }
+
+                    // Look for file MaxDirSize.txt which defines the maximum space that the files can use
+                    var fiMaxDirSize = new FileInfo(Path.Combine(diOrgDbFolder.FullName, "MaxDirSize.txt"));
+
+                    var driveLetter = diOrgDbFolder.FullName.Substring(0, 2);
+
+                    if ((!driveLetter.EndsWith(":")))
+                    {
+                        // The folder is not local to this computer
+                        if (!fiMaxDirSize.Exists)
+                        {
+                            LogError("Warning: Orb DB folder path does not have a colon and could not find file " + fiMaxDirSize.Name + "; cannot manage drive space usage: " + diOrgDbFolder.FullName);
+                            return;
+                        }
+
+                        // MaxDirSize.txt file found; delete the older FASTA files to free up space
+                        PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName);
+                        return;
+                    }
+
+                    var localDriveInfo = new DriveInfo(driveLetter);
+                    double percentFreeSpaceAtStart = localDriveInfo.AvailableFreeSpace / Convert.ToDouble(localDriveInfo.TotalSize) * 100;
+
+                    if ((percentFreeSpaceAtStart >= freeSpaceThresholdPercent))
+                    {
+                        if (m_DebugLevel >= 2)
+                        {
+                            var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                            LogMessage(string.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required", localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent));
+                        }
+                    }
+                    else
+                    {
+                        PurgeFastaFilesUsingFreeSpaceThreshold(localDriveInfo, diOrgDbFolder, legacyFastaFileBaseName, freeSpaceThresholdPercent, requiredFreeSpaceMB, percentFreeSpaceAtStart);
+                    }
+
+                    if (fiMaxDirSize.Exists)
+                    {
+                        // MaxDirSize.txt file exists; possibly delete additional FASTA files to free up space
+                        PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    LogError("Error in PurgeFastaFilesIfLowFreeSpace", ex);
+                }
+            }
+
+        }
+
+        private void PurgeFastaFilesUsingFreeSpaceThreshold(
+            DriveInfo localDriveInfo,
+            DirectoryInfo diOrgDbFolder,
+            string legacyFastaFileBaseName,
+            int freeSpaceThresholdPercent,
+            double requiredFreeSpaceMB,
+            double percentFreeSpaceAtStart)
+        {
+
+
+
+            {
+                var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+
+                var logInfoMessages = m_DebugLevel >= 1 && freeSpaceGB < 100 || m_DebugLevel >= 2 && freeSpaceGB < 250 || m_DebugLevel >= 3;
+
+                if (logInfoMessages)
+                {
+                    LogMessage(string.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%", localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent));
+                }
+
+                // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
+                var dctFastaFiles = GetFastaFilesByLastUse(diOrgDbFolder);
+
+                var lstFastaFilesByLastUse = (from item in dctFastaFiles orderby item.Value select item.Key);
+                long totalBytesPurged = 0;
+
+                foreach (var fiFileToPurge in lstFastaFilesByLastUse)
+                {
+                    // Abort this process if the LastUsed date of this file is less than 5 days old
+                    DateTime dtLastUsed;
+                    if (dctFastaFiles.TryGetValue(fiFileToPurge, out dtLastUsed))
+                    {
+                        if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
+                        {
+                            if (logInfoMessages)
+                            {
+                                LogMessage("All fasta files in " + diOrgDbFolder.FullName + " are less than 5 days old; " + "will not purge any more files to free disk space");
+                            }
+                            break; // TODO: might not be correct. Was : Exit For
+                        }
+                    }
+
+                    // Delete all files associated with this fasta file
+                    // However, do not delete it if the name starts with legacyFastaFileBaseName
+                    var bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName);
+                    totalBytesPurged += bytesDeleted;
+
+                    // Re-check the disk free space
+                    var percentFreeSpace = localDriveInfo.AvailableFreeSpace / Convert.ToDouble(localDriveInfo.TotalSize) * 100;
+                    var updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+
+                    if (requiredFreeSpaceMB > 0 && updatedFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
+                    {
+                        // Required free space is known, and we're not yet there
+                        // Keep deleting files
+                        if (m_DebugLevel >= 2)
+                        {
+                            LogDebugMessage(string.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space", localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace));
+                        }
+                    }
+                    else
+                    {
+                        // Either required free space is not known, or we have more than enough free space
+
+                        if ((percentFreeSpace >= freeSpaceThresholdPercent))
+                        {
+                            // Target threshold reached
+                            if (m_DebugLevel >= 1)
+                            {
+                                LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " + "deleted {3:F1} GB of cached files", localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)));
+                            }
+                            break; // TODO: might not be correct. Was : Exit For
+                        }
+                        else if (m_DebugLevel >= 2)
+                        {
+                            // Keep deleting until we reach the target threshold for free space
+                            LogDebugMessage(string.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space", localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace));
+                        }
+                    }
+                }
+
+                // We have deleted all of the files that can be deleted
+                var finalFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+
+                if (requiredFreeSpaceMB > 0 && finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
+                {
+                    LogMessage(string.Format("Warning: unable to delete enough files to free up the required space on {0} ({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files", localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Use the space usage defined in MaxDirSize.txt to decide if any FASTA files need to be deleted
+        /// </summary>
+        /// <param name="fiMaxDirSize">MaxDirSize.txt file in the local organism DB folder</param>
+        /// <param name="legacyFastaFileBaseName">Base FASTA file name for the current analysis job</param>
+        private void PurgeFastaFilesUsingSpaceUsedThreshold(FileInfo fiMaxDirSize, string legacyFastaFileBaseName)
+        {
+            try
+            {
+                DirectoryInfo diOrgDbFolder = fiMaxDirSize.Directory;
+                var errorSuffix = "; cannot manage drive space usage: " + diOrgDbFolder.FullName;
+                var maxSizeGB = 0;
+
+                using (var reader = new StreamReader(new FileStream(fiMaxDirSize.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrEmpty(dataLine) || dataLine.StartsWith("#"))
+                        {
+                            continue;
+                        }
+
+                        var lineParts = dataLine.Split('=');
+                        if (lineParts.Length < 2)
+                        {
+                            continue;
+                        }
+
+                        if (string.Equals(lineParts[0], "MaxSizeGB", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            if (!int.TryParse(lineParts[1], out maxSizeGB))
+                            {
+                                LogError("MaxSizeGB line does not contain an integer in " + fiMaxDirSize.FullName + errorSuffix);
+                                return;
+                            }
+                            break;
+                        }
+
+                    }
+                }
+
+                if (maxSizeGB == 0)
+                {
+                    LogError("MaxSizeGB line not found in " + fiMaxDirSize.FullName + errorSuffix);
+                    return;
+                }
+
+                long spaceUsageBytes = 0;
+
+                foreach (var fiFile in diOrgDbFolder.GetFiles("*", SearchOption.TopDirectoryOnly))
+                {
+                    spaceUsageBytes += fiFile.Length;
+                }
+
+                var spaceUsageGB = clsGlobal.BytesToGB(spaceUsageBytes);
+                if (spaceUsageGB <= maxSizeGB)
+                {
+                    // Space usage is under the threshold
+                    var statusMessage = string.Format("Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge", diOrgDbFolder.FullName, spaceUsageGB, maxSizeGB);
+                    LogMessage(statusMessage, 3);
+                    return;
+                }
+
+                // Space usage is too high; need to purge some files
+                // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
+                Dictionary<FileInfo, DateTime> dctFastaFiles = GetFastaFilesByLastUse(diOrgDbFolder);
+
+                var lstFastaFilesByLastUse = from item in dctFastaFiles orderby item.Value select item.Key;
+
+                var bytesToPurge = Convert.ToInt64(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024);
+                long totalBytesPurged = 0;
+
+                foreach (var fiFileToPurge in lstFastaFilesByLastUse)
+                {
+                    // Abort this process if the LastUsed date of this file is less than 5 days old
+                    DateTime dtLastUsed;
+                    if (dctFastaFiles.TryGetValue(fiFileToPurge, out dtLastUsed))
+                    {
+                        if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
+                        {
+                            LogMessage("All fasta files in " + diOrgDbFolder.FullName + " are less than 5 days old; " + "will not purge any more files to free disk space");
+                            break; // TODO: might not be correct. Was : Exit For
+                        }
+                    }
+
+                    // Delete all files associated with this fasta file
+                    // However, do not delete it if the name starts with legacyFastaFileBaseName
+                    var bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName);
+                    totalBytesPurged += bytesDeleted;
+
+                    if (totalBytesPurged < bytesToPurge)
+                    {
+                        // Keep deleting files
+                        if (m_DebugLevel >= 2)
+                        {
+                            LogDebugMessage(string.Format("Purging FASTA files: {0:F1} / {1:F1} MB deleted", clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
+                        }
+                    }
+                    else
+                    {
+                        // Enough files have been deleted
+                        LogMessage(string.Format("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files", diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
+                        return;
+                    }
+                }
+
+                if (totalBytesPurged < bytesToPurge)
+                {
+                    LogMessage(string.Format("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " + "deleted {2:F1} GB of cached files", diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex);
+            }
+
+        }
+
+        /// <summary>
+        /// Looks for the specified file in the given folder
+        /// If present, returns the full path to the file
+        /// If not present, looks for a file named FileName_StoragePathInfo.txt; if that file is found, opens the file and reads the path
+        /// If the file isn't found (and the _StoragePathInfo.txt file isn't present), then returns an empty string
+        /// </summary>
+        /// <param name="FolderPath">The folder to look in</param>
+        /// <param name="FileName">The file name to find</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string ResolveStoragePath(string FolderPath, string FileName)
+        {
+
+            string strPhysicalFilePath = string.Empty;
+            string strFilePath = null;
+
+            string strLineIn = null;
+
+            strFilePath = Path.Combine(FolderPath, FileName);
+
+            if (File.Exists(strFilePath))
+            {
+                // The desired file is located in folder FolderPath
+                strPhysicalFilePath = strFilePath;
+            }
+            else
+            {
+                // The desired file was not found
+                strFilePath += STORAGE_PATH_INFO_FILE_SUFFIX;
+
+                if (File.Exists(strFilePath))
+                {
+                    // The _StoragePathInfo.txt file is present
+                    // Open that file to read the file path on the first line of the file
+
+                    using (var srInFile = new StreamReader(new FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    {
+                        strLineIn = srInFile.ReadLine();
+                        strPhysicalFilePath = strLineIn;
+                    }
+
+                }
+            }
+
+            return strPhysicalFilePath;
+
+        }
+
+        /// <summary>
+        /// Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
+        /// If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
+        /// If the file named _StoragePathInfo.txt isn't found, then looks for a ser file in the specified folder
+        /// If found, returns the path to the ser file
+        /// If not found, then looks for a 0.ser folder in the specified folder
+        /// If found, returns the path to the 0.ser folder
+        /// Otherwise, returns an empty string
+        /// </summary>
+        /// <param name="FolderPath">The folder to look in</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string ResolveSerStoragePath(string FolderPath)
+        {
+            string strPhysicalFilePath;
+
+            var strFilePath = Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX);
+
+            if (File.Exists(strFilePath))
+            {
+                // The desired file is located in folder FolderPath
+                // The _StoragePathInfo.txt file is present
+                // Open that file to read the file path on the first line of the file
+
+                using (var srInFile = new StreamReader(new FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+
+                    var strLineIn = srInFile.ReadLine();
+                    strPhysicalFilePath = strLineIn;
+
+                }
+            }
+            else
+            {
+                // The desired file was not found
+
+                // Look for a ser file in the dataset folder
+                strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE);
+                var fiFile = new FileInfo(strPhysicalFilePath);
+
+                if (!fiFile.Exists)
+                {
+                    // See if a folder named 0.ser exists in FolderPath
+                    strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER);
+                    var diFolder = new DirectoryInfo(strPhysicalFilePath);
+                    if (!diFolder.Exists)
+                    {
+                        strPhysicalFilePath = string.Empty;
+                    }
+                }
+
+            }
+
+            return strPhysicalFilePath;
+
+        }
+
+        /// <summary>
+        /// Retrieve the files specified by the file processing options parameter
+        /// </summary>
+        /// <param name="fileSpecList">
+        /// File processing options, examples:
+        /// sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,sequest:_syn_ModSummary.txt:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
+        /// sequest:_syn.txt,sequest:_syn_MSGF.txt,sequest:_fht.txt,sequest:_fht_MSGF.txt,sequest:_dta.zip,sequest:_syn_ModSummary.txt
+        /// MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_fht.txt,MSGFPlus:_dta.zip,MSGFPlus:_syn_ModSummary.txt,masic_finnigan:_ScanStatsEx.txt,masic_finnigan:_ReporterIons.txt:copy
+        /// MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_syn_ModSummary.txt,MSGFPlus:_dta.zip
+        /// </param>
+        /// <param name="fileRetrievalMode">Used by plugins to indicate the types of files that are required (in case fileSpecList is not configured correctly for a given data package job)</param>
+        /// <returns>True if success, false if a problem</returns>
+        /// <remarks>
+        /// This function is used by plugins PhosphoFDRAggregator and PRIDEMzXML
+        /// However, PrideMzXML is dormant as of September 2013
+        /// </remarks>
+        protected bool RetrieveAggregateFiles(List<string> fileSpecList, DataPackageFileRetrievalModeConstants fileRetrievalMode,
+            out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        {
+
+
+
+            bool blnSuccess = false;
+
+            try
+            {
+                if (!LoadDataPackageJobInfo(out dctDataPackageJobs))
+                {
+                    m_message = "Error looking up datasets and jobs using LoadDataPackageJobInfo";
+                    dctDataPackageJobs = null;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("RetrieveAggregateFiles; Exception calling LoadDataPackageJobInfo", ex);
+                dctDataPackageJobs = null;
+                return false;
+            }
+
+            try
+            {
+                var diWorkingDirectory = new DirectoryInfo(m_WorkingDir);
+
+                // Cache the current dataset and job info
+                var currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
+
+
+                foreach (KeyValuePair<int, clsDataPackageJobInfo> dataPkgJob in dctDataPackageJobs)
+                {
+                    if (!OverrideCurrentDatasetAndJobInfo(dataPkgJob.Value))
+                    {
+                        return false;
+                    }
+
+                    // See if this job matches any of the entries in fileSpecList
+                    var fileSpecListCurrent = new List<string>();
+
+                    foreach (string fileSpec in fileSpecList)
+                    {
+                        var fileSpecTerms = fileSpec.Trim().Split(':').ToList();
+                        if (dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms[0].Trim().ToLower()))
+                        {
+                            fileSpecListCurrent = fileSpecList;
+                            break;
+                        }
+                    }
+
+                    if (fileSpecListCurrent.Count == 0)
+                    {
+                        switch (fileRetrievalMode)
+                        {
+                            case DataPackageFileRetrievalModeConstants.Ascore:
+
+                                if (dataPkgJob.Value.Tool.ToLower().StartsWith("msgf"))
+                                {
+                                    // MSGF+
+                                    fileSpecListCurrent = new List<string> {
+                                        "MSGFPlus:_msgfplus_syn.txt",
+                                        "MSGFPlus:_msgfplus_syn_ModSummary.txt",
+                                        "MSGFPlus:_dta.zip"
+                                    };
+
+                                }
+
+                                if (dataPkgJob.Value.Tool.ToLower().StartsWith("sequest"))
+                                {
+                                    // Sequest
+                                    fileSpecListCurrent = new List<string> {
+                                        "sequest:_syn.txt",
+                                        "sequest:_syn_MSGF.txt",
+                                        "sequest:_syn_ModSummary.txt",
+                                        "sequest:_dta.zip"
+                                    };
+
+                                }
+
+                                if (dataPkgJob.Value.Tool.ToLower().StartsWith("xtandem"))
+                                {
+                                    // XTandem
+                                    fileSpecListCurrent = new List<string> {
+                                        "xtandem:_xt_syn.txt",
+                                        "xtandem:_xt_syn_ModSummary.txt",
+                                        "xtandem:_dta.zip"
+                                    };
+
+                                }
+
+                                break;
+                        }
+                    }
+
+                    if (fileSpecListCurrent.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var spectraFileKey = "Job" + dataPkgJob.Key + DATA_PACKAGE_SPECTRA_FILE_SUFFIX;
+
+                    foreach (string fileSpec in fileSpecListCurrent)
+                    {
+                        var fileSpecTerms = fileSpec.Trim().Split(':').ToList();
+                        var sourceFileName = dataPkgJob.Value.Dataset + fileSpecTerms[1].Trim();
+                        var sourceFolderPath = "??";
+
+                        var saveMode = "nocopy";
+                        if (fileSpecTerms.Count > 2)
+                        {
+                            saveMode = fileSpecTerms[2].Trim();
+                        }
+
+
+                        try
+                        {
+                            if (!dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms[0].Trim().ToLower()))
+                            {
+                                continue;
+                            }
+
+                            // To avoid collisions, files for this job will be placed in a subfolder based on the Job number
+                            var diTargetFolder = new DirectoryInfo(Path.Combine(m_WorkingDir, "Job" + dataPkgJob.Key));
+                            if (!diTargetFolder.Exists)
+                                diTargetFolder.Create();
+
+                            if (sourceFileName.ToLower().EndsWith("_dta.zip") && dataPkgJob.Value.Tool.ToLower().EndsWith("_mzml"))
+                            {
+                                // This is a .mzML job; it is not going to have a _dta.zip file
+                                // Setting sourceFolderPath to an empty string so that GetMzMLFile will get called below
+                                sourceFolderPath = string.Empty;
+                            }
+                            else
+                            {
+                                sourceFolderPath = FindDataFile(sourceFileName);
+
+                                if (string.IsNullOrEmpty(sourceFolderPath))
+                                {
+                                    // Source file not found
+
+                                    string alternateSourceFileName = string.Empty;
+
+                                    if (sourceFileName.ToLower().Contains("_msgfdb"))
+                                    {
+                                        // Auto-look for the _msgfplus version of this file
+                                        alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfdb", "_msgfplus");
+                                    }
+                                    else if (sourceFileName.ToLower().Contains("_msgfplus"))
+                                    {
+                                        // Auto-look for the _msgfdb version of this file
+                                        alternateSourceFileName = clsGlobal.ReplaceIgnoreCase(sourceFileName, "_msgfplus", "_msgfdb");
+                                    }
+
+                                    if (!string.IsNullOrEmpty(alternateSourceFileName))
+                                    {
+                                        sourceFolderPath = FindDataFile(alternateSourceFileName);
+                                        if (!string.IsNullOrEmpty(sourceFolderPath))
+                                        {
+                                            sourceFileName = alternateSourceFileName;
+                                        }
+                                    }
+                                }
+
+                            }
+
+
+                            if (string.IsNullOrEmpty(sourceFolderPath))
+                            {
+                                if (sourceFileName.ToLower().EndsWith("_dta.zip"))
+                                {
+                                    // Look for a mzML.gz file instead
+
+                                    string errorMessage = string.Empty;
+                                    bool fileMissingFromCache = false;
+
+                                    var success = RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false, out errorMessage, out fileMissingFromCache);
+
+                                    if (!success)
+                                    {
+                                        if (string.IsNullOrWhiteSpace(errorMessage))
+                                        {
+                                            errorMessage = "Unknown error looking for the .mzML file for " + dataPkgJob.Value.Dataset + ", job " + dataPkgJob.Key;
+                                        }
+
+                                        LogError(errorMessage);
+                                        return false;
+                                    }
+
+                                    sourceFileName = dataPkgJob.Value.Dataset + DOT_MZML_EXTENSION + DOT_GZ_EXTENSION;
+                                    m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName);
+                                    m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION);
+
+                                    MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName);
+
+                                    if (m_DebugLevel >= 1)
+                                    {
+                                        LogMessage("Retrieved the .mzML file for " + dataPkgJob.Value.Dataset + ", job " + dataPkgJob.Key);
+                                    }
+
+                                    continue;
+                                }
+
+                                m_message = "Could not find a valid folder with file " + sourceFileName + " for job " + dataPkgJob.Key;
+                                if (m_DebugLevel >= 1)
+                                {
+                                    LogMessage(m_message, 0, true);
+                                }
+                                return false;
+                            }
+
+                            if (!CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                            {
+                                m_message = "CopyFileToWorkDir returned False for " + sourceFileName + " using folder " + sourceFolderPath + " for job " + dataPkgJob.Key;
+                                if (m_DebugLevel >= 1)
+                                {
+                                    LogMessage(m_message, 0, true);
+                                }
+                                return false;
+                            }
+
+                            if (sourceFileName.EndsWith("_dta.zip"))
+                            {
+                                m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName);
+                            }
+
+                            if (saveMode.ToLower() != "copy")
+                            {
+                                m_jobParams.AddResultFileToSkip(sourceFileName);
+                            }
+
+                            MoveFileToFolder(diWorkingDirectory, diTargetFolder, sourceFileName);
+
+                            if (m_DebugLevel >= 1)
+                            {
+                                LogMessage("Copied " + sourceFileName + " from folder " + sourceFolderPath);
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            LogError("RetrieveAggregateFiles; Exception during copy of file: " + sourceFileName + " from folder " + sourceFolderPath + " for job " + dataPkgJob.Key, ex);
+                            return false;
+
+                        }
+
+                    }
+                }
+
+                if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                {
+                    return false;
+                }
+
+                // Restore the dataset and job info for this aggregation job
+                OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
+
+                blnSuccess = true;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in RetrieveAggregateFiles", ex);
+                blnSuccess = false;
+            }
+
+            return blnSuccess;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Retrieve the dataset's cached .mzML file from the MsXML Cache
+        /// </summary>
+        /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
+        /// <param name="errorMessage">Output parameter: Error message</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <returns>True if success, false if an error or file not found</returns>
+        /// <remarks>
+        /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
+        /// InputFolderName should be in the form MSXML_Gen_1_93_367204
+        /// </remarks>
+        protected bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        {
+            return RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+        }
+
+
+        /// <summary>
+        /// Retrieve the dataset's cached .PBF file from the MsXML Cache
+        /// </summary>
+        /// <param name="errorMessage">Output parameter: Error message</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <returns>True if success, false if an error or file not found</returns>
+        /// <remarks>
+        /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
+        /// InputFolderName should be in the form MSXML_Gen_1_93_367204
+        /// </remarks>
+        protected bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache)
+        {
+            const bool unzip = false;
+            return RetrieveCachedMSXMLFile(DOT_PBF_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+        }
+
+
+        /// <summary>
+        /// Retrieve the dataset's cached .mzXML file from the MsXML Cache
+        /// </summary>
+        /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
+        /// <param name="errorMessage">Output parameter: Error message</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <returns>True if success, false if an error or file not found</returns>
+        /// <remarks>
+        /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
+        /// InputFolderName should be in the form MSXML_Gen_1_105_367204
+        /// </remarks>
+        protected bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        {
+            return RetrieveCachedMSXMLFile(DOT_MZXML_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+        }
+
+
+
+        /// <summary>
+        /// Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache (assumes the file is gzipped)
+        /// </summary>
+        /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
+        /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
+        /// <param name="errorMessage">Output parameter: Error message</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <returns>True if success, false if an error or file not found</returns>
+        /// <remarks>
+        /// Uses the job's InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
+        /// InputFolderName should be in the form MSXML_Gen_1_93_367204
+        /// </remarks>
+        protected bool RetrieveCachedMSXMLFile(string resultFileExtension, bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        {
+
+
+            string msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var diMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
+
+            errorMessage = string.Empty;
+            fileMissingFromCache = false;
+
+            if (string.IsNullOrEmpty(resultFileExtension))
+            {
+                errorMessage = "resultFileExtension is empty; should be .mzXML or .mzML";
+                return false;
+            }
+
+            if (!diMSXmlCacheFolder.Exists)
+            {
+                errorMessage = "MSXmlCache folder not found: " + msXMLCacheFolderPath;
+                return false;
+            }
+
+            var foldersToSearch = new List<string>();
+            foldersToSearch.Add(m_jobParams.GetJobParameter("InputFolderName", string.Empty));
+            if (foldersToSearch[0].Length == 0)
+            {
+                foldersToSearch.Clear();
+            }
+
+            foreach (var sharedResultFolder in GetSharedResultFolderList())
+            {
+                if (sharedResultFolder.Trim().Length == 0)
+                    continue;
+                if (!foldersToSearch.Contains(sharedResultFolder))
+                {
+                    foldersToSearch.Add(sharedResultFolder);
+                }
+            }
+
+            if (foldersToSearch.Count == 0)
+            {
+                errorMessage = "Job parameters InputFolderName and SharedResultsFolders are empty; cannot retrieve the " + resultFileExtension + " file";
+                return false;
+            }
+
+            List<string> msXmlToolNameVersionFolders = new List<string>();
+
+            foreach (var folderName in foldersToSearch)
+            {
+                try
+                {
+                    var msXmlToolNameVersionFolder = GetMSXmlToolNameVersionFolder(folderName);
+                    msXmlToolNameVersionFolders.Add(msXmlToolNameVersionFolder);
+                }
+                catch (Exception)
+                {
+                    errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" + folderName + "); " + "cannot retrieve the " + resultFileExtension + " File";
+
+                    LogMessage(errorMessage, 0, true);
+                }
+            }
+
+            if (msXmlToolNameVersionFolders.Count == 0)
+            {
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = "The input folder and shared results folder(s) were not in the expected form of ToolName_Version_DatasetID";
+
+                    LogMessage(errorMessage, 0, true);
+                }
+                return false;
+            }
+            else
+            {
+                errorMessage = string.Empty;
+            }
+
+            DirectoryInfo diSourceFolder = null;
+
+            foreach (var toolNameVersionFolder in msXmlToolNameVersionFolders)
+            {
+                var sourceFolder = GetMSXmlCacheFolderPath(diMSXmlCacheFolder.FullName, m_jobParams, toolNameVersionFolder, out errorMessage);
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    continue;
+                }
+
+                diSourceFolder = new DirectoryInfo(sourceFolder);
+                if (diSourceFolder.Exists)
+                {
+                    break; // TODO: might not be correct. Was : Exit For
+                }
+
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = "Cache folder does not exist (" + sourceFolder;
+                }
+                else
+                {
+                    errorMessage += " or " + sourceFolder;
+                }
+
+            }
+
+            if (diSourceFolder == null)
+            {
+                errorMessage += "); will re-generate the " + resultFileExtension + " file";
+
+                LogMessage(errorMessage);
+                fileMissingFromCache = true;
+                return false;
+            }
+
+            var sourceFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName + resultFileExtension);
+            var expectedFileDescription = resultFileExtension;
+            if (resultFileExtension != DOT_PBF_EXTENSION)
+            {
+                sourceFilePath += DOT_GZ_EXTENSION;
+                expectedFileDescription += DOT_GZ_EXTENSION;
+            }
+
+            var fiSourceFile = new FileInfo(sourceFilePath);
+            if (!fiSourceFile.Exists)
+            {
+                errorMessage = "Cached " + expectedFileDescription + " file does not exist in " + diSourceFolder.FullName + "; will re-generate it";
+                fileMissingFromCache = true;
+                return false;
+            }
+
+            // Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
+
+            var hashcheckFilePath = fiSourceFile.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+
+            errorMessage = string.Empty;
+            if (!clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashcheckFilePath, out errorMessage))
+            {
+                errorMessage = "Cached " + resultFileExtension + " file does not match the hashcheck file in " + diSourceFolder.FullName + "; will re-generate it";
+                fileMissingFromCache = true;
+                return false;
+            }
+
+            if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            {
+                errorMessage = "Error copying " + fiSourceFile.Name;
+                return false;
+            }
+
+            if (fiSourceFile.Extension.ToLower() == DOT_GZ_EXTENSION)
+            {
+                // Do not skip all .gz files because we compress MSGF+ results using .gz and we want to keep those
+
+                m_jobParams.AddResultFileToSkip(fiSourceFile.Name);
+                m_jobParams.AddResultFileToSkip(fiSourceFile.Name.Substring(0, fiSourceFile.Name.Length - DOT_GZ_EXTENSION.Length));
+
+                if (unzip)
+                {
+                    var localZippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name);
+
+                    if (!m_IonicZipTools.GUnzipFile(localZippedFile))
+                    {
+                        errorMessage = m_IonicZipTools.Message;
+                        return false;
+                    }
+                }
+
+            }
+
+            return true;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
+        /// Also creates a batch file that can be manually run to retrieve the instrument data files
+        /// </summary>
+        /// <param name="udtOptions">File retrieval options</param>
+        /// <param name="lstDataPackagePeptideHitJobs">Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveDataPackagePeptideHitJobPHRPFiles(
+            clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType udtOptions,
+            out List<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
+        {
+
+            const float progressPercentAtStart = 0;
+            const float progressPercentAtFinish = 20;
+            return RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish);
+        }
+
+        /// <summary>
+        /// Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
+        /// Also creates a batch file that can be manually run to retrieve the instrument data files
+        /// </summary>
+        /// <param name="udtOptions">File retrieval options</param>
+        /// <param name="lstDataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package (output parameter)</param>
+        /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
+        /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveDataPackagePeptideHitJobPHRPFiles(
+            clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType udtOptions,
+            out List<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs,
+            float progressPercentAtStart,
+            float progressPercentAtFinish)
+        {
+
+            // Gigasax.DMS_Pipeline
+            string connectionString = m_mgrParams.GetParam("brokerconnectionstring");
+
+            int dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
+
+            var dataPackageFileHander = new clsDataPackageFileHandler(connectionString, dataPackageID, this);
+            RegisterEvents(dataPackageFileHander);
+
+            var blnSuccess = dataPackageFileHander.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish);
+
+            return blnSuccess;
+
+        }
+
+        /// <summary>
+        /// Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by strProgLocName
+        /// </summary>
+        /// <param name="strProgLocName"></param>
+        /// <returns></returns>
+        /// <remarks>strProgLocName is tyipcally DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
+        protected bool RetrievePNNLOmicsResourceFiles(string strProgLocName)
+        {
+
+            const string OMICS_ELEMENT_DATA_FILE = "PNNLOmicsElementData.xml";
+
+            try
+            {
+                var strProgLoc = m_mgrParams.GetParam(strProgLocName);
+                if (string.IsNullOrEmpty(strProgLocName))
+                {
+                    LogError("Manager parameter " + strProgLocName + " is not defined; cannot retrieve file " + OMICS_ELEMENT_DATA_FILE);
+                    return false;
+                }
+
+                var fiSourceFile = new FileInfo(Path.Combine(strProgLoc, OMICS_ELEMENT_DATA_FILE));
+
+                if (!fiSourceFile.Exists)
+                {
+                    LogError("PNNLOmics Element Data file not found at: " + fiSourceFile.FullName);
+                    m_message = "PNNLOmics Element Data file not found";
+                    return false;
+                }
+
+                fiSourceFile.CopyTo(Path.Combine(m_WorkingDir, OMICS_ELEMENT_DATA_FILE));
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error copying " + OMICS_ELEMENT_DATA_FILE, ex);
+                return false;
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
+        /// </summary>
+        /// <param name="FileExtension">File extension to match; must contain a period, for example ".raw"</param>
+        /// ''' <param name="CreateStoragePathInfoOnly">If true, then create a storage path info file</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveDatasetFile(string FileExtension, bool createStoragePathInfoOnly)
+        {
+            return RetrieveDatasetFile(FileExtension, createStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT);
+        }
+
+        /// <summary>
+        /// Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
+        /// </summary>
+        /// <param name="FileExtension">File extension to match; must contain a period, for example ".raw"</param>
+        /// <param name="CreateStoragePathInfoOnly">If true, then create a storage path info file</param>
+        /// <param name="maxAttempts">Maximum number of attempts</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveDatasetFile(string FileExtension, bool createStoragePathInfoOnly, int maxAttempts)
+        {
+
+            string DatasetFilePath = FindDatasetFile(maxAttempts, FileExtension);
+            if (string.IsNullOrEmpty(DatasetFilePath))
+            {
+                return false;
+            }
+
+            if ((DatasetFilePath.StartsWith(MYEMSL_PATH_FLAG)))
+            {
+                // Queue this file for download
+                m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);
+                return true;
+            }
+
+            var fiDatasetFile = new FileInfo(DatasetFilePath);
+            if (!fiDatasetFile.Exists)
+            {
+                LogError("Source dataset file not found: " + fiDatasetFile.FullName);
+                m_message = "Source dataset file not found";
+                return false;
+            }
+
+            if (m_DebugLevel >= 1)
+            {
+                LogDebugMessage("Retrieving file " + fiDatasetFile.FullName);
+            }
+
+            if (CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Retrieves an Agilent ion trap .mgf file or .cdf/,mgf pair for analysis job in progress
+        /// </summary>
+        /// <param name="GetCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveMgfFile(bool GetCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
+        {
+
+            var strMGFFilePath = FindMGFFile(maxAttempts, assumeUnpurged: false);
+
+            if (string.IsNullOrEmpty(strMGFFilePath))
+            {
+                LogError("Source mgf file not found using FindMGFFile");
+                return false;
+            }
+
+            var fiMGFFile = new FileInfo(strMGFFilePath);
+            if (!fiMGFFile.Exists)
+            {
+                LogError("Source mgf file not found: " + fiMGFFile.FullName);
+                m_message = "Source mgf file not found";
+                return false;
+            }
+
+
+            // Do the copy
+            if (!CopyFileToWorkDirWithRename(fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
+                return false;
+
+            // If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
+            if (!GetCdfAlso)
+                return true;
+
+            foreach (FileInfo fiCDFFile in fiMGFFile.Directory.GetFiles("*" + DOT_CDF_EXTENSION))
+            {
+                //Copy the .cdf file that was found
+                if (CopyFileToWorkDirWithRename(fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
+                {
+                    return true;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        LogError("Error obtaining CDF file from " + fiCDFFile.FullName);
+                    }
+                    return false;
+                }
+            }
+
+            // CDF file not found
+            LogError("CDF File not found");
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Looks for the newest mzXML file for this dataset
+        /// First looks for the newest file in \\Proto-11\MSXML_Cache
+        /// If not found, looks in the dataset folder, looking for subfolders 
+        /// MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
+        /// </summary>
+        /// <param name="CreateStoragePathInfoOnly"></param>
+        /// <param name="sourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
+        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <remarks>The retrieved file might be gzipped.  For MzML files, use RetrieveMzMLFile</remarks>
+        protected bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
+        {
+
+            string hashcheckFilePath;
+            sourceFilePath = FindMZXmlFile(out hashcheckFilePath);
+
+            if (string.IsNullOrEmpty(sourceFilePath))
+            {
+                return false;
+            }
+            else
+            {
+                return RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, sourceFilePath, hashcheckFilePath);
+            }
+
+        }
+
+        /// <summary>
+        /// Retrieves this dataset's mzXML or mzML file
+        /// </summary>
+        /// <param name="CreateStoragePathInfoOnly"></param>
+        /// <param name="sourceFilePath">Full path to the file that should be retrieved</param>
+        /// <param name="HashcheckFilePath"></param>
+        /// <returns>True if success, false if not retrieved or a hash error</returns>
+        /// <remarks></remarks>
+        public bool RetrieveMZXmlFileUsingSourceFile(bool createStoragePathInfoOnly, string sourceFilePath, string hashcheckFilePath)
+        {
+
+            if (sourceFilePath.StartsWith(MYEMSL_PATH_FLAG))
+            {
+                return m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
+            }
+
+            var fiSourceFile = new FileInfo(sourceFilePath);
+
+            if (fiSourceFile.Exists)
+            {
+
+                if (CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
+                {
+                    if (!string.IsNullOrEmpty(hashcheckFilePath) && File.Exists(hashcheckFilePath))
+                    {
+                        return RetrieveMzXMLFileVerifyHash(fiSourceFile, hashcheckFilePath, createStoragePathInfoOnly);
+                    }
+                    else
+                    {
+                        return true;
+                    }
+
+                }
+            }
+
+            if (m_DebugLevel >= 1)
+            {
+                LogMessage("MzXML (or MzML) file not found; will need to generate it: " + fiSourceFile.Name);
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Verify the hash value of a given .mzXML or .mzML file
+        /// </summary>
+        /// <param name="fiSourceFile"></param>
+        /// <param name="HashcheckFilePath"></param>
+        /// <param name="CreateStoragePathInfoOnly"></param>
+        /// <returns>True if the hash of the file matches the expected hash, otherwise false</returns>
+        /// <remarks>If createStoragePathInfoOnly is true and the source file matches the target file, the hash is not recomputed</remarks>
+        protected bool RetrieveMzXMLFileVerifyHash(FileInfo fiSourceFile, string HashcheckFilePath, bool createStoragePathInfoOnly)
+        {
+
+            string strTargetFilePath = null;
+            string strErrorMessage = string.Empty;
+            bool blnComputeHash = false;
+
+            if (createStoragePathInfoOnly)
+            {
+                strTargetFilePath = fiSourceFile.FullName;
+                // Don't compute the hash, since we're accessing the file over the network
+                blnComputeHash = false;
+            }
+            else
+            {
+                strTargetFilePath = Path.Combine(m_WorkingDir, fiSourceFile.Name);
+                blnComputeHash = true;
+            }
+
+            if (clsGlobal.ValidateFileVsHashcheck(strTargetFilePath, HashcheckFilePath, out strErrorMessage, blnCheckDate: true, blnComputeHash: blnComputeHash))
+            {
+                return true;
+            }
+
+            LogMessage("MzXML/MzML file validation error in RetrieveMzXMLFileVerifyHash: " + strErrorMessage, 0, true);
+
+            try
+            {
+                if (createStoragePathInfoOnly)
+                {
+                    // Delete the local StoragePathInfo file
+                    string strStoragePathInfoFile = Path.Combine(m_WorkingDir, fiSourceFile.Name + STORAGE_PATH_INFO_FILE_SUFFIX);
+                    if (File.Exists(strStoragePathInfoFile))
+                    {
+                        File.Delete(strStoragePathInfoFile);
+                    }
+                }
+                else
+                {
+                    // Delete the local file to force it to be re-generated
+                    File.Delete(strTargetFilePath);
+                }
+
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
+
+            try
+            {
+                // Delete the remote mzXML or mzML file only if we computed the hash and we had a hash mismatch
+                if (blnComputeHash)
+                {
+                    fiSourceFile.Delete();
+                }
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Looks for this dataset's ScanStats files (previously created by MASIC)
+        /// Looks for the files in any SIC folder that exists for the dataset
+        /// </summary>
+        /// <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly)
+        {
+
+            const bool RetrieveSICStatsFile = false;
+            return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile: true, RetrieveScanStatsExFile: true);
+
+        }
+
+        /// <summary>
+        /// Looks for this dataset's ScanStats files (previously created by MASIC)
+        /// Looks for the files in any SIC folder that exists for the dataset
+        /// </summary>
+        /// <param name="CreateStoragePathInfoOnly"></param>
+        /// <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+        /// <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly, bool RetrieveScanStatsFile, bool RetrieveScanStatsExFile)
+        {
+
+            const bool RetrieveSICStatsFile = false;
+            return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile);
+
+        }
+
+        /// <summary>
+        /// Looks for this dataset's MASIC results files
+        /// Looks for the files in any SIC folder that exists for the dataset
+        /// </summary>
+        /// <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveScanAndSICStatsFiles(bool RetrieveSICStatsFile, bool createStoragePathInfoOnly)
+        {
+            return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile: true, RetrieveScanStatsExFile: true);
+        }
+
+        /// <summary>
+        /// Looks for this dataset's MASIC results files
+        /// Looks for the files in any SIC folder that exists for the dataset
+        /// </summary>
+        /// <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+        /// <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveScanAndSICStatsFiles(bool RetrieveSICStatsFile, bool createStoragePathInfoOnly, bool RetrieveScanStatsFile, bool RetrieveScanStatsExFile)
+        {
+
+            var lstNonCriticalFileSuffixes = new List<string>();
+            const bool RETRIEVE_REPORTERIONS_FILE = false;
+
+            return RetrieveScanAndSICStatsFiles(RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes);
+
+        }
+
+
+        /// <summary>
+        /// Looks for this dataset's MASIC results files
+        /// Looks for the files in any SIC folder that exists for the dataset
+        /// </summary>
+        /// <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
+        /// <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
+        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveScanAndSICStatsFiles(
+            bool retrieveSICStatsFile,
+            bool createStoragePathInfoOnly,
+            bool retrieveScanStatsFile,
+            bool retrieveScanStatsExFile,
+            bool retrieveReporterIonsFile,
+            List<string> lstNonCriticalFileSuffixes)
+        {
+
+            string ServerPath = null;
+            string ScanStatsFilename = null;
+
+            Int64 BestScanStatsFileTransactionID = 0;
+
+            const int MAX_ATTEMPTS = 1;
+
+            // Look for the MASIC Results folder
+            // If the folder cannot be found, then FindValidFolder will return the folder defined by "DatasetStoragePath"
+            ScanStatsFilename = m_DatasetName + SCAN_STATS_FILE_SUFFIX;
+            ServerPath = FindValidFolder(m_DatasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound: false, retrievingInstrumentDataFolder: false);
+
+            if (string.IsNullOrEmpty(ServerPath))
+            {
+                m_message = "Dataset folder path not defined";
+
+            }
+            else
+            {
+                if (ServerPath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    // Find the newest _ScanStats.txt file in MyEMSL
+                    var BestSICFolderName = string.Empty;
+
+                    foreach (var myEmslFile in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles)
+                    {
+                        if (myEmslFile.IsFolder)
+                        {
+                            continue;
+                        }
+
+                        if (clsGlobal.IsMatch(myEmslFile.FileInfo.Filename, ScanStatsFilename) && myEmslFile.FileInfo.TransactionID > BestScanStatsFileTransactionID)
+                        {
+                            var fiScanStatsFile = new FileInfo(myEmslFile.FileInfo.RelativePathWindows);
+                            BestSICFolderName = fiScanStatsFile.Directory.Name;
+                            BestScanStatsFileTransactionID = myEmslFile.FileInfo.TransactionID;
+                        }
+                    }
+
+                    if (BestScanStatsFileTransactionID == 0)
+                    {
+                        m_message = "MASIC ScanStats file not found in the SIC results folder(s) in MyEMSL";
+                    }
+                    else
+                    {
+                        var bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, BestSICFolderName);
+                        return RetrieveScanAndSICStatsFiles(bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile: retrieveScanStatsFile, retrieveScanStatsExFile: retrieveScanStatsExFile, retrieveReporterIonsFile: retrieveReporterIonsFile, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                    }
+                }
+                else
+                {
+                    var diFolderInfo = new DirectoryInfo(ServerPath);
+
+                    if (!diFolderInfo.Exists)
+                    {
+                        m_message = "Dataset folder with MASIC files not found: " + diFolderInfo.FullName;
+
+                    }
+                    else
+                    {
+                        // See if the ServerPath folder actually contains a subfolder that starts with "SIC"
+                        DirectoryInfo[] diSubfolders = diFolderInfo.GetDirectories("SIC*");
+                        if (diSubfolders.Length == 0)
+                        {
+                            m_message = "Dataset folder does not contain any MASIC results folders: " + diFolderInfo.FullName;
+                        }
+                        else
+                        {
+                            // MASIC Results Folder Found
+                            // If more than one folder, then use the folder with the newest _ScanStats.txt file
+                            DateTime dtNewestScanStatsFileDate = DateTime.MinValue;
+                            string strNewestScanStatsFilePath = string.Empty;
+
+                            foreach (DirectoryInfo diSubFolder in diSubfolders)
+                            {
+                                var fiSourceFile = new FileInfo(Path.Combine(diSubFolder.FullName, ScanStatsFilename));
+                                if (fiSourceFile.Exists)
+                                {
+                                    if (string.IsNullOrEmpty(strNewestScanStatsFilePath) || fiSourceFile.LastWriteTimeUtc > dtNewestScanStatsFileDate)
+                                    {
+                                        strNewestScanStatsFilePath = fiSourceFile.FullName;
+                                        dtNewestScanStatsFileDate = fiSourceFile.LastWriteTimeUtc;
+                                    }
+                                }
+                            }
+
+                            if (string.IsNullOrEmpty(strNewestScanStatsFilePath))
+                            {
+                                m_message = "MASIC ScanStats file not found below " + diFolderInfo.FullName;
+                            }
+                            else
+                            {
+                                var fiSourceFile = new FileInfo(strNewestScanStatsFilePath);
+                                var bestSICFolderPath = fiSourceFile.Directory.FullName;
+                                return RetrieveScanAndSICStatsFiles(bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile: retrieveScanStatsFile, retrieveScanStatsExFile: retrieveScanStatsExFile, retrieveReporterIonsFile: retrieveReporterIonsFile, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            if (m_DebugLevel >= 1)
+            {
+                if (string.IsNullOrEmpty(m_message))
+                {
+
+                    LogMessage("RetrieveScanAndSICStatsFiles v1: Unknown Error", 0, true);
+                }
+                else
+                {
+
+                    LogMessage("RetrieveScanAndSICStatsFiles v1: " + m_message, 0, true);
+                }
+            }
+
+            return false;
+        }
+
+
+        /// <summary>
+        /// Retrieves the MASIC results for this dataset using the specified folder
+        /// </summary>
+        /// <param name="MASICResultsFolderPath">Source folder to copy files from</param>
+        /// <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="CreateStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+        /// <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveScanAndSICStatsFiles(string MASICResultsFolderPath, bool RetrieveSICStatsFile, bool createStoragePathInfoOnly, bool RetrieveScanStatsFile, bool RetrieveScanStatsExFile)
+        {
+
+            var lstNonCriticalFileSuffixes = new List<string>();
+            const bool RETRIEVE_REPORTERIONS_FILE = false;
+
+            return RetrieveScanAndSICStatsFiles(MASICResultsFolderPath, RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes);
+        }
+
+
+
+
+
+        /// <summary>
+        /// Retrieves the MASIC results for this dataset using the specified folder
+        /// </summary>
+        /// <param name="masicResultsFolderPath">Source folder to copy files from</param>
+        /// <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
+        /// <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
+        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        protected bool RetrieveScanAndSICStatsFiles(string masicResultsFolderPath, bool retrieveSICStatsFile, bool createStoragePathInfoOnly, bool retrieveScanStatsFile, bool retrieveScanStatsExFile, bool retrieveReporterIonsFile, List<string> lstNonCriticalFileSuffixes)
+        {
+
+            const int maxCopyAttempts = 2;
+
+            // Copy the MASIC files from the MASIC results folder
+
+            if (string.IsNullOrEmpty(masicResultsFolderPath))
+            {
+                m_message = "MASIC Results folder path not defined";
+
+
+            }
+            else if (masicResultsFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+            {
+                var diSICFolder = new DirectoryInfo(masicResultsFolderPath);
+
+                if (retrieveScanStatsFile)
+                {
+                    // Look for and copy the _ScanStats.txt file
+                    if (!RetrieveSICFileMyEMSL(m_DatasetName + SCAN_STATS_FILE_SUFFIX, diSICFolder.Name, lstNonCriticalFileSuffixes))
+                    {
+                        return false;
+                    }
+                }
+
+                if (retrieveScanStatsExFile)
+                {
+                    // Look for and copy the _ScanStatsEx.txt file
+                    if (!RetrieveSICFileMyEMSL(m_DatasetName + SCAN_STATS_EX_FILE_SUFFIX, diSICFolder.Name, lstNonCriticalFileSuffixes))
+                    {
+                        return false;
+                    }
+                }
+
+
+                if (retrieveSICStatsFile)
+                {
+                    // Look for and copy the _SICStats.txt file
+                    if (!RetrieveSICFileMyEMSL(m_DatasetName + "_SICStats.txt", diSICFolder.Name, lstNonCriticalFileSuffixes))
+                    {
+                        return false;
+                    }
+                }
+
+                if (retrieveReporterIonsFile)
+                {
+                    // Look for and copy the _SICStats.txt file
+                    if (!RetrieveSICFileMyEMSL(m_DatasetName + "_ReporterIons.txt", diSICFolder.Name, lstNonCriticalFileSuffixes))
+                    {
+                        return false;
+                    }
+                }
+
+                // All files have been found
+                // The calling process should download them using ProcessMyEMSLDownloadQueue()
+                return true;
+
+
+            }
+            else
+            {
+                var diFolderInfo = new DirectoryInfo(masicResultsFolderPath);
+
+                if (!diFolderInfo.Exists)
+                {
+                    m_message = "MASIC Results folder not found: " + diFolderInfo.FullName;
+
+                }
+                else
+                {
+                    if (retrieveScanStatsFile)
+                    {
+                        // Look for and copy the _ScanStats.txt file
+                        if (!RetrieveSICFileUNC(m_DatasetName + SCAN_STATS_FILE_SUFFIX, masicResultsFolderPath, createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
+                        {
+                            return false;
+                        }
+                    }
+
+                    if (retrieveScanStatsExFile)
+                    {
+                        // Look for and copy the _ScanStatsEx.txt file
+                        if (!RetrieveSICFileUNC(m_DatasetName + SCAN_STATS_EX_FILE_SUFFIX, masicResultsFolderPath, createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
+                        {
+                            return false;
+                        }
+                    }
+
+                    if (retrieveSICStatsFile)
+                    {
+                        // Look for and copy the _SICStats.txt file
+                        if (!RetrieveSICFileUNC(m_DatasetName + "_SICStats.txt", masicResultsFolderPath, createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
+                        {
+                            return false;
+                        }
+                    }
+
+                    if (retrieveReporterIonsFile)
+                    {
+                        // Look for and copy the _SICStats.txt file
+                        if (!RetrieveSICFileUNC(m_DatasetName + "_ReporterIons.txt", masicResultsFolderPath, createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
+                        {
+                            return false;
+                        }
+                    }
+
+                    // All files successfully copied
+                    return true;
+
+                }
+
+            }
+
+            if (m_DebugLevel >= 1)
+            {
+                if (string.IsNullOrEmpty(m_message))
+                {
+                    LogMessage("RetrieveScanAndSICStatsFiles v2: Unknown Error", 0, true);
+                }
+                else
+                {
+                    LogMessage("RetrieveScanAndSICStatsFiles v2: " + m_message, 0, true);
+                }
+            }
+
+            return false;
+
+        }
+
+
+
+
+        protected bool RetrieveSICFileMyEMSL(string strFileToFind, string strSICFolderName, List<string> lstNonCriticalFileSuffixes)
+        {
+
+            var matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(strFileToFind, strSICFolderName, m_DatasetName, recurse: false);
+
+            if (matchingMyEMSLFiles.Count > 0)
+            {
+                if (m_DebugLevel >= 3)
+                {
+                    LogDebugMessage("Found MASIC results file in MyEMSL, " + Path.Combine(strSICFolderName, strFileToFind));
+                }
+
+                m_MyEMSLUtilities.AddFileToDownloadQueue(matchingMyEMSLFiles.First().FileInfo);
+
+            }
+            else
+            {
+                bool blnIgnoreFile = false;
+                blnIgnoreFile = SafeToIgnore(strFileToFind, lstNonCriticalFileSuffixes);
+
+                if (!blnIgnoreFile)
+                {
+                    m_message = strFileToFind + " not found in MyEMSL, subfolder " + strSICFolderName;
+                    return false;
+                }
+            }
+
+            return true;
+
+        }
+
+
+
+        protected bool RetrieveSICFileUNC(string strFileToFind, string MASICResultsFolderPath, bool createStoragePathInfoOnly, int maxCopyAttempts, List<string> lstNonCriticalFileSuffixes)
+        {
+
+            var fiSourceFile = new FileInfo(Path.Combine(MASICResultsFolderPath, strFileToFind));
+
+            if (m_DebugLevel >= 3)
+            {
+                LogDebugMessage("Copying MASIC results file: " + fiSourceFile.FullName);
+            }
+
+            var blnIgnoreFile = SafeToIgnore(fiSourceFile.Name, lstNonCriticalFileSuffixes);
+
+            clsLogTools.LogLevels logMsgTypeIfNotFound;
+            if (blnIgnoreFile)
+            {
+                logMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG;
+            }
+            else
+            {
+                logMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
+            }
+
+            var success = CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, logMsgTypeIfNotFound, createStoragePathInfoOnly, maxCopyAttempts);
+            if (!success)
+            {
+                if (blnIgnoreFile)
+                {
+                    if (m_DebugLevel >= 3)
+                    {
+                        LogDebugMessage("  File not found; this is not a problem");
+                    }
+                }
+                else
+                {
+                    LogError(strFileToFind + " not found at " + fiSourceFile.Directory.FullName);
+                    return false;
+                }
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
+        /// </summary>
+        /// <param name="RawDataType">Type of data to copy</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveSpectra(string RawDataType)
+        {
+            const bool createStoragePathInfoOnly = false;
+            return RetrieveSpectra(RawDataType, createStoragePathInfoOnly);
+        }
+
+        /// <summary>
+        /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
+        /// </summary>
+        /// <param name="RawDataType">Type of data to copy</param>
+        /// <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveSpectra(string RawDataType, bool createStoragePathInfoOnly)
+        {
+            return RetrieveSpectra(RawDataType, createStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT);
+        }
+
+
+
+        // <summary>
+        /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
+        /// </summary>
+        /// <param name="RawDataType">Type of data to copy</param>
+        /// <param name="CreateStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
+        /// <param name="maxAttempts">Maximum number of attempts</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        public bool RetrieveSpectra(string RawDataType, bool createStoragePathInfoOnly, int maxAttempts)
+        {
+
+            var blnSuccess = false;
+            string StoragePath = m_jobParams.GetParam("DatasetStoragePath");
+
+            LogMessage("Retrieving spectra file(s)");
+
+            var eRawDataType = GetRawDataType(RawDataType);
+            switch (eRawDataType)
+            {
+                case eRawDataTypeConstants.AgilentDFolder:
+                    //Agilent ion trap data
+
+                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) || StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()))
+                    {
+                        // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
+                        //  we would pre-process the data beforehand to create MGF files
+                        // The following call can be used to retrieve the files
+                        blnSuccess = RetrieveMgfFile(GetCdfAlso: true, createStoragePathInfoOnly: createStoragePathInfoOnly, maxAttempts: maxAttempts);
+                    }
+                    else
+                    {
+                        // DeconTools_V2 now supports reading the .D files directly
+                        // Call RetrieveDotDFolder() to copy the folder and all subfolders
+                        blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles: true);
+                    }
+
+                    break;
+                case eRawDataTypeConstants.AgilentQStarWiffFile:
+                    //Agilent/QSTAR TOF data
+                    blnSuccess = RetrieveDatasetFile(DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+
+                    break;
+                case eRawDataTypeConstants.ZippedSFolders:
+                    //FTICR data
+                    blnSuccess = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts);
+
+                    break;
+                case eRawDataTypeConstants.ThermoRawFile:
+                    //Finnigan ion trap/LTQ-FT data
+                    blnSuccess = RetrieveDatasetFile(DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+
+                    break;
+                case eRawDataTypeConstants.MicromassRawFolder:
+                    //Micromass QTOF data
+                    blnSuccess = RetrieveDotRawFolder(createStoragePathInfoOnly, maxAttempts);
+
+                    break;
+                case eRawDataTypeConstants.UIMF:
+                    //IMS UIMF data
+                    blnSuccess = RetrieveDatasetFile(DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+
+                    break;
+                case eRawDataTypeConstants.mzXML:
+                    blnSuccess = RetrieveDatasetFile(DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+
+                    break;
+                case eRawDataTypeConstants.mzML:
+                    blnSuccess = RetrieveDatasetFile(DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+
+                    break;
+                case eRawDataTypeConstants.BrukerFTFolder:
+                case eRawDataTypeConstants.BrukerTOFBaf:
+                    // Call RetrieveDotDFolder() to copy the folder and all subfolders
+
+                    // Both the MSXml step tool and DeconTools require the .Baf file
+                    // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, we need the file
+                    // In contrast, ICR-2LS only needs the ser or FID file, plus the apexAcquisition.method file in the .md folder
+
+                    var blnSkipBAFFiles = false;
+
+                    var strStepTool = m_jobParams.GetJobParameter("StepTool", "Unknown");
+
+                    if (strStepTool == "ICR2LS")
+                    {
+                        blnSkipBAFFiles = true;
+                    }
+
+                    blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles);
+
+                    break;
+                case eRawDataTypeConstants.BrukerMALDIImaging:
+                    blnSuccess = RetrieveBrukerMALDIImagingFolders(UnzipOverNetwork: true);
+
+                    break;
+                default:
+                    // RawDataType is not recognized or not supported by this function
+                    if (eRawDataType == eRawDataTypeConstants.Unknown)
+                    {
+
+                        LogError("Invalid data type specified: " + RawDataType);
+                    }
+                    else
+                    {
+
+                        LogError("Data type " + RawDataType + " is not supported by the RetrieveSpectra function");
+                    }
+                    break;
+            }
+
+            //Return the result of the spectra retrieval
+            return blnSuccess;
+        }
+
+
+
+        ///
+        /// <summary>
+        /// Retrieves an Agilent or Bruker .D folder for the analysis job in progress
+        /// </summary>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveDotDFolder(bool createStoragePathInfoOnly, int maxAttempts, bool blnSkipBAFFiles)
+        {
+            var objFileNamesToSkip = new List<string>();
+            if (blnSkipBAFFiles)
+            {
+                objFileNamesToSkip.Add("analysis.baf");
+            }
+
+            return RetrieveDotXFolder(DOT_D_EXTENSION, createStoragePathInfoOnly, maxAttempts, objFileNamesToSkip);
+        }
+
+        /// <summary>
+        /// Retrieves a Micromass .raw folder for the analysis job in progress
+        /// </summary>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveDotRawFolder(bool createStoragePathInfoOnly, int maxAttempts)
+        {
+            return RetrieveDotXFolder(DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts, new List<string>());
+        }
+
+        /// <summary>
+        /// Retrieves a folder with a name like Dataset.D or Dataset.Raw
+        /// </summary>
+        /// <param name="FolderExtension">Extension on the folder; for example, ".D"</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveDotXFolder(string FolderExtension, bool createStoragePathInfoOnly, int maxAttempts, List<string> objFileNamesToSkip)
+        {
+
+            //Copies a data folder ending in FolderExtension to the working directory
+
+            //Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
+            string DSFolderPath = FindDotXFolder(FolderExtension, assumeUnpurged: false);
+
+            if (string.IsNullOrEmpty(DSFolderPath))
+            {
+                return false;
+            }
+
+            if ((DSFolderPath.StartsWith(MYEMSL_PATH_FLAG)))
+            {
+                // Queue the MyEMSL files for download
+                foreach (var udtArchiveFile in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles)
+                {
+                    m_MyEMSLUtilities.AddFileToDownloadQueue(udtArchiveFile.FileInfo);
+                }
+                return true;
+            }
+
+            //Do the copy
+            try
+            {
+                var diSourceFolder = new DirectoryInfo(DSFolderPath);
+                if (!diSourceFolder.Exists)
+                {
+                    LogError("Source dataset folder not found: " + diSourceFolder.FullName);
+                    m_message = "Source dataset folder not found";
+                    return false;
+                }
+
+                var destFolderPath = Path.Combine(m_WorkingDir, diSourceFolder.Name);
+
+                if (createStoragePathInfoOnly)
+                {
+                    CreateStoragePathInfoFile(diSourceFolder.FullName, destFolderPath);
+                }
+                else
+                {
+                    // Copy the directory and all subdirectories
+                    // Skip any files defined by objFileNamesToSkip
+                    if (m_DebugLevel >= 1)
+                    {
+                        LogMessage("Retrieving folder " + diSourceFolder.FullName);
+                    }
+                    ResetTimestampForQueueWaitTimeLogging();
+                    m_FileTools.CopyDirectory(diSourceFolder.FullName, destFolderPath, objFileNamesToSkip);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error copying folder " + DSFolderPath, ex);
+                return false;
+            }
+
+            // If we get here, all is fine
+            return true;
+
+        }
+
+        /// <summary>
+        /// Retrieves a data from a Bruker MALDI imaging dataset
+        /// The data is stored as zip files with names like 0_R00X433.zip
+        /// This data is unzipped into a subfolder in the Chameleon cached data folder
+        /// </summary>
+        /// <param name="UnzipOverNetwork"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public bool RetrieveBrukerMALDIImagingFolders(bool UnzipOverNetwork)
+        {
+
+
+            const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
+
+            string ChameleonCachedDataFolder = m_mgrParams.GetParam("ChameleonCachedDataFolder");
+            DirectoryInfo diCachedDataFolder = null;
+
+            string strUnzipFolderPathBase = null;
+
+            Queue<string> strFilesToDelete = new Queue<string>();
+
+            string strZipFilePathRemote = string.Empty;
+            string strZipFilePathToExtract;
+
+            bool blnUnzipFile = false;
+
+            bool blnApplySectionFilter = false;
+
+            try
+            {
+                if (string.IsNullOrEmpty(ChameleonCachedDataFolder))
+                {
+
+                    LogError("Chameleon cached data folder not defined; unable to unzip MALDI imaging data");
+                    m_message = "Chameleon cached data folder not defined";
+                    return false;
+                }
+
+                // Delete any subfolders at ChameleonCachedDataFolder that do not have this dataset's name
+                diCachedDataFolder = new DirectoryInfo(ChameleonCachedDataFolder);
+                if (!diCachedDataFolder.Exists)
+                {
+
+                    LogError("Chameleon cached data folder does not exist: " + diCachedDataFolder.FullName);
+                    m_message = "Chameleon cached data folder does not exist";
+                    return false;
+                }
+                else
+                {
+                    strUnzipFolderPathBase = Path.Combine(diCachedDataFolder.FullName, m_DatasetName);
+                }
+
+                foreach (DirectoryInfo diSubFolder in diCachedDataFolder.GetDirectories())
+                {
+                    if (!clsGlobal.IsMatch(diSubFolder.Name, m_DatasetName))
+                    {
+                        // Delete this directory
+                        try
+                        {
+                            if (m_DebugLevel >= 2)
+                            {
+
+                                LogMessage("Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName);
+                            }
+
+                            if (m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe"))
+                            {
+
+                                LogMessage(" Skipping delete since this is a development computer");
+                            }
+                            else
+                            {
+                                diSubFolder.Delete(true);
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+
+                            LogError("Error deleting cached subfolder " + diSubFolder.FullName, ex);
+                            m_message = "Error deleting cached subfolder";
+                            return false;
+                        }
+                    }
+                }
+
+                // Delete any .mis files that do not start with this dataset's name
+                foreach (FileInfo fiFile in diCachedDataFolder.GetFiles("*.mis"))
+                {
+                    if (!clsGlobal.IsMatch(Path.GetFileNameWithoutExtension(fiFile.Name), m_DatasetName))
+                    {
+                        fiFile.Delete();
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                LogError("Error cleaning out old data from the Chameleon cached data folder", ex);
+                return false;
+            }
+
+            // See if any imaging section filters are defined
+            int StartSectionX;
+            int EndSectionX;
+            blnApplySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, out StartSectionX, out EndSectionX);
+
+            // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
+            // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
+            var serverPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder: true);
+
+
+            try
+            {
+                string[] MisFiles = null;
+                string strImagingSeqFilePathFinal = null;
+
+                // Look for the .mis file (ImagingSequence file) 
+                strImagingSeqFilePathFinal = Path.Combine(diCachedDataFolder.FullName, m_DatasetName + ".mis");
+
+
+                if (!File.Exists(strImagingSeqFilePathFinal))
+                {
+                    // Copy the .mis file (ImagingSequence file) over from the storage server
+                    MisFiles = Directory.GetFiles(serverPath, "*.mis");
+
+                    if (MisFiles.Length == 0)
+                    {
+                        // No .mis files were found; unable to continue
+                        LogError("ImagingSequence (.mis) file not found in dataset folder; unable to process MALDI imaging data");
+                        return false;
+                    }
+                    else
+                    {
+                        // We'll copy the first file in MisFiles[0]
+                        // Log a warning if we will be renaming the file
+
+                        if (!clsGlobal.IsMatch(Path.GetFileName(MisFiles[0]), strImagingSeqFilePathFinal))
+                        {
+
+                            LogMessage("Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles[0]) + " to " + Path.GetFileName(strImagingSeqFilePathFinal));
+                        }
+
+                        if (!CopyFileWithRetry(MisFiles[0], strImagingSeqFilePathFinal, true))
+                        {
+                            // Abort processing
+                            LogError("Error copying ImagingSequence (.mis) file; unable to process MALDI imaging data");
+                            return false;
+                        }
+
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                LogError("Error obtaining ImagingSequence (.mis) file", ex);
+                return false;
+            }
+
+
+            try
+            {
+                // Unzip each of the *R*X*.zip files to the Chameleon cached data folder
+
+                // However, consider limits defined by job params BrukerMALDI_Imaging_StartSectionX and BrukerMALDI_Imaging_EndSectionX
+                // when processing the files
+
+                string[] ZipFiles = null;
+                ZipFiles = Directory.GetFiles(serverPath, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK);
+
+                var reRegExRXY = new Regex(@"R(?<R>\d+)X(?<X>\d+)Y(?<Y>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var reRegExRX = new Regex(@"R(?<R>\d+)X(?<X>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                foreach (var zipFilePath in ZipFiles)
+                {
+                    strZipFilePathRemote = zipFilePath;
+
+                    if (blnApplySectionFilter)
+                    {
+                        blnUnzipFile = false;
+
+                        // Determine the R, X, and Y coordinates for this .Zip file
+                        int CoordR = 0;
+                        int CoordX = 0;
+                        int CoordY = 0;
+
+                        if (GetBrukerImagingFileCoords(strZipFilePathRemote, reRegExRXY, reRegExRX, out CoordR, out CoordX, out CoordY))
+                        {
+                            // Compare to StartSectionX and EndSectionX
+                            if (CoordX >= StartSectionX && CoordX <= EndSectionX)
+                            {
+                                blnUnzipFile = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        blnUnzipFile = true;
+                    }
+
+                    // Open up the zip file over the network and get a listing of all of the files
+                    // If they already exist in the cached data folder, then there is no need to continue
+
+
+                    if (blnUnzipFile)
+                    {
+                        // Set this to false for now
+                        blnUnzipFile = false;
+
+                        var objZipfile = new Ionic.Zip.ZipFile(strZipFilePathRemote);
+
+                        foreach (Ionic.Zip.ZipEntry objEntry in objZipfile.Entries)
+                        {
+
+                            if (!objEntry.IsDirectory)
+                            {
+                                string strPathToCheck = null;
+                                strPathToCheck = Path.Combine(strUnzipFolderPathBase, objEntry.FileName.Replace('/', '\\'));
+
+                                if (!File.Exists(strPathToCheck))
+                                {
+                                    blnUnzipFile = true;
+                                    break; // TODO: might not be correct. Was : Exit For
+                                }
+                            }
+                        }
+                    }
+
+                    if (blnUnzipFile)
+                    {
+                        // Unzip the file to the Chameleon cached data folder
+                        // If UnzipOverNetwork=True, then we want to copy the file locally first
+
+                        if (UnzipOverNetwork)
+                        {
+                            strZipFilePathToExtract = string.Copy(strZipFilePathRemote);
+                        }
+                        else
+                        {
+
+                            try
+                            {
+                                // Copy the file to the work directory on the local computer
+                                strZipFilePathToExtract = Path.Combine(m_WorkingDir, Path.GetFileName(strZipFilePathRemote));
+
+                                if (m_DebugLevel >= 2)
+                                {
+
+                                    LogMessage("Copying " + strZipFilePathRemote);
+                                }
+
+                                if (!CopyFileWithRetry(strZipFilePathRemote, strZipFilePathToExtract, true))
+                                {
+                                    // Abort processing
+                                    LogError("Error copying Zip file; unable to process MALDI imaging data");
+                                    return false;
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+
+                                LogError("Error copying zipped instrument data, file " + strZipFilePathRemote, ex);
+                                return false;
+                            }
+                        }
+
+                        // Now use Ionic to unzip strZipFilePathLocal to the data cache folder
+                        // Do not overwrite existing files (assume they're already valid)
+
+                        try
+                        {
+                            using (var objZipfile = new Ionic.Zip.ZipFile(strZipFilePathToExtract))
+                            {
+                                if (m_DebugLevel >= 2)
+                                {
+
+                                    LogMessage("Unzipping " + strZipFilePathToExtract);
+                                }
+
+                                objZipfile.ExtractAll(strUnzipFolderPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite);
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+
+                            LogError("Error extracting zipped instrument data, file " + strZipFilePathToExtract, ex);
+                            return false;
+                        }
+
+                        if (!UnzipOverNetwork)
+                        {
+                            // Need to delete the zip file that we copied locally
+                            // However, Ionic may have a file handle open so we use a queue to keep track of files that need to be deleted
+
+                            DeleteQueuedFiles(strFilesToDelete, strZipFilePathToExtract);
+                        }
+
+                    }
+
+                }
+
+                if (!UnzipOverNetwork)
+                {
+                    DateTime dtStartTime = DateTime.UtcNow;
+
+                    while (strFilesToDelete.Count > 0)
+                    {
+                        // Try to process the files remaining in queue strFilesToDelete
+
+                        DeleteQueuedFiles(strFilesToDelete, string.Empty);
+
+                        if (strFilesToDelete.Count > 0)
+                        {
+                            if (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 20)
+                            {
+                                // Stop trying to delete files; it's not worth continuing to try
+                                LogMessage("Unable to delete all of the files in queue strFilesToDelete; " +
+                                    "Queue Length = " + strFilesToDelete.Count.ToString() + "; " +
+                                    "this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)");
+                                break;
+                            }
+
+                            Thread.Sleep(500);
+                        }
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                LogError("Error extracting zipped instrument data from " + strZipFilePathRemote, ex);
+                return false;
+            }
+
+            // If we get here, all is fine
+            return true;
+
+
+        }
+
+        /// <summary>
+        /// Unzips dataset folders to working directory
+        /// </summary>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        private bool RetrieveSFolders(bool createStoragePathInfoOnly, int maxAttempts)
+        {
+
+            string[] ZipFiles = null;
+            string DSWorkFolder = null;
+
+            string sourceFilePath = null;
+            string TargetFolderPath = null;
+
+
+            try
+            {
+                //First Check for the existence of a 0.ser Folder
+                //If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
+                string DSFolderPath = FindValidFolder(m_DatasetName, fileNameToFind: "", folderNameToFind: BRUKER_ZERO_SER_FOLDER, maxRetryCount: maxAttempts, logFolderNotFound: true, retrievingInstrumentDataFolder: true);
+
+                if (!string.IsNullOrEmpty(DSFolderPath))
+                {
+                    var diSourceFolder = new DirectoryInfo(Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER));
+
+                    if (diSourceFolder.Exists)
+                    {
+                        if (createStoragePathInfoOnly)
+                        {
+                            if (CreateStoragePathInfoFile(diSourceFolder.FullName, m_WorkingDir + @"\"))
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            // Copy the 0.ser folder to the Work directory
+                            // First create the 0.ser subfolder
+                            var diTargetFolder = Directory.CreateDirectory(Path.Combine(m_WorkingDir, BRUKER_ZERO_SER_FOLDER));
+
+                            // Now copy the files from the source 0.ser folder to the target folder
+                            // Typically there will only be two files: ACQUS and ser
+                            foreach (var fiFile in diSourceFolder.GetFiles())
+                            {
+                                if (!CopyFileToWorkDir(fiFile.Name, diSourceFolder.FullName, diTargetFolder.FullName))
+                                {
+                                    // Error has alredy been logged
+                                    return false;
+                                }
+                            }
+
+                            return true;
+                        }
+                    }
+
+                }
+
+                //If the 0.ser folder does not exist, unzip the zipped s-folders
+                //Copy the zipped s-folders from archive to work directory
+                if (!CopySFoldersToWorkDir(createStoragePathInfoOnly))
+                {
+                    //Error messages have already been logged, so just exit
+                    return false;
+                }
+
+                if (createStoragePathInfoOnly)
+                {
+                    // Nothing was copied locally, so nothing to unzip
+                    return true;
+                }
+
+
+                // Get a listing of the zip files to process
+                ZipFiles = Directory.GetFiles(m_WorkingDir, "s*.zip");
+                if (ZipFiles.GetLength(0) < 1)
+                {
+                    LogError("No zipped s-folders found in working directory");
+                    return false;
+                }
+
+                // Create a dataset subdirectory under the working directory
+                DSWorkFolder = Path.Combine(m_WorkingDir, m_DatasetName);
+                Directory.CreateDirectory(DSWorkFolder);
+
+                // Set up the unzipper
+                var zipTools = new clsIonicZipTools(m_DebugLevel, DSWorkFolder);
+                RegisterEvents(zipTools);
+
+                // Unzip each of the zip files to the working directory
+                foreach (string zipFilePath in ZipFiles)
+                {
+                    if (m_DebugLevel > 3)
+                    {
+                        LogMessage("Unzipping file " + zipFilePath);
+                    }
+                    try
+                    {
+                        TargetFolderPath = Path.Combine(DSWorkFolder, Path.GetFileNameWithoutExtension(zipFilePath));
+                        Directory.CreateDirectory(TargetFolderPath);
+
+                        sourceFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(zipFilePath));
+
+                        if (!zipTools.UnzipFile(sourceFilePath, TargetFolderPath))
+                        {
+                            LogError("Error unzipping file " + zipFilePath);
+                            return false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("Exception while unzipping s-folders", ex);
+                        return false;
+                    }
+                }
+
+                Thread.Sleep(125);
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                // Delete all s*.zip files in working directory
+                foreach (string zipFilePath in ZipFiles)
+                {
+                    try
+                    {
+                        File.Delete(Path.Combine(m_WorkingDir, Path.GetFileName(zipFilePath)));
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("Exception deleting file " + zipFilePath, ex);
+                        return false;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RetrieveSFolders", ex);
+                return false;
+            }
+
+            // Got to here, so everything must have worked
+            return true;
+
+        }
+
+
+        protected bool RetrieveOrgDB(string LocalOrgDBFolder)
+        {
+            var udtHPCOptions = new udtHPCOptionsType();
+            return RetrieveOrgDB(LocalOrgDBFolder, udtHPCOptions);
+        }
+
+
+
+        /// <summary>
+        /// Uses Ken's dll to create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
+        /// </summary>
+        /// <param name="LocalOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
+        protected bool RetrieveOrgDB(string LocalOrgDBFolder, udtHPCOptionsType udtHPCOptions)
+        {
+
+            Console.WriteLine();
+            if (m_DebugLevel >= 3)
+            {
+                LogMessage("Obtaining org db file");
+            }
+
+            try
+            {
+                var proteinCollectionInfo = new clsProteinCollectionInfo(m_jobParams);
+
+                double requiredFreeSpaceMB = 0;
+
+                if (proteinCollectionInfo.UsingLegacyFasta)
+                {
+                    // Estimate the drive space required to download the fasta file and its associated MSGF+ the index files
+                    requiredFreeSpaceMB = LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo);
+                }
+
+                if (!udtHPCOptions.UsingHPC)
+                {
+                    // Delete old fasta files and suffix array files if getting low on disk space
+                    // Do not delete any files related to the current Legacy Fasta file (if defined)
+
+                    const int freeSpaceThresholdPercent = 20;
+
+                    string legacyFastaFileBaseName = string.Empty;
+
+                    if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) && !(proteinCollectionInfo.LegacyFastaName.ToLower() == "na"))
+                    {
+                        legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
+                    }
+
+                    PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
+                }
+
+                // Make a new fasta file from scratch
+                if (!CreateFastaFile(proteinCollectionInfo, LocalOrgDBFolder))
+                {
+                    // There was a problem. Log entries in lower-level routines provide documentation
+                    return false;
+                }
+
+                // Fasta file was successfully generated. Put the name of the generated fastafile in the
+                // job data class for other methods to use
+                if (!m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName))
+                {
+                    LogError("Error adding parameter 'generatedFastaName' to m_jobParams");
+                    return false;
+                }
+
+                if (!udtHPCOptions.UsingHPC)
+                {
+                    // Delete old fasta files and suffix array files if getting low on disk space
+                    // No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
+                    const int freeSpaceThresholdPercent = 20;
+                    PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, 0, "");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in RetrieveOrgDB", ex);
+                return false;
+            }
+
+            //We got to here OK, so return
+            return true;
+
+
+        }
+
+
+
+
+        /// <summary>
+        /// Overrides base class version of the function to creates a Sequest params file compatible 
+        /// with the Bioworks version on this System. Uses ParamFileGenerator dll provided by Ken Auberry
+        /// </summary>
+        /// <param name="paramFileName">Name of param file to be created</param>
+        /// <returns>True for success; False for failure</returns>
+        protected bool RetrieveGeneratedParamFile(string paramFileName)
+        {
+
+            IGenerateFile ParFileGen = null;
+            bool blnSuccess = false;
+
+            try
+            {
+                LogMessage("Retrieving parameter file " + paramFileName);
+
+                ParFileGen = new ParamFileGenerator.MakeParams.clsMakeParameterFile();
+                ParFileGen.TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc");
+
+                // Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
+                // Furthermore, the full path to the fasta file is only necessary when creating Sequest parameter files
+                var toolName = m_jobParams.GetParam("ToolName", string.Empty);
+                if (string.IsNullOrWhiteSpace(toolName))
+                {
+                    m_message = "Job parameter ToolName is empty";
+                    return false;
+                }
+
+                var paramFileType = SetParamfileType(toolName);
+                if (paramFileType == IGenerateFile.ParamFileType.Invalid)
+                {
+                    m_message = "Tool " + toolName + " is not supported by the ParamFileGenerator; update clsAnalysisResources and ParamFileGenerator.dll";
+                    return false;
+                }
+
+                var fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+
+                // Gigasax.DMS5
+                var connectionString = m_mgrParams.GetParam("connectionstring");
+                int datasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0);
+
+                blnSuccess = ParFileGen.MakeFile(paramFileName, paramFileType, fastaFilePath, m_WorkingDir, connectionString, datasetID);
+
+
+                // Examine the size of the ModDefs.txt file
+                // Add it to the ignore list if it is empty (no point in tracking a 0-byte file)
+                var fiModDefs = new FileInfo(Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
+                if (fiModDefs.Exists && fiModDefs.Length == 0)
+                {
+                    m_jobParams.AddResultFileToSkip(fiModDefs.Name);
+                }
+
+                if (blnSuccess)
+                {
+                    if (m_DebugLevel >= 3)
+                    {
+                        LogMessage("Successfully retrieved param file: " + paramFileName);
+                    }
+
+                    return true;
+                }
+                else
+                {
+                    LogError(m_message + ": " + ParFileGen.LastError);
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                if (string.IsNullOrWhiteSpace(m_message))
+                {
+                    m_message = "Error retrieving parameter file";
+                }
+
+                LogError(m_message, ex);
+
+                if ((ParFileGen != null))
+                {
+                    if (!string.IsNullOrWhiteSpace(ParFileGen.LastError))
+                    {
+                        LogMessage("Error converting param file: " + ParFileGen.LastError, 0, true);
+                    }
+                }
+                return false;
+            }
+
+        }
+
+
+
+
+        /// <summary>
+        /// This is just a generic function to copy files to the working directory
+        /// </summary>
+        /// <param name="fileName">Name of file to be copied</param>
+        /// <param name="sourceFolderPath">Source folder that has the file</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        protected bool RetrieveFile(string fileName, string sourceFolderPath)
+        {
+
+            //Copy the file
+            if (!CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            {
+                return false;
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// This is just a generic function to copy files to the working directory
+        /// </summary>
+        /// <param name="fileName">Name of file to be copied</param>
+        /// <param name="sourceFolderPath">Source folder that has the file</param>
+        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
+        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        protected bool RetrieveFile(string fileName, string sourceFolderPath, int maxCopyAttempts, clsLogTools.LogLevels logMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR)
+        {
+
+            //Copy the file
+            if (maxCopyAttempts < 1)
+                maxCopyAttempts = 1;
+            if (!CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts))
+            {
+                return false;
+            }
+
+            return true;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Finds the _DTA.txt file for this dataset
+        /// </summary>
+        /// <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
+        /// <remarks></remarks>
+        public string FindCDTAFile(out string strErrorMessage)
+        {
+
+            strErrorMessage = string.Empty;
+
+            //Retrieve zipped DTA file
+            var sourceFileName = m_DatasetName + "_dta.zip";
+            var sourceFolderPath = FindDataFile(sourceFileName);
+
+            if (!string.IsNullOrEmpty(sourceFolderPath))
+            {
+                if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    // add the _dta.zip file name to the folder path found by FindDataFile
+                    return clsMyEMSLUtilities.AddFileToMyEMSLFolderPath(sourceFolderPath, sourceFileName);
+                }
+                else
+                {
+                    // Return the path to the _dta.zip file
+                    return Path.Combine(sourceFolderPath, sourceFileName);
+                }
+            }
+
+            // Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
+
+            sourceFileName = m_DatasetName + "_dta.txt";
+            sourceFolderPath = FindDataFile(sourceFileName);
+
+            if (string.IsNullOrEmpty(sourceFolderPath))
+            {
+                // No folder found containing the zipped DTA files; return False
+                // (the FindDataFile procedure should have already logged an error)
+                strErrorMessage = "Could not find " + sourceFileName + " using FindDataFile";
+                return string.Empty;
+            }
+            else
+            {
+                LogMessage("Warning: could not find the _dta.zip file, but was able to find " + sourceFileName + " in folder " + sourceFolderPath);
+
+                if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    return sourceFolderPath;
+                }
+                else
+                {
+                    // Return the path to the _dta.txt file
+                    return Path.Combine(sourceFolderPath, sourceFileName);
+                }
+
+            }
+
+        }
+
+        /// <summary>
+        /// Finds the .pbf (PNNL Binary Format) file for this dataset
+        /// </summary>
+        /// <returns>The path to the .pbf file</returns>
+        /// <remarks></remarks>
+        protected string FindPBFFile(out string strErrorMessage)
+        {
+
+            string SourceFileName = null;
+            string SourceFolderPath = null;
+
+            strErrorMessage = string.Empty;
+
+            SourceFileName = m_DatasetName + DOT_PBF_EXTENSION;
+            SourceFolderPath = FindDataFile(SourceFileName);
+
+            if (!string.IsNullOrEmpty(SourceFolderPath))
+            {
+                if (SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    return SourceFolderPath;
+                }
+                else
+                {
+                    // Return the path to the .pbf file
+                    return Path.Combine(SourceFolderPath, SourceFileName);
+                }
+            }
+
+            strErrorMessage = "Could not find " + SourceFileName + " using FindDataFile";
+            return string.Empty;
+
+        }
+
+        /// <summary>
+        /// Retrieves the _DTA.txt file (either zipped or unzipped).  
+        /// </summary>
+        /// <returns>TRUE for success, FALSE for error</returns>
+        /// <remarks>If the _dta.zip or _dta.txt file already exists in the working folder then will not re-copy it from the remote folder</remarks>
+        public bool RetrieveDtaFiles()
+        {
+
+            string targetZipFilePath = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.zip");
+            string targetCDTAFilePath = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt");
+
+
+            if (!File.Exists(targetCDTAFilePath) & !File.Exists(targetZipFilePath))
+            {
+                string strErrorMessage = string.Empty;
+
+                // Find the CDTA file
+                var sourceFilePath = FindCDTAFile(out strErrorMessage);
+
+                if (string.IsNullOrEmpty(sourceFilePath))
+                {
+                    LogError(strErrorMessage);
+                    return false;
+                }
+
+                if (sourceFilePath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
+                    if (m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    {
+                        if (m_DebugLevel >= 1)
+                        {
+                            LogMessage("Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL");
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                }
+                else
+                {
+                    var fiSourceFile = new FileInfo(sourceFilePath);
+
+                    // Copy the file locally
+                    if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                    {
+                        m_message = "Error copying " + fiSourceFile.Name;
+                        if (m_DebugLevel >= 2)
+                        {
+                            LogMessage("CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName, 0, true);
+                        }
+                        return false;
+                    }
+                    else
+                    {
+                        if (m_DebugLevel >= 1)
+                        {
+                            LogMessage("Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName);
+                        }
+                    }
+                }
+
+            }
+
+
+            if (!File.Exists(targetCDTAFilePath))
+            {
+                if (!File.Exists(targetZipFilePath))
+                {
+                    LogError(Path.GetFileName(targetZipFilePath) + " not found in the working directory; cannot unzip in RetrieveDtaFiles");
+                    return false;
+                }
+
+                // Unzip concatenated DTA file
+                LogMessage("Unzipping concatenated DTA file");
+                if (UnzipFileStart(targetZipFilePath, m_WorkingDir, "RetrieveDtaFiles", false))
+                {
+                    if (m_DebugLevel >= 1)
+                    {
+                        LogDebugMessage("Concatenated DTA file unzipped");
+                    }
+                }
+
+                // Delete the _DTA.zip file to free up some disk space
+                Thread.Sleep(100);
+                if (m_DebugLevel >= 3)
+                {
+                    LogDebugMessage("Deleting the _DTA.zip file");
+                }
+
+                try
+                {
+                    Thread.Sleep(125);
+                    PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                    File.Delete(targetZipFilePath);
+                }
+                catch (Exception ex)
+                {
+                    LogError("Error deleting the _DTA.zip file", ex);
+                }
+
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Retrieves zipped, concatenated OUT file, unzips, and splits into individual OUT files
+        /// </summary>
+        /// <param name="UnConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
+        /// <returns>TRUE for success, FALSE for error</returns>
+        /// <remarks></remarks>
+        protected bool RetrieveOutFiles(bool UnConcatenate)
+        {
+
+            //Retrieve zipped OUT file
+            string ZippedFileName = m_DatasetName + "_out.zip";
+            string ZippedFolderName = FindDataFile(ZippedFileName);
+
+            if (string.IsNullOrEmpty(ZippedFolderName))
+                return false;
+            //No folder found containing the zipped OUT files
+            //Copy the file
+            if (!CopyFileToWorkDir(ZippedFileName, ZippedFolderName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            {
+                return false;
+            }
+
+            //Unzip concatenated OUT file
+            LogMessage("Unzipping concatenated OUT file");
+            if (UnzipFileStart(Path.Combine(m_WorkingDir, ZippedFileName), m_WorkingDir, "RetrieveOutFiles", false))
+            {
+                if (m_DebugLevel >= 1)
+                {
+                    LogMessage("Concatenated OUT file unzipped");
+                }
+            }
+
+            //Unconcatenate OUT file if needed
+            if (UnConcatenate)
+            {
+                LogMessage("Splitting concatenated OUT file");
+
+                var fiSourceFile = new FileInfo(Path.Combine(m_WorkingDir, m_DatasetName + "_out.txt"));
+
+                if (!fiSourceFile.Exists)
+                {
+                    m_message = "_OUT.txt file not found after unzipping";
+                    return false;
+                }
+                else if (fiSourceFile.Length == 0)
+                {
+                    m_message = "_OUT.txt file is empty (zero-bytes)";
+                    return false;
+                }
+
+                clsSplitCattedFiles FileSplitter = new clsSplitCattedFiles();
+                FileSplitter.SplitCattedOutsOnly(m_DatasetName, m_WorkingDir);
+
+                if (m_DebugLevel >= 1)
+                {
+                    LogDebugMessage("Completed splitting concatenated OUT file");
+                }
+            }
+
+            return true;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Creates the specified settings file from db info
+        /// </summary>
+        /// <returns>TRUE if file created successfully; FALSE otherwise</returns>
+        /// <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
+        protected internal bool RetrieveSettingsFileFromDb()
+        {
+
+            string OutputFile = Path.Combine(m_WorkingDir, m_jobParams.GetParam("SettingsFileName"));
+
+            return CreateSettingsFile(m_jobParams.GetParam("ParameterXML"), OutputFile);
+
+        }
+
+
+
+
+        /// <summary>
+        /// Returns True if the filename ends with any of the suffixes in lstNonCriticalFileSuffixes
+        /// </summary>
+        /// <param name="strFileName"></param>
+        /// <param name="lstNonCriticalFileSuffixes"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected bool SafeToIgnore(string strFileName, List<string> lstNonCriticalFileSuffixes)
+        {
+
+
+            if ((lstNonCriticalFileSuffixes != null))
+            {
+                strFileName = strFileName.ToLower();
+                foreach (string strSuffix in lstNonCriticalFileSuffixes)
+                {
+                    if (strFileName.EndsWith(strSuffix.ToLower()))
+                    {
+                        // It's OK that this file is missing
+                        return true;
+                    }
+                }
+
+            }
+
+            return false;
+
+        }
+
+
+
+        /// <summary>
+        /// Specifies the Bioworks version for use by the Param File Generator DLL
+        /// </summary>
+        /// <param name="toolName">Version specified in mgr config file</param>
+        /// <returns>IGenerateFile.ParamFileType based on input version</returns>
+        /// <remarks></remarks>
+        protected IGenerateFile.ParamFileType SetParamfileType(string toolName)
+        {
+
+
+            var toolNameToTypeMapping = new Dictionary<String, IGenerateFile.ParamFileType>(StringComparer.CurrentCultureIgnoreCase);
+            toolNameToTypeMapping.Add("sequest", IGenerateFile.ParamFileType.BioWorks_Current);
+            toolNameToTypeMapping.Add("xtandem", IGenerateFile.ParamFileType.X_Tandem);
+            toolNameToTypeMapping.Add("inspect", IGenerateFile.ParamFileType.Inspect);
+            toolNameToTypeMapping.Add("msgfplus", IGenerateFile.ParamFileType.MSGFPlus);
+            toolNameToTypeMapping.Add("msalign_histone", IGenerateFile.ParamFileType.MSAlignHistone);
+            toolNameToTypeMapping.Add("msalign", IGenerateFile.ParamFileType.MSAlign);
+            toolNameToTypeMapping.Add("moda", IGenerateFile.ParamFileType.MODa);
+            toolNameToTypeMapping.Add("mspathfinder", IGenerateFile.ParamFileType.MSPathFinder);
+            toolNameToTypeMapping.Add("modplus", IGenerateFile.ParamFileType.MODPlus);
+
+            IGenerateFile.ParamFileType paramFileType;
+
+            if (toolNameToTypeMapping.TryGetValue(toolName, out paramFileType))
+            {
+                return paramFileType;
+            }
+
+            var strToolNameLCase = toolName.ToLower();
+
+            foreach (var entry in toolNameToTypeMapping)
+            {
+                if (strToolNameLCase.Contains(entry.Key.ToLower()))
+                {
+                    return entry.Value;
+                }
+            }
+
+            return IGenerateFile.ParamFileType.Invalid;
+        }
+
+        /// <summary>
+        /// Converts the dictionary items to a list of key/value pairs separated by an equals sign
+        /// Next, calls StorePackedJobParameterList to store the list (items will be separated by tab characters)
+        /// </summary>
+        /// <param name="dctItems">Dictionary items to store as a packed job parameter</param>
+        /// <param name="strParameterName">Packed job parameter name</param>
+        /// <remarks></remarks>
+        protected void StorePackedJobParameterDictionary(Dictionary<string, int> dctItems, string strParameterName)
+        {
+            var lstItems = new List<string>();
+
+            foreach (KeyValuePair<string, int> item in dctItems)
+            {
+                lstItems.Add(item.Key + "=" + item.Value);
+            }
+
+            StorePackedJobParameterList(lstItems, strParameterName);
+
+        }
+        /// <summary>
+        /// Converts the dictionary items to a list of key/value pairs separated by an equals sign
+        /// Next, calls StorePackedJobParameterList to store the list (items will be separated by tab characters)
+        /// </summary>
+        /// <param name="dctItems">Dictionary items to store as a packed job parameter</param>
+        /// <param name="strParameterName">Packed job parameter name</param>
+        /// <remarks></remarks>
+        public void StorePackedJobParameterDictionary(Dictionary<string, string> dctItems, string strParameterName)
+        {
+            var lstItems = new List<string>();
+
+            foreach (KeyValuePair<string, string> item in dctItems)
+            {
+                lstItems.Add(item.Key + "=" + item.Value);
+            }
+
+            StorePackedJobParameterList(lstItems, strParameterName);
+
+        }
+
+        /// <summary>
+        /// Convert a string list to a packed job parameter (items are separated by tab characters)
+        /// </summary>
+        /// <param name="lstItems">List items to store as a packed job parameter</param>
+        /// <param name="strParameterName">Packed job parameter name</param>
+        /// <remarks></remarks>
+        protected void StorePackedJobParameterList(List<string> lstItems, string strParameterName)
+        {
+            m_jobParams.AddAdditionalParameter("JobParameters", strParameterName, clsGlobal.FlattenList(lstItems, "\t"));
+
+        }
+
+
+
+
+
+        /// <summary>
+        /// Unzips all files in the specified Zip file
+        /// If the file is less than 1.25 GB in size (IONIC_ZIP_MAX_FILESIZE_MB) then uses Ionic.Zip
+        /// Otherwise, uses PKZipC (provided PKZipC.exe exists)
+        /// </summary>
+        /// <param name="zipFilePath">File to unzip</param>
+        /// <param name="outFolderPath">Target directory for the extracted files</param>
+        /// <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
+        /// <param name="forceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
+        /// <returns>True if success, otherwise false</returns>
+        /// <remarks></remarks>
+        public bool UnzipFileStart(string zipFilePath, string outFolderPath, string callingFunctionName, bool forceExternalZipProgramUse)
+        {
+            var strUnzipperName = "??";
+
+            try
+            {
+                if (string.IsNullOrEmpty(callingFunctionName))
+                {
+                    callingFunctionName = "??";
+                }
+
+                if (zipFilePath == null)
+                {
+
+                    LogError(callingFunctionName + " called UnzipFileStart with an empty file path");
+                    return false;
+                }
+
+                var strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram", string.Empty);
+
+                var fiFileInfo = new FileInfo(zipFilePath);
+                var fileSizeMB = clsGlobal.BytesToMB(fiFileInfo.Length);
+
+                if (!fiFileInfo.Exists)
+                {
+                    // File not found
+                    LogError("Error unzipping '" + zipFilePath + "': File not found");
+
+                    LogMessage("CallingFunction: " + callingFunctionName);
+                    return false;
+                }
+
+                bool blnUseExternalUnzipper = false;
+
+                if (zipFilePath.ToLower().EndsWith(DOT_GZ_EXTENSION))
+                {
+                    // This is a gzipped file
+                    // Use Ionic.Zip
+                    strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
+                    m_IonicZipTools.DebugLevel = m_DebugLevel;
+                    return m_IonicZipTools.GUnzipFile(zipFilePath, outFolderPath);
+                }
+
+                // Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
+                // However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
+                if (forceExternalZipProgramUse || fileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB)
+                {
+                    if (strExternalUnzipperFilePath.Length > 0 && strExternalUnzipperFilePath.ToLower() != "na")
+                    {
+                        if (File.Exists(strExternalUnzipperFilePath))
+                        {
+                            blnUseExternalUnzipper = true;
+                        }
+                    }
+
+                    if (!blnUseExternalUnzipper)
+                    {
+
+                        LogMessage("External zip program not found: " + strExternalUnzipperFilePath + "; will instead use Ionic.Zip");
+                    }
+                }
+
+                if (blnUseExternalUnzipper)
+                {
+                    strUnzipperName = Path.GetFileName(strExternalUnzipperFilePath);
+
+                    PRISM.Files.ZipTools UnZipper = new PRISM.Files.ZipTools(outFolderPath, strExternalUnzipperFilePath);
+
+                    var dtStartTime = DateTime.UtcNow;
+                    var blnSuccess = UnZipper.UnzipFile("", zipFilePath, outFolderPath);
+                    var dtEndTime = DateTime.UtcNow;
+
+                    if (blnSuccess)
+                    {
+                        m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, false, strUnzipperName);
+                    }
+                    else
+                    {
+
+                        LogError("Error unzipping " + Path.GetFileName(zipFilePath) + " using " + strUnzipperName);
+
+                        LogMessage("CallingFunction: " + callingFunctionName);
+                    }
+
+                    return blnSuccess;
+                }
+                else
+                {
+                    // Use Ionic.Zip
+                    strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
+                    m_IonicZipTools.DebugLevel = m_DebugLevel;
+                    var blnSuccess = m_IonicZipTools.UnzipFile(zipFilePath, outFolderPath);
+
+                    return blnSuccess;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                var errMsg = "Exception while unzipping '" + zipFilePath + "'";
+                if (!string.IsNullOrEmpty(strUnzipperName))
+                    errMsg += " using " + strUnzipperName;
+
+
+                LogError(errMsg, ex);
+
+                LogMessage("CallingFunction: " + callingFunctionName);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update m_message, which is logged in the pipeline job steps table when the job step finishes
+        /// </summary>
+        /// <param name="statusMessage">New status message</param>
+        /// <param name="appendToExisting">True to append to m_message; false to overwrite it</param>
+        public void UpdateStatusMessage(string statusMessage, bool appendToExisting = false)
+        {
+            if (appendToExisting)
+            {
+                clsGlobal.AppendToComment(m_message, statusMessage);
+            }
+            else
+            {
+                m_message = statusMessage;
+            }
+        }
+
+        /// <summary>
+        /// Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
+        /// </summary>
+        /// <param name="strWorkDir">Folder with the CDTA file</param>
+        /// <param name="strInputFileName">CDTA filename</param>
+        /// <returns>True if success; false if an error</returns>
+        protected bool ValidateCDTAFileRemoveSparseSpectra(string strWorkDir, string strInputFileName)
+        {
+            bool blnSuccess = false;
+
+            blnSuccess = m_CDTAUtilities.RemoveSparseSpectra(strWorkDir, strInputFileName);
+            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            {
+                m_message = "m_CDTAUtilities.RemoveSparseSpectra returned False";
+            }
+
+            return blnSuccess;
+
+        }
+
+        /// <summary>
+        /// Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
+        /// </summary>
+        /// <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
+        /// <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
+        /// <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
+        /// <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
+        /// <returns>True if success; false if an error</returns>
+        protected bool ValidateCDTAFileScanAndCSTags(string strSourceFilePath, bool blnReplaceSourceFile, bool blnDeleteSourceFileIfUpdated, string strOutputFilePath)
+        {
+
+            bool blnSuccess = false;
+
+            blnSuccess = m_CDTAUtilities.ValidateCDTAFileScanAndCSTags(strSourceFilePath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, strOutputFilePath);
+            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            {
+                m_message = "m_CDTAUtilities.ValidateCDTAFileScanAndCSTags returned False";
+            }
+
+            return blnSuccess;
+
+        }
+
+
+
+        /// <summary>
+        /// Condenses CDTA files that are over 2 GB in size
+        /// </summary>
+        /// <param name="strWorkDir"></param>
+        /// <param name="strInputFileName"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected bool ValidateCDTAFileSize(string strWorkDir, string strInputFileName)
+        {
+            bool blnSuccess = false;
+
+            blnSuccess = m_CDTAUtilities.ValidateCDTAFileSize(strWorkDir, strInputFileName);
+            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            {
+                m_message = "m_CDTAUtilities.ValidateCDTAFileSize returned False";
+            }
+
+            return blnSuccess;
+
+        }
+
+        public bool ValidateCDTAFileIsCentroided(string strCDTAPath)
+        {
+
+
+            try
+            {
+                // Read the m/z values in the _dta.txt file
+                // Examine the data in each spectrum to determine if it is centroided
+
+                mSpectraTypeClassifier = new SpectraTypeClassifier.clsSpectrumTypeClassifier();
+
+                var blnSuccess = mSpectraTypeClassifier.CheckCDTAFile(strCDTAPath);
+
+                if (!blnSuccess)
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        LogError("SpectraTypeClassifier encountered an error while parsing the _dta.txt file");
+                    }
+
+                    return false;
+                }
+
+                var fractionCentroided = mSpectraTypeClassifier.FractionCentroided();
+
+                var commentSuffix = " (" + mSpectraTypeClassifier.TotalSpectra() + " total spectra)";
+
+                if (fractionCentroided > 0.8)
+                {
+                    // At least 80% of the spectra are centroided
+
+                    if (fractionCentroided > 0.999)
+                    {
+                        LogMessage("All of the spectra are centroided" + commentSuffix);
+                    }
+                    else
+                    {
+                        LogMessage((fractionCentroided * 100).ToString("0") + "% of the spectra are centroided" + commentSuffix);
+                    }
+
+                    return true;
+
+                }
+                else if (fractionCentroided > 0.001)
+                {
+                    // Less than 80% of the spectra are centroided
+                    // Post a message similar to:
+                    //   MSGF+ will likely skip 90% of the spectra because they did not appear centroided
+                    m_message = "MSGF+ will likely skip " + ((1 - fractionCentroided) * 100).ToString("0") + "% of the spectra because they do not appear centroided";
+                    LogMessage(m_message + commentSuffix);
+                    return false;
+                }
+                else
+                {
+                    // None of the spectra are centroided; unable to process with MSGF+
+                    m_message = SPECTRA_ARE_NOT_CENTROIDED + " with MSGF+";
+                    LogMessage(m_message + commentSuffix, 0, true);
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in ValidateCDTAFileIsCentroided", ex);
+                return false;
+            }
+
+        }
+
+
+
+        /// <summary>
+        /// Validate that the specified file exists and has at least one tab-delimited row with a numeric value in the first column
+        /// </summary>
+        /// <param name="strFilePath">Path to the file</param>
+        /// <param name="strFileDescription">File description, e.g. Synopsis</param>
+        /// <returns>True if the file has data; otherwise false</returns>
+        /// <remarks></remarks>
+        public static bool ValidateFileHasData(string strFilePath, string strFileDescription, out string strErrorMessage)
+        {
+            const int intNumericDataColIndex = 0;
+            return ValidateFileHasData(strFilePath, strFileDescription, out strErrorMessage, intNumericDataColIndex);
+        }
+
+        /// <summary>
+        /// Validate that the specified file exists and has at least one tab-delimited row with a numeric value
+        /// </summary>
+        /// <param name="strFilePath">Path to the file</param>
+        /// <param name="strFileDescription">File description, e.g. Synopsis</param>
+        /// <param name="intNumericDataColIndex">Index of the numeric data column; use -1 to simply look for any text in the file</param>
+        /// <returns>True if the file has data; otherwise false</returns>
+        /// <remarks></remarks>
+        public static bool ValidateFileHasData(string strFilePath, string strFileDescription, out string strErrorMessage, int intNumericDataColIndex)
+        {
+
+            string strLineIn = null;
+            string[] strSplitLine = null;
+
+            double dblValue = 0;
+            bool blnDataFound = false;
+
+            strErrorMessage = string.Empty;
+
+            try
+            {
+                var fiFileInfo = new FileInfo(strFilePath);
+
+                if (!fiFileInfo.Exists)
+                {
+                    strErrorMessage = strFileDescription + " file not found: " + fiFileInfo.Name;
+                    return false;
+                }
+
+                if (fiFileInfo.Length == 0)
+                {
+                    strErrorMessage = strFileDescription + " file is empty (zero-bytes)";
+                    return false;
+                }
+
+                // Open the file and confirm it has data rows
+                using (var srInFile = new StreamReader(new FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!srInFile.EndOfStream & !blnDataFound)
+                    {
+                        strLineIn = srInFile.ReadLine();
+                        if (!string.IsNullOrEmpty(strLineIn))
+                        {
+                            if (intNumericDataColIndex < 0)
+                            {
+                                blnDataFound = true;
+                            }
+                            else
+                            {
+                                // Split on the tab character and check if the first column is numeric
+                                strSplitLine = strLineIn.Split('\t');
+
+                                if ((strSplitLine != null) && strSplitLine.Length > intNumericDataColIndex)
+                                {
+                                    if (double.TryParse(strSplitLine[intNumericDataColIndex], out dblValue))
+                                    {
+                                        blnDataFound = true;
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+                if (!blnDataFound)
+                {
+                    strErrorMessage = strFileDescription + " is empty (no data)";
+                }
+
+            }
+            catch (Exception)
+            {
+                strErrorMessage = "Exception validating " + strFileDescription + " file";
+                return false;
+            }
+
+            return blnDataFound;
+
+        }
+
+        /// <summary>
+        /// Validates that sufficient free memory is available to run Java
+        /// </summary>
+        /// <param name="strJavaMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) to reserve for Java</param>
+        /// <param name="strStepToolName">Step tool name to use when posting log entries</param>
+        /// <returns>True if sufficient free memory; false if not enough free memory</returns>
+        /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
+        /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
+        protected bool ValidateFreeMemorySize(string strJavaMemorySizeJobParamName, string strStepToolName)
+        {
+
+            const bool blnLogFreeMemoryOnSuccess = true;
+            return ValidateFreeMemorySize(strJavaMemorySizeJobParamName, strStepToolName, blnLogFreeMemoryOnSuccess);
+
+        }
+
+        /// <summary>
+        /// Validates that sufficient free memory is available to run Java
+        /// </summary>
+        /// <param name="strMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
+        /// <param name="strStepToolName">Step tool name to use when posting log entries</param>
+        /// <param name="blnLogFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
+        /// <returns>True if sufficient free memory; false if not enough free memory</returns>
+        /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
+        /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)
+        /// </remarks>
+        protected bool ValidateFreeMemorySize(string strMemorySizeJobParamName, string strStepToolName, bool blnLogFreeMemoryOnSuccess)
+        {
+            int intFreeMemoryRequiredMB = 0;
+
+            // Lookup parameter strMemorySizeJobParamName; assume 2000 MB if not defined
+            intFreeMemoryRequiredMB = m_jobParams.GetJobParameter(strMemorySizeJobParamName, 2000);
+
+            // Require intFreeMemoryRequiredMB be at least 0.5 GB
+            if (intFreeMemoryRequiredMB < 512)
+                intFreeMemoryRequiredMB = 512;
+
+            if (m_DebugLevel < 1)
+                blnLogFreeMemoryOnSuccess = false;
+
+            return ValidateFreeMemorySize(intFreeMemoryRequiredMB, strStepToolName, blnLogFreeMemoryOnSuccess);
+
+        }
+
+        public static bool ValidateFreeMemorySize(int intFreeMemoryRequiredMB, string strStepToolName, bool blnLogFreeMemoryOnSuccess)
+        {
+            float sngFreeMemoryMB = 0;
+            string strMessage = null;
+
+            sngFreeMemoryMB = clsGlobal.GetFreeMemoryMB();
+
+            if (intFreeMemoryRequiredMB >= sngFreeMemoryMB)
+            {
+                strMessage = "Not enough free memory to run " + strStepToolName;
+
+                strMessage += "; need " + intFreeMemoryRequiredMB.ToString() + " MB but system has " + sngFreeMemoryMB.ToString("0") + " MB available";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage);
+                Console.WriteLine(strMessage);
+                return false;
+            }
+            else
+            {
+                if (blnLogFreeMemoryOnSuccess)
+                {
+                    strMessage = strStepToolName + " will use " + intFreeMemoryRequiredMB.ToString() + " MB; system has " + sngFreeMemoryMB.ToString("0") + " MB available";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage);
+                }
+
+                return true;
+            }
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+
+        private void m_CDTAUtilities_ErrorEvent(string errorMessage)
+        {
+            LogError(errorMessage);
+        }
+
+        private void m_CDTAUtilities_InfoEvent(string strMessage, int intDebugLevel)
+        {
+            if (m_DebugLevel >= intDebugLevel)
+            {
+                LogMessage(strMessage);
+            }
+        }
+
+        private void m_CDTAUtilities_ProgressEvent(string taskDescription, float percentComplete)
+        {
+
+            if (m_DebugLevel >= 1)
+            {
+                if (m_DebugLevel == 1 && DateTime.UtcNow.Subtract(m_LastCDTAUtilitiesUpdateTime).TotalSeconds >= 60 ||
+                    m_DebugLevel > 1 && DateTime.UtcNow.Subtract(m_LastCDTAUtilitiesUpdateTime).TotalSeconds >= 20)
+                {
+                    m_LastCDTAUtilitiesUpdateTime = DateTime.UtcNow;
+
+                    LogDebugMessage(" ... CDTAUtilities: " + percentComplete.ToString("0.00") + "% complete");
+                }
+            }
+
+        }
+
+        private void m_CDTAUtilities_WarningEvent(string strMessage)
+        {
+            LogWarning(strMessage);
+        }
+
+        private void m_FastaTools_FileGenerationCompleted(string FullOutputPath)
+        {
+            // Get the name of the fasta file that was generated
+            m_FastaFileName = Path.GetFileName(FullOutputPath);
+        }
+
+        private void m_FastaTools_FileGenerationProgress(string statusMsg, double fractionDone)
+        {
+
+            const int MINIMUM_LOG_INTERVAL_SEC = 10;
+
+            var blnForcelog = m_DebugLevel >= 1 && statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT);
+
+            if (m_DebugLevel >= 3 || blnForcelog)
+            {
+                // Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
+                if (blnForcelog || DateTime.UtcNow.Subtract(m_FastaToolsLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC ||
+                    fractionDone - m_FastaToolFractionDoneSaved >= 0.25)
+                {
+                    m_FastaToolsLastLogTime = DateTime.UtcNow;
+                    m_FastaToolFractionDoneSaved = fractionDone;
+                    LogDebugMessage("Generating Fasta file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg);
+                }
+            }
+
+        }
+
+        private void m_SplitFastaFileUtility_ErrorEvent(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private void m_SplitFastaFileUtility_ProgressUpdate(string progressMessage, float percentComplete)
+        {
+
+            if (m_DebugLevel >= 1)
+            {
+
+                if (m_DebugLevel == 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 || m_DebugLevel > 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 || percentComplete >= 100 & m_SplitFastaLastPercentComplete < 100)
+                {
+                    m_SplitFastaLastUpdateTime = DateTime.UtcNow;
+                    m_SplitFastaLastPercentComplete = percentComplete;
+
+                    if (percentComplete > 0)
+                    {
+                        LogDebugMessage(" ... " + progressMessage + ", " + percentComplete + "% complete");
+                    }
+                    else
+                    {
+                        LogDebugMessage(" ... SplitFastaFile: " + progressMessage);
+                    }
+
+                }
+            }
+
+        }
+
+        private void m_SplitFastaFileUtility_SplittingBaseFastaFile(string strBaseFastaFileName, int numSplitParts)
+        {
+            LogDebugMessage("Splitting " + strBaseFastaFileName + " into " + numSplitParts + " parts");
+        }
+
+        #endregion
+
+        #region "clsEventNotifier events"
+
+        protected void RegisterEvents(clsEventNotifier oProcessingClass)
+        {
+            oProcessingClass.StatusEvent += StatusEventHandler;
+            oProcessingClass.ErrorEvent += ErrorEventHandler;
+            oProcessingClass.WarningEvent += WarningEventHandler;
+            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private void StatusEventHandler(string statusMessage)
+        {
+            LogMessage(statusMessage);
+        }
+
+        private void ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private void WarningEventHandler(string warningMessage)
+        {
+            LogWarning(warningMessage);
+        }
+
+        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
+        {
+            m_StatusTools.CurrentOperation = progressMessage;
+            m_StatusTools.UpdateAndWrite(percentComplete);
+        }
+
+        #endregion
+
+        #region "SpectraTypeClassifier Events"
+
+        private void mSpectraTypeClassifier_ErrorEvent(string strMessage)
+        {
+        }
+
+        private void mSpectraTypeClassifier_ReadingSpectra(int spectraProcessed)
+        {
+            LogDebugMessage(" ... " + spectraProcessed + " spectra parsed in the _dta.txt file");
+        }
+
+        #endregion
+
+
+    } // End Class
+
+}

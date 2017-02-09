@@ -1,78 +1,99 @@
-﻿Option Strict On
+﻿
+using System.Collections.Generic;
+using System.Threading;
 
-Imports System.Threading
+namespace AnalysisManagerBase
+{
 
-' delegate that does the eventual posting
-Public Delegate Sub MessageSenderDelegate(message As String)
+    // delegate that does the eventual posting
+    public delegate void MessageSenderDelegate(string message);
 
-Class clsMessageQueueLogger
-    ' actual delegate registers here
-    Public Event Sender As MessageSenderDelegate
+    class clsMessageQueueLogger
+    {
+        // actual delegate registers here
+        public event MessageSenderDelegate Sender;
 
-    ' the worker thread that pulls messages off the queue
-    ' and posts them
-    Private ReadOnly worker As Thread
+        // the worker thread that pulls messages off the queue
+        // and posts them
 
-    ' synchronization and signalling stuff to coordinate
-    ' with worker thread
-    Private ReadOnly waitHandle As EventWaitHandle = New AutoResetEvent(False)
-    Private ReadOnly locker As New Object()
+        private readonly Thread worker;
+        // synchronization and signalling stuff to coordinate
+        // with worker thread
+        private readonly EventWaitHandle waitHandle = new AutoResetEvent(false);
 
-    ' local queue that contains messages to be sent
-    Private ReadOnly m_statusMessages As New Queue(Of String)()
+        private readonly object locker = new object();
+        // local queue that contains messages to be sent
 
-    Public Sub New()
-        worker = New Thread(AddressOf PostalWorker)
-        worker.Start()
-    End Sub
+        private readonly Queue<string> m_statusMessages = new Queue<string>();
 
-    ' stuff status message onto the local status message queue 
-    ' to be sent off by the PostalWorker thread
-    Public Sub LogStatusMessage(statusMessage As String)
-        SyncLock locker
-            m_statusMessages.Enqueue(statusMessage)
-        End SyncLock
-        waitHandle.[Set]()
-    End Sub
+        public clsMessageQueueLogger()
+        {
+            worker = new Thread(PostalWorker);
+            worker.Start();
+        }
 
-    ' worker that runs in the worker thread
-    ' It pulls messages off the queue and posts
-    ' them via the delegate.  When no more messages
-    ' it waits until signalled by new message added to queue
-    Private Sub PostalWorker()
-        While True
-            Dim statusMessage As String = Nothing
-            SyncLock locker
-                If m_statusMessages.Count > 0 Then
-                    statusMessage = m_statusMessages.Dequeue()
-                    If statusMessage Is Nothing Then
-                        Exit Sub
-                    End If
-                End If
-            End SyncLock
-            If statusMessage IsNot Nothing Then
-                ' we have work to do
-                ' use our delegates (if we have any)
-                RaiseEvent Sender(statusMessage)
-            Else
-                waitHandle.WaitOne()
-                ' No more m_statusMessages - wait for a signal
-            End If
-        End While
-    End Sub
+        // stuff status message onto the local status message queue 
+        // to be sent off by the PostalWorker thread
+        public void LogStatusMessage(string statusMessage)
+        {
+            lock (locker)
+            {
+                m_statusMessages.Enqueue(statusMessage);
+            }
+            waitHandle.Set();
+        }
 
-    Public Sub Dispose()
-        LogStatusMessage(Nothing)
-        ' Signal the worker to exit.
-        ' Wait a maximum of 15 seconds
-        If Not worker.Join(15000) Then
-            ' Still no response, so kill the thread
-            worker.Abort()
-        Else
-            ' Wait for the consumer's thread to finish.
-            ' Release any OS resources.
-            waitHandle.Close()
-        End If
-    End Sub
+        // worker that runs in the worker thread
+        // It pulls messages off the queue and posts
+        // them via the delegate.  When no more messages
+        // it waits until signalled by new message added to queue
+        private void PostalWorker()
+        {
+            while (true)
+            {
+                string statusMessage = null;
+                lock (locker)
+                {
+                    if (m_statusMessages.Count > 0)
+                    {
+                        statusMessage = m_statusMessages.Dequeue();
+                        if (statusMessage == null)
+                        {
+                            return;
+                        }
+                    }
+                }
+                if (statusMessage != null)
+                {
+                    // we have work to do
+                    // use our delegates (if we have any)
+                    Sender?.Invoke(statusMessage);
+                }
+                else
+                {
+                    waitHandle.WaitOne();
+                    // No more m_statusMessages - wait for a signal
+                }
+            }
+        }
 
-End Class
+        public void Dispose()
+        {
+            LogStatusMessage(null);
+            // Signal the worker to exit.
+            // Wait a maximum of 15 seconds
+            if (!worker.Join(15000))
+            {
+                // Still no response, so kill the thread
+                worker.Abort();
+            }
+            else
+            {
+                // Wait for the consumer's thread to finish.
+                // Release any OS resources.
+                waitHandle.Close();
+            }
+        }
+
+    }
+}

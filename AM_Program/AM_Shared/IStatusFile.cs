@@ -1,276 +1,282 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2006, Battelle Memorial Institute
-' Created 06/07/2006
-'
-'*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Collections.Generic;
 
-Public Interface IStatusFile
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2006, Battelle Memorial Institute
+// Created 06/07/2006
+//
+//*********************************************************************************************************
 
-    '*********************************************************************************************************
-    'Interface used by classes that create and update analysis status file
-    '*********************************************************************************************************
+namespace AnalysisManagerBase
+{
 
-#Region "Enums"
-    'Status constants
-    Enum EnumMgrStatus As Short
-        STOPPED
-        STOPPED_ERROR
-        RUNNING
-        DISABLED_LOCAL
+    #region "Enums"
+
+    /// <summary>
+    /// Manager Status constants
+    /// </summary>
+    public enum EnumMgrStatus : short
+    {
+        STOPPED,
+        STOPPED_ERROR,
+        RUNNING,
+        DISABLED_LOCAL,
         DISABLED_MC
-    End Enum
+    }
 
-    Enum EnumTaskStatus As Short
-        STOPPED
-        REQUESTING
-        RUNNING
-        CLOSING
-        FAILED
+    /// <summary>
+    /// Task status constants
+    /// </summary>
+    public enum EnumTaskStatus : short
+    {
+        STOPPED,
+        REQUESTING,
+        RUNNING,
+        CLOSING,
+        FAILED,
         NO_TASK
-    End Enum
+    }
 
-    Enum EnumTaskStatusDetail As Short
-        RETRIEVING_RESOURCES
-        RUNNING_TOOL
-        PACKAGING_RESULTS
-        DELIVERING_RESULTS
-        CLOSING
+    /// <summary>
+    /// Task status detail constants
+    /// </summary>
+    public enum EnumTaskStatusDetail : short
+    {
+        RETRIEVING_RESOURCES,
+        RUNNING_TOOL,
+        PACKAGING_RESULTS,
+        DELIVERING_RESULTS,
+        CLOSING,
         NO_TASK
-    End Enum
-#End Region
+    }
+    #endregion
 
-#Region "Properties"
-    Property FileNamePath() As String
+    /// <summary>
+    /// Interface used by classes that create and update analysis status file
+    /// </summary>
+    public interface IStatusFile
+    {
 
-    Property MgrName() As String
+        #region "Properties"
 
-    Property MgrStatus() As EnumMgrStatus
+        string FileNamePath { get; set; }
 
-    ''' <summary>
-    ''' Overall CPU utilization of all threads
-    ''' </summary>
-    ''' <remarks></remarks>
-    Property CpuUtilization() As Integer
+        string MgrName { get; set; }
 
-    Property Tool() As String
+        EnumMgrStatus MgrStatus { get; set; }
+        
+        /// <summary>
+        /// Overall CPU utilization of all threads
+        /// </summary>
+        /// <remarks></remarks>
+        int CpuUtilization { get; set; }
 
-    Property TaskStatus() As EnumTaskStatus
+        string Tool { get; set; }
 
-    Property Progress() As Single
+        EnumTaskStatus TaskStatus { get; set; }
 
-    Property CurrentOperation() As String
+        float Progress { get; set; }
 
-    Property TaskStatusDetail() As EnumTaskStatusDetail
+        string CurrentOperation { get; set; }
 
-    Property JobNumber() As Integer
+        EnumTaskStatusDetail TaskStatusDetail { get; set; }
 
-    Property JobStep() As Integer
+        int JobNumber { get; set; }
 
-    Property Dataset() As String
+        int JobStep { get; set; }
 
-    Property MostRecentJobInfo() As String
+        string Dataset { get; set; }
 
-    ''' <summary>
-    ''' ProcessID of an externally spawned process
-    ''' </summary>
-    ''' <remarks>0 if no external process running</remarks>
-    Property ProgRunnerProcessID As Integer
+        string MostRecentJobInfo { get; set; }
 
-    ''' <summary>
-    ''' Number of cores in use by an externally spawned process
-    ''' </summary>
-    ''' <remarks></remarks>
-    Property ProgRunnerCoreUsage As Single
+        /// <summary>
+        /// ProcessID of an externally spawned process
+        /// </summary>
+        /// <remarks>0 if no external process running</remarks>
+        int ProgRunnerProcessID { get; set; }
 
-    Property SpectrumCount() As Integer
+        /// <summary>
+        /// Number of cores in use by an externally spawned process
+        /// </summary>
+        /// <remarks></remarks>
+        float ProgRunnerCoreUsage { get; set; }
 
-    Property MessageQueueURI() As String
+        int SpectrumCount { get; set; }
 
-    Property MessageQueueTopic() As String
+        string MessageQueueURI { get; set; }
 
-    Property LogToMsgQueue() As Boolean
+        string MessageQueueTopic { get; set; }
 
-#End Region
+        bool LogToMsgQueue { get; set; }
+        #endregion
 
-#Region "Methods"
+        #region "Methods"
 
-    ''' <summary>
-    ''' Returns the number of cores
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks>Not affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
-    Function GetCoreCount() As Integer
+        /// <summary>
+        /// Returns the number of cores
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>Not affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+        int GetCoreCount();
 
-    ''' <summary>
-    ''' Returns the amount of free memory
-    ''' </summary>
-    ''' <returns>Amount of free memory, in MB</returns>
-    Function GetFreeMemoryMB() As Single
+        /// <summary>
+        /// Returns the amount of free memory
+        /// </summary>
+        /// <returns>Amount of free memory, in MB</returns>
+        float GetFreeMemoryMB();
 
-    ''' <summary>
-    ''' Return the ProcessID of the running process
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Function GetProcessID() As Integer
+        /// <summary>
+        /// Return the ProcessID of the running process
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        int GetProcessID();
 
-    Sub StoreCoreUsageHistory(coreUsageHistory As Queue(Of KeyValuePair(Of DateTime, Single)))
+        void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManagerIdleMessage"></param>
+        /// <param name="RecentErrorMessages"></param>
+        /// <param name="JobInfo"></param>
+        /// <param name="ForceLogToBrokerDB"></param>
+        /// <remarks></remarks>
 
-    ''' <summary>
-    ''' 
-    ''' </summary>
-    ''' <param name="ManagerIdleMessage"></param>
-    ''' <param name="RecentErrorMessages"></param>
-    ''' <param name="JobInfo"></param>
-    ''' <param name="ForceLogToBrokerDB"></param>
-    ''' <remarks></remarks>
-    Sub UpdateClose(ManagerIdleMessage As String,
-      ByRef RecentErrorMessages() As String,
-      JobInfo As String,
-      ForceLogToBrokerDB As Boolean)
+        void UpdateClose(string ManagerIdleMessage, ref string[] RecentErrorMessages, string JobInfo, bool ForceLogToBrokerDB);
 
+        /// <summary>
+        /// Update the current status
+        /// </summary>
+        /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+        /// <remarks></remarks>
 
-    ''' <summary>
-    ''' Update the current status
-    ''' </summary>
-    ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-    ''' <remarks></remarks>
-    Sub UpdateAndWrite(PercentComplete As Single)
+        void UpdateAndWrite(float PercentComplete);
 
-    ''' <summary>
-    ''' Update the current status
-    ''' </summary>
-    ''' <param name="eMgrStatus">Job status code</param>
-    ''' <param name="eTaskStatus">Task status code</param>
-    ''' <param name="eTaskStatusDetail">Detailed task status</param>
-    ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-    ''' <remarks></remarks>
-    Sub UpdateAndWrite(eMgrStatus As EnumMgrStatus,
-                       eTaskStatus As EnumTaskStatus,
-                       eTaskStatusDetail As EnumTaskStatusDetail,
-                       PercentComplete As Single)
+        /// <summary>
+        /// Update the current status
+        /// </summary>
+        /// <param name="eMgrStatus">Job status code</param>
+        /// <param name="eTaskStatus">Task status code</param>
+        /// <param name="eTaskStatusDetail">Detailed task status</param>
+        /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+        /// <remarks></remarks>
 
-    ''' <summary>
-    ''' Update the current status
-    ''' </summary>
-    ''' <param name="Status">Job status code</param>
-    ''' <param name="PercentComplete">VJob completion percentage (value between 0 and 100)</param>
-    ''' <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
-    ''' <remarks></remarks>
-    Sub UpdateAndWrite(Status As EnumTaskStatus,
-                       PercentComplete As Single,
-                       SpectrumCountTotal As Integer)
+        void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete);
+        /// <summary>
+        /// Update the current status
+        /// </summary>
+        /// <param name="Status">Job status code</param>
+        /// <param name="PercentComplete">VJob completion percentage (value between 0 and 100)</param>
+        /// <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+        /// <remarks></remarks>
 
-    ''' <summary>
-    ''' Updates status file
-    ''' </summary>
-    ''' <param name="eMgrStatus">Job status code</param>
-    ''' <param name="eTaskStatus">Task status code</param>
-    ''' <param name="eTaskStatusDetail">Detailed task status</param>
-    ''' <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-    ''' <param name="DTACount">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
-    ''' <param name="MostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
-    ''' <param name="MostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
-    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-    ''' <remarks></remarks>
-    Sub UpdateAndWrite(
-      eMgrStatus As EnumMgrStatus, eTaskStatus As EnumTaskStatus, eTaskStatusDetail As EnumTaskStatusDetail,
-      PercentComplete As Single, DTACount As Integer,
-      MostRecentLogMessage As String, MostRecentErrorMessage As String,
-      RecentJobInfo As String, ForceLogToBrokerDB As Boolean)
+        void UpdateAndWrite(EnumTaskStatus Status, float PercentComplete, int SpectrumCountTotal);
+        /// <summary>
+        /// Updates status file
+        /// </summary>
+        /// <param name="eMgrStatus">Job status code</param>
+        /// <param name="eTaskStatus">Task status code</param>
+        /// <param name="eTaskStatusDetail">Detailed task status</param>
+        /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
+        /// <param name="DTACount">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+        /// <param name="MostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
+        /// <param name="MostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
+        /// <param name="RecentJobInfo">Information on the job that started most recently</param>
+        /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <remarks></remarks>
 
-    ''' <summary>
-    ''' Logs to the status file that the manager is idle
-    ''' </summary>
-    ''' <remarks></remarks>
-    Sub UpdateIdle()
+        void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string RecentJobInfo, bool ForceLogToBrokerDB);
 
-    ''' <summary>
-    ''' Logs to the status file that the manager is idle
-    ''' </summary>
-    ''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-    ''' <remarks></remarks>
-    Sub UpdateIdle(ManagerIdleMessage As String, ForceLogToBrokerDB As Boolean)
+        /// <summary>
+        /// Logs to the status file that the manager is idle
+        /// </summary>
+        /// <remarks></remarks>
+        void UpdateIdle();
 
-    ''' <summary>
-    ''' Logs to the status file that the manager is idle
-    ''' </summary>
-    ''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-    ''' <param name="IdleErrorMessage">Error message explaining why the manager is idle</param>
-    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-    ''' <remarks></remarks>
-    Sub UpdateIdle(ManagerIdleMessage As String, IdleErrorMessage As String, RecentJobInfo As String, ForceLogToBrokerDB As Boolean)
+        /// <summary>
+        /// Logs to the status file that the manager is idle
+        /// </summary>
+        /// <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+        /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <remarks></remarks>
+        void UpdateIdle(string ManagerIdleMessage, bool ForceLogToBrokerDB);
 
-    ''' <summary>
-    ''' Logs to the status file that the manager is idle
-    ''' </summary>
-    ''' <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-    ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-    ''' <remarks></remarks>
-    Sub UpdateIdle(ManagerIdleMessage As String, ByRef RecentErrorMessages() As String, RecentJobInfo As String, ForceLogToBrokerDB As Boolean)
+        /// <summary>
+        /// Logs to the status file that the manager is idle
+        /// </summary>
+        /// <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+        /// <param name="IdleErrorMessage">Error message explaining why the manager is idle</param>
+        /// <param name="RecentJobInfo">Information on the job that started most recently</param>
+        /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <remarks></remarks>
+        void UpdateIdle(string ManagerIdleMessage, string IdleErrorMessage, string RecentJobInfo, bool ForceLogToBrokerDB);
 
+        /// <summary>
+        /// Logs to the status file that the manager is idle
+        /// </summary>
+        /// <param name="ManagerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+        /// <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="RecentJobInfo">Information on the job that started most recently</param>
+        /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <remarks></remarks>
+        void UpdateIdle(string ManagerIdleMessage, ref string[] RecentErrorMessages, string RecentJobInfo, bool ForceLogToBrokerDB);
 
-    ''' <summary>
-    ''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
-    ''' </summary>
-    ''' <remarks></remarks>
-    Sub UpdateDisabled(ManagerStatus As EnumMgrStatus)
+        /// <summary>
+        /// Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+        /// </summary>
+        /// <remarks></remarks>
+        void UpdateDisabled(EnumMgrStatus ManagerStatus);
 
-    ''' <summary>
-    ''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
-    ''' </summary>
-    ''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-    ''' <remarks></remarks>
-    Sub UpdateDisabled(ManagerStatus As EnumMgrStatus, ManagerDisableMessage As String)
+        /// <summary>
+        /// Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+        /// </summary>
+        /// <param name="ManagerStatus"></param>
+        /// <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
+        /// <remarks></remarks>    
+        void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage);
 
-    ''' <summary>
-    ''' Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
-    ''' </summary>
-    ''' <param name="ManagerStatus">Should be EnumMgrStatus.DISABLED_LOCAL or EnumMgrStatus.DISABLED_MC</param>
-    ''' <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-    ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-    ''' <remarks></remarks>
-    Sub UpdateDisabled(ManagerStatus As EnumMgrStatus, ManagerDisableMessage As String, ByRef RecentErrorMessages() As String, RecentJobInfo As String)
+        /// <summary>
+        /// Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+        /// </summary>
+        /// <param name="ManagerStatus">Should be EnumMgrStatus.DISABLED_LOCAL or EnumMgrStatus.DISABLED_MC</param>
+        /// <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
+        /// <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="RecentJobInfo">Information on the job that started most recently</param>
+        /// <remarks></remarks>
+        void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage, ref string[] RecentErrorMessages, string RecentJobInfo);
 
-    ''' <summary>
-    ''' Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
-    ''' </summary>
-    ''' <remarks></remarks>
-    Sub UpdateFlagFileExists()
+        /// <summary>
+        /// Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
+        /// </summary>
+        /// <remarks></remarks>
+        void UpdateFlagFileExists();
 
-    ''' <summary>
-    ''' Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
-    ''' </summary>
-    ''' <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-    ''' <param name="RecentJobInfo">Information on the job that started most recently</param>
-    ''' <remarks></remarks>
-    Sub UpdateFlagFileExists(ByRef RecentErrorMessages() As String, RecentJobInfo As String)
+        /// <summary>
+        /// Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
+        /// </summary>
+        /// <param name="RecentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="RecentJobInfo">Information on the job that started most recently</param>
+        /// <remarks></remarks>
+        void UpdateFlagFileExists(ref string[] RecentErrorMessages, string RecentJobInfo);
 
-    ''' <summary>
-    ''' Writes out a new status file, indicating that the manager is still alive
-    ''' </summary>
-    ''' <remarks></remarks>
-    Sub WriteStatusFile()
+        /// <summary>
+        /// Writes out a new status file, indicating that the manager is still alive
+        /// </summary>
+        /// <remarks></remarks>
+        void WriteStatusFile();
 
-    ''' <summary>
-    ''' Writes the status file
-    ''' </summary>
-    ''' <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-    ''' <remarks></remarks>
-    Sub WriteStatusFile(ForceLogToBrokerDB As Boolean)
+        /// <summary>
+        /// Writes the status file
+        /// </summary>
+        /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <remarks></remarks>
+        void WriteStatusFile(bool ForceLogToBrokerDB);
 
-#End Region
+        #endregion
 
-End Interface
+    }
 
-
+}

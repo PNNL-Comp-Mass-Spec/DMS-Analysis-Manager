@@ -1,108 +1,113 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2006, Battelle Memorial Institute
-' Created 06/07/2006
-'
-'*********************************************************************************************************
 
-Option Strict On
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2006, Battelle Memorial Institute
+// Created 06/07/2006
+//
+//*********************************************************************************************************
 
-Public Interface ISpectraFileProcessor
-    '*********************************************************************************************************
-    'Defines minimum required functionality for classes that will generate spectra files
-    '*********************************************************************************************************
+namespace AnalysisManagerBase
+{
+    #region "Structures"
 
-#Region "Enums"
-    Enum ProcessResults
-        'Return values for MakeDTA and Abort functions
-        SF_SUCCESS = 0      'Operation succeeded
-        SF_FAILURE = -1     'Operation failed
-        SF_NO_FILES_CREATED = -2        'Spectra file creation didn't fail, but no output files were created
-        SF_ABORTED = -3     'Spectra file creation aborted
-    End Enum
+    /// <summary>
+    /// Initialization parameters for classes that implement ISpectraFileProcessor
+    /// </summary>
+    public struct SpectraFileProcessorParams
+    {
+        public int DebugLevel;
+        public IMgrParams MgrParams;
+        public IJobParams JobParams;
+        public IStatusFile StatusTools;
+        public string WorkDir;
+        public string DatasetName;
+    }
+    #endregion
 
-    Enum ProcessStatus
-        'Return value for status property
-        SF_STARTING     'Plugin initialization in progress
-        SF_RUNNING      'Plugin is attempting to do its job
-        SF_COMPLETE     'Plugin successfully completed its job
-        SF_ERROR        'There was an error somewhere
-        SF_ABORTING     'An ABORT command has been received; plugin shutdown in progress
-    End Enum
-#End Region
+    /// <summary>
+    /// Defines minimum required functionality for classes that will generate spectra files
+    /// </summary>
+    public interface ISpectraFileProcessor
+    {
 
-#Region "Structures"
-    Structure InitializationParams
-        Dim DebugLevel As Integer
-        Dim MgrParams As IMgrParams
-        Dim JobParams As IJobParams
-        Dim StatusTools As IStatusFile
-        Dim WorkDir As String
-        Dim DatasetName As String
-    End Structure
-#End Region
+        #region "Properties"
 
-#Region "Properties"
-    ''' <summary>
-    ''' Allows calling program to get current status
-    ''' </summary>
-    ReadOnly Property Status() As ISpectraFileProcessor.ProcessStatus
+        /// <summary>
+        /// Allows calling program to get current status
+        /// </summary>
+        ProcessStatus Status { get; }
+        
+        /// <summary>
+        /// Allows calling program to determine if DTA creation succeeded
+        /// </summary>
+        ProcessResults Results { get; }
 
-    ''' <summary>
-    ''' Allows calling program to determine if DTA creation succeeded
-    ''' </summary>
-    ReadOnly Property Results() As ISpectraFileProcessor.ProcessResults
+        /// <summary>
+        /// Error message describing any errors encountered
+        /// </summary>
+        string ErrMsg { get; }
 
-    ''' <summary>
-    ''' Error message describing any errors encountered
-    ''' </summary>
-    ReadOnly Property ErrMsg() As String
+        /// <summary>
+        /// Allows control of debug information verbosity; 0=minimum, 5=maximum verbosity
+        /// </summary>
+        int DebugLevel { get; set; }
 
-    ''' <summary>
-    ''' Allows control of debug information verbosity; 0=minimum, 5=maximum verbosity
-    ''' </summary>
-    Property DebugLevel() As Integer
+        /// <summary>
+        /// Path to the program used to create .DTA files
+        /// </summary>
+        string DtaToolNameLoc { get; }
 
-    ''' <summary>
-    ''' Path to the program used to create .DTA files
-    ''' </summary>
-    ReadOnly Property DtaToolNameLoc() As String
+        /// <summary>
+        /// Count of spectra files that have been created
+        /// </summary>
+        int SpectraFileCount { get; }
 
-    ''' <summary>
-    ''' Count of spectra files that have been created
-    ''' </summary>
-    ReadOnly Property SpectraFileCount() As Integer
+        /// <summary>
+        /// Percent complete (Value between 0 and 100)
+        /// </summary>
+        float Progress { get; }
 
-    ''' <summary>
-    '''  Percent complete (Value between 0 and 100)
-    ''' </summary>
-    ReadOnly Property Progress() As Single
+        /// <summary>
+        /// Machine-specific parameters, such as file locations
+        /// </summary>
+        //
+        IMgrParams MgrParams { set; }
 
-    ''' <summary>
-    ''' Machine-specific parameters, such as file locations
-    ''' </summary>
-    WriteOnly Property MgrParams() As IMgrParams    '
+        /// <summary>
+        /// Job-specific parameters
+        /// </summary>     
+        IJobParams JobParams { set; }
 
-    ''' <summary>
-    ''' Job-specific parameters
-    ''' </summary>
-    WriteOnly Property JobParams() As IJobParams    '
+        /// <summary>
+        /// Interface for updating task status
+        /// </summary>
+        IStatusFile StatusTools { set; }
 
-    ''' <summary>
-    ''' Interface for updating task status
-    ''' </summary>
-    WriteOnly Property StatusTools() As IStatusFile  '
-#End Region
+        #endregion
 
-#Region "Methods"
-    Sub Setup(InitParams As InitializationParams, toolRunner As clsAnalysisToolRunnerBase)   'Initializes parameters. Must be called before executing Start()
+        #region "Methods"
 
-    Function Start() As ISpectraFileProcessor.ProcessStatus  'Starts the spectra file creation process
+        /// <summary>
+        /// Initializes parameters. Must be called before executing Start()
+        /// </summary>
+        /// <param name="InitParams"></param>
+        /// <param name="toolRunner"></param>
+        void Setup(SpectraFileProcessorParams InitParams, clsAnalysisToolRunnerBase toolRunner);
 
-    Function Abort() As ISpectraFileProcessor.ProcessStatus  'Aborts spectra file creation
-#End Region
+        /// <summary>
+        /// Starts the spectra file creation process
+        /// </summary>
+        /// <returns></returns>
+        ProcessStatus Start();
 
-End Interface
+        /// <summary>
+        /// Aborts spectra file creation
+        /// </summary>
+        /// <returns></returns>
+        ProcessStatus Abort();
+   
+        #endregion
 
-
+    }
+}

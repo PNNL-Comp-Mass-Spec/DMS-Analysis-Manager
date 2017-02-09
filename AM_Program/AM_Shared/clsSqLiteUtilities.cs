@@ -1,290 +1,340 @@
-﻿Option Strict On
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
+using System.IO;
 
-Imports System.Collections.Generic
-Imports System.IO
-Imports System.Linq
-Imports System.Text
-Imports System.Data.SQLite
+namespace AnalysisManagerBase
+{
+    public class clsSqLiteUtilities
+    {
 
-Public Class clsSqLiteUtilities
+        /// <summary>
+        /// Clones a database, optionally skipping tables in list tablesToSkip
+        /// </summary>
+        /// <param name="sourceDBPath">Source database path</param>
+        /// <param name="targetDBPath">Target database path</param>
+        /// <returns>True if success, false if a problem</returns>
+        /// <remarks>If the target database already exists, then missing tables (and data) will be appended to the file</remarks>
+        public bool CloneDB(string sourceDBPath, string targetDBPath)
+        {
+            const bool appendToExistingDB = true;
+            var tablesToSkip = new List<string>();
+            return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip);
+        }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    Public Sub New()
-    End Sub
+        /// <summary>
+        /// Clones a database, optionally skipping tables in list tablesToSkip
+        /// </summary>
+        /// <param name="sourceDBPath">Source database path</param>
+        /// <param name="targetDBPath">Target database path</param>
+        /// <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
+        /// <returns>True if success, false if a problem</returns>
+        public bool CloneDB(string sourceDBPath, string targetDBPath, bool appendToExistingDB)
+        {
+            var tablesToSkip = new List<string>();
+            return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip);
+        }
 
-    ''' <summary>
-    ''' Clones a database, optionally skipping tables in list tablesToSkip
-    ''' </summary>
-    ''' <param name="sourceDBPath">Source database path</param>
-    ''' <param name="targetDBPath">Target database path</param>
-    ''' <returns>True if success, false if a problem</returns>
-    ''' <remarks>If the target database already exists, then missing tables (and data) will be appended to the file</remarks>
-    Public Function CloneDB(sourceDBPath As String, targetDBPath As String) As Boolean
-        Const appendToExistingDB = True
-        Dim tablesToSkip = New List(Of String)()
-        Return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip)
-    End Function
+        /// <summary>
+        /// Clones a database, optionally skipping tables in list tablesToSkip
+        /// </summary>
+        /// <param name="sourceDBPath">Source database path</param>
+        /// <param name="targetDBPath">Target database path</param>
+        /// <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
+        /// <param name="tablesToSkip">A list of table names (e.g. Frame_Scans) that should not be copied.</param>
+        /// <returns>True if success, false if a problem</returns>
+        public bool CloneDB(string sourceDBPath, string targetDBPath, bool appendToExistingDB, List<string> tablesToSkip)
+        {
 
-    ''' <summary>
-    ''' Clones a database, optionally skipping tables in list tablesToSkip
-    ''' </summary>
-    ''' <param name="sourceDBPath">Source database path</param>
-    ''' <param name="targetDBPath">Target database path</param>
-    ''' <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
-    ''' <returns>True if success, false if a problem</returns>
-    Public Function CloneDB(sourceDBPath As String, targetDBPath As String, appendToExistingDB As Boolean) As Boolean
-        Dim tablesToSkip = New List(Of String)()
-        Return CloneDB(sourceDBPath, targetDBPath, appendToExistingDB, tablesToSkip)
-    End Function
-
-    ''' <summary>
-    ''' Clones a database, optionally skipping tables in list tablesToSkip
-    ''' </summary>
-    ''' <param name="sourceDBPath">Source database path</param>
-    ''' <param name="targetDBPath">Target database path</param>
-    ''' <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
-    ''' <param name="tablesToSkip">A list of table names (e.g. Frame_Scans) that should not be copied.</param>
-    ''' <returns>True if success, false if a problem</returns>
-    Public Function CloneDB(sourceDBPath As String, targetDBPath As String, appendToExistingDB As Boolean, ByRef tablesToSkip As List(Of String)) As Boolean
-
-        Dim currentTable As String = String.Empty
-        Dim appendingToExistingDB = False
-
-        Try
-
-            Using cnSourceDB = New SQLiteConnection("Data Source = " & sourceDBPath)
-                cnSourceDB.Open()
-
-                ' Get list of tables in source DB					
-                Dim dctTableInfo As Dictionary(Of String, String) = GetDBObjects(cnSourceDB, "table")
-
-                ' Delete the "sqlite_sequence" database from dctTableInfo if present
-                If dctTableInfo.ContainsKey("sqlite_sequence") Then
-                    dctTableInfo.Remove("sqlite_sequence")
-                End If
-
-                ' Get list of indices in source DB
-                Dim dctIndexToTableMap As Dictionary(Of String, String) = Nothing
-                Dim dctIndexInfo As Dictionary(Of String, String) = GetDBObjects(cnSourceDB, "index", dctIndexToTableMap)
-
-                If File.Exists(targetDBPath) Then
-                    If appendToExistingDB Then
-                        appendingToExistingDB = True
-                    Else
-                        File.Delete(targetDBPath)
-                    End If
-                End If
-
-                Try
-                    Dim sTargetConnectionString As String = ("Data Source = " & targetDBPath) + "; Version=3; DateTimeFormat=Ticks;"
-                    Dim cnTargetDB As New SQLiteConnection(sTargetConnectionString)
-
-                    cnTargetDB.Open()
-                    Dim cmdTargetDB As SQLiteCommand = cnTargetDB.CreateCommand()
+            var currentTable = string.Empty;
+            var appendingToExistingDB = false;
 
 
-                    Dim dctExistingTables As Dictionary(Of String, String)
-                    If appendingToExistingDB Then
-                        ' Lookup the table names that already exist in the target
-                        dctExistingTables = GetDBObjects(cnTargetDB, "table")
-                    Else
-                        dctExistingTables = New Dictionary(Of String, String)()
-                    End If
+            try
+            {
+                using (var cnSourceDB = new SQLiteConnection("Data Source = " + sourceDBPath))
+                {
+                    cnSourceDB.Open();
 
-                    ' Create each table
-                    For Each kvp As KeyValuePair(Of String, String) In dctTableInfo
-                        If Not String.IsNullOrEmpty(kvp.Value) Then
-                            If dctExistingTables.ContainsKey(kvp.Key) Then
-                                If Not tablesToSkip.Contains(kvp.Key) Then
-                                    tablesToSkip.Add(kvp.Key)
-                                End If
-                            Else
-                                currentTable = String.Copy(kvp.Key)
-                                cmdTargetDB.CommandText = kvp.Value
-                                cmdTargetDB.ExecuteNonQuery()
-                            End If
-                        End If
-                    Next
+                    // Get list of tables in source DB					
+                    var dctTableInfo = GetDBObjects(cnSourceDB, "table");
 
-                    For Each kvp As KeyValuePair(Of String, String) In dctIndexInfo
-                        If Not String.IsNullOrEmpty(kvp.Value) Then
-                            Dim createIndex = True
+                    // Delete the "sqlite_sequence" database from dctTableInfo if present
+                    if (dctTableInfo.ContainsKey("sqlite_sequence"))
+                    {
+                        dctTableInfo.Remove("sqlite_sequence");
+                    }
 
-                            If appendingToExistingDB Then
-                                Dim indexTargetTable As String = String.Empty
-                                If dctIndexToTableMap.TryGetValue(kvp.Key, indexTargetTable) Then
-                                    If dctExistingTables.ContainsKey(indexTargetTable) Then
-                                        createIndex = False
-                                    End If
-                                End If
-                            End If
+                    // Get list of indices in source DB
+                    Dictionary<string, string> dctIndexToTableMap;
+                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out dctIndexToTableMap);
 
-                            If createIndex Then
-                                currentTable = kvp.Key + " (create index)"
-                                cmdTargetDB.CommandText = kvp.Value
-                                cmdTargetDB.ExecuteNonQuery()
-                            End If
-                        End If
-                    Next
+                    if (File.Exists(targetDBPath))
+                    {
+                        if (appendToExistingDB)
+                        {
+                            appendingToExistingDB = true;
+                        }
+                        else
+                        {
+                            File.Delete(targetDBPath);
+                        }
+                    }
 
-                    Try
-                        cmdTargetDB.CommandText = ("ATTACH DATABASE '" & sourceDBPath) + "' AS SourceDB;"
-                        cmdTargetDB.ExecuteNonQuery()
+                    try
+                    {
+                        var sTargetConnectionString = ("Data Source = " + targetDBPath) + "; Version=3; DateTimeFormat=Ticks;";
+                        var cnTargetDB = new SQLiteConnection(sTargetConnectionString);
 
-                        ' Populate each table
-                        For Each kvp As KeyValuePair(Of String, String) In dctTableInfo
-                            currentTable = String.Copy(kvp.Key)
+                        cnTargetDB.Open();
+                        var cmdTargetDB = cnTargetDB.CreateCommand();
 
-                            If Not tablesToSkip.Contains(currentTable) Then
-                                Dim sSql As String = "INSERT INTO main." & currentTable & " SELECT * FROM SourceDB." & currentTable + ";"
 
-                                cmdTargetDB.CommandText = sSql
-                                cmdTargetDB.ExecuteNonQuery()
-                            End If
-                        Next
+                        Dictionary<string, string> dctExistingTables;
+                        if (appendingToExistingDB)
+                        {
+                            // Lookup the table names that already exist in the target
+                            dctExistingTables = GetDBObjects(cnTargetDB, "table");
+                        }
+                        else
+                        {
+                            dctExistingTables = new Dictionary<string, string>();
+                        }
 
-                        currentTable = "(DETACH DATABASE)"
+                        // Create each table
+                        foreach (var kvp in dctTableInfo)
+                        {
+                            if (!string.IsNullOrEmpty(kvp.Value))
+                            {
+                                if (dctExistingTables.ContainsKey(kvp.Key))
+                                {
+                                    if (!tablesToSkip.Contains(kvp.Key))
+                                    {
+                                        tablesToSkip.Add(kvp.Key);
+                                    }
+                                }
+                                else
+                                {
+                                    currentTable = string.Copy(kvp.Key);
+                                    cmdTargetDB.CommandText = kvp.Value;
+                                    cmdTargetDB.ExecuteNonQuery();
+                                }
+                            }
+                        }
 
-                        ' Detach the source DB
-                        cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';"
-                        cmdTargetDB.ExecuteNonQuery()
-                    Catch ex As Exception
-                        Throw New Exception("Error copying data into cloned database, table " & currentTable, ex)
-                    End Try
+                        foreach (var kvp in dctIndexInfo)
+                        {
+                            if (!string.IsNullOrEmpty(kvp.Value))
+                            {
+                                var createIndex = true;
 
-                    cmdTargetDB.Dispose()
+                                if (appendingToExistingDB)
+                                {
+                                    string indexTargetTable;
+                                    if (dctIndexToTableMap.TryGetValue(kvp.Key, out indexTargetTable))
+                                    {
+                                        if (dctExistingTables.ContainsKey(indexTargetTable))
+                                        {
+                                            createIndex = false;
+                                        }
+                                    }
+                                }
 
-                    cnTargetDB.Close()
-                Catch ex As Exception
-                    Throw New Exception("Error initializing cloned database", ex)
-                End Try
+                                if (createIndex)
+                                {
+                                    currentTable = kvp.Key + " (create index)";
+                                    cmdTargetDB.CommandText = kvp.Value;
+                                    cmdTargetDB.ExecuteNonQuery();
+                                }
+                            }
+                        }
 
-                cnSourceDB.Close()
-            End Using
-        Catch ex As Exception
-            Throw New Exception("Error cloning database", ex)
-        End Try
+                        try
+                        {
+                            cmdTargetDB.CommandText = ("ATTACH DATABASE '" + sourceDBPath) + "' AS SourceDB;";
+                            cmdTargetDB.ExecuteNonQuery();
 
-        Return True
-    End Function
+                            // Populate each table
+                            foreach (var kvp in dctTableInfo)
+                            {
+                                currentTable = string.Copy(kvp.Key);
 
-    Public Function CopySqliteTable(sourceDBPath As String, tableName As String, targetDBPath As String) As Boolean
+                                if (!tablesToSkip.Contains(currentTable))
+                                {
+                                    var sSql = "INSERT INTO main." + currentTable + " SELECT * FROM SourceDB." + currentTable + ";";
 
-        Try
+                                    cmdTargetDB.CommandText = sSql;
+                                    cmdTargetDB.ExecuteNonQuery();
+                                }
+                            }
 
-            Using cnSourceDB = New SQLiteConnection("Data Source = " & sourceDBPath)
-                cnSourceDB.Open()
-                Dim cmdSourceDB As SQLiteCommand = cnSourceDB.CreateCommand()
+                            currentTable = "(DETACH DATABASE)";
 
-                ' Lookup up the table creation Sql
-                Dim sql As String = "SELECT sql FROM main.sqlite_master WHERE name = '" & tableName & "'"
-                cmdSourceDB.CommandText = sql
+                            // Detach the source DB
+                            cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';";
+                            cmdTargetDB.ExecuteNonQuery();
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception("Error copying data into cloned database, table " + currentTable, ex);
+                        }
 
-                Dim result As Object = cmdSourceDB.ExecuteScalar()
-                If result Is Nothing OrElse result Is DBNull.Value Then
-                    Throw New Exception("Source file " + Path.GetFileName(sourceDBPath) + " does not have table " & tableName)
-                End If
+                        cmdTargetDB.Dispose();
 
-                Dim tableCreateSql As String = result.ToString()
+                        cnTargetDB.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Error initializing cloned database", ex);
+                    }
 
-                ' Look for any indices on this table
-                Dim dctIndexToTableMap As Dictionary(Of String, String) = Nothing
-                Dim dctIndexInfo As Dictionary(Of String, String) = GetDBObjects(cnSourceDB, "index", dctIndexToTableMap, tableName)
+                    cnSourceDB.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error cloning database", ex);
+            }
 
-                ' Connect to the target database
-                Using cnTarget = New SQLiteConnection("Data Source = " & targetDBPath)
-                    cnTarget.Open()
-                    Dim cmdTargetDB As SQLiteCommand = cnTarget.CreateCommand()
+            return true;
+        }
 
-                    ' Attach the source database to the target
-                    cmdTargetDB.CommandText = "ATTACH DATABASE '" & sourceDBPath & "' AS SourceDB;"
-                    cmdTargetDB.ExecuteNonQuery()
+        public bool CopySqliteTable(string sourceDBPath, string tableName, string targetDBPath)
+        {
 
-                    Using transaction As SQLiteTransaction = cnTarget.BeginTransaction()
 
-                        ' Create the target table
-                        cmdTargetDB.CommandText = tableCreateSql
-                        cmdTargetDB.ExecuteNonQuery()
+            try
+            {
+                using (var cnSourceDB = new SQLiteConnection("Data Source = " + sourceDBPath))
+                {
+                    cnSourceDB.Open();
+                    var cmdSourceDB = cnSourceDB.CreateCommand();
 
-                        ' Copy the data
-                        sql = "INSERT INTO main." & tableName & " SELECT * FROM SourceDB." & tableName + ";"
-                        cmdTargetDB.CommandText = sql
-                        cmdTargetDB.ExecuteNonQuery()
+                    // Lookup up the table creation Sql
+                    var sql = "SELECT sql FROM main.sqlite_master WHERE name = '" + tableName + "'";
+                    cmdSourceDB.CommandText = sql;
 
-                        ' Create any indices
-                        For Each item In dctIndexInfo
-                            cmdTargetDB.CommandText = item.Value
-                            cmdTargetDB.ExecuteNonQuery()
-                        Next
+                    var result = cmdSourceDB.ExecuteScalar();
+                    if (result == null || ReferenceEquals(result, DBNull.Value))
+                    {
+                        throw new Exception("Source file " + Path.GetFileName(sourceDBPath) + " does not have table " + tableName);
+                    }
 
-                        transaction.Commit()
-                    End Using
+                    var tableCreateSql = result.ToString();
 
-                    ' Detach the source DB
-                    cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';"
-                    cmdTargetDB.ExecuteNonQuery()
+                    // Look for any indices on this table
+                    Dictionary<string, string> dctIndexToTableMap;
+                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out dctIndexToTableMap, tableName);
 
-                    cmdTargetDB.Dispose()
+                    // Connect to the target database
+                    using (var cnTarget = new SQLiteConnection("Data Source = " + targetDBPath))
+                    {
+                        cnTarget.Open();
+                        var cmdTargetDB = cnTarget.CreateCommand();
 
-                    cnTarget.Close()
-                End Using
+                        // Attach the source database to the target
+                        cmdTargetDB.CommandText = "ATTACH DATABASE '" + sourceDBPath + "' AS SourceDB;";
+                        cmdTargetDB.ExecuteNonQuery();
 
-                cnSourceDB.Close()
-            End Using
-        Catch ex As Exception
-            Throw New Exception("Error copying table to new database: " + ex.Message, ex)
-        End Try
+                        using (var transaction = cnTarget.BeginTransaction())
+                        {
 
-        Return True
-    End Function
+                            // Create the target table
+                            cmdTargetDB.CommandText = tableCreateSql;
+                            cmdTargetDB.ExecuteNonQuery();
 
-    Private Function GetDBObjects(cnDatabase As SQLiteConnection, objectType As String) As Dictionary(Of String, String)
-        Dim tableName As String = String.Empty
-        Dim dctIndexToTableMap As Dictionary(Of String, String) = Nothing
-        Return GetDBObjects(cnDatabase, objectType, dctIndexToTableMap, tableName)
-    End Function
+                            // Copy the data
+                            sql = "INSERT INTO main." + tableName + " SELECT * FROM SourceDB." + tableName + ";";
+                            cmdTargetDB.CommandText = sql;
+                            cmdTargetDB.ExecuteNonQuery();
 
-    Private Function GetDBObjects(cnDatabase As SQLiteConnection, objectType As String, ByRef dctIndexToTableMap As Dictionary(Of String, String)) As Dictionary(Of String, String)
-        Dim tableName As String = String.Empty
-        Return GetDBObjects(cnDatabase, objectType, dctIndexToTableMap, tableName)
-    End Function
+                            // Create any indices
+                            foreach (var item in dctIndexInfo)
+                            {
+                                cmdTargetDB.CommandText = item.Value;
+                                cmdTargetDB.ExecuteNonQuery();
+                            }
 
-    ''' <summary>
-    ''' Looks up the object names and object creation sql for objects of the specified type
-    ''' </summary>
-    ''' <param name="cnDatabase">Database connection object</param>
-    ''' <param name="objectType">Should be 'table' or 'index'</param>
-    ''' <param name="dctIndexToTableMap">Output parameter, only used if objectType is "index"; Keys are Index names and Values are the names of the tables that the indices apply to</param>
-    ''' <param name="tableNameFilter">Optional table name to filter on (useful when looking for indices that refer to a given table)</param>
-    ''' <returns>Dictionary object where Keys are the object names and Values are the Sql to create that object</returns>
-    Private Function GetDBObjects(cnDatabase As SQLiteConnection, objectType As String, ByRef dctIndexToTableMap As Dictionary(Of String, String), tableNameFilter As String) As Dictionary(Of String, String)
+                            transaction.Commit();
+                        }
 
-        Dim dctObjects = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
-        dctIndexToTableMap = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
+                        // Detach the source DB
+                        cmdTargetDB.CommandText = "DETACH DATABASE 'SourceDB';";
+                        cmdTargetDB.ExecuteNonQuery();
 
-        Dim cmd As New SQLiteCommand(cnDatabase)
+                        cmdTargetDB.Dispose();
 
-        Dim sql As String = "SELECT name, sql, tbl_name FROM main.sqlite_master WHERE type='" & objectType & "'"
+                        cnTarget.Close();
+                    }
 
-        If Not String.IsNullOrWhiteSpace(tableNameFilter) Then
-            sql &= " and tbl_name = '" & tableNameFilter & "'"
-        End If
-        sql &= " ORDER BY NAME;"
+                    cnSourceDB.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error copying table to new database: " + ex.Message, ex);
+            }
 
-        cmd.CommandText = sql
+            return true;
+        }
 
-        Using reader As SQLiteDataReader = cmd.ExecuteReader()
-            While reader.Read()
-                dctObjects.Add(Convert.ToString(reader("Name")), Convert.ToString(reader("sql")))
+        private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType)
+        {
+            var tableName = string.Empty;
+            Dictionary<string, string> dctIndexToTableMap;
+            return GetDBObjects(cnDatabase, objectType, out dctIndexToTableMap, tableName);
+        }
 
-                If objectType = "index" Then
-                    dctIndexToTableMap.Add(Convert.ToString(reader("Name")), Convert.ToString(reader("tbl_name")))
-                End If
-            End While
-        End Using
+        private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType, out Dictionary<string, string> dctIndexToTableMap)
+        {
+            var tableName = string.Empty;
+            return GetDBObjects(cnDatabase, objectType, out dctIndexToTableMap, tableName);
+        }
 
-        Return dctObjects
-    End Function
-End Class
+        /// <summary>
+        /// Looks up the object names and object creation sql for objects of the specified type
+        /// </summary>
+        /// <param name="cnDatabase">Database connection object</param>
+        /// <param name="objectType">Should be 'table' or 'index'</param>
+        /// <param name="dctIndexToTableMap">Output parameter, only used if objectType is "index"; Keys are Index names and Values are the names of the tables that the indices apply to</param>
+        /// <param name="tableNameFilter">Optional table name to filter on (useful when looking for indices that refer to a given table)</param>
+        /// <returns>Dictionary where Keys are the object names and Values are the Sql to create that object</returns>
+        private Dictionary<string, string> GetDBObjects(
+            SQLiteConnection cnDatabase, string 
+            objectType, 
+            out Dictionary<string, string> dctIndexToTableMap, 
+            string tableNameFilter)
+        {
+
+            var dctObjects = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            dctIndexToTableMap = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+
+            var cmd = new SQLiteCommand(cnDatabase);
+
+            var sql = "SELECT name, sql, tbl_name FROM main.sqlite_master WHERE type='" + objectType + "'";
+
+            if (!string.IsNullOrWhiteSpace(tableNameFilter))
+            {
+                sql += " and tbl_name = '" + tableNameFilter + "'";
+            }
+            sql += " ORDER BY NAME;";
+
+            cmd.CommandText = sql;
+
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    dctObjects.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["sql"]));
+
+                    if (objectType == "index")
+                    {
+                        dctIndexToTableMap.Add(Convert.ToString(reader["Name"]), Convert.ToString(reader["tbl_name"]));
+                    }
+                }
+            }
+
+            return dctObjects;
+        }
+    }
+}

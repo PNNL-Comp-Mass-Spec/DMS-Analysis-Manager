@@ -1,1006 +1,1111 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2007, Battelle Memorial Institute
-' Created 12/18/2007
-'
-'*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Xml;
+using System.Xml.Linq;
+
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2007, Battelle Memorial Institute
+// Created 12/18/2007
+//
+//*********************************************************************************************************
+
+namespace AnalysisManagerBase
+{
+
+    /// <summary>
+    /// Provides DB access and tools for one analysis job
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsAnalysisJob : clsDBTask, IJobParams
+    {
+
+        #region "Constants"
+        protected const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
+
+        /// <summary>
+        /// "RequestStepTask"
+        /// </summary>
+        protected const string SP_NAME_REQUEST_TASK = "RequestStepTaskXML";
+        #endregion
+
+        #region "Module variables"
+
+        /// <summary>
+        /// The outer dictionary tracks section names, then the inner dictionary tracks key/value pairs within each section
+        /// </summary>
+        protected Dictionary<string, Dictionary<string, string>> m_JobParams;
+        protected int m_JobId;
+
+        protected bool m_TaskWasClosed;
+        
+        /// <summary>
+        /// List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
+        /// </summary>
+        protected SortedSet<string> m_ResultFilesToSkip = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+
+        /// <summary>
+        /// List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder
+        /// </summary>
+        /// <remarks>
+        /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip: 
+        /// If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
+        /// </remarks>
+        protected SortedSet<string> m_ResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+
+        /// <summary>
+        /// List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
+        /// </summary>
+        protected SortedSet<string> m_ResultFilesToKeep = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+
+        /// <summary>
+        /// List of file path to delete from the storage server (must be full file paths)
+        /// </summary>
+        protected SortedSet<string> m_ServerFilesToDelete = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+
+        /// <summary>
+        /// List of dataset names and dataset IDs
+        /// </summary>
+        protected Dictionary<string, int> m_DatasetInfoList = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+
+        #endregion
+
+        #region "Properties"
+
+        /// <summary>
+        /// List of dataset names and dataset IDs associated with this aggregation job
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public Dictionary<string, int> DatasetInfoList => m_DatasetInfoList;
+
+        /// <summary>
+        /// List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public SortedSet<string> ResultFilesToKeep => m_ResultFilesToKeep;
+
+        /// <summary>
+        /// List of file names to NOT move to the result folder
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public SortedSet<string> ResultFilesToSkip => m_ResultFilesToSkip;
+
+        /// <summary>
+        /// List of file extensions to NOT move to the result folder; comparison checks if the end of the fileName matches any entry in ResultFileExtensionsToSkip
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public SortedSet<string> ResultFileExtensionsToSkip => m_ResultFileExtensionsToSkip;
+
+        /// <summary>
+        /// List of file paths to remove from the storage server (full file paths)
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks>Used by clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
+        public SortedSet<string> ServerFilesToDelete => m_ServerFilesToDelete;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrParams">IMgrParams object containing manager parameters</param>
+        /// <param name="debugLvl">Debug level</param>
+        /// <remarks></remarks>
+
+        public clsAnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
+        {
+
+            Reset();
 
-Imports System.Data.SqlClient
-Imports System.IO
-Imports System.Xml
-Imports System.Text
-Imports System.Xml.Linq
-
-''' <summary>
-''' Provides DB access and tools for one analysis job
-''' </summary>
-''' <remarks></remarks>
-Public Class clsAnalysisJob
-    Inherits clsDBTask
-    Implements IJobParams
-
-#Region "Constants"
-    Protected Const SP_NAME_SET_COMPLETE As String = "SetStepTaskComplete"
-    Protected Const SP_NAME_REQUEST_TASK As String = "RequestStepTaskXML"   '"RequestStepTask"
-#End Region
-
-#Region "Module variables"
-    ' The outer dictionary tracks section names, then the inner dictionary tracks key/value pairs within each section
-    Protected m_JobParams As Dictionary(Of String, Dictionary(Of String, String))
-
-    Protected m_JobId As Integer
-    Protected m_TaskWasClosed As Boolean
-
-    ''' <summary>
-    ''' List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
-    ''' </summary>
-    Protected m_ResultFilesToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
-
-    ''' <summary>
-    ''' List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder
-    ''' </summary>
-    ''' <remarks>
-    ''' Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip: 
-    ''' If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
-    ''' </remarks>
-    Protected m_ResultFileExtensionsToSkip As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
-
-    ''' <summary>
-    ''' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
-    ''' </summary>
-    Protected m_ResultFilesToKeep As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
-
-    ''' <summary>
-    ''' List of file path to delete from the storage server (must be full file paths)
-    ''' </summary>
-    Protected m_ServerFilesToDelete As New SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
-
-    ''' <summary>
-    ''' List of dataset names and dataset IDs
-    ''' </summary>
-    Protected m_DatasetInfoList As New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
-
-#End Region
-
-#Region "Properties"
-
-    ''' <summary>
-    '''  List of dataset names and dataset IDs associated with this aggregation job
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property DatasetInfoList As Dictionary(Of String, Integer) Implements IJobParams.DatasetInfoList
-        Get
-            Return m_DatasetInfoList
-        End Get
-    End Property
-
-    ''' <summary>
-    ''' List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property ResultFilesToKeep As SortedSet(Of String) Implements IJobParams.ResultFilesToKeep
-        Get
-            Return m_ResultFilesToKeep
-        End Get
-    End Property
-
-    ''' <summary>
-    ''' List of file names to NOT move to the result folder
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property ResultFilesToSkip As SortedSet(Of String) Implements IJobParams.ResultFilesToSkip
-        Get
-            Return m_ResultFilesToSkip
-        End Get
-    End Property
-
-    ''' <summary>
-    ''' List of file extensions to NOT move to the result folder; comparison checks if the end of the fileName matches any entry in ResultFileExtensionsToSkip
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property ResultFileExtensionsToSkip As SortedSet(Of String) Implements IJobParams.ResultFileExtensionsToSkip
-        Get
-            Return m_ResultFileExtensionsToSkip
-        End Get
-    End Property
-
-    ''' <summary>
-    ''' List of file paths to remove from the storage server (full file paths)
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks>Used by clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
-    Public ReadOnly Property ServerFilesToDelete As SortedSet(Of String) Implements IJobParams.ServerFilesToDelete
-        Get
-            Return m_ServerFilesToDelete
-        End Get
-    End Property
-#End Region
-
-#Region "Methods"
-
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="mgrParams">IMgrParams object containing manager parameters</param>
-    ''' <remarks></remarks>
-    Public Sub New(mgrParams As IMgrParams, DebugLvl As Short)
-
-        MyBase.New(mgrParams, DebugLvl)
-
-        Reset()
-
-    End Sub
-
-    ''' <summary>
-    ''' Adds (or updates) a job parameter
-    ''' </summary>
-    ''' <param name="SectionName">Section name for parameter</param>
-    ''' <param name="ParamName">Name of parameter</param>
-    ''' <param name="ParamValue">Boolean value for parameter</param>
-    ''' <returns>True if success, False if an error</returns>
-    ''' <remarks></remarks>
-    Public Function AddAdditionalParameter(SectionName As String, ParamName As String, ParamValue As Boolean) As Boolean Implements IJobParams.AddAdditionalParameter
-
-        Try
-
-            SetParam(SectionName, ParamName, ParamValue.ToString())
-
-            Return True
-        Catch ex As Exception
-            LogError("Exception adding parameter: " & ParamName & " Value: " & ParamValue, ex)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Adds (or updates) a job parameter
-    ''' </summary>
-    ''' <param name="SectionName">Section name for parameter</param>
-    ''' <param name="ParamName">Name of parameter</param>
-    ''' <param name="ParamValue">Value for parameter</param>
-    ''' <returns>True if success, False if an error</returns>
-    ''' <remarks></remarks>
-    Public Function AddAdditionalParameter(SectionName As String, ParamName As String, ParamValue As String) As Boolean Implements IJobParams.AddAdditionalParameter
-
-        Try
-            If ParamValue Is Nothing Then ParamValue = String.Empty
-
-            SetParam(SectionName, ParamName, ParamValue)
-
-            Return True
-        Catch ex As Exception
-            LogError("Exception adding parameter: " & ParamName & " Value: " & ParamValue, ex)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Add new dataset name and ID to DatasetInfoList
-    ''' </summary>
-    ''' <param name="datasetName"></param>
-    ''' <param name="datasetID"></param>
-    ''' <remarks></remarks>
-    Public Sub AddDatasetInfo(datasetName As String, datasetID As Integer) Implements IJobParams.AddDatasetInfo
-        If String.IsNullOrWhiteSpace(datasetName) Then Exit Sub
-        If Not m_DatasetInfoList.ContainsKey(datasetName) Then
-            m_DatasetInfoList.Add(datasetName, datasetID)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Add a fileName extension to not move to the results folder
-    ''' </summary>
-    ''' <param name="fileExtension"></param>
-    ''' <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
-    Public Sub AddResultFileExtensionToSkip(fileExtension As String) Implements IJobParams.AddResultFileExtensionToSkip
-        If String.IsNullOrWhiteSpace(fileExtension) Then Exit Sub
-
-        If Not m_ResultFileExtensionsToSkip.Contains(fileExtension) Then
-            m_ResultFileExtensionsToSkip.Add(fileExtension)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Add a fileName to definitely move to the results folder
-    ''' </summary>
-    ''' <param name="fileName"></param>
-    ''' <remarks></remarks>
-    Public Sub AddResultFileToKeep(fileName As String) Implements IJobParams.AddResultFileToKeep
-        If String.IsNullOrWhiteSpace(fileName) Then Exit Sub
-
-        fileName = Path.GetFileName(fileName)
-        If Not m_ResultFilesToKeep.Contains(fileName) Then
-            m_ResultFilesToKeep.Add(fileName)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Add a fileName to not move to the results folder
-    ''' </summary>
-    ''' <param name="fileName"></param>
-    ''' <remarks></remarks>
-    Public Sub AddResultFileToSkip(fileName As String) Implements IJobParams.AddResultFileToSkip
-        If String.IsNullOrWhiteSpace(fileName) Then Exit Sub
-
-        fileName = Path.GetFileName(fileName)
-        If Not m_ResultFilesToSkip.Contains(fileName) Then
-            m_ResultFilesToSkip.Add(fileName)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Add a file to be deleted from the storage server (requires full file path)
-    ''' </summary>
-    ''' <param name="filePath">Full path to the file</param>
-    ''' <remarks></remarks>
-    Public Sub AddServerFileToDelete(filePath As String) Implements IJobParams.AddServerFileToDelete
-        If String.IsNullOrWhiteSpace(filePath) Then Exit Sub
-
-        If Not m_ServerFilesToDelete.Contains(filePath) Then
-            m_ServerFilesToDelete.Add(filePath)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name (in any parameter section)
-    ''' </summary>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    ''' <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
-    Public Function GetJobParameter(Name As String, ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
-
-        Dim strValue As String
-
-        Try
-            strValue = GetParam(Name)
-
-            If String.IsNullOrEmpty(strValue) Then
-                Return ValueIfMissing
-            End If
-
-        Catch
-            Return ValueIfMissing
-        End Try
-
-        ' Note: if strValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
-        Return CBool(strValue)
-
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name (in any parameter section)
-    ''' </summary>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetJobParameter(Name As String, ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
-
-        Dim strValue As String
-
-        Try
-            strValue = GetParam(Name)
-
-            If String.IsNullOrEmpty(strValue) Then
-                Return ValueIfMissing
-            End If
-
-        Catch
-            Return ValueIfMissing
-        End Try
-
-        Return strValue
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name (in any parameter section)
-    ''' </summary>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetJobParameter(Name As String, ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
-        Dim strValue As String
-
-        Try
-            strValue = GetParam(Name)
-
-            If String.IsNullOrEmpty(strValue) Then
-                Return ValueIfMissing
-            End If
-
-        Catch
-            Return ValueIfMissing
-        End Try
-
-        ' Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
-        Return CInt(strValue)
-
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name (in any parameter section)
-    ''' </summary>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetJobParameter(Name As String, ValueIfMissing As Short) As Short Implements IJobParams.GetJobParameter
-        Return CShort(GetJobParameter(Name, CInt(ValueIfMissing)))
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name (in any parameter section)
-    ''' </summary>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetJobParameter(Name As String, ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
-        Return clsGlobal.CSngSafe(GetParam(Name), ValueIfMissing)
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
-    ''' </summary>
-    ''' <param name="Section">Section name for parameter</param>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetJobParameter(Section As String, Name As String, ValueIfMissing As Boolean) As Boolean Implements IJobParams.GetJobParameter
-        Return clsGlobal.CBoolSafe(GetParam(Section, Name), ValueIfMissing)
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
-    ''' </summary>
-    ''' <param name="Section">Section name for parameter</param>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetJobParameter(Section As String, Name As String, ValueIfMissing As Integer) As Integer Implements IJobParams.GetJobParameter
-        Return clsGlobal.CIntSafe(GetParam(Section, Name), ValueIfMissing)
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
-    ''' </summary>
-    ''' <param name="Section">Section name for parameter</param>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetJobParameter(Section As String, Name As String, ValueIfMissing As String) As String Implements IJobParams.GetJobParameter
-        Dim strValue As String
-        strValue = GetParam(Section, Name)
-        If String.IsNullOrEmpty(strValue) Then
-            Return ValueIfMissing
-        Else
-            Return strValue
-        End If
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
-    ''' </summary>
-    ''' <param name="Section">Section name for parameter</param>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-    ''' <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-    Public Function GetJobParameter(Section As String, Name As String, ValueIfMissing As Single) As Single Implements IJobParams.GetJobParameter
-        Return clsGlobal.CSngSafe(GetParam(Section, Name), ValueIfMissing)
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name (in any parameter section)
-    ''' </summary>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <returns>Value for specified parameter; empty string if not found</returns>
-    ''' <remarks></remarks>
-    Public Function GetParam(Name As String) As String Implements IJobParams.GetParam
-
-        Dim strValue As String = String.Empty
-
-        If TryGetParam(Name, strValue) Then
-            Return strValue
-        Else
-            Return String.Empty
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Gets a job parameter with the given name, preferentially using the specified parameter section
-    ''' </summary>
-    ''' <param name="Section">Section name for parameter</param>
-    ''' <param name="Name">Key name for parameter</param>
-    ''' <returns>Value for specified parameter; empty string if not found</returns>
-    ''' <remarks></remarks>
-    Public Function GetParam(Section As String, Name As String) As String Implements IJobParams.GetParam
-
-        Dim strValue As String = String.Empty
-
-        If String.IsNullOrEmpty(Name) Then
-            ' User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
-            Return GetParam(Section)
-        End If
-
-        If TryGetParam(Section, Name, strValue) Then
-            Return strValue
-        Else
-            Return String.Empty
-        End If
-
-    End Function
-
-    Public Shared Function JobParametersFilename(jobNum As Integer) As String
-        Return JobParametersFilename(jobNum.ToString())
-    End Function
-
-    Public Shared Function JobParametersFilename(jobNum As String) As String
-        Return clsGlobal.XML_FILENAME_PREFIX & jobNum & "." & clsGlobal.XML_FILENAME_EXTENSION
-    End Function
-
-    ''' <summary>
-    ''' Add/updates the value for the given parameter (searches all sections)
-    ''' </summary>
-    ''' <param name="ParamName">Parameter name</param>
-    ''' <param name="ParamValue">Parameter value</param>
-    ''' <remarks></remarks>
-    Public Sub SetParam(ParamName As String, ParamValue As String) Implements IJobParams.SetParam
-
-        Dim blnMatchFound As Boolean
-
-        If ParamValue Is Nothing Then ParamValue = String.Empty
-
-        For Each oSection In m_JobParams
-            If oSection.Value.ContainsKey(ParamName) Then
-                oSection.Value(ParamName) = ParamValue
-                blnMatchFound = True
-            End If
-        Next
-
-        If Not blnMatchFound AndAlso m_JobParams.Count > 0 Then
-            ' Add the parameter to the first section
-            m_JobParams.First.Value.Add(ParamName, ParamValue)
-        End If
-
-    End Sub
-
-    ''' <summary>
-    ''' Add/updates the value for the given parameter
-    ''' </summary>
-    ''' <param name="Section">Section name</param>
-    ''' <param name="ParamName">Parameter name</param>
-    ''' <param name="ParamValue">Parameter value</param>
-    ''' <remarks></remarks>
-    Public Sub SetParam(Section As String, ParamName As String, ParamValue As String) Implements IJobParams.SetParam
-
-        Dim oParams As Dictionary(Of String, String) = Nothing
-
-        If Not m_JobParams.TryGetValue(Section, oParams) Then
-            ' Need to add a section with a blank name
-            oParams = New Dictionary(Of String, String)(StringComparer.CurrentCultureIgnoreCase)
-            m_JobParams.Add(Section, oParams)
-        End If
-
-        If ParamValue Is Nothing Then ParamValue = String.Empty
-
-        If oParams.ContainsKey(ParamName) Then
-            oParams(ParamName) = ParamValue
-        Else
-            oParams.Add(ParamName, ParamValue)
-        End If
-
-    End Sub
-
-    ''' <summary>
-    ''' Attempts to retrieve the specified parameter (looks in all parameter sections)
-    ''' </summary>
-    ''' <param name="ParamName">Parameter Name</param>
-    ''' <param name="ParamValue">Output: parameter value</param>
-    ''' <returns>True if success, False if not found</returns>
-    ''' <remarks></remarks>
-    Public Function TryGetParam(ParamName As String, ByRef ParamValue As String) As Boolean
-
-        ParamValue = String.Empty
-
-        If Not m_JobParams Is Nothing Then
-            For Each oEntry As KeyValuePair(Of String, Dictionary(Of String, String)) In m_JobParams
-                If oEntry.Value.TryGetValue(ParamName, ParamValue) Then
-                    If String.IsNullOrWhiteSpace(ParamValue) Then
-                        ParamValue = String.Empty
-                    End If
-                    Return True
-                End If
-            Next
-        End If
-
-        Return False
-
-    End Function
-
-    ''' <summary>
-    ''' Attempts to retrieve the specified parameter in the specified parameter section
-    ''' </summary>
-    ''' <param name="Section">Section Name</param>
-    ''' <param name="ParamName">Parameter Name</param>
-    ''' <param name="ParamValue">Output: parameter value</param>
-    ''' <returns>True if success, False if not found</returns>
-    ''' <remarks></remarks>
-    Public Function TryGetParam(Section As String, ParamName As String, ByRef ParamValue As String) As Boolean
-        Return TryGetParam(Section, ParamName, ParamValue, True)
-    End Function
-
-    ''' <summary>
-    ''' Attempts to retrieve the specified parameter in the specified parameter section
-    ''' </summary>
-    ''' <param name="Section">Section Name</param>
-    ''' <param name="ParamName">Parameter Name</param>
-    ''' <param name="ParamValue">Output: parameter value</param>
-    ''' <param name="SearchAllSectionsIfNotFound">If True, then searches other sections for the parameter if not found in the specified section</param>
-    ''' <returns>True if success, False if not found</returns>
-    ''' <remarks></remarks>
-    Public Function TryGetParam(Section As String, ParamName As String, ByRef ParamValue As String, SearchAllSectionsIfNotFound As Boolean) As Boolean
-
-        Dim oParams As Dictionary(Of String, String) = Nothing
-        ParamValue = String.Empty
-
-        If Not m_JobParams Is Nothing Then
-            If m_JobParams.TryGetValue(Section, oParams) Then
-                If oParams.TryGetValue(ParamName, ParamValue) Then
-                    If String.IsNullOrWhiteSpace(ParamValue) Then
-                        ParamValue = String.Empty
-                    End If
-                    Return True
-                End If
-            End If
-        End If
-
-        If SearchAllSectionsIfNotFound Then
-            ' Parameter not found in the specified section
-            ' Search for the entry in other sections
-            Return TryGetParam(ParamName, ParamValue)
-        Else
-            Return False
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Remove a fileName that was previously added to ResultFilesToSkip
-    ''' </summary>
-    ''' <param name="fileName"></param>
-    ''' <remarks></remarks>
-    Public Sub RemoveResultFileToSkip(fileName As String) Implements IJobParams.RemoveResultFileToSkip
-
-        If m_ResultFilesToSkip.Contains(fileName) Then
-            m_ResultFilesToSkip.Remove(fileName)
-        End If
-
-    End Sub
-
-    ''' <summary>
-    ''' Filter the job parameters in paramXml to remove extra items from section sectionName
-    ''' </summary>
-    ''' <param name="paramXml">Job Parameters XML to filter</param>
-    ''' <param name="sectionName">SectionName to match</param>
-    ''' <param name="paramNamesToIgnore">
-    ''' Keys are parameter names to ignore
-    ''' Values are another parameter name that must be present if we're going to ignore the given parameter
-    ''' </param>
-    ''' <param name="paramsToAddAsAttribute">
-    ''' Parameters to convert to an attribute at the section level
-    ''' Keys are the parameter name to match, Values are the new attribute name to add
-    ''' </param>
-    ''' <returns>Updated XML, as a string</returns>
-    Private Function FilterXmlSection(
-      paramXml As String,
-      sectionName As String,
-      paramNamesToIgnore As Dictionary(Of String, String),
-      paramsToAddAsAttribute As Dictionary(Of String, String)) As String
-
-        Try
-            ' Note that XDocument supersedes XmlDocument and can often be easier to use since XDocument is LINQ-based
-            Dim doc As XDocument = XDocument.Parse(paramXml)
-
-            Dim sections = doc.Elements("sections").Elements("section")
-            For Each section In sections
-                If Not section.HasAttributes Then Continue For
-
-                Dim nameAttrib = section.Attribute("name")
-                If nameAttrib Is Nothing Then Continue For
-
-                If Not nameAttrib.Value = sectionName Then Continue For
-
-                Dim parameterItems = section.Elements("item").ToList()
-
-                ' Construct a list of the parameter names in this section
-                Dim paramNames = (From item In parameterItems Where item.HasAttributes
-                                  Select itemKey = item.Attribute("key")
-                                  Where itemKey IsNot Nothing
-                                  Select itemKey.Value).ToList()
-
-                Dim paramsToRemove = New List(Of XElement)
-                Dim attributesToAdd = New Dictionary(Of String, String)
-
-                For Each paramItem In parameterItems
-                    If Not paramItem.HasAttributes Then Continue For
-
-                    Dim paramName = paramItem.Attribute("key")
-                    If paramName Is Nothing Then Continue For
-
-                    If paramNamesToIgnore.ContainsKey(paramName.Value) Then
-                        Dim requiredParameter = paramNamesToIgnore(paramName.Value)
-                        If String.IsNullOrEmpty(requiredParameter) OrElse paramNames.Contains(requiredParameter) Then
-                            ' Remove this parameter from this section
-                            paramsToRemove.Add(paramItem)
-                        End If
-                    End If
-
-                    If paramsToAddAsAttribute.ContainsKey(paramName.Value) Then
-                        Dim attribName = paramsToAddAsAttribute(paramName.Value)
-                        If String.IsNullOrEmpty(attribName) Then attribName = paramName.Value
-
-                        Dim paramValue = paramItem.Attribute("value")
-                        If paramValue Is Nothing Then
-                            attributesToAdd.Add(attribName, String.Empty)
-                        Else
-                            attributesToAdd.Add(attribName, paramValue.Value)
-                        End If
-
-                    End If
-                Next
-
-                For Each paramItem In paramsToRemove
-                    paramItem.Remove()
-                Next
-
-                For Each attribItem In attributesToAdd
-                    section.SetAttributeValue(attribItem.Key, attribItem.Value)
-                Next
-            Next
-
-            Dim sbOutput = New StringBuilder()
-
-            Dim settings = New XmlWriterSettings()
-            settings.Indent = True
-            settings.IndentChars = "  "
-            settings.OmitXmlDeclaration = True
-
-            Using writer As XmlWriter = XmlWriter.Create(sbOutput, settings)
-                doc.Save(writer)
-            End Using
-
-            Dim filteredXML = sbOutput.ToString()
-
-            Return filteredXML
-
-        Catch ex As Exception
-            LogError("Error in FilterXmlSection", ex)
-            Return paramXml
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Requests a task from the database
-    ''' </summary>
-    ''' <returns>Enum indicating if task was found</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RequestTask() As RequestTaskResult Implements IJobParams.RequestTask
-
-        Dim retVal As RequestTaskResult
-
-        retVal = RequestAnalysisJob()
-        Select Case retVal
-            Case RequestTaskResult.NoTaskFound
-                m_TaskWasAssigned = False
-            Case RequestTaskResult.TaskFound
-                m_TaskWasAssigned = True
-            Case Else
-                m_TaskWasAssigned = False
-        End Select
-        Return retVal
-
-    End Function
-
-    ''' <summary>
-    ''' Requests a single analysis job using RequestStepTaskXML
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function RequestAnalysisJob() As RequestTaskResult
-
-        Dim taskResult As RequestTaskResult
-
-        Dim strProductVersion As String = clsGlobal.GetAssemblyVersion()
-        If strProductVersion Is Nothing Then strProductVersion = "??"
-
-        Reset()
-
-        Try
-            'Set up the command object prior to SP execution
-            Dim myCmd = New SqlCommand(SP_NAME_REQUEST_TASK) With {
-                .CommandType = CommandType.StoredProcedure
-            }
-
-            myCmd.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
-            myCmd.Parameters.Add(New SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("MgrName")
-            myCmd.Parameters.Add(New SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output
-            myCmd.Parameters.Add(New SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output
-            myCmd.Parameters.Add(New SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output
-            myCmd.Parameters.Add(New SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0
-            myCmd.Parameters.Add(New SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128)).Value = strProductVersion
-
-            If m_DebugLevel > 4 Then
-                LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " & m_BrokerConnStr, clsLogTools.LogLevels.DEBUG)
-                LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", clsLogTools.LogLevels.DEBUG)
-                PrintCommandParams(myCmd)
-            End If
-
-            ' Execute the SP
-            Dim retVal = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 1)
-
-            Select Case retVal
-                Case RET_VAL_OK
-                    'No errors found in SP call, so see if any step tasks were found
-                    m_JobId = CInt(myCmd.Parameters("@jobNumber").Value)
-                    Dim jobParamsXML = CStr(myCmd.Parameters("@parameters").Value)
-
-                    'Step task was found; get the data for it
-                    Dim dctParameters As List(Of udtParameterInfoType) = FillParamDictXml(jobParamsXML).ToList()
-
-                    If dctParameters IsNot Nothing Then
-
-                        For Each udtParamInfo As udtParameterInfoType In dctParameters
-                            SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value)
-                        Next
-
-                        SaveJobParameters(m_MgrParams.GetParam("WorkDir"), jobParamsXML, m_JobId)
-                        taskResult = RequestTaskResult.TaskFound
-                    Else
-                        'There was an error
-                        LogError("clsAnalysisJob.AddTaskParamsToDictionary(), Unable to obtain job data")
-                        taskResult = RequestTaskResult.ResultError
-                    End If
-                Case RET_VAL_TASK_NOT_AVAILABLE
-                    'No jobs found
-                    taskResult = RequestTaskResult.NoTaskFound
-                Case RET_VAL_EXCESSIVE_RETRIES
-                    ' Too many retries
-                    taskResult = RequestTaskResult.TooManyRetries
-                Case RET_VAL_DEADLOCK
-                    ' Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-                    taskResult = RequestTaskResult.Deadlock
-                Case Else
-                    'There was an SP error
-                    LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " & retVal.ToString &
-                        "; Msg text = " & CStr(myCmd.Parameters("@message").Value))
-                    taskResult = RequestTaskResult.ResultError
-            End Select
-
-        Catch ex As Exception
-            LogError("Exception requesting analysis job", ex)
-            taskResult = RequestTaskResult.ResultError
-        End Try
-
-        Return taskResult
-
-    End Function
-
-    ''' <summary>
-    ''' Reset the class-wide variables to their defaults
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Sub Reset()
-        m_TaskWasClosed = False
-
-        m_ResultFilesToSkip.Clear()
-        m_ResultFileExtensionsToSkip.Clear()
-        m_ResultFilesToKeep.Clear()
-        m_ServerFilesToDelete.Clear()
-
-        m_DatasetInfoList.Clear()
-
-        If m_JobParams Is Nothing Then
-            m_JobParams = New Dictionary(Of String, Dictionary(Of String, String))(StringComparer.CurrentCultureIgnoreCase)
-        End If
-
-        m_JobParams.Clear()
-
-    End Sub
-
-    ''' <summary>
-    ''' Saves job Parameters to an XML File
-    ''' </summary>
-    ''' <param name="workDir">Full path to work directory</param>
-    ''' <param name="jobParamsXML">Contains the xml for all the job parameters</param>
-    ''' <param name="jobNum">Job number</param>
-    ''' <remarks></remarks>
-    Private Sub SaveJobParameters(
-      workDir As String,
-      jobParamsXML As String,
-      jobNum As Integer)
-
-        Dim xmlParameterFilePath = String.Empty
-
-        Try
-            Dim xmlParameterFilename = JobParametersFilename(jobNum.ToString())
-            xmlParameterFilePath = Path.Combine(workDir, xmlParameterFilename)
-
-            Dim xmlParameterFile = New FileInfo(xmlParameterFilePath)
-
-            ' Keys are parameter names to ignore
-            ' Values are another parameter name that must be present if we're going to ignore the given parameter
-            Dim paramNamesToIgnore = New Dictionary(Of String, String)
-            paramNamesToIgnore.Add("SharedResultsFolders", "")
-            paramNamesToIgnore.Add("CPU_Load", "")
-            paramNamesToIgnore.Add("Job", "")
-            paramNamesToIgnore.Add("Step", "")
-            paramNamesToIgnore.Add("StepInputFolderName", "InputFolderName")
-            paramNamesToIgnore.Add("StepOutputFolderName", "OutputFolderName")
-
-            Dim paramsToAddAsAttribute = New Dictionary(Of String, String)
-            paramsToAddAsAttribute.Add("Step", "step")
-
-            ' Remove extra parameters from the StepParameters section that we don't want to include in the XML
-            ' Also update the section to have an attribute that is the step number
-            Dim filteredXML = FilterXmlSection(jobParamsXML, "StepParameters", paramNamesToIgnore, paramsToAddAsAttribute)
-
-            Dim xmlWriter As New clsFormattedXMLWriter
-            xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFile.FullName)
-
-            AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename)
-
-            Dim msg As String = "Job Parameters successfully saved to file: " & xmlParameterFile.FullName
-
-            ' Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
-            clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5)
-
-            LogDebug(msg, clsLogTools.LogLevels.DEBUG)
-
-        Catch ex As Exception
-            LogError("Exception saving analysis job parameters to " & xmlParameterFilePath, ex)
-        End Try
-
-    End Sub
-
-    ''' <summary>
-    ''' Contact the Pipeline database to close the analysis job
-    ''' </summary>
-    ''' <param name="CloseOut">IJobParams enum specifying close out type</param>
-    ''' <param name="CompMsg">Completion message to be added to database upon closeout</param>
-    Public Overrides Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String) Implements IJobParams.CloseTask
-        CloseTask(CloseOut, CompMsg, 0, String.Empty)
-    End Sub
-
-    ''' <summary>
-    ''' Contact the Pipeline database to close the analysis job
-    ''' </summary>
-    ''' <param name="CloseOut">IJobParams enum specifying close out type</param>
-    ''' <param name="CompMsg">Completion message to be added to database upon closeout</param>
-    ''' <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
-    ''' <param name="EvalMessage">Evaluation message ("" if no special message)</param>
-    Public Overrides Sub CloseTask(CloseOut As IJobParams.CloseOutType, CompMsg As String, EvalCode As Integer, EvalMessage As String) Implements IJobParams.CloseTask
-
-        Dim CompCode = CInt(CloseOut)
-
-        If EvalMessage Is Nothing Then EvalMessage = String.Empty
-
-        If m_TaskWasClosed Then
-            LogMessage("Job " & m_JobId & " has already been closed; will not call " & SP_NAME_SET_COMPLETE & " again")
-        Else
-            m_TaskWasClosed = True
-            If Not SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage) Then
-                LogError("Error setting job complete in database, job " & m_JobId)
-            End If
-        End If
-
-    End Sub
-
-    ''' <summary>
-    ''' Communicates with database to perform job closeout
-    ''' </summary>
-    ''' <param name="SpName">Name of SP in database to call for closeout, typically SetStepTaskComplete</param>
-    ''' <param name="CompCode">Integer version of ITaskParams specifying closeout type</param>
-    ''' <param name="CompMsg">Comment to insert in database</param>
-    ''' <param name="EvalCode">Integer results evaluation code</param>
-    ''' <param name="EvalMsg">Message describing evaluation results</param>
-    ''' <returns>True for success, False for failure</returns>
-    ''' <remarks>EvalCode and EvalMsg not presently used</remarks>
-    Protected Function SetAnalysisJobComplete(
-       spName As String,
-       compCode As Integer,
-       compMsg As String,
-       evalCode As Integer,
-       evalMsg As String) As Boolean
-
-        Dim success As Boolean
-        Dim returnCode As Integer
-
-        ' Setup for execution of the stored procedure
-        Dim myCmd As New SqlCommand(spName) With {
-            .CommandType = CommandType.StoredProcedure
         }
 
-        myCmd.Parameters.Add(New SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue
-        myCmd.Parameters.Add(New SqlParameter("@job", SqlDbType.Int)).Value = GetJobParameter("StepParameters", "Job", 0)
-        myCmd.Parameters.Add(New SqlParameter("@step", SqlDbType.Int)).Value = GetJobParameter("StepParameters", "Step", 0)
-        myCmd.Parameters.Add(New SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode
-        myCmd.Parameters.Add(New SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg
-        myCmd.Parameters.Add(New SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode
-        myCmd.Parameters.Add(New SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg
-
-        Dim orgDbNameParam = myCmd.Parameters.Add(New SqlParameter("@organismDBName", SqlDbType.VarChar, 128))
-        Dim strValue As String = String.Empty
-        If TryGetParam("PeptideSearch", "generatedFastaName", strValue) Then
-            orgDbNameParam.Value = strValue
-        Else
-            orgDbNameParam.Value = String.Empty
-        End If
-
-        ' Execute the Stored Procedure (retry the call up to 20 times)
-        returnCode = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 20)
-
-        If returnCode = 0 Then
-            success = True
-        Else
-            LogError("Error " & returnCode.ToString & " setting analysis job complete")
-            success = False
-        End If
-
-        Return success
-
-    End Function
-
-    ''' <summary>
-    ''' Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
-    ''' Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
-    ''' </summary>
-    ''' <returns>Tool name</returns>
-    ''' <remarks></remarks>
-    Public Function GetCurrentJobToolDescription() As String Implements IJobParams.GetCurrentJobToolDescription
-        Dim strTool As String
-
-        Dim strToolAndStepTool As String
-        Dim strStep As String
-
-        If m_JobParams Is Nothing Then
-            strToolAndStepTool = "??"
-        Else
-            strTool = GetParam("ToolName")
-
-            strToolAndStepTool = GetParam("StepTool")
-            If String.IsNullOrWhiteSpace(strToolAndStepTool) Then strToolAndStepTool = String.Empty
-
-            strStep = GetParam("StepParameters", "Step")
-            If strStep Is Nothing Then strStep = String.Empty
-
-            If Not String.IsNullOrWhiteSpace(strTool) AndAlso Not String.Equals(strToolAndStepTool, strTool) Then
-                If strToolAndStepTool.Length > 0 Then
-                    strToolAndStepTool &= " (" & strTool & ")"
-                Else
-                    strToolAndStepTool &= strTool
-                End If
-            End If
-
-            If strStep.Length > 0 Then
-                strToolAndStepTool &= ", Step " & strStep
-            End If
-        End If
-
-        Return strToolAndStepTool
-
-    End Function
-
-#End Region
-
-End Class
+        /// <summary>
+        /// Adds (or updates) a job parameter
+        /// </summary>
+        /// <param name="SectionName">Section name for parameter</param>
+        /// <param name="ParamName">Name of parameter</param>
+        /// <param name="ParamValue">Boolean value for parameter</param>
+        /// <returns>True if success, False if an error</returns>
+        /// <remarks></remarks>
+        public bool AddAdditionalParameter(string SectionName, string ParamName, bool ParamValue)
+        {
 
 
+            try
+            {
+                SetParam(SectionName, ParamName, ParamValue.ToString());
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception adding parameter: " + ParamName + " Value: " + ParamValue, ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Adds (or updates) a job parameter
+        /// </summary>
+        /// <param name="SectionName">Section name for parameter</param>
+        /// <param name="ParamName">Name of parameter</param>
+        /// <param name="ParamValue">Value for parameter</param>
+        /// <returns>True if success, False if an error</returns>
+        /// <remarks></remarks>
+        public bool AddAdditionalParameter(string SectionName, string ParamName, string ParamValue)
+        {
+
+            try
+            {
+                if (ParamValue == null)
+                    ParamValue = string.Empty;
+
+                SetParam(SectionName, ParamName, ParamValue);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception adding parameter: " + ParamName + " Value: " + ParamValue, ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Add new dataset name and ID to DatasetInfoList
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="datasetID"></param>
+        /// <remarks></remarks>
+        public void AddDatasetInfo(string datasetName, int datasetID)
+        {
+            if (string.IsNullOrWhiteSpace(datasetName))
+                return;
+            if (!m_DatasetInfoList.ContainsKey(datasetName))
+            {
+                m_DatasetInfoList.Add(datasetName, datasetID);
+            }
+        }
+
+        /// <summary>
+        /// Add a fileName extension to not move to the results folder
+        /// </summary>
+        /// <param name="fileExtension"></param>
+        /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
+        public void AddResultFileExtensionToSkip(string fileExtension)
+        {
+            if (string.IsNullOrWhiteSpace(fileExtension))
+                return;
+
+            if (!m_ResultFileExtensionsToSkip.Contains(fileExtension))
+            {
+                m_ResultFileExtensionsToSkip.Add(fileExtension);
+            }
+        }
+
+        /// <summary>
+        /// Add a fileName to definitely move to the results folder
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <remarks></remarks>
+        public void AddResultFileToKeep(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return;
+
+            fileName = Path.GetFileName(fileName);
+            if (!m_ResultFilesToKeep.Contains(fileName))
+            {
+                m_ResultFilesToKeep.Add(fileName);
+            }
+        }
+
+        /// <summary>
+        /// Add a fileName to not move to the results folder
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <remarks></remarks>
+        public void AddResultFileToSkip(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return;
+
+            fileName = Path.GetFileName(fileName);
+            if (!m_ResultFilesToSkip.Contains(fileName))
+            {
+                m_ResultFilesToSkip.Add(fileName);
+            }
+        }
+
+        /// <summary>
+        /// Add a file to be deleted from the storage server (requires full file path)
+        /// </summary>
+        /// <param name="filePath">Full path to the file</param>
+        /// <remarks></remarks>
+        public void AddServerFileToDelete(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+                return;
+
+            if (!m_ServerFilesToDelete.Contains(filePath))
+            {
+                m_ServerFilesToDelete.Add(filePath);
+            }
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        /// <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
+        public bool GetJobParameter(string Name, bool ValueIfMissing)
+        {
+
+            string strValue;
+
+            try
+            {
+                strValue = GetParam(Name);
+
+                if (string.IsNullOrEmpty(strValue))
+                {
+                    return ValueIfMissing;
+                }
+
+            }
+            catch
+            {
+                return ValueIfMissing;
+            }
+
+            // Note: if strValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
+            return Convert.ToBoolean(strValue);
+
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        public string GetJobParameter(string Name, string ValueIfMissing)
+        {
+
+            string strValue;
+
+            try
+            {
+                strValue = GetParam(Name);
+
+                if (string.IsNullOrEmpty(strValue))
+                {
+                    return ValueIfMissing;
+                }
+
+            }
+            catch
+            {
+                return ValueIfMissing;
+            }
+
+            return strValue;
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        public int GetJobParameter(string Name, int ValueIfMissing)
+        {
+            string strValue;
+
+            try
+            {
+                strValue = GetParam(Name);
+
+                if (string.IsNullOrEmpty(strValue))
+                {
+                    return ValueIfMissing;
+                }
+
+            }
+            catch
+            {
+                return ValueIfMissing;
+            }
+
+            // Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
+            return Convert.ToInt32(strValue);
+
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        public short GetJobParameter(string Name, short ValueIfMissing)
+        {
+            return Convert.ToInt16(GetJobParameter(Name, Convert.ToInt32(ValueIfMissing)));
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        public float GetJobParameter(string Name, float ValueIfMissing)
+        {
+            return clsGlobal.CSngSafe(GetParam(Name), ValueIfMissing);
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// </summary>
+        /// <param name="Section">Section name for parameter</param>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        public bool GetJobParameter(string Section, string Name, bool ValueIfMissing)
+        {
+            return clsGlobal.CBoolSafe(GetParam(Section, Name), ValueIfMissing);
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// </summary>
+        /// <param name="Section">Section name for parameter</param>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        public int GetJobParameter(string Section, string Name, int ValueIfMissing)
+        {
+            return clsGlobal.CIntSafe(GetParam(Section, Name), ValueIfMissing);
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// </summary>
+        /// <param name="Section">Section name for parameter</param>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        public string GetJobParameter(string Section, string Name, string ValueIfMissing)
+        {
+            var strValue = GetParam(Section, Name);
+            if (string.IsNullOrEmpty(strValue))
+            {
+                return ValueIfMissing;
+            }
+            return strValue;
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// </summary>
+        /// <param name="Section">Section name for parameter</param>
+        /// <param name="Name">Key name for parameter</param>
+        /// <param name="ValueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        public float GetJobParameter(string Section, string Name, float ValueIfMissing)
+        {
+            return clsGlobal.CSngSafe(GetParam(Section, Name), ValueIfMissing);
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="Name">Key name for parameter</param>
+        /// <returns>Value for specified parameter; empty string if not found</returns>
+        /// <remarks></remarks>
+        public string GetParam(string Name)
+        {
+
+            string strValue;
+
+            if (TryGetParam(Name, out strValue))
+            {
+                return strValue;
+            }
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// </summary>
+        /// <param name="Section">Section name for parameter</param>
+        /// <param name="Name">Key name for parameter</param>
+        /// <returns>Value for specified parameter; empty string if not found</returns>
+        /// <remarks></remarks>
+        public string GetParam(string Section, string Name)
+        {
+
+            string strValue;
+
+            if (string.IsNullOrEmpty(Name))
+            {
+                // User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
+                return GetParam(Section);
+            }
+
+            if (TryGetParam(Section, Name, out strValue))
+            {
+                return strValue;
+            }
+            return string.Empty;
+        }
+
+        public static string JobParametersFilename(int jobNum)
+        {
+            return JobParametersFilename(jobNum.ToString());
+        }
+
+        public static string JobParametersFilename(string jobNum)
+        {
+            return clsGlobal.XML_FILENAME_PREFIX + jobNum + "." + clsGlobal.XML_FILENAME_EXTENSION;
+        }
+
+        /// <summary>
+        /// Add/updates the value for the given parameter (searches all sections)
+        /// </summary>
+        /// <param name="ParamName">Parameter name</param>
+        /// <param name="ParamValue">Parameter value</param>
+        /// <remarks></remarks>
+
+        public void SetParam(string ParamName, string ParamValue)
+        {
+            var blnMatchFound = false;
+
+            if (ParamValue == null)
+                ParamValue = string.Empty;
+
+            foreach (var section in m_JobParams)
+            {
+                if (section.Value.ContainsKey(ParamName))
+                {
+                    section.Value[ParamName] = ParamValue;
+                    blnMatchFound = true;
+                }
+            }
+
+            if (!blnMatchFound && m_JobParams.Count > 0)
+            {
+                // Add the parameter to the first section
+                m_JobParams.First().Value.Add(ParamName, ParamValue);
+            }
+
+        }
+
+        /// <summary>
+        /// Add/updates the value for the given parameter
+        /// </summary>
+        /// <param name="Section">Section name</param>
+        /// <param name="ParamName">Parameter name</param>
+        /// <param name="ParamValue">Parameter value</param>
+        /// <remarks></remarks>
+
+        public void SetParam(string Section, string ParamName, string ParamValue)
+        {
+            Dictionary<string, string> oParams;
+
+            if (!m_JobParams.TryGetValue(Section, out oParams))
+            {
+                // Need to add a section with a blank name
+                oParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+                m_JobParams.Add(Section, oParams);
+            }
+
+            if (ParamValue == null)
+                ParamValue = string.Empty;
+
+            if (oParams.ContainsKey(ParamName))
+            {
+                oParams[ParamName] = ParamValue;
+            }
+            else
+            {
+                oParams.Add(ParamName, ParamValue);
+            }
+
+        }
+
+        /// <summary>
+        /// Attempts to retrieve the specified parameter (looks in all parameter sections)
+        /// </summary>
+        /// <param name="ParamName">Parameter Name</param>
+        /// <param name="ParamValue">Output: parameter value</param>
+        /// <returns>True if success, False if not found</returns>
+        /// <remarks></remarks>
+        public bool TryGetParam(string ParamName, out string ParamValue)
+        {
+
+            ParamValue = string.Empty;
+
+            if ((m_JobParams != null))
+            {
+                foreach (var oEntry in m_JobParams)
+                {
+                    if (oEntry.Value.TryGetValue(ParamName, out ParamValue))
+                    {
+                        if (string.IsNullOrWhiteSpace(ParamValue))
+                        {
+                            ParamValue = string.Empty;
+                        }
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+
+        }
+
+        /// <summary>
+        /// Attempts to retrieve the specified parameter in the specified parameter section
+        /// </summary>
+        /// <param name="Section">Section Name</param>
+        /// <param name="ParamName">Parameter Name</param>
+        /// <param name="ParamValue">Output: parameter value</param>
+        /// <returns>True if success, False if not found</returns>
+        /// <remarks></remarks>
+        public bool TryGetParam(string Section, string ParamName, out string ParamValue)
+        {
+            return TryGetParam(Section, ParamName, out ParamValue, true);
+        }
+
+        /// <summary>
+        /// Attempts to retrieve the specified parameter in the specified parameter section
+        /// </summary>
+        /// <param name="Section">Section Name</param>
+        /// <param name="ParamName">Parameter Name</param>
+        /// <param name="ParamValue">Output: parameter value</param>
+        /// <param name="SearchAllSectionsIfNotFound">If True, then searches other sections for the parameter if not found in the specified section</param>
+        /// <returns>True if success, False if not found</returns>
+        /// <remarks></remarks>
+        public bool TryGetParam(string Section, string ParamName, out string ParamValue, bool SearchAllSectionsIfNotFound)
+        {
+            ParamValue = string.Empty;
+
+            if ((m_JobParams != null))
+            {
+                Dictionary<string, string> oParams;
+                if (m_JobParams.TryGetValue(Section, out oParams))
+                {
+                    if (oParams.TryGetValue(ParamName, out ParamValue))
+                    {
+                        if (string.IsNullOrWhiteSpace(ParamValue))
+                        {
+                            ParamValue = string.Empty;
+                        }
+                        return true;
+                    }
+                }
+            }
+
+            if (SearchAllSectionsIfNotFound)
+            {
+                // Parameter not found in the specified section
+                // Search for the entry in other sections
+                return TryGetParam(ParamName, out ParamValue);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Remove a fileName that was previously added to ResultFilesToSkip
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <remarks></remarks>
+
+        public void RemoveResultFileToSkip(string fileName)
+        {
+            if (m_ResultFilesToSkip.Contains(fileName))
+            {
+                m_ResultFilesToSkip.Remove(fileName);
+            }
+
+        }
+
+        /// <summary>
+        /// Filter the job parameters in paramXml to remove extra items from section sectionName
+        /// </summary>
+        /// <param name="paramXml">Job Parameters XML to filter</param>
+        /// <param name="sectionName">SectionName to match</param>
+        /// <param name="paramNamesToIgnore">
+        /// Keys are parameter names to ignore
+        /// Values are another parameter name that must be present if we're going to ignore the given parameter
+        /// </param>
+        /// <param name="paramsToAddAsAttribute">
+        /// Parameters to convert to an attribute at the section level
+        /// Keys are the parameter name to match, Values are the new attribute name to add
+        /// </param>
+        /// <returns>Updated XML, as a string</returns>
+        private string FilterXmlSection(string paramXml, string sectionName, Dictionary<string, string> paramNamesToIgnore, Dictionary<string, string> paramsToAddAsAttribute)
+        {
+
+            try
+            {
+                // Note that XDocument supersedes XmlDocument and can often be easier to use since XDocument is LINQ-based
+                var doc = XDocument.Parse(paramXml);
+
+                var sections = doc.Elements("sections").Elements("section");
+                foreach (var section in sections)
+                {
+                    if (!section.HasAttributes)
+                        continue;
+
+                    var nameAttrib = section.Attribute("name");
+                    if (nameAttrib == null)
+                        continue;
+
+                    if (nameAttrib.Value != sectionName)
+                        continue;
+
+                    var parameterItems = section.Elements("item").ToList();
+
+                    // Construct a list of the parameter names in this section
+                    var paramNames = new List<string>();
+                    foreach (var item in parameterItems) {
+                        if (!item.HasAttributes) continue;
+
+                        var itemKey = item.Attribute("key");
+                        if (itemKey == null) continue;
+
+                        paramNames.Add(itemKey.Value);
+                    }
+
+                    var paramsToRemove = new List<XElement>();
+                    var attributesToAdd = new Dictionary<string, string>();
+
+                    foreach (var paramItem in parameterItems)
+                    {
+                        if (!paramItem.HasAttributes)
+                            continue;
+
+                        var paramName = paramItem.Attribute("key");
+                        if (paramName == null)
+                            continue;
+
+                        if (paramNamesToIgnore.ContainsKey(paramName.Value))
+                        {
+                            var requiredParameter = paramNamesToIgnore[paramName.Value];
+                            if (string.IsNullOrEmpty(requiredParameter) || paramNames.Contains(requiredParameter))
+                            {
+                                // Remove this parameter from this section
+                                paramsToRemove.Add(paramItem);
+                            }
+                        }
+
+                        if (paramsToAddAsAttribute.ContainsKey(paramName.Value))
+                        {
+                            var attribName = paramsToAddAsAttribute[paramName.Value];
+                            if (string.IsNullOrEmpty(attribName))
+                                attribName = paramName.Value;
+
+                            var paramValue = paramItem.Attribute("value");
+                            if (paramValue == null)
+                            {
+                                attributesToAdd.Add(attribName, string.Empty);
+                            }
+                            else
+                            {
+                                attributesToAdd.Add(attribName, paramValue.Value);
+                            }
+
+                        }
+                    }
+
+                    foreach (var paramItem in paramsToRemove)
+                    {
+                        paramItem.Remove();
+                    }
+
+                    foreach (var attribItem in attributesToAdd)
+                    {
+                        section.SetAttributeValue(attribItem.Key, attribItem.Value);
+                    }
+                }
+
+                var sbOutput = new StringBuilder();
+
+                var settings = new XmlWriterSettings
+                {
+                    Indent = true,
+                    IndentChars = "  ",
+                    OmitXmlDeclaration = true
+                };
+
+                using (var writer = XmlWriter.Create(sbOutput, settings))
+                {
+                    doc.Save(writer);
+                }
+
+                var filteredXML = sbOutput.ToString();
+
+                return filteredXML;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in FilterXmlSection", ex);
+                return paramXml;
+            }
+
+        }
+
+        /// <summary>
+        /// Requests a task from the database
+        /// </summary>
+        /// <returns>Enum indicating if task was found</returns>
+        /// <remarks></remarks>
+        public override RequestTaskResult RequestTask()
+        {
+
+            var retVal = RequestAnalysisJob();
+            switch (retVal)
+            {
+                case RequestTaskResult.NoTaskFound:
+                    m_TaskWasAssigned = false;
+                    break;
+                case RequestTaskResult.TaskFound:
+                    m_TaskWasAssigned = true;
+                    break;
+                default:
+                    m_TaskWasAssigned = false;
+                    break;
+            }
+            return retVal;
+
+        }
+
+        /// <summary>
+        /// Requests a single analysis job using RequestStepTaskXML
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private RequestTaskResult RequestAnalysisJob()
+        {
+
+            RequestTaskResult taskResult;
+
+            var strProductVersion = clsGlobal.GetAssemblyVersion() ?? "??";
+
+            Reset();
+
+            try
+            {
+                //Set up the command object prior to SP execution
+                var myCmd = new SqlCommand(SP_NAME_REQUEST_TASK) { CommandType = CommandType.StoredProcedure };
+
+                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                myCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("MgrName");
+                myCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
+                myCmd.Parameters.Add(new SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output;
+                myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+                myCmd.Parameters.Add(new SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128)).Value = strProductVersion;
+
+                if (m_DebugLevel > 4)
+                {
+                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + m_BrokerConnStr, (int)clsLogTools.LogLevels.DEBUG);
+                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", (int)clsLogTools.LogLevels.DEBUG);
+                    PrintCommandParams(myCmd);
+                }
+
+                // Execute the SP
+                var retVal = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 1);
+
+                switch (retVal)
+                {
+                    case RET_VAL_OK:
+                        //No errors found in SP call, so see if any step tasks were found
+                        m_JobId = Convert.ToInt32(myCmd.Parameters["@jobNumber"].Value);
+                        var jobParamsXML = Convert.ToString(myCmd.Parameters["@parameters"].Value);
+
+                        //Step task was found; get the data for it
+                        var dctParameters = FillParamDictXml(jobParamsXML).ToList();
+
+
+                        foreach (var udtParamInfo in dctParameters)
+                        {
+                            SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value);
+                        }
+
+                        SaveJobParameters(m_MgrParams.GetParam("WorkDir"), jobParamsXML, m_JobId);
+                        taskResult = RequestTaskResult.TaskFound;
+                        break;
+                    case RET_VAL_TASK_NOT_AVAILABLE:
+                        //No jobs found
+                        taskResult = RequestTaskResult.NoTaskFound;
+                        break;
+                    case RET_VAL_EXCESSIVE_RETRIES:
+                        // Too many retries
+                        taskResult = RequestTaskResult.TooManyRetries;
+                        break;
+                    case RET_VAL_DEADLOCK:
+                        // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
+                        taskResult = RequestTaskResult.Deadlock;
+                        break;
+                    default:
+                        //There was an SP error
+                        LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + retVal + "; " + 
+                            "Msg text = " + Convert.ToString(myCmd.Parameters["@message"].Value));
+                        taskResult = RequestTaskResult.ResultError;
+                        break;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception requesting analysis job", ex);
+                taskResult = RequestTaskResult.ResultError;
+            }
+
+            return taskResult;
+
+        }
+
+        /// <summary>
+        /// Reset the class-wide variables to their defaults
+        /// </summary>
+        /// <remarks></remarks>
+        public void Reset()
+        {
+            m_TaskWasClosed = false;
+
+            m_ResultFilesToSkip.Clear();
+            m_ResultFileExtensionsToSkip.Clear();
+            m_ResultFilesToKeep.Clear();
+            m_ServerFilesToDelete.Clear();
+
+            m_DatasetInfoList.Clear();
+
+            if (m_JobParams == null)
+            {
+                m_JobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.CurrentCultureIgnoreCase);
+            }
+
+            m_JobParams.Clear();
+
+        }
+
+        /// <summary>
+        /// Saves job Parameters to an XML File
+        /// </summary>
+        /// <param name="workDir">Full path to work directory</param>
+        /// <param name="jobParamsXML">Contains the xml for all the job parameters</param>
+        /// <param name="jobNum">Job number</param>
+        /// <remarks></remarks>
+
+        private void SaveJobParameters(string workDir, string jobParamsXML, int jobNum)
+        {
+            var xmlParameterFilePath = string.Empty;
+
+            try
+            {
+                var xmlParameterFilename = JobParametersFilename(jobNum.ToString());
+                xmlParameterFilePath = Path.Combine(workDir, xmlParameterFilename);
+
+                var xmlParameterFile = new FileInfo(xmlParameterFilePath);
+
+                // Keys are parameter names to ignore
+                // Values are another parameter name that must be present if we're going to ignore the given parameter
+                var paramNamesToIgnore = new Dictionary<string, string>
+                {
+                    {"SharedResultsFolders", ""},
+                    {"CPU_Load", ""},
+                    {"Job", ""},
+                    {"Step", ""},
+                    {"StepInputFolderName", "InputFolderName"},
+                    {"StepOutputFolderName", "OutputFolderName"}
+                };
+
+                var paramsToAddAsAttribute = new Dictionary<string, string> {
+                    { "Step", "step"}
+                };
+
+                // Remove extra parameters from the StepParameters section that we don't want to include in the XML
+                // Also update the section to have an attribute that is the step number
+                var filteredXML = FilterXmlSection(jobParamsXML, "StepParameters", paramNamesToIgnore, paramsToAddAsAttribute);
+
+                var xmlWriter = new clsFormattedXMLWriter();
+                xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFile.FullName);
+
+                AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename);
+
+                var msg = "Job Parameters successfully saved to file: " + xmlParameterFile.FullName;
+
+                // Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
+                clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5);
+
+                LogDebug(msg, (int)clsLogTools.LogLevels.DEBUG);
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception saving analysis job parameters to " + xmlParameterFilePath, ex);
+            }
+
+        }
+
+        /// <summary>
+        /// Contact the Pipeline database to close the analysis job
+        /// </summary>
+        /// <param name="CloseOut">IJobParams enum specifying close out type</param>
+        /// <param name="CompMsg">Completion message to be added to database upon closeout</param>
+        public override void CloseTask(CloseOutType CloseOut, string CompMsg)
+        {
+            CloseTask(CloseOut, CompMsg, 0, string.Empty);
+        }
+
+        /// <summary>
+        /// Contact the Pipeline database to close the analysis job
+        /// </summary>
+        /// <param name="CloseOut">IJobParams enum specifying close out type</param>
+        /// <param name="CompMsg">Completion message to be added to database upon closeout</param>
+        /// <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
+        /// <param name="EvalMessage">Evaluation message ("" if no special message)</param>
+
+        public override void CloseTask(CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage)
+        {
+            var CompCode = Convert.ToInt32(CloseOut);
+
+            if (EvalMessage == null)
+                EvalMessage = string.Empty;
+
+            if (m_TaskWasClosed)
+            {
+                LogMessage("Job " + m_JobId + " has already been closed; will not call " + SP_NAME_SET_COMPLETE + " again");
+            }
+            else
+            {
+                m_TaskWasClosed = true;
+                if (!SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage))
+                {
+                    LogError("Error setting job complete in database, job " + m_JobId);
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Communicates with database to perform job closeout
+        /// </summary>
+        /// <param name="spName">Name of SP in database to call for closeout, typically SetStepTaskComplete</param>
+        /// <param name="compCode">Integer version of ITaskParams specifying closeout type</param>
+        /// <param name="compMsg">Comment to insert in database</param>
+        /// <param name="evalCode">Integer results evaluation code</param>
+        /// <param name="evalMsg">Message describing evaluation results</param>
+        /// <returns>True for success, False for failure</returns>
+        /// <remarks>EvalCode and EvalMsg not presently used</remarks>
+        protected bool SetAnalysisJobComplete(string spName, int compCode, string compMsg, int evalCode, string evalMsg)
+        {
+
+            // Setup for execution of the stored procedure
+            var myCmd = new SqlCommand(spName) { CommandType = CommandType.StoredProcedure };
+
+            myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+            myCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = GetJobParameter("StepParameters", "Job", 0);
+            myCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = GetJobParameter("StepParameters", "Step", 0);
+            myCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
+            myCmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg;
+            myCmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
+            myCmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg;
+
+            var orgDbNameParam = myCmd.Parameters.Add(new SqlParameter("@organismDBName", SqlDbType.VarChar, 128));
+            string strValue;
+            if (TryGetParam("PeptideSearch", "generatedFastaName", out strValue))
+            {
+                orgDbNameParam.Value = strValue;
+            }
+            else
+            {
+                orgDbNameParam.Value = string.Empty;
+            }
+
+            // Execute the Stored Procedure (retry the call up to 20 times)
+            var returnCode = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 20);
+
+            if (returnCode == 0)
+            {
+                return true;
+            }
+
+            LogError("Error " + returnCode + " setting analysis job complete");
+            return false;
+        }
+
+        /// <summary>
+        /// Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
+        /// Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
+        /// </summary>
+        /// <returns>Tool name</returns>
+        /// <remarks></remarks>
+        public string GetCurrentJobToolDescription()
+        {
+
+            if (m_JobParams == null)
+            {
+               return "??";
+            }
+
+            var strTool = GetParam("ToolName");
+
+            var strToolAndStepTool = GetParam("StepTool");
+            if (string.IsNullOrWhiteSpace(strToolAndStepTool))
+                strToolAndStepTool = string.Empty;
+
+            var strStep = GetParam("StepParameters", "Step") ?? string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(strTool) && !string.Equals(strToolAndStepTool, strTool))
+            {
+                if (strToolAndStepTool.Length > 0)
+                {
+                    strToolAndStepTool += " (" + strTool + ")";
+                }
+                else
+                {
+                    strToolAndStepTool += strTool;
+                }
+            }
+
+            if (strStep.Length > 0)
+            {
+                strToolAndStepTool += ", Step " + strStep;
+            }
+
+            return strToolAndStepTool;
+
+        }
+
+        #endregion
+
+    }
+}

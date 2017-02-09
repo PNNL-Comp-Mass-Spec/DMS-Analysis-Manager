@@ -1,227 +1,281 @@
-﻿Imports System.IO
-Imports System.Runtime.InteropServices
-Imports System.Text.RegularExpressions
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 
-''' <summary>
-''' This class splits a Mascot Generic File (mgf file) into multiple parts
-''' </summary>
-''' <remarks></remarks>
-Public Class clsSplitMGFFile
-    Inherits clsEventNotifier
+namespace AnalysisManagerBase
+{
+    /// <summary>
+    /// This class splits a Mascot Generic File (mgf file) into multiple parts
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsSplitMGFFile : clsEventNotifier
+    {
 
-    Protected Structure udtOutputFileType
-        Public OutputFile As FileInfo
-        Public SpectraWritten As Integer
-        Public Writer As StreamWriter
-        Public PartNumber As Integer
-    End Structure
+        protected struct udtOutputFileType
+        {
+            public FileInfo OutputFile;
+            public int SpectraWritten;
+            public StreamWriter Writer;
+            public int PartNumber;
+        }
 
-    Protected ReadOnly mExtractScan As Regex
-    ''' <summary>
-    '''  Constructor
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Sub New()
-        mExtractScan = New Regex(".+\.(\d+)\.\d+\.\d?", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-    End Sub
 
-    ''' <summary>
-    ''' Splits a Mascot Generic File (mgf file) into splitCount parts
-    ''' </summary>
-    ''' <param name="mgfFilePath">.mgf file path</param>
-    ''' <param name="splitCount">Number of parts; minimum is 2</param>
-    ''' <returns>True if success, False is an error</returns>
-    ''' <remarks>Exceptions will be reported using event ErrorEvent</remarks>
-    Public Function SplitMgfFile(mgfFilePath As String, splitCount As Integer) As List(Of FileInfo)
-        Return SplitMgfFile(mgfFilePath, splitCount, "_Part")
-    End Function
+        protected readonly Regex mExtractScan;
 
-    ''' <summary>
-    ''' Splits a Mascot Generic File (mgf file) into splitCount parts
-    ''' </summary>
-    ''' <param name="mgfFilePath">.mgf file path</param>
-    ''' <param name="splitCount">Number of parts; minimum is 2</param>
-    ''' <param name="fileSuffix">Text to append to each split file (just before the file extension)</param>
-    ''' <returns>List of split files if success; empty list if an error</returns>
-    ''' <remarks>Exceptions will be reported using event ErrorEvent</remarks>
-    Public Function SplitMgfFile(mgfFilePath As String, splitCount As Integer, fileSuffix As String) As List(Of FileInfo)
+        /// <summary>
+        ///  Constructor
+        /// </summary>
+        /// <remarks></remarks>
+        public clsSplitMGFFile()
+        {
+            mExtractScan = new Regex(@".+\.(\d+)\.\d+\.\d?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        }
 
-        Try
+        /// <summary>
+        /// Splits a Mascot Generic File (mgf file) into splitCount parts
+        /// </summary>
+        /// <param name="mgfFilePath">.mgf file path</param>
+        /// <param name="splitCount">Number of parts; minimum is 2</param>
+        /// <returns>True if success, False is an error</returns>
+        /// <remarks>Exceptions will be reported using event ErrorEvent</remarks>
+        public List<FileInfo> SplitMgfFile(string mgfFilePath, int splitCount)
+        {
+            return SplitMgfFile(mgfFilePath, splitCount, "_Part");
+        }
 
-            If String.IsNullOrWhiteSpace(fileSuffix) Then
-                fileSuffix = "_Part"
-            End If
+        /// <summary>
+        /// Splits a Mascot Generic File (mgf file) into splitCount parts
+        /// </summary>
+        /// <param name="mgfFilePath">.mgf file path</param>
+        /// <param name="splitCount">Number of parts; minimum is 2</param>
+        /// <param name="fileSuffix">Text to append to each split file (just before the file extension)</param>
+        /// <returns>List of split files if success; empty list if an error</returns>
+        /// <remarks>Exceptions will be reported using event ErrorEvent</remarks>
+        public List<FileInfo> SplitMgfFile(string mgfFilePath, int splitCount, string fileSuffix)
+        {
 
-            Dim fiMgfFile = New FileInfo(mgfFilePath)
-            If Not fiMgfFile.Exists Then
-                OnErrorEvent("File not found: " & mgfFilePath)
-                Return New List(Of FileInfo)
-            End If
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fileSuffix))
+                {
+                    fileSuffix = "_Part";
+                }
 
-            If fiMgfFile.Length = 0 Then
-                OnErrorEvent("MGF file is empty: " & mgfFilePath)
-                Return New List(Of FileInfo)
-            End If
+                var fiMgfFile = new FileInfo(mgfFilePath);
+                if (!fiMgfFile.Exists)
+                {
+                    OnErrorEvent("File not found: " + mgfFilePath);
+                    return new List<FileInfo>();
+                }
 
-            If splitCount < 2 Then splitCount = 2
-            Dim dtLastProgress = Date.UtcNow
+                if (fiMgfFile.Length == 0)
+                {
+                    OnErrorEvent("MGF file is empty: " + mgfFilePath);
+                    return new List<FileInfo>();
+                }
 
-            OnProgressUpdate("Splitting " & fiMgfFile.Name & " into " & splitCount & " parts", 0)
+                if (splitCount < 2)
+                    splitCount = 2;
+                var dtLastProgress = DateTime.UtcNow;
 
-            Dim scanMapFilePath = Path.Combine(fiMgfFile.DirectoryName, Path.GetFileNameWithoutExtension(fiMgfFile.Name) & "_mgfScanMap.txt")
+                OnProgressUpdate("Splitting " + fiMgfFile.Name + " into " + splitCount + " parts", 0);
 
-            Dim lstSplitMgfFiles = New List(Of FileInfo)
+                var scanMapFile = Path.GetFileNameWithoutExtension(fiMgfFile.Name) + "_mgfScanMap.txt";
 
-            Using srMgfFile = New StreamReader(New FileStream(fiMgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)),
-                  swScanToPartMapFile = New StreamWriter(New FileStream(scanMapFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                var scanMapFilePath = fiMgfFile.DirectoryName == null ? scanMapFile : Path.Combine(fiMgfFile.DirectoryName, scanMapFile);
 
-                ' Write the header to the map file
-                swScanToPartMapFile.WriteLine("ScanNumber" & ControlChars.Tab & "ScanIndexOriginal" & ControlChars.Tab & "MgfFilePart" & ControlChars.Tab & "ScanIndex")
+                var lstSplitMgfFiles = new List<FileInfo>();
 
-                ' Create the writers
-                ' Keys are each StreamWriter, values are the number of spectra written to the file
-                Dim swWriters = New Queue(Of udtOutputFileType)
+                using (var srMgfFile = new StreamReader(new FileStream(fiMgfFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    using (var swScanToPartMapFile = new StreamWriter(new FileStream(scanMapFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
 
-                For partNum = 1 To splitCount
-                    Dim outputFilePath = Path.Combine(fiMgfFile.DirectoryName, Path.GetFileNameWithoutExtension(fiMgfFile.Name) & fileSuffix & partNum & ".mgf")
 
-                    Dim nextWriter = New udtOutputFileType()
-                    nextWriter.OutputFile = New FileInfo(outputFilePath)
-                    nextWriter.SpectraWritten = 0
-                    nextWriter.PartNumber = partNum
+                        // Write the header to the map file
 
-                    lstSplitMgfFiles.Add(nextWriter.OutputFile)
-                    nextWriter.Writer = New StreamWriter(New FileStream(nextWriter.OutputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                        {
+                            swScanToPartMapFile.WriteLine("ScanNumber" + '\t' + "ScanIndexOriginal" + '\t' + "MgfFilePart" + '\t' + "ScanIndex");
 
-                    swWriters.Enqueue(nextWriter)
-                Next
+                            // Create the writers
+                            // Keys are each StreamWriter, values are the number of spectra written to the file
+                            var swWriters = new Queue<udtOutputFileType>();
 
-                Dim bytesRead As Int64 = 0
-                Dim scanNumber As Integer
-                Dim totalSpectraWritten = 0
+                            for (var partNum = 1; partNum <= splitCount; partNum++)
+                            {
+                                var msgFileName = Path.GetFileNameWithoutExtension(fiMgfFile.Name) + fileSuffix + partNum + ".mgf";
 
-                Dim previousLine As String = String.Empty
-                While True
-                    Dim spectrumData As List(Of String) = GetNextMGFSpectrum(srMgfFile, previousLine, bytesRead, scanNumber)
-                    If spectrumData.Count = 0 Then
-                        Exit While
-                    Else
-                        Dim nextWriter = swWriters.Dequeue()
-                        For Each dataLine In spectrumData
-                            nextWriter.Writer.WriteLine(dataLine)
-                        Next
+                                var outputFilePath = fiMgfFile.DirectoryName == null ? msgFileName : Path.Combine(fiMgfFile.DirectoryName, msgFileName);
 
-                        nextWriter.SpectraWritten += 1
-                        totalSpectraWritten += 1
+                                var nextWriter = new udtOutputFileType
+                                {
+                                    OutputFile = new FileInfo(outputFilePath),
+                                    SpectraWritten = 0,
+                                    PartNumber = partNum
+                                };
 
-                        swScanToPartMapFile.WriteLine(scanNumber & ControlChars.Tab & totalSpectraWritten & ControlChars.Tab & nextWriter.PartNumber & ControlChars.Tab & nextWriter.SpectraWritten)
+                                lstSplitMgfFiles.Add(nextWriter.OutputFile);
+                                nextWriter.Writer = new StreamWriter(new FileStream(nextWriter.OutputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                        swWriters.Enqueue(nextWriter)
-                    End If
+                                swWriters.Enqueue(nextWriter);
+                            }
 
-                    If Date.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5 Then
-                        dtLastProgress = Date.UtcNow
-                        Dim percentComplete = bytesRead / srMgfFile.BaseStream.Length * 100
-                        If percentComplete > 100 Then percentComplete = 100
-                        OnProgressUpdate("Splitting MGF file", CInt(percentComplete))
-                    End If
-                End While
+                            long bytesRead = 0;
+                            var totalSpectraWritten = 0;
 
-                ' Close the writers
-                ' In addition, delete any output files that did not have any spectra written to them
-                totalSpectraWritten = 0
+                            var previousLine = string.Empty;
+                            while (true)
+                            {
+                                int scanNumber;
+                                var spectrumData = GetNextMGFSpectrum(srMgfFile, ref previousLine, ref bytesRead, out scanNumber);
+                                if (spectrumData.Count == 0)
+                                {
+                                    break;
+                                }
 
-                While swWriters.Count > 0
-                    Dim nextWriter = swWriters.Dequeue()
-                    nextWriter.Writer.Close()
+                                var nextWriter = swWriters.Dequeue();
+                                foreach (var dataLine in spectrumData)
+                                {
+                                    nextWriter.Writer.WriteLine(dataLine);
+                                }
 
-                    If nextWriter.SpectraWritten = 0 Then
-                        Threading.Thread.Sleep(50)
-                        nextWriter.OutputFile.Delete()
-                        lstSplitMgfFiles.Remove(nextWriter.OutputFile)
-                    Else
-                        totalSpectraWritten += nextWriter.SpectraWritten
-                    End If
+                                nextWriter.SpectraWritten += 1;
+                                totalSpectraWritten += 1;
 
-                End While
+                                swScanToPartMapFile.WriteLine(scanNumber + '\t' + totalSpectraWritten + '\t' + nextWriter.PartNumber + '\t' + nextWriter.SpectraWritten);
 
-                If totalSpectraWritten = 0 Then
-                    OnErrorEvent("No spectra were read from the source MGF file (BEGIN IONS not found)")
-                    Return New List(Of FileInfo)
-                End If
-            End Using
+                                swWriters.Enqueue(nextWriter);
 
-            Return lstSplitMgfFiles
+                                if (DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5)
+                                {
+                                    dtLastProgress = DateTime.UtcNow;
+                                    var percentComplete = bytesRead / srMgfFile.BaseStream.Length * 100;
+                                    if (percentComplete > 100)
+                                        percentComplete = 100;
+                                    OnProgressUpdate("Splitting MGF file", Convert.ToInt32(percentComplete));
+                                }
+                            }
 
-        Catch ex As Exception
-            OnErrorEvent("Error in SplitMgfFile: " & ex.Message)
-            Return New List(Of FileInfo)
-        End Try
+                            // Close the writers
+                            // In addition, delete any output files that did not have any spectra written to them
+                            totalSpectraWritten = 0;
 
-    End Function
+                            while (swWriters.Count > 0)
+                            {
+                                var nextWriter = swWriters.Dequeue();
+                                nextWriter.Writer.Close();
 
-    Private Function GetNextMGFSpectrum(
-      srMgfFile As StreamReader,
-      ByRef previousLine As String,
-      ByRef bytesRead As Int64,
-      <Out()> ByRef scanNumber As Integer) As List(Of String)
+                                if (nextWriter.SpectraWritten == 0)
+                                {
+                                    System.Threading.Thread.Sleep(50);
+                                    nextWriter.OutputFile.Delete();
+                                    lstSplitMgfFiles.Remove(nextWriter.OutputFile);
+                                }
+                                else
+                                {
+                                    totalSpectraWritten += nextWriter.SpectraWritten;
+                                }
 
-        Dim spectrumFound = False
-        Dim spectrumData = New List(Of String)
-        scanNumber = 0
+                            }
 
-        If srMgfFile.EndOfStream Then Return spectrumData
+                            if (totalSpectraWritten == 0)
+                            {
+                                OnErrorEvent("No spectra were read from the source MGF file (BEGIN IONS not found)");
+                                return new List<FileInfo>();
+                            }
+                        }
 
-        Dim dataLine As String
-        If String.IsNullOrWhiteSpace(previousLine) Then
-            dataLine = srMgfFile.ReadLine()
-            bytesRead += 2
-        Else
-            dataLine = String.Copy(previousLine)
-            previousLine = String.Empty
-        End If
 
-        While True
+                    }
+                }
 
-            If Not String.IsNullOrWhiteSpace(dataLine) Then
-                bytesRead += dataLine.Length
+                return lstSplitMgfFiles;
 
-                Dim datalineUCase = dataLine.ToUpper()
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in SplitMgfFile: " + ex.Message);
+                return new List<FileInfo>();
+            }
 
-                If datalineUCase.StartsWith("BEGIN IONS") Then
-                    If spectrumFound Then
-                        ' The previous spectrum was missing the END IONS line
-                        ' This is unexpected, but we'll allow it
-                        previousLine = dataLine
 
-                        spectrumData.Add("END IONS")
-                        Return spectrumData
-                    End If
-                    spectrumFound = True
-                ElseIf datalineUCase.StartsWith("TITLE") Then
-                    ' Parse out the scan number
-                    Dim reMatch = mExtractScan.Match(dataLine)
-                    If reMatch.Success Then
-                        Integer.TryParse(reMatch.Groups(1).Value, scanNumber)
-                    End If
-                End If
+        }
 
-                If spectrumFound Then
-                    spectrumData.Add(dataLine)
-                End If
+        private List<string> GetNextMGFSpectrum(StreamReader srMgfFile, ref string previousLine, ref long bytesRead, out int scanNumber)
+        {
 
-                If datalineUCase.StartsWith("END IONS") Then
-                    Return spectrumData
-                End If
-            End If
+            var spectrumFound = false;
+            var spectrumData = new List<string>();
+            scanNumber = 0;
 
-            If srMgfFile.EndOfStream Then Exit While
-            dataLine = srMgfFile.ReadLine()
-            bytesRead += 2
-        End While
+            if (srMgfFile.EndOfStream)
+                return spectrumData;
 
-        Return spectrumData
+            string dataLine;
+            if (string.IsNullOrWhiteSpace(previousLine))
+            {
+                dataLine = srMgfFile.ReadLine();
+                bytesRead += 2;
+            }
+            else
+            {
+                dataLine = string.Copy(previousLine);
+                previousLine = string.Empty;
+            }
 
-    End Function
 
-End Class
+            while (true)
+            {
+                if (!string.IsNullOrWhiteSpace(dataLine))
+                {
+                    bytesRead += dataLine.Length;
+
+                    var datalineUCase = dataLine.ToUpper();
+
+                    if (datalineUCase.StartsWith("BEGIN IONS"))
+                    {
+                        if (spectrumFound)
+                        {
+                            // The previous spectrum was missing the END IONS line
+                            // This is unexpected, but we'll allow it
+                            previousLine = dataLine;
+
+                            spectrumData.Add("END IONS");
+                            return spectrumData;
+                        }
+                        spectrumFound = true;
+                    }
+                    else if (datalineUCase.StartsWith("TITLE"))
+                    {
+                        // Parse out the scan number
+                        var reMatch = mExtractScan.Match(dataLine);
+                        if (reMatch.Success)
+                        {
+                            int.TryParse(reMatch.Groups[1].Value, out scanNumber);
+                        }
+                    }
+
+                    if (spectrumFound)
+                    {
+                        spectrumData.Add(dataLine);
+                    }
+
+                    if (datalineUCase.StartsWith("END IONS"))
+                    {
+                        return spectrumData;
+                    }
+                }
+
+                if (srMgfFile.EndOfStream)
+                    break; // TODO: might not be correct. Was : Exit While
+                dataLine = srMgfFile.ReadLine();
+                bytesRead += 2;
+            }
+
+            return spectrumData;
+
+        }
+
+    }
+}

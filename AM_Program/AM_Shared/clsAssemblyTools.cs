@@ -1,81 +1,91 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2006, Battelle Memorial Institute
-' Created 06/07/2006
-'
-'*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Diagnostics;
+using System.IO;
 
-Imports System.IO
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2006, Battelle Memorial Institute
+// Created 06/07/2006
+//
+//*********************************************************************************************************
 
-Public Class clsAssemblyTools
+namespace AnalysisManagerBase
+{
 
-	'*********************************************************************************************************
-	'Tools for manipulating and documenting the assemblies used for each analysis job
-	'*********************************************************************************************************
+    public class clsAssemblyTools
+    {
 
-#Region "Methods"
-	Public Sub GetLoadedAssemblyInfo(ByRef objSummaryFile As clsSummaryFile)
-		Dim currentDomain As AppDomain = AppDomain.CurrentDomain
+        //*********************************************************************************************************
+        //Tools for manipulating and documenting the assemblies used for each analysis job
+        //*********************************************************************************************************
 
-		'Make an array for the list of assemblies.
-		Dim assems As System.Reflection.Assembly() = currentDomain.GetAssemblies()
+        #region "Methods"
 
-		'List the assemblies in the current application domain.
-		Console.WriteLine("List of assemblies loaded in current appdomain:")
-		Dim assem As System.Reflection.Assembly
-		For Each assem In assems
-			''Console.WriteLine(assem.ToString())
-			objSummaryFile.Add(assem.ToString())
-		Next assem
-	End Sub
+        public void GetLoadedAssemblyInfo(ref clsSummaryFile objSummaryFile)
+        {
+            var currentDomain = AppDomain.CurrentDomain;
 
-	Public Sub GetComponentFileVersionInfo(ByRef objSummaryFile As clsSummaryFile)
-		' Create a reference to the current directory.
-		Dim di As New DirectoryInfo(clsGlobal.GetAppFolderPath())
+            //Make an array for the list of assemblies.
+            var assemblies = currentDomain.GetAssemblies();
 
-		' Create an array representing the files in the current directory.
-		Dim fi As FileInfo() = di.GetFiles("*.dll")
+            //List the assemblies in the current application domain.
+            Console.WriteLine("List of assemblies loaded in current appdomain:");
+            foreach (var item in assemblies)
+            {
+                objSummaryFile.Add(item.ToString());
+            }
+        }
 
-		' get file version info for files
-		Dim fiTemp As FileInfo
-		Dim myFVI As FileVersionInfo
-		For Each fiTemp In fi
-			myFVI = FileVersionInfo.GetVersionInfo(fiTemp.FullName)
+        public void GetComponentFileVersionInfo(clsSummaryFile objSummaryFile)
+        {
+            // Create a reference to the current directory.
+            var di = new DirectoryInfo(clsGlobal.GetAppFolderPath());
 
-			Dim strFileInfo As String
-			strFileInfo = "File:             " & fiTemp.FullName & Environment.NewLine
+            // Create an array representing the files in the current directory.
+            var dllFiles = di.GetFiles("*.dll");
 
-			If Not String.IsNullOrWhiteSpace(myFVI.InternalName) AndAlso myFVI.InternalName <> fiTemp.Name Then
-				strFileInfo &= "InternalName:     " & myFVI.InternalName & Environment.NewLine
-			End If
+            // get file version info for files
+            foreach (var dllFile in dllFiles)
+            {
+                var versionInfo = FileVersionInfo.GetVersionInfo(dllFile.FullName);
 
-			If myFVI.InternalName <> myFVI.OriginalFilename Then
-				strFileInfo &= "OriginalFilename: " & myFVI.OriginalFilename & Environment.NewLine
-			End If
+                var strFileInfo = "File:             " + dllFile.FullName + Environment.NewLine;
 
-			If Not String.IsNullOrWhiteSpace(myFVI.ProductName) Then
-				strFileInfo &= "Product:          " & myFVI.ProductName & Environment.NewLine
-			End If
+                if (!string.IsNullOrWhiteSpace(versionInfo.InternalName) && versionInfo.InternalName != dllFile.Name)
+                {
+                    strFileInfo += "InternalName:     " + versionInfo.InternalName + Environment.NewLine;
+                }
 
-			strFileInfo &= "ProductVersion:   " & myFVI.ProductVersion & Environment.NewLine
+                if (versionInfo.InternalName != versionInfo.OriginalFilename)
+                {
+                    strFileInfo += "OriginalFilename: " + versionInfo.OriginalFilename + Environment.NewLine;
+                }
 
-			If myFVI.FileVersion <> myFVI.ProductVersion Then
-				strFileInfo &= "FileVersion:      " & myFVI.FileVersion & Environment.NewLine
-			End If
+                if (!string.IsNullOrWhiteSpace(versionInfo.ProductName))
+                {
+                    strFileInfo += "Product:          " + versionInfo.ProductName + Environment.NewLine;
+                }
 
-			If Not String.IsNullOrWhiteSpace(myFVI.FileDescription) AndAlso myFVI.FileDescription <> myFVI.ProductName Then
-				strFileInfo &= "FileDescription:  " & myFVI.FileDescription & Environment.NewLine
-			End If
+                strFileInfo += "ProductVersion:   " + versionInfo.ProductVersion + Environment.NewLine;
 
-			objSummaryFile.Add(strFileInfo)
-		Next fiTemp
+                if (versionInfo.FileVersion != versionInfo.ProductVersion)
+                {
+                    strFileInfo += "FileVersion:      " + versionInfo.FileVersion + Environment.NewLine;
+                }
 
-	End Sub
-#End Region
+                if (!string.IsNullOrWhiteSpace(versionInfo.FileDescription) && versionInfo.FileDescription != versionInfo.ProductName)
+                {
+                    strFileInfo += "FileDescription:  " + versionInfo.FileDescription + Environment.NewLine;
+                }
 
-End Class
+                objSummaryFile.Add(strFileInfo);
+            }
 
+        }
 
+        #endregion
+
+    }
+}

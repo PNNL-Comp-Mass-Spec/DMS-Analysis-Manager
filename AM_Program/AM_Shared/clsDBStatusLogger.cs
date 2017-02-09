@@ -1,255 +1,286 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
-' Created 02/09/2009
-'
-'*********************************************************************************************************
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
 
-Option Strict On
-
-Public Class clsDBStatusLogger
-
-#Region "Structures"
-
-    Public Structure udtStatusInfoType
-        Public MgrName As String
-        Public MgrStatus As IStatusFile.EnumMgrStatus
-        Public LastUpdate As DateTime
-        Public LastStartTime As DateTime
-
-        ''' <summary>
-        ''' Overall CPU utilization of all threads
-        ''' </summary>
-        ''' <remarks></remarks>
-        Public CPUUtilization As Single
-
-        ''' <summary>
-        ''' System-wide free memory
-        ''' </summary>
-        ''' <remarks></remarks>
-        Public FreeMemoryMB As Single
-
-        ''' <summary>
-        ''' Return the ProcessID of the Analysis manager
-        ''' </summary>
-        ''' <remarks></remarks>
-        Public ProcessID As Integer
-
-        ''' <summary>
-        ''' ProcessID of an externally spawned process
-        ''' </summary>
-        ''' <remarks>0 if no external process running</remarks>
-        Public ProgRunnerProcessID As Integer
-
-        ''' <summary>
-        ''' Number of cores in use by an externally spawned process
-        ''' </summary>
-        ''' <remarks></remarks>
-        Public ProgRunnerCoreUsage As Single
-
-        Public MostRecentErrorMessage As String
-        Public Task As udtTaskInfoType
-    End Structure
-
-    Public Structure udtTaskInfoType
-        Public Tool As String
-        Public Status As IStatusFile.EnumTaskStatus
-        Public DurationHours As Single       ' Task duration, in hours
-        Public Progress As Single       ' Percent complete, value between 0 and 100
-        Public CurrentOperation As String
-        Public TaskDetails As udtTaskDetailsType
-    End Structure
-
-    Public Structure udtTaskDetailsType
-        Public Status As IStatusFile.EnumTaskStatusDetail
-        Public Job As Integer
-        Public JobStep As Integer
-        Public Dataset As String
-        Public MostRecentLogMessage As String
-        Public MostRecentJobInfo As String
-        Public SpectrumCount As Integer
-    End Structure
-
-#End Region
-
-#Region "Module variables"
-
-    ''' <summary>
-    ''' Stored procedure that could be used to report manager status; typically not used
-    ''' </summary>
-    ''' <remarks>This stored procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-    Private Const SP_NAME_UPDATE_MANAGER_STATUS As String = "UpdateManagerAndTaskStatus"
-
-    'Status file name and location
-    Private ReadOnly m_DBConnectionString As String
-
-    ' The minimum interval between updating the manager status in the database
-    Private m_DBStatusUpdateIntervalMinutes As Single = 1
-
-#End Region
-
-#Region "Properties"
-
-    Public ReadOnly Property DBConnectionString() As String
-        Get
-            Return m_DBConnectionString
-        End Get
-    End Property
-
-    Public Property DBStatusUpdateIntervalMinutes() As Single
-        Get
-            Return m_DBStatusUpdateIntervalMinutes
-        End Get
-        Set(value As Single)
-            If value < 0 Then value = 0
-            m_DBStatusUpdateIntervalMinutes = value
-        End Set
-    End Property
-#End Region
-
-#Region "Methods"
-
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="strDBConnectionString">Database connection string</param>
-    ''' <param name="sngDBStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
-    ''' <remarks></remarks>
-    Public Sub New(strDBConnectionString As String, sngDBStatusUpdateIntervalMinutes As Single)
-        If strDBConnectionString Is Nothing Then strDBConnectionString = String.Empty
-        m_DBConnectionString = strDBConnectionString
-        m_DBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes
-    End Sub
-
-    ''' <summary>
-    ''' Send status information to the database
-    ''' </summary>
-    ''' <param name="udtStatusInfo"></param>
-    ''' <param name="blnForceLogToDB"></param>
-    ''' <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-    Public Sub LogStatus(udtStatusInfo As udtStatusInfoType, blnForceLogToDB As Boolean)
-
-        Static dtLastWriteTime As DateTime = Date.UtcNow.Subtract(New TimeSpan(1, 0, 0))
-
-        Try
-            If String.IsNullOrEmpty(m_DBConnectionString) Then
-                ' Connection string not defined; unable to continue
-                Exit Sub
-            End If
-
-            If Not blnForceLogToDB AndAlso Date.UtcNow.Subtract(dtLastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes Then
-                ' Not enough time has elapsed since the last write; exit sub
-                Exit Sub
-            End If
-            dtLastWriteTime = Date.UtcNow
+//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2009, Battelle Memorial Institute
+// Created 02/09/2009
+//
+//*********************************************************************************************************
 
 
-            Dim myConnection = New SqlClient.SqlConnection(m_DBConnectionString)
-            myConnection.Open()
+namespace AnalysisManagerBase
+{
+    public class clsDBStatusLogger
+    {
 
-            'Set up the command object prior to SP execution
-            Dim myCmd = New SqlClient.SqlCommand() With {
-                .CommandType = CommandType.StoredProcedure,
-                .CommandText = SP_NAME_UPDATE_MANAGER_STATUS,
-                .Connection = myConnection
+        #region "Structures"
+
+        public struct udtStatusInfoType
+        {
+            public string MgrName;
+            public EnumMgrStatus MgrStatus;
+            public DateTime LastUpdate;
+
+            public DateTime LastStartTime;
+            /// <summary>
+            /// Overall CPU utilization of all threads
+            /// </summary>
+            /// <remarks></remarks>
+
+            public float CPUUtilization;
+            /// <summary>
+            /// System-wide free memory
+            /// </summary>
+            /// <remarks></remarks>
+
+            public float FreeMemoryMB;
+            /// <summary>
+            /// Return the ProcessID of the Analysis manager
+            /// </summary>
+            /// <remarks></remarks>
+
+            public int ProcessID;
+            /// <summary>
+            /// ProcessID of an externally spawned process
+            /// </summary>
+            /// <remarks>0 if no external process running</remarks>
+
+            public int ProgRunnerProcessID;
+            /// <summary>
+            /// Number of cores in use by an externally spawned process
+            /// </summary>
+            /// <remarks></remarks>
+
+            public float ProgRunnerCoreUsage;
+            public string MostRecentErrorMessage;
+            public udtTaskInfoType Task;
+        }
+
+        public struct udtTaskInfoType
+        {
+            public string Tool;
+            public EnumTaskStatus Status;
+            // Task duration, in hours
+            public float DurationHours;
+            // Percent complete, value between 0 and 100
+            public float Progress;
+            public string CurrentOperation;
+            public udtTaskDetailsType TaskDetails;
+        }
+
+        public struct udtTaskDetailsType
+        {
+            public EnumTaskStatusDetail Status;
+            public int Job;
+            public int JobStep;
+            public string Dataset;
+            public string MostRecentLogMessage;
+            public string MostRecentJobInfo;
+            public int SpectrumCount;
+        }
+
+        #endregion
+
+        #region "Module variables"
+
+        /// <summary>
+        /// Stored procedure that could be used to report manager status; typically not used
+        /// </summary>
+        /// <remarks>This stored procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
+
+        private const string SP_NAME_UPDATE_MANAGER_STATUS = "UpdateManagerAndTaskStatus";
+
+        private readonly string m_DBConnectionString;
+
+        /// <summary>
+        /// The minimum interval between updating the manager status in the database
+        /// </summary>
+        private float m_DBStatusUpdateIntervalMinutes;
+
+
+        private DateTime m_LastWriteTime;
+
+        #endregion
+
+        #region "Properties"
+
+        public string DBConnectionString => m_DBConnectionString;
+
+        public float DBStatusUpdateIntervalMinutes
+        {
+            get { return m_DBStatusUpdateIntervalMinutes; }
+            set
+            {
+                if (value < 0)
+                    value = 0;
+                m_DBStatusUpdateIntervalMinutes = value;
+            }
+        }
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="strDBConnectionString">Database connection string</param>
+        /// <param name="sngDBStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
+        /// <remarks></remarks>
+        public clsDBStatusLogger(string strDBConnectionString, float sngDBStatusUpdateIntervalMinutes)
+        {
+            if (strDBConnectionString == null)
+                strDBConnectionString = string.Empty;
+            m_DBConnectionString = strDBConnectionString;
+            m_DBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes;
+            m_LastWriteTime = DateTime.MinValue;
+        }
+
+        /// <summary>
+        /// Send status information to the database
+        /// </summary>
+        /// <param name="udtStatusInfo"></param>
+        /// <param name="blnForceLogToDB"></param>
+        /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
+        public void LogStatus(udtStatusInfoType udtStatusInfo, bool blnForceLogToDB)
+        {
+           
+            try
+            {
+                if (string.IsNullOrEmpty(m_DBConnectionString))
+                {
+                    // Connection string not defined; unable to continue
+                    return;
+                }
+
+                if (!blnForceLogToDB && DateTime.UtcNow.Subtract(m_LastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes)
+                {
+                    // Not enough time has elapsed since the last write; exit sub
+                    return;
+                }
+                m_LastWriteTime = DateTime.UtcNow;
+
+
+                var myConnection = new SqlConnection(m_DBConnectionString);
+                myConnection.Open();
+
+                //Set up the command object prior to SP execution
+                var myCmd = new SqlCommand
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = SP_NAME_UPDATE_MANAGER_STATUS,
+                    Connection = myConnection
+                };
+
+                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
+                myCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+
+
+                // Manager items
+                AddSPParameter(myCmd.Parameters, "@MgrName", udtStatusInfo.MgrName, 128);
+                AddSPParameter(myCmd.Parameters, "@MgrStatusCode", (int)udtStatusInfo.MgrStatus);
+
+                AddSPParameter(myCmd.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime());
+                AddSPParameter(myCmd.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime());
+                AddSPParameter(myCmd.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization);
+                AddSPParameter(myCmd.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB);
+                AddSPParameter(myCmd.Parameters, "@ProcessID", udtStatusInfo.ProcessID);
+                AddSPParameter(myCmd.Parameters, "@ProgRunnerProcessID", udtStatusInfo.ProgRunnerProcessID);
+                AddSPParameter(myCmd.Parameters, "@ProgRunnerCoreUsage", udtStatusInfo.ProgRunnerCoreUsage);
+
+                AddSPParameter(myCmd.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024);
+
+                // Task items
+                AddSPParameter(myCmd.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128);
+                AddSPParameter(myCmd.Parameters, "@TaskStatusCode", (int)udtStatusInfo.Task.Status);
+                AddSPParameter(myCmd.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours);
+                AddSPParameter(myCmd.Parameters, "@Progress", udtStatusInfo.Task.Progress);
+                AddSPParameter(myCmd.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256);
+
+                // Task detail items
+                AddSPParameter(myCmd.Parameters, "@TaskDetailStatusCode", (int)udtStatusInfo.Task.TaskDetails.Status);
+                AddSPParameter(myCmd.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job);
+                AddSPParameter(myCmd.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep);
+                AddSPParameter(myCmd.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256);
+                AddSPParameter(myCmd.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024);
+                AddSPParameter(myCmd.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256);
+                AddSPParameter(myCmd.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount);
+
+                AddSPParameterOutput(myCmd.Parameters, "@message", string.Empty, 512);
+
+                //Execute the SP
+                myCmd.ExecuteNonQuery();
+
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                Console.WriteLine("Error in clsDBStatusLogger.LogStatus: " + ex.Message);
             }
 
-            myCmd.Parameters.Add(New SqlClient.SqlParameter("@Return", SqlDbType.Int))
-            myCmd.Parameters.Item("@Return").Direction = ParameterDirection.ReturnValue
+        }
 
+        private void AddSPParameter(SqlParameterCollection objParameters, string strParamName, string strValue, int intVarCharLength)
+        {
+            // Make sure the parameter starts with an @ sign
+            if (!strParamName.StartsWith("@"))
+            {
+                strParamName = "@" + strParamName;
+            }
 
-            ' Manager items
-            AddSPParameter(myCmd.Parameters, "@MgrName", udtStatusInfo.MgrName, 128)
-            AddSPParameter(myCmd.Parameters, "@MgrStatusCode", udtStatusInfo.MgrStatus)
+            objParameters.Add(new SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength)).Value = strValue;
+        }
 
-            AddSPParameter(myCmd.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime())
-            AddSPParameter(myCmd.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime())
-            AddSPParameter(myCmd.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization)
-            AddSPParameter(myCmd.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB)
-            AddSPParameter(myCmd.Parameters, "@ProcessID", udtStatusInfo.ProcessID)
-            AddSPParameter(myCmd.Parameters, "@ProgRunnerProcessID", udtStatusInfo.ProgRunnerProcessID)
-            AddSPParameter(myCmd.Parameters, "@ProgRunnerCoreUsage", udtStatusInfo.ProgRunnerCoreUsage)
+        private void AddSPParameter(SqlParameterCollection objParameters, string strParamName, int intValue)
+        {
+            // Make sure the parameter starts with an @ sign
+            if (!strParamName.StartsWith("@"))
+            {
+                strParamName = "@" + strParamName;
+            }
 
-            AddSPParameter(myCmd.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024)
+            objParameters.Add(new SqlParameter(strParamName, SqlDbType.Int)).Value = intValue;
+        }
 
-            ' Task items
-            AddSPParameter(myCmd.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128)
-            AddSPParameter(myCmd.Parameters, "@TaskStatusCode", udtStatusInfo.Task.Status)
-            AddSPParameter(myCmd.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours)
-            AddSPParameter(myCmd.Parameters, "@Progress", udtStatusInfo.Task.Progress)
-            AddSPParameter(myCmd.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256)
+        private void AddSPParameter(SqlParameterCollection objParameters, string strParamName, DateTime dtValue)
+        {
+            // Make sure the parameter starts with an @ sign
+            if (!strParamName.StartsWith("@"))
+            {
+                strParamName = "@" + strParamName;
+            }
 
-            ' Task detail items
-            AddSPParameter(myCmd.Parameters, "@TaskDetailStatusCode", udtStatusInfo.Task.TaskDetails.Status)
-            AddSPParameter(myCmd.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job)
-            AddSPParameter(myCmd.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep)
-            AddSPParameter(myCmd.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256)
-            AddSPParameter(myCmd.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024)
-            AddSPParameter(myCmd.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256)
-            AddSPParameter(myCmd.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount)
+            objParameters.Add(new SqlParameter(strParamName, SqlDbType.DateTime)).Value = dtValue;
+        }
 
-            AddSPParameterOutput(myCmd.Parameters, "@message", String.Empty, 512)
+        private void AddSPParameter(SqlParameterCollection objParameters, string strParamName, float sngValue)
+        {
+            // Make sure the parameter starts with an @ sign
+            if (!strParamName.StartsWith("@"))
+            {
+                strParamName = "@" + strParamName;
+            }
 
-            'Execute the SP
-            myCmd.ExecuteNonQuery()
+            objParameters.Add(new SqlParameter(strParamName, SqlDbType.Real)).Value = sngValue;
+        }
 
-        Catch ex As Exception
-            ' Ignore errors here
-            Console.WriteLine("Error in clsDBStatusLogger.LogStatus: " & ex.Message)
-        End Try
+        private void AddSPParameterOutput(SqlParameterCollection objParameters, string strParamName, string strValue, int intVarCharLength)
+        {
+            // Make sure the parameter starts with an @ sign
+            if (!strParamName.StartsWith("@"))
+            {
+                strParamName = "@" + strParamName;
+            }
 
-    End Sub
+            objParameters.Add(new SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength));
+            objParameters[strParamName].Direction = ParameterDirection.Output;
+            objParameters[strParamName].Value = strValue;
+        }
+        
 
-    Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, strValue As String, intVarCharLength As Integer)
-        ' Make sure the parameter starts with an @ sign
-        If Not strParamName.StartsWith("@") Then
-            strParamName = "@" & strParamName
-        End If
+        #endregion
 
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength)).Value = strValue
-    End Sub
-
-    Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, intValue As Integer)
-        ' Make sure the parameter starts with an @ sign
-        If Not strParamName.StartsWith("@") Then
-            strParamName = "@" & strParamName
-        End If
-
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Int)).Value = intValue
-    End Sub
-
-    Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, dtValue As DateTime)
-        ' Make sure the parameter starts with an @ sign
-        If Not strParamName.StartsWith("@") Then
-            strParamName = "@" & strParamName
-        End If
-
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.DateTime)).Value = dtValue
-    End Sub
-
-    Private Sub AddSPParameter(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, sngValue As Single)
-        ' Make sure the parameter starts with an @ sign
-        If Not strParamName.StartsWith("@") Then
-            strParamName = "@" & strParamName
-        End If
-
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.Real)).Value = sngValue
-    End Sub
-
-    Private Sub AddSPParameterOutput(ByRef objParameters As SqlClient.SqlParameterCollection, strParamName As String, strValue As String, intVarCharLength As Integer)
-        ' Make sure the parameter starts with an @ sign
-        If Not strParamName.StartsWith("@") Then
-            strParamName = "@" & strParamName
-        End If
-
-        objParameters.Add(New SqlClient.SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength))
-        objParameters.Item(strParamName).Direction = ParameterDirection.Output
-        objParameters.Item(strParamName).Value = strValue
-    End Sub
-
-#End Region
-
-End Class
-
-
+    }
+}
