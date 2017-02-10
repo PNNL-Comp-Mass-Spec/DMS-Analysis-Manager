@@ -52,7 +52,7 @@ namespace AnalysisManagerBase
 
         private Queue<KeyValuePair<DateTime, float>> m_ProgRunnerCoreUsageHistory;
         
-        protected int m_DebugLevel;
+        private readonly int m_DebugLevel;
 
         /// <summary>
         /// Used to log the memory usage to a status file
@@ -524,7 +524,7 @@ namespace AnalysisManagerBase
             return processID;
         }
 
-        protected void LogStatusToMessageQueue(string strStatusXML)
+        private void LogStatusToMessageQueue(string strStatusXML)
         {
             const float MINIMUM_LOG_FAILURE_INTERVAL_MINUTES = 10;           
 
@@ -573,8 +573,7 @@ namespace AnalysisManagerBase
         /// Send status information to the database
         /// </summary>
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-
-        protected void LogStatusToBrokerDatabase(bool ForceLogToBrokerDB)
+        private void LogStatusToBrokerDatabase(bool ForceLogToBrokerDB)
         {
             var udtStatusInfo = new clsDBStatusLogger.udtStatusInfoType
             {
@@ -640,7 +639,7 @@ namespace AnalysisManagerBase
             m_ProgRunnerCoreUsageHistory = coreUsageHistory;
         }
 
-        protected void StoreRecentJobInfo(string JobInfo)
+        private void StoreRecentJobInfo(string JobInfo)
         {
             if (!string.IsNullOrEmpty(JobInfo))
             {
@@ -648,7 +647,7 @@ namespace AnalysisManagerBase
             }
         }
 
-        protected void StoreNewErrorMessage(string strErrorMessage, bool blnClearExistingMessages)
+        private void StoreNewErrorMessage(string strErrorMessage, bool blnClearExistingMessages)
         {
 
             if (blnClearExistingMessages)
@@ -690,7 +689,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="recentErrorMessages"></param>
         /// <remarks></remarks>
-        protected void StoreRecentErrorMessages(List<string> recentErrorMessages)
+        private void StoreRecentErrorMessages(IEnumerable<string> recentErrorMessages)
         {
             if (recentErrorMessages == null)
             {
@@ -948,7 +947,7 @@ namespace AnalysisManagerBase
 
         }
 
-        protected bool WriteStatusFileToDisk(string strFilePath, string strXMLText, bool logWarning)
+        private bool WriteStatusFileToDisk(string strFilePath, string strXMLText, bool logWarning)
         {
             const int WRITE_FAILURE_LOG_THRESHOLD = 5;
            

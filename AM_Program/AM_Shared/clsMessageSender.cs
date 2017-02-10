@@ -73,7 +73,7 @@ namespace AnalysisManagerBase
         /// <param name="retryCount"></param>
         /// <param name="timeoutSeconds"></param>
         /// <remarks></remarks>
-        protected void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
+        private void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
             if (hasConnection)
             {
@@ -137,7 +137,7 @@ namespace AnalysisManagerBase
             OnErrorEvent(msg);           
         }
 
-        protected void DestroyConnection()
+        private void DestroyConnection()
         {
             try
             {
