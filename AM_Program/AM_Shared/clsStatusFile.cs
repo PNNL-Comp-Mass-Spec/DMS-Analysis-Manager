@@ -998,7 +998,7 @@ namespace AnalysisManagerBase
         /// <param name="JobInfo">Information on the job that started most recently</param>
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-        public void UpdateClose(string ManagerIdleMessage, List<string> recentErrorMessages, string JobInfo, bool ForceLogToBrokerDB)
+        public void UpdateClose(string ManagerIdleMessage, IEnumerable<string> recentErrorMessages, string JobInfo, bool ForceLogToBrokerDB)
         {
             ClearCachedInfo();
 
@@ -1148,7 +1148,7 @@ namespace AnalysisManagerBase
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
 
-        public void UpdateIdle(string ManagerIdleMessage, List<string> recentErrorMessages, string RecentJobInfo, bool ForceLogToBrokerDB)
+        public void UpdateIdle(string ManagerIdleMessage, IEnumerable<string> recentErrorMessages, string RecentJobInfo, bool ForceLogToBrokerDB)
         {
             ClearCachedInfo();
             MgrStatus = EnumMgrStatus.RUNNING;
@@ -1179,9 +1179,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage)
         {
-            var recentErrorMessages = new List<string>();
-
-            UpdateDisabled(ManagerStatus, ManagerDisableMessage, recentErrorMessages, MostRecentJobInfo);
+            UpdateDisabled(ManagerStatus, ManagerDisableMessage, new List<string>(), MostRecentJobInfo);
         }
 
         /// <summary>
@@ -1192,7 +1190,7 @@ namespace AnalysisManagerBase
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <remarks></remarks>
-        public void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage, List<string> recentErrorMessages, string RecentJobInfo)
+        public void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage, IEnumerable<string> recentErrorMessages, string RecentJobInfo)
         {
             ClearCachedInfo();
 
@@ -1217,8 +1215,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void UpdateFlagFileExists()
         {
-            var recentErrorMessages = new List<string>();
-            UpdateFlagFileExists(recentErrorMessages, MostRecentJobInfo);
+            UpdateFlagFileExists(new List<string>(), MostRecentJobInfo);
         }
 
         /// <summary>
@@ -1227,7 +1224,7 @@ namespace AnalysisManagerBase
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <remarks></remarks>
-        public void UpdateFlagFileExists(List<string> recentErrorMessages, string RecentJobInfo)
+        public void UpdateFlagFileExists(IEnumerable<string> recentErrorMessages, string RecentJobInfo)
         {
             ClearCachedInfo();
 
@@ -1253,7 +1250,7 @@ namespace AnalysisManagerBase
 
         public void DisposeMessageQueue()
         {
-            if ((m_MessageSender != null))
+            if (m_MessageSender != null)
             {
                 m_QueueLogger.Dispose();
                 m_MessageSender.Dispose();
