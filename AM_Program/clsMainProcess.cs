@@ -10,7 +10,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -1146,20 +1145,20 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var reLogFileName = new Regex(@"(.+_)(\d+)-(\d+)-(\d+).\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var reLogFileName = new Regex(@"(?<BaseName>.+_)(?<Month>\d+)-(?<Day>\d+)-(?<Year>\d+).\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 var objMatch = reLogFileName.Match(strLogFilePath);
 
-                if (objMatch.Success && objMatch.Groups.Count >= 4)
+                if (objMatch.Success)
                 {
-                    var intMonth = Convert.ToInt32(objMatch.Groups[2].Value);
-                    var intDay = Convert.ToInt32(objMatch.Groups[3].Value);
-                    var intYear = Convert.ToInt32(objMatch.Groups[4].Value);
+                    var intMonth = Convert.ToInt32(objMatch.Groups["Month"].Value);
+                    var intDay = Convert.ToInt32(objMatch.Groups["Day"].Value);
+                    var intYear = Convert.ToInt32(objMatch.Groups["Year"].Value);
 
                     var dtCurrentDate = DateTime.Parse(intYear + "-" + intMonth + "-" + intDay);
                     var dtNewDate = dtCurrentDate.Subtract(new TimeSpan(1, 0, 0, 0));
 
-                    var strPreviousLogFilePath = objMatch.Groups[1].Value + dtNewDate.ToString("MM-dd-yyyy") + Path.GetExtension(strLogFilePath);
+                    var strPreviousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString("MM-dd-yyyy") + Path.GetExtension(strLogFilePath);
                     return strPreviousLogFilePath;
                 }
 
@@ -1183,14 +1182,14 @@ namespace AnalysisManagerProg
         /// <param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
         /// <returns>List of recent errors</returns>
         /// <remarks></remarks>
-        public List<string> DetermineRecentErrorMessages(int intErrorMessageCountToReturn, ref string strMostRecentJobInfo)
+        public IEnumerable<string> DetermineRecentErrorMessages(int intErrorMessageCountToReturn, ref string strMostRecentJobInfo)
         {
             // This regex will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
-            const string ERROR_MATCH_REGEX = "^([^,]+),(.+), Error, *$";
+            const string ERROR_MATCH_REGEX = "^(?<Date>[^,]+),(?<Error>.+), Error, *$";
 
             // This regex looks for information on a job starting
             // Note: do not try to match "Step \d+" with this regex due to variations on how the log message appears
-            const string JOB_START_REGEX = "^([^,]+),.+Started analysis job (\\d+), Dataset (.+), Tool ([^,]+)";
+            const string JOB_START_REGEX = @"^(?<Date>[^,]+),.+Started analysis job (?<Job>\d+), Dataset (?<Dataset>.+), Tool (?<Tool>[^,]+)";
 
             // Examples matching log entries
             // 5/04/2015 12:34:46, Pub-88-3: Started analysis job 1193079, Dataset Lp_PDEC_N-sidG_PD1_1May15_Lynx_15-01-24, Tool Decon2LS_V2, Step 1, INFO,
@@ -1199,9 +1198,8 @@ namespace AnalysisManagerProg
             // The following effectively defines the number of days in the past to search when finding recent errors
             const int MAX_LOG_FILES_TO_SEARCH = 5;
 
-            // Note that strRecentErrorMessages() and dtRecentErrorMessageDates() are parallel arrays
-            var strRecentErrorMessages = new string[0];
-            DateTime[] dtRecentErrorMessageDates = null;
+            // In this list, keys are error message strings and values are the corresponding time of the error
+            var recentErrorMessages = new List<KeyValuePair<string, DateTime>>();
 
             if (strMostRecentJobInfo == null)
                 strMostRecentJobInfo = string.Empty;
@@ -1210,24 +1208,18 @@ namespace AnalysisManagerProg
             {
                 var strMostRecentJobInfoFromLogs = string.Empty;
 
-                //If objLogger Is Nothing Then
-                //    intRecentErrorMessageCount = 0
-                //    ReDim strRecentErrorMessages(-1)
-                //Else
                 if (intErrorMessageCountToReturn < 1)
                     intErrorMessageCountToReturn = 1;
-
-                var intRecentErrorMessageCount = 0;
 
                 // Initialize the RegEx that splits out the timestamp from the error message
                 var reErrorLine = new Regex(ERROR_MATCH_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
                 var reJobStartLine = new Regex(JOB_START_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 // Initialize the queue that holds recent error messages
-                var qErrorMsgQueue = new Queue(intErrorMessageCountToReturn);
+                var qErrorMsgQueue = new Queue<string>(intErrorMessageCountToReturn);
 
                 // Initialize the hashtable to hold the error messages, but without date stamps
-                var htUniqueErrorMessages = new Hashtable();
+                var uniqueErrorMessages = new Dictionary<string, DateTime>((StringComparer.InvariantCultureIgnoreCase));
 
                 // Examine the most recent error reported by objLogger
                 var strLineIn = clsLogTools.MostRecentErrorMessage;
@@ -1265,30 +1257,34 @@ namespace AnalysisManagerProg
                             {
                                 strLineIn = srInFile.ReadLine();
 
-                                if ((strLineIn != null))
+                                if (strLineIn == null)
+                                    continue;
+
+                                var oMatchError = reErrorLine.Match(strLineIn);
+
+                                if (oMatchError.Success)
                                 {
-                                    var objMatch = reErrorLine.Match(strLineIn);
+                                    DetermineRecentErrorCacheError(oMatchError, strLineIn, uniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn);
+                                }
 
-                                    if (objMatch.Success)
-                                    {
-                                        DetermineRecentErrorCacheError(objMatch, strLineIn, htUniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn);
-                                    }
+                                if (!blnCheckForMostRecentJob)
+                                    continue;
 
-                                    if (blnCheckForMostRecentJob)
-                                    {
-                                        objMatch = reJobStartLine.Match(strLineIn);
-                                        if (objMatch.Success)
-                                        {
-                                            try
-                                            {
-                                                strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(objMatch.Groups[1].Value, Convert.ToInt32(objMatch.Groups[2].Value), objMatch.Groups[3].Value, objMatch.Groups[4].Value);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                // Ignore errors here
-                                            }
-                                        }
-                                    }
+                                var oMatchJob = reJobStartLine.Match(strLineIn);
+                                if (!oMatchJob.Success)
+                                    continue;
+
+                                try
+                                {
+                                    strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(
+                                        oMatchJob.Groups["Date"].Value,
+                                        Convert.ToInt32(oMatchJob.Groups["Job"].Value),
+                                        oMatchJob.Groups["Dataset"].Value,
+                                        oMatchJob.Groups["Tool"].Value);
+                                }
+                                catch (Exception)
+                                {
+                                    // Ignore errors here
                                 }
                             }
 
@@ -1308,17 +1304,17 @@ namespace AnalysisManagerProg
                         // Increment the log file counter, regardless of whether or not the log file was found
                         intLogFileCountProcessed += 1;
 
-                        if (qErrorMsgQueue.Count < intErrorMessageCountToReturn)
-                        {
-                            // We still haven't found intErrorMessageCountToReturn error messages
-                            // Keep checking older log files as long as qErrorMsgQueue.Count < intErrorMessageCountToReturn
+                        if (qErrorMsgQueue.Count >= intErrorMessageCountToReturn)
+                            continue;
 
-                            // Decrement the log file path by one day
-                            strLogFilePath = DecrementLogFilePath(strLogFilePath);
-                            if (string.IsNullOrEmpty(strLogFilePath))
-                            {
-                                break;
-                            }
+                        // We still haven't found intErrorMessageCountToReturn error messages
+                        // Keep checking older log files as long as qErrorMsgQueue.Count < intErrorMessageCountToReturn
+
+                        // Decrement the log file path by one day
+                        strLogFilePath = DecrementLogFilePath(strLogFilePath);
+                        if (string.IsNullOrEmpty(strLogFilePath))
+                        {
+                            break;
                         }
                     }
                 }
@@ -1331,64 +1327,30 @@ namespace AnalysisManagerProg
 
                     if (objMatch.Success)
                     {
-                        DetermineRecentErrorCacheError(objMatch, strLineIn, htUniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn);
+                        DetermineRecentErrorCacheError(objMatch, strLineIn, uniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn);
                     }
                 }
 
                 // Populate strRecentErrorMessages and dtRecentErrorMessageDates using the messages stored in qErrorMsgQueue
                 while (qErrorMsgQueue.Count > 0)
                 {
-                    var strErrorMessageClean = Convert.ToString(qErrorMsgQueue.Dequeue());
+                    var strErrorMessageClean = qErrorMsgQueue.Dequeue();
 
                     // Find the newest timestamp for this message
-                    string strTimestamp;
-                    if (htUniqueErrorMessages.ContainsKey(strErrorMessageClean))
-                    {
-                        strTimestamp = Convert.ToString(htUniqueErrorMessages[strErrorMessageClean]);
-                    }
-                    else
+                    DateTime timeStamp;
+                    if (!uniqueErrorMessages.TryGetValue(strErrorMessageClean, out timeStamp))
                     {
                         // This code should not be reached
-                        strTimestamp = "";
+                        timeStamp = DateTime.MinValue;
                     }
 
-                    if (intRecentErrorMessageCount >= strRecentErrorMessages.Length)
-                    {
-                        // Need to reserve more memory; this is unexpected
-                        Array.Resize(ref strRecentErrorMessages, strRecentErrorMessages.Length * 2);
-                        Array.Resize(ref dtRecentErrorMessageDates, strRecentErrorMessages.Length);
-                    }
-
-                    strRecentErrorMessages[intRecentErrorMessageCount] = strTimestamp + ", " + strErrorMessageClean.TrimStart(' ');
-
-                    try
-                    {
-                        dtRecentErrorMessageDates[intRecentErrorMessageCount] = Convert.ToDateTime(strTimestamp);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Error converting date;
-                        dtRecentErrorMessageDates[intRecentErrorMessageCount] = DateTime.MinValue;
-                    }
-
-                    intRecentErrorMessageCount += 1;
+                    recentErrorMessages.Add(new KeyValuePair<string, DateTime>(timeStamp + ", " + strErrorMessageClean.TrimStart(' '), timeStamp));
                 }
 
-                if (intRecentErrorMessageCount < strRecentErrorMessages.Length)
-                {
-                    // Shrink the arrays
-                    Array.Resize(ref strRecentErrorMessages, intRecentErrorMessageCount);
-                    Array.Resize(ref dtRecentErrorMessageDates, intRecentErrorMessageCount);
-                }
-
-                if (intRecentErrorMessageCount > 1)
-                {
-                    // Sort the arrays by descending date
-                    Array.Sort(dtRecentErrorMessageDates, strRecentErrorMessages);
-                    Array.Reverse(dtRecentErrorMessageDates);
-                    Array.Reverse(strRecentErrorMessages);
-                }
-
+                var sortedAndFilteredRecentErrors = (from item in recentErrorMessages
+                                                     orderby item.Value descending
+                                                     select item.Key).Take(intErrorMessageCountToReturn);
+               
                 if (string.IsNullOrEmpty(strMostRecentJobInfo))
                 {
                     if (!string.IsNullOrWhiteSpace(strMostRecentJobInfoFromLogs))
@@ -1397,6 +1359,8 @@ namespace AnalysisManagerProg
                         strMostRecentJobInfo = strMostRecentJobInfoFromLogs;
                     }
                 }
+
+                return sortedAndFilteredRecentErrors;
             }
             catch (Exception ex)
             {
@@ -1405,53 +1369,58 @@ namespace AnalysisManagerProg
                 {
                     LogError("Error in DetermineRecentErrorMessages", ex);
                 }
-                catch (Exception ex2)
+                catch (Exception)
                 {
                     // Ignore errors logging the error
                 }
+                return new List<string>();
             }
 
-            return strRecentErrorMessages.ToList();
         }
 
-        private void DetermineRecentErrorCacheError(Match objMatch, string strErrorMessage, Hashtable htUniqueErrorMessages, Queue qErrorMsgQueue, int intMaxErrorMessageCountToReturn)
+        private void DetermineRecentErrorCacheError(
+            Match oMatch,
+            string strErrorMessage,
+            IDictionary<string, DateTime> uniqueErrorMessages,
+            Queue<string> qErrorMsgQueue,
+            int intMaxErrorMessageCountToReturn)
         {
-            string strTimestamp = null;
-            string strErrorMessageClean = null;
-            string strQueuedError = null;
+            DateTime timeStamp;
+            string strErrorMessageClean;
 
-            bool blnAddItemToQueue = false;
-
-            // See if this error is present in htUniqueErrorMessages yet
-            // If it is present, update the timestamp in htUniqueErrorMessages
+            // See if this error is present in uniqueErrorMessages yet
+            // If it is present, update the timestamp in uniqueErrorMessages
             // If not present, queue it
 
-            if (objMatch.Groups.Count >= 2)
+            if (oMatch.Groups.Count >= 2)
             {
-                strTimestamp = objMatch.Groups[1].Value;
-                strErrorMessageClean = objMatch.Groups[2].Value;
+                var strTimestamp = oMatch.Groups["Date"].Value;
+                if (!DateTime.TryParse(strTimestamp, out timeStamp))
+                    timeStamp = DateTime.MinValue;
+
+                strErrorMessageClean = oMatch.Groups["Error"].Value;
             }
             else
             {
                 // Regex didn't match; this is unexpected
-                strTimestamp = DateTime.MinValue.ToString();
+                timeStamp = DateTime.MinValue;
                 strErrorMessageClean = strErrorMessage;
             }
 
             // Check whether strErrorMessageClean is in the hash table
-            var objItem = htUniqueErrorMessages[strErrorMessageClean];
-            if ((objItem != null))
+            DateTime existingTimeStamp;
+            if (uniqueErrorMessages.TryGetValue(strErrorMessageClean, out existingTimeStamp))
             {
                 // The error message is present
                 // Update the timestamp associated with strErrorMessageClean if the time stamp is newer than the stored one
                 try
                 {
-                    if (DateTime.Parse(strTimestamp) > DateTime.Parse(Convert.ToString(objItem)))
+                    if (timeStamp > existingTimeStamp)
                     {
-                        htUniqueErrorMessages[strErrorMessageClean] = strTimestamp;
+                        uniqueErrorMessages[strErrorMessageClean] = timeStamp;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Date comparison failed; leave the existing timestamp unchanged
                 }
@@ -1459,58 +1428,58 @@ namespace AnalysisManagerProg
             else
             {
                 // The error message is not present
-                htUniqueErrorMessages.Add(strErrorMessageClean, strTimestamp);
+                uniqueErrorMessages.Add(strErrorMessageClean, timeStamp);
             }
 
-            if (!qErrorMsgQueue.Contains(strErrorMessageClean))
-            {
-                // Queue this message
-                // However, if we already have intErrorMessageCountToReturn messages queued, then dequeue the oldest one
+            if (qErrorMsgQueue.Contains(strErrorMessageClean))
+                return;
 
-                if (qErrorMsgQueue.Count < intMaxErrorMessageCountToReturn)
+            // Queue this message
+            // However, if we already have intErrorMessageCountToReturn messages queued, then dequeue the oldest one
+
+            if (qErrorMsgQueue.Count < intMaxErrorMessageCountToReturn)
+            {
+                qErrorMsgQueue.Enqueue(strErrorMessageClean);
+            }
+            else
+            {
+                // Too many queued messages, so remove oldest one
+                // However, only do this if the new error message has a timestamp newer than the oldest queued message
+                //  (this is a consideration when processing multiple log files)
+
+                var blnAddItemToQueue = true;
+
+                var strQueuedError = qErrorMsgQueue.Peek();
+
+                // Get the timestamp associated with strQueuedError, as tracked by the hashtable
+                DateTime queuedTimeStamp;
+                if (!uniqueErrorMessages.TryGetValue(strQueuedError, out queuedTimeStamp))
                 {
-                    qErrorMsgQueue.Enqueue(strErrorMessageClean);
+                    // The error message is not in the hashtable; this is unexpected
                 }
                 else
                 {
-                    // Too many queued messages, so remove oldest one
-                    // However, only do this if the new error message has a timestamp newer than the oldest queued message
-                    //  (this is a consideration when processing multiple log files)
-
-                    blnAddItemToQueue = true;
-
-                    strQueuedError = Convert.ToString(qErrorMsgQueue.Peek());
-
-                    // Get the timestamp associated with strQueuedError, as tracked by the hashtable
-                    objItem = htUniqueErrorMessages[strQueuedError];
-                    if (objItem == null)
+                    // Compare the queued error's timestamp with the timestamp of the new error message
+                    try
                     {
-                        // The error message is not in the hashtable; this is unexpected
-                    }
-                    else
-                    {
-                        // Compare the queued error's timestamp with the timestamp of the new error message
-                        try
+                        if (queuedTimeStamp >= timeStamp)
                         {
-                            if (DateTime.Parse(Convert.ToString(objItem)) >= DateTime.Parse(strTimestamp))
-                            {
-                                // The queued error message's timestamp is equal to or newer than the new message's timestamp
-                                // Do not add the new item to the queue
-                                blnAddItemToQueue = false;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            // Date comparison failed; Do not add the new item to the queue
+                            // The queued error message's timestamp is equal to or newer than the new message's timestamp
+                            // Do not add the new item to the queue
                             blnAddItemToQueue = false;
                         }
                     }
-
-                    if (blnAddItemToQueue)
+                    catch (Exception)
                     {
-                        qErrorMsgQueue.Dequeue();
-                        qErrorMsgQueue.Enqueue(strErrorMessageClean);
+                        // Date comparison failed; Do not add the new item to the queue
+                        blnAddItemToQueue = false;
                     }
+                }
+
+                if (blnAddItemToQueue)
+                {
+                    qErrorMsgQueue.Dequeue();
+                    qErrorMsgQueue.Enqueue(strErrorMessageClean);
                 }
             }
         }
