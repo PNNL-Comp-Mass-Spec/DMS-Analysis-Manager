@@ -2323,6 +2323,38 @@ namespace AnalysisManagerProg
 
         #endregion
 
+        #region "clsEventNotifier events"
+
+        private void RegisterEvents(clsEventNotifier oProcessingClass)
+        {
+            oProcessingClass.StatusEvent += StatusEventHandler;
+            oProcessingClass.ErrorEvent += ErrorEventHandler;
+            oProcessingClass.WarningEvent += WarningEventHandler;
+            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private void StatusEventHandler(string statusMessage)
+        {
+            LogMessage(statusMessage);
+        }
+
+        private void ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private void WarningEventHandler(string warningMessage)
+        {
+            LogWarning(warningMessage);
+        }
+
+        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
+        {
+            m_StatusTools.CurrentOperation = progressMessage;
+            m_StatusTools.UpdateAndWrite(percentComplete);
+        }
+
+        #endregion
         /// <summary>
         /// Event handler for file watcher
         /// </summary>
