@@ -132,61 +132,66 @@ namespace AnalysisManagerProg
             mInitialized = true;
         }
 
+        /// <summary>
+        /// Automatically clean old files from the work directory if eManagerErrorCleanupMode is not eCleanupModeConstants.Disabled
+        /// </summary>
+        /// <param name="eManagerErrorCleanupMode"></param>
+        /// <param name="debugLevel"></param>
+        /// <returns></returns>
         public bool AutoCleanupManagerErrors(eCleanupModeConstants eManagerErrorCleanupMode, int debugLevel)
         {
-            bool blnSuccess = false;
-            string strFailureMessage = string.Empty;
-
             if (!mInitialized)
                 return false;
 
-            if (eManagerErrorCleanupMode != eCleanupModeConstants.Disabled)
+            if (eManagerErrorCleanupMode == eCleanupModeConstants.Disabled)
+                return false;
+
+            LogMessage("Attempting to automatically clean the work directory");
+
+            // Call SP ReportManagerErrorCleanup @ActionCode=1
+            ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
+
+            // Delete all folders and subfolders in work folder
+            var blnSuccess = CleanWorkDir(mWorkingDirPath, 1);
+            string strFailureMessage;
+
+            if (!blnSuccess)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Attempting to automatically clean the work directory");
-
-                // Call SP ReportManagerErrorCleanup @ActionCode=1
-                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
-
-                // Delete all folders and subfolders in work folder
-                blnSuccess = CleanWorkDir(mWorkingDirPath, 1);
+                strFailureMessage = "unable to clear work directory";
+            }
+            else
+            {
+                // If successful, then deletes flag files: flagfile.txt and flagFile_Svr.txt
+                blnSuccess = DeleteDeconServerFlagFile(debugLevel);
 
                 if (!blnSuccess)
                 {
-                    if (string.IsNullOrEmpty(strFailureMessage))
-                    {
-                        strFailureMessage = "unable to clear work directory";
-                    }
+                    strFailureMessage = "error deleting " + DECON_SERVER_FLAG_FILE_NAME;
                 }
                 else
                 {
-                    // If successful, then deletes flag files: flagfile.txt and flagFile_Svr.txt
-                    blnSuccess = DeleteDeconServerFlagFile(debugLevel);
-
+                    blnSuccess = DeleteStatusFlagFile(debugLevel);
                     if (!blnSuccess)
                     {
-                        strFailureMessage = "error deleting " + DECON_SERVER_FLAG_FILE_NAME;
+                        strFailureMessage = "error deleting " + FLAG_FILE_NAME;
                     }
                     else
                     {
-                        blnSuccess = DeleteStatusFlagFile(debugLevel);
-                        if (!blnSuccess)
-                        {
-                            strFailureMessage = "error deleting " + FLAG_FILE_NAME;
-                        }
+                        strFailureMessage = string.Empty;
                     }
                 }
+            }
 
-                // If successful, then call SP with ReportManagerErrorCleanup @ActionCode=2
-                //    otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
+            // If successful, call SP with ReportManagerErrorCleanup @ActionCode=2
+            //  otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
 
-                if (blnSuccess)
-                {
-                    ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success);
-                }
-                else
-                {
-                    ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, strFailureMessage);
-                }
+            if (blnSuccess)
+            {
+                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success);
+            }
+            else
+            {
+                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, strFailureMessage);
             }
 
             return blnSuccess;

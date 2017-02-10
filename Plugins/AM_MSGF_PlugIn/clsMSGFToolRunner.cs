@@ -604,7 +604,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         /// <summary>
-        /// Examines the X!Tndem param file to determine if ETD mode is enabled
+        /// Examines the X!Tandem param file to determine if ETD mode is enabled
         /// If it is, then sets mETDMode to True
         /// </summary>
         /// <param name="strSearchToolParamFilePath">X!Tandem XML parameter file to read</param>
