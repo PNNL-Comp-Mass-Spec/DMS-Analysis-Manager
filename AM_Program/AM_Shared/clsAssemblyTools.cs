@@ -14,12 +14,11 @@ using System.IO;
 namespace AnalysisManagerBase
 {
 
+    /// <summary>
+    /// Tools for manipulating and documenting the assemblies used for each analysis job
+    /// </summary>
     public class clsAssemblyTools
     {
-
-        //*********************************************************************************************************
-        //Tools for manipulating and documenting the assemblies used for each analysis job
-        //*********************************************************************************************************
 
         #region "Methods"
 
@@ -27,10 +26,10 @@ namespace AnalysisManagerBase
         {
             var currentDomain = AppDomain.CurrentDomain;
 
-            //Make an array for the list of assemblies.
+            // Make an array for the list of assemblies.
             var assemblies = currentDomain.GetAssemblies();
 
-            //List the assemblies in the current application domain.
+            // List the assemblies in the current application domain.
             Console.WriteLine("List of assemblies loaded in current appdomain:");
             foreach (var item in assemblies)
             {

@@ -821,7 +821,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                //Set up the command object prior to SP execution
+                // Set up the command object prior to SP execution
                 var myCmd = new SqlCommand(SP_NAME_REQUEST_TASK) { CommandType = CommandType.StoredProcedure };
 
                 myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
@@ -845,13 +845,12 @@ namespace AnalysisManagerBase
                 switch (retVal)
                 {
                     case RET_VAL_OK:
-                        //No errors found in SP call, so see if any step tasks were found
+                        // No errors found in SP call, so see if any step tasks were found
                         m_JobId = Convert.ToInt32(myCmd.Parameters["@jobNumber"].Value);
                         var jobParamsXML = Convert.ToString(myCmd.Parameters["@parameters"].Value);
 
-                        //Step task was found; get the data for it
+                        // Step task was found; get the data for it
                         var dctParameters = FillParamDictXml(jobParamsXML).ToList();
-
 
                         foreach (var udtParamInfo in dctParameters)
                         {
@@ -862,7 +861,7 @@ namespace AnalysisManagerBase
                         taskResult = RequestTaskResult.TaskFound;
                         break;
                     case RET_VAL_TASK_NOT_AVAILABLE:
-                        //No jobs found
+                        // No jobs found
                         taskResult = RequestTaskResult.NoTaskFound;
                         break;
                     case RET_VAL_EXCESSIVE_RETRIES:
@@ -874,7 +873,7 @@ namespace AnalysisManagerBase
                         taskResult = RequestTaskResult.Deadlock;
                         break;
                     default:
-                        //There was an SP error
+                        // There was an SP error
                         LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + retVal + "; " + 
                             "Msg text = " + Convert.ToString(myCmd.Parameters["@message"].Value));
                         taskResult = RequestTaskResult.ResultError;

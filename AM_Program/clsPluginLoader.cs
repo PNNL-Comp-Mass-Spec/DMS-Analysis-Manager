@@ -27,6 +27,11 @@ namespace AnalysisManagerProg
         #endregion
 
         #region "Properties"
+
+        /// <summary>
+        /// Plugin config file
+        /// </summary>
+        /// <remarks>Defaults to plugin_info.xml</remarks>
         public string FileName
         {
             get { return m_pluginConfigFile; }
@@ -53,6 +58,11 @@ namespace AnalysisManagerProg
 
         #region "Methods"
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="objSummaryFile"></param>
+        /// <param name="MgrFolderPath"></param>
         public clsPluginLoader(clsSummaryFile objSummaryFile, string MgrFolderPath)
         {
             m_SummaryFile = objSummaryFile;

@@ -12,12 +12,11 @@ using System.Xml;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Writes a formatted XML file
+    /// </summary>
     public class clsFormattedXMLWriter
     {
-
-        //*********************************************************************************************************
-        //Writes a formatted XML file
-        //*********************************************************************************************************
 
         #region "Module variables"
         #endregion

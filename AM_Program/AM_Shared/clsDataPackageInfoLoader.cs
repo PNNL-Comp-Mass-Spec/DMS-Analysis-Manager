@@ -14,7 +14,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Typically Gigasax.DMS_Pipeline
         /// </summary>
-
         private readonly string mBrokerDbConnectionString;
 
         private readonly int mDataPackageID;

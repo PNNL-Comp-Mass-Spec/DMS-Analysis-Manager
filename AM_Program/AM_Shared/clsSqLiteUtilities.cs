@@ -56,7 +56,7 @@ namespace AnalysisManagerBase
                 {
                     cnSourceDB.Open();
 
-                    // Get list of tables in source DB					
+                    // Get list of tables in source DB
                     var dctTableInfo = GetDBObjects(cnSourceDB, "table");
 
                     // Delete the "sqlite_sequence" database from dctTableInfo if present

@@ -16,12 +16,12 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
+
+    /// <summary>
+    /// Base class for handling task-related data
+    /// </summary>
     public abstract class clsDBTask : clsLoggerBase
     {
-
-        //*********************************************************************************************************
-        //Base class for handling task-related data
-        //*********************************************************************************************************
 
         #region "Enums"
         public enum RequestTaskResult
@@ -107,10 +107,13 @@ namespace AnalysisManagerBase
         protected clsDBTask(IMgrParams mgrParams, short debugLvl)
         {
             m_MgrParams = mgrParams;
-            m_ConnStr = m_MgrParams.GetParam("ConnectionString");
+
             // Gigasax.DMS5
-            m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring");
+            m_ConnStr = m_MgrParams.GetParam("ConnectionString");
+
             // Gigasax.DMS_Pipeline
+            m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring");
+            
             m_DebugLevel = debugLvl;
 
             DMSProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr);

@@ -67,8 +67,6 @@ namespace AnalysisManagerBase
         public static string AppendToComment(string baseComment, string addnlComment)
         {
 
-            //Appends a comment string to an existing comment string
-
             if (string.IsNullOrWhiteSpace(baseComment))
             {
                 return addnlComment;
@@ -111,7 +109,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        ///Examines intCount to determine which string to return
+        /// Examines intCount to determine which string to return
         /// </summary>
         /// <param name="intCount"></param>
         /// <param name="strTextIfOneItem"></param>
@@ -842,7 +840,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string DbCStr(object InpObj)
         {
-            //If input var is DbNull, returns "", otherwise returns String representation of var
+            // If input var is DbNull, returns "", otherwise returns String representation of var
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return string.Empty;
@@ -860,7 +858,7 @@ namespace AnalysisManagerBase
         public static float DbCSng(object InpObj)
         {
 
-            //If input var is DbNull, returns "", otherwise returns String representation of var
+            // If input var is DbNull, returns "", otherwise returns String representation of var
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return (float)0.0;
@@ -879,7 +877,7 @@ namespace AnalysisManagerBase
         public static double DbCDbl(object InpObj)
         {
 
-            //If input var is DbNull, returns "", otherwise returns String representation of var
+            // If input var is DbNull, returns "", otherwise returns String representation of var
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0.0;
@@ -898,7 +896,7 @@ namespace AnalysisManagerBase
         public static int DbCInt(object InpObj)
         {
 
-            //If input var is DbNull, returns "", otherwise returns String representation of var
+            // If input var is DbNull, returns "", otherwise returns String representation of var
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
@@ -917,7 +915,7 @@ namespace AnalysisManagerBase
         public static long DbCLng(object InpObj)
         {
 
-            //If input var is DbNull, returns "", otherwise returns String representation of var
+            // If input var is DbNull, returns "", otherwise returns String representation of var
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
@@ -937,7 +935,7 @@ namespace AnalysisManagerBase
         public static decimal DbCDec(object InpObj)
         {
 
-            //If input var is DbNull, returns "", otherwise returns String representation of var
+            // If input var is DbNull, returns "", otherwise returns String representation of var
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
@@ -947,10 +945,12 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Converts a byte array into a hex string
+        /// </summary>
         private static string ByteArrayToString(byte[] arrInput)
         {
-            // Converts a byte array into a hex string
-
+ 
             var  strOutput = new StringBuilder(arrInput.Length);
 
             for (var i = 0; i <= arrInput.Length - 1; i++)

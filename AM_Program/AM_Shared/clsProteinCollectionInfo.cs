@@ -4,8 +4,8 @@ namespace AnalysisManagerBase
     public class clsProteinCollectionInfo
     {
 
-
         private string mOrgDBDescription;
+
         /// <summary>
         /// Legacy Fasta file name
         /// </summary>
@@ -21,7 +21,6 @@ namespace AnalysisManagerBase
         public bool IsValid { get; set; }
 
         public string OrgDBDescription => mOrgDBDescription;
-
 
         public clsProteinCollectionInfo(IJobParams jobParams)
         {

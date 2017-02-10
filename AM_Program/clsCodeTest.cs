@@ -13,6 +13,9 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerProg
 {
+    /// <summary>
+    /// Collection of test code
+    /// </summary>
     public class clsCodeTest : clsLoggerBase
     {
         //Imports Protein_Exporter
@@ -91,7 +94,8 @@ namespace AnalysisManagerProg
         }
 
         private DateTime mLastStatusTime;
-        // 7.5 minutes
+
+        // 450 seconds is 7.5 minutes
         private const int FASTA_GEN_TIMEOUT_INTERVAL_SEC = 450;
 
         private struct udtPSMJobInfoType
@@ -103,7 +107,12 @@ namespace AnalysisManagerProg
         }
 
         #region "Properties"
+
+        /// <summary>
+        /// When true, show extra messages at the console
+        /// </summary>
         public bool TraceMode { get; set; }
+
         #endregion
 
         /// <summary>
@@ -145,6 +154,11 @@ namespace AnalysisManagerProg
             }
         }
 
+        /// <summary>
+        /// Display the version of all DLLs in the application folder, including the .NET framework that they were compiled against
+        /// </summary>
+        /// <param name="displayDllPath"></param>
+        /// <param name="fileNameFileSpec"></param>
         public void DisplayDllVersions(string displayDllPath, string fileNameFileSpec = "*.dll")
         {
             try
@@ -480,6 +494,9 @@ namespace AnalysisManagerProg
 
         //End Function
 
+        /// <summary>
+        /// Instantiate the CPU Usage and Free Memory performance counters
+        /// </summary>
         public void PerformanceCounterTest()
         {
             try
@@ -512,17 +529,20 @@ namespace AnalysisManagerProg
             }
         }
 
+        /// <summary>
+        /// Process a DTA Refinery log files for a range of jobs
+        /// </summary>
         public void ProcessDtaRefineryLogFiles()
         {
-            //ProcessDtaRefineryLogFiles(968057, 968057)
-            //ProcessDtaRefineryLogFiles(968061, 968061)
-            //ProcessDtaRefineryLogFiles(968094, 968094)
-            //ProcessDtaRefineryLogFiles(968102, 968102)
-            //ProcessDtaRefineryLogFiles(968106, 968106)
+            // ProcessDtaRefineryLogFiles(968057, 968057)
+            // ProcessDtaRefineryLogFiles(968061, 968061)
+            // ProcessDtaRefineryLogFiles(968094, 968094)
+            // ProcessDtaRefineryLogFiles(968102, 968102)
+            // ProcessDtaRefineryLogFiles(968106, 968106)
 
-            //ProcessDtaRefineryLogFiles(968049, 968049)
-            //ProcessDtaRefineryLogFiles(968053, 968053)
-            //ProcessDtaRefineryLogFiles(968098, 968098)
+            // ProcessDtaRefineryLogFiles(968049, 968049)
+            // ProcessDtaRefineryLogFiles(968053, 968053)
+            // ProcessDtaRefineryLogFiles(968098, 968098)
             ProcessDtaRefineryLogFiles(968470, 968470);
             ProcessDtaRefineryLogFiles(968482, 968482);
         }
@@ -600,6 +620,9 @@ namespace AnalysisManagerProg
 
         private clsRunDosProgram m_RunProgTool;
 
+        /// <summary>
+        /// Use MSConvert to convert a .raw file to .mgf
+        /// </summary>
         public void RunMSConvert()
         {
             var workDir = "E:\\DMS_WorkDir";
@@ -628,6 +651,9 @@ namespace AnalysisManagerProg
             }
         }
 
+        /// <summary>
+        /// Archive a Sequest parameter ifle by copying to \\gigasax\dms_parameter_Files\Sequest
+        /// </summary>
         public void TestArchiveFileStart()
         {
             string strParamFilePath = null;
@@ -717,6 +743,11 @@ namespace AnalysisManagerProg
             throw new PathTooLongException();
         }
 
+        /// <summary>
+        /// Split apart a _dta.txt file
+        /// </summary>
+        /// <param name="rootFileName"></param>
+        /// <param name="strResultsFolder"></param>
         public void TestUncat(string rootFileName, string strResultsFolder)
         {
             Console.WriteLine("Splitting concatenated DTA file");
@@ -727,6 +758,9 @@ namespace AnalysisManagerProg
             Console.WriteLine("Completed splitting concatenated DTA file");
         }
 
+        /// <summary>
+        /// Instantiate an instance of clsAnalysisToolRunnerDtaSplit
+        /// </summary>
         public void TestDTASplit()
         {
             //'Const intDebugLevel = 2
@@ -747,6 +781,13 @@ namespace AnalysisManagerProg
         }
 
         public bool TestProteinDBExport(string DestFolder)
+        /// <summary>
+        /// Test creation of a .fasta file from a protein collection
+        /// Also calls Running BuildSA
+        /// </summary>
+        /// <param name="destFolder"></param>
+        /// <returns></returns>
+        public bool TestProteinDBExport(string destFolder)
         {
             string strLegacyFasta = null;
             string strProteinCollectionList = null;
@@ -768,9 +809,9 @@ namespace AnalysisManagerProg
             strProteinOptions = "seq_direction=forward,filetype=fasta";
 
             // Test 100 MB fasta file
-            //strLegacyFasta = "na"
-            //strProteinCollectionList = "GWB1_Rifle_2011_9_13_0_1_2013-03-27,Tryp_Pig_Bov"
-            //strProteinOptions = "seq_direction=forward,filetype=fasta"
+            // strLegacyFasta = "na"
+            // strProteinCollectionList = "GWB1_Rifle_2011_9_13_0_1_2013-03-27,Tryp_Pig_Bov"
+            // strProteinOptions = "seq_direction=forward,filetype=fasta"
 
             bool blnSuccess = false;
             blnSuccess = TestProteinDBExport(DestFolder, "na", strProteinCollectionList, strProteinOptions);
@@ -805,8 +846,17 @@ namespace AnalysisManagerProg
         }
 
         public bool TestProteinDBExport(string DestFolder, string strLegacyFasta, string strProteinCollectionList, string strProteinOptions)
+        /// <summary>
+        /// Test creation of a .fasta file from a protein collection
+        /// </summary>
+        /// <param name="destFolder"></param>
+        /// <param name="strLegacyFasta"></param>
+        /// <param name="strProteinCollectionList"></param>
+        /// <param name="strProteinOptions"></param>
+        /// <returns></returns>
+        public bool TestProteinDBExport(string destFolder, string strLegacyFasta, string strProteinCollectionList, string strProteinOptions)
         {
-            //Instantiate fasta tool if not already done
+            // Instantiate fasta tool if not already done
             if (m_FastaTools == null)
             {
                 if (string.IsNullOrEmpty(m_FastaToolsCnStr))
@@ -817,8 +867,7 @@ namespace AnalysisManagerProg
                 m_FastaTools = new Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr);
             }
 
-            //Initialize fasta generation state variables
-            m_GenerationStarted = false;
+            // Initialize fasta generation state variables
             m_GenerationComplete = false;
 
             // Setup a timer to prevent an infinite loop if there's a fasta generation problem
@@ -856,6 +905,9 @@ namespace AnalysisManagerProg
             return true;
         }
 
+        /// <summary>
+        /// Test deleting a file
+        /// </summary>
         public void TestDeleteFiles()
         {
             var OutFileName = "MyTestDataset_out.txt";
@@ -870,6 +922,9 @@ namespace AnalysisManagerProg
             objToolRunner.RunTool();
         }
 
+        /// <summary>
+        /// Test copying results
+        /// </summary>
         public void TestDeliverResults()
         {
             var OutFileName = "MyTestDataset_out.txt";
@@ -886,6 +941,9 @@ namespace AnalysisManagerProg
             objToolRunner.RunTool();
         }
 
+        /// <summary>
+        /// Check date formatting
+        /// </summary>
         public void TestFileDateConversion()
         {
             FileInfo objTargetFile = default(FileInfo);
@@ -907,6 +965,9 @@ namespace AnalysisManagerProg
             Console.WriteLine(strDate);
         }
 
+        /// <summary>
+        /// Create a log file
+        /// </summary>
         public void TestLogging()
         {
             var logFileNameBase = "Logs\\AnalysisMgr";
@@ -948,6 +1009,9 @@ namespace AnalysisManagerProg
             LogMessage("Testing complete");
         }
 
+        /// <summary>
+        /// Determine the size of a legacy FASTA file
+        /// </summary>
         public void GetLegacyFastaFileSize()
         {
             IJobParams objJobParams = default(IJobParams);
@@ -988,6 +1052,9 @@ namespace AnalysisManagerProg
             Console.WriteLine(legacyFastaName + " requires roughly " + spaceRequiredMB.ToString("#,##0") + " MB");
         }
 
+        /// <summary>
+        /// Run a test query
+        /// </summary>
         public void TestRunQuery()
         {
             const string sqlStr = "Select top 50 * from t_log_entries";
@@ -1006,6 +1073,9 @@ namespace AnalysisManagerProg
             }
         }
 
+        /// <summary>
+        /// Call a stored procedure
+        /// </summary>
         public void TestRunSP()
         {
             var cmd = new SqlCommand
@@ -1032,6 +1102,10 @@ namespace AnalysisManagerProg
             }
         }
 
+        /// <summary>
+        /// Convert a zip file to a gzip file
+        /// </summary>
+        /// <param name="zipFilePath"></param>
         public void ConvertZipToGZip(string zipFilePath)
         {
             const int debugLevel = 2;
@@ -1048,6 +1122,9 @@ namespace AnalysisManagerProg
             }
         }
 
+        /// <summary>
+        /// Test creating and decompressing .gz files using gzip
+        /// </summary>
         public void TestGZip()
         {
             clsAnalysisJob objJobParams = null;
@@ -1068,6 +1145,10 @@ namespace AnalysisManagerProg
             objToolRunner.GUnzipFile(gzippedFile, "F:\\Temp\\ZipTest\\GUnzipTarget");
         }
 
+        /// <summary>
+        /// Test unzipping a file
+        /// </summary>
+        /// <remarks>This uses ionic zip</remarks>
         public bool TestUnzip(string strZipFilePath, string strOutFolderPath)
         {
             var intDebugLevel = 2;
@@ -1075,11 +1156,15 @@ namespace AnalysisManagerProg
             var objResources = GetResourcesObject(intDebugLevel);
 
             var blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", false);
-            //blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
+            // blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
 
             return blnSuccess;
         }
 
+        /// <summary>
+        /// Test zipping a file
+        /// </summary>
+        /// <remarks>This uses ionic zip</remarks>
         public void TestZip()
         {
             clsAnalysisJob objJobParams = null;
@@ -1101,6 +1186,9 @@ namespace AnalysisManagerProg
             oZipTools.ZipDirectory("F:\\Temp\\ZipTest\\QExact01\\", "F:\\Temp\\ZipTest\\QExact01_Folder.zip");
         }
 
+        /// <summary>
+        /// Test Ionic zip
+        /// </summary>
         public void TestIonicZipTools()
         {
             clsIonicZipTools oIonicZipTools = default(clsIonicZipTools);
@@ -1114,6 +1202,11 @@ namespace AnalysisManagerProg
             }
         }
 
+        /// <summary>
+        /// Retrieve and decompress MALDI data
+        /// </summary>
+        /// <param name="strSourceDatasetFolder"></param>
+        /// <returns></returns>
         public bool TestMALDIDataUnzip(string strSourceDatasetFolder)
         {
             var intDebugLevel = 2;
@@ -1150,6 +1243,9 @@ namespace AnalysisManagerProg
             return blnSuccess;
         }
 
+        /// <summary>
+        /// Test zipping and unzipping with ionic zip
+        /// </summary>
         public void TestZipAndUnzip()
         {
             clsIonicZipTools objZipper = new clsIonicZipTools(3, "F:\\Temp");
@@ -1180,6 +1276,10 @@ namespace AnalysisManagerProg
         }
 
         public bool TestFileSplitThenCombine()
+        /// <summary>
+        /// Generate a scan stats file
+        /// </summary>
+        public void GenerateScanStatsFile()
         {
             const int SYN_FILE_MAX_SIZE_MB = 200;
             const string PEPPROPHET_RESULT_FILE_SUFFIX = "_PepProphet.txt";
@@ -1197,6 +1297,11 @@ namespace AnalysisManagerProg
             bool blnIgnorePeptideProphetErrors = false;
 
             SynFile = "JGI_Fungus_02_13_8Apr09_Griffin_09-02-12_syn.txt";
+        /// <summary>
+        /// Generate a scan stats file
+        /// </summary>
+        public bool GenerateScanStatsFile(string strInputFilePath, string workingDir)
+        {
 
             //Check to see if Syn file exists
             var fiSynFile = new FileInfo(SynFile);
@@ -1320,6 +1425,10 @@ namespace AnalysisManagerProg
         }
 
         private bool InterleaveFiles(string[] strFileList, string strCombinedFilePath, bool blnLookForHeaderLine)
+        /// <summary>
+        /// Test the program runner by starting X!Tandem
+        /// </summary>
+        public void TestProgRunner()
         {
             string msg = null;
 
@@ -1361,6 +1470,11 @@ namespace AnalysisManagerProg
                 // Create the output file
 
                 var swOutFile = new StreamWriter(new FileStream(strCombinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+        /// <summary>
+        /// Test the program runner by running IDPicker
+        /// </summary>
+        public void TestProgRunnerIDPicker()
+        {
 
                 var intTotalLinesRead = 0;
                 var blnContinueReading = true;
@@ -1413,6 +1527,11 @@ namespace AnalysisManagerProg
                         blnContinueReading = false;
                     }
                 }
+        /// <summary>
+        /// Test PurgeOldServerCacheFilesTest 
+        /// </summary>
+        public void TestMSXmlCachePurge()
+        {
 
                 // Close the input files
                 for (var intIndex = 0; intIndex <= intFileCount - 1; intIndex++)
@@ -2398,6 +2517,9 @@ namespace AnalysisManagerProg
             UpdateDTAProgress(e.Name);
         }
 
+        /// <summary>
+        /// Read the contents file TestInputFile
+        /// </summary>
         public void TestGetFileContents()
         {
             var strFilePath = "TestInputFile.txt";
@@ -2425,6 +2547,9 @@ namespace AnalysisManagerProg
             return s;
         }
 
+        /// <summary>
+        /// Get the version info of several DLLs
+        /// </summary>
         public void TestGetVersionInfo()
         {
             clsAnalysisJob objJobParams = null;
@@ -2449,6 +2574,9 @@ namespace AnalysisManagerProg
             Console.WriteLine(strToolVersionInfo);
         }
 
+        /// <summary>
+        /// Test RemoveSparseSpectra
+        /// </summary>
         public void RemoveSparseSpectra()
         {
             var oCDTAUtilities = new clsCDTAUtilities();
@@ -2456,6 +2584,9 @@ namespace AnalysisManagerProg
             oCDTAUtilities.RemoveSparseSpectra("e:\\dms_workdir", "ALZ_VP2P101_C_SCX_02_7Dec08_Draco_08-10-29_dta.txt");
         }
 
+        /// <summary>
+        /// Test ValidateCDTAFileIsCentroided
+        /// </summary>
         public void ValidateCentroided()
         {
             const int intDebugLevel = 2;

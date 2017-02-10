@@ -21,7 +21,7 @@ namespace AnalysisManagerBase
 
         #region "Module variables"
 
-        //msec
+        // msec
         private int m_MonitorInterval = 2000;
 
         private int m_MaxRuntimeSeconds;
@@ -33,7 +33,7 @@ namespace AnalysisManagerBase
 
         private bool m_AbortProgramPostLogEntry;
 
-        //Runs specified program
+        // Runs specified program
         private clsProgRunner m_ProgRunner;
 
         #endregion
@@ -173,7 +173,6 @@ namespace AnalysisManagerBase
         /// </summary>
         public int MonitorInterval
         {
-            //msec
             get { return m_MonitorInterval; }
             set
             {

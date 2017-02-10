@@ -13,7 +13,7 @@ using log4net.Util.TypeConverters;
 //
 //*********************************************************************************************************
 
-//This assembly attribute tells Log4Net where to find the config file
+// This assembly attribute tells Log4Net where to find the config file
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "Logging.config", Watch = true)]
 namespace AnalysisManagerBase
 {
@@ -283,12 +283,12 @@ namespace AnalysisManagerBase
         private static IEnumerable<IAppender> FindAppenders(string appenderName)
         {
 
-            //Get a list of the current loggers
+            // Get a list of the current loggers
             var LoggerList = LogManager.GetCurrentLoggers();
             if (LoggerList.GetLength(0) < 1)
                 return null;
 
-            //Create a List of appenders matching the criteria for each logger
+            // Create a List of appenders matching the criteria for each logger
             var RetList = new List<IAppender>();
             foreach (var testLogger in LoggerList)
             {
@@ -299,7 +299,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            //Return the list of appenders, if any found
+            // Return the list of appenders, if any found
             if (RetList.Count > 0)
             {
                 return RetList;
@@ -318,14 +318,14 @@ namespace AnalysisManagerBase
         {
             var logLevelEnumType = typeof(LogLevels);
 
-            //Verify input level is a valid log level
+            // Verify input level is a valid log level
             if (!Enum.IsDefined(logLevelEnumType, logLevel))
             {
                 WriteLog(LoggerTypes.LogFile, LogLevels.ERROR, "Invalid value specified for level: " + logLevel);
                 return;
             }
 
-            //Convert input integer into the associated enum
+            // Convert input integer into the associated enum
             var logLevelEnum = (LogLevels)Enum.Parse(logLevelEnumType, logLevel.ToString());
             SetFileLogLevel(logLevelEnum);
 
@@ -488,7 +488,7 @@ namespace AnalysisManagerBase
                 Name = appenderName
             };
 
-            //Type parameter
+            // Type parameter
             var typeParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@type",
@@ -499,7 +499,7 @@ namespace AnalysisManagerBase
 
             returnAppender.AddParameter(typeParam);
 
-            //Message parameter
+            // Message parameter
             var msgParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@message",
@@ -510,7 +510,7 @@ namespace AnalysisManagerBase
 
             returnAppender.AddParameter(msgParam);
 
-            //PostedBy parameter
+            // PostedBy parameter
             var postByParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@postedBy",

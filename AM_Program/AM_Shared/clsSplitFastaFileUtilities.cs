@@ -102,7 +102,7 @@ namespace AnalysisManagerBase
                             lockFi.Refresh();
                             if (DateTime.UtcNow.Subtract(startTime).TotalMinutes >= 60)
                             {
-                                break; // TODO: might not be correct. Was : Exit While
+                                break;
                             }
                         }
 
@@ -185,7 +185,7 @@ namespace AnalysisManagerBase
                         {
                             lockFi.Delete();
                         }
-                        break; // TODO: might not be correct. Was : Exit While
+                        break;
 
                     }
                     catch (Exception ex)
@@ -265,7 +265,7 @@ namespace AnalysisManagerBase
                     var fiSplitFastaFile = new FileInfo(udtFileInfo.FilePath);
                     splitFastaName = fiSplitFastaFile.Name;
 
-                    //Setup for execution of the stored procedure
+                    // Setup for execution of the stored procedure
                     var myCmd = new SqlCommand
                     {
                         CommandType = CommandType.StoredProcedure,
@@ -345,7 +345,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                //Setup for execution of the stored procedure
+                // Setup for execution of the stored procedure
                 var myCmd = new SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
@@ -375,7 +375,7 @@ namespace AnalysisManagerBase
 
                         }
 
-                        break; // TODO: might not be correct. Was : Exit While
+                        break;
 
                     }
                     catch (Exception ex)
@@ -476,7 +476,7 @@ namespace AnalysisManagerBase
 
                 OnSplittingBaseFastafile(fiBaseFastaFile.FullName, mNumSplitParts);
 
-                // Perform the splitting			
+                // Perform the splitting
                 //    Call SplitFastaFile to create a split file, using mNumSplitParts parts
 
                 mSplitter = new clsFastaFileSplitter

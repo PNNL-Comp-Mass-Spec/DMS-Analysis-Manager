@@ -14,12 +14,11 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Provides tools for creating an analysis job summary file
+    /// </summary>
     public class clsSummaryFile
     {
-
-        //*********************************************************************************************************
-        //Provides tools for creating an analysis job summary file
-        //*********************************************************************************************************
 
         #region "Module Variables"
         // ReSharper disable once FieldCanBeMadeReadOnly.Local

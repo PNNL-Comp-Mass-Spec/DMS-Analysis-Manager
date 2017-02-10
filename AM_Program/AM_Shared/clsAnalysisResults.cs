@@ -14,13 +14,11 @@ using System.Threading;
 namespace AnalysisManagerBase
 {
 
-
+    /// <summary>
+    /// Analysis job results handling class
+    /// </summary>
     public class clsAnalysisResults : clsAnalysisMgrBase
     {
-
-        //*********************************************************************************************************
-        //Analysis job results handling class
-        //*********************************************************************************************************
 
         #region "Module variables"
         private const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
@@ -239,10 +237,10 @@ namespace AnalysisManagerBase
                     {
                         throw new IOException("Tried to overwrite an existing file when Overwrite = False: " + DestFilePath);
                     }
-
-                    Thread.Sleep(Convert.ToInt32(Math.Floor(sngRetryHoldoffSeconds * 1000)));
-                    //Wait several seconds before retrying
-
+                    
+                    // Wait several seconds before retrying
+                    Thread.Sleep(Convert.ToInt32(Math.Floor(sngRetryHoldoffSeconds * 1000)));                    
+                    
                     PRISM.Processes.clsProgRunner.GarbageCollectNow();
                 }
 
@@ -406,8 +404,8 @@ namespace AnalysisManagerBase
                 {
                     LogError("clsAnalysisResults: error creating folder " + FolderPath, ex);
 
+                    // Wait several seconds before retrying
                     Thread.Sleep(Convert.ToInt32(Math.Floor(sngRetryHoldoffSeconds * 1000)));
-                    //Wait several seconds before retrying
 
                     PRISM.Processes.clsProgRunner.GarbageCollectNow();
                 }
@@ -519,8 +517,8 @@ namespace AnalysisManagerBase
                 {
                     LogError("clsAnalysisResults: error looking for folder " + FolderPath, ex);
 
+                    // Wait several seconds before retrying
                     Thread.Sleep(Convert.ToInt32(Math.Floor(sngRetryHoldoffSeconds * 1000)));
-                    //Wait several seconds before retrying
 
                     PRISM.Processes.clsProgRunner.GarbageCollectNow();
                 }

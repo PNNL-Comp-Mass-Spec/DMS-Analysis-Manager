@@ -166,7 +166,7 @@ namespace AnalysisManagerBase
                 var myConnection = new SqlConnection(m_DBConnectionString);
                 myConnection.Open();
 
-                //Set up the command object prior to SP execution
+                // Set up the command object prior to SP execution
                 var myCmd = new SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
@@ -210,7 +210,7 @@ namespace AnalysisManagerBase
 
                 AddSPParameterOutput(myCmd.Parameters, "@message", string.Empty, 512);
 
-                //Execute the SP
+                // Execute the SP
                 myCmd.ExecuteNonQuery();
 
             }

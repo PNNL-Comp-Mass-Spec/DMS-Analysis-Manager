@@ -5,25 +5,37 @@ using System.Threading;
 namespace AnalysisManagerBase
 {
 
-    // delegate that does the eventual posting
+    /// <summary>
+    /// Delegate that does the eventual posting
+    /// </summary>
+    /// <param name="message"></param>
     public delegate void MessageSenderDelegate(string message);
 
+    /// <summary>
+    /// Class for interacting with a message queue
+    /// </summary>
     class clsMessageQueueLogger
     {
-        // actual delegate registers here
+        /// <summary>
+        /// Actual delegate registers here
+        /// </summary>
         public event MessageSenderDelegate Sender;
 
-        // the worker thread that pulls messages off the queue
-        // and posts them
-
+        /// <summary>
+        /// The worker thread that pulls messages off the queue and posts them
+        /// </summary>
         private readonly Thread worker;
-        // synchronization and signalling stuff to coordinate
-        // with worker thread
+
+        /// <summary>
+        /// Synchronization and signalling stuff to coordinate with worker thread
+        /// </summary>
         private readonly EventWaitHandle waitHandle = new AutoResetEvent(false);
 
         private readonly object locker = new object();
-        // local queue that contains messages to be sent
 
+        /// <summary>
+        /// local queue that contains messages to be sent
+        /// </summary>
         private readonly Queue<string> m_statusMessages = new Queue<string>();
 
         public clsMessageQueueLogger()
@@ -32,8 +44,11 @@ namespace AnalysisManagerBase
             worker.Start();
         }
 
-        // stuff status message onto the local status message queue 
-        // to be sent off by the PostalWorker thread
+        /// <summary>
+        /// Push status message onto the local status message queue 
+        /// to be sent off by the PostalWorker thread
+        /// </summary>
+        /// <param name="statusMessage"></param>
         public void LogStatusMessage(string statusMessage)
         {
             lock (locker)
@@ -43,10 +58,12 @@ namespace AnalysisManagerBase
             waitHandle.Set();
         }
 
-        // worker that runs in the worker thread
-        // It pulls messages off the queue and posts
-        // them via the delegate.  When no more messages
-        // it waits until signalled by new message added to queue
+        /// <summary>
+        /// Worker that runs in the worker thread
+        /// It pulls messages off the queue and posts
+        /// them via the delegate.  When no more messages
+        /// it waits until signalled by new message added to queue
+        /// </summary>
         private void PostalWorker()
         {
             while (true)

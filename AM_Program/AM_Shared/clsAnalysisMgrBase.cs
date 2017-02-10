@@ -16,6 +16,7 @@ namespace AnalysisManagerBase
         protected string m_message;
 
         private readonly string m_derivedClassName;
+
         /// <summary>
         /// Constructor
         /// </summary>

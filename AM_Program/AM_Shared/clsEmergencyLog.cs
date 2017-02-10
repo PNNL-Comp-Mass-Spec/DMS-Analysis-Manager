@@ -13,15 +13,15 @@ using System.Diagnostics;
 namespace AnalysisManagerBase
 {
 
-    [Obsolete("Unused")]
+    /// <summary>
+    /// Class for logging of problems prior to manager's full logging capability being available
+    /// </summary>
+    [Obsolete("Unused")]    
     public class clsEmergencyLog
     {
 
-        //*********************************************************************************************************
-        //Class for logging of problems prior to manager's full logging capability being available
-        //*********************************************************************************************************
-
         #region "Methods"
+        
         /// <summary>
         /// Writes a message to a custom event log, which is used if standard log file not available
         /// </summary>
@@ -29,17 +29,16 @@ namespace AnalysisManagerBase
         /// <param name="LogName">Name of log</param>
         /// <param name="ErrMsg">Message to write to log</param>
         /// <remarks></remarks>
-
         public static void WriteToLog(string SourceName, string LogName, string ErrMsg)
         {
-            //If custom event log doesn't exist yet, create it
+            // If custom event log doesn't exist yet, create it
             if (!EventLog.SourceExists(SourceName))
             {
                 var SourceData = new EventSourceCreationData(SourceName, LogName);
                 EventLog.CreateEventSource(SourceData);
             }
 
-            //Create custom event logging object and write to log
+            // Create custom event logging object and write to log
             var ELog = new EventLog
             {
                 Log = LogName,

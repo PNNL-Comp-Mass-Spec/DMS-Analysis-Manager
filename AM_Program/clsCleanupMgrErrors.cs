@@ -7,28 +7,74 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerProg
 {
-    public class clsCleanupMgrErrors
+    /// <summary>
+    /// This creates and deletes file flagFile.txt when the manager starts and stops
+    /// It also can remove files left behind in the working directory
+    /// </summary>
+    public class clsCleanupMgrErrors : clsLoggerBase
     {
         #region "Constants"
 
         private const string SP_NAME_REPORTMGRCLEANUP = "ReportManagerErrorCleanup";
 
         private const int DEFAULT_HOLDOFF_SECONDS = 3;
-        public const string FLAG_FILE_NAME = "flagFile.txt";
-        public const string DECON_SERVER_FLAG_FILE_NAME = "flagFile_Svr.txt";
 
+        /// <summary>
+        /// File indicating that the manager is running
+        /// </summary>
+        public const string FLAG_FILE_NAME = "flagFile.txt";
+
+        /// <summary>
+        /// Flag file for DeconTools
+        /// </summary>
+        /// <remarks>Likely unused in 2017</remarks>
+        private const string DECON_SERVER_FLAG_FILE_NAME = "flagFile_Svr.txt";
+
+        /// <summary>
+        /// Special file indicating that there was a problem removing files in the working directory and the manager thus exited
+        /// On the next start of the manager, this file will be auto-deleted
+        /// </summary>
         public const string ERROR_DELETING_FILES_FILENAME = "Error_Deleting_Files_Please_Delete_Me.txt";
+
+        /// <summary>
+        /// Options for auto-removing files from the working directory when the manager starts
+        /// </summary>
         public enum eCleanupModeConstants
         {
+            /// <summary>
+            /// Never auto-remove files from the working directory
+            /// </summary>
             Disabled = 0,
+
+            /// <summary>
+            /// Auto-remove files from the working directory once
+            /// </summary>
             CleanupOnce = 1,
+
+            /// <summary>
+            /// Always auto-remove files from the working directory
+            /// </summary>
             CleanupAlways = 2
         }
 
+        /// <summary>
+        /// Cleanup status codes for stored procedure ReportManagerErrorCleanup
+        /// </summary>
         public enum eCleanupActionCodeConstants
         {
+            /// <summary>
+            /// Starting
+            /// </summary>
             Start = 1,
+
+            /// <summary>
+            /// Success
+            /// </summary>
             Success = 2,
+
+            /// <summary>
+            /// Failed
+            /// </summary>
             Fail = 3
         }
 
@@ -36,10 +82,11 @@ namespace AnalysisManagerProg
 
         #region "Properties"
 
-        public string FlagFilePath
-        {
-            get { return Path.Combine(mMgrFolderPath, FLAG_FILE_NAME); }
-        }
+        /// <summary>
+        /// Full path to the flag file
+        /// </summary>
+        /// <remarks>Will be in the same folder as the manager executable</remarks>
+        public string FlagFilePath => Path.Combine(mMgrFolderPath, FLAG_FILE_NAME);
 
         #endregion
         #region "Class wide Variables"

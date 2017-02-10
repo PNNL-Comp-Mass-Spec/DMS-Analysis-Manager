@@ -12,12 +12,11 @@ using System;
 namespace AnalysisManagerBase
 {
 
+    /// <summary>
+    /// Specialized handler for "file not found" exception
+    /// </summary>
     public class AMFileNotFoundException : ApplicationException
     {
-
-        //*********************************************************************************************************
-        //Specialized handler for "file not found" exception
-        //*********************************************************************************************************
 
         #region "Module variables"
         #endregion
@@ -47,13 +46,11 @@ namespace AnalysisManagerBase
 
     }
 
-
+    /// <summary>
+    /// Specialized handler for "folder not found" exception
+    /// </summary>
     public class AMFolderNotFoundException : ApplicationException
     {
-
-        //*********************************************************************************************************
-        //Specialized handler for "folder not found" exception
-        //*********************************************************************************************************
 
         #region "Module variables"
         #endregion
@@ -83,12 +80,11 @@ namespace AnalysisManagerBase
 
     }
 
+    /// <summary>
+    /// Specialized handler for file deletion exception after multiple retries
+    /// </summary>
     public class AMFileNotDeletedAfterRetryException : ApplicationException
     {
-
-        //*********************************************************************************************************
-        //Specialized handler for file deletion exception after multiple retries
-        //*********************************************************************************************************
 
         #region "Enums"
         public enum RetryExceptionType
@@ -134,12 +130,11 @@ namespace AnalysisManagerBase
 
     }
 
+    /// <summary>
+    /// Specialized handler for file deletion exception
+    /// </summary>
     public class AMFileNotDeletedException : ApplicationException
     {
-
-        //*********************************************************************************************************
-        //Specialized handler for file deletion exception
-        //*********************************************************************************************************
 
         #region "Module variables"
         #endregion

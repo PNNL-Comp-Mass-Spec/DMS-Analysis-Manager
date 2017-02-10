@@ -62,10 +62,7 @@ namespace AnalysisManagerBase
                 {
                     // something went wrong trying to send message,
                     // get rid of current set of connection object - they'll never work again anyway
-                    DestroyConnection();
-                    // temp debug
-                    //+ e.Message
-                    //                Console.WriteLine("=== Error sending ===" & Environment.NewLine)
+                    DestroyConnection();                    
                 }
             }
         }

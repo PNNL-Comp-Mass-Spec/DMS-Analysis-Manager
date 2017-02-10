@@ -27,9 +27,16 @@ namespace AnalysisManagerProg
     public class clsMainProcess : clsLoggerBase
     {
         #region "Constants"
-        // These constants are used to create the Windows Event log (aka the EmergencyLog) that this program rights to
-        //  when the manager is disabled or cannot make an entry in the log file
+
+        /// <summary>
+        /// This is used to create the Windows Event log (aka the EmergencyLog) that this program rights to
+        ///  when the manager is disabled or cannot make an entry in the log file
+        /// </summary>
         private const string CUSTOM_LOG_SOURCE_NAME = "Analysis Manager";
+
+        /// <summary>
+        /// Windows application log name for the analysis manager
+        /// </summary>
         public const string CUSTOM_LOG_NAME = "DMS_AnalysisMgr";
 
         private const int MAX_ERROR_COUNT = 10;
@@ -68,9 +75,22 @@ namespace AnalysisManagerProg
         #endregion
 
         #region "Properties"
+
+        /// <summary>
+        /// When true, do not log messages to the manager status message queue
+        /// </summary>
         public bool DisableMessageQueue { get; set; }
+
+        /// <summary>
+        /// When true, do not contact MyEMSL
+        /// </summary>
         public bool DisableMyEMSL { get; set; }
+
+        /// <summary>
+        /// When true, show additional trace log messages
+        /// </summary>
         public bool TraceMode { get; set; }
+
         #endregion
 
         #region "Methods"

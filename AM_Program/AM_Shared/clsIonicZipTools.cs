@@ -704,7 +704,7 @@ namespace AnalysisManagerBase
         /// If the file size is less than 4 GB, then also performs a full CRC check of the data
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>
-        /// <returns>True if a valid zip file, otherwise false</returns>	
+        /// <returns>True if a valid zip file, otherwise false</returns>
         public bool VerifyZipFile(string zipFilePath)
         {
             return VerifyZipFile(zipFilePath, crcCheckThresholdGB: 4);

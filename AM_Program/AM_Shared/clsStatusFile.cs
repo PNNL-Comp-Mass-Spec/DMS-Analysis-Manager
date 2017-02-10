@@ -15,18 +15,19 @@ using System.Xml;
 
 namespace AnalysisManagerBase
 {
-    public class clsStatusFile : IStatusFile
-    {
 
-        //*********************************************************************************************************
-        //Provides tools for creating and updating an analysis status file
-        // Additional functionality:
-        //  1) Can log memory usage stats to a file using clsMemoryUsageLogger
-        //  2) Looks for the presence of file "AbortProcessingNow.txt"; if found, it sets AbortProcessingNow to true 
-        //	 and renames the file to "AbortProcessingNow.txt.Done"
-        //  3) Posts status messages to the DMS broker DB at the specified interval
-        //
-        //*********************************************************************************************************
+    /// <summary>
+    /// Provides tools for creating and updating an analysis status file
+    /// </summary>
+    /// <remarks>
+    /// Additional functionality:
+    ///  1) Can log memory usage stats to a file using clsMemoryUsageLogger
+    ///  2) Looks for the presence of file "AbortProcessingNow.txt"; if found, it sets AbortProcessingNow to true 
+    ///  and renames the file to "AbortProcessingNow.txt.Done"
+    ///  3) Posts status messages to the DMS broker DB at the specified interval
+    /// </remarks>
+    public class clsStatusFile : clsEventNotifier, IStatusFile
+    {
 
         #region "Module variables"
 
@@ -151,12 +152,24 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public int SpectrumCount { get; set; }
 
+        /// <summary>
+        /// URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616
+        /// </summary>
         public string MessageQueueURI { get; set; }
 
+        /// <summary>
+        /// Topic name for the manager status message queue
+        /// </summary>
         public string MessageQueueTopic { get; set; }
 
+        /// <summary>
+        /// When true, log messages to the manager status message queue
+        /// </summary>
         public bool LogToMsgQueue { get; set; }
 
+        /// <summary>
+        /// Set to true to abort processing due to a critical error
+        /// </summary>
         public bool AbortProcessingNow => m_AbortProcessingNow;
 
         #endregion
@@ -343,7 +356,7 @@ namespace AnalysisManagerBase
         private string ConvertTaskStatusToString(EnumTaskStatus StatusEnum)
         {
 
-            //Converts a status enum to a string
+            // Converts a status enum to a string
             switch (StatusEnum)
             {
                 case EnumTaskStatus.CLOSING:
@@ -359,7 +372,7 @@ namespace AnalysisManagerBase
                 case EnumTaskStatus.FAILED:
                     return "Failed";
                 default:
-                    //Should never get here
+                    // Should never get here
                     return "Unknown Task Status";
             }
 
@@ -374,7 +387,7 @@ namespace AnalysisManagerBase
         private string ConvertMgrStatusToString(EnumMgrStatus StatusEnum)
         {
 
-            //Converts a status enum to a string
+            // Converts a status enum to a string
             switch (StatusEnum)
             {
                 case EnumMgrStatus.DISABLED_LOCAL:
@@ -388,7 +401,7 @@ namespace AnalysisManagerBase
                 case EnumMgrStatus.STOPPED_ERROR:
                     return "Stopped Error";
                 default:
-                    //Should never get here
+                    // Should never get here
                     return "Unknown Mgr Status";
             }
 
@@ -403,7 +416,7 @@ namespace AnalysisManagerBase
         private string ConvertTaskStatusDetailToString(EnumTaskStatusDetail StatusEnum)
         {
 
-            //Converts a status enum to a string
+            // Converts a status enum to a string
             switch (StatusEnum)
             {
                 case EnumTaskStatusDetail.DELIVERING_RESULTS:
@@ -419,7 +432,7 @@ namespace AnalysisManagerBase
                 case EnumTaskStatusDetail.CLOSING:
                     return "Closing";
                 default:
-                    //Should never get here
+                    // Should never get here
                     return "Unknown Task Status Detail";
             }
 
@@ -725,7 +738,7 @@ namespace AnalysisManagerBase
 
         public void WriteStatusFile(bool ForceLogToBrokerDB)
         {
-            //Writes a status file for external monitor to read
+            // Writes a status file for external monitor to read
 
             var strXMLText = string.Empty;
 
@@ -756,16 +769,14 @@ namespace AnalysisManagerBase
                     xWriter.Formatting = Formatting.Indented;
                     xWriter.Indentation = 2;
 
-                    //Create the XML document in memory
+                    // Create the XML document in memory
                     xWriter.WriteStartDocument(true);
                     xWriter.WriteComment("Analysis manager job status");
 
-                    //General job information
-                    //Root level element
+                    // General job information
+                    // Root level element
                     xWriter.WriteStartElement("Root");
-                    // Root
                     xWriter.WriteStartElement("Manager");
-                    // Manager
                     xWriter.WriteElementString("MgrName", MgrName);
                     xWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(MgrStatus));
                     xWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString(CultureInfo.InvariantCulture));

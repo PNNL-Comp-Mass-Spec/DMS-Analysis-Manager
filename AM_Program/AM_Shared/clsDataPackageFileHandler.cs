@@ -189,7 +189,7 @@ namespace AnalysisManagerBase
                         {
                             mAnalysisResources.MyEMSLUtilities.AddFileToDownloadQueue(udtArchivedFile.FileInfo);
                             cacheInfoFileName = udtArchivedFile.FileInfo.Filename;
-                            break; // TODO: might not be correct. Was : Exit For
+                            break;
                         }
                     }
 
@@ -915,7 +915,7 @@ namespace AnalysisManagerBase
                                 {
                                     if (!mAnalysisResources.RetrieveDtaFiles())
                                     {
-                                        //Errors were reported in function call, so just return
+                                        // Errors were reported in function call, so just return
                                         mAnalysisResources.RestoreCachedDataAndJobInfo();
                                         return false;
                                     }
@@ -954,7 +954,7 @@ namespace AnalysisManagerBase
                                     {
                                         ionicZipTools.GUnzipFile(fiFileToUnzip.FullName);
                                         unzippedFilePath = MostRecentUnzippedFile(ionicZipTools);
-                                        break; // TODO: might not be correct. Was : Exit For
+                                        break;
                                     }
                                 }
 

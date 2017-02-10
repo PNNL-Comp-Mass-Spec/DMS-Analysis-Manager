@@ -268,7 +268,8 @@ namespace AnalysisManagerBase
                 }
 
                 if (srMgfFile.EndOfStream)
-                    break; // TODO: might not be correct. Was : Exit While
+                    break;
+
                 dataLine = srMgfFile.ReadLine();
                 bytesRead += 2;
             }

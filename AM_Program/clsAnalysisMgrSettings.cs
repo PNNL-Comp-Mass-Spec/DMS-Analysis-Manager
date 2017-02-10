@@ -19,23 +19,47 @@ using PRISM;
 
 namespace AnalysisManagerProg
 {
-    public class clsAnalysisMgrSettings : IMgrParams
+    /// <summary>
+    /// Class for loading, storing and accessing manager parameters.
+    /// </summary>
+    /// <remarks>
+    /// Loads initial settings from local config file, then checks to see if remainder of settings should be loaded or manager set to inactive. 
+    /// If manager active, retrieves remainder of settings manager parameters database.
+    /// </remarks>
+    public class clsAnalysisMgrSettings : clsLoggerBase, IMgrParams
     {
-        //*********************************************************************************************************
-        //Class for loading, storing and accessing manager parameters.
-        //	Loads initial settings from local config file, then checks to see if remainder of settings should be
-        //		loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
-        //		parameters database.
-        //*********************************************************************************************************
 
         #region "Constants"
 
+        /// <summary>
+        /// Status message for when the manager is deactivated locally
+        /// </summary>
+        /// <remarks>Used when MgrActive_Local is False in AnalysisManagerProg.exe.config</remarks>
         public const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
+
+        /// <summary>
+        /// Manager parameter: config database connection string
+        /// </summary>
         public const string MGR_PARAM_MGR_CFG_DB_CONN_STRING = "MgrCnfgDbConnectStr";
+
+        /// <summary>
+        /// Manager parameter: manager active
+        /// </summary>
         public const string MGR_PARAM_MGR_ACTIVE_LOCAL = "MgrActive_Local";
+
+        /// <summary>
+        /// Manager parameter: manager name
+        /// </summary>
         public const string MGR_PARAM_MGR_NAME = "MgrName";
+
+        /// <summary>
+        /// Manager parameter: using defaults flag
+        /// </summary>
         public const string MGR_PARAM_USING_DEFAULTS = "UsingDefaults";
 
+        /// <summary>
+        /// Manager parameter: DMS connection string
+        /// </summary>
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
         #endregion
@@ -82,14 +106,14 @@ namespace AnalysisManagerProg
                 var myConnection = new SqlConnection(connectionString);
                 myConnection.Open();
 
-                //Set up the command object prior to SP execution
+                // Set up the command object prior to SP execution
                 var myCmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) {CommandType = CommandType.StoredProcedure};
 
                 myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 myCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = this.GetParam(MGR_PARAM_MGR_NAME);
                 myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
-                //Execute the SP
+                // Execute the SP
                 myCmd.ExecuteNonQuery();
             }
             catch (Exception ex)
@@ -100,6 +124,10 @@ namespace AnalysisManagerProg
             }
         }
 
+        /// <summary>
+        /// Disable the manager by changing MgrActive_Local to False in AnalysisManagerProg.exe.config
+        /// </summary>
+        /// <returns></returns>
         public bool DisableManagerLocally()
         {
             return WriteConfigSetting(MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
@@ -150,14 +178,14 @@ namespace AnalysisManagerProg
 
             mParamDictionary = paramDictionary;
 
-            //Test the settings retrieved from the config file
+            // Test the settings retrieved from the config file
             if (!CheckInitialSettings(mParamDictionary))
             {
-                //Error logging handled by CheckInitialSettings
+                // Error logging handled by CheckInitialSettings
                 return false;
             }
 
-            //Determine if manager is deactivated locally
+            // Determine if manager is deactivated locally
             if (!Convert.ToBoolean(mParamDictionary[MGR_PARAM_MGR_ACTIVE_LOCAL]))
             {
                 WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, DEACTIVATED_LOCALLY);
@@ -165,14 +193,14 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            //Get settings from Manager Control DB and Broker DB
+            // Get settings from Manager Control DB and Broker DB
             if (!LoadDBSettings())
             {
                 // Errors have already been logged; return False
                 return false;
             }
 
-            //No problems found
+            // No problems found
             return true;
         }
 
@@ -227,7 +255,7 @@ namespace AnalysisManagerProg
                 }
             }
 
-            //No problems found
+            // No problems found
             return true;
         }
 
@@ -254,7 +282,10 @@ namespace AnalysisManagerProg
             return string.Empty;
         }
 
-        // Retrieves the manager and global settings from various databases
+        /// <summary>
+        /// Retrieves the manager and global settings from various databases
+        /// </summary>
+        /// <returns></returns>
         public bool LoadDBSettings()
         {
             bool success = false;
@@ -276,7 +307,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         protected bool LoadMgrSettingsFromDB()
         {
-            //Requests manager specific settings from database. Performs retries if necessary.
+            // Requests manager specific settings from database. Performs retries if necessary.
 
             var managerName = GetParam(MGR_PARAM_MGR_NAME, "");
             if (string.IsNullOrEmpty(managerName))
@@ -465,7 +496,7 @@ namespace AnalysisManagerProg
             //Get a table to hold the results of the query
             var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadBrokerDBSettings", retryCount, out dt);
 
-            //If loop exited due to errors, return false
+            // If loop exited due to errors, return false
             if (!success)
             {
                 var statusMessage = "clsMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
@@ -474,7 +505,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            //Verify at least one row returned
+            // Verify at least one row returned
             if (dt.Rows.Count < 1)
             {
                 // No data was returned
@@ -681,12 +712,12 @@ namespace AnalysisManagerProg
                 XmlElement myElement = (XmlElement) myNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", key));
                 if (myElement != null)
                 {
-                    //Set key to specified value
+                    // Set key to specified value
                     myElement.InnerText = value;
                 }
                 else
                 {
-                    //Key was not found
+                    // Key was not found
                     mErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + key;
                     return false;
                 }
@@ -707,7 +738,7 @@ namespace AnalysisManagerProg
             // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
             // Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
 
-            //If custom event log doesn't exist yet, create it
+            // If custom event log doesn't exist yet, create it
             if (!EventLog.SourceExists(sourceName))
             {
                 EventSourceCreationData sourceData = new EventSourceCreationData(sourceName, logName);

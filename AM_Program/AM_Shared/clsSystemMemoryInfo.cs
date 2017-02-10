@@ -113,7 +113,7 @@ namespace AnalysisManagerBase
                 if (GlobalMemoryStatusEx(MemoryStatus))
                 {
                     MemoryLoad = MemoryStatus.dwMemoryLoad;
-                    //etc.. Repeat for other structure members
+                    // etc.. Repeat for other structure members
                 }
                 else
                 {
