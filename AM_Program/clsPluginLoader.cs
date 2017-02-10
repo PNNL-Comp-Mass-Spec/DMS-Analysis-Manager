@@ -380,10 +380,20 @@ namespace AnalysisManagerProg
 
                 //read the tool runner info file
                 doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
-                XmlElement root = doc.DocumentElement;
+                var root = doc.DocumentElement;
 
-                //find the element that matches the tool name
+                if (root == null)
+                {
+                    throw new Exception("Valid XML not found in file " + m_pluginConfigFile);
+                }
+
+                // find the element that matches the tool name
                 var nodeList = root.SelectNodes(XPath);
+
+                if (nodeList == null)
+                {
+                    throw new Exception(string.Format("XPath did not have a match for '{0}' in {1}", strPluginInfo, m_pluginConfigFile));
+                }
 
                 // make sure that we found exactly one element,
                 // and if we did, retrieve its information
@@ -422,7 +432,7 @@ namespace AnalysisManagerProg
             {
                 //Build instance of tool runner subclass from class name and assembly file name.
                 var a = System.Reflection.Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
-                Type t = a.GetType(className, false, true);
+                var t = a.GetType(className, false, true);
                 obj = Activator.CreateInstance(t);
             }
             catch (Exception ex)
@@ -449,13 +459,13 @@ namespace AnalysisManagerProg
 
             if (GetPluginInfo(xpath, out className, out assyName))
             {
-            #if PLUGIN_DEBUG_MODE_ENABLED
+#if PLUGIN_DEBUG_MODE_ENABLED
                 myToolRunner = DebugModeGetToolRunner(className);
                 if (myToolRunner != null)
                 {
                     return myToolRunner;
                 }
-            #endif
+#endif
 
                 var obj = LoadObject(className, assyName);
                 if (obj != null)
@@ -490,13 +500,13 @@ namespace AnalysisManagerProg
 
             if (GetPluginInfo(xpath, out className, out assyName))
             {
-            #if PLUGIN_DEBUG_MODE_ENABLED
+#if PLUGIN_DEBUG_MODE_ENABLED
                 myModule = DebugModeGetAnalysisResources(className);
                 if ((myModule != null))
                 {
                     return myModule;
                 }
-            #endif
+#endif
 
                 var obj = LoadObject(className, assyName);
                 if ((obj != null))
