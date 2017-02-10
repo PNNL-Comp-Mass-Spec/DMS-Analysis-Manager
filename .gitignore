@@ -19,3 +19,5 @@
 /AM_Common/DTASpectraFileGen.dll
 /Plugins/AM_Bruker_DA_Export/Documents
 /AM_Common/_Unused
+
+cloc*.pl
