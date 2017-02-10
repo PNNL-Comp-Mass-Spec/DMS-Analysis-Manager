@@ -7,7 +7,6 @@
 //*********************************************************************************************************
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -1748,6 +1747,31 @@ namespace AnalysisManagerProg
             }
         }
 
+        private void LogPluginLoaderErrors(string pluginType, IReadOnlyCollection<string> errorMessages)
+        {
+            if (errorMessages.Count <= 0)
+            {
+                LogError(string.Format("Unable to load {0}, unknown error", pluginType));
+                return;
+            }
+
+            LogError(string.Format("Unable to load {0}: {1}", pluginType, errorMessages.First()));
+            if (errorMessages.Count <= 1)
+                return;
+
+            var firstSkipped = false;
+            foreach (var item in errorMessages)
+            {
+                if (!firstSkipped)
+                {
+                    LogDebug("Additional errors:", 10);
+                    firstSkipped = true;
+                    continue;
+                }
+                LogDebug(item, 10);
+            }
+        }
+
         private void PostToEventLog(string ErrMsg)
         {
             const string EVENT_LOG_NAME = "DMSAnalysisManager";
@@ -1872,16 +1896,18 @@ namespace AnalysisManagerProg
             m_Resource = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
             if (m_Resource == null)
             {
-                LogError("Unable to load resource object, " + m_PluginLoader.Message);
+                LogPluginLoaderErrors("resource object for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
                 return false;
             }
 
             if (m_DebugLevel > 0)
             {
-                strMessage = "Loaded resourcer for StepTool " + stepToolName;
-                if (m_PluginLoader.Message.Length > 0)
-                    strMessage += ": " + m_PluginLoader.Message;
-                LogMessage(strMessage);
+                LogMessage("Loaded resourcer for StepTool " + stepToolName);
+                foreach (var item in m_PluginLoader.ErrorMessages)
+                {
+                    LogWarning(item);
+                }
+                
             }
 
             try
@@ -1961,16 +1987,18 @@ namespace AnalysisManagerProg
             m_ToolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower());
             if (m_ToolRunner == null)
             {
-                LogError("Unable to load tool runner for StepTool " + stepToolName + ": " + m_PluginLoader.Message);
+                LogPluginLoaderErrors("tool runner for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
                 return false;
             }
 
             if (m_DebugLevel > 0)
             {
-                var msg = "Loaded tool runner for StepTool " + m_AnalysisTask.GetCurrentJobToolDescription();
-                if (m_PluginLoader.Message.Length > 0)
-                    msg += ": " + m_PluginLoader.Message;
-                LogMessage(msg);
+                LogMessage("Loaded tool runner for StepTool " + m_AnalysisTask.GetCurrentJobToolDescription());
+                foreach (var item in m_PluginLoader.ErrorMessages)
+                {
+                    LogWarning(item);
+                }
+
             }
 
             try

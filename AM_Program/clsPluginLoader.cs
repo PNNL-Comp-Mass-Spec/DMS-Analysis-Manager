@@ -20,10 +20,12 @@ namespace AnalysisManagerProg
     public class clsPluginLoader
     {
         #region "Member variables"
-        private readonly List<string> m_msgList = new List<string>();
+
+        private readonly List<string> m_ErrorMessages = new List<string>();
         private readonly string m_MgrFolderPath;
         private string m_pluginConfigFile = "plugin_info.xml";
         private readonly clsSummaryFile m_SummaryFile;
+
         #endregion
 
         #region "Properties"
@@ -38,22 +40,11 @@ namespace AnalysisManagerProg
             set { m_pluginConfigFile = value; }
         }
 
-        public string Message
-        {
-            get
-            {
-                var s = "";
+        /// <summary>
+        /// Exceptions that occur in the call to GetAnalysisResources or GetToolRunner
+        /// </summary>
+        public List<string> ErrorMessages => m_ErrorMessages;
 
-                foreach (string DumStr in m_msgList)
-                {
-                    if (!string.IsNullOrEmpty(s))
-                        s += Environment.NewLine;
-                    s += DumStr;
-                }
-
-                return s;
-            }
-        }
         #endregion
 
         #region "Methods"
@@ -75,8 +66,8 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public void ClearMessageList()
         {
-            //Clears the message list
-            m_msgList.Clear();
+            // Clears the message list
+            m_ErrorMessages.Clear();
         }
 
 #if PLUGIN_DEBUG_MODE_ENABLED
@@ -410,7 +401,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                m_msgList.Add("Error in GetPluginInfo:" + ex.Message + "; " + strPluginInfo);
+                m_ErrorMessages.Add("Error in GetPluginInfo:" + ex.Message + "; " + strPluginInfo);
                 return false;
             }
         }
@@ -425,7 +416,7 @@ namespace AnalysisManagerProg
         private object LoadObject(string className, string assyName)
         {
             object obj = null;
-            m_msgList.Clear();
+            m_ErrorMessages.Clear();
 
             try
             {
@@ -436,8 +427,8 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                //'Catch any exceptions
-                m_msgList.Add("clsPluginLoader.LoadObject(), exception: " + ex.Message);
+                // Cache exceptions
+                m_ErrorMessages.Add("clsPluginLoader.LoadObject(), exception: " + ex.Message);
             }
             return obj;
         }
@@ -475,8 +466,8 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        //'Catch any exceptions
-                        m_msgList.Add(ex.Message);
+                        // Cache exceptions
+                        m_ErrorMessages.Add(ex.Message);
                     }
                 }
             }
@@ -516,8 +507,8 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        //'Catch any exceptions
-                        m_msgList.Add(ex.Message);
+                        // Cache exceptions
+                        m_ErrorMessages.Add(ex.Message);
                     }
                 }
                 m_SummaryFile.Add("Loaded resourcer: " + className + " from " + assyName);
