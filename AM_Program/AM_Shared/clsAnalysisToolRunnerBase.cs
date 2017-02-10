@@ -3412,7 +3412,7 @@ namespace AnalysisManagerBase
                     LogDebug(strAppPath + " " + strArgs);
                 }
 
-                var objProgRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath())
+                var progRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath())
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,
@@ -3421,9 +3421,9 @@ namespace AnalysisManagerBase
                     DebugLevel = 1,
                     MonitorInterval = 250
                 };
-                RegisterEvents(objProgRunner);
+                RegisterEvents(progRunner);
 
-                var blnSuccess = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", false);
+                var blnSuccess = progRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", false);
 
                 if (!blnSuccess)
                 {

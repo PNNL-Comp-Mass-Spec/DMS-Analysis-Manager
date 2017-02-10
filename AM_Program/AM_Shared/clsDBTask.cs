@@ -213,21 +213,21 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Debugging routine for printing SP calling params
         /// </summary>
-        /// <param name="InpCmd">SQL command object containing params</param>
+        /// <param name="sqlCmd">SQL command object containing params</param>
         /// <remarks></remarks>
-        protected void PrintCommandParams(SqlCommand InpCmd)
+        protected void PrintCommandParams(SqlCommand sqlCmd)
         {
-            //Verify there really are command paramters
-            if (InpCmd == null)
+            // Verify there really are command parameters
+            if (sqlCmd == null)
                 return;
-            if (InpCmd.Parameters.Count < 1)
+            if (sqlCmd.Parameters.Count < 1)
                 return;
 
-            var MyMsg = "";
+            var paramDetails = "";
 
-            foreach (SqlParameter MyParam in InpCmd.Parameters)
+            foreach (SqlParameter MyParam in sqlCmd.Parameters)
             {
-                MyMsg += Environment.NewLine + "Name= " + MyParam.ParameterName + "\t, Value= " + clsGlobal.DbCStr(MyParam.Value);
+                paramDetails += Environment.NewLine + "Name= " + MyParam.ParameterName + "\t, Value= " + clsGlobal.DbCStr(MyParam.Value);
             }
 
             LogDebug("Parameter list:" + paramDetails);

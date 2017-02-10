@@ -320,16 +320,14 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            DataTable dtSettings = null;
-            var blnReturnErrorIfNoParameters = true;
-            var success = LoadMgrSettingsFromDBWork(managerName, out dtSettings, blnReturnErrorIfNoParameters);
+            DataTable dtSettings;
+            var success = LoadMgrSettingsFromDBWork(managerName, out dtSettings, returnErrorIfNoParameters: true);
             if (!success)
             {
                 return false;
             }
 
-            var blnSkipExistingParameters = false;
-            success = StoreParameters(dtSettings, blnSkipExistingParameters, managerName);
+            success = StoreParameters(dtSettings, skipExistingParameters: false, managerName: managerName);
             if (!success)
                 return false;
 
@@ -343,24 +341,20 @@ namespace AnalysisManagerProg
 
                 // This manager has group-based settings defined; load them now
 
-                blnReturnErrorIfNoParameters = false;
-                dtSettings = null;
-                success = LoadMgrSettingsFromDBWork(strMgrSettingsGroup, out dtSettings, blnReturnErrorIfNoParameters);
+                success = LoadMgrSettingsFromDBWork(strMgrSettingsGroup, out dtSettings, returnErrorIfNoParameters: false);
 
                 if (success)
                 {
-                    blnSkipExistingParameters = true;
-                    success = StoreParameters(dtSettings, blnSkipExistingParameters, managerName);
+                    success = StoreParameters(dtSettings, skipExistingParameters: true, managerName: managerName);
                 }
             }
 
             return success;
         }
 
-        private bool LoadMgrSettingsFromDBWork(string ManagerName, out DataTable dtSettings, bool blnReturnErrorIfNoParameters)
+        private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool returnErrorIfNoParameters)
         {
             const short retryCount = 6;
-            dtSettings = null;
 
             // Data Source=proteinseqs;Initial Catalog=manager_control
             string connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, string.Empty);
@@ -399,10 +393,10 @@ namespace AnalysisManagerProg
             }
 
             // Verify at least one row returned
-            if (dtSettings.Rows.Count < 1 & blnReturnErrorIfNoParameters)
+            if (dtSettings.Rows.Count < 1 & returnErrorIfNoParameters)
             {
                 // No data was returned
-                mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" + ManagerName + "' not defined in the manager control database; using " + connectionString;
+                mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
                 WriteErrorMsg(mErrMsg);
                 dtSettings.Dispose();
                 return false;
@@ -411,7 +405,7 @@ namespace AnalysisManagerProg
             return true;
         }
 
-        private bool StoreParameters(DataTable dtSettings, bool blnSkipExisting, string ManagerName)
+        private bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
         {
             bool success = false;
 
@@ -440,7 +434,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                mErrMsg = "clsAnalysisMgrSettings.StoreParameters; Exception filling string dictionary from table for manager '" + ManagerName + "': " +
+                mErrMsg = "clsAnalysisMgrSettings.StoreParameters; Exception filling string dictionary from table for manager '" + managerName + "': " +
                           ex.Message;
                 WriteErrorMsg(mErrMsg);
                 success = false;
