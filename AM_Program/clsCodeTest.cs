@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
-using System.Xml;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerProg
@@ -64,18 +63,15 @@ namespace AnalysisManagerProg
             m_DebugLevel = 2;
             mLastStatusTime = DateTime.UtcNow.AddMinutes(-1);
 
-            // Get settings from config file
-            Dictionary<string, string> lstMgrSettings = new Dictionary<string, string>();
-
             try
-            {
-                lstMgrSettings = clsMainProcess.LoadMgrSettingsFromFile();
+            {   // Get settings from config file
+                var lstMgrSettings = clsMainProcess.LoadMgrSettingsFromFile();
 
                 m_mgrParams = new clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
 
                 m_DebugLevel = 2;
 
-                m_mgrParams.SetParam("workdir", "E:\\DMS_WorkDir");
+                m_mgrParams.SetParam("workdir", @"C:\DMS_WorkDir");
                 m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
                 m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString());
             }
@@ -99,7 +95,7 @@ namespace AnalysisManagerProg
         {
             try
             {
-                DirectoryInfo diSourceFolder = default(DirectoryInfo);
+                DirectoryInfo diSourceFolder;
 
                 if (string.IsNullOrWhiteSpace(displayDllPath))
                 {
@@ -110,7 +106,7 @@ namespace AnalysisManagerProg
                     diSourceFolder = new DirectoryInfo(displayDllPath);
                 }
 
-                List<FileInfo> lstFiles = default(List<FileInfo>);
+                List<FileInfo> lstFiles;
                 if (string.IsNullOrWhiteSpace(fileNameFileSpec))
                 {
                     lstFiles = diSourceFolder.GetFiles("*.dll").ToList();
@@ -131,8 +127,8 @@ namespace AnalysisManagerProg
                     {
                         Console.Write(".");
 
-                        Assembly fileAssembly = System.Reflection.Assembly.LoadFrom(fiFile.FullName);
-                        string fileVersion = fileAssembly.ImageRuntimeVersion;
+                        var fileAssembly = Assembly.LoadFrom(fiFile.FullName);
+                        var fileVersion = fileAssembly.ImageRuntimeVersion;
                         var frameworkVersion = "??";
 
                         var customAttributes = fileAssembly.GetCustomAttributes(typeof(TargetFrameworkAttribute)).ToList();
@@ -162,8 +158,8 @@ namespace AnalysisManagerProg
 
                         try
                         {
-                            Assembly fileAssembly2 = Assembly.ReflectionOnlyLoadFrom(fiFile.FullName);
-                            string fileVersion2 = fileAssembly2.ImageRuntimeVersion;
+                            var fileAssembly2 = Assembly.ReflectionOnlyLoadFrom(fiFile.FullName);
+                            var fileVersion2 = fileAssembly2.ImageRuntimeVersion;
 
                             if (dctResults.ContainsKey(fiFile.FullName))
                             {
@@ -204,10 +200,10 @@ namespace AnalysisManagerProg
 
                 var query = (from item in dctResults orderby item.Key select item).ToList();
 
-                Console.WriteLine(string.Format("{0,-50} {1,-20} {2}", "Filename", ".NET Version", "Target Framework"));
+                Console.WriteLine("{0,-50} {1,-20} {2}", "Filename", ".NET Version", "Target Framework");
                 foreach (var result in query)
                 {
-                    Console.WriteLine(string.Format("{0,-50} {1,-20} {2}", Path.GetFileName(result.Key), " " + result.Value.Key, result.Value.Value));
+                    Console.WriteLine("{0,-50} {1,-20} {2}", Path.GetFileName(result.Key), " " + result.Value.Key, result.Value.Value);
                 }
 
                 if (dctErrors.Count > 0)
@@ -218,17 +214,17 @@ namespace AnalysisManagerProg
 
                     var errorList = (from item in dctErrors orderby item.Key select item).ToList();
 
-                    Console.WriteLine(string.Format("{0,-30} {1}", "Filename", "Error"));
+                    Console.WriteLine("{0,-30} {1}", "Filename", "Error");
 
                     foreach (var result in errorList)
                     {
-                        Console.Write(string.Format("{0,-30} ", Path.GetFileName(result.Key)));
+                        Console.Write("{0,-30} ", Path.GetFileName(result.Key));
                         var startIndex = 0;
                         while (startIndex < result.Value.Length)
                         {
                             if (startIndex > 0)
                             {
-                                Console.Write(string.Format("{0,-30} ", string.Empty));
+                                Console.Write("{0,-30} ", string.Empty);
                             }
 
                             if (startIndex + 80 > result.Value.Length)
@@ -236,10 +232,8 @@ namespace AnalysisManagerProg
                                 Console.WriteLine(result.Value.Substring(startIndex, result.Value.Length - startIndex));
                                 break;
                             }
-                            else
-                            {
-                                Console.WriteLine(result.Value.Substring(startIndex, 80));
-                            }
+
+                            Console.WriteLine(result.Value.Substring(startIndex, 80));
 
                             startIndex += 80;
                         }
@@ -266,7 +260,7 @@ namespace AnalysisManagerProg
             objJobParams.SetParam("JobParameters", "ToolName", "TestTool");
 
             objJobParams.SetParam("StepParameters", "Job", "12345");
-            objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results");
+            objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results");
 
             return objJobParams;
         }
@@ -277,22 +271,23 @@ namespace AnalysisManagerProg
 
             objJobParams = InitializeMgrAndJobParams(DEBUG_LEVEL);
 
-            clsStatusFile objStatusTools = new clsStatusFile("Status.xml", DEBUG_LEVEL);
-            clsSummaryFile objSummaryFile = new clsSummaryFile();
+            var statusTools = new clsStatusFile("Status.xml", DEBUG_LEVEL);
+            RegisterEvents(statusTools);
+
+            var objSummaryFile = new clsSummaryFile();
 
             myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, WORKING_DIRECTORY);
             RegisterEvents(myEMSLUtilities);
 
             var objToolRunner = new clsCodeTestAM();
-            objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, objSummaryFile, myEMSLUtilities);
+            objToolRunner.Setup(m_mgrParams, objJobParams, statusTools, objSummaryFile, myEMSLUtilities);
 
             return objToolRunner;
         }
 
         private clsResourceTestClass GetResourcesObject(int intDebugLevel)
         {
-            IJobParams objJobParams = default(IJobParams);
-            objJobParams = new clsAnalysisJob(m_mgrParams, 0);
+            var objJobParams = new clsAnalysisJob(m_mgrParams, 0);
 
             return GetResourcesObject(intDebugLevel, objJobParams);
         }
@@ -301,22 +296,24 @@ namespace AnalysisManagerProg
         {
             var objResources = new clsResourceTestClass();
 
-            clsStatusFile objStatusTools = new clsStatusFile("Status.xml", intDebugLevel);
+            var statusTools = new clsStatusFile("Status.xml", intDebugLevel);
+            RegisterEvents(statusTools);
 
-            clsMyEMSLUtilities myEMSLUtilities = new clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY);
+            var myEMSLUtilities = new clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY);
+            RegisterEvents(myEMSLUtilities);
 
             m_mgrParams.SetParam("workdir", WORKING_DIRECTORY);
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString());
-            m_mgrParams.SetParam("zipprogram", "C:\\PKWARE\\PKZIPC\\pkzipc.exe");
+            m_mgrParams.SetParam("zipprogram", @"C:\PKWARE\PKZIPC\pkzipc.exe");
 
             objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool");
             objJobParams.SetParam("JobParameters", "ToolName", "TestTool");
 
             objJobParams.SetParam("StepParameters", "Job", "12345");
-            objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results");
+            objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results");
 
-            objResources.Setup(m_mgrParams, objJobParams, objStatusTools, myEMSLUtilities);
+            objResources.Setup(m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
 
             return objResources;
         }
@@ -330,9 +327,9 @@ namespace AnalysisManagerProg
         {
             var intDebugLevel = 1;
 
-            clsAnalysisJob objJobParams = new clsAnalysisJob(m_mgrParams, 0);
+            var objJobParams = new clsAnalysisJob(m_mgrParams, 0);
 
-            m_mgrParams.SetParam("workdir", "E:\\DMS_WorkDir");
+            m_mgrParams.SetParam("workdir", @"C:\DMS_WorkDir");
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString());
 
@@ -340,7 +337,7 @@ namespace AnalysisManagerProg
             objJobParams.SetParam("JobParameters", "ToolName", "TestTool");
 
             objJobParams.SetParam("StepParameters", "Job", "12345");
-            objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results");
+            objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results");
 
             return objJobParams;
         }
@@ -354,25 +351,26 @@ namespace AnalysisManagerProg
             {
                 // Note that the Memory and Processor performance monitor categories are not
                 // available on Windows instances running under VMWare on PIC
-                //Console.WriteLine("Performance monitor categories")
-                //Dim perfCats As PerformanceCounterCategory() = PerformanceCounterCategory.GetCategories()
-                //For Each category As PerformanceCounterCategory In perfCats.OrderBy(Function(c) c.CategoryName)
-                //	Console.WriteLine("Category Name: {0}", category.CategoryName)
-                //Next
-                //Console.WriteLine()
+                // Console.WriteLine("Performance monitor categories")
+                // Dim perfCats As PerformanceCounterCategory() = PerformanceCounterCategory.GetCategories()
+                // For Each category As PerformanceCounterCategory In perfCats.OrderBy(Function(c) c.CategoryName)
+                //    Console.WriteLine("Category Name: {0}", category.CategoryName)
+                // Next
+                // Console.WriteLine()
 
-                var mCPUUsagePerformanceCounter = new System.Diagnostics.PerformanceCounter("Processor", "% Processor Time", "_Total");
-                mCPUUsagePerformanceCounter.ReadOnly = true;
+                var mCPUUsagePerformanceCounter = new System.Diagnostics.PerformanceCounter("Processor", "% Processor Time", "_Total")
+                {
+                    ReadOnly = true
+                };
 
-                var mFreeMemoryPerformanceCounter = new System.Diagnostics.PerformanceCounter("Memory", "Available MBytes");
-                mFreeMemoryPerformanceCounter.ReadOnly = true;
+                var mFreeMemoryPerformanceCounter = new System.Diagnostics.PerformanceCounter("Memory", "Available MBytes") { ReadOnly = true };
             }
             catch (Exception ex)
             {
                 Console.WriteLine();
                 Console.WriteLine("Error in PerformanceCounterTest: " + ex.Message);
                 Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, true));
-                var rePub1000 = new System.Text.RegularExpressions.Regex("Pub-1\\d{3,}", RegexOptions.IgnoreCase);
+                var rePub1000 = new Regex(@"Pub-1\d{3,}", RegexOptions.IgnoreCase);
                 if (rePub1000.IsMatch(Environment.MachineName))
                 {
                     Console.WriteLine("This is a known issue with Windows instances running under VMWare on PIC");
@@ -398,7 +396,7 @@ namespace AnalysisManagerProg
             ProcessDtaRefineryLogFiles(968482, 968482);
         }
 
-        public bool ProcessDtaRefineryLogFiles(int intJobStart, int intJobEnd)
+        private bool ProcessDtaRefineryLogFiles(int intJobStart, int intJobEnd)
         {
             // Query the Pipeline DB to find jobs that ran DTA Refinery
 
@@ -408,7 +406,7 @@ namespace AnalysisManagerProg
             //   "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
             //   " WHERE (JSH.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JSH.Tool = 'DTA_Refinery') AND (JSH.Most_Recent_Entry = 1) AND (JSH.State = 5)"
 
-            string strSql =
+            var strSql =
                 "SELECT JS.Dataset, J.Dataset_ID, JS.Job, JS.Output_Folder, DFP.Dataset_Folder_Path, JS.Transfer_Folder_Path" +
                 " FROM DMS_Pipeline.dbo.V_Job_Steps JS INNER JOIN" +
                 "      DMS_Pipeline.dbo.T_Jobs J ON JS.Job = J.Job INNER JOIN" +
@@ -418,7 +416,7 @@ namespace AnalysisManagerProg
             const string strConnectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
             const short RetryCount = 2;
 
-            DataTable Dt = null;
+            DataTable Dt;
 
             var blnSuccess = clsGlobal.GetDataTableByQuery(strSql, strConnectionString, "ProcessDtaRefineryLogFiles", RetryCount, out Dt);
 
@@ -434,11 +432,11 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            string strWorkDir = m_mgrParams.GetParam("workdir");
-            var blnPostResultsToDB = true;
+            // var strWorkDir = m_mgrParams.GetParam("workdir");
+            // var blnPostResultsToDB = true;
 
             // Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
-            //Dim oMassErrorExtractor = New clsDtaRefLogMassErrorExtractor(m_mgrParams, strWorkDir, m_DebugLevel, blnPostResultsToDB)
+            // var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(m_mgrParams, strWorkDir, m_DebugLevel, blnPostResultsToDB);
 
             foreach (DataRow CurRow in Dt.Rows)
             {
@@ -458,7 +456,7 @@ namespace AnalysisManagerProg
                 if (Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath))
                 {
                     Console.WriteLine("Processing " + udtPSMJob.DtaRefineryDataFolderPath);
-                    //oMassErrorExtractor.ParseDTARefineryLogFile(udtPSMJob.Dataset, udtPSMJob.DatasetID, udtPSMJob.Job, udtPSMJob.DtaRefineryDataFolderPath)
+                    // oMassErrorExtractor.ParseDTARefineryLogFile(udtPSMJob.Dataset, udtPSMJob.DatasetID, udtPSMJob.Job, udtPSMJob.DtaRefineryDataFolderPath)
                 }
                 else
                 {
@@ -476,11 +474,11 @@ namespace AnalysisManagerProg
         /// </summary>
         public void RunMSConvert()
         {
-            var workDir = "E:\\DMS_WorkDir";
+            var workDir = @"C:\DMS_WorkDir";
 
-            var exePath = "C:\\DMS_Programs\\ProteoWizard\\msconvert.exe";
-            var dataFilePath = "E:\\DMS_WorkDir\\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
-            var cmdStr = dataFilePath + " --filter \"peakPicking true 1-\" --filter \"threshold count 500 most-intense\" --mgf -o E:\\DMS_WorkDir";
+            var exePath = @"C:\DMS_Programs\ProteoWizard\msconvert.exe";
+            var dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
+            var cmdStr = dataFilePath + @" --filter ""peakPicking true 1-"" --filter ""threshold count 500 most-intense"" --mgf -o C:\DMS_WorkDir";
 
             m_RunProgTool = new clsRunDosProgram(workDir)
             {
@@ -491,6 +489,7 @@ namespace AnalysisManagerProg
                 ConsoleOutputFilePath = ""
                 // Allow the console output filename to be auto-generated
             };
+            RegisterEvents(m_RunProgTool);
 
             if (!m_RunProgTool.RunProgram(exePath, cmdStr, "MSConvert", true))
             {
@@ -507,26 +506,24 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestArchiveFileStart()
         {
-            string strParamFilePath = null;
-            string strTargetFolderPath = null;
-
-            strParamFilePath = "D:\\Temp\\sequest_N14_NE.params";
-            strTargetFolderPath = "\\\\gigasax\\dms_parameter_Files\\Sequest";
+            var strParamFilePath = @"D:\Temp\sequest_N14_NE.params";
+            var strTargetFolderPath = @"\\gigasax\dms_parameter_Files\Sequest";
 
             TestArchiveFile(strParamFilePath, strTargetFolderPath);
 
-            //TestArchiveFile("\\n2.emsl.pnl.gov\dmsarch\LCQ_1\LCQ_C1\DR026_dialyzed_7june00_a\Seq200104201154_Auto1001\sequest_Tryp_4_IC.params", strTargetFolderPath)
-            //TestArchiveFile("\\proto-4\C1_DMS1\DR026_dialyzed_7june00_a\Seq200104201154_Auto1001\sequest_Tryp_4_IC.params", strTargetFolderPath)
+            // TestArchiveFile(@"\\n2.emsl.pnl.gov\dmsarch\LCQ_1\LCQ_C1\DR026_dialyzed_7june00_a\Seq200104201154_Auto1001\sequest_Tryp_4_IC.params", strTargetFolderPath)
+            // TestArchiveFile(@"\\proto-4\C1_DMS1\DR026_dialyzed_7june00_a\Seq200104201154_Auto1001\sequest_Tryp_4_IC.params", strTargetFolderPath)
 
             Console.WriteLine("Done syncing files");
         }
 
-        public void TestArchiveFile(string strSrcFilePath, string strTargetFolderPath)
+        private void TestArchiveFile(string strSrcFilePath, string strTargetFolderPath)
         {
             try
             {
-                var lstLineIgnoreRegExSpecs = new List<Regex>();
-                lstLineIgnoreRegExSpecs.Add(new Regex("mass_type_parent *=.*", RegexOptions.Compiled | RegexOptions.IgnoreCase));
+                var lstLineIgnoreRegExSpecs = new List<Regex> {
+                    new Regex("mass_type_parent *=.*", RegexOptions.Compiled | RegexOptions.IgnoreCase)
+                };
 
                 var blnNeedToArchiveFile = false;
 
@@ -562,7 +559,7 @@ namespace AnalysisManagerProg
                             }
 
                             intRevisionNumber += 1;
-                            strNewName = strNewNameBase + "_v" + intRevisionNumber.ToString() + Path.GetExtension(strTargetFilePath);
+                            strNewName = strNewNameBase + "_v" + intRevisionNumber + Path.GetExtension(strTargetFilePath);
                         } while (true);
 
                         fiArchivedFile.MoveTo(strNewPath);
@@ -593,7 +590,7 @@ namespace AnalysisManagerProg
         {
             Console.WriteLine("Splitting concatenated DTA file");
 
-            clsSplitCattedFiles FileSplitter = new clsSplitCattedFiles();
+            var FileSplitter = new clsSplitCattedFiles();
             FileSplitter.SplitCattedDTAsOnly(rootFileName, strResultsFolder);
 
             Console.WriteLine("Completed splitting concatenated DTA file");
@@ -604,24 +601,35 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDTASplit()
         {
-            //'Const intDebugLevel = 2
 
-            //'Dim objJobParams = InitializeMgrAndJobParams(intDebugLevel)
-            //'Dim objStatusTools As New clsStatusFile("Status.xml", intDebugLevel)
+            const int intDebugLevel = 2;
 
-            //'Dim myEMSLUtilities As New clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY)
+            var objJobParams = InitializeMgrAndJobParams(intDebugLevel);
 
-            //'objJobParams.SetParam("JobParameters", "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08")
-            //'objJobParams.SetParam("JobParameters", "NumberOfClonedSteps", "25")
-            //'objJobParams.SetParam("JobParameters", "ClonedStepsHaveEqualNumSpectra", "True")
+            var statusTools = new clsStatusFile("Status.xml", intDebugLevel);
+            RegisterEvents(statusTools);
 
-            //'Dim objToolRunner = New clsAnalysisToolRunnerDtaSplit
-            //'objToolRunner.Setup(m_mgrParams, objJobParams, objStatusTools, myEMSLUtilities)
+            var myEMSLUtilities = new clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY);
+            RegisterEvents(myEMSLUtilities);
 
-            //'objToolRunner.RunTool()
+            objJobParams.SetParam("JobParameters", "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08");
+            objJobParams.SetParam("JobParameters", "NumberOfClonedSteps", "25");
+            objJobParams.SetParam("JobParameters", "ClonedStepsHaveEqualNumSpectra", "True");
+
+            var fiMgr = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
+            var mgrFolderPath = fiMgr.DirectoryName;
+
+            var summaryFile = new clsSummaryFile();
+            summaryFile.Clear();
+
+            var pluginLoader = new clsPluginLoader(summaryFile, mgrFolderPath);
+
+            var objToolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
+            objToolRunner.Setup(m_mgrParams, objJobParams, statusTools, summaryFile, myEMSLUtilities);
+            objToolRunner.RunTool();
+
         }
 
-        public bool TestProteinDBExport(string DestFolder)
         /// <summary>
         /// Test creation of a .fasta file from a protein collection
         /// Also calls Running BuildSA
@@ -630,22 +638,12 @@ namespace AnalysisManagerProg
         /// <returns></returns>
         public bool TestProteinDBExport(string destFolder)
         {
-            string strLegacyFasta = null;
-            string strProteinCollectionList = null;
-            string strProteinOptions = null;
 
             // Test what the Protein_Exporter does if a protein collection name is truncated (and thus invalid)
-            strLegacyFasta = "na";
-            strProteinCollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_";
-            strProteinOptions = "seq_direction=forward,filetype=fasta";
-
-            // Test a legacy fasta file:
-            strLegacyFasta = "GOs_Surface_Sargasso_Meso_2009-02-11_24.fasta";
-            strProteinCollectionList = "";
-            strProteinOptions = "";
+            var strProteinCollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_";
+            var strProteinOptions = "seq_direction=forward,filetype=fasta";
 
             // Test a 34 MB fasta file
-            strLegacyFasta = "na";
             strProteinCollectionList = "nr_ribosomal_2010-08-17,Tryp_Pig";
             strProteinOptions = "seq_direction=forward,filetype=fasta";
 
@@ -654,39 +652,39 @@ namespace AnalysisManagerProg
             // strProteinCollectionList = "GWB1_Rifle_2011_9_13_0_1_2013-03-27,Tryp_Pig_Bov"
             // strProteinOptions = "seq_direction=forward,filetype=fasta"
 
-            bool blnSuccess = false;
-            blnSuccess = TestProteinDBExport(DestFolder, "na", strProteinCollectionList, strProteinOptions);
+            var blnSuccess = false;
+            blnSuccess = TestProteinDBExport(destFolder, "na", strProteinCollectionList, strProteinOptions);
 
             if (blnSuccess)
             {
                 IJobParams oJobParams = InitializeManagerParams();
 
-                var blnMsgfPlus = true;
+                const bool blnMsgfPlus = true;
                 var strJobNum = "12345";
                 var intDebugLevel = Convert.ToInt16(m_mgrParams.GetParam("debuglevel", 1));
 
-                var JavaProgLoc = "C:\\Program Files\\Java\\jre8\\bin\\java.exe";
-                var MSGFDbProgLoc = "C:\\DMS_Programs\\MSGFDB\\MSGFPlus.jar";
-                var FastaFileIsDecoy = false;
-                string FastaFilePath = string.Empty;
+                var JavaProgLoc = @"C:\Program Files\Java\jre8\bin\java.exe";
+                var MSGFDbProgLoc = @"C:\DMS_Programs\MSGFDB\MSGFPlus.jar";
+                bool fastaFileIsDecoy;
+                string fastaFilePath;
 
                 oJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName);
 
-                //' Note: This won't compile if the AM_Shared project is loaded in the solution
-                //Dim oTool As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
-                //oTool = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, oJobParams, strJobNum, m_mgrParams.GetParam("workdir"), intDebugLevel, blnMsgfPlus)
+                // Uncomment the following if the MSGFDB plugin is associated with the solution
+                //var oTool = new AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(
+                //    m_mgrParams, oJobParams, strJobNum, m_mgrParams.GetParam("workdir"), intDebugLevel, blnMsgfPlus);
 
-                //Dim FastaFileSizeKB As Single
-                //Dim eResult As CloseOutType
+                //RegisterEvents(oTool);
 
-                //' Note that FastaFilePath will be populated by this function call
-                //eResult = oTool.InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath)
+                //float fastaFileSizeKB;
+
+                //// Note that fastaFilePath will be populated by this function call
+                //var eResult = oTool.InitializeFastaFile(JavaProgLoc, MSGFDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath);
             }
 
             return blnSuccess;
         }
 
-        public bool TestProteinDBExport(string DestFolder, string strLegacyFasta, string strProteinCollectionList, string strProteinOptions)
         /// <summary>
         /// Test creation of a .fasta file from a protein collection
         /// </summary>
@@ -706,6 +704,10 @@ namespace AnalysisManagerProg
                     return false;
                 }
                 m_FastaTools = new Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr);
+                m_FastaTools.FileGenerationStarted += m_FastaTools_FileGenerationStarted;
+                m_FastaTools.FileGenerationCompleted += m_FastaTools_FileGenerationCompleted;
+                m_FastaTools.FileGenerationProgress += m_FastaTools_FileGenerationProgress;
+
             }
 
             // Initialize fasta generation state variables
@@ -713,6 +715,8 @@ namespace AnalysisManagerProg
 
             // Setup a timer to prevent an infinite loop if there's a fasta generation problem
             m_FastaTimer = new System.Timers.Timer();
+            m_FastaTimer.Elapsed += m_FastaTimer_Elapsed;
+
             m_FastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000;
             m_FastaTimer.AutoReset = false;
 
@@ -721,7 +725,7 @@ namespace AnalysisManagerProg
             try
             {
                 m_FastaTimer.Start();
-                var HashString = m_FastaTools.ExportFASTAFile(strProteinCollectionList, strProteinOptions, strLegacyFasta, DestFolder);
+                var hashString = m_FastaTools.ExportFASTAFile(strProteinCollectionList, strProteinOptions, strLegacyFasta, destFolder);
             }
             catch (Exception ex)
             {
@@ -737,12 +741,12 @@ namespace AnalysisManagerProg
 
             if (m_FastaGenTimeOut)
             {
-                //Fasta generator hung - report error and exit
-                Console.WriteLine("Timeout error while generating OrdDb file (" + FASTA_GEN_TIMEOUT_INTERVAL_SEC.ToString() + " seconds have elapsed)");
+                // Fasta generator hung - report error and exit
+                Console.WriteLine("Timeout error while generating OrdDb file (" + FASTA_GEN_TIMEOUT_INTERVAL_SEC + " seconds have elapsed)");
                 return false;
             }
 
-            //If we got to here, everything worked OK
+            // If we got to here, everything worked OK
             return true;
         }
 
@@ -753,10 +757,10 @@ namespace AnalysisManagerProg
         {
             var OutFileName = "MyTestDataset_out.txt";
 
-            clsAnalysisJob objJobParams = null;
-            clsMyEMSLUtilities myEMSLUtilities = null;
+            clsAnalysisJob objJobParams;
+            clsMyEMSLUtilities myEMSLUtilities;
 
-            clsCodeTestAM objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
             objJobParams.AddResultFileToSkip(OutFileName);
 
@@ -768,15 +772,14 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDeliverResults()
         {
-            var OutFileName = "MyTestDataset_out.txt";
 
-            clsAnalysisJob objJobParams = null;
-            clsMyEMSLUtilities myEMSLUtilities = null;
+            clsAnalysisJob objJobParams;
+            clsMyEMSLUtilities myEMSLUtilities;
 
-            clsCodeTestAM objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
-            objJobParams.SetParam("StepParameters", "OutputFolderName", "Tst_Results_" + System.DateTime.Now.ToString("hh_mm_ss"));
-            objJobParams.SetParam("JobParameters", "transferFolderPath", "\\\\proto-3\\DMS3_XFER");
+            objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
+            objJobParams.SetParam("JobParameters", "transferFolderPath", @"\\proto-3\DMS3_XFER");
             objJobParams.SetParam("JobParameters", "DatasetNum", "Test_Dataset");
 
             objToolRunner.RunTool();
@@ -787,18 +790,13 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestFileDateConversion()
         {
-            FileInfo objTargetFile = default(FileInfo);
-            string strDate = null;
+            var objTargetFile = new FileInfo(@"D:\JobSteps.png");
 
-            objTargetFile = new FileInfo("D:\\JobSteps.png");
+            var strDate = objTargetFile.LastWriteTime.ToString(CultureInfo.InvariantCulture);
 
-            strDate = objTargetFile.LastWriteTime.ToString();
+            var ResultFiles = Directory.GetFiles(@"C:\Temp\", "*");
 
-            string[] ResultFiles = null;
-
-            ResultFiles = Directory.GetFiles("C:\\Temp\\", "*");
-
-            foreach (string FileToCopy in ResultFiles)
+            foreach (var FileToCopy in ResultFiles)
             {
                 Console.WriteLine(FileToCopy);
             }
@@ -811,22 +809,29 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestLogging()
         {
-            var logFileNameBase = "Logs\\AnalysisMgr";
+            var logFileNameBase = @"Logs\AnalysisMgr";
 
             clsLogTools.CreateFileLogger(logFileNameBase);
 
-            clsAnalysisJob objJobParams = null;
-            clsMyEMSLUtilities myEMSLUtilities = null;
+            clsAnalysisJob objJobParams;
+            clsMyEMSLUtilities myEMSLUtilities;
 
-            clsCodeTestAM objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
             m_DebugLevel = 2;
             objJobParams.DebugLevel = m_DebugLevel;
 
             for (var debugLevel = 0; debugLevel <= 5; debugLevel++)
             {
-                LogMessage("Test status, debugLevel " + debugLevel, debugLevel, false);
+                LogMessage("Test status, debugLevel " + debugLevel, debugLevel);
             }
+
+            for (var debugLevel = 0; debugLevel <= 5; debugLevel++)
+            {
+                LogDebug("Test debug, debugLevel " + debugLevel, debugLevel);
+            }
+
+            LogWarning("Test warning");
 
             for (var debugLevel = 0; debugLevel <= 5; debugLevel++)
             {
@@ -834,10 +839,7 @@ namespace AnalysisManagerProg
             }
 
             LogError("Test error, no detailed message");
-
-            // To test this function, temporarily make it public
-            // objToolRunner.LogError("Test error", "Detailed message of the error")
-
+          
             try
             {
                 throw new FileNotFoundException("TestFile.txt");
@@ -855,8 +857,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void GetLegacyFastaFileSize()
         {
-            IJobParams objJobParams = default(IJobParams);
-            objJobParams = new clsAnalysisJob(m_mgrParams, 0);
+            var objJobParams = new clsAnalysisJob(m_mgrParams, 0);
 
             objJobParams.SetParam("JobParameters", "ToolName", "MSGFPlus_SplitFasta");
 
@@ -878,11 +879,11 @@ namespace AnalysisManagerProg
 
             var spaceRequiredMB = objResources.LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo);
 
-            string legacyFastaName = null;
+            string legacyFastaName;
 
             if (proteinCollectionInfo.UsingSplitFasta)
             {
-                string errorMessage = string.Empty;
+                string errorMessage;
                 legacyFastaName = clsAnalysisResources.GetSplitFastaFileName(objJobParams, out errorMessage);
             }
             else
@@ -904,13 +905,13 @@ namespace AnalysisManagerProg
             const string callingFunction = "TestRunQuery";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
-            DataTable dtResults = null;
+            DataTable dtResults;
 
             clsGlobal.GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
 
             foreach (DataRow row in dtResults.Rows)
             {
-                Console.WriteLine(row[0].ToString() + ": " + row[1].ToString());
+                Console.WriteLine(row[0] + ": " + row[1]);
             }
         }
 
@@ -933,13 +934,13 @@ namespace AnalysisManagerProg
             const string callingFunction = "TestRunSP";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
-            DataTable dtResults = null;
+            DataTable dtResults;
 
             clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
 
             foreach (DataRow row in dtResults.Rows)
             {
-                Console.WriteLine(row[0].ToString() + ": " + row[1].ToString());
+                Console.WriteLine(row[0] + ": " + row[1]);
             }
         }
 
@@ -950,9 +951,10 @@ namespace AnalysisManagerProg
         public void ConvertZipToGZip(string zipFilePath)
         {
             const int debugLevel = 2;
-            const string workDir = "e:\\dms_workdir";
+            const string workDir = @"C:\DMS_WorkDir";
 
             var ionicZipTools = new clsIonicZipTools(debugLevel, workDir);
+            RegisterEvents(ionicZipTools);
 
             ionicZipTools.UnzipFile(zipFilePath);
 
@@ -968,22 +970,22 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGZip()
         {
-            clsAnalysisJob objJobParams = null;
-            clsMyEMSLUtilities myEMSLUtilities = null;
+            clsAnalysisJob objJobParams;
+            clsMyEMSLUtilities myEMSLUtilities;
 
-            clsCodeTestAM objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
-            const string sourceFilePath = "F:\\Temp\\ZipTest\\QExact01\\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
+            const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
 
-            objToolRunner.GZipFile(sourceFilePath, "F:\\Temp\\ZipTest\\QExact01\\GZipTarget", false);
+            objToolRunner.GZipFile(sourceFilePath, @"F:\Temp\ZipTest\QExact01\GZipTarget", false);
 
             objToolRunner.GZipFile(sourceFilePath, false);
 
-            string gzippedFile = "F:\\Temp\\ZipTest\\QExact01\\" + Path.GetFileName(sourceFilePath) + ".gz";
+            var gzippedFile = @"F:\Temp\ZipTest\QExact01\" + Path.GetFileName(sourceFilePath) + ".gz";
 
             objToolRunner.GUnzipFile(gzippedFile);
 
-            objToolRunner.GUnzipFile(gzippedFile, "F:\\Temp\\ZipTest\\GUnzipTarget");
+            objToolRunner.GUnzipFile(gzippedFile, @"F:\Temp\ZipTest\GUnzipTarget");
         }
 
         /// <summary>
@@ -1008,23 +1010,25 @@ namespace AnalysisManagerProg
         /// <remarks>This uses ionic zip</remarks>
         public void TestZip()
         {
-            clsAnalysisJob objJobParams = null;
-            clsMyEMSLUtilities myEMSLUtilities = null;
+            clsAnalysisJob objJobParams;
+            clsMyEMSLUtilities myEMSLUtilities;
 
-            clsCodeTestAM objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
-            const string sourceFilePath = "F:\\Temp\\ZipTest\\QExact01\\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
+            const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
 
             objToolRunner.ZipFile(sourceFilePath, false);
 
-            string zippedFile = "F:\\Temp\\ZipTest\\QExact01\\" + Path.GetFileNameWithoutExtension(sourceFilePath) + ".zip";
+            var zippedFile = @"F:\Temp\ZipTest\QExact01\" + Path.GetFileNameWithoutExtension(sourceFilePath) + ".zip";
 
             objToolRunner.UnzipFile(zippedFile);
 
-            objToolRunner.UnzipFile(zippedFile, "F:\\Temp\\ZipTest\\UnzipTarget");
+            objToolRunner.UnzipFile(zippedFile, @"F:\Temp\ZipTest\UnzipTarget");
 
-            var oZipTools = new clsIonicZipTools(1, WORKING_DIRECTORY);
-            oZipTools.ZipDirectory("F:\\Temp\\ZipTest\\QExact01\\", "F:\\Temp\\ZipTest\\QExact01_Folder.zip");
+            var ionicZipTools = new clsIonicZipTools(1, WORKING_DIRECTORY);
+            RegisterEvents(ionicZipTools);
+
+            ionicZipTools.ZipDirectory(@"F:\Temp\ZipTest\QExact01\", @"F:\Temp\ZipTest\QExact01_Folder.zip");
         }
 
         /// <summary>
@@ -1032,12 +1036,11 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestIonicZipTools()
         {
-            clsIonicZipTools oIonicZipTools = default(clsIonicZipTools);
+            var ionicZipTools = new clsIonicZipTools(1, @"C:\DMS_WorkDir");
+            RegisterEvents(ionicZipTools);
 
-            oIonicZipTools = new clsIonicZipTools(1, "E:\\DMS_WorkDir");
-
-            oIonicZipTools.UnzipFile("E:\\DMS_WorkDir\\Temp.zip", "E:\\DMS_WorkDir", "*.png");
-            foreach (var item in oIonicZipTools.MostRecentUnzippedFiles)
+            ionicZipTools.UnzipFile(@"C:\DMS_WorkDir\Temp.zip", @"C:\DMS_WorkDir", "*.png");
+            foreach (var item in ionicZipTools.MostRecentUnzippedFiles)
             {
                 Console.WriteLine(item.Key + " - " + item.Value);
             }
@@ -1052,34 +1055,34 @@ namespace AnalysisManagerProg
         {
             var intDebugLevel = 2;
 
-            clsResourceTestClass objResources = new clsResourceTestClass();
+            var objResources = new clsResourceTestClass();
 
-            clsStatusFile objStatusTools = new clsStatusFile("Status.xml", intDebugLevel);
-            bool blnSuccess = false;
+            var statusTools = new clsStatusFile("Status.xml", intDebugLevel);
+            RegisterEvents(statusTools);
 
             if (string.IsNullOrEmpty(strSourceDatasetFolder))
             {
-                strSourceDatasetFolder = "\\\\Proto-10\\9T_FTICR_Imaging\\2010_4\\ratjoint071110_INCAS_MS";
+                strSourceDatasetFolder = @"\\Proto-10\9T_FTICR_Imaging\2010_4\ratjoint071110_INCAS_MS";
             }
 
-            clsAnalysisJob objJobParams = null;
-            clsMyEMSLUtilities myEMSLUtilities = null;
+            clsAnalysisJob objJobParams;
+            clsMyEMSLUtilities myEMSLUtilities;
 
-            clsCodeTestAM objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
-            m_mgrParams.SetParam("ChameleonCachedDataFolder", "H:\\9T_Imaging");
+            m_mgrParams.SetParam("ChameleonCachedDataFolder", @"H:\9T_Imaging");
 
             objJobParams.SetParam("JobParameters", "DatasetNum", "ratjoint071110_INCAS_MS");
 
-            objJobParams.SetParam("JobParameters", "DatasetStoragePath", "\\\\Proto-10\\9T_FTICR_Imaging\\2010_4\\");
-            objJobParams.SetParam("JobParameters", "DatasetArchivePath", "\\\\adms.emsl.pnl.gov\\dmsarch\\9T_FTICR_Imaging_1");
-            objJobParams.SetParam("JobParameters", "transferFolderPath", "\\\\proto-10\\DMS3_Xfer");
+            objJobParams.SetParam("JobParameters", "DatasetStoragePath", @"\\Proto-10\9T_FTICR_Imaging\2010_4\");
+            objJobParams.SetParam("JobParameters", "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
+            objJobParams.SetParam("JobParameters", "transferFolderPath", @"\\proto-10\DMS3_Xfer");
 
-            objResources.Setup(m_mgrParams, objJobParams, objStatusTools, myEMSLUtilities);
+            objResources.Setup(m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
 
-            blnSuccess = objResources.RetrieveBrukerMALDIImagingFolders(true);
+            var blnSuccess = objResources.RetrieveBrukerMALDIImagingFolders(true);
 
-            //blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
+            // blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
 
             return blnSuccess;
         }
@@ -1089,31 +1092,32 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestZipAndUnzip()
         {
-            clsIonicZipTools objZipper = new clsIonicZipTools(3, "F:\\Temp");
+            var ionicZipTools = new clsIonicZipTools(3, @"F:\Temp");
+            RegisterEvents(ionicZipTools);
 
-            objZipper.ZipFile("F:\\Temp\\Sarc_P12_D12_1104_148_8Sep11_Cheetah_11-05-34.uimf", false);
+            ionicZipTools.ZipFile(@"F:\Temp\Sarc_P12_D12_1104_148_8Sep11_Cheetah_11-05-34.uimf", false);
 
-            objZipper.ZipFile("F:\\Temp\\Schutzer_cf_ff_XTandem_AllProt.txt", false, "F:\\Temp\\TestCustom.zip");
+            ionicZipTools.ZipFile(@"F:\Temp\Schutzer_cf_ff_XTandem_AllProt.txt", false, @"F:\Temp\TestCustom.zip");
 
-            objZipper.ZipDirectory("F:\\Temp\\STAC", "F:\\Temp\\ZippedFolderTest.zip");
+            ionicZipTools.ZipDirectory(@"F:\Temp\STAC", @"F:\Temp\ZippedFolderTest.zip");
 
-            //objZipper.ZipDirectory("F:\Temp\UnzipTest\0_R00X051Y065", "F:\Temp\UnzipTest\0_R00X051Y065.zip", False)
+            // ionicZipTools.ZipDirectory(@"F:\Temp\UnzipTest\0_R00X051Y065", @"F:\Temp\UnzipTest\0_R00X051Y065.zip", false);
 
-            //      objZipper.ZipDirectory("F:\Temp\UnzipTest\0_R00X051Y065", "F:\Temp\UnzipTest\ZippedFolders2.zip", True, "*.baf*")
+            //      ionicZipTools.ZipDirectory(@"F:\Temp\UnzipTest\0_R00X051Y065", @"F:\Temp\UnzipTest\ZippedFolders2.zip", True, "*.baf*");
 
-            //      objZipper.ZipDirectory("F:\Temp\UnzipTest\0_R00X051Y065", "F:\Temp\UnzipTest\ZippedFolders3.zip", True, "*.ini")
+            //      ionicZipTools.ZipDirectory(@"F:\Temp\UnzipTest\0_R00X051Y065", @"F:\Temp\UnzipTest\ZippedFolders3.zip", True, "*.ini");
 
-            //      objZipper.UnzipFile("f:\temp\unziptest\StageMD5_Scratch.zip")
+            //      ionicZipTools.UnzipFile(@"F:\temp\unziptest\StageMD5_Scratch.zip");
 
-            //      objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders.zip", "F:\Temp\UnzipTest\Unzipped")
+            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders.zip", @"F:\Temp\UnzipTest\Unzipped");
 
-            //      objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders.zip", "F:\Temp\UnzipTest\Unzipped2", "*.baf*")
+            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders.zip", @"F:\Temp\UnzipTest\Unzipped2", "*.baf*");
 
-            //      objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders.zip", "F:\Temp\UnzipTest\Unzipped3", "*.baf*", Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
+            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders.zip", @"F:\Temp\UnzipTest\Unzipped3", "*.baf*", Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite);
 
-            //      objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders3.zip", "F:\Temp\UnzipTest\Unzipped4", "*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently)
+            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders3.zip", @"F:\Temp\UnzipTest\Unzipped4", "*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
 
-            //      objZipper.UnzipFile("F:\Temp\UnzipTest\ZippedFolders3.zip", "F:\Temp\UnzipTest\Unzipped5", "my*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently)
+            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders3.zip", @"F:\Temp\UnzipTest\Unzipped5", "my*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
         }
     
         /// <summary>
