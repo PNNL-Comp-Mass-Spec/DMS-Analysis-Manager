@@ -44,27 +44,25 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            bool blnProcessingError = false;
-            CloseOutType eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+            var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
             // Create some dummy results files
-            string strSubFolderPath = null;
 
             CreateTestFiles(m_WorkDir, 5, "TestResultFile");
 
             // Make some subfolders with more files
-            strSubFolderPath = System.IO.Path.Combine(m_WorkDir, "Plots");
-            System.IO.Directory.CreateDirectory(strSubFolderPath);
+            var strSubFolderPath = Path.Combine(m_WorkDir, "Plots");
+            Directory.CreateDirectory(strSubFolderPath);
             CreateTestFiles(strSubFolderPath, 4, "Plot");
 
-            strSubFolderPath = System.IO.Path.Combine(strSubFolderPath, "MoreStuff");
-            System.IO.Directory.CreateDirectory(strSubFolderPath);
-            blnProcessingError = CreateTestFiles(strSubFolderPath, 5, "Stuff");
+            strSubFolderPath = Path.Combine(strSubFolderPath, "MoreStuff");
+            Directory.CreateDirectory(strSubFolderPath);
+            var success = CreateTestFiles(strSubFolderPath, 5, "Stuff");
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = System.DateTime.UtcNow;
 
-            if (blnProcessingError)
+            if (!success)
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -72,56 +70,54 @@ namespace AnalysisManagerProg
                 eReturnCode = CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
                 LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step"));
             }
 
-            //Make sure objects are released
+            // Make sure objects are released
             System.Threading.Thread.Sleep(500);
-            // 1 second delay
             PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
-            var Result = MakeResultsFolder();
-            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+            var result = MakeResultsFolder();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //MakeResultsFolder handles posting to local log, so set database error message and exit
+                // MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            Result = MoveResultFiles();
-            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+            result = MoveResultFiles();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //MoveResultFiles moves the result files to the result folder
+                // MoveResultFiles moves the result files to the result folder
                 m_message = "Error moving files into results folder";
                 eReturnCode = CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Move the Plots folder to the result files folder
-            System.IO.DirectoryInfo diPlotsFolder = default(System.IO.DirectoryInfo);
-            diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "Plots"));
+            var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
 
-            string strTargetFolderPath = null;
-            strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-            diPlotsFolder.MoveTo(strTargetFolderPath);
+            var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+            if (diPlotsFolder.Exists && !Directory.Exists(strTargetFolderPath))
+                diPlotsFolder.MoveTo(strTargetFolderPath);
 
-            if (blnProcessingError | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
+            if (!success | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Try to save whatever files were moved into the results folder
-                clsAnalysisResults objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName));
+                var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            Result = CopyResultsFolderToServer();
-            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+            result = CopyResultsFolderToServer();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //TODO: What do we do here?
+                // TODO: What do we do here?
                 // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return Result;
+                return result;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -129,14 +125,14 @@ namespace AnalysisManagerProg
 
         private bool CreateTestFiles(string strFolderPath, int intFilesToCreate, string strFileNameBase)
         {
-            System.Random objRand = new System.Random();
+            var objRand = new System.Random();
 
-            for (int intIndex = 1; intIndex <= intFilesToCreate; intIndex++)
+            for (var intIndex = 1; intIndex <= intFilesToCreate; intIndex++)
             {
-                var strOutFilePath = System.IO.Path.Combine(strFolderPath, strFileNameBase + intIndex.ToString() + "_" + objRand.Next(1, 99) + ".txt");
+                var strOutFilePath = Path.Combine(strFolderPath, strFileNameBase + intIndex + "_" + objRand.Next(1, 99) + ".txt");
 
-                var swOutFile = new System.IO.StreamWriter(new System.IO.FileStream(strOutFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-                swOutFile.WriteLine(System.DateTime.Now.ToString() + " - This is a test file.");
+                var swOutFile = new StreamWriter(new FileStream(strOutFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                swOutFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
                 swOutFile.Close();
 
                 System.Threading.Thread.Sleep(50);

@@ -103,32 +103,32 @@ namespace AnalysisManagerProg
         {
             try
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Initializing the manager");
 
                 if (!InitMgr())
                 {
-                    if (this.TraceMode)
+                    if (TraceMode)
                         ShowTraceMessage("InitMgr returned false; aborting");
                     return -1;
                 }
 
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Call DoAnalysis");
                 DoAnalysis();
 
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Exiting clsMainProcess.Main with error code = 0");
                 return 0;
             }
             catch (Exception ex)
             {
-                //Report any exceptions not handled at a lower level to the system application log
+                // Report any exceptions not handled at a lower level to the system application log
                 var errMsg = "Critical exception starting application: " + ex.Message;
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage(errMsg + "; " + clsGlobal.GetExceptionStackTrace(ex, true));
                 PostToEventLog(errMsg + "; " + clsGlobal.GetExceptionStackTrace(ex, false));
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Exiting clsMainProcess.Main with error code = 1");
                 return 1;
             }
@@ -139,7 +139,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public clsMainProcess(bool blnTraceModeEnabled)
         {
-            this.TraceMode = blnTraceModeEnabled;
+            TraceMode = blnTraceModeEnabled;
             m_ConfigChanged = false;
             m_DebugLevel = 0;
             m_NeedToAbortProcessing = false;
@@ -165,20 +165,19 @@ namespace AnalysisManagerProg
             clsLogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + hostName, true);
 
             // Get settings from config file
-            Dictionary<string, string> lstMgrSettings = default(Dictionary<string, string>);
 
             try
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Reading application config file");
-                lstMgrSettings = LoadMgrSettingsFromFile();
+                var lstMgrSettings = LoadMgrSettingsFromFile();
 
                 // Get the manager settings
                 // If you get an exception here while debugging in Visual Studio, then be sure
                 //   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
                 try
                 {
-                    if (this.TraceMode)
+                    if (TraceMode)
                         ShowTraceMessage("Instantiating clsAnalysisMgrSettings");
                     m_MgrSettings = new clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath, TraceMode);
                 }
@@ -215,7 +214,7 @@ namespace AnalysisManagerProg
             }
 
             m_MgrName = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME);
-            if (this.TraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Manager name is " + m_MgrName);
 
             // Delete any temporary files that may be left in the app directory
@@ -240,7 +239,7 @@ namespace AnalysisManagerProg
             clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, false);
 
             // Make the initial log entry
-            if (this.TraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Initializing log file " + clsLogTools.CurrentFileAppenderPath);
 
             var startupMsg = "=== Started Analysis Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
@@ -281,27 +280,30 @@ namespace AnalysisManagerProg
             }
 
             // Setup the tool for getting tasks
-            if (this.TraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Instantiate m_AnalysisTask as new clsAnalysisJob");
             m_AnalysisTask = new clsAnalysisJob(m_MgrSettings, m_DebugLevel);
 
             m_WorkDirPath = m_MgrSettings.GetParam("workdir");
 
             // Setup the manager cleanup class
-            if (this.TraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Setup the manager cleanup class");
+
             m_MgrErrorCleanup = new clsCleanupMgrErrors(m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING), m_MgrName, m_DebugLevel, m_MgrFolderPath, m_WorkDirPath);
 
-            if (this.TraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Initialize the Summary file");
+
             m_SummaryFile = new clsSummaryFile();
             m_SummaryFile.Clear();
 
-            if (this.TraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Initialize the Plugin Loader");
+
             m_PluginLoader = new clsPluginLoader(m_SummaryFile, m_MgrFolderPath);
 
-            //Everything worked
+            // Everything worked
             return true;
         }
 
@@ -311,37 +313,32 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public void DoAnalysis()
         {
-            if (this.TraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Entering clsMainProcess.DoAnalysis");
 
-            var LoopCount = 0;
-            int MaxLoopCount = 0;
-            var TasksStartedCount = 0;
-            bool blnErrorDeletingFilesFlagFile = false;
+            var loopCount = 0;
+            var tasksStartedCount = 0;
+            var errorDeletingFilesFlagFile = false;
 
-            DateTime dtLastConfigDBUpdate = System.DateTime.UtcNow;
-
-            bool blnRequestJobs = false;
-            bool blnOneTaskStarted = false;
-            bool blnOneTaskPerformed = false;
+            var dtLastConfigDBUpdate = DateTime.UtcNow;
 
             // Used to track critical manager errors (not necessarily failed analysis jobs when the plugin reports "no results" or similar)
-            var intCriticalMgrErrorCount = 0;
-            var intSuccessiveDeadLockCount = 0;
+            var criticalMgrErrorCount = 0;
+            var successiveDeadLockCount = 0;
 
             try
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Entering clsMainProcess.DoAnalysis Try/Catch block");
 
-                MaxLoopCount = Convert.ToInt32(m_MgrSettings.GetParam("maxrepetitions"));
-                blnRequestJobs = true;
-                blnOneTaskStarted = false;
-                blnOneTaskPerformed = false;
+                var maxLoopCount = Convert.ToInt32(m_MgrSettings.GetParam("maxrepetitions"));
+                var requestJobs = true;
+                var oneTaskStarted = false;
+                var oneTaskPerformed = false;
 
                 InitStatusTools();
 
-                while ((LoopCount < MaxLoopCount) & blnRequestJobs)
+                while ((loopCount < maxLoopCount) & requestJobs)
                 {
                     UpdateStatusIdle("No analysis jobs found");
 
@@ -352,7 +349,7 @@ namespace AnalysisManagerProg
                         // Local config file has changed
                         m_ConfigChanged = false;
 
-                        if (this.TraceMode)
+                        if (TraceMode)
                             ShowTraceMessage("Reloading manager settings since config file has changed");
 
                         if (!ReloadManagerSettings())
@@ -373,11 +370,12 @@ namespace AnalysisManagerProg
                     }
 
                     // Check to see if manager is still active
-                    bool MgrActive = m_MgrSettings.GetParam("mgractive", false);
-                    bool MgrActiveLocal = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
-                    string strManagerDisableReason = null;
+                    var MgrActive = m_MgrSettings.GetParam("mgractive", false);
+                    var MgrActiveLocal = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
+
                     if (!(MgrActive & MgrActiveLocal))
                     {
+                        string strManagerDisableReason;
                         if (!MgrActiveLocal)
                         {
                             strManagerDisableReason = "Disabled locally via AnalysisManagerProg.exe.config";
@@ -394,7 +392,7 @@ namespace AnalysisManagerProg
                         return;
                     }
 
-                    bool MgrUpdateRequired = m_MgrSettings.GetParam("ManagerUpdateRequired", false);
+                    var MgrUpdateRequired = m_MgrSettings.GetParam("ManagerUpdateRequired", false);
                     if (MgrUpdateRequired)
                     {
                         var msg = "Manager update is required";
@@ -412,7 +410,7 @@ namespace AnalysisManagerProg
                         // There was a problem deleting non result files with the last job.  Attempt to delete files again
                         if (!m_MgrErrorCleanup.CleanWorkDir())
                         {
-                            if (blnOneTaskStarted)
+                            if (oneTaskStarted)
                             {
                                 LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam("StepParameters", "Job") + "; see folder " + m_WorkDirPath);
                                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
@@ -445,7 +443,7 @@ namespace AnalysisManagerProg
                     }
 
                     // Check to see if an excessive number of errors have occurred
-                    if (intCriticalMgrErrorCount > MAX_ERROR_COUNT)
+                    if (criticalMgrErrorCount > MAX_ERROR_COUNT)
                     {
                         LogError("Excessive task failures; disabling manager via flag file");
 
@@ -462,7 +460,7 @@ namespace AnalysisManagerProg
                     // Verify working directory properly specified and empty
                     if (!ValidateWorkingDir())
                     {
-                        if (blnOneTaskStarted)
+                        if (oneTaskStarted)
                         {
                             // Working directory problem due to the most recently processed job
                             // Create ErrorDeletingFiles file and exit the program
@@ -483,7 +481,7 @@ namespace AnalysisManagerProg
                     // Check whether the computer is likely to install the monthly Windows Updates within the next few hours
                     // Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
                     // Do not request a job between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
-                    string pendingWindowsUpdateMessage = string.Empty;
+                    string pendingWindowsUpdateMessage;
                     if (clsWindowsUpdateStatus.UpdatesArePending(out pendingWindowsUpdateMessage))
                     {
                         LogMessage(pendingWindowsUpdateMessage);
@@ -491,11 +489,12 @@ namespace AnalysisManagerProg
                         break;
                     }
 
-                    if (this.TraceMode)
+                    if (TraceMode)
                         ShowTraceMessage("Requesting a new task from DMS_Pipeline");
 
-                    // Re-initialize these utilies for each analysis job
+                    // Re-initialize these utilities for each analysis job
                     m_MyEMSLUtilities = new clsMyEMSLUtilities(m_DebugLevel, m_WorkDirPath);
+                    RegisterEvents(m_MyEMSLUtilities);
 
                     // Get an analysis job, if any are available
 
@@ -504,48 +503,47 @@ namespace AnalysisManagerProg
                     switch (taskReturn)
                     {
                         case clsDBTask.RequestTaskResult.NoTaskFound:
-                            if (this.TraceMode)
+                            if (TraceMode)
                                 ShowTraceMessage("No tasks found");
 
-                            //No tasks found
+                            // No tasks found
                             if (m_DebugLevel >= 3)
                             {
                                 LogMessage("No analysis jobs found");
                             }
-                            blnRequestJobs = false;
-                            intCriticalMgrErrorCount = 0;
+                            requestJobs = false;
+                            criticalMgrErrorCount = 0;
                             UpdateStatusIdle("No analysis jobs found");
 
                             break;
                         case clsDBTask.RequestTaskResult.ResultError:
-                            if (this.TraceMode)
+                            if (TraceMode)
                                 ShowTraceMessage("Error requesting a task");
 
-                            //There was a problem getting the task; errors were logged by RequestTaskResult
-                            intCriticalMgrErrorCount += 1;
+                            // There was a problem getting the task; errors were logged by RequestTaskResult
+                            criticalMgrErrorCount += 1;
 
                             break;
                         case clsDBTask.RequestTaskResult.TaskFound:
 
-                            if (this.TraceMode)
+                            if (TraceMode)
                                 ShowTraceMessage("Task found");
 
-                            blnRequestJobs = true;
-                            TasksStartedCount += 1;
-                            intSuccessiveDeadLockCount = 0;
+                            tasksStartedCount += 1;
+                            successiveDeadLockCount = 0;
 
                             try
                             {
-                                blnOneTaskStarted = true;
+                                oneTaskStarted = true;
                                 if (DoAnalysisJob())
                                 {
                                     // Task succeeded; reset the sequential job failure counter
-                                    intCriticalMgrErrorCount = 0;
-                                    blnOneTaskPerformed = true;
+                                    criticalMgrErrorCount = 0;
+                                    oneTaskPerformed = true;
                                 }
                                 else
                                 {
-                                    //Something went wrong; errors were logged by DoAnalysisJob
+                                    // Something went wrong; errors were logged by DoAnalysisJob
                                     if (m_MostRecentErrorMessage.Contains("None of the spectra are centroided") || m_MostRecentErrorMessage.Contains("No peaks found") || m_MostRecentErrorMessage.Contains("No spectra were exported"))
                                     {
                                         // Job failed, but this was not a manager error
@@ -553,7 +551,7 @@ namespace AnalysisManagerProg
                                     }
                                     else
                                     {
-                                        intCriticalMgrErrorCount += 1;
+                                        criticalMgrErrorCount += 1;
                                     }
                                 }
                             }
@@ -567,79 +565,77 @@ namespace AnalysisManagerProg
                                 // Set the job state to failed
                                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception thrown by DoAnalysisJob");
 
-                                intCriticalMgrErrorCount += 1;
+                                criticalMgrErrorCount += 1;
                                 m_NeedToAbortProcessing = true;
                             }
 
                             break;
                         case clsDBTask.RequestTaskResult.TooManyRetries:
-                            if (this.TraceMode)
+                            if (TraceMode)
                                 ShowTraceMessage("Too many retries calling the stored procedure");
 
-                            //There were too many retries calling the stored procedure; errors were logged by RequestTaskResult
-                            // Bump up LoopCount to the maximum to exit the loop
+                            // There were too many retries calling the stored procedure; errors were logged by RequestTaskResult
+                            // Bump up loopCount to the maximum to exit the loop
                             UpdateStatusIdle("Excessive retries requesting task");
-                            LoopCount = MaxLoopCount;
+                            loopCount = maxLoopCount;
 
                             break;
                         case clsDBTask.RequestTaskResult.Deadlock:
 
-                            if (this.TraceMode)
+                            if (TraceMode)
                                 ShowTraceMessage("Deadlock");
 
                             // A deadlock error occured
                             // Query the DB again, but only if we have not had 3 deadlock results in a row
-                            intSuccessiveDeadLockCount += 1;
-                            if (intSuccessiveDeadLockCount >= 3)
+                            successiveDeadLockCount += 1;
+                            if (successiveDeadLockCount >= 3)
                             {
-                                var msg = "Deadlock encountered " + intSuccessiveDeadLockCount.ToString() + " times in a row when requesting a new task; exiting";
+                                var msg = "Deadlock encountered " + successiveDeadLockCount.ToString() + " times in a row when requesting a new task; exiting";
                                 LogWarning(msg);
-                                blnRequestJobs = false;
+                                requestJobs = false;
                             }
 
                             break;
                         default:
-                            //Shouldn't ever get here
+                            // Shouldn't ever get here
                             LogError("clsMainProcess.DoAnalysis; Invalid request result: " + Convert.ToInt32(taskReturn).ToString());
                             return;
-
-                            break;
                     }
 
                     if (NeedToAbortProcessing())
                     {
-                        if (this.TraceMode)
+                        if (TraceMode)
                             ShowTraceMessage("Need to abort processing");
                         break;
                     }
-                    LoopCount += 1;
+                    loopCount += 1;
 
                     // If the only problem was deleting non result files, we want to stop the manager
                     if (m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile())
                     {
-                        if (this.TraceMode)
+                        if (TraceMode)
                             ShowTraceMessage("Error deleting files flag file");
-                        blnErrorDeletingFilesFlagFile = true;
-                        LoopCount = MaxLoopCount;
+                        errorDeletingFilesFlagFile = true;
+                        loopCount = maxLoopCount;
                     }
                 }
 
-                if (LoopCount >= MaxLoopCount)
+                if (loopCount >= maxLoopCount)
                 {
-                    if (blnErrorDeletingFilesFlagFile)
+                    if (errorDeletingFilesFlagFile)
                     {
-                        if (TasksStartedCount > 0)
+                        if (tasksStartedCount > 0)
                         {
-                            LogWarning("Error deleting file with an open file handle; closing manager. Jobs processed: " + TasksStartedCount.ToString());
+                            LogWarning("Error deleting file with an open file handle; closing manager. Jobs processed: " + tasksStartedCount.ToString());
                             Thread.Sleep(1500);
                         }
                     }
                     else
                     {
-                        if (TasksStartedCount > 0)
+                        if (tasksStartedCount > 0)
                         {
-                            var msg = "Maximum number of jobs to analyze has been reached: " + TasksStartedCount.ToString() + " job";
-                            if (TasksStartedCount != 1)
+                            var msg = "Maximum number of jobs to analyze has been reached: " + tasksStartedCount.ToString() + " job";
+                            if (tasksStartedCount != 1)
                                 msg += "s";
                             msg += "; closing manager";
                             LogMessage(msg);
@@ -647,12 +643,12 @@ namespace AnalysisManagerProg
                     }
                 }
 
-                if (blnOneTaskPerformed)
+                if (oneTaskPerformed)
                 {
                     LogMessage("Analysis complete for all available jobs");
                 }
 
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Closing the manager");
                 UpdateClose("Closing manager.");
             }
@@ -665,7 +661,7 @@ namespace AnalysisManagerProg
             {
                 if ((m_StatusTools != null))
                 {
-                    if (this.TraceMode)
+                    if (TraceMode)
                         ShowTraceMessage("Disposing message queue via m_StatusTools.DisposeMessageQueue");
                     m_StatusTools.DisposeMessageQueue();
                 }
@@ -674,20 +670,20 @@ namespace AnalysisManagerProg
 
         private bool DoAnalysisJob()
         {
-            CloseOutType eToolRunnerResult = default(CloseOutType);
-            int jobNum = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0);
-            int stepNum = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0);
-            int cpuLoadExpected = m_AnalysisTask.GetJobParameter("StepParameters", "CPU_Load", 1);
+            CloseOutType eToolRunnerResult;
+            var jobNum = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0);
+            var stepNum = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0);
+            var cpuLoadExpected = m_AnalysisTask.GetJobParameter("StepParameters", "CPU_Load", 1);
 
-            string datasetName = m_AnalysisTask.GetParam("JobParameters", "DatasetNum");
-            string jobToolDescription = m_AnalysisTask.GetCurrentJobToolDescription();
+            var datasetName = m_AnalysisTask.GetParam("JobParameters", "DatasetNum");
+            var jobToolDescription = m_AnalysisTask.GetCurrentJobToolDescription();
 
             var blnRunToolError = false;
 
-            if (this.TraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Processing job " + jobNum + ", " + jobToolDescription);
 
-            //Initialize summary and status files
+            // Initialize summary and status files
             m_SummaryFile.Clear();
 
             if (m_StatusTools == null)
@@ -696,9 +692,11 @@ namespace AnalysisManagerProg
             }
 
             // Update the cached most recent job info
-            m_MostRecentJobInfo = ConstructMostRecentJobInfoText(System.DateTime.Now.ToString(), jobNum, datasetName, jobToolDescription);
+            m_MostRecentJobInfo = ConstructMostRecentJobInfoText(
+                DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
+                jobNum, datasetName, jobToolDescription);
 
-            m_StatusTools.TaskStartTime = System.DateTime.UtcNow;
+            m_StatusTools.TaskStartTime = DateTime.UtcNow;
             m_StatusTools.Dataset = datasetName;
             m_StatusTools.JobNumber = jobNum;
             m_StatusTools.JobStep = stepNum;
@@ -748,7 +746,7 @@ namespace AnalysisManagerProg
 
             if (NeedToAbortProcessing())
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("NeedToAbortProcessing; closing job step task");
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Processing aborted");
                 m_MgrErrorCleanup.CleanWorkDir();
@@ -759,7 +757,7 @@ namespace AnalysisManagerProg
             // Make sure we have enough free space on the drive with the working directory and on the drive with the transfer folder
             if (!ValidateFreeDiskSpace(out m_MostRecentErrorMessage))
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Insufficient free space; closing job step task");
                 if (string.IsNullOrEmpty(m_MostRecentErrorMessage))
                 {
@@ -781,14 +779,14 @@ namespace AnalysisManagerProg
             m_MgrErrorCleanup.CreateStatusFlagFile();
             try
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Getting job resources");
 
                 eToolRunnerResult = m_Resource.GetResources();
-                if (!(eToolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS))
+                if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     m_MostRecentErrorMessage = "GetResources returned result: " + eToolRunnerResult.ToString();
-                    if (this.TraceMode)
+                    if (TraceMode)
                         ShowTraceMessage(m_MostRecentErrorMessage + "; closing job step task");
                     if ((m_Resource.Message != null))
                     {
@@ -827,7 +825,7 @@ namespace AnalysisManagerProg
             m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, 0);
             try
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Running the step tool");
 
                 eToolRunnerResult = m_ToolRunner.RunTool();
@@ -840,7 +838,7 @@ namespace AnalysisManagerProg
                         m_MostRecentErrorMessage = "Unknown ToolRunner Error";
                     }
 
-                    if (this.TraceMode)
+                    if (TraceMode)
                         ShowTraceMessage("Error running the tool; closing job step task");
 
                     LogError(m_MgrName + ": " + m_MostRecentErrorMessage + ", Job " + jobNum + ", Dataset " + datasetName);
@@ -874,7 +872,7 @@ namespace AnalysisManagerProg
                 if (m_ToolRunner.NeedToAbortProcessing)
                 {
                     m_NeedToAbortProcessing = true;
-                    if (this.TraceMode)
+                    if (TraceMode)
                         ShowTraceMessage("ToolRunner.NeedToAbortProcessing = True; closing job step task");
                     m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
                 }
@@ -897,7 +895,7 @@ namespace AnalysisManagerProg
             {
                 // Note: the above code should have already called m_AnalysisTask.CloseTask()
 
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Tool run error; cleaning up");
 
                 try
@@ -917,15 +915,14 @@ namespace AnalysisManagerProg
                         // Return True; do not count this as a manager failure
                         return true;
                     }
-                    else if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
+
+                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
                     {
                         // Return True; do not count this as a manager failure
                         return true;
                     }
-                    else
-                    {
-                        return false;
-                    }
+
+                    return false;
                 }
                 catch (Exception ex)
                 {
@@ -939,10 +936,10 @@ namespace AnalysisManagerProg
             m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.CLOSING, EnumTaskStatusDetail.CLOSING, 100);
             try
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Task completed successfully; closing the job step task");
 
-                //Close out the job as a success
+                // Close out the job as a success
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_SUCCESS, string.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
                 LogMessage(m_MgrName + ": Completed job " + jobNum);
 
@@ -960,41 +957,39 @@ namespace AnalysisManagerProg
                 // If success was reported check to see if there was an error deleting non result files
                 if (m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile())
                 {
-                    //If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
+                    // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                     // However, wait another 5 seconds before continuing
                     PRISM.Processes.clsProgRunner.GarbageCollectNow();
                     Thread.Sleep(5000);
 
                     return true;
                 }
-                else
+
+                // Clean the working directory
+                try
                 {
-                    // Clean the working directory
-                    try
+                    if (!m_MgrErrorCleanup.CleanWorkDir(1))
                     {
-                        if (!m_MgrErrorCleanup.CleanWorkDir(1))
-                        {
-                            LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam("StepParameters", "Job"));
-                            m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
-                            m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
-                            return false;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError("clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," + ex.Message, ex);
-                        m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
+                        LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam("StepParameters", "Job"));
+                        m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
+                        m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                         return false;
                     }
-
-                    //Delete the status flag file
-                    m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
-
-                    // Note that we do not need to call m_StatusTools.UpdateIdle() here since
-                    // we called UpdateStatusIdle() just after m_AnalysisTask.CloseTask above
-
-                    return true;
                 }
+                catch (Exception ex)
+                {
+                    LogError("clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," + ex.Message, ex);
+                    m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
+                    return false;
+                }
+
+                // Delete the status flag file
+                m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
+
+                // Note that we do not need to call m_StatusTools.UpdateIdle() here since
+                // we called UpdateStatusIdle() just after m_AnalysisTask.CloseTask above
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -1026,17 +1021,19 @@ namespace AnalysisManagerProg
 
                 return "Job " + Job.ToString() + "; " + ToolName + "; " + Dataset + "; " + JobStartTimeStamp;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Error combining the terms; return an empty string
                 return string.Empty;
             }
         }
 
+        /// <summary>
+        /// Initialize the analysis manager application log, 
+        /// </summary>
         public static void CreateAnalysisManagerEventLog()
         {
-            bool blnSuccess = false;
-            blnSuccess = CreateAnalysisManagerEventLog(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
+            var blnSuccess = CreateAnalysisManagerEventLog(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
 
             if (blnSuccess)
             {
@@ -1070,9 +1067,11 @@ namespace AnalysisManagerProg
                 }
 
                 // Create custom event logging object and update it's configuration
-                EventLog ELog = new EventLog();
-                ELog.Log = LogName;
-                ELog.Source = SourceName;
+                var ELog = new EventLog
+                {
+                    Log = LogName,
+                    Source = SourceName
+                };
 
                 try
                 {
@@ -1118,7 +1117,7 @@ namespace AnalysisManagerProg
             "RepoPkgr"
         };
 
-            bool dataPkgRequired = false;
+            var dataPkgRequired = false;
             if (multiJobStepTools.Any(multiJobTool => string.Equals(stepToolName, multiJobTool, StringComparison.InvariantCultureIgnoreCase)))
             {
                 dataPkgRequired = true;
@@ -1145,41 +1144,33 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private string DecrementLogFilePath(string strLogFilePath)
         {
-            Regex reLogFileName = default(Regex);
-            Match objMatch = default(Match);
-
-            int intYear = 0;
-            int intMonth = 0;
-            int intDay = 0;
-            string strPreviousLogFilePath = string.Empty;
-
             try
             {
-                reLogFileName = new Regex("(.+_)(\\d+)-(\\d+)-(\\d+).\\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var reLogFileName = new Regex(@"(.+_)(\d+)-(\d+)-(\d+).\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                objMatch = reLogFileName.Match(strLogFilePath);
+                var objMatch = reLogFileName.Match(strLogFilePath);
 
                 if (objMatch.Success && objMatch.Groups.Count >= 4)
                 {
-                    intMonth = Convert.ToInt32(objMatch.Groups[2].Value);
-                    intDay = Convert.ToInt32(objMatch.Groups[3].Value);
-                    intYear = Convert.ToInt32(objMatch.Groups[4].Value);
+                    var intMonth = Convert.ToInt32(objMatch.Groups[2].Value);
+                    var intDay = Convert.ToInt32(objMatch.Groups[3].Value);
+                    var intYear = Convert.ToInt32(objMatch.Groups[4].Value);
 
-                    DateTime dtCurrentDate = default(DateTime);
-                    DateTime dtNewDate = default(DateTime);
+                    var dtCurrentDate = DateTime.Parse(intYear + "-" + intMonth + "-" + intDay);
+                    var dtNewDate = dtCurrentDate.Subtract(new TimeSpan(1, 0, 0, 0));
 
-                    dtCurrentDate = DateTime.Parse(intYear + "-" + intMonth + "-" + intDay);
-                    dtNewDate = dtCurrentDate.Subtract(new TimeSpan(1, 0, 0, 0));
-
-                    strPreviousLogFilePath = objMatch.Groups[1].Value + dtNewDate.ToString("MM-dd-yyyy") + Path.GetExtension(strLogFilePath);
+                    var strPreviousLogFilePath = objMatch.Groups[1].Value + dtNewDate.ToString("MM-dd-yyyy") + Path.GetExtension(strLogFilePath);
+                    return strPreviousLogFilePath;
                 }
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error in DecrementLogFilePath: " + ex.Message);
             }
 
-            return strPreviousLogFilePath;
+            return string.Empty;
+
         }
 
         /// <summary>
@@ -1190,7 +1181,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="intErrorMessageCountToReturn">Maximum number of error messages to return</param>
         /// <param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
-        /// <returns></returns>
+        /// <returns>List of recent errors</returns>
         /// <remarks></remarks>
         public List<string> DetermineRecentErrorMessages(int intErrorMessageCountToReturn, ref string strMostRecentJobInfo)
         {
@@ -1540,7 +1531,7 @@ namespace AnalysisManagerProg
 
         private string GetRecentLogFilename()
         {
-            string lastFilename = null;
+            string lastFilename;
 
             try
             {
@@ -1559,7 +1550,7 @@ namespace AnalysisManagerProg
                 // Return the last filename in the list
                 lastFilename = files[files.Length - 1];
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return string.Empty;
             }
@@ -1569,10 +1560,9 @@ namespace AnalysisManagerProg
 
         private clsCleanupMgrErrors.eCleanupModeConstants GetManagerErrorCleanupMode()
         {
-            string strManagerErrorCleanupMode = null;
             clsCleanupMgrErrors.eCleanupModeConstants eManagerErrorCleanupMode;
 
-            strManagerErrorCleanupMode = m_MgrSettings.GetParam("ManagerErrorCleanupMode");
+            var strManagerErrorCleanupMode = m_MgrSettings.GetParam("ManagerErrorCleanupMode");
 
             switch (strManagerErrorCleanupMode.Trim())
             {
@@ -1601,14 +1591,14 @@ namespace AnalysisManagerProg
         {
             if (m_StatusTools == null)
             {
-                string statusFileLoc = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation"));
+                var statusFileLoc = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation"));
 
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Initialize m_StatusTools using " + statusFileLoc);
 
                 m_StatusTools = new clsStatusFile(statusFileLoc, m_DebugLevel)
                 {
-                    TaskStartTime = System.DateTime.UtcNow,
+                    TaskStartTime = DateTime.UtcNow,
                     Dataset = "",
                     JobNumber = 0,
                     JobStep = 0,
@@ -1618,6 +1608,7 @@ namespace AnalysisManagerProg
                     TaskStatus = EnumTaskStatus.NO_TASK,
                     TaskStatusDetail = EnumTaskStatusDetail.NO_TASK
                 };
+                RegisterEvents(m_StatusTools);
 
                 UpdateStatusToolLoggingSettings(m_StatusTools);
             }
@@ -1630,8 +1621,8 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         internal static Dictionary<string, string> LoadMgrSettingsFromFile()
         {
-            //Load initial settings into string dictionary for return
-            Dictionary<string, string> lstMgrSettings = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            // Load initial settings into string dictionary for return
+            var lstMgrSettings = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
             // Note: When you are editing this project using the Visual Studio IDE, if you edit the values
             //  ->My Project>Settings.settings, then when you run the program (from within the IDE), it
@@ -1641,10 +1632,10 @@ namespace AnalysisManagerProg
 
             Properties.Settings.Default.Reload();
 
-            //Manager config db connection string
+            // Manager config db connection string
             lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr);
 
-            //Manager active flag
+            // Manager active flag
             lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, Properties.Settings.Default.MgrActive_Local.ToString());
 
             // Manager name
@@ -1654,7 +1645,7 @@ namespace AnalysisManagerProg
 
             lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, Properties.Settings.Default.MgrName.Replace("$ComputerName$", Environment.MachineName));
 
-            //Default settings in use flag
+            // Default settings in use flag
             var usingDefaults = Properties.Settings.Default.UsingDefaults.ToString();
             lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS, usingDefaults);
 
@@ -1711,12 +1702,12 @@ namespace AnalysisManagerProg
                     var timeStampText = lineParts[0];
                     var message = lineParts[1];
 
-                    DateTime timeStamp = default(DateTime);
+                    DateTime timeStamp;
                     if (DateTime.TryParse(timeStampText, out timeStamp))
                     {
                         // Valid message; store it
 
-                        DateTime cachedTimeStamp = default(DateTime);
+                        DateTime cachedTimeStamp;
                         if (cachedMessages.TryGetValue(message, out cachedTimeStamp))
                         {
                             if (timeStamp > cachedTimeStamp)
@@ -1741,7 +1732,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                Dictionary<string, DateTime> cachedMessages = default(Dictionary<string, DateTime>);
+                Dictionary<string, DateTime> cachedMessages;
 
                 var messageCacheFile = new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), PERIODIC_LOG_FILE));
 
@@ -1755,7 +1746,7 @@ namespace AnalysisManagerProg
                     cachedMessages = new Dictionary<string, DateTime>();
                 }
 
-                DateTime timeStamp = default(DateTime);
+                DateTime timeStamp;
                 if (cachedMessages.TryGetValue(errorMessage, out timeStamp))
                 {
                     if (DateTime.UtcNow.Subtract(timeStamp).TotalHours < logIntervalHours)
@@ -1802,7 +1793,7 @@ namespace AnalysisManagerProg
                 Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + EVENT_LOG_NAME + " application log");
                 Console.WriteLine();
 
-                EventLog Ev = new EventLog("Application", ".", EVENT_LOG_NAME);
+                var Ev = new EventLog("Application", ".", EVENT_LOG_NAME);
                 Trace.Listeners.Add(new EventLogTraceListener(EVENT_LOG_NAME));
                 Trace.WriteLine(ErrMsg);
                 Ev.Close();
@@ -1825,26 +1816,25 @@ namespace AnalysisManagerProg
         {
             try
             {
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Reading application config file");
 
-                //Get settings from config file
-                Dictionary<string, string> lstMgrSettings = default(Dictionary<string, string>);
-                lstMgrSettings = LoadMgrSettingsFromFile();
+                // Get settings from config file
+                var lstMgrSettings = LoadMgrSettingsFromFile();
 
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Storing manager settings in m_MgrSettings");
                 if (!m_MgrSettings.LoadSettings(lstMgrSettings))
                 {
                     if (!string.IsNullOrWhiteSpace(m_MgrSettings.ErrMsg))
                     {
-                        //Manager has been deactivated, so report this
+                        // Manager has been deactivated, so report this
                         LogMessage(m_MgrSettings.ErrMsg);
                         UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally");
                     }
                     else
                     {
-                        //Unknown problem reading config file
+                        // Unknown problem reading config file
                         LogError("Error re-reading config file in ReloadManagerSettings");
                     }
                     return false;
@@ -1867,7 +1857,7 @@ namespace AnalysisManagerProg
             // This name is defined in the RollingFileAppender section of the Logging.config file via this XML:
             // <file value="IgnoreMe" />
 
-            foreach (FileInfo fiFile in diMgrFolder.GetFiles("IgnoreMe*.txt"))
+            foreach (var fiFile in diMgrFolder.GetFiles("IgnoreMe*.txt"))
             {
                 try
                 {
@@ -1883,22 +1873,22 @@ namespace AnalysisManagerProg
             // These files indicate a previous, failed Decon2LS task and can be safely deleted
             // For safety, we will not delete files less than 24 hours old
 
-            List<FileInfo> lstFilesToDelete = diMgrFolder.GetFiles("tmp.iso.*").ToList();
+            var lstFilesToDelete = diMgrFolder.GetFiles("tmp.iso.*").ToList();
 
             lstFilesToDelete.AddRange(diMgrFolder.GetFiles("tmp.peak.*"));
 
-            foreach (FileInfo fiFile in lstFilesToDelete)
+            foreach (var fiFile in lstFilesToDelete)
             {
                 try
                 {
-                    if (System.DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24)
+                    if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24)
                     {
-                        if (this.TraceMode)
+                        if (TraceMode)
                             ShowTraceMessage("Deleting temp file " + fiFile.FullName);
                         fiFile.Delete();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     LogError("Error deleting file: " + fiFile.Name);
                 }
@@ -1907,8 +1897,7 @@ namespace AnalysisManagerProg
 
         private bool SetResourceObject()
         {
-            string strMessage = null;
-            string stepToolName = m_AnalysisTask.GetParam("StepTool");
+            var stepToolName = m_AnalysisTask.GetParam("StepTool");
 
             m_PluginLoader.ClearMessageList();
             m_Resource = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
@@ -1946,7 +1935,7 @@ namespace AnalysisManagerProg
         /// <returns>True if a flag file exists, false if safe to proceed</returns>
         private bool StatusFlagFileError()
         {
-            bool blnMgrCleanupSuccess = false;
+            bool blnMgrCleanupSuccess;
 
             if (!m_MgrErrorCleanup.DetectStatusFlagFile())
             {
@@ -1978,7 +1967,7 @@ namespace AnalysisManagerProg
 
             // Periodically log errors to the database
             var flagFile = new FileInfo(m_MgrErrorCleanup.FlagFilePath);
-            string errorMessage = null;
+            string errorMessage;
             if ((flagFile.Directory == null))
             {
                 errorMessage = "Flag file exists in the manager folder";
@@ -1997,7 +1986,7 @@ namespace AnalysisManagerProg
 
         private bool SetToolRunnerObject()
         {
-            string stepToolName = m_AnalysisTask.GetParam("StepTool");
+            var stepToolName = m_AnalysisTask.GetParam("StepTool");
 
             m_PluginLoader.ClearMessageList();
             m_ToolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower());
@@ -2029,10 +2018,14 @@ namespace AnalysisManagerProg
             return true;
         }
 
+        /// <summary>
+        /// Display a trace message at the console, preceded by a time stamp
+        /// </summary>
+        /// <param name="strMessage"></param>
         public static void ShowTraceMessage(string strMessage)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(System.DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
+            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
             Console.ResetColor();
         }
 
@@ -2055,18 +2048,18 @@ namespace AnalysisManagerProg
         {
             var blnSuccess = true;
 
-            if ((System.DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates))
+            if ((DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates))
             {
-                dtLastConfigDBUpdate = System.DateTime.UtcNow;
+                dtLastConfigDBUpdate = DateTime.UtcNow;
 
-                if (this.TraceMode)
+                if (TraceMode)
                     ShowTraceMessage("Loading manager settings from the manager control DB");
 
                 if (!m_MgrSettings.LoadDBSettings())
                 {
-                    string msg = null;
+                    string msg;
 
-                    if ((string.IsNullOrEmpty(m_MgrSettings.ErrMsg)))
+                    if (string.IsNullOrEmpty(m_MgrSettings.ErrMsg))
                     {
                         msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
                     }
@@ -2112,16 +2105,17 @@ namespace AnalysisManagerProg
 
         private void UpdateStatusToolLoggingSettings(clsStatusFile objStatusFile)
         {
-            bool logMemoryUsage = m_MgrSettings.GetParam("LogMemoryUsage", false);
+            var logMemoryUsage = m_MgrSettings.GetParam("LogMemoryUsage", false);
             float minimumMemoryUsageLogInterval = m_MgrSettings.GetParam("MinimumMemoryUsageLogInterval", 1);
 
             // Most managers have logStatusToBrokerDb=False and logStatusToMessageQueue=True
-            bool logStatusToBrokerDb = m_MgrSettings.GetParam("LogStatusToBrokerDB", false);
-            string brokerDbConnectionString = m_MgrSettings.GetParam("brokerconnectionstring");
+            var logStatusToBrokerDb = m_MgrSettings.GetParam("LogStatusToBrokerDB", false);
+            var brokerDbConnectionString = m_MgrSettings.GetParam("brokerconnectionstring");
+            
             // Gigasax.DMS_Pipeline
             float brokerDbStatusUpdateIntervalMinutes = m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60);
 
-            bool logStatusToMessageQueue = m_MgrSettings.GetParam("LogStatusToMessageQueue", false);
+            var logStatusToMessageQueue = m_MgrSettings.GetParam("LogStatusToMessageQueue", false);
             if (DisableMessageQueue)
             {
                 // Command line has switch /NQ
@@ -2129,8 +2123,8 @@ namespace AnalysisManagerProg
                 logStatusToMessageQueue = false;
             }
 
-            string messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
-            string messageQueueTopicMgrStatus = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
+            var messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
+            var messageQueueTopicMgrStatus = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
 
             objStatusFile.ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, m_MgrFolderPath);
             objStatusFile.ConfigureBrokerDBLogging(logStatusToBrokerDb, brokerDbConnectionString, brokerDbStatusUpdateIntervalMinutes);
@@ -2189,10 +2183,8 @@ namespace AnalysisManagerProg
                     {
                         return false;
                     }
-                    else
-                    {
-                        return true;
-                    }
+
+                    return true;
                 }
 
                 var workingDirMinFreeSpaceMB = m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
@@ -2230,7 +2222,7 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                bool orgDbRequired = m_Resource.GetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired);
+                var orgDbRequired = m_Resource.GetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired);
 
                 if (orgDbRequired)
                 {
@@ -2313,7 +2305,7 @@ namespace AnalysisManagerProg
                             return true;
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Deletion failed
                     }

@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "February 3, 2017";
+        public const string PROGRAM_DATE = "February 10, 2017";
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
         private static bool mTraceMode;
@@ -45,10 +45,9 @@ namespace AnalysisManagerProg
         {
             // Returns 0 if no error, error code if an error
 
-            int intReturnCode = 0;
-            clsParseCommandLine objParseCommandLine = new clsParseCommandLine();
+            var objParseCommandLine = new clsParseCommandLine();
 
-            intReturnCode = 0;
+            var intReturnCode = 0;
             mCodeTestMode = false;
             mTraceMode = false;
             mDisableMessageQueue = false;
@@ -85,101 +84,37 @@ namespace AnalysisManagerProg
                         if (mTraceMode)
                             ShowTraceMessage("Code test mode enabled");
 
-                        clsCodeTest objTest = new clsCodeTest { TraceMode = mTraceMode };
+                        var objTest = new clsCodeTest { TraceMode = mTraceMode };
 
                         try
                         {
-                            //objTest.TestFileDateConversion()
-                            //objTest.TestArchiveFileStart()
-                            //objTest.TestDTASplit()
-                            //objTest.TestUncat("Cyano_Nitrogenase_BU_1_12Apr12_Earth_12-03-24", "F:\Temp\Deconcat")
-                            //objTest.TestFileSplitThenCombine()
-                            //objTest.TestResultsTransfer()
-                            //objTest.TestDeliverResults()
-                            //objTest.TestGetFileContents()
+                            // objTest.SystemMemoryUsage();
+                            // objTest.TestDTASplit();
+                            objTest.TestProteinDBExport(@"C:\DMS_Temp_Org");
+                            // objTest.TestDeleteFiles();
 
-                            //objTest.FixICR2LSResultFileNames("E:\DMS_WorkDir", "Test")
-                            //objTest.TestFindAndReplace()
-
-                            //objTest.TestProgRunner()
-                            //objTest.TestUnzip("f:\'temp\QC_Shew_500_100_fr720_c2_Ek_0000_isos.zip", "f:\temp")
-
-                            //objTest.CheckETDModeEnabledXTandem("input.xml", False)
-                            //objTest.TestDTAWatcher("E:\DMS_WorkDir", 5)
-
-                            //objTest.TestProteinDBExport("C:\DMS_Temp_Org")
-
-                            //objTest.TestFindFile()
-                            //objTest.TestDeleteFiles()
-
-                            //objTest.TestZipAndUnzip()
-                            //objTest.TestMALDIDataUnzip("")
-
-                            //objTest.TestMSGFResultsSummarizer()
-
-                            //objTest.TestProgRunnerIDPicker()
-
-                            //objTest.TestProteinDBExport("c:\dms_temp_org")
-
-                            //objTest.PerformanceCounterTest()
-                            //objTest.SystemMemoryUsage()
-
-                            // objTest.TestIonicZipTools()
-
-                            //objTest.RemoveSparseSpectra()
-
-                            // objTest.ProcessDtaRefineryLogFiles()
-
-                            //objTest.TestZip()
-                            //objTest.TestGZip()
-
-                            //objTest.ConvertZipToGZip("F:\Temp\GZip\Diabetes_iPSC_KO2_TMT_NiNTA_04_21Oct13_Pippin_13-06-18_msgfplus.zip")
-
-                            //objTest.TestRunQuery()
-                            //objTest.TestRunSP()
-
-                            //objTest.ValidateCentroided()
-
-                            //Console.WriteLine(clsGlobal.DecodePassword("Test"))
-
-                            //Console.WriteLine(clsGlobal.UpdateHostName("\\winhpcfs\Projects\dms", "\\picfs.pnl.gov\"))
-
-                            //objTest.TestCosoleOutputParsing()
-                            // objTest.TestMSXmlCachePurge()
-
-                            // Dim testLogger = New PRISM.Logging.clsDBLogger()
-                            // Console.WriteLine(testLogger.MachineName)
-
-                            // objTest.TestGetVersionInfo()
-
-                            // objTest.ParseMSPathFinderConsoleOutput()
-
-                            // objTest.ParseMSGFDBConsoleOutput()
-
-                            // objTest.RunMSConvert()
-
-                            // objTest.GetLegacyFastaFileSize()
-
-                            // objTest.GenerateScanStatsFile()
-
-                            objTest.TestLogging();
+                            // objTest.TestLogging();
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, true));
+                            clsGlobal.LogError("clsCodeTest exception: " + ex.Message, ex);
                         }
 
+                        clsParseCommandLine.PauseAtConsole(3000, 1000);
                         return 0;
                     }
-                    else if (mCreateWindowsEventLog)
+
+                    if (mCreateWindowsEventLog)
                     {
                         clsMainProcess.CreateAnalysisManagerEventLog();
                     }
                     else if (mDisplayDllVersions)
                     {
-                        clsCodeTest objTest = new clsCodeTest();
-                        objTest.TraceMode = mTraceMode;
+                        var objTest = new clsCodeTest {
+                            TraceMode = mTraceMode
+                        };
                         objTest.DisplayDllVersions(mDisplayDllPath);
+                        clsParseCommandLine.PauseAtConsole();
                     }
                     else
                     {
@@ -187,9 +122,11 @@ namespace AnalysisManagerProg
                         if (mTraceMode)
                             ShowTraceMessage("Instantiating clsMainProcess");
 
-                        var objDMSMain = new clsMainProcess(mTraceMode);
-                        objDMSMain.DisableMessageQueue = mDisableMessageQueue;
-                        objDMSMain.DisableMyEMSL = mDisableMyEMSL;
+                        var objDMSMain = new clsMainProcess(mTraceMode)
+                        {
+                            DisableMessageQueue = mDisableMessageQueue,
+                            DisableMyEMSL = mDisableMyEMSL
+                        };
 
                         intReturnCode = objDMSMain.Main();
                     }
@@ -197,8 +134,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message);
-                Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex, true));
+                clsGlobal.LogError("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message, ex);
                 intReturnCode = -1;
             }
 
@@ -218,30 +154,30 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private static string GetAppVersion(string strProgramDate)
         {
-            return Assembly.GetExecutingAssembly().GetName().Version.ToString() + " (" + strProgramDate + ")";
+            return Assembly.GetExecutingAssembly().GetName().Version + " (" + strProgramDate + ")";
         }
 
         private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
 
-            string strValue = string.Empty;
             var lstValidParameters = new List<string> {
-            "T",
-            "Test",
-            "Trace",
-            "EL",
-            "NQ",
-            "NoMyEMSL",
-            "DLL"
-        };
+                "T",
+                "Test",
+                "Trace",
+                "EL",
+                "NQ",
+                "NoMyEMSL",
+                "DLL"
+            };
 
             try
             {
                 // Make sure no invalid parameters are present
                 if (objParseCommandLine.InvalidParametersPresent(lstValidParameters))
                 {
-                    ShowErrorMessage("Invalid commmand line parameters", (from item in objParseCommandLine.InvalidParameters(lstValidParameters) select "/" + item).ToList());
+                    ShowErrorMessage("Invalid commmand line parameters", 
+                        (from item in objParseCommandLine.InvalidParameters(lstValidParameters) select "/" + item).ToList());
                 }
                 else
                 {
@@ -267,6 +203,7 @@ namespace AnalysisManagerProg
                     if (objParseCommandLine.IsParameterPresent("DLL"))
                     {
                         mDisplayDllVersions = true;
+                        string strValue;
                         if (objParseCommandLine.RetrieveValueForParameter("DLL", out strValue))
                         {
                             if (!string.IsNullOrWhiteSpace(strValue))
@@ -279,7 +216,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
+                clsGlobal.LogError("Error parsing the command line parameters: " + Environment.NewLine + ex.Message, ex);
             }
         }
 
@@ -299,14 +236,13 @@ namespace AnalysisManagerProg
         private static void ShowErrorMessage(string strTitle, IEnumerable<string> items)
         {
             const string strSeparator = "------------------------------------------------------------------------------";
-            string strMessage = null;
 
             Console.WriteLine();
             Console.WriteLine(strSeparator);
             Console.WriteLine(strTitle);
-            strMessage = strTitle + ":";
+            var strMessage = strTitle + ":";
 
-            foreach (string item in items)
+            foreach (var item in items)
             {
                 Console.WriteLine("   " + item);
                 strMessage += " " + item;
@@ -360,7 +296,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error displaying the program syntax: " + ex.Message);
+                clsGlobal.LogError("Error displaying the program syntax: " + ex.Message, ex);
             }
         }
 
@@ -373,7 +309,7 @@ namespace AnalysisManagerProg
                     swErrorStream.WriteLine(strErrorMessage);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

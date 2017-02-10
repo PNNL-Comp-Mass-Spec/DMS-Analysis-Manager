@@ -80,10 +80,10 @@ namespace AnalysisManagerProg
 
         #region "Properties"
 
-        public string ErrMsg
-        {
-            get { return mErrMsg; }
-        }
+        /// <summary>
+        /// Error message
+        /// </summary>
+        public string ErrMsg => mErrMsg;
 
         #endregion
 
@@ -98,9 +98,9 @@ namespace AnalysisManagerProg
             try
             {
                 // Data Source=proteinseqs;Initial Catalog=manager_control
-                var connectionString = this.GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
+                var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
-                if (mTraceMode == true)
+                if (mTraceMode)
                     ShowTraceMessage("AckManagerUpdateRequired using " + connectionString);
 
                 var myConnection = new SqlConnection(connectionString);
@@ -110,7 +110,7 @@ namespace AnalysisManagerProg
                 var myCmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) {CommandType = CommandType.StoredProcedure};
 
                 myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                myCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = this.GetParam(MGR_PARAM_MGR_NAME);
+                myCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = GetParam(MGR_PARAM_MGR_NAME);
                 myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
@@ -156,13 +156,11 @@ namespace AnalysisManagerProg
                 {
                     throw new ApplicationException("Unable to initialize manager settings class: " + mErrMsg);
                 }
-                else
-                {
-                    throw new ApplicationException("Unable to initialize manager settings class: unknown error");
-                }
+
+                throw new ApplicationException("Unable to initialize manager settings class: unknown error");
             }
 
-            if (mTraceMode == true)
+            if (mTraceMode)
                 ShowTraceMessage("Initialized clsAnalysisMgrSettings");
         }
 
@@ -212,41 +210,41 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool CheckInitialSettings(Dictionary<string, string> paramDictionary)
         {
-            string errorMessage = null;
+            string errorMessage;
 
-            //Verify manager settings dictionary exists
+            // Verify manager settings dictionary exists
             if (paramDictionary == null)
             {
                 errorMessage = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
 
-                if (mTraceMode == true)
+                if (mTraceMode)
                     ShowTraceMessage("Error in " + errorMessage);
 
                 WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage);
                 return false;
             }
 
-            //Verify intact config file was found
-            string strValue = string.Empty;
+            // Verify intact config file was found
+            string strValue;
             if (!paramDictionary.TryGetValue(MGR_PARAM_USING_DEFAULTS, out strValue))
             {
                 errorMessage = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
 
-                if (mTraceMode == true)
+                if (mTraceMode)
                     ShowTraceMessage("Error in " + errorMessage);
 
                 WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage);
             }
             else
             {
-                bool blnValue = false;
+                bool blnValue;
                 if (bool.TryParse(strValue, out blnValue))
                 {
                     if (blnValue)
                     {
                         errorMessage = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
 
-                        if (mTraceMode == true)
+                        if (mTraceMode)
                             ShowTraceMessage("Error in " + errorMessage);
 
                         WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage);
@@ -263,20 +261,18 @@ namespace AnalysisManagerProg
         {
             foreach (DataRow oRow in dtSettings.Rows)
             {
-                //Add the column heading and value to the dictionary
-                string paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
+                // Add the column heading and value to the dictionary
+                var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
 
                 if (clsGlobal.IsMatch(paramKey, "MgrSettingGroupName"))
                 {
-                    string groupName = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+                    var groupName = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
                     if (!string.IsNullOrWhiteSpace(groupName))
                     {
                         return groupName;
                     }
-                    else
-                    {
-                        return string.Empty;
-                    }
+
+                    return string.Empty;
                 }
             }
             return string.Empty;
@@ -288,9 +284,7 @@ namespace AnalysisManagerProg
         /// <returns></returns>
         public bool LoadDBSettings()
         {
-            bool success = false;
-
-            success = LoadMgrSettingsFromDB();
+            var success = LoadMgrSettingsFromDB();
 
             if (success)
             {
@@ -305,7 +299,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <returns>True for success; False for error</returns>
         /// <remarks></remarks>
-        protected bool LoadMgrSettingsFromDB()
+        private bool LoadMgrSettingsFromDB()
         {
             // Requests manager specific settings from database. Performs retries if necessary.
 
@@ -314,7 +308,7 @@ namespace AnalysisManagerProg
             {
                 mErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file";
 
-                if (mTraceMode == true)
+                if (mTraceMode)
                     ShowTraceMessage("Error in LoadMgrSettingsFromDB: " + mErrMsg);
 
                 return false;
@@ -357,24 +351,24 @@ namespace AnalysisManagerProg
             const short retryCount = 6;
 
             // Data Source=proteinseqs;Initial Catalog=manager_control
-            string connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, string.Empty);
+            var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, string.Empty);
 
-            if (string.IsNullOrEmpty(ManagerName))
+            if (string.IsNullOrEmpty(managerName))
             {
                 mErrMsg =
                     "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file";
-                if (mTraceMode == true)
+                if (mTraceMode)
                     ShowTraceMessage("LoadMgrSettingsFromDBWork: " + mErrMsg);
                 dtSettings = null;
                 return false;
             }
 
-            if (mTraceMode == true)
-                ShowTraceMessage("LoadMgrSettingsFromDBWork using [" + connectionString + "] for manager " + ManagerName);
+            if (mTraceMode)
+                ShowTraceMessage("LoadMgrSettingsFromDBWork using [" + connectionString + "] for manager " + managerName);
 
-            string sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + ManagerName + "'";
+            var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
 
-            //Get a table to hold the results of the query
+            // Get a table to hold the results of the query
             var success = clsGlobal.GetDataTableByQuery(sqlStr, connectionString, "LoadMgrSettingsFromDBWork", retryCount, out dtSettings);
 
             // If unable to retrieve the data, return false
@@ -384,11 +378,10 @@ namespace AnalysisManagerProg
                 var allowLogToDB = !(clsWindowsUpdateStatus.ServerUpdatesArePending());
 
                 mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
-                          "for manager '" + ManagerName + "'";
+                          "for manager '" + managerName + "'";
                 WriteErrorMsg(mErrMsg, allowLogToDB);
 
-                if ((dtSettings != null))
-                    dtSettings.Dispose();
+                dtSettings?.Dispose();
                 return false;
             }
 
@@ -407,20 +400,20 @@ namespace AnalysisManagerProg
 
         private bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
         {
-            bool success = false;
+            bool success;
 
-            //Fill a string dictionary with the manager parameters that have been found
+            // Fill a string dictionary with the manager parameters that have been found
             try
             {
                 foreach (DataRow oRow in dtSettings.Rows)
                 {
-                    //Add the column heading and value to the dictionary
-                    string paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
-                    string paramVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+                    // Add the column heading and value to the dictionary
+                    var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
+                    var paramVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
 
                     if (mParamDictionary.ContainsKey(paramKey))
                     {
-                        if (!blnSkipExisting)
+                        if (!skipExistingParameters)
                         {
                             mParamDictionary[paramKey] = paramVal;
                         }
@@ -441,8 +434,7 @@ namespace AnalysisManagerProg
             }
             finally
             {
-                if ((dtSettings != null))
-                    dtSettings.Dispose();
+                dtSettings?.Dispose();
             }
 
             return success;
@@ -453,7 +445,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <returns>True for success; False for error</returns>
         /// <remarks></remarks>
-        protected bool LoadBrokerDBSettings()
+        private bool LoadBrokerDBSettings()
         {
             // Retrieves global settings from the Broker DB. Performs retries if necessary.
             //
@@ -464,12 +456,11 @@ namespace AnalysisManagerProg
             //   Value="\\gigasax\dms_parameter_Files\LCMSFeatureFinder"
 
             short retryCount = 6;
-            string paramKey = null;
-            string paramVal = null;
-            string connectionString = this.GetParam("brokerconnectionstring");
-            // Gigasax.DMS_Pipeline
 
-            if (mTraceMode == true)
+            // Gigasax.DMS_Pipeline
+            var connectionString = GetParam("brokerconnectionstring");            
+
+            if (mTraceMode)
                 ShowTraceMessage("LoadBrokerDBSettings has brokerconnectionstring = " + connectionString);
 
             // Construct the Sql to obtain the information:
@@ -482,13 +473,13 @@ namespace AnalysisManagerProg
                 " [Param File Storage Path] AS ParameterValue" + " FROM V_Pipeline_Step_Tools_Detail_Report" +
                 " WHERE ISNULL([Param File Storage Path], '') <> ''";
 
-            DataTable dt = null;
+            DataTable dt;
 
-            if (mTraceMode == true)
+            if (mTraceMode)
                 ShowTraceMessage("Query V_Pipeline_Step_Tools_Detail_Report in broker");
 
-            //Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadBrokerDBSettings", retryCount, out dt);
+            // Get a table to hold the results of the query
+            var success = clsGlobal.GetDataTableByQuery(sqlStr, connectionString, "LoadBrokerDBSettings", retryCount, out dt);
 
             // If loop exited due to errors, return false
             if (!success)
@@ -515,26 +506,25 @@ namespace AnalysisManagerProg
             {
                 foreach (DataRow curRow in dt.Rows)
                 {
-                    //Add the column heading and value to the dictionary
-                    paramKey = DbCStr(curRow[dt.Columns["ParameterName"]]);
-                    paramVal = DbCStr(curRow[dt.Columns["ParameterValue"]]);
+                    // Add the column heading and value to the dictionary
+                    var paramKey = DbCStr(curRow[dt.Columns["ParameterName"]]);
+                    var paramVal = DbCStr(curRow[dt.Columns["ParameterValue"]]);
 
-                    this.SetParam(paramKey, paramVal);
+                    SetParam(paramKey, paramVal);
                 }
-                success = true;
+                return true;
             }
             catch (Exception ex)
             {
                 var statusMessage = "clsMgrSettings.LoadBrokerDBSettings; Exception filling string dictionary from table: " + ex.Message;
                 WriteErrorMsg(statusMessage);
-                success = false;
+                return false;
             }
             finally
             {
                 dt.Dispose();
             }
 
-            return success;
         }
 
         /// <summary>
@@ -545,7 +535,7 @@ namespace AnalysisManagerProg
         /// <remarks>Returns empty string if key isn't found</remarks>
         public string GetParam(string itemKey)
         {
-            string value = string.Empty;
+            var value = string.Empty;
 
             if ((mParamDictionary != null))
             {
@@ -595,21 +585,18 @@ namespace AnalysisManagerProg
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public string GetParam(string itemKey, string valueIfMissing)
         {
-            string strValue = null;
-            strValue = GetParam(itemKey);
+            var strValue = GetParam(itemKey);
             if (string.IsNullOrEmpty(strValue))
             {
                 return valueIfMissing;
             }
-            else
-            {
-                return strValue;
-            }
+
+            return strValue;
         }
 
         private static void ShowTraceMessage(string strMessage)
         {
-            Console.WriteLine(System.DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
+            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
         }
 
         /// <summary>
@@ -659,17 +646,15 @@ namespace AnalysisManagerProg
         /// <param name="inpObj"></param>
         /// <returns>String equivalent of object; empty string if object is dbNull</returns>
         /// <remarks></remarks>
-        protected string DbCStr(object inpObj)
+        private string DbCStr(object inpObj)
         {
-            //If input object is DbNull, returns "", otherwise returns String representation of object
-            if (object.ReferenceEquals(inpObj, DBNull.Value))
+            // If input object is DbNull, returns "", otherwise returns String representation of object
+            if (ReferenceEquals(inpObj, DBNull.Value))
             {
                 return string.Empty;
             }
-            else
-            {
-                return Convert.ToString(inpObj);
-            }
+
+            return Convert.ToString(inpObj);
         }
 
         /// <summary>
@@ -683,16 +668,16 @@ namespace AnalysisManagerProg
         {
             mErrMsg = "";
 
-            //Load the config document
-            XmlDocument myDoc = LoadConfigDocument();
+            // Load the config document
+            var myDoc = LoadConfigDocument();
             if (myDoc == null)
             {
-                //Error message has already been produced by LoadConfigDocument
+                // Error message has already been produced by LoadConfigDocument
                 return false;
             }
 
-            //Retrieve the settings node
-            XmlNode myNode = myDoc.SelectSingleNode("//applicationSettings");
+            // Retrieve the settings node
+            var myNode = myDoc.SelectSingleNode("// applicationSettings");
 
             if (myNode == null)
             {
@@ -702,8 +687,8 @@ namespace AnalysisManagerProg
 
             try
             {
-                //Select the element containing the value for the specified key containing the key
-                XmlElement myElement = (XmlElement) myNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", key));
+                // Select the element containing the value for the specified key containing the key
+                var myElement = (XmlElement) myNode.SelectSingleNode(string.Format("// setting[@name='{0}']/value", key));
                 if (myElement != null)
                 {
                     // Set key to specified value
@@ -725,7 +710,7 @@ namespace AnalysisManagerProg
             }
         }
 
-        protected void WriteToEmergencyLog(string sourceName, string logName, string message)
+        private void WriteToEmergencyLog(string sourceName, string logName, string message)
         {
             // Post a message to the the Windows application event log named LogName
             // If the application log does not exist yet, we will try to create it
@@ -735,20 +720,22 @@ namespace AnalysisManagerProg
             // If custom event log doesn't exist yet, create it
             if (!EventLog.SourceExists(sourceName))
             {
-                EventSourceCreationData sourceData = new EventSourceCreationData(sourceName, logName);
+                var sourceData = new EventSourceCreationData(sourceName, logName);
                 EventLog.CreateEventSource(sourceData);
             }
 
-            //Create custom event logging object and write to log
-            EventLog customEventLog = new EventLog();
-            customEventLog.Log = logName;
-            customEventLog.Source = sourceName;
+            // Create custom event logging object and write to log
+            var customEventLog = new EventLog
+            {
+                Log = logName,
+                Source = sourceName
+            };
 
             try
             {
                 customEventLog.MaximumKilobytes = 1024;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Leave this as the default
             }
@@ -757,7 +744,7 @@ namespace AnalysisManagerProg
             {
                 customEventLog.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 90);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Leave this as the default
             }

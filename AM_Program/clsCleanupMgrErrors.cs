@@ -89,16 +89,17 @@ namespace AnalysisManagerProg
         public string FlagFilePath => Path.Combine(mMgrFolderPath, FLAG_FILE_NAME);
 
         #endregion
+
         #region "Class wide Variables"
 
-        private readonly bool mInitialized = false;
-        private readonly string mMgrConfigDBConnectionString = string.Empty;
-        private readonly string mManagerName = string.Empty;
+        private readonly bool mInitialized;
+        private readonly string mMgrConfigDBConnectionString;
+        private readonly string mManagerName;
 
         private readonly int mDebugLevel;
-        private readonly string mMgrFolderPath = string.Empty;
+        private readonly string mMgrFolderPath;
 
-        private readonly string mWorkingDirPath = string.Empty;
+        private readonly string mWorkingDirPath;
         #endregion
 
         /// <summary>
@@ -115,21 +116,20 @@ namespace AnalysisManagerProg
             {
                 throw new Exception("Manager config DB connection string is not defined");
             }
-            else if (string.IsNullOrEmpty(managerName))
+
+            if (string.IsNullOrEmpty(managerName))
             {
                 throw new Exception("Manager name is not defined");
             }
-            else
-            {
-                mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString);
-                mManagerName = string.Copy(managerName);
-                mDebugLevel = debugLevel;
 
-                mMgrFolderPath = mgrFolderPath;
-                mWorkingDirPath = workingDirPath;
+            mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString);
+            mManagerName = string.Copy(managerName);
+            mDebugLevel = debugLevel;
 
-                mInitialized = true;
-            }
+            mMgrFolderPath = mgrFolderPath;
+            mWorkingDirPath = workingDirPath;
+
+            mInitialized = true;
         }
 
         public bool AutoCleanupManagerErrors(eCleanupModeConstants eManagerErrorCleanupMode, int debugLevel)
@@ -222,7 +222,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool CleanWorkDir(string workDir, float holdoffSeconds)
         {
-            int holdoffMilliseconds = 0;
+            int holdoffMilliseconds;
 
             if (Environment.MachineName.ToLower().StartsWith("monroe") && holdoffSeconds > 1)
                 holdoffSeconds = 1;
@@ -235,12 +235,12 @@ namespace AnalysisManagerProg
                 if (holdoffMilliseconds > 300000)
                     holdoffMilliseconds = 300000;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 holdoffMilliseconds = 10000;
             }
 
-            //Try to ensure there are no open objects with file handles
+            // Try to ensure there are no open objects with file handles
             PRISM.Processes.clsProgRunner.GarbageCollectNow();
             System.Threading.Thread.Sleep(holdoffMilliseconds);
 
@@ -250,10 +250,8 @@ namespace AnalysisManagerProg
             {
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
 
         private bool DeleteFilesWithRetry(DirectoryInfo diWorkFolder)
@@ -268,7 +266,7 @@ namespace AnalysisManagerProg
             {
                 foreach (var fiFile in diWorkFolder.GetFiles())
                 {
-                    string errorMessage = string.Empty;
+                    string errorMessage;
 
                     if (!oFileTools.DeleteFileWithRetry(fiFile, DELETE_RETRY_COUNT, out errorMessage))
                     {
@@ -284,7 +282,9 @@ namespace AnalysisManagerProg
                     {
                         // Remove the folder if it is empty
                         diSubDirectory.Refresh();
-                        if (diSubDirectory.GetFileSystemInfos().Length == 0)
+                        if (diSubDirectory.GetFileSystemInfos().Length != 0)
+                            continue;
+
                         try
                         {
                             diSubDirectory.Delete();
@@ -361,10 +361,8 @@ namespace AnalysisManagerProg
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -375,10 +373,10 @@ namespace AnalysisManagerProg
         {
             try
             {
-                string strPath = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
+                var strPath = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
                 using (var writer = new StreamWriter(new FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
-                    writer.WriteLine(System.DateTime.Now.ToString());
+                    writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     writer.Flush();
                 }
             }
@@ -396,10 +394,10 @@ namespace AnalysisManagerProg
         {
             try
             {
-                string strPath = FlagFilePath;
+                var strPath = FlagFilePath;
                 using (var writer = new StreamWriter(new FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
-                    writer.WriteLine(System.DateTime.Now.ToString());
+                    writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     writer.Flush();
                 }
             }
@@ -470,8 +468,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DeleteStatusFlagFile(int DebugLevel)
         {
-            //Deletes the job request control flag file
-            string strFlagFilePath = FlagFilePath;
+            var strFlagFilePath = FlagFilePath;
 
             return DeleteFlagFile(strFlagFilePath, DebugLevel);
         }
@@ -483,8 +480,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DetectErrorDeletingFilesFlagFile()
         {
-            //Returns True if job request control flag file exists
-            string TestFile = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
+            var TestFile = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
 
             return File.Exists(TestFile);
         }
@@ -496,8 +492,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DetectStatusFlagFile()
         {
-            //Returns True if job request control flag file exists
-            string TestFile = FlagFilePath;
+            var TestFile = FlagFilePath;
 
             return File.Exists(TestFile);
         }
@@ -508,8 +503,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public void DeleteErrorDeletingFilesFlagFile()
         {
-            //Deletes the job request control flag file
-            string TestFile = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
+            var TestFile = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
 
             try
             {
@@ -552,12 +546,12 @@ namespace AnalysisManagerProg
                 myCmd.Parameters.Add(new SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = strFailureMessage;
                 myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
-                //Execute the SP
+                // Execute the SP
                 myCmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
-                string strErrorMessage = null;
+                string strErrorMessage;
                 if (mMgrConfigDBConnectionString == null)
                 {
                     strErrorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup; empty connection string";

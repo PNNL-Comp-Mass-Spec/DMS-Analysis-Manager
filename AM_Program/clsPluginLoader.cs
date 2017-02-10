@@ -450,7 +450,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public IToolRunner GetToolRunner(string toolName)
         {
-            string xpath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
+            var xpath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
 
             string className;
             string assyName;
@@ -492,7 +492,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public IAnalysisResources GetAnalysisResources(string toolName)
         {
-            string xpath = "//Resourcers/Resourcer[@Tool='" + toolName + "']";
+            var xpath = "//Resourcers/Resourcer[@Tool='" + toolName + "']";
             string className;
             string assyName;
             IAnalysisResources myModule = null;
