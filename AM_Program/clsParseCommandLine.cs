@@ -1,4 +1,9 @@
-﻿// This class can be used to parse the text following the program name when a
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using ExtensionMethods;
+
+// This class can be used to parse the text following the program name when a 
 //  program is started from the command line
 //
 // -------------------------------------------------------------------------------
@@ -8,26 +13,8 @@
 // E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
 // Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/
 // -------------------------------------------------------------------------------
-//
-// Licensed under the Apache License, Version 2.0; you may not use this file except
-// in compliance with the License.  You may obtain a copy of the License at
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Notice: This computer software was prepared by Battelle Memorial Institute,
-// hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the
-// Department of Energy (DOE).  All rights in the computer software are reserved
-// by DOE on behalf of the United States Government and the Contractor as
-// provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY
-// WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS
-// SOFTWARE.  This notice including this sentence must appear on any copies of
-// this computer software.
-
-//
-// Last modified October 29, 2015
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
+// 
+// Last modified February 9, 2017
 
 namespace AnalysisManagerProg
 {
@@ -56,24 +43,28 @@ namespace AnalysisManagerProg
         private readonly Dictionary<string, string> mSwitches = new Dictionary<string, string>();
 
         private readonly List<string> mNonSwitchParameters = new List<string>();
-        private bool mShowHelp = false;
+        private bool mShowHelp;
 
-        private bool mDebugMode = false;
-        public bool NeedToShowHelp
-        {
-            get { return mShowHelp; }
-        }
+        private bool mDebugMode;
 
-        public int ParameterCount
-        {
-            get { return mSwitches.Count; }
-        }
+        /// <summary>
+        /// If true, we need to show the syntax to the user due to a switch error, invalid switch, or the presence of /? or /help
+        /// </summary>
+        public bool NeedToShowHelp => mShowHelp;
 
-        public int NonSwitchParameterCount
-        {
-            get { return mNonSwitchParameters.Count; }
-        }
+        /// <summary>
+        /// Number of switches
+        /// </summary>
+        public int ParameterCount => mSwitches.Count;
 
+        /// <summary>
+        /// Number of parameters that are not preceded by a switch
+        /// </summary>
+        public int NonSwitchParameterCount => mNonSwitchParameters.Count;
+
+        /// <summary>
+        /// Set to true to see extra debug information
+        /// </summary>
         public bool DebugMode
         {
             get { return mDebugMode; }
@@ -83,88 +74,105 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Compares the parameter names in objParameterList with the parameters at the command line
         /// </summary>
-        /// <param name="objParameterList">Parameter list</param>
-        /// <returns>True if any of the parameters are not present in strParameterList()</returns>
-        public bool InvalidParametersPresent(List<string> objParameterList)
+        /// <param name="parameterList">Parameter list</param>
+        /// <returns>True if any of the parameters are not present in parameterList()</returns>
+        public bool InvalidParametersPresent(List<string> parameterList)
         {
-            const bool blnCaseSensitive = false;
-            return InvalidParametersPresent(objParameterList, blnCaseSensitive);
+            const bool caseSensitive = false;
+            return InvalidParametersPresent(parameterList, caseSensitive);
         }
 
         /// <summary>
-        /// Compares the parameter names in strParameterList with the parameters at the command line
+        /// Compares the parameter names in parameterList with the parameters at the command line
         /// </summary>
-        /// <param name="strParameterList">Parameter list</param>
-        /// <returns>True if any of the parameters are not present in strParameterList()</returns>
-        public bool InvalidParametersPresent(string[] strParameterList)
+        /// <param name="parameterList">Parameter list</param>
+        /// <returns>True if any of the parameters are not present in parameterList()</returns>
+        public bool InvalidParametersPresent(IEnumerable<string> parameterList)
         {
-            const bool blnCaseSensitive = false;
-            return InvalidParametersPresent(strParameterList, blnCaseSensitive);
+            const bool caseSensitive = false;
+            return InvalidParametersPresent(parameterList, caseSensitive);
         }
 
         /// <summary>
-        /// Compares the parameter names in strParameterList with the parameters at the command line
+        /// Compares the parameter names in parameterList with the parameters at the command line
         /// </summary>
-        /// <param name="strParameterList">Parameter list</param>
-        /// <param name="blnCaseSensitive">True to perform case-sensitive matching of the parameter name</param>
-        /// <returns>True if any of the parameters are not present in strParameterList()</returns>
-        public bool InvalidParametersPresent(string[] strParameterList, bool blnCaseSensitive)
+        /// <param name="parameterList">Parameter list</param>
+        /// <param name="caseSensitive">True to perform case-sensitive matching of the parameter name</param>
+        /// <returns>True if any of the parameters are not present in parameterList()</returns>
+        public bool InvalidParametersPresent(IEnumerable<string> parameterList, bool caseSensitive)
         {
-            if (InvalidParameters(strParameterList.ToList()).Count > 0)
+            if (InvalidParameters(parameterList.ToList()).Count > 0)
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
-        public bool InvalidParametersPresent(List<string> lstValidParameters, bool blnCaseSensitive)
+        /// <summary>
+        /// Validate that the user-provided parameters are in the validParameters list
+        /// </summary>
+        /// <param name="validParameters"></param>
+        /// <param name="caseSensitive"></param>
+        /// <returns></returns>
+        public bool InvalidParametersPresent(List<string> validParameters, bool caseSensitive)
         {
-            if (InvalidParameters(lstValidParameters, blnCaseSensitive).Count > 0)
+            if (InvalidParameters(validParameters, caseSensitive).Count > 0)
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
-        public List<string> InvalidParameters(List<string> lstValidParameters)
+        /// <summary>
+        /// Retrieve a list of the user-provided parameters that are not in validParameters
+        /// </summary>
+        /// <param name="validParameters"></param>
+        /// <returns></returns>
+        public List<string> InvalidParameters(List<string> validParameters)
         {
-            const bool blnCaseSensitive = false;
-            return InvalidParameters(lstValidParameters, blnCaseSensitive);
+            const bool caseSensitive = false;
+            return InvalidParameters(validParameters, caseSensitive);
         }
 
-        public List<string> InvalidParameters(List<string> lstValidParameters, bool blnCaseSensitive)
+        /// <summary>
+        /// Retrieve a list of the user-provided parameters that are not in validParameters
+        /// </summary>
+        /// <param name="validParameters"></param>
+        /// <param name="caseSensitive"></param>
+        /// <returns></returns>
+        public List<string> InvalidParameters(List<string> validParameters, bool caseSensitive)
         {
             var lstInvalidParameters = new List<string>();
 
+
             try
             {
-                // Find items in mSwitches whose keys are not in lstValidParameters)
+                // Find items in mSwitches whose keys are not in validParameters)
 
-                foreach (KeyValuePair<string, string> item in mSwitches)
+                foreach (var item in mSwitches)
                 {
-                    string itemKey = item.Key;
-                    int intMatchCount = 0;
+                    var itemKey = item.Key;
+                    int matchCount;
 
-                    if (blnCaseSensitive)
+                    if (caseSensitive)
                     {
-                        intMatchCount = (from validItem in lstValidParameters where validItem == itemKey select validItem).Count();
+                        matchCount = (from validItem in validParameters
+                                      where validItem == itemKey
+                                      select validItem).Count();
                     }
                     else
                     {
-                        intMatchCount = (from validItem in lstValidParameters where string.Equals(validItem, itemKey, StringComparison.InvariantCultureIgnoreCase) select validItem).Count();
+                        matchCount = (from validItem in validParameters
+                                      where string.Equals(validItem, itemKey, StringComparison.CurrentCultureIgnoreCase)
+                                      select validItem).Count();
                     }
 
-                    if (intMatchCount == 0)
+                    if (matchCount == 0)
                     {
                         lstInvalidParameters.Add(item.Key);
                     }
                 }
+
             }
             catch (Exception ex)
             {
@@ -172,19 +180,19 @@ namespace AnalysisManagerProg
             }
 
             return lstInvalidParameters;
+
         }
 
         /// <summary>
         /// Look for parameter on the command line
         /// </summary>
-        /// <param name="strParameterName">Parameter name</param>
+        /// <param name="paramName">Parameter name</param>
         /// <returns>True if present, otherwise false</returns>
-        /// <remarks>Does not work for /? or /help -- for those, use .NeedToShowHelp</remarks>
-        public bool IsParameterPresent(string strParameterName)
+        public bool IsParameterPresent(string paramName)
         {
-            string strValue = string.Empty;
-            const bool blnCaseSensitive = false;
-            return RetrieveValueForParameter(strParameterName, out strValue, blnCaseSensitive);
+            string paramValue;
+            const bool caseSensitive = false;
+            return RetrieveValueForParameter(paramName, out paramValue, caseSensitive);
         }
 
         /// <summary>
@@ -202,57 +210,57 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <returns>Returns True if any command line parameters were found; otherwise false</returns>
         /// <remarks>If /? or /help is found, then returns False and sets mShowHelp to True</remarks>
-        public bool ParseCommandLine(char strSwitchStartChar)
+        public bool ParseCommandLine(char switchStartChar)
         {
-            return ParseCommandLine(strSwitchStartChar, DEFAULT_SWITCH_PARAM_CHAR);
+            return ParseCommandLine(switchStartChar, DEFAULT_SWITCH_PARAM_CHAR);
         }
 
         /// <summary>
         /// Parse the parameters and switches at the command line
         /// </summary>
-        /// <param name="chSwitchStartChar"></param>
-        /// <param name="chSwitchParameterChar"></param>
+        /// <param name="switchStartChar"></param>
+        /// <param name="switchParameterChar"></param>
         /// <returns>Returns True if any command line parameters were found; otherwise false</returns>
         /// <remarks>If /? or /help is found, then returns False and sets mShowHelp to True</remarks>
-        public bool ParseCommandLine(char chSwitchStartChar, char chSwitchParameterChar)
+        public bool ParseCommandLine(char switchStartChar, char switchParameterChar)
         {
             // Returns True if any command line parameters were found
             // Otherwise, returns false
             //
             // If /? or /help is found, then returns False and sets mShowHelp to True
 
-            string strCmdLine = string.Empty;
-
             mSwitches.Clear();
             mNonSwitchParameters.Clear();
 
             try
             {
+                string commandLine;
                 try
                 {
                     // .CommandLine() returns the full command line
-                    strCmdLine = Environment.CommandLine;
+                    commandLine = Environment.CommandLine;
 
                     // .GetCommandLineArgs splits the command line at spaces, though it keeps text between double quotes together
                     // Note that .NET will strip out the starting and ending double quote if the user provides a parameter like this:
                     // MyProgram.exe "C:\Program Files\FileToProcess"
                     //
-                    // In this case, strParameters(1) will not have a double quote at the start but it will have a double quote at the end:
-                    //  strParameters(1) = C:\Program Files\FileToProcess"
+                    // In this case, paramList[1] will not have a double quote at the start but it will have a double quote at the end:
+                    //  paramList[1] = C:\Program Files\FileToProcess"
 
                     // One very odd feature of Environment.GetCommandLineArgs() is that if the command line looks like this:
                     //    MyProgram.exe "D:\My Folder\Subfolder\" /O:D:\OutputFolder
-                    // Then strParameters will have:
-                    //    strParameters(1) = D:\My Folder\Subfolder" /O:D:\OutputFolder
+                    // Then paramList will have:
+                    //    paramList[1] = D:\My Folder\Subfolder" /O:D:\OutputFolder
                     //
                     // To avoid this problem instead specify the command line as:
                     //    MyProgram.exe "D:\My Folder\Subfolder" /O:D:\OutputFolder
                     // which gives:
-                    //    strParameters(1) = D:\My Folder\Subfolder
-                    //    strParameters(2) = /O:D:\OutputFolder
+                    //    paramList[1] = D:\My Folder\Subfolder
+                    //    paramList[2] = /O:D:\OutputFolder
                     //
                     // Due to the idiosyncrasies of .GetCommandLineArgs, we will instead use SplitCommandLineParams to do the splitting
-                    // strParameters = Environment.GetCommandLineArgs()
+                    // paramList = Environment.GetCommandLineArgs()
+
                 }
                 catch (Exception ex)
                 {
@@ -260,12 +268,12 @@ namespace AnalysisManagerProg
                     // This appears to be fixed in .NET 2.0 and above
                     // If an exception does occur here, we'll show the error message at the console, then sleep for 2 seconds
 
-                    Console.WriteLine("------------------------------------------------------------------------------");
-                    Console.WriteLine("This program cannot be run from a network share.  Please map a drive to the");
-                    Console.WriteLine(" network share you are currently accessing or copy the program files and");
-                    Console.WriteLine(" required DLL's to your local computer.");
-                    Console.WriteLine(" Exception: " + ex.Message);
-                    Console.WriteLine("------------------------------------------------------------------------------");
+                    Console.WriteLine(@"------------------------------------------------------------------------------");
+                    Console.WriteLine(@"This program cannot be run from a network share.  Please map a drive to the");
+                    Console.WriteLine(@" network share you are currently accessing or copy the program files and");
+                    Console.WriteLine(@" required DLL's to your local computer.");
+                    Console.WriteLine(@" Exception: " + ex.Message);
+                    Console.WriteLine(@"------------------------------------------------------------------------------");
 
                     PauseAtConsole(5000, 1000);
 
@@ -276,99 +284,104 @@ namespace AnalysisManagerProg
                 if (mDebugMode)
                 {
                     Console.WriteLine();
-                    Console.WriteLine("Debugging command line parsing");
+                    Console.WriteLine(@"Debugging command line parsing");
                     Console.WriteLine();
                 }
 
-                var strParameters = SplitCommandLineParams(strCmdLine);
+                var paramList = SplitCommandLineParams(commandLine);
 
                 if (mDebugMode)
                 {
                     Console.WriteLine();
                 }
 
-                if (string.IsNullOrWhiteSpace(strCmdLine))
+                if (string.IsNullOrWhiteSpace(commandLine))
                 {
                     return false;
                 }
-                else if (strCmdLine.IndexOf(chSwitchStartChar + "?", StringComparison.Ordinal) > 0 || strCmdLine.ToLower().IndexOf(chSwitchStartChar + "help", StringComparison.Ordinal) > 0)
+
+                if (commandLine.IndexOf(switchStartChar + "?", StringComparison.Ordinal) > 0 ||
+                    commandLine.ToLower().IndexOf(switchStartChar + "help", StringComparison.CurrentCultureIgnoreCase) > 0)
                 {
                     mShowHelp = true;
                     return false;
                 }
 
                 // Parse the command line
-                // Note that strParameters(0) is the path to the Executable for the calling program
+                // Note that paramList[0] is the path to the Executable for the calling program
 
-                for (var intIndex = 1; intIndex <= strParameters.Length - 1; intIndex++)
+                for (var paramIndex = 1; paramIndex <= paramList.Length - 1; paramIndex++)
                 {
-                    if (strParameters[intIndex].Length > 0)
+                    if (paramList[paramIndex].Length <= 0)
                     {
-                        var strKey = strParameters[intIndex].TrimStart(' ');
-                        var strValue = string.Empty;
-                        bool blnSwitchParam = false;
+                        continue;
+                    }
 
-                        if (strKey.StartsWith(chSwitchStartChar.ToString()))
+                    var paramName = paramList[paramIndex].TrimStart(' ');
+                    var paramValue = string.Empty;
+
+                    bool isSwitchParam;
+                    if (paramName.StartsWith(switchStartChar))
+                    {
+                        isSwitchParam = true;
+                    }
+                    else if (paramName.StartsWith(ALTERNATE_SWITCH_CHAR) || paramName.StartsWith(DEFAULT_SWITCH_CHAR))
+                    {
+                        isSwitchParam = true;
+                    }
+                    else
+                    {
+                        // Parameter doesn't start with switchStartChar or / or -
+                        isSwitchParam = false;
+                    }
+
+                    if (isSwitchParam)
+                    {
+                        // Look for switchParameterChar in paramList[paramIndex]
+                        var charIndex = paramList[paramIndex].IndexOf(switchParameterChar);
+
+                        if (charIndex >= 0)
                         {
-                            blnSwitchParam = true;
-                        }
-                        else if (strKey.StartsWith(ALTERNATE_SWITCH_CHAR.ToString()) || strKey.StartsWith(DEFAULT_SWITCH_CHAR.ToString()))
-                        {
-                            blnSwitchParam = true;
-                        }
-                        else
-                        {
-                            // Parameter doesn't start with strSwitchStartChar or / or -
-                            blnSwitchParam = false;
-                        }
-
-                        if (blnSwitchParam)
-                        {
-                            // Look for strSwitchParameterChar in strParameters(intIndex)
-                            var intCharIndex = strParameters[intIndex].IndexOf(chSwitchParameterChar);
-
-                            if (intCharIndex >= 0)
-                            {
-                                // Parameter is of the form /I:MyParam or /I:"My Parameter" or -I:"My Parameter" or /MyParam:Setting
-                                strValue = strKey.Substring(intCharIndex + 1).Trim();
-
-                                // Remove any starting and ending quotation marks
-                                strValue = strValue.Trim('"');
-
-                                strKey = strKey.Substring(0, intCharIndex);
-                            }
-                            else
-                            {
-                                // Parameter is of the form /S or -S
-                            }
-
-                            // Remove the switch character from strKey
-                            strKey = strKey.Substring(1).Trim();
-
-                            if (mDebugMode)
-                            {
-                                Console.WriteLine("SwitchParam: " + strKey + "=" + strValue);
-                            }
-
-                            // Note: .Item() will add strKey if it doesn't exist (which is normally the case)
-                            mSwitches[strKey] = strValue;
-                        }
-                        else
-                        {
-                            // Non-switch parameter since strSwitchParameterChar was not found and does not start with strSwitchStartChar
+                            // Parameter is of the form /I:MyParam or /I:"My Parameter" or -I:"My Parameter" or /MyParam:Setting
+                            paramValue = paramName.Substring(charIndex + 1).Trim();
 
                             // Remove any starting and ending quotation marks
-                            strKey = strKey.Trim('"');
+                            paramValue = paramValue.Trim('"');
 
-                            if (mDebugMode)
-                            {
-                                Console.WriteLine("NonSwitchParam " + mNonSwitchParameters.Count + ": " + strKey);
-                            }
-
-                            mNonSwitchParameters.Add(strKey);
+                            paramName = paramName.Substring(0, charIndex);
                         }
+                        else
+                        {
+                            // Parameter is of the form /S or -S
+                        }
+
+                        // Remove the switch character from paramName
+                        paramName = paramName.Substring(1).Trim();
+
+                        if (mDebugMode)
+                        {
+                            Console.WriteLine(@"SwitchParam: " + paramName + @"=" + paramValue);
+                        }
+
+                        // Note: This will add paramName if it doesn't exist (which is normally the case)
+                        mSwitches[paramName] = paramValue;
+                    }
+                    else
+                    {
+                        // Non-switch parameter since switchParameterChar was not found and does not start with switchStartChar
+
+                        // Remove any starting and ending quotation marks
+                        paramName = paramName.Trim('"');
+
+                        if (mDebugMode)
+                        {
+                            Console.WriteLine(@"NonSwitchParam " + mNonSwitchParameters.Count + @": " + paramName);
+                        }
+
+                        mNonSwitchParameters.Add(paramName);
                     }
                 }
+
             }
             catch (Exception ex)
             {
@@ -378,8 +391,8 @@ namespace AnalysisManagerProg
             if (mDebugMode)
             {
                 Console.WriteLine();
-                Console.WriteLine("Switch Count = " + mSwitches.Count);
-                Console.WriteLine("NonSwitch Count = " + mNonSwitchParameters.Count);
+                Console.WriteLine(@"Switch Count = " + mSwitches.Count);
+                Console.WriteLine(@"NonSwitch Count = " + mNonSwitchParameters.Count);
                 Console.WriteLine();
             }
 
@@ -387,99 +400,102 @@ namespace AnalysisManagerProg
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
-        public static void PauseAtConsole(int intMillisecondsToPause, int intMillisecondsBetweenDots)
+        /// <summary>
+        /// Pause the program for the specified number of milliseconds, displaying a period at a set interval while paused
+        /// </summary>
+        /// <param name="millisecondsToPause">Milliseconds to pause; default 5 seconds</param>
+        /// <param name="millisecondsBetweenDots">Seconds between each period; default 1 second</param>
+        public static void PauseAtConsole(int millisecondsToPause = 5000, int millisecondsBetweenDots = 1000)
         {
-            int intIteration = 0;
-            int intTotalIterations = 0;
+            int totalIterations;
 
             Console.WriteLine();
-            Console.Write("Continuing in " + (intMillisecondsToPause / 1000.0).ToString("0") + " seconds ");
+            Console.Write(@"Continuing in " + (millisecondsToPause / 1000.0).ToString("0") + @" seconds ");
 
             try
             {
-                if (intMillisecondsBetweenDots == 0)
-                    intMillisecondsBetweenDots = intMillisecondsToPause;
+                if (millisecondsBetweenDots == 0)
+                    millisecondsBetweenDots = millisecondsToPause;
 
-                intTotalIterations = Convert.ToInt32(Math.Round((double)intMillisecondsToPause / intMillisecondsBetweenDots, 0));
+                totalIterations = Convert.ToInt32(Math.Round(millisecondsToPause / (double)millisecondsBetweenDots, 0));
             }
-            catch (Exception ex)
+            catch
             {
-                intTotalIterations = 1;
+                // Ignore errors here
+                totalIterations = 1;
             }
 
-            intIteration = 0;
+            var iteration = 0;
             do
             {
                 Console.Write('.');
 
-                System.Threading.Thread.Sleep(intMillisecondsBetweenDots);
+                System.Threading.Thread.Sleep(millisecondsBetweenDots);
 
-                intIteration += 1;
-            } while (intIteration < intTotalIterations);
+                iteration += 1;
+            } while (iteration < totalIterations);
 
             Console.WriteLine();
+
         }
 
         /// <summary>
         /// Returns the value of the non-switch parameter at the given index
         /// </summary>
-        /// <param name="intParameterIndex">Parameter index</param>
+        /// <param name="parameterIndex">Parameter index</param>
         /// <returns>The value of the parameter at the given index; empty string if no value or invalid index</returns>
-        public string RetrieveNonSwitchParameter(int intParameterIndex)
+        public string RetrieveNonSwitchParameter(int parameterIndex)
         {
-            string strValue = string.Empty;
+            var paramValue = string.Empty;
 
-            if (intParameterIndex < mNonSwitchParameters.Count)
+            if (parameterIndex < mNonSwitchParameters.Count)
             {
-                strValue = mNonSwitchParameters[intParameterIndex];
+                paramValue = mNonSwitchParameters[parameterIndex];
             }
 
-            if (strValue == null)
+            if (string.IsNullOrEmpty(paramValue))
             {
-                strValue = string.Empty;
+                return string.Empty;
             }
 
-            return strValue;
+            return paramValue;
+
         }
 
         /// <summary>
         /// Returns the parameter at the given index
         /// </summary>
-        /// <param name="intParameterIndex">Parameter index</param>
-        /// <param name="strKey">Parameter name (output)</param>
-        /// <param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
+        /// <param name="parameterIndex">Parameter index</param>
+        /// <param name="paramName">Parameter name (output)</param>
+        /// <param name="paramValue">Value associated with the parameter; empty string if no value (output)</param>
         /// <returns></returns>
-        public bool RetrieveParameter(int intParameterIndex, out string strKey, out string strValue)
+        public bool RetrieveParameter(int parameterIndex, out string paramName, out string paramValue)
         {
-            int intIndex = 0;
-
             try
             {
-                strKey = string.Empty;
-                strValue = string.Empty;
+                paramName = string.Empty;
+                paramValue = string.Empty;
 
-                if (intParameterIndex < mSwitches.Count)
+                if (parameterIndex < mSwitches.Count)
                 {
-                    Dictionary<string, string>.Enumerator iEnum = mSwitches.GetEnumerator();
-
-                    intIndex = 0;
-                    while (iEnum.MoveNext())
+                    using (var iEnum = mSwitches.GetEnumerator())
                     {
-                        if (intIndex == intParameterIndex)
+                        var switchIndex = 0;
+                        while (iEnum.MoveNext())
                         {
-                            strKey = iEnum.Current.Key;
-                            strValue = iEnum.Current.Value;
-                            return true;
+                            if (switchIndex == parameterIndex)
+                            {
+                                paramName = iEnum.Current.Key;
+                                paramValue = iEnum.Current.Value;
+                                return true;
+                            }
+                            switchIndex += 1;
                         }
-                        intIndex += 1;
                     }
-                    iEnum.Dispose();
                 }
                 else
                 {
@@ -492,124 +508,123 @@ namespace AnalysisManagerProg
             }
 
             return false;
+
         }
 
         /// <summary>
-        /// Look for parameter on the command line and returns its value in strValue
+        /// Look for parameter on the command line and returns its value in paramValue
         /// </summary>
-        /// <param name="strKey">Parameter name</param>
-        /// <param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
+        /// <param name="paramName">Parameter name</param>
+        /// <param name="paramValue">Value associated with the parameter; empty string if no value (output)</param>
         /// <returns>True if present, otherwise false</returns>
-        public bool RetrieveValueForParameter(string strKey, out string strValue)
+        public bool RetrieveValueForParameter(string paramName, out string paramValue)
         {
-            return RetrieveValueForParameter(strKey, out strValue, false);
+            return RetrieveValueForParameter(paramName, out paramValue, false);
         }
 
         /// <summary>
-        /// Look for parameter on the command line and returns its value in strValue
+        /// Look for parameter on the command line and returns its value in paramValue
         /// </summary>
-        /// <param name="strKey">Parameter name</param>
-        /// <param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
-        /// <param name="blnCaseSensitive">True to perform case-sensitive matching of the parameter name</param>
+        /// <param name="paramName">Parameter name</param>
+        /// <param name="paramValue">Value associated with the parameter; empty string if no value (output)</param>
+        /// <param name="caseSensitive">True to perform case-sensitive matching of the parameter name</param>
         /// <returns>True if present, otherwise false</returns>
-        public bool RetrieveValueForParameter(string strKey, out string strValue, bool blnCaseSensitive)
+        public bool RetrieveValueForParameter(string paramName, out string paramValue, bool caseSensitive)
         {
+
             try
             {
-                strValue = string.Empty;
+                paramValue = string.Empty;
 
-                if (blnCaseSensitive)
+                if (caseSensitive)
                 {
-                    if (mSwitches.ContainsKey(strKey))
+                    if (mSwitches.ContainsKey(paramName))
                     {
-                        strValue = Convert.ToString(mSwitches[strKey]);
+                        paramValue = Convert.ToString(mSwitches[paramName]);
                         return true;
                     }
-                    else
-                    {
-                        return false;
-                    }
+
+                    return false;
                 }
-                else
+
+                var result = (from item in mSwitches
+                              where string.Equals(item.Key, paramName, StringComparison.CurrentCultureIgnoreCase)
+                              select item).ToList();
+
+                if (result.Count > 0)
                 {
-                    var query = (from item in mSwitches where string.Equals(item.Key, strKey, StringComparison.InvariantCultureIgnoreCase) select item).ToList();
-
-                    if (query.Count == 0)
-                    {
-                        return false;
-                    }
-
-                    strValue = query.FirstOrDefault().Value;
+                    paramValue = result.First().Value;
                     return true;
                 }
+
+                return false;
             }
             catch (Exception ex)
             {
                 throw new Exception("Error in RetrieveValueForParameter", ex);
             }
+
         }
 
-        private string[] SplitCommandLineParams(string strCmdLine)
+        private string[] SplitCommandLineParams(string commandLine)
         {
-            List<string> strParameters = new List<string>();
-            string strParameter = null;
+            var paramList = new List<string>();
 
-            var intIndexStart = 0;
-            var intIndexEnd = 0;
-            bool blnInsideDoubleQuotes = false;
+            var indexStart = 0;
+            var indexEnd = 0;
 
             try
             {
-                if (!string.IsNullOrEmpty(strCmdLine))
+
+                if (!string.IsNullOrEmpty(commandLine))
                 {
                     // Make sure the command line doesn't have any carriage return or linefeed characters
-                    strCmdLine = strCmdLine.Replace("\r\n", " ");
-                    strCmdLine = strCmdLine.Replace("\r", " ");
-                    strCmdLine = strCmdLine.Replace("\n", " ");
+                    commandLine = commandLine.Replace("\r", " ");
+                    commandLine = commandLine.Replace("\n", " ");
 
-                    blnInsideDoubleQuotes = false;
+                    var insideDoubleQuotes = false;
 
-                    while (intIndexStart < strCmdLine.Length)
+                    while (indexStart < commandLine.Length)
                     {
                         // Step through the characters to find the next space
                         // However, if we find a double quote, then stop checking for spaces
 
-                        if (strCmdLine[intIndexEnd] == '"')
+                        if (commandLine[indexEnd] == '"')
                         {
-                            blnInsideDoubleQuotes = !blnInsideDoubleQuotes;
+                            insideDoubleQuotes = !insideDoubleQuotes;
                         }
 
-                        if (!blnInsideDoubleQuotes || intIndexEnd == strCmdLine.Length - 1)
+                        if (!insideDoubleQuotes || indexEnd == commandLine.Length - 1)
                         {
-                            if (strCmdLine[intIndexEnd] == ' ' || intIndexEnd == strCmdLine.Length - 1)
+                            if (commandLine[indexEnd] == ' ' || indexEnd == commandLine.Length - 1)
                             {
                                 // Found the end of a parameter
-                                strParameter = strCmdLine.Substring(intIndexStart, intIndexEnd - intIndexStart + 1).TrimEnd(' ');
+                                var paramName = commandLine.Substring(indexStart, indexEnd - indexStart + 1).TrimEnd(' ');
 
-                                if (strParameter.StartsWith("\""))
+                                if (paramName.StartsWith('"'))
                                 {
-                                    strParameter = strParameter.Substring(1);
+                                    paramName = paramName.Substring(1);
                                 }
 
-                                if (strParameter.EndsWith("\""))
+                                if (paramName.EndsWith('"'))
                                 {
-                                    strParameter = strParameter.Substring(0, strParameter.Length - 1);
+                                    paramName = paramName.Substring(0, paramName.Length - 1);
                                 }
 
-                                if (!string.IsNullOrEmpty(strParameter))
+                                if (!string.IsNullOrEmpty(paramName))
                                 {
                                     if (mDebugMode)
                                     {
-                                        Console.WriteLine("Param " + strParameters.Count + ": " + strParameter);
+                                        Console.WriteLine(@"Param " + paramList.Count + @": " + paramName);
                                     }
-                                    strParameters.Add(strParameter);
+                                    paramList.Add(paramName);
                                 }
 
-                                intIndexStart = intIndexEnd + 1;
+                                indexStart = indexEnd + 1;
                             }
                         }
 
-                        intIndexEnd += 1;
+                        indexEnd += 1;
                     }
                 }
             }
@@ -618,7 +633,49 @@ namespace AnalysisManagerProg
                 throw new Exception("Error in SplitCommandLineParams", ex);
             }
 
-            return strParameters.ToArray();
+            return paramList.ToArray();
+
+        }
+    }
+
+    namespace ExtensionMethods
+    {
+        /// <summary>
+        /// String extension methods StartsWith and EndsWith
+        /// </summary>
+        public static class StringExtensions
+        {
+            /// <summary>
+            /// Determine whether a string starts with a character
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="ch"></param>
+            /// <returns>True if str starts with ch</returns>
+            public static bool StartsWith(this string str, char ch)
+            {
+                if (!string.IsNullOrEmpty(str))
+                {
+                    if (str[0] == ch)
+                        return true;
+                }
+                return false;
+            }
+
+            /// <summary>
+            /// Determine whether a string ends with a character
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="ch"></param>
+            /// <returns>True if str ends with ch</returns>
+            public static bool EndsWith(this string str, char ch)
+            {
+                if (!string.IsNullOrEmpty(str))
+                {
+                    if (str[str.Length - 1] == ch)
+                        return true;
+                }
+                return false;
+            }
         }
     }
 }
