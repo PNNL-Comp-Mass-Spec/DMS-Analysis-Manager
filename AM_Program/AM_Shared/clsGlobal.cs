@@ -405,7 +405,7 @@ namespace AnalysisManagerBase
                     }
 
                     Console.WriteLine(msg);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
                     Thread.Sleep(retryDelaySeconds * 1000);
 
                     retryDelaySeconds *= 2;
@@ -1810,7 +1810,7 @@ namespace AnalysisManagerBase
                 // Example error message: Organism DB directory not found: G:\DMS_Temp_Org
                 errorMessage = directoryDescription + " not found: " + directoryPath;
                 Console.WriteLine(errorMessage);
-                clsLogTools.WriteLog(eLogLocationIfNotFound, clsLogTools.LogLevels.ERROR, errorMessage);
+                LogError(errorMessage);
                 return false;
             }
 
@@ -1843,7 +1843,7 @@ namespace AnalysisManagerBase
                 // Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
                 errorMessage = $"{directoryDescription} drive has less than {minFreeSpaceMB} MB free: {Convert.ToInt32(freeSpaceMB)} MB";
                 Console.WriteLine(errorMessage);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                LogError(errorMessage);
                 return false;
             }
 

@@ -120,7 +120,7 @@ namespace AnalysisManagerProg
             {
                 var msg = "Exception calling " + SP_NAME_ACKMANAGERUPDATE + ex.Message;
                 Console.WriteLine(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg, ex);
             }
         }
 
@@ -645,12 +645,12 @@ namespace AnalysisManagerProg
         private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
         {
             WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+            LogError(errorMessage);
 
-            if ((allowLogToDB))
+            if (allowLogToDB)
             {
                 // Also post a log to the database
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
+                LogError(errorMessage);
             }
 
             if (mTraceMode)

@@ -223,7 +223,7 @@ namespace AnalysisManagerBase
 
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.Setup()");
+                LogDebug("clsAnalysisToolRunnerBase.Setup()");
             }
 
             m_IonicZipTools = new clsIonicZipTools(m_DebugLevel, m_WorkDir);
@@ -263,14 +263,11 @@ namespace AnalysisManagerBase
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     $"CalcElapsedTime: StartTime = {startTime}; Stoptime = {stopTime}");
+                LogDebug($"CalcElapsedTime: StartTime = {startTime}; Stoptime = {stopTime}");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     $"CalcElapsedTime: {dtElapsedTime.Hours} Hours, {dtElapsedTime.Minutes} Minutes, {dtElapsedTime.Seconds} Seconds");
+                LogDebug($"CalcElapsedTime: {dtElapsedTime.Hours} Hours, {dtElapsedTime.Minutes} Minutes, {dtElapsedTime.Seconds} Seconds");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     $"CalcElapsedTime: TotalMinutes = {dtElapsedTime.TotalMinutes:0.00}");
+                LogDebug($"CalcElapsedTime: TotalMinutes = {dtElapsedTime.TotalMinutes:0.00}");
             }
 
             return dtElapsedTime.Hours.ToString("###0") + ":" + dtElapsedTime.Minutes.ToString("00") + ":" + dtElapsedTime.Seconds.ToString("00");
@@ -666,10 +663,7 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(m_ResFolderName))
                 {
                     // Log this error to the database (the logger will also update the local log file)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder name is not defined, job " + m_jobParams.GetParam("StepParameters", "Job"));
-
-                    // Also display at console
-                    LogMessage("Results folder not defined (job parameter OutputFolderName)", 10, true);
+                    LogError("Results folder name is not defined, job " + m_jobParams.GetParam("StepParameters", "Job"), true);
 
                     // Without a source folder; there isn't much we can do
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -681,10 +675,7 @@ namespace AnalysisManagerBase
                 if (!Directory.Exists(sourceFolderPath))
                 {
                     // Log this error to the database
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Results folder not found, job " + m_jobParams.GetParam("StepParameters", "Job") + ", folder " + sourceFolderPath);
-
-                    // Also display at console
-                    LogMessage("Results folder not found", 10, true);
+                    LogError("Results folder not found, job " + m_jobParams.GetParam("StepParameters", "Job") + ", folder " + sourceFolderPath, true);
 
                     // Without a source folder; there isn't much we can do
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -1028,7 +1019,7 @@ namespace AnalysisManagerBase
 
             if (debugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBase.DeleteFileWithRetries, executing method");
+                clsGlobal.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, executing method");
             }
 
             // Verify specified file exists
@@ -1045,8 +1036,7 @@ namespace AnalysisManagerBase
                     File.Delete(fileNamePath);
                     if (debugLevel > 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                            "clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit");
+                        clsGlobal.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit");
                     }
                     return true;
 
@@ -1056,13 +1046,12 @@ namespace AnalysisManagerBase
                     // File may be read-only. Clear read-only flag and try again
                     if (debugLevel > 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " + fileNamePath + " exception ERR1: " + Err1.Message);
+                        clsGlobal.LogDebug("File " + fileNamePath + " exception ERR1: " + Err1.Message);
                         if ((Err1.InnerException != null))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " + Err1.InnerException.Message);
+                            clsGlobal.LogDebug("Inner exception: " + Err1.InnerException.Message);
                         }
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                            "File " + fileNamePath + " may be read-only, attribute reset attempt #" + retryCount);
+                        clsGlobal.LogDebug("File " + fileNamePath + " may be read-only, attribute reset attempt #" + retryCount);
                     }
                     File.SetAttributes(fileNamePath, File.GetAttributes(fileNamePath) & ~FileAttributes.ReadOnly);
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception;
@@ -1074,13 +1063,12 @@ namespace AnalysisManagerBase
                     // If problem is locked file, attempt to fix lock and retry
                     if (debugLevel > 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "File " + fileNamePath + " exception ERR2: " + Err2.Message);
+                        clsGlobal.LogDebug("File " + fileNamePath + " exception ERR2: " + Err2.Message);
                         if ((Err2.InnerException != null))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inner exception: " + Err2.InnerException.Message);
+                            clsGlobal.LogDebug("Inner exception: " + Err2.InnerException.Message);
                         }
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                            "Error deleting file " + fileNamePath + ", attempt #" + retryCount);
+                        clsGlobal.LogDebug("Error deleting file " + fileNamePath + ", attempt #" + retryCount);
                     }
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception;
 
@@ -1095,8 +1083,7 @@ namespace AnalysisManagerBase
                 catch (Exception Err3)
                 {
                     var msg = "Error deleting file, exception ERR3 " + fileNamePath + Err3.Message;
-                    Console.WriteLine(msg);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    clsGlobal.LogError(msg);
                     throw new AMFileNotDeletedException(fileNamePath, Err3.Message);
                 }
             }
@@ -1352,8 +1339,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(progLoc))
             {
                 errorMessage = "Manager parameter " + strProgLocManagerParamName + " is not defined in the Manager Control DB";
-                Console.WriteLine(errorMessage);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                clsGlobal.LogError(errorMessage);
                 return string.Empty;
             }
 
@@ -1367,12 +1353,11 @@ namespace AnalysisManagerBase
                 if (!Directory.Exists(progLoc))
                 {
                     errorMessage = "Version-specific folder not found for " + strStepToolName;
-                    Console.WriteLine(errorMessage);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ": " + progLoc);
+                    clsGlobal.LogError(errorMessage + ": " + progLoc);
                     return string.Empty;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using specific version of " + strStepToolName + ": " + progLoc);
+                clsGlobal.LogMessage("Using specific version of " + strStepToolName + ": " + progLoc);
             }
 
             // Define the path to the .Exe, then verify that it exists
@@ -1381,8 +1366,7 @@ namespace AnalysisManagerBase
             if (!File.Exists(progLoc))
             {
                 errorMessage = "Cannot find " + strStepToolName + " program file " + strExeName;
-                Console.WriteLine(errorMessage);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + " at " + progLoc);
+                clsGlobal.LogError(errorMessage + " at " + progLoc);
                 return string.Empty;
             }
 
@@ -1488,7 +1472,7 @@ namespace AnalysisManagerBase
 
                 if (debugLevel >= 5)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings from the Manager Control DB");
+                    clsGlobal.LogDebug("Updating manager settings from the Manager Control DB");
                 }
 
                 // Data Source=proteinseqs;Initial Catalog=manager_control
@@ -1499,7 +1483,7 @@ namespace AnalysisManagerBase
 
                 if (debugLevel > 0 && newDebugLevel != debugLevel)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Debug level changed from " + debugLevel + " to " + newDebugLevel);
+                    clsGlobal.LogDebug("Debug level changed from " + debugLevel + " to " + newDebugLevel);
                     debugLevel = newDebugLevel;
                 }
 
@@ -1509,9 +1493,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 var errorMessage = "Exception getting current manager settings from the manager control DB";
-                Console.WriteLine(errorMessage);
-                Console.WriteLine(clsGlobal.GetExceptionStackTrace(ex));
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ": " + ex.Message);
+                clsGlobal.LogError(errorMessage, ex);
             }
 
             return false;
@@ -2315,8 +2297,8 @@ namespace AnalysisManagerBase
                             {
                                 // Invalid character found
                                 okToMove = false;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " + tmpFileName);
-                                break; // TODO: might not be correct. Was : Exit For
+                                LogDebug(" MoveResultFiles: Accepted file:  " + tmpFileName);
+                                break;
                             }
                         }
                     }
@@ -2340,7 +2322,7 @@ namespace AnalysisManagerBase
                             //  However, if a file was rejected due to invalid characters in the name, then we don't track that rejection with dctRejectStats
                             if (dctRejectStats[fileExtension] <= REJECT_LOGGING_THRESHOLD)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Rejected file:  " + tmpFileName);
+                                LogDebug(" MoveResultFiles: Rejected file:  " + tmpFileName);
                             }
                         }
                     }
@@ -2366,7 +2348,7 @@ namespace AnalysisManagerBase
                         // Only log the first 50 times files of a given extension are accepted
                         if (dctAcceptStats[fileExtension] <= ACCEPT_LOGGING_THRESHOLD)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " MoveResultFiles: Accepted file:  " + tmpFileName);
+                            LogDebug(" MoveResultFiles: Accepted file:  " + tmpFileName);
                         }
                     }
 
@@ -2737,10 +2719,9 @@ namespace AnalysisManagerBase
                     if (intFileDeleteErrorCount > 0)
                     {
                         LogMessage("Unable to delete " + intFileDeleteErrorCount + " file(s) from " + strCacheFolderPath, 0, true);
-                        Console.WriteLine("See the log file for details");
                         foreach (var kvItem in dctErrorSummary)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  " + kvItem.Key + ": " + kvItem.Value);
+                            LogMessage("  " + kvItem.Key + ": " + kvItem.Value, 1, true);
                         }
                     }
 
@@ -3428,7 +3409,7 @@ namespace AnalysisManagerBase
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strAppPath + " " + strArgs);
+                    LogDebug(strAppPath + " " + strArgs);
                 }
 
                 var objProgRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath())
@@ -4151,7 +4132,7 @@ namespace AnalysisManagerBase
                     {
                         if (m_DebugLevel >= 3)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting target .zip file: " + zipFilePath);
+                            LogDebug("Deleting target .zip file: " + zipFilePath);
                         }
 
                         File.Delete(zipFilePath);

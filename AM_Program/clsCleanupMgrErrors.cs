@@ -272,8 +272,7 @@ namespace AnalysisManagerProg
 
                     if (!oFileTools.DeleteFileWithRetry(fiFile, DELETE_RETRY_COUNT, out errorMessage))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                        Console.WriteLine(errorMessage);
+                        LogError(errorMessage);
                         failedDeleteCount += 1;
                     }
                 }
@@ -286,81 +285,75 @@ namespace AnalysisManagerProg
                         // Remove the folder if it is empty
                         diSubDirectory.Refresh();
                         if (diSubDirectory.GetFileSystemInfos().Length == 0)
+                        try
                         {
+                            diSubDirectory.Delete();
+                        }
+                        catch (IOException)
+                        {
+                            // Try re-applying the permissions
+
+                            var folderAcl = new DirectorySecurity();
+                            var currentUser = Environment.UserDomainName + @"\" + Environment.UserName;
+
+                            LogWarning("IOException deleting " + diSubDirectory.FullName + "; will try granting modify access to user " + currentUser);
+                            folderAcl.AddAccessRule(new FileSystemAccessRule(currentUser, FileSystemRights.Modify, 
+                                                                             InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+
                             try
                             {
-                                diSubDirectory.Delete();
-                            }
-                            catch (IOException ex)
-                            {
-                                // Try re-applying the permissions
+                                // To remove existing permissions, use this: folderAcl.SetAccessRuleProtection(True, False)
 
-                                DirectorySecurity folderAcl = new DirectorySecurity();
-                                var currentUser = Environment.UserDomainName + "\\" + Environment.UserName;
+                                // Add the new access rule
+                                diSubDirectory.SetAccessControl(folderAcl);
 
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "IOException deleting " + diSubDirectory.FullName + "; will try granting modify access to user " + currentUser);
-                                folderAcl.AddAccessRule(new FileSystemAccessRule(currentUser, FileSystemRights.Modify, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+                                // Make sure the readonly flag is not set (it's likely not even possible for a folder to have a readonly flag set, but it doesn't hurt to check)
+                                diSubDirectory.Refresh();
+                                var attributes = diSubDirectory.Attributes;
+                                if (((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly))
+                                {
+                                    diSubDirectory.Attributes = attributes & (~FileAttributes.ReadOnly);
+                                }
 
                                 try
                                 {
-                                    // To remove existing permissions, use this: folderAcl.SetAccessRuleProtection(True, False)
-
-                                    // Add the new access rule
-                                    diSubDirectory.SetAccessControl(folderAcl);
-
-                                    // Make sure the readonly flag is not set (it's likely not even possible for a folder to have a readonly flag set, but it doesn't hurt to check)
-                                    diSubDirectory.Refresh();
-                                    var attributes = diSubDirectory.Attributes;
-                                    if (((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly))
-                                    {
-                                        diSubDirectory.Attributes = attributes & (~FileAttributes.ReadOnly);
-                                    }
-
-                                    try
-                                    {
-                                        // Retry the delete
-                                        diSubDirectory.Delete();
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updated permissions, then successfully deleted the folder");
-                                    }
-                                    catch (Exception ex3)
-                                    {
-                                        string strFailureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex3.Message;
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage);
-                                        Console.WriteLine(strFailureMessage);
-                                        failedDeleteCount += 1;
-                                    }
+                                    // Retry the delete
+                                    diSubDirectory.Delete();
+                                    LogDebug("Updated permissions, then successfully deleted the folder");
                                 }
-                                catch (Exception ex2)
+                                catch (Exception ex3)
                                 {
-                                    string strFailureMessage = "Error updating permissions for folder " + diSubDirectory.FullName + ": " + ex2.Message;
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage);
-                                    Console.WriteLine(strFailureMessage);
+                                    var strFailureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex3.Message;
+                                    LogError(strFailureMessage);
                                     failedDeleteCount += 1;
                                 }
                             }
-                            catch (Exception ex)
+                            catch (Exception ex2)
                             {
-                                string strFailureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex.Message;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage);
-                                Console.WriteLine(strFailureMessage);
+                                var strFailureMessage = "Error updating permissions for folder " + diSubDirectory.FullName + ": " + ex2.Message;
+                                LogError(strFailureMessage);
                                 failedDeleteCount += 1;
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            var strFailureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex.Message;
+                            LogError(strFailureMessage);
+                            failedDeleteCount += 1;
                         }
                     }
                     else
                     {
                         var strFailureMessage = "Error deleting working directory subfolder " + diSubDirectory.FullName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage);
-                        Console.WriteLine(strFailureMessage);
+                        LogError(strFailureMessage);
                         failedDeleteCount += 1;
                     }
                 }
             }
             catch (Exception ex)
             {
-                string strFailureMessage = "Error deleting files/folders in " + diWorkFolder.FullName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage, ex);
-                Console.WriteLine(strFailureMessage + ": " + ex.Message);
+                var strFailureMessage = "Error deleting files/folders in " + diWorkFolder.FullName;
+                LogError(strFailureMessage, ex);
                 return false;
             }
 
@@ -391,7 +384,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating " + ERROR_DELETING_FILES_FILENAME + ": " + ex.Message);
+                LogError("Error creating " + ERROR_DELETING_FILES_FILENAME, ex);
             }
         }
 
@@ -412,7 +405,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating " + FLAG_FILE_NAME + ": " + ex.Message);
+                LogError("Error creating " + FLAG_FILE_NAME, ex);
             }
         }
 
@@ -423,8 +416,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DeleteDeconServerFlagFile(int DebugLevel)
         {
-            //Deletes the job request control flag file
-            string strFlagFilePath = Path.Combine(mMgrFolderPath, DECON_SERVER_FLAG_FILE_NAME);
+            var strFlagFilePath = Path.Combine(mMgrFolderPath, DECON_SERVER_FLAG_FILE_NAME);
 
             return DeleteFlagFile(strFlagFilePath, DebugLevel);
         }
@@ -451,15 +443,13 @@ namespace AnalysisManagerProg
                         {
                             return true;
                         }
-                        else
-                        {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting file " + strFlagFilePath);
-                            return false;
-                        }
+
+                        LogError("Error deleting file " + strFlagFilePath);
+                        return false;
                     }
                     catch (Exception ex)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteFlagFile", ex);
+                        LogError("DeleteFlagFile", ex);
                         return false;
                     }
                 }
@@ -468,7 +458,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteFlagFile", ex);
+                LogError("DeleteFlagFile", ex);
                 return false;
             }
         }
@@ -530,7 +520,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteStatusFlagFile", ex);
+                LogError("DeleteStatusFlagFile", ex);
             }
         }
 
@@ -577,7 +567,7 @@ namespace AnalysisManagerProg
                     strErrorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage + ex.Message);
+                LogError(strErrorMessage, ex);
             }
         }
     }

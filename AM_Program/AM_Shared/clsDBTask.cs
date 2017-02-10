@@ -230,7 +230,7 @@ namespace AnalysisManagerBase
                 MyMsg += Environment.NewLine + "Name= " + MyParam.ParameterName + "\t, Value= " + clsGlobal.DbCStr(MyParam.Value);
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" + MyMsg);
+            LogDebug("Parameter list:" + paramDetails);
 
         }
 

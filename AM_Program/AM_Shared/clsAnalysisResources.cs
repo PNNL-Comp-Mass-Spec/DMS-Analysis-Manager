@@ -569,9 +569,7 @@ namespace AnalysisManagerBase
                         dtLockFileCreated = fiLockFile.LastWriteTimeUtc;
 
                         var debugMessage = dataFileDescription + " lock file found; will wait for file to be deleted or age; " + fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString();
-                        // Simulate call to LogDebugMessage() since this is a shared method
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, debugMessage);
-                        Console.WriteLine(debugMessage);
+                        clsGlobal.LogDebug(debugMessage);
                     }
                     else
                     {
@@ -918,11 +916,7 @@ namespace AnalysisManagerBase
                 if (!FileExistsWithRetry(sourceFilePath, HOLDOFF_SECONDS, logMsgTypeIfNotFound, MAX_ATTEMPTS))
                 {
                     m_message = "File not found: " + sourceFilePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logMsgTypeIfNotFound, m_message);
-                    if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
-                    {
-                        LogMessage(m_message, 0, true);
-                    }
+                    LogMessage(m_message, 0, logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR);
                     return false;
                 }
 
@@ -1040,11 +1034,7 @@ namespace AnalysisManagerBase
                 if (!FileExistsWithRetry(sourceFilePath, logMsgTypeIfNotFound))
                 {
                     m_message = "File not found: " + sourceFilePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logMsgTypeIfNotFound, m_message);
-                    if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
-                    {
-                        LogMessage(m_message, 0, true);
-                    }
+                    LogMessage(m_message, 0, logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR);
                     return false;
                 }
 
@@ -1333,10 +1323,10 @@ namespace AnalysisManagerBase
 
                     try
                     {
-                        strFastaFileMsg = "Fasta file last modified: " + 
+                        strFastaFileMsg = "Fasta file last modified: " +
                             GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString();
 
-                        strFastaFileMsg += "; file created: " + 
+                        strFastaFileMsg += "; file created: " +
                             GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + fiFastaFile.CreationTime.ToString();
 
                         strFastaFileMsg += "; file size: " + fiFastaFile.Length.ToString() + " bytes";
@@ -1565,11 +1555,7 @@ namespace AnalysisManagerBase
                         // Only log each failed attempt to find the file if logMsgTypeIfNotFound = ILogger.logMsgType.logError
                         // Otherwise, we won't log each failed attempt
                         string errMsg = "File " + fileName + " not found. Retry count = " + retryCount;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logMsgTypeIfNotFound, errMsg);
-                        if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
-                        {
-                            LogMessage(errMsg, 0, true);
-                        }
+                        LogMessage(errMsg, 0, logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR);
                     }
                     retryCount -= 1;
                     if (retryCount > 0)
@@ -1592,11 +1578,7 @@ namespace AnalysisManagerBase
                     m_message = "File not be found after " + maxAttempts + " tries: " + fileName;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logMsgTypeIfNotFound, m_message);
-                if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
-                {
-                    LogMessage(m_message, 0, true);
-                }
+                LogMessage(m_message, 0, logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR);
                 return false;
             }
 
@@ -3373,9 +3355,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 var errorMessage = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database";
-                // Simulate call to LogError() since this is a shared method
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 resultSet.Dispose();
                 return string.Empty;
             }
@@ -3387,9 +3367,7 @@ namespace AnalysisManagerBase
                 // Log an error
 
                 var errorMessage = "GetDataPackageStoragePath; Data package not found: " + dataPackageID.ToString();
-                // Simulate call to LogError() since this is a shared method
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 return string.Empty;
             }
             else
@@ -4239,8 +4217,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(legacyFastaFileName))
             {
                 errorMessage = "Parameter LegacyFastaFileName is empty for the job; cannot determine the SplitFasta file name for this job step";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 return string.Empty;
             }
 
@@ -4248,8 +4225,7 @@ namespace AnalysisManagerBase
             if (numberOfClonedSteps == 0)
             {
                 errorMessage = "Settings file is missing parameter NumberOfClonedSteps; cannot determine the SplitFasta file name for this job step";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 return string.Empty;
             }
 
@@ -4267,9 +4243,9 @@ namespace AnalysisManagerBase
                 {
                     if (string.IsNullOrEmpty(errorMessage))
                     {
-                        errorMessage = "GetSplitFastaIteration computed an iteration value of " + iteration + "; cannot determine the SplitFasta file name for this job step";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                        Console.WriteLine(errorMessage);
+                        errorMessage = "GetSplitFastaIteration computed an iteration value of " + iteration + "; " + 
+                            "cannot determine the SplitFasta file name for this job step";
+                        clsGlobal.LogError(errorMessage);
                     }
                     return string.Empty;
                 }
@@ -4304,8 +4280,7 @@ namespace AnalysisManagerBase
             if (cloneStepRenumStart == 0)
             {
                 errorMessage = "Settings file is missing parameter CloneStepRenumberStart; cannot determine the SplitFasta iteration value for this job step";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 return 0;
             }
 
@@ -4313,8 +4288,7 @@ namespace AnalysisManagerBase
             if (stepNumber == 0)
             {
                 errorMessage = "Job parameter Step is missing; cannot determine the SplitFasta iteration value for this job step";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 return 0;
             }
 
@@ -4468,8 +4442,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 var errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 resultSet.Dispose();
                 return false;
             }
@@ -4479,8 +4452,7 @@ namespace AnalysisManagerBase
             {
                 // No data was returned
                 var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID.ToString();
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
-                Console.WriteLine(warningMessage);
+                clsGlobal.LogError(warningMessage);
                 return false;
             }
 
@@ -4535,97 +4507,89 @@ namespace AnalysisManagerBase
         public static bool LoadDataPackageJobInfo(string ConnectionString, int DataPackageID, out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
 
+            const short RETRY_COUNT = 3;
 
-            // Obtains the job information for a data package
+            dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
 
+            var sqlStr = new System.Text.StringBuilder();
+
+            // Note that this queries view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database
+            // That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
+            // The two views have the same name, but some columns differ
+
+            sqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ");
+            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
+            sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ");
+            sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
+            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType");
+            sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
+            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
+            sqlStr.Append(" ORDER BY Dataset, Tool");
+
+            DataTable resultSet = null;
+
+            // Get a table to hold the results of the query
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
+
+            if (!success)
             {
-                const short RETRY_COUNT = 3;
+                var errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
+                clsGlobal.LogError(errorMessage);
+                resultSet.Dispose();
+                return false;
+            }
 
-                dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+            // Verify at least one row returned
+            if (resultSet.Rows.Count < 1)
+            {
+                // No data was returned
+                string warningMessage = null;
 
-                var sqlStr = new System.Text.StringBuilder();
+                // If the data package exists and has datasets associated with it, then Log this as a warning but return true
+                // Otherwise, log an error and return false
 
-                // Note that this queries view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database
-                // That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
-                // The two views have the same name, but some columns differ
-
-                sqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ");
-                sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
-                sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ");
-                sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
-                sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType");
-                sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
+                sqlStr.Clear();
+                sqlStr.Append(" SELECT Count(*) AS Datasets");
+                sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
                 sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
-                sqlStr.Append(" ORDER BY Dataset, Tool");
-
-                DataTable resultSet = null;
 
                 // Get a table to hold the results of the query
-                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
-
-                if (!success)
+                success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
+                if (success && resultSet.Rows.Count > 0)
                 {
-                    var errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                    Console.WriteLine(errorMessage);
-                    resultSet.Dispose();
-                    return false;
-                }
-
-                // Verify at least one row returned
-                if (resultSet.Rows.Count < 1)
-                {
-                    // No data was returned
-                    string warningMessage = null;
-
-                    // If the data package exists and has datasets associated with it, then Log this as a warning but return true
-                    // Otherwise, log an error and return false
-
-                    sqlStr.Clear();
-                    sqlStr.Append(" SELECT Count(*) AS Datasets");
-                    sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
-                    sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
-
-                    // Get a table to hold the results of the query
-                    success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
-                    if (success && resultSet.Rows.Count > 0)
+                    foreach (DataRow curRow in resultSet.Rows)
                     {
-                        foreach (DataRow curRow in resultSet.Rows)
-                        {
-                            var datasetCount = clsGlobal.DbCInt(curRow[0]);
+                        var datasetCount = clsGlobal.DbCInt(curRow[0]);
 
-                            if (datasetCount > 0)
-                            {
-                                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID + ", but it does have " + datasetCount + " dataset";
-                                if (datasetCount > 1)
-                                    warningMessage += "s";
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
-                                Console.WriteLine(warningMessage);
-                                return true;
-                            }
+                        if (datasetCount > 0)
+                        {
+                            warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID + ", but it does have " + datasetCount + " dataset";
+                            if (datasetCount > 1)
+                                warningMessage += "s";
+                            clsGlobal.LogWarning(warningMessage);
+                            return true;
                         }
                     }
-
-                    warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID.ToString();
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
-                    Console.WriteLine(warningMessage);
-                    return false;
                 }
 
-                foreach (DataRow curRow in resultSet.Rows)
-                {
-                    var dataPkgJob = ParseDataPackageJobInfoRow(curRow);
-
-                    if (!dctDataPackageJobs.ContainsKey(dataPkgJob.Job))
-                    {
-                        dctDataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
-                    }
-                }
-
-                resultSet.Dispose();
-
-                return true;
+                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID.ToString();
+                clsGlobal.LogWarning(warningMessage);
+                return false;
             }
+
+            foreach (DataRow curRow in resultSet.Rows)
+            {
+                var dataPkgJob = ParseDataPackageJobInfoRow(curRow);
+
+                if (!dctDataPackageJobs.ContainsKey(dataPkgJob.Job))
+                {
+                    dctDataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
+                }
+            }
+
+            resultSet.Dispose();
+
+            return true;
 
         }
 
@@ -5136,71 +5100,65 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected void PurgeFastaFilesIfLowFreeSpace(string localOrgDbFolder, int freeSpaceThresholdPercent, double requiredFreeSpaceMB, string legacyFastaFileBaseName)
         {
+            if (freeSpaceThresholdPercent < 1)
+                freeSpaceThresholdPercent = 1;
+            if (freeSpaceThresholdPercent > 50)
+                freeSpaceThresholdPercent = 50;
 
-
-
+            try
             {
-                if (freeSpaceThresholdPercent < 1)
-                    freeSpaceThresholdPercent = 1;
-                if (freeSpaceThresholdPercent > 50)
-                    freeSpaceThresholdPercent = 50;
-
-
-                try
+                var diOrgDbFolder = new DirectoryInfo(localOrgDbFolder);
+                if (diOrgDbFolder.FullName.Length <= 2)
                 {
-                    var diOrgDbFolder = new DirectoryInfo(localOrgDbFolder);
-                    if (diOrgDbFolder.FullName.Length <= 2)
+                    LogMessage("Warning: Org DB folder length is less than 3 characters; this is unexpected: " + diOrgDbFolder.FullName);
+                    return;
+                }
+
+                // Look for file MaxDirSize.txt which defines the maximum space that the files can use
+                var fiMaxDirSize = new FileInfo(Path.Combine(diOrgDbFolder.FullName, "MaxDirSize.txt"));
+
+                var driveLetter = diOrgDbFolder.FullName.Substring(0, 2);
+
+                if ((!driveLetter.EndsWith(":")))
+                {
+                    // The folder is not local to this computer
+                    if (!fiMaxDirSize.Exists)
                     {
-                        LogMessage("Warning: Org DB folder length is less than 3 characters; this is unexpected: " + diOrgDbFolder.FullName);
+                        LogError("Warning: Orb DB folder path does not have a colon and could not find file " + fiMaxDirSize.Name + "; cannot manage drive space usage: " + diOrgDbFolder.FullName);
                         return;
                     }
 
-                    // Look for file MaxDirSize.txt which defines the maximum space that the files can use
-                    var fiMaxDirSize = new FileInfo(Path.Combine(diOrgDbFolder.FullName, "MaxDirSize.txt"));
-
-                    var driveLetter = diOrgDbFolder.FullName.Substring(0, 2);
-
-                    if ((!driveLetter.EndsWith(":")))
-                    {
-                        // The folder is not local to this computer
-                        if (!fiMaxDirSize.Exists)
-                        {
-                            LogError("Warning: Orb DB folder path does not have a colon and could not find file " + fiMaxDirSize.Name + "; cannot manage drive space usage: " + diOrgDbFolder.FullName);
-                            return;
-                        }
-
-                        // MaxDirSize.txt file found; delete the older FASTA files to free up space
-                        PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName);
-                        return;
-                    }
-
-                    var localDriveInfo = new DriveInfo(driveLetter);
-                    double percentFreeSpaceAtStart = localDriveInfo.AvailableFreeSpace / Convert.ToDouble(localDriveInfo.TotalSize) * 100;
-
-                    if ((percentFreeSpaceAtStart >= freeSpaceThresholdPercent))
-                    {
-                        if (m_DebugLevel >= 2)
-                        {
-                            var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
-                            LogMessage(string.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required", localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent));
-                        }
-                    }
-                    else
-                    {
-                        PurgeFastaFilesUsingFreeSpaceThreshold(localDriveInfo, diOrgDbFolder, legacyFastaFileBaseName, freeSpaceThresholdPercent, requiredFreeSpaceMB, percentFreeSpaceAtStart);
-                    }
-
-                    if (fiMaxDirSize.Exists)
-                    {
-                        // MaxDirSize.txt file exists; possibly delete additional FASTA files to free up space
-                        PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName);
-                    }
-
+                    // MaxDirSize.txt file found; delete the older FASTA files to free up space
+                    PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName);
+                    return;
                 }
-                catch (Exception ex)
+
+                var localDriveInfo = new DriveInfo(driveLetter);
+                double percentFreeSpaceAtStart = localDriveInfo.AvailableFreeSpace / Convert.ToDouble(localDriveInfo.TotalSize) * 100;
+
+                if ((percentFreeSpaceAtStart >= freeSpaceThresholdPercent))
                 {
-                    LogError("Error in PurgeFastaFilesIfLowFreeSpace", ex);
+                    if (m_DebugLevel >= 2)
+                    {
+                        var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                        LogMessage(string.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required", localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent));
+                    }
                 }
+                else
+                {
+                    PurgeFastaFilesUsingFreeSpaceThreshold(localDriveInfo, diOrgDbFolder, legacyFastaFileBaseName, freeSpaceThresholdPercent, requiredFreeSpaceMB, percentFreeSpaceAtStart);
+                }
+
+                if (fiMaxDirSize.Exists)
+                {
+                    // MaxDirSize.txt file exists; possibly delete additional FASTA files to free up space
+                    PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in PurgeFastaFilesIfLowFreeSpace", ex);
             }
 
         }
@@ -5213,87 +5171,83 @@ namespace AnalysisManagerBase
             double requiredFreeSpaceMB,
             double percentFreeSpaceAtStart)
         {
+            var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
 
+            var logInfoMessages = m_DebugLevel >= 1 && freeSpaceGB < 100 || m_DebugLevel >= 2 && freeSpaceGB < 250 || m_DebugLevel >= 3;
 
-
+            if (logInfoMessages)
             {
-                var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                LogMessage(string.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%", localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent));
+            }
 
-                var logInfoMessages = m_DebugLevel >= 1 && freeSpaceGB < 100 || m_DebugLevel >= 2 && freeSpaceGB < 250 || m_DebugLevel >= 3;
+            // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
+            var dctFastaFiles = GetFastaFilesByLastUse(diOrgDbFolder);
 
-                if (logInfoMessages)
+            var lstFastaFilesByLastUse = (from item in dctFastaFiles orderby item.Value select item.Key);
+            long totalBytesPurged = 0;
+
+            foreach (var fiFileToPurge in lstFastaFilesByLastUse)
+            {
+                // Abort this process if the LastUsed date of this file is less than 5 days old
+                DateTime dtLastUsed;
+                if (dctFastaFiles.TryGetValue(fiFileToPurge, out dtLastUsed))
                 {
-                    LogMessage(string.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%", localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent));
-                }
-
-                // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
-                var dctFastaFiles = GetFastaFilesByLastUse(diOrgDbFolder);
-
-                var lstFastaFilesByLastUse = (from item in dctFastaFiles orderby item.Value select item.Key);
-                long totalBytesPurged = 0;
-
-                foreach (var fiFileToPurge in lstFastaFilesByLastUse)
-                {
-                    // Abort this process if the LastUsed date of this file is less than 5 days old
-                    DateTime dtLastUsed;
-                    if (dctFastaFiles.TryGetValue(fiFileToPurge, out dtLastUsed))
+                    if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
                     {
-                        if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
+                        if (logInfoMessages)
                         {
-                            if (logInfoMessages)
-                            {
-                                LogMessage("All fasta files in " + diOrgDbFolder.FullName + " are less than 5 days old; " + "will not purge any more files to free disk space");
-                            }
-                            break;
+                            LogMessage("All fasta files in " + diOrgDbFolder.FullName + " are less than 5 days old; " +
+                                "will not purge any more files to free disk space");
                         }
-                    }
-
-                    // Delete all files associated with this fasta file
-                    // However, do not delete it if the name starts with legacyFastaFileBaseName
-                    var bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName);
-                    totalBytesPurged += bytesDeleted;
-
-                    // Re-check the disk free space
-                    var percentFreeSpace = localDriveInfo.AvailableFreeSpace / Convert.ToDouble(localDriveInfo.TotalSize) * 100;
-                    var updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
-
-                    if (requiredFreeSpaceMB > 0 && updatedFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
-                    {
-                        // Required free space is known, and we're not yet there
-                        // Keep deleting files
-                        if (m_DebugLevel >= 2)
-                        {
-                            LogDebugMessage(string.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space", localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace));
-                        }
-                    }
-                    else
-                    {
-                        // Either required free space is not known, or we have more than enough free space
-
-                        if ((percentFreeSpace >= freeSpaceThresholdPercent))
-                        {
-                            // Target threshold reached
-                            if (m_DebugLevel >= 1)
-                            {
-                                LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " + "deleted {3:F1} GB of cached files", localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)));
-                            }
-                            break;
-                        }
-                        else if (m_DebugLevel >= 2)
-                        {
-                            // Keep deleting until we reach the target threshold for free space
-                            LogDebugMessage(string.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space", localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace));
-                        }
+                        break;
                     }
                 }
 
-                // We have deleted all of the files that can be deleted
-                var finalFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                // Delete all files associated with this fasta file
+                // However, do not delete it if the name starts with legacyFastaFileBaseName
+                var bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName);
+                totalBytesPurged += bytesDeleted;
 
-                if (requiredFreeSpaceMB > 0 && finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
+                // Re-check the disk free space
+                var percentFreeSpace = localDriveInfo.AvailableFreeSpace / Convert.ToDouble(localDriveInfo.TotalSize) * 100;
+                var updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+
+                if (requiredFreeSpaceMB > 0 && updatedFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
                 {
-                    LogMessage(string.Format("Warning: unable to delete enough files to free up the required space on {0} ({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files", localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
+                    // Required free space is known, and we're not yet there
+                    // Keep deleting files
+                    if (m_DebugLevel >= 2)
+                    {
+                        LogDebugMessage(string.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space", localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace));
+                    }
                 }
+                else
+                {
+                    // Either required free space is not known, or we have more than enough free space
+
+                    if ((percentFreeSpace >= freeSpaceThresholdPercent))
+                    {
+                        // Target threshold reached
+                        if (m_DebugLevel >= 1)
+                        {
+                            LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " + "deleted {3:F1} GB of cached files", localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)));
+                        }
+                        break;
+                    }
+                    else if (m_DebugLevel >= 2)
+                    {
+                        // Keep deleting until we reach the target threshold for free space
+                        LogDebugMessage(string.Format("Free space on {0} ({1:F1} GB) is now {2:F1}% of the total space", localDriveInfo.Name, updatedFreeSpaceGB, percentFreeSpace));
+                    }
+                }
+            }
+
+            // We have deleted all of the files that can be deleted
+            var finalFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+
+            if (requiredFreeSpaceMB > 0 && finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
+            {
+                LogMessage(string.Format("Warning: unable to delete enough files to free up the required space on {0} ({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files", localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
             }
 
         }
@@ -5379,8 +5333,9 @@ namespace AnalysisManagerBase
                     {
                         if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
                         {
-                            LogMessage("All fasta files in " + diOrgDbFolder.FullName + " are less than 5 days old; " + "will not purge any more files to free disk space");
-                            break; // TODO: might not be correct. Was : Exit For
+                            LogMessage("All fasta files in " + diOrgDbFolder.FullName + " are less than 5 days old; " +
+                                "will not purge any more files to free disk space");
+                            break;
                         }
                     }
 
@@ -7483,8 +7438,8 @@ namespace AnalysisManagerBase
                 Directory.CreateDirectory(DSWorkFolder);
 
                 // Set up the unzipper
-                var zipTools = new clsIonicZipTools(m_DebugLevel, DSWorkFolder);
-                RegisterEvents(zipTools);
+                var ionicZipTools = new clsIonicZipTools(m_DebugLevel, DSWorkFolder);
+                RegisterEvents(ionicZipTools);
 
                 // Unzip each of the zip files to the working directory
                 foreach (string zipFilePath in ZipFiles)
@@ -7500,7 +7455,7 @@ namespace AnalysisManagerBase
 
                         sourceFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(zipFilePath));
 
-                        if (!zipTools.UnzipFile(sourceFilePath, TargetFolderPath))
+                        if (!ionicZipTools.UnzipFile(sourceFilePath, TargetFolderPath))
                         {
                             LogError("Error unzipping file " + zipFilePath);
                             return false;
@@ -8574,16 +8529,16 @@ namespace AnalysisManagerBase
                 strMessage = "Not enough free memory to run " + strStepToolName;
 
                 strMessage += "; need " + intFreeMemoryRequiredMB.ToString() + " MB but system has " + sngFreeMemoryMB.ToString("0") + " MB available";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage);
-                Console.WriteLine(strMessage);
+                clsGlobal.LogError(strMessage);
                 return false;
             }
             else
             {
                 if (blnLogFreeMemoryOnSuccess)
                 {
-                    strMessage = strStepToolName + " will use " + intFreeMemoryRequiredMB.ToString() + " MB; system has " + sngFreeMemoryMB.ToString("0") + " MB available";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMessage);
+                    strMessage = strStepToolName + " will use " + intFreeMemoryRequiredMB.ToString() + " MB; " + 
+                        "system has " + sngFreeMemoryMB.ToString("0") + " MB available";
+                    clsGlobal.LogDebug(strMessage);
                 }
 
                 return true;

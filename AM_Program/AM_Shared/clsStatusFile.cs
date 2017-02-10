@@ -454,7 +454,8 @@ namespace AnalysisManagerBase
                 // To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
                 if (!blnVirtualMachineOnPIC && DateTime.Now.Hour == 0 && DateTime.Now.Minute <= 30)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error instantiating the Processor.[% Processor Time] performance counter (this message is only logged between 12 am and 12:30 am): " + ex.Message);
+                    OnErrorEvent("Error instantiating the Processor.[% Processor Time] performance counter " +
+                                 "(this message is only logged between 12 am and 12:30 am): " + ex.Message);
                 }
             }
 
@@ -534,10 +535,11 @@ namespace AnalysisManagerBase
                 {
                     if (m_DebugLevel >= 5)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Initializing message queue with URI '" + MessageQueueURI + "' and Topic '" + MessageQueueTopic + "'");
+                        OnStatusEvent("Initializing message queue with URI '" + MessageQueueURI + "' and Topic '" + MessageQueueTopic + "'");
                     }
 
                     m_MessageSender = new clsMessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
+                    m_MessageSender.ErrorEvent += MessageSender_ErrorEvent;
 
                     // message queue logger sets up local message buffering (so calls to log don't block)
                     // and uses message sender (as a delegate) to actually send off the messages
@@ -546,7 +548,7 @@ namespace AnalysisManagerBase
 
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message queue initialized with URI '" + MessageQueueURI + "'; posting to Topic '" + MessageQueueTopic + "'");
+                        OnStatusEvent("Message queue initialized with URI '" + MessageQueueURI + "'; posting to Topic '" + MessageQueueTopic + "'");
                     }
 
                 }
@@ -559,8 +561,7 @@ namespace AnalysisManagerBase
                 {
                     m_LastMessageQueueErrorTime = DateTime.UtcNow;
                     var msg = "Error in clsStatusFile.LogStatusToMessageQueue (B): " + ex.Message;
-                    Console.WriteLine(msg);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    OnErrorEvent(msg, ex);
                 }
 
             }
@@ -851,14 +852,13 @@ namespace AnalysisManagerBase
                     // Since strXMLText now contains the XML, we can now safely close XWriter
                 }
 
-                WriteStatusFileToDisk(ref strXMLText);
+                WriteStatusFileToDisk(strXMLText);
 
             }
             catch (Exception ex)
             {
                 var msg = "Error generating status info: " + ex.Message;
-                Console.WriteLine(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                OnWarningEvent(msg);
             }
 
             CheckForAbortProcessingFile();
@@ -872,7 +872,7 @@ namespace AnalysisManagerBase
             // Log the memory usage to a local file
             m_MemoryUsageLogger?.WriteMemoryUsageLogEntry();
 
-            if ((m_BrokerDBLogger != null))
+            if (m_BrokerDBLogger != null)
             {
                 // Send the status info to the Broker DB
                 // Note that m_BrokerDBLogger() only logs the status every x minutes (unless ForceLogToBrokerDB = True)
@@ -881,68 +881,67 @@ namespace AnalysisManagerBase
             }
         }
 
-        protected bool WriteStatusFileToDisk(ref string strXMLText)
+        private bool WriteStatusFileToDisk(string strXMLText)
         {
-            const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;           
+            const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
 
-            var blnSuccess = true;
+            if (!(DateTime.UtcNow.Subtract(m_LastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS))
+                return true;
 
-            if (DateTime.UtcNow.Subtract(m_LastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS)
+            // We will write out the Status XML to a temporary file, then rename the temp file to the primary file
+
+            if (FileNamePath == null)
+                return false;
+
+            var strTempStatusFilePath = Path.Combine(Path.GetDirectoryName(FileNamePath), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
+
+            m_LastFileWriteTime = DateTime.UtcNow;
+
+            var logWarning = true;
+            if (Tool.ToLower().Contains("glyq") || Tool.ToLower().Contains("modplus"))
             {
-                // We will write out the Status XML to a temporary file, then rename the temp file to the primary file
+                if (m_DebugLevel < 3)
+                    logWarning = false;
+            }
 
-                if (FileNamePath == null)
-                    return false;
-
-                var strTempStatusFilePath = Path.Combine(Path.GetDirectoryName(FileNamePath), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
-
-                m_LastFileWriteTime = DateTime.UtcNow;
-
-                var logWarning = true;
-                if (Tool.ToLower().Contains("glyq") || Tool.ToLower().Contains("modplus"))
+            var blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText, logWarning);
+            if (blnSuccess)
+            {
+                try
                 {
-                    if (m_DebugLevel < 3)
-                        logWarning = false;
+                    File.Copy(strTempStatusFilePath, FileNamePath, true);
                 }
-
-                blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText, logWarning);
-                if (blnSuccess)
+                catch (Exception ex)
                 {
-                    try
+                    // Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
+                    if (logWarning)
                     {
-                        File.Copy(strTempStatusFilePath, FileNamePath, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
-                        if (logWarning)
-                        {
-                            // Log a warning that the file copy failed
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to copy temporary status file to the final status file (" + Path.GetFileName(strTempStatusFilePath) + " to " + Path.GetFileName(FileNamePath) + "):" + ex.Message);
-                        }
-
-                    }
-
-                    try
-                    {
-                        File.Delete(strTempStatusFilePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Delete failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
-                        if (logWarning)
-                        {
-                            // Log a warning that the file delete failed
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete temporary status file (" + Path.GetFileName(strTempStatusFilePath) + "): " + ex.Message);
-                        }
+                        // Log a warning that the file copy failed
+                        OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(strTempStatusFilePath) + 
+                                       " to " + Path.GetFileName(FileNamePath) + "):" + ex.Message);
                     }
 
                 }
-                else
+
+                try
                 {
-                    // Error writing to the temporary status file; try the primary file
-                    blnSuccess = WriteStatusFileToDisk(FileNamePath, strXMLText, logWarning);
+                    File.Delete(strTempStatusFilePath);
                 }
+                catch (Exception ex)
+                {
+                    // Delete failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
+                    if (logWarning)
+                    {
+                        // Log a warning that the file delete failed
+                        OnWarningEvent("Unable to delete temporary status file (" + Path.GetFileName(strTempStatusFilePath) + "): " + ex.Message);
+                    }
+                }
+
+            }
+            else
+            {
+                // Error writing to the temporary status file; try the primary file
+                blnSuccess = WriteStatusFileToDisk(FileNamePath, strXMLText, logWarning);
             }
 
             return blnSuccess;
@@ -982,8 +981,7 @@ namespace AnalysisManagerBase
                     if (m_WritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || m_WritingErrorCountSaved % 10 == 0)
                     {
                         var msg = "Error writing status file " + Path.GetFileName(strFilePath) + ": " + ex.Message;
-                        Console.WriteLine(msg);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        OnWarningEvent(msg);
                     }
                 }
                 blnSuccess = false;
@@ -1266,5 +1264,12 @@ namespace AnalysisManagerBase
 
         #endregion
 
+        #region "Event handlers"
+        private void MessageSender_ErrorEvent(string strMessage, Exception ex)
+        {
+            OnErrorEvent(strMessage, ex);
+        }
+
+        #endregion
     }
 }

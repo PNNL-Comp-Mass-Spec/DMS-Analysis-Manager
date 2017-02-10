@@ -243,8 +243,8 @@ namespace AnalysisManagerProg
             if (this.TraceMode)
                 ShowTraceMessage("Initializing log file " + clsLogTools.CurrentFileAppenderPath);
 
-            string startupMsg = "=== Started Analysis Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, startupMsg);
+            var startupMsg = "=== Started Analysis Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
+            LogMessage(startupMsg);
 
             var configFileName = m_MgrSettings.GetParam("configfilename");
             if ((string.IsNullOrEmpty(configFileName)))
@@ -2347,7 +2347,7 @@ namespace AnalysisManagerProg
 
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Config file changed");
+                LogDebug("Config file changed");
             }
         }
     }

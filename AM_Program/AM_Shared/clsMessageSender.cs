@@ -134,10 +134,7 @@ namespace AnalysisManagerBase
             }
 
             msg += ": " + string.Join("; ", errorList);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-            Console.WriteLine("=== Error creating Activemq connection ===" + Environment.NewLine + msg);
-
+            OnErrorEvent(msg);           
         }
 
         protected void DestroyConnection()
@@ -173,5 +170,21 @@ namespace AnalysisManagerBase
                 }
             }
         }
+
+        #region "Events and Event Handlers"
+
+        public event ErrorEventEventHandler ErrorEvent;
+        public delegate void ErrorEventEventHandler(string strMessage, Exception ex);
+
+        /// <summary>
+        /// Report an error
+        /// </summary>
+        /// <param name="strMessage"></param>
+        protected void OnErrorEvent(string strMessage)
+        {
+            ErrorEvent?.Invoke(strMessage, null);
+        }
+
+        #endregion
     }
 }

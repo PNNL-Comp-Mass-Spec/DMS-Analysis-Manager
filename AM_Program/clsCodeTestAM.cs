@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSeqBase.Setup()");
+                LogDebug("clsAnalysisToolRunnerSeqBase.Setup()");
             }
         }
 
@@ -75,7 +75,7 @@ namespace AnalysisManagerProg
             //Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step"));
+                LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step"));
             }
 
             //Make sure objects are released

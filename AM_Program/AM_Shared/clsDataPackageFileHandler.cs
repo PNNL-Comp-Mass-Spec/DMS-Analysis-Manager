@@ -591,9 +591,7 @@ namespace AnalysisManagerBase
                     if (dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
                     {
                         var msg = "PeptideHit ResultType not recognized for job " + dataPkgJob.Job + ": " + dataPkgJob.ResultType;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                        Console.WriteLine(msg);
-
+                        clsGlobal.LogWarning(msg);
                     }
                     else
                     {

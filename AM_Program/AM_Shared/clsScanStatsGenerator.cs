@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
-    public class clsScanStatsGenerator
+    public class clsScanStatsGenerator : clsEventNotifier
     {
 
         protected int mDebugLevel;
@@ -71,7 +71,7 @@ namespace AnalysisManagerBase
             {
                 mMSFileInfoScannerErrorCount = 0;
 
-                // Initialize the MSFileScanner class					
+                // Initialize the MSFileScanner class
                 mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath);
 
                 mMSFileInfoScanner.ErrorEvent += mMSFileInfoScanner_ErrorEvent;
@@ -127,8 +127,7 @@ namespace AnalysisManagerBase
                 if (!File.Exists(strMSFileInfoScannerDLLPath))
                 {
                     var msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
-                    Console.WriteLine(msg);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    OnErrorEvent(msg);
                 }
                 else
                 {
@@ -139,7 +138,7 @@ namespace AnalysisManagerBase
                         var msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
                         if (mDebugLevel >= 2)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                            OnStatusEvent(msg);
                         }
                     }
 
@@ -147,9 +146,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                var msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
-                Console.WriteLine(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent("Exception loading class " + MsDataFileReaderClass, ex);
             }
 
             return objMSFileInfoScanner;
@@ -167,26 +164,23 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                var msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
-                Console.WriteLine(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent("Exception loading DLL " + strDLLFilePath, ex);
                 return null;
             }
         }
 
-        protected void mMSFileInfoScanner_ErrorEvent(string Message)
+        protected void mMSFileInfoScanner_ErrorEvent(string message)
         {
             mMSFileInfoScannerErrorCount += 1;
-            var msg = "MSFileInfoScanner error: " + Message;
-            Console.WriteLine(msg);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            var msg = "MSFileInfoScanner error: " + message;
+            OnErrorEvent(msg);
         }
 
-        protected void mMSFileInfoScanner_MessageEvent(string Message)
+        protected void mMSFileInfoScanner_MessageEvent(string message)
         {
             if (mDebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " + Message);
+                OnStatusEvent(" ... " + message);
             }
         }
 

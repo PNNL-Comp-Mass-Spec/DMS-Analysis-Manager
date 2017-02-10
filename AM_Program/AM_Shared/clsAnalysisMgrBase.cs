@@ -129,11 +129,11 @@ namespace AnalysisManagerBase
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask + "; " + taskDetail);
+                    LogMessage(currentTask + "; " + taskDetail);
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask);
+                    LogMessage(currentTask);
                 }
             }
         }
@@ -154,7 +154,7 @@ namespace AnalysisManagerBase
                 {
                     msg = warningMessage;
                 }
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
             }
         }
 
@@ -163,8 +163,7 @@ namespace AnalysisManagerBase
             if (m_DebugLevel >= 1)
             {
                 var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + m_derivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
-                Console.WriteLine(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
             }
         }
 
@@ -173,8 +172,7 @@ namespace AnalysisManagerBase
             if (m_DebugLevel >= 1 && waitTimeMinutes >= 1)
             {
                 var msg = "Exited lockfile queue after " + waitTimeMinutes.ToString("0") + " minutes (" + m_derivedClassName + "); will now copy file";
-                Console.WriteLine(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug(msg);
             }
         }
 
@@ -187,8 +185,7 @@ namespace AnalysisManagerBase
                 if (m_DebugLevel >= 1)
                 {
                     var msg = "Waiting for lockfile queue to fall below threshold (" + m_derivedClassName + "); " + "SourceBacklog=" + backlogSourceMB + " MB, " + "TargetBacklog=" + backlogTargetMB + " MB, " + "Source=" + sourceFilePath + ", Target=" + targetFilePath;
-                    Console.WriteLine(msg);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    LogDebug(msg);
                 }
             }
 

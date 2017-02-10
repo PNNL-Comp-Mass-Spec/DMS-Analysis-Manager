@@ -86,8 +86,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 var errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 resultSet.Dispose();
                 return false;
             }
@@ -96,9 +95,8 @@ namespace AnalysisManagerBase
             if (resultSet.Rows.Count < 1)
             {
                 // No data was returned
-                var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID.ToString();
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
-                Console.WriteLine(warningMessage);
+                var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID;
+                clsGlobal.LogWarning(warningMessage);
                 return false;
             }
 
@@ -172,8 +170,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 var errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                Console.WriteLine(errorMessage);
+                clsGlobal.LogError(errorMessage);
                 resultSet.Dispose();
                 return false;
             }
@@ -205,16 +202,14 @@ namespace AnalysisManagerBase
                             warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID + ", but it does have " + datasetCount + " dataset";
                             if (datasetCount > 1)
                                 warningMessage += "s";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
-                            Console.WriteLine(warningMessage);
+                            clsGlobal.LogWarning(warningMessage);
                             return true;
                         }
                     }
                 }
 
                 warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID.ToString();
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
-                Console.WriteLine(warningMessage);
+                clsGlobal.LogError(warningMessage);
                 return false;
             }
 
@@ -311,11 +306,10 @@ namespace AnalysisManagerBase
                         retryCount -= 1;
                         var msg = "Exception running stored procedure " + myCmd.CommandText + ": " + ex.Message + "; RetryCount = " + retryCount;
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                        Console.WriteLine(msg);
+                        clsGlobal.LogError(msg);
 
-                        Thread.Sleep(5000);
                         // Delay for 5 second before trying again
+                        Thread.Sleep(5000);
                     }
                 }
 
@@ -344,8 +338,7 @@ namespace AnalysisManagerBase
                     if (jobParameters.ContainsKey(parameter))
                     {
                         var msg = "Job " + jobNumber + " has multiple values for parameter " + parameter + "; only using the first occurrence";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                        Console.WriteLine(msg);
+                        clsGlobal.LogWarning(msg);
                     }
                     else
                     {
@@ -361,9 +354,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 errorMsg = "Exception retrieving parameters from history for job " + jobNumber;
-                var detailedMsg = "Exception retrieving parameters from history for job " + jobNumber + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMsg);
-                Console.WriteLine(detailedMsg);
+                clsGlobal.LogError(errorMsg, ex);
                 return false;
             }
 

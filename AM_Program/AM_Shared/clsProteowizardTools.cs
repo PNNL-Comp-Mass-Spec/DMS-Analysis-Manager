@@ -4,14 +4,18 @@ using Microsoft.Win32;
 
 namespace AnalysisManagerBase
 {
-    public class clsProteowizardTools
+    public class clsProteowizardTools : clsEventNotifier
     {
 
-
         protected int mDebugLevel;
-        public clsProteowizardTools(int DebugLvl)
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="debugLevel"></param>
+        public clsProteowizardTools(int debugLevel)
         {
-            mDebugLevel = DebugLvl;
+            mDebugLevel = debugLevel;
         }
 
         public bool RegisterProteoWizard()
@@ -24,13 +28,12 @@ namespace AnalysisManagerBase
                 //  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
                 //  to indicate that we agree to the Thermo license
 
-
                 bool blnSubKeyMissing;
                 try
                 {
                     if (mDebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, @"Confirming that 'Software\ProteoWizard' registry key exists");
+                        OnStatusEvent(@"Confirming that 'Software\ProteoWizard' registry key exists");
                     }
 
                     var regSoftware = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Software", false);
@@ -49,7 +52,7 @@ namespace AnalysisManagerBase
 
                         if (mDebugLevel >= 2)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Confirming that 'Thermo MSFileReader' registry key exists");
+                            OnStatusEvent("Confirming that 'Thermo MSFileReader' registry key exists");
                         }
 
                         var objValue = regProteoWizard.GetValue("Thermo MSFileReader");
@@ -82,7 +85,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Exception looking for key (possibly not found): " + ex.Message);
+                    OnWarningEvent("Exception looking for key (possibly not found): " + ex.Message);
                     blnSubKeyMissing = true;
                     blnValueMissing = true;
                 }
@@ -99,7 +102,7 @@ namespace AnalysisManagerBase
                     {
                         if (mDebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, @"Creating 'Software\ProteoWizard' SubKey");
+                            OnStatusEvent(@"Creating 'Software\ProteoWizard' SubKey");
                         }
                         regProteoWizard = regSoftware.CreateSubKey("ProteoWizard");
                     }
@@ -107,14 +110,14 @@ namespace AnalysisManagerBase
                     {
                         if (mDebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, @"Opening 'Software\ProteoWizard' SubKey");
+                            OnStatusEvent(@"Opening 'Software\ProteoWizard' SubKey");
                         }
                         regProteoWizard = regSoftware.OpenSubKey("ProteoWizard", true);
                     }
 
                     if (mDebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Setting value for 'Thermo MSFileReader' registry key to 'True'");
+                        OnStatusEvent("Setting value for 'Thermo MSFileReader' registry key to 'True'");
                     }
 
                     if (regProteoWizard != null)
@@ -130,7 +133,7 @@ namespace AnalysisManagerBase
             {
                 var msg = "Error creating ProteoWizard registry key";
                 Console.WriteLine(msg + ": " + ex.Message);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 return false;
             }
 

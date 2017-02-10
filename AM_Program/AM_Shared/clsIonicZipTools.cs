@@ -67,7 +67,7 @@ namespace AnalysisManagerBase
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting folder: " + diFolder.FullName);
+                    OnStatusEvent("Deleting folder: " + diFolder.FullName);
                 }
 
                 diFolder.Refresh();
@@ -97,7 +97,7 @@ namespace AnalysisManagerBase
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting source file: " + fiFile.FullName);
+                    OnStatusEvent("Deleting source file: " + fiFile.FullName);
                 }
 
                 fiFile.Refresh();
@@ -191,7 +191,7 @@ namespace AnalysisManagerBase
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file: " + fiFile.FullName);
+                    OnStatusEvent("Unzipping file: " + fiFile.FullName);
                 }
 
                 var dtStartTime = DateTime.UtcNow;
@@ -304,7 +304,7 @@ namespace AnalysisManagerBase
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting target .gz file: " + GZipFilePath);
+                        OnStatusEvent("Deleting target .gz file: " + GZipFilePath);
                     }
 
                     File.Delete(GZipFilePath);
@@ -363,7 +363,7 @@ namespace AnalysisManagerBase
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .gz file using " + fiGZip.Name + ": " + GZipFilePath);
+                    OnStatusEvent("Creating .gz file using " + fiGZip.Name + ": " + GZipFilePath);
                 }
 
                 var dtStartTime = DateTime.UtcNow;
@@ -372,7 +372,7 @@ namespace AnalysisManagerBase
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, fiGZip.FullName + " " + strArgs);
+                    OnStatusEvent(fiGZip.FullName + " " + strArgs);
                 }
 
                 var progRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath())
@@ -454,7 +454,7 @@ namespace AnalysisManagerBase
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .gz file using IonicZip: " + GZipFilePath);
+                    OnStatusEvent("Creating .gz file using IonicZip: " + GZipFilePath);
                 }
 
                 var dtStartTime = DateTime.UtcNow;
@@ -641,7 +641,7 @@ namespace AnalysisManagerBase
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Unzipping file: " + fiFile.FullName);
+                    OnStatusEvent("Unzipping file: " + fiFile.FullName);
                 }
 
                 using (var zipper = new Ionic.Zip.ZipFile(ZipFilePath))
@@ -858,7 +858,7 @@ namespace AnalysisManagerBase
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting target .zip file: " + ZipFilePath);
+                        OnStatusEvent("Deleting target .zip file: " + ZipFilePath);
                     }
 
                     File.Delete(ZipFilePath);
@@ -876,7 +876,7 @@ namespace AnalysisManagerBase
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .zip file: " + ZipFilePath);
+                    OnStatusEvent("Creating .zip file: " + ZipFilePath);
                 }
 
                 using (var zipper = new Ionic.Zip.ZipFile(ZipFilePath))
@@ -955,7 +955,7 @@ namespace AnalysisManagerBase
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting target .zip file: " + ZipFilePath);
+                        OnStatusEvent("Deleting target .zip file: " + ZipFilePath);
                     }
 
                     File.Delete(ZipFilePath);
@@ -972,7 +972,7 @@ namespace AnalysisManagerBase
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating .zip file: " + ZipFilePath);
+                    OnStatusEvent("Creating .zip file: " + ZipFilePath);
                 }
 
                 using (var zipper = new Ionic.Zip.ZipFile(ZipFilePath))
