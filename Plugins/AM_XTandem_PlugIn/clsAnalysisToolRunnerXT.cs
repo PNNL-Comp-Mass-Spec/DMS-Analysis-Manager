@@ -1,467 +1,530 @@
-'*********************************************************************************************************
-' Written by Matt Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2006, Battelle Memorial Institute
-' Created 06/07/2006
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports System.Collections.Generic
-Imports System.IO
-Imports System.Text.RegularExpressions
-Imports System.Threading
-Imports AnalysisManagerBase
-Imports PRISM.Processes
-
-''' <summary>
-''' Class for running XTandem analysis
-''' </summary>
-''' <remarks></remarks>
-Public Class clsAnalysisToolRunnerXT
-    Inherits clsAnalysisToolRunnerBase
-
-#Region "Module Variables"
-    Protected Const XTANDEM_CONSOLE_OUTPUT As String = "XTandem_ConsoleOutput.txt"
-
-    Protected Const PROGRESS_PCT_XTANDEM_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_XTANDEM_LOADING_SPECTRA As Single = 5
-    Protected Const PROGRESS_PCT_XTANDEM_COMPUTING_MODELS As Single = 10
-    Protected Const PROGRESS_PCT_XTANDEM_REFINEMENT As Single = 50
-    Protected Const PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE As Single = 50
-    Protected Const PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE As Single = 70
-    Protected Const PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING As Single = 85
-    Protected Const PROGRESS_PCT_XTANDEM_MERGING_RESULTS As Single = 90
-    Protected Const PROGRESS_PCT_XTANDEM_CREATING_REPORT As Single = 95
-    Protected Const PROGRESS_PCT_XTANDEM_COMPLETE As Single = 99
-
-    Protected mCmdRunner As clsRunDosProgram
-
-    Protected mToolVersionWritten As Boolean
-    Protected mXTandemVersion As String = String.Empty
-    Protected mXTandemResultsCount As Integer               ' This is initially set to -1; it will be updated to the value reported by "Valid models" in the X!Tandem Console Output file
-
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Runs XTandem tool
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
-
-        Dim CmdStr As String
-        Dim result As CloseOutType
-        Dim blnSuccess As Boolean
-        Dim blnNoResults As Boolean
-
-        'Do the base class stuff
-        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Note: we will store the XTandem version info in the database after the first line is written to file XTandem_ConsoleOutput.txt
-        mToolVersionWritten = False
-        mXTandemVersion = String.Empty
-        mXTandemResultsCount = -1
-        blnNoResults = False
-
-        ' Make sure the _DTA.txt file is valid
-        If Not ValidateCDTAFile() Then
-            Return CloseOutType.CLOSEOUT_NO_DTA_FILES
-        End If
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem")
-
-        mCmdRunner = New clsRunDosProgram(m_WorkDir)
-        RegisterEvents(mCmdRunner)
-        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
-
-        If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter")
-        End If
-
-        ' Define the path to the X!Tandem .Exe
-        Dim progLoc As String = m_mgrParams.GetParam("xtprogloc")
-        If progLoc.Length = 0 Then
-            m_message = "Parameter 'xtprogloc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Check whether we need to update the program location to use a specific version of X!Tandem
-        progLoc = DetermineXTandemProgramLocation(progLoc)
-
-        If String.IsNullOrWhiteSpace(progLoc) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        ElseIf Not File.Exists(progLoc) Then
-            m_message = "Cannot find XTandem program file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        'Set up and execute a program runner to run X!Tandem
-        CmdStr = "input.xml"
-
-        With mCmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT)
-        End With
-
-        m_progress = PROGRESS_PCT_XTANDEM_STARTING
-
-        blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "XTandem", True)
-
-        ' Parse the console output file one more time to determine the number of peptides found
-        ParseConsoleOutputFile(Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT))
-
-        If Not mToolVersionWritten Then
-            mToolVersionWritten = StoreToolVersionInfo()
-        End If
-
-        If Not blnSuccess Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " & m_JobNum)
-
-            If mCmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tandem.exe returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Tandem.exe failed (but exit code is 0)")
-            End If
-
-            ' Note: Job 553883 returned error code -1073740777, which indicated that the _xt.xml file was not fully written
-
-            ' Move the source files and any results to the Failed Job folder
-            ' Useful for debugging XTandem problems
-            CopyFailedResultsToArchiveFolder()
-
-            Return CloseOutType.CLOSEOUT_FAILED
-
-        End If
-
-        If mXTandemResultsCount < 0 Then
-            m_message = "X!Tandem did not report a ""Valid models"" count"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            blnNoResults = True
-        ElseIf mXTandemResultsCount = 0 Then
-            m_message = "No results above threshold"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            blnNoResults = True
-        End If
-
-        'Stop the job timer
-        m_StopTime = DateTime.UtcNow
-
-        'Add the current job data to the summary file
-        If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-        End If
-
-        'Make sure objects are released
-        Thread.Sleep(500)        ' 500 msec delay
-        clsProgRunner.GarbageCollectNow()
-
-        'Zip the output file
-        result = ZipMainOutputFile()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the source files and any results to the Failed Job folder
-            ' Useful for debugging XTandem problems
-            CopyFailedResultsToArchiveFolder()
-            Return result
-        End If
-
-        result = MakeResultsFolder()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?           
-            Return result
-        End If
-
-        result = MoveResultFiles()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
-
-        result = CopyResultsFolderToServer()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
-
-        If blnNoResults Then
-            Return CloseOutType.CLOSEOUT_NO_DATA
-        Else
-            Return CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
-        End If
-
-
-    End Function
-
-
-    Protected Sub CopyFailedResultsToArchiveFolder()
-
-        Dim result As CloseOutType
-
-        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
-
-        ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
-
-        ' Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-        Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
-
-        Try
-            File.Delete(Path.Combine(m_WorkDir, m_Dataset & "_dta.zip"))
-            File.Delete(Path.Combine(m_WorkDir, m_Dataset & "_dta.txt"))
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        ' Make the results folder
-        result = MakeResultsFolder()
-        If result = CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
-            End If
-        End If
-
-        ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
-
-    End Sub
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        Dim strToolVersionInfo = String.Copy(mXTandemVersion)
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(m_mgrParams.GetParam("xtprogloc")))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    Protected Function DetermineXTandemProgramLocation(progLoc As String) As String
-
-        ' Check whether the settings file specifies that a specific version of the step tool be used
-        Dim strXTandemStepToolVersion As String = m_jobParams.GetParam("XTandem_Version")
-
-        If Not String.IsNullOrWhiteSpace(strXTandemStepToolVersion) Then
-            ' progLoc is currently "C:\DMS_Programs\DMS5\XTandem\bin\Tandem.exe" or "C:\DMS_Programs\XTandem\bin\x64\Tandem.exe"
-            ' strXTandemStepToolVersion will be similar to "v2011.12.1.1"
-            ' Insert the specific version just before \bin\ in progLoc
-
-            Dim intInsertIndex As Integer
-            intInsertIndex = progLoc.ToLower().IndexOf("\bin\", StringComparison.Ordinal)
-
-            If intInsertIndex > 0 Then
-                Dim strNewProgLoc As String
-                strNewProgLoc = Path.Combine(progLoc.Substring(0, intInsertIndex), strXTandemStepToolVersion)
-                strNewProgLoc = Path.Combine(strNewProgLoc, progLoc.Substring(intInsertIndex + 1))
-                progLoc = String.Copy(strNewProgLoc)
-            Else
-                m_message = "XTandem program path does not contain \bin\"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & progLoc)
-                progLoc = String.Empty
-            End If
-        End If
-
-        Return progLoc
-
-    End Function
-
-    ''' <summary>
-    ''' Parse the X!Tandem console output file to determine the X!Tandem version and to track the search progress
-    ''' </summary>
-    ''' <param name="strConsoleOutputFilePath"></param>
-    ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
-
-        Dim reExtraceValue = New Regex("= *(\d+)", RegexOptions.Compiled)
-
-        Try
-
-            If Not File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-                End If
-
-                Exit Sub
-            End If
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
-            End If
-
-
-            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                Dim intLinesRead = 0
-                Do While Not srInFile.EndOfStream
-                    Dim strLineIn = srInFile.ReadLine()
-                    intLinesRead += 1
-
-                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
-
-                    If intLinesRead <= 4 AndAlso String.IsNullOrEmpty(mXTandemVersion) AndAlso strLineIn.StartsWith("X!") Then
-                        ' Originally the first line was the X!Tandem version
-                        ' Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                        ' The third or fourth line should be the X!Tandem version
-
-                        If m_DebugLevel >= 2 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "X!Tandem version: " & strLineIn)
-                        End If
-
-                        mXTandemVersion = String.Copy(strLineIn)
-
-                    Else
-
-                        ' Update progress if the line starts with one of the expected phrases
-                        If strLineIn.StartsWith("Loading spectra") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA
-
-                        ElseIf strLineIn.StartsWith("Computing models") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS
-
-                        ElseIf strLineIn.StartsWith("Model refinement") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT
-
-                        ElseIf strLineIn.StartsWith("	partial cleavage") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE
-
-                        ElseIf strLineIn.StartsWith("	unanticipated cleavage") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE
-
-                        ElseIf strLineIn.StartsWith("	finishing refinement ") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING
-
-                        ElseIf strLineIn.StartsWith("Merging results") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS
-
-                        ElseIf strLineIn.StartsWith("Creating report") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_CREATING_REPORT
-
-                        ElseIf strLineIn.StartsWith("Estimated false positives") Then
-                            m_progress = PROGRESS_PCT_XTANDEM_COMPLETE
-
-                        ElseIf strLineIn.StartsWith("Valid models") Then
-                            Dim reMatch = reExtraceValue.Match(strLineIn)
-                            If reMatch.Success Then
-                                Integer.TryParse(reMatch.Groups(1).Value, mXTandemResultsCount)
-                            End If
-                        End If
-                    End If
-
-                Loop
-
-            End Using
-
-        Catch ex As Exception
-            ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-            End If
-        End Try
-
-    End Sub
-
-    ''' <summary>
-    ''' Zips concatenated XML output file
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function ZipMainOutputFile() As CloseOutType
-        Dim TmpFile As String
-        Dim FileList() As String
-        Dim TmpFilePath As String
-
-        Try
-            FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml")
-            For Each TmpFile In FileList
-                TmpFilePath = Path.Combine(m_WorkDir, Path.GetFileName(TmpFile))
-                If Not MyBase.ZipFile(TmpFilePath, True) Then
-                    Dim Msg As String = "Error zipping output files, job " & m_JobNum
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-                    m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-                    Return CloseOutType.CLOSEOUT_FAILED
-                End If
-            Next
-        Catch ex As Exception
-            Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        ' Make sure the XML output files have been deleted (the call to MyBase.ZipFile() above should have done this)
-        Try
-            FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml")
-            For Each TmpFile In FileList
-                File.SetAttributes(TmpFile, File.GetAttributes(TmpFile) And (Not FileAttributes.ReadOnly))
-                File.Delete(TmpFile)
-            Next
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " & m_JobNum & Err.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
-
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
-
-        UpdateStatusFile()
-
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
-
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT))
-            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mXTandemVersion) Then
-                mToolVersionWritten = StoreToolVersionInfo()
-            End If
-
-            LogProgress("XTandem")
-        End If
-
-    End Sub
-
-#End Region
-
-End Class
+//*********************************************************************************************************
+// Written by Matt Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2006, Battelle Memorial Institute
+// Created 06/07/2006
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Threading;
+using AnalysisManagerBase;
+using PRISM.Processes;
+
+namespace AnalysisManagerXTandemPlugIn
+{
+    /// <summary>
+    /// Class for running XTandem analysis
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsAnalysisToolRunnerXT : clsAnalysisToolRunnerBase
+    {
+        #region "Module Variables"
+
+        protected const string XTANDEM_CONSOLE_OUTPUT = "XTandem_ConsoleOutput.txt";
+
+        protected const float PROGRESS_PCT_XTANDEM_STARTING = 1;
+        protected const float PROGRESS_PCT_XTANDEM_LOADING_SPECTRA = 5;
+        protected const float PROGRESS_PCT_XTANDEM_COMPUTING_MODELS = 10;
+        protected const float PROGRESS_PCT_XTANDEM_REFINEMENT = 50;
+        protected const float PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE = 50;
+        protected const float PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE = 70;
+        protected const float PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING = 85;
+        protected const float PROGRESS_PCT_XTANDEM_MERGING_RESULTS = 90;
+        protected const float PROGRESS_PCT_XTANDEM_CREATING_REPORT = 95;
+        protected const float PROGRESS_PCT_XTANDEM_COMPLETE = 99;
+
+        protected clsRunDosProgram mCmdRunner;
+
+        protected bool mToolVersionWritten;
+        protected string mXTandemVersion = string.Empty;
+        // This is initially set to -1; it will be updated to the value reported by "Valid models" in the X!Tandem Console Output file
+        protected int mXTandemResultsCount;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Runs XTandem tool
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            string CmdStr = null;
+            bool blnSuccess = false;
+            bool blnNoResults = false;
+
+            //Do the base class stuff
+            if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Note: we will store the XTandem version info in the database after the first line is written to file XTandem_ConsoleOutput.txt
+            mToolVersionWritten = false;
+            mXTandemVersion = string.Empty;
+            mXTandemResultsCount = -1;
+            blnNoResults = false;
+
+            // Make sure the _DTA.txt file is valid
+            if (!ValidateCDTAFile())
+            {
+                return CloseOutType.CLOSEOUT_NO_DTA_FILES;
+            }
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem");
+
+            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            RegisterEvents(mCmdRunner);
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+            if (m_DebugLevel > 4)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter");
+            }
+
+            // Define the path to the X!Tandem .Exe
+            string progLoc = m_mgrParams.GetParam("xtprogloc");
+            if (progLoc.Length == 0)
+            {
+                m_message = "Parameter 'xtprogloc' not defined for this manager";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Check whether we need to update the program location to use a specific version of X!Tandem
+            progLoc = DetermineXTandemProgramLocation(progLoc);
+
+            if (string.IsNullOrWhiteSpace(progLoc))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+            else if (!File.Exists(progLoc))
+            {
+                m_message = "Cannot find XTandem program file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + progLoc);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            //Set up and execute a program runner to run X!Tandem
+            CmdStr = "input.xml";
+
+            mCmdRunner.CreateNoWindow = true;
+            mCmdRunner.CacheStandardOutput = true;
+            mCmdRunner.EchoOutputToConsole = true;
+
+            mCmdRunner.WriteConsoleOutputToFile = true;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT);
+
+            m_progress = PROGRESS_PCT_XTANDEM_STARTING;
+
+            blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "XTandem", true);
+
+            // Parse the console output file one more time to determine the number of peptides found
+            ParseConsoleOutputFile(Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT));
+
+            if (!mToolVersionWritten)
+            {
+                mToolVersionWritten = StoreToolVersionInfo();
+            }
+
+            if (!blnSuccess)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " + m_JobNum);
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Tandem.exe returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Tandem.exe failed (but exit code is 0)");
+                }
+
+                // Note: Job 553883 returned error code -1073740777, which indicated that the _xt.xml file was not fully written
+
+                // Move the source files and any results to the Failed Job folder
+                // Useful for debugging XTandem problems
+                CopyFailedResultsToArchiveFolder();
+
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (mXTandemResultsCount < 0)
+            {
+                m_message = "X!Tandem did not report a \"Valid models\" count";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                blnNoResults = true;
+            }
+            else if (mXTandemResultsCount == 0)
+            {
+                m_message = "No results above threshold";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                blnNoResults = true;
+            }
+
+            //Stop the job timer
+            m_StopTime = DateTime.UtcNow;
+
+            //Add the current job data to the summary file
+            if (!UpdateSummaryFile())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            }
+
+            //Make sure objects are released
+            Thread.Sleep(500);
+            // 500 msec delay
+            clsProgRunner.GarbageCollectNow();
+
+            //Zip the output file
+            var result = ZipMainOutputFile();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the source files and any results to the Failed Job folder
+                // Useful for debugging XTandem problems
+                CopyFailedResultsToArchiveFolder();
+                return result;
+            }
+
+            result = MakeResultsFolder();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                return result;
+            }
+
+            result = MoveResultFiles();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
+
+            result = CopyResultsFolderToServer();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
+
+            if (blnNoResults)
+            {
+                return CloseOutType.CLOSEOUT_NO_DATA;
+            }
+            else
+            {
+                return CloseOutType.CLOSEOUT_SUCCESS;
+                //ZipResult
+            }
+        }
+
+        protected void CopyFailedResultsToArchiveFolder()
+        {
+            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
+                strFailedResultsFolderPath = "??Not Defined??";
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
+
+            // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
+            string strFolderPathToArchive = null;
+            strFolderPathToArchive = string.Copy(m_WorkDir);
+
+            try
+            {
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.zip"));
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.txt"));
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+            }
+
+            // Make the results folder
+            var result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the result files into the result folder
+                result = MoveResultFiles();
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Move was a success; update strFolderPathToArchive
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
+
+            // Copy the results folder to the Archive folder
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        protected bool StoreToolVersionInfo()
+        {
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            var strToolVersionInfo = string.Copy(mXTandemVersion);
+
+            // Store paths to key files in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("xtprogloc")));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: true);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        protected string DetermineXTandemProgramLocation(string progLoc)
+        {
+            // Check whether the settings file specifies that a specific version of the step tool be used
+            string strXTandemStepToolVersion = m_jobParams.GetParam("XTandem_Version");
+
+            if (!string.IsNullOrWhiteSpace(strXTandemStepToolVersion))
+            {
+                // progLoc is currently "C:\DMS_Programs\DMS5\XTandem\bin\Tandem.exe" or "C:\DMS_Programs\XTandem\bin\x64\Tandem.exe"
+                // strXTandemStepToolVersion will be similar to "v2011.12.1.1"
+                // Insert the specific version just before \bin\ in progLoc
+
+                int intInsertIndex = 0;
+                intInsertIndex = progLoc.ToLower().IndexOf("\\bin\\", StringComparison.Ordinal);
+
+                if (intInsertIndex > 0)
+                {
+                    string strNewProgLoc = null;
+                    strNewProgLoc = Path.Combine(progLoc.Substring(0, intInsertIndex), strXTandemStepToolVersion);
+                    strNewProgLoc = Path.Combine(strNewProgLoc, progLoc.Substring(intInsertIndex + 1));
+                    progLoc = string.Copy(strNewProgLoc);
+                }
+                else
+                {
+                    m_message = "XTandem program path does not contain \\bin\\";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + progLoc);
+                    progLoc = string.Empty;
+                }
+            }
+
+            return progLoc;
+        }
+
+        /// <summary>
+        /// Parse the X!Tandem console output file to determine the X!Tandem version and to track the search progress
+        /// </summary>
+        /// <param name="strConsoleOutputFilePath"></param>
+        /// <remarks></remarks>
+        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        {
+            var reExtraceValue = new Regex(@"= *(\d+)", RegexOptions.Compiled);
+
+            try
+            {
+                if (!File.Exists(strConsoleOutputFilePath))
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Console output file not found: " + strConsoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                }
+
+                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    var intLinesRead = 0;
+                    while (!srInFile.EndOfStream)
+                    {
+                        var strLineIn = srInFile.ReadLine();
+                        intLinesRead += 1;
+
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
+
+                        if (intLinesRead <= 4 && string.IsNullOrEmpty(mXTandemVersion) && strLineIn.StartsWith("X!"))
+                        {
+                            // Originally the first line was the X!Tandem version
+                            // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                            // The third or fourth line should be the X!Tandem version
+
+                            if (m_DebugLevel >= 2)
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "X!Tandem version: " + strLineIn);
+                            }
+
+                            mXTandemVersion = string.Copy(strLineIn);
+                        }
+                        else
+                        {
+                            // Update progress if the line starts with one of the expected phrases
+                            if (strLineIn.StartsWith("Loading spectra"))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_LOADING_SPECTRA;
+                            }
+                            else if (strLineIn.StartsWith("Computing models"))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_COMPUTING_MODELS;
+                            }
+                            else if (strLineIn.StartsWith("Model refinement"))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT;
+                            }
+                            else if (strLineIn.StartsWith("\tpartial cleavage"))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE;
+                            }
+                            else if (strLineIn.StartsWith("\tunanticipated cleavage"))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE;
+                            }
+                            else if (strLineIn.StartsWith("\tfinishing refinement "))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING;
+                            }
+                            else if (strLineIn.StartsWith("Merging results"))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_MERGING_RESULTS;
+                            }
+                            else if (strLineIn.StartsWith("Creating report"))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_CREATING_REPORT;
+                            }
+                            else if (strLineIn.StartsWith("Estimated false positives"))
+                            {
+                                m_progress = PROGRESS_PCT_XTANDEM_COMPLETE;
+                            }
+                            else if (strLineIn.StartsWith("Valid models"))
+                            {
+                                var reMatch = reExtraceValue.Match(strLineIn);
+                                if (reMatch.Success)
+                                {
+                                    int.TryParse(reMatch.Groups[1].Value, out mXTandemResultsCount);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Zips concatenated XML output file
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        private CloseOutType ZipMainOutputFile()
+        {
+            string[] FileList = null;
+            string TmpFilePath = null;
+
+            try
+            {
+                FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
+                foreach (string TmpFile in FileList)
+                {
+                    TmpFilePath = Path.Combine(m_WorkDir, Path.GetFileName(TmpFile));
+                    if (!base.ZipFile(TmpFilePath, true))
+                    {
+                        string Msg = "Error zipping output files, job " + m_JobNum;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                        m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files");
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string Msg = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " + m_JobNum + ": " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Make sure the XML output files have been deleted (the call to MyBase.ZipFile() above should have done this)
+            try
+            {
+                FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
+                foreach (string TmpFile in FileList)
+                {
+                    File.SetAttributes(TmpFile, File.GetAttributes(TmpFile) & (~FileAttributes.ReadOnly));
+                    File.Delete(TmpFile);
+                }
+            }
+            catch (Exception Err)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + m_JobNum + Err.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            UpdateStatusFile();
+
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            {
+                dtLastConsoleOutputParse = DateTime.UtcNow;
+
+                ParseConsoleOutputFile(Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT));
+                if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mXTandemVersion))
+                {
+                    mToolVersionWritten = StoreToolVersionInfo();
+                }
+
+                LogProgress("XTandem");
+            }
+        }
+
+        #endregion
+    }
+}
