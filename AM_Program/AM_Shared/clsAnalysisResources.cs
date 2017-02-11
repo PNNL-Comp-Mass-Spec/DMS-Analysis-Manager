@@ -28,15 +28,6 @@ namespace AnalysisManagerBase
     {
 
         #region "Constants"
-        protected const int DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS = 15;
-
-        protected const int DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS = 5;
-
-        /// <summary>
-        /// Maximum number of attempts to find a folder or file
-        /// </summary>
-        /// <remarks></remarks>
-        protected const int DEFAULT_MAX_RETRY_COUNT = 3;
 
         protected const int FASTA_GEN_TIMEOUT_INTERVAL_MINUTES = 65;
 
@@ -159,7 +150,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public const string DOT_MS1FT_EXTENSION = ".ms1ft";
 
-        public const string STORAGE_PATH_INFO_FILE_SUFFIX = "_StoragePathInfo.txt";
+        public const string STORAGE_PATH_INFO_FILE_SUFFIX = clsFileCopyUtilities.STORAGE_PATH_INFO_FILE_SUFFIX;
         public const string SCAN_STATS_FILE_SUFFIX = "_ScanStats.txt";
 
         public const string SCAN_STATS_EX_FILE_SUFFIX = "_ScanStatsEx.txt";
@@ -278,12 +269,17 @@ namespace AnalysisManagerBase
         private Dictionary<clsGlobal.eAnalysisResourceOptions, bool> m_ResourceOptions;
         private bool m_AuroraAvailable;
 
-        private bool m_MyEmslAvailable;
+        private bool m_MyEMSLAvailable;
+        private bool m_MyEMSLSearchDisabled;
+
         private clsDataPackageJobInfo mCachedDatasetAndJobInfo;
 
         private bool mCachedDatasetAndJobInfoIsDefined;
 
         public SpectraTypeClassifier.clsSpectrumTypeClassifier mSpectraTypeClassifier;
+
+        private clsFileCopyUtilities m_FileCopyUtilities;
+        private clsFolderSearch m_FolderSearch;
 
         #endregion
 
@@ -301,10 +297,23 @@ namespace AnalysisManagerBase
 
         public bool MyEMSLAvailable
         {
-            get { return m_MyEmslAvailable && !MyEMSLSearchDisabled; }
+            get { return m_MyEMSLAvailable && !MyEMSLSearchDisabled; }
         }
 
-        public bool MyEMSLSearchDisabled { get; set; }
+        public bool MyEMSLSearchDisabled
+        {
+            get { return m_MyEMSLSearchDisabled; }
+            set
+            {
+                m_MyEMSLSearchDisabled = value;
+                if (m_FolderSearch != null)
+                {
+                    if (m_MyEMSLSearchDisabled && !m_FolderSearch.MyEMSLSearchDisabled)
+                        m_FolderSearch.MyEMSLSearchDisabled = true;
+                }
+                
+            }
+        }
 
         public clsMyEMSLUtilities MyEMSLUtilities
         {
@@ -381,6 +390,11 @@ namespace AnalysisManagerBase
 
             RegisterEvents(m_MyEMSLUtilities);
 
+            m_FileCopyUtilities = new clsFileCopyUtilities(m_FileTools, m_MyEMSLUtilities, m_MgrName, m_DebugLevel);
+            RegisterEvents(m_FileCopyUtilities);
+
+            m_FileCopyUtilities.ResetTimestampForQueueWaitTime += FileCopyUtilities_ResetTimestampForQueueWaitTime;
+
             m_ResourceOptions = new Dictionary<clsGlobal.eAnalysisResourceOptions, bool>();
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, false);
             SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, false);
@@ -389,8 +403,16 @@ namespace AnalysisManagerBase
 
             m_AuroraAvailable = m_mgrParams.GetParam("AuroraAvailable", true);
 
-            m_MyEmslAvailable = m_mgrParams.GetParam("MyEmslAvailable", true);
+            m_MyEMSLAvailable = m_mgrParams.GetParam("MyEmslAvailable", true);
 
+            m_FolderSearch = new clsFolderSearch(m_FileCopyUtilities, m_jobParams, m_MyEMSLUtilities, m_MgrName, m_DebugLevel, m_AuroraAvailable);
+            RegisterEvents(m_FolderSearch);
+
+            m_FolderSearch.MyEMSLSearchDisabled = m_MyEMSLSearchDisabled;
+            if (!m_MyEMSLAvailable)
+            {
+                m_FolderSearch.MyEMSLSearchDisabled = true;
+            }
         }
 
         public abstract CloseOutType GetResources();
@@ -452,18 +474,6 @@ namespace AnalysisManagerBase
             {
                 MyEMSLSearchDisabled = enabled;
             }
-        }
-
-        /// <summary>
-        /// Add a folder or file path to a list of paths to examine
-        /// </summary>
-        /// <param name="lstPathsToCheck">List of Tuples where the string is a folder or file path, and the boolean is logIfMissing</param>
-        /// <param name="folderOrFilePath">Path to add</param>
-        /// <param name="logIfMissing">True to log a message if the path is not found</param>
-        /// <remarks></remarks>
-        private void AddPathToCheck(ICollection<Tuple<string, bool>> lstPathsToCheck, string folderOrFilePath, bool logIfMissing)
-        {
-            lstPathsToCheck.Add(new Tuple<string, bool>(folderOrFilePath, logIfMissing));
         }
 
         /// <summary>
@@ -665,6 +675,7 @@ namespace AnalysisManagerBase
             }
 
         }
+
         /// <summary>
         /// Copies the zipped s-folders to the working directory
         /// </summary>
@@ -706,7 +717,7 @@ namespace AnalysisManagerBase
 
                 if (createStoragePathInfoOnly)
                 {
-                    if (!CreateStoragePathInfoFile(ZipFilePath, DestFilePath))
+                    if (!m_FileCopyUtilities.CreateStoragePathInfoFile(ZipFilePath, DestFilePath))
                     {
                         LogError("Error creating storage path info file for " + ZipFilePath);
                         return false;
@@ -714,7 +725,7 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    if (!CopyFileWithRetry(ZipFilePath, DestFilePath, false))
+                    if (!m_FileCopyUtilities.CopyFileWithRetry(ZipFilePath, DestFilePath, false))
                     {
                         LogError("Error copying file " + ZipFilePath);
                         return false;
@@ -724,82 +735,6 @@ namespace AnalysisManagerBase
 
             // If we got to here, everything worked
             return true;
-
-        }
-
-        /// <summary>
-        /// Copies a file with retries in case of failure
-        /// </summary>
-        /// <param name="SrcFilePath">Full path to source file</param>
-        /// <param name="DestFilePath">Full path to destination file</param>
-        /// <param name="Overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
-        /// <returns>TRUE for success; FALSE for error</returns>
-        /// <remarks>Logs copy errors</remarks>
-        private bool CopyFileWithRetry(string SrcFilePath, string DestFilePath, bool Overwrite)
-        {
-            const int maxCopyAttempts = 3;
-            return CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, maxCopyAttempts);
-        }
-
-        /// <summary>
-        /// Copies a file with retries in case of failure
-        /// </summary>
-        /// <param name="srcFilePath">Full path to source file</param>
-        /// <param name="destFilePath">Full path to destination file</param>
-        /// <param name="overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
-        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for error</returns>
-        /// <remarks>Logs copy errors</remarks>
-        private bool CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxCopyAttempts)
-        {
-
-            const int RETRY_HOLDOFF_SECONDS = 15;
-
-            if (maxCopyAttempts < 1)
-                maxCopyAttempts = 1;
-            int retryCount = maxCopyAttempts;
-
-            while (retryCount > 0)
-            {
-                try
-                {
-                    ResetTimestampForQueueWaitTimeLogging();
-                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        LogMessage("CopyFileUsingLocks returned false copying " + srcFilePath + " to " + destFilePath, 0, true);
-                        return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception copying file " + srcFilePath + " to " + destFilePath + "; Retry Count = " + retryCount, ex);
-
-                    retryCount -= 1;
-
-                    if (!overwrite && File.Exists(destFilePath))
-                    {
-                        LogMessage("Tried to overwrite an existing file when Overwrite = False: " + destFilePath, 0, true);
-                        return false;
-                    }
-
-                    // Wait several seconds before retrying
-                    Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000);                    
-                }
-            }
-
-            // If we got to here, there were too many failures
-            if (retryCount < 1)
-            {
-                LogError(m_message);
-                return false;
-            }
-
-            return false;
-
         }
 
         /// <summary>
@@ -812,11 +747,7 @@ namespace AnalysisManagerBase
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         protected bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath)
         {
-
-            const int MAX_ATTEMPTS = 3;
-            return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
-                clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: MAX_ATTEMPTS);
-
+            return m_FileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath);
         }
 
         /// <summary>
@@ -831,251 +762,7 @@ namespace AnalysisManagerBase
         public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
         {
 
-            const int MAX_ATTEMPTS = 3;
-            return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
-                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: MAX_ATTEMPTS);
-
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory
-        /// </summary>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        protected bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound, int maxCopyAttempts)
-        {
-
-            return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
-                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
-
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory
-        /// </summary>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <param name="CreateStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        protected bool CopyFileToWorkDir(
-            string sourceFileName,
-            string sourceFolderPath,
-            string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
-            bool createStoragePathInfoOnly)
-        {
-
-            const int MAX_ATTEMPTS = 3;
-            return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
-                logMsgTypeIfNotFound, createStoragePathInfoOnly, MAX_ATTEMPTS);
-
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory
-        /// </summary>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <param name="createStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
-        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        protected bool CopyFileToWorkDir(
-            string sourceFileName,
-            string sourceFolderPath,
-            string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
-            bool createStoragePathInfoOnly,
-            int maxCopyAttempts)
-        {
-
-            try
-            {
-                var sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
-
-                if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
-                {
-                    return m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
-                }
-
-                var destFilePath = Path.Combine(targetFolderPath, sourceFileName);
-
-                // Verify source file exists
-                const int HOLDOFF_SECONDS = 1;
-                const int MAX_ATTEMPTS = 1;
-                if (!FileExistsWithRetry(sourceFilePath, HOLDOFF_SECONDS, logMsgTypeIfNotFound, MAX_ATTEMPTS))
-                {
-                    m_message = "File not found: " + sourceFilePath;
-                    LogMessage(m_message, 0, logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR);
-                    return false;
-                }
-
-                if (createStoragePathInfoOnly)
-                {
-                    // Create a storage path info file
-                    return CreateStoragePathInfoFile(sourceFilePath, destFilePath);
-                }
-
-                if (CopyFileWithRetry(sourceFilePath, destFilePath, true, maxCopyAttempts))
-                {
-                    if (m_DebugLevel > 3)
-                    {
-                        LogDebugMessage("CopyFileToWorkDir, File copied: " + sourceFilePath);
-                    }
-                    return true;
-                }
-                else
-                {
-                    LogError("Error copying file " + sourceFilePath);
-                    return false;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception in CopyFileToWorkDir for " + Path.Combine(sourceFolderPath, sourceFileName), ex);
-            }
-
-            return false;
-
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory
-        /// </summary>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
-        protected bool CopyFileToWorkDirWithRename(string sourceFileName, string sourceFolderPath, string targetFolderPath)
-        {
-            const int maxCopyAttempts = 3;
-            return CopyFileToWorkDirWithRename(sourceFileName, sourceFolderPath, targetFolderPath, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory
-        /// </summary>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
-        protected bool CopyFileToWorkDirWithRename(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
-        {
-            const int maxCopyAttempts = 3;
-            return CopyFileToWorkDirWithRename(sourceFileName, sourceFolderPath, targetFolderPath,
-                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory
-        /// </summary>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
-        protected bool CopyFileToWorkDirWithRename(
-            string sourceFileName,
-            string sourceFolderPath,
-            string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
-            int maxCopyAttempts)
-        {
-            return CopyFileToWorkDirWithRename(sourceFileName, sourceFolderPath, targetFolderPath,
-                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory, renames destination with dataset name
-        /// </summary>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <param name="CreateStoragePathInfoOnly">
-        /// When true, does not actually copy the specified file, and instead creates a file named FileName_StoragePathInfo.txt
-        /// The first line of the StoragePathInfo.txt file will be the full path to the source file</param>
-        /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
-        protected bool CopyFileToWorkDirWithRename(
-            string sourceFileName,
-            string sourceFolderPath,
-            string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
-            bool createStoragePathInfoOnly,
-            int maxCopyAttempts)
-        {
-
-            string sourceFilePath = string.Empty;
-            string destFilePath = null;
-
-            try
-            {
-                sourceFilePath = Path.Combine(sourceFolderPath, sourceFileName);
-
-                // Verify source file exists
-                if (!FileExistsWithRetry(sourceFilePath, logMsgTypeIfNotFound))
-                {
-                    m_message = "File not found: " + sourceFilePath;
-                    LogMessage(m_message, 0, logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR);
-                    return false;
-                }
-
-                FileInfo sourceFile = new FileInfo(sourceFilePath);
-                string TargetName = m_DatasetName + sourceFile.Extension;
-                destFilePath = Path.Combine(targetFolderPath, TargetName);
-
-                if (createStoragePathInfoOnly)
-                {
-                    // Create a storage path info file
-                    return CreateStoragePathInfoFile(sourceFilePath, destFilePath);
-                }
-
-                if (CopyFileWithRetry(sourceFilePath, destFilePath, true, maxCopyAttempts))
-                {
-                    if (m_DebugLevel > 3)
-                    {
-                        LogDebugMessage("CopyFileToWorkDirWithRename, File copied: " + sourceFilePath);
-                    }
-                    return true;
-                }
-                else
-                {
-                    LogError("Error copying file " + sourceFilePath);
-                    return false;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                if (sourceFilePath == null)
-                    sourceFilePath = sourceFileName;
-
-                if (sourceFilePath == null)
-                    sourceFilePath = "??";
-
-                LogError("Exception in CopyFileToWorkDirWithRename for " + sourceFilePath, ex);
-            }
-
-            return false;
-
+            return m_FileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, logMsgTypeIfNotFound);
         }
 
         /// <summary>
@@ -1386,44 +1073,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Creates a file named DestFilePath but with "_StoragePathInfo.txt" appended to the name
-        /// The file's contents is the path given by sourceFilePath
-        /// </summary>
-        /// <param name="sourceFilePath">The path to write to the StoragePathInfo file</param>
-        /// <param name="DestFilePath">The path where the file would have been copied to</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        protected bool CreateStoragePathInfoFile(string sourceFilePath, string DestFilePath)
-        {
-
-            string strInfoFilePath = string.Empty;
-
-            try
-            {
-                if (sourceFilePath == null | DestFilePath == null)
-                {
-                    return false;
-                }
-
-                strInfoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
-
-                using (var swOutFile = new StreamWriter(new FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    swOutFile.WriteLine(sourceFilePath);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception in CreateStoragePathInfoFile for " + strInfoFilePath, ex);
-                return false;
-            }
-
-            return true;
-
-        }
-
-        /// <summary>
         /// Given two dates, returns the most recent date
         /// </summary>
         /// <param name="date1"></param>
@@ -1487,103 +1136,6 @@ namespace AnalysisManagerBase
         {
             m_MyEMSLUtilities.ClearDownloadQueue();
             MyEMSLSearchDisabled = true;
-        }
-
-        /// <summary>
-        /// Test for file existence with a retry loop in case of temporary glitch
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private bool FileExistsWithRetry(string fileName, clsLogTools.LogLevels logMsgTypeIfNotFound)
-        {
-
-            return FileExistsWithRetry(fileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS, logMsgTypeIfNotFound);
-
-        }
-
-        /// <summary>
-        /// Test for file existence with a retry loop in case of temporary glitch
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <returns>True if the file exists, otherwise false</returns>
-        /// <remarks></remarks>
-        private bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, clsLogTools.LogLevels logMsgTypeIfNotFound)
-        {
-
-            const int MAX_ATTEMPTS = 3;
-            return FileExistsWithRetry(fileName, retryHoldoffSeconds, logMsgTypeIfNotFound, MAX_ATTEMPTS);
-
-        }
-
-        /// <summary>
-        /// Test for file existence with a retry loop in case of temporary glitch
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <returns>True if the file exists, otherwise false</returns>
-        /// <remarks></remarks>
-        private bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, clsLogTools.LogLevels logMsgTypeIfNotFound, int maxAttempts)
-        {
-
-            if (maxAttempts < 1)
-                maxAttempts = 1;
-            if (maxAttempts > 10)
-                maxAttempts = 10;
-            var retryCount = maxAttempts;
-
-            if (retryHoldoffSeconds <= 0)
-                retryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS;
-            if (retryHoldoffSeconds > 600)
-                retryHoldoffSeconds = 600;
-
-            while (retryCount > 0)
-            {
-                if (File.Exists(fileName))
-                {
-                    return true;
-                }
-                else
-                {
-                    if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
-                    {
-                        // Only log each failed attempt to find the file if logMsgTypeIfNotFound = ILogger.logMsgType.logError
-                        // Otherwise, we won't log each failed attempt
-                        string errMsg = "File " + fileName + " not found. Retry count = " + retryCount;
-                        LogMessage(errMsg, 0, logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR);
-                    }
-                    retryCount -= 1;
-                    if (retryCount > 0)
-                    {
-                        // Wait RetryHoldoffSeconds seconds before retrying
-                        Thread.Sleep(new TimeSpan(0, 0, retryHoldoffSeconds));
-                    }
-                }
-            }
-
-            // If we got to here, there were too many failures
-            if (retryCount < 1)
-            {
-                if (maxAttempts == 1)
-                {
-                    m_message = "File not found: " + fileName;
-                }
-                else
-                {
-                    m_message = "File not be found after " + maxAttempts + " tries: " + fileName;
-                }
-
-                LogMessage(m_message, 0, logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR);
-                return false;
-            }
-
-            return false;
-
         }
 
         /// <summary>
@@ -1674,7 +1226,7 @@ namespace AnalysisManagerBase
             }
 
             // Copy the file
-            if (!CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile))
             {
                 return false;
             }
@@ -2003,299 +1555,7 @@ namespace AnalysisManagerBase
         /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
         public string FindDatasetFileOrFolder(out bool blnIsFolder, bool assumeUnpurged)
         {
-            return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, out blnIsFolder, assumeUnpurged: assumeUnpurged);
-        }
-
-        /// <summary>
-        /// Determines the full path to the dataset file
-        /// Returns a folder path for data that is stored in folders (e.g. .D folders)
-        /// For instruments with multiple data folders, returns the path to the first folder
-        /// For instrument with multiple zipped data files, returns the dataset folder path
-        /// </summary>
-        /// <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
-        /// <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
-        /// <param name="assumeUnpurged">
-        /// When true, assume that the instrument data exists on the storage server 
-        /// (and thus do not search MyEMSL or the archive for the file)
-        /// </param>
-        /// <returns>The full path to the dataset file or folder</returns>
-        /// <remarks>When assumeUnpurged is true, this function returns the expected path 
-        /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-        protected string FindDatasetFileOrFolder(int maxAttempts, out bool blnIsFolder, bool assumeUnpurged = false)
-        {
-            string RawDataType = m_jobParams.GetParam("RawDataType");
-            string StoragePath = m_jobParams.GetParam("DatasetStoragePath");
-            string strFileOrFolderPath = string.Empty;
-
-            blnIsFolder = false;
-
-            var eRawDataType = GetRawDataType(RawDataType);
-            switch (eRawDataType)
-            {
-                case eRawDataTypeConstants.AgilentDFolder:
-                    // Agilent ion trap data
-
-                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) || StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()))
-                    {
-                        // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
-                        //  we would pre-process the data beforehand to create MGF files
-                        // The following call can be used to retrieve the files
-                        strFileOrFolderPath = FindMGFFile(maxAttempts, assumeUnpurged);
-                    }
-                    else
-                    {
-                        // DeconTools_V2 now supports reading the .D files directly
-                        // Call RetrieveDotDFolder() to copy the folder and all subfolders
-                        strFileOrFolderPath = FindDotDFolder(assumeUnpurged);
-                        blnIsFolder = true;
-                    }
-
-                    break;
-                case eRawDataTypeConstants.AgilentQStarWiffFile:
-                    // Agilent/QSTAR TOF data
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_WIFF_EXTENSION, assumeUnpurged);
-
-                    break;
-                case eRawDataTypeConstants.ZippedSFolders:
-                    // FTICR data
-                    strFileOrFolderPath = FindSFolders(assumeUnpurged);
-                    blnIsFolder = true;
-
-                    break;
-                case eRawDataTypeConstants.ThermoRawFile:
-                    // Finnigan ion trap/LTQ-FT data
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_RAW_EXTENSION, assumeUnpurged);
-
-                    break;
-                case eRawDataTypeConstants.MicromassRawFolder:
-                    // Micromass QTOF data
-                    strFileOrFolderPath = FindDotRawFolder(assumeUnpurged);
-                    blnIsFolder = true;
-
-                    break;
-                case eRawDataTypeConstants.UIMF:
-                    // IMS UIMF data
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_UIMF_EXTENSION, assumeUnpurged);
-
-                    break;
-                case eRawDataTypeConstants.mzXML:
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_MZXML_EXTENSION, assumeUnpurged);
-
-                    break;
-                case eRawDataTypeConstants.mzML:
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, DOT_MZML_EXTENSION, assumeUnpurged);
-
-                    break;
-                case eRawDataTypeConstants.BrukerFTFolder:
-                case eRawDataTypeConstants.BrukerTOFBaf:
-                    // Call RetrieveDotDFolder() to copy the folder and all subfolders
-
-                    // Both the MSXml step tool and DeconTools require the .Baf file
-                    // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, so we need the file
-
-                    strFileOrFolderPath = FindDotDFolder(assumeUnpurged);
-                    blnIsFolder = true;
-
-                    break;
-                case eRawDataTypeConstants.BrukerMALDIImaging:
-                    strFileOrFolderPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
-                    blnIsFolder = true;
-
-                    break;
-            }
-
-            return strFileOrFolderPath;
-        }
-
-        /// <summary>
-        /// Finds the dataset folder containing Bruker Maldi imaging .zip files
-        /// </summary>
-        /// <returns>The full path to the dataset folder</returns>
-        /// <remarks></remarks>
-        public string FindBrukerMALDIImagingFolders(bool assumeUnpurged = false)
-        {
-
-            const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
-
-            // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
-            // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
-
-            string DSFolderPath = null;
-            DSFolderPath = FindValidFolder(m_DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
-
-            if (string.IsNullOrEmpty(DSFolderPath))
-                return string.Empty;
-
-            return DSFolderPath;
-
-        }
-
-        /// <summary>
-        /// Finds a file named DatasetName.FileExtension
-        /// </summary>
-        /// <param name="FileExtension"></param>
-        /// <returns>The full path to the folder; an empty string if no match</returns>
-        /// <remarks></remarks>
-        protected string FindDatasetFile(string FileExtension)
-        {
-            return FindDatasetFile(DEFAULT_MAX_RETRY_COUNT, FileExtension);
-        }
-
-        /// <summary>
-        /// Finds a file named DatasetName.FileExtension
-        /// </summary>
-        /// <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
-        /// <param name="FileExtension"></param>
-        /// <returns>The full path to the folder; an empty string if no match</returns>
-        /// <remarks></remarks>
-        protected string FindDatasetFile(int maxAttempts, string fileExtension, bool assumeUnpurged = false)
-        {
-
-            if (!fileExtension.StartsWith("."))
-            {
-                fileExtension = "." + fileExtension;
-            }
-
-            string DataFileName = m_DatasetName + fileExtension;
-            bool validFolderFound = false;
-
-            string DSFolderPath = FindValidFolder(m_DatasetName, DataFileName, folderNameToFind: "", maxAttempts: maxAttempts,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false,
-                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
-
-            if (!string.IsNullOrEmpty(DSFolderPath))
-            {
-                return Path.Combine(DSFolderPath, DataFileName);
-            }
-            else
-            {
-                return string.Empty;
-            }
-
-        }
-
-        /// <summary>
-        /// Finds a .Raw folder below the dataset folder
-        /// </summary>
-        /// <returns>The full path to the folder; an empty string if no match</returns>
-        /// <remarks></remarks>
-        protected string FindDotDFolder(bool assumeUnpurged = false)
-        {
-            return FindDotXFolder(DOT_D_EXTENSION, assumeUnpurged);
-        }
-
-        /// <summary>
-        /// Finds a .D folder below the dataset folder
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        protected string FindDotRawFolder(bool assumeUnpurged = false)
-        {
-            return FindDotXFolder(DOT_RAW_EXTENSION, assumeUnpurged);
-        }
-
-        /// <summary>
-        /// Finds a subfolder (typically Dataset.D or Dataset.Raw) below the dataset folder
-        /// </summary>
-        /// <param name="FolderExtension"></param>
-        /// <returns>The full path to the folder; an empty string if no match</returns>
-        /// <remarks></remarks>
-        protected string FindDotXFolder(string folderExtension, bool assumeUnpurged)
-        {
-
-            if (!folderExtension.StartsWith("."))
-            {
-                folderExtension = "." + folderExtension;
-            }
-
-            bool validFolderFound = false;
-
-            string FileNameToFind = string.Empty;
-            string FolderExtensionWildcard = "*" + folderExtension;
-
-            string ServerPath = FindValidFolder(m_DatasetName, FileNameToFind, FolderExtensionWildcard, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: true,
-                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
-
-            if ((ServerPath.StartsWith(MYEMSL_PATH_FLAG)))
-            {
-                return ServerPath;
-            }
-
-            var diDatasetFolder = new DirectoryInfo(ServerPath);
-
-            // Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-            foreach (DirectoryInfo diSubFolder in diDatasetFolder.GetDirectories(FolderExtensionWildcard))
-            {
-                return diSubFolder.FullName;
-            }
-
-            // No match found
-            return string.Empty;
-
-        }
-
-        /// <summary>
-        /// Finds the dataset folder containing either a 0.ser subfolder or containing zipped S-folders
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        protected string FindSFolders(bool assumeUnpurged = false)
-        {
-
-            // First Check for the existence of a 0.ser Folder
-            string FileNameToFind = string.Empty;
-            bool validFolderFound = false;
-
-            string DSFolderPath = FindValidFolder(m_DatasetName, FileNameToFind, BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: true,
-                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
-
-            if (!string.IsNullOrEmpty(DSFolderPath))
-            {
-                return Path.Combine(DSFolderPath, BRUKER_ZERO_SER_FOLDER);
-            }
-
-            // The 0.ser folder does not exist; look for zipped s-folders
-            DSFolderPath = FindValidFolder(m_DatasetName, "s*.zip", RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
-
-            return DSFolderPath;
-
-        }
-
-        /// <summary>
-        /// Finds the best .mgf file for the current dataset
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        protected string FindMGFFile(int maxAttempts, bool assumeUnpurged)
-        {
-
-            // Data files are in a subfolder off of the main dataset folder
-            // Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
-
-            bool validFolderFound = false;
-            string serverPath = FindValidFolder(m_DatasetName, "", "*" + DOT_D_EXTENSION, maxAttempts,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false,
-                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
-
-            var diServerFolder = new DirectoryInfo(serverPath);
-
-            // Get a list of the subfolders in the dataset folder
-            // Go through the folders looking for a file with a ".mgf" extension
-
-            foreach (DirectoryInfo diSubFolder in diServerFolder.GetDirectories())
-            {
-                foreach (FileInfo fiFile in diSubFolder.GetFiles("*" + DOT_MGF_EXTENSION))
-                {
-                    // Return the first .mgf file that was found
-                    return fiFile.FullName;
-                }
-            }
-
-            // No match was found
-            return string.Empty;
-
+            return m_FolderSearch.FindDatasetFileOrFolder(m_DatasetName, out blnIsFolder, assumeUnpurged: assumeUnpurged);
         }
 
         /// <summary>
@@ -2526,110 +1786,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="DSName">Name of the dataset</param>
         /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        protected string FindValidFolder(string DSName, string FileNameToFind)
-        {
-
-            return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
-
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        protected string FindValidFolder(string DSName, string FileNameToFind, bool RetrievingInstrumentDataFolder)
+        public string FindValidFolder(string DSName, string FileNameToFind, bool RetrievingInstrumentDataFolder)
         {
+            string folderPath = m_FolderSearch.FindValidFolder(DSName, FileNameToFind, RetrievingInstrumentDataFolder);
 
-            const string folderNameToFind = "";
-            return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder);
-
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        protected string FindValidFolder(string DSName, string FileNameToFind, bool RetrievingInstrumentDataFolder, bool assumeUnpurged)
-        {
-
-            const string folderNameToFind = "";
-            bool validFolderFound = false;
-            return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder,
-                validFolderFound: out validFolderFound, assumeUnpurged: assumeUnpurged);
-
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        protected string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind)
-        {
-
-            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
-
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        protected string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind, bool RetrievingInstrumentDataFolder)
-        {
-
-            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder);
-
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="MaxRetryCount">Maximum number of attempts</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        protected string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind, int MaxRetryCount)
-        {
-
-            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
-
+            return folderPath;
         }
 
         /// <summary>
@@ -2637,21 +1801,24 @@ namespace AnalysisManagerBase
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
         /// If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
         /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="FolderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="MaxRetryCount">Maximum number of attempts</param>
-        /// <param name="LogFolderNotFound">If true, then log a warning if the folder is not found</param>
-        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <param name="dsName">Name of the dataset</param>
+        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="maxRetryCount">Maximum number of attempts</param>
+        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
-        protected string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, int maxRetryCount, bool logFolderNotFound, bool retrievingInstrumentDataFolder)
+        public string FindValidFolder(
+            string dsName, string fileNameToFind, string folderNameToFind,
+            int maxRetryCount, bool logFolderNotFound, bool retrievingInstrumentDataFolder)
         {
 
-            bool validFolderFound = false;
-            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound, retrievingInstrumentDataFolder,
-                out validFolderFound, assumeUnpurged: false);
+            string folderPath = m_FolderSearch.FindValidFolder(
+                dsName, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound,
+                retrievingInstrumentDataFolder);
 
+            return folderPath;
         }
 
         /// <summary>
@@ -2669,406 +1836,22 @@ namespace AnalysisManagerBase
         /// <param name="assumeUnpurged">When true, this function returns the path to the dataset folder on the storage server</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
-        public string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, int maxAttempts, bool logFolderNotFound, bool retrievingInstrumentDataFolder, out bool validFolderFound, bool assumeUnpurged)
+        public string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, int maxAttempts, bool logFolderNotFound,
+                                      bool retrievingInstrumentDataFolder, out bool validFolderFound, bool assumeUnpurged,
+                                      out string folderNotFoundMessage)
         {
+            string folderPath = m_FolderSearch.FindValidFolder(
+                dsName, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound,
+                retrievingInstrumentDataFolder, assumeUnpurged, out validFolderFound, out folderNotFoundMessage);
 
-            string strBestPath = string.Empty;
-
-            // The tuples in this list are the path to check, and True if we should warn that the folder was not found
-            var lstPathsToCheck = new List<Tuple<string, bool>>();
-
-            bool blnValidFolder = false;
-            bool blnFileNotFoundEncountered = false;
-
-            validFolderFound = false;
-
-            try
+            if (!validFolderFound && !assumeUnpurged)
             {
-                if (fileNameToFind == null)
-                    fileNameToFind = string.Empty;
-                if (folderNameToFind == null)
-                    folderNameToFind = string.Empty;
-
-                if (assumeUnpurged)
-                {
-                    maxAttempts = 1;
-                    logFolderNotFound = false;
-                }
-
-                var instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0);
-
-                if (retrievingInstrumentDataFolder && instrumentDataPurged != 0 && !assumeUnpurged)
-                {
-                    // The instrument data is purged and we're retrieving instrument data
-                    // Skip the primary dataset folder since the primary data files were most likely purged
-                }
-                else
-                {
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName), true);
-                }
-
-                if (MyEMSLAvailable && !assumeUnpurged)
-                {
-                    // \\MyEMSL
-                    AddPathToCheck(lstPathsToCheck, MYEMSL_PATH_FLAG, false);
-                }
-
-                // Optional Temp Debug: Enable compilation constant DISABLE_MYEMSL_SEARCH to disable checking MyEMSL (and thus speed things up)
-#if DISABLE_MYEMSL_SEARCH
-        if (m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe")) {
-            lstPathsToCheck.Remove(MYEMSL_PATH_FLAG);
-        }
-#endif
-                if ((m_AuroraAvailable || !MyEMSLAvailable) && !assumeUnpurged)
-                {
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), true);
-                }
-
-                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName), false);
-
-                blnFileNotFoundEncountered = false;
-
-                strBestPath = lstPathsToCheck.First().Item1;
-                foreach (var pathToCheck in lstPathsToCheck)
-                {
-                    try
-                    {
-                        if (m_DebugLevel > 3)
-                        {
-                            string Msg = "FindValidDatasetFolder, Looking for folder " + pathToCheck.Item1;
-                            LogDebugMessage(Msg);
-                        }
-
-                        if (pathToCheck.Item1 == MYEMSL_PATH_FLAG)
-                        {
-                            const bool recurseMyEMSL = false;
-                            blnValidFolder = FindValidFolderMyEMSL(dsName, fileNameToFind, folderNameToFind, false, recurseMyEMSL);
-                        }
-                        else
-                        {
-                            blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound & pathToCheck.Item2);
-
-                            if (!blnValidFolder && !string.IsNullOrEmpty(fileNameToFind) && !string.IsNullOrEmpty(folderNameToFind))
-                            {
-                                // Look for a subfolder named folderNameToFind that contains file fileNameToFind
-                                var pathToCheckAlt = Path.Combine(pathToCheck.Item1, folderNameToFind);
-                                blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, string.Empty, maxAttempts, logFolderNotFound & pathToCheck.Item2);
-
-                                if (blnValidFolder)
-                                {
-                                    var pathToCheckOverride = new Tuple<string, bool>(pathToCheckAlt, pathToCheck.Item2);
-                                    strBestPath = string.Copy(pathToCheck.Item1);
-                                    break;
-                                }
-                            }
-
-                        }
-
-                        if (blnValidFolder)
-                        {
-                            strBestPath = string.Copy(pathToCheck.Item1);
-                            break;
-                        }
-                        else
-                        {
-                            blnFileNotFoundEncountered = true;
-                        }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError("Exception looking for folder: " + pathToCheck.Item1, ex);
-                    }
-                } // for each item in lstPathsToCheck
-
-                if (blnValidFolder)
-                {
-                    validFolderFound = true;
-
-                    if (m_DebugLevel >= 4 || m_DebugLevel >= 1 && blnFileNotFoundEncountered)
-                    {
-                        string Msg = "FindValidFolder, Valid dataset folder has been found:  " + strBestPath;
-                        if (fileNameToFind.Length > 0)
-                        {
-                            Msg += " (matched file " + fileNameToFind + ")";
-                        }
-                        if (folderNameToFind.Length > 0)
-                        {
-                            Msg += " (matched folder " + folderNameToFind + ")";
-                        }
-                        LogDebugMessage(Msg);
-                    }
-
-                }
-                else
-                {
-                    var folderNotFoundMessage = "Could not find a valid dataset folder";
-                    if (fileNameToFind.Length > 0)
-                    {
-                        // Could not find a valid dataset folder containing file
-                        folderNotFoundMessage += " containing file " + fileNameToFind;
-                    }
-
-                    if (logFolderNotFound && m_DebugLevel >= 1)
-                    {
-                        if (assumeUnpurged)
-                        {
-                            LogMessage(folderNotFoundMessage);
-                        }
-                        else
-                        {
-                            string msg = folderNotFoundMessage + ", Job " + m_jobParams.GetParam("StepParameters", "Job") + ", Dataset " + dsName;
-                            LogWarning(msg);
-                        }
-                    }
-
-                    if (!assumeUnpurged)
-                    {
-                        m_message = folderNotFoundMessage;
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception looking for a valid dataset folder for dataset " + dsName, ex);
-                m_message = "Exception looking for a valid dataset folder";
+                m_message = folderNotFoundMessage;
             }
 
-            return strBestPath;
-
+            return folderPath;
         }
 
-        /// <summary>
-        /// Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
-        /// </summary>
-        /// <param name="dataset">Dataset name</param>
-        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="subFolderName">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
-        /// <param name="recurse">True to look for fileNameToFind in all subfolders of a dataset; false to only look in the primary dataset folder</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
-        private bool FindValidFolderMyEMSL(string dataset, string fileNameToFind, string subFolderName, bool logFolderNotFound, bool recurse)
-        {
-
-            if (string.IsNullOrEmpty(fileNameToFind))
-                fileNameToFind = "*";
-
-            if (m_DebugLevel > 3)
-            {
-                LogDebugMessage("FindValidFolderMyEMSL, querying MyEMSL for this dataset's files");
-            }
-
-            List<MyEMSLReader.DatasetFolderOrFileInfo> matchingMyEMSLFiles;
-
-            if (string.IsNullOrEmpty(subFolderName))
-            {
-                // Simply look for the file
-                matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, string.Empty, dataset, recurse);
-            }
-            else
-            {
-                // First look for the subfolder
-                // If there are multiple matching subfolders, then choose the newest one
-                // The entries in matchingMyEMSLFiles will be folder entries where the "Filename" field is the folder name while the "SubDirPath" field is any parent folders above the found folder
-                matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, subFolderName, dataset, recurse);
-            }
-
-            if (matchingMyEMSLFiles.Count > 0)
-            {
-                return true;
-            }
-            else
-            {
-                if (logFolderNotFound)
-                {
-                    string msg = "MyEMSL does not have any files for dataset " + dataset;
-                    if (!string.IsNullOrEmpty(fileNameToFind))
-                    {
-                        msg += " and file " + fileNameToFind;
-                    }
-
-                    if (!string.IsNullOrEmpty(subFolderName))
-                    {
-                        msg += " and subfolder " + subFolderName;
-                    }
-
-                    LogWarning(msg);
-                }
-                return false;
-            }
-
-        }
-
-        /// <summary>
-        /// Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
-        /// </summary>
-        /// <param name="PathToCheck">Path to examine</param>
-        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
-        private bool FindValidFolderUNC(string pathToCheck, string fileNameToFind, string folderNameToFind, int maxAttempts, bool logFolderNotFound)
-        {
-
-            // First check whether this folder exists
-            // Using a 1 second holdoff between retries
-            if (!FolderExistsWithRetry(pathToCheck, 1, maxAttempts, logFolderNotFound))
-            {
-                return false;
-            }
-
-            // Folder was found
-            var blnValidFolder = true;
-
-            if (m_DebugLevel > 3)
-            {
-                LogDebugMessage("FindValidFolderUNC, Folder found " + pathToCheck);
-            }
-
-            // Optionally look for fileNameToFind
-
-            if (!string.IsNullOrEmpty(fileNameToFind))
-            {
-                if (fileNameToFind.Contains("*"))
-                {
-                    if (m_DebugLevel > 3)
-                    {
-                        LogDebugMessage("FindValidFolderUNC, Looking for files matching " + fileNameToFind);
-                    }
-
-                    // Wildcard in the name
-                    // Look for any files matching fileNameToFind
-                    var objFolderInfo = new DirectoryInfo(pathToCheck);
-
-                    // Do not recurse here
-                    // If the dataset folder does not contain a target file, and if folderNameToFind is defined, 
-                    // FindValidFolder will append folderNameToFind to the dataset folder path and call this method again
-                    if (objFolderInfo.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length == 0)
-                    {
-                        blnValidFolder = false;
-                    }
-                }
-                else
-                {
-                    if (m_DebugLevel > 3)
-                    {
-                        LogDebugMessage("FindValidFolderUNC, Looking for file named " + fileNameToFind);
-                    }
-
-                    // Look for file fileNameToFind in this folder
-                    // Note: Using a 1 second holdoff between retries
-                    var fileFound = FileExistsWithRetry(Path.Combine(pathToCheck, fileNameToFind), retryHoldoffSeconds: 1, logMsgTypeIfNotFound: clsLogTools.LogLevels.WARN, maxAttempts: maxAttempts);
-
-                    if (!fileFound)
-                    {
-                        blnValidFolder = false;
-                    }
-                }
-            }
-
-            // Optionally look for folderNameToFind
-            if (blnValidFolder && !string.IsNullOrEmpty(folderNameToFind))
-            {
-                if (folderNameToFind.Contains("*"))
-                {
-                    if (m_DebugLevel > 3)
-                    {
-                        LogDebugMessage("FindValidFolderUNC, Looking for folders matching " + folderNameToFind);
-                    }
-
-                    // Wildcard in the name
-                    // Look for any folders matching folderNameToFind
-                    var objFolderInfo = new DirectoryInfo(pathToCheck);
-
-                    if (objFolderInfo.GetDirectories(folderNameToFind).Length == 0)
-                    {
-                        blnValidFolder = false;
-                    }
-                }
-                else
-                {
-                    if (m_DebugLevel > 3)
-                    {
-                        LogDebugMessage("FindValidFolderUNC, Looking for folder named " + folderNameToFind);
-                    }
-
-                    // Look for folder folderNameToFind in this folder
-                    // Note: Using a 1 second holdoff between retries
-                    if (!FolderExistsWithRetry(Path.Combine(pathToCheck, folderNameToFind), 1, maxAttempts, logFolderNotFound))
-                    {
-                        blnValidFolder = false;
-                    }
-                }
-            }
-
-            return blnValidFolder;
-
-        }
-
-        /// <summary>
-        /// Test for folder existence with a retry loop in case of temporary glitch
-        /// </summary>
-        /// <param name="folderName">Folder name to look for</param>
-        /// <param name="retryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
-        /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private bool FolderExistsWithRetry(string folderNamer, int retryHoldoffSeconds, int maxAttempts, bool logFolderNotFound)
-        {
-
-            if (maxAttempts < 1)
-                maxAttempts = 1;
-
-            if (maxAttempts > 10)
-                maxAttempts = 10;
-
-            var retryCount = maxAttempts;
-
-            if (retryHoldoffSeconds <= 0)
-                retryHoldoffSeconds = DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS;
-
-            if (retryHoldoffSeconds > 600)
-                retryHoldoffSeconds = 600;
-
-            while (retryCount > 0)
-            {
-                if (Directory.Exists(folderNamer))
-                {
-                    return true;
-                }
-                else
-                {
-                    if (logFolderNotFound)
-                    {
-                        if (m_DebugLevel >= 2 || m_DebugLevel >= 1 && retryCount == 1)
-                        {
-                            string errMsg = "Folder " + folderNamer + " not found. Retry count = " + retryCount;
-                            LogWarning(errMsg);
-                        }
-                    }
-                    retryCount -= 1;
-                    if (retryCount <= 0)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        // Wait retryHoldoffSeconds seconds before retrying
-                        Thread.Sleep(new TimeSpan(0, 0, retryHoldoffSeconds));
-                    }
-                }
-            }
-
-            return false;
-
-        }
-
-        /// <summary>
         /// Creates the _ScanStats.txt file for this job's dataset
         /// </summary>
         /// <returns>True if success, false if a problem</returns>
@@ -3538,7 +2321,7 @@ namespace AnalysisManagerBase
 
                 // Copy the file, renaming to avoid a naming collision
                 var destFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
-                if (CopyFileWithRetry(sourceFile.FullName, destFilePath, overwrite: true, maxCopyAttempts: 3))
+                if (m_FileCopyUtilities.CopyFileWithRetry(sourceFile.FullName, destFilePath, overwrite: true, maxCopyAttempts: 3))
                 {
                     if (m_DebugLevel > 3)
                     {
@@ -4243,7 +3026,7 @@ namespace AnalysisManagerBase
                 {
                     if (string.IsNullOrEmpty(errorMessage))
                     {
-                        errorMessage = "GetSplitFastaIteration computed an iteration value of " + iteration + "; " + 
+                        errorMessage = "GetSplitFastaIteration computed an iteration value of " + iteration + "; " +
                             "cannot determine the SplitFasta file name for this job step";
                         clsGlobal.LogError(errorMessage);
                     }
@@ -5701,7 +4484,7 @@ namespace AnalysisManagerBase
                                 return false;
                             }
 
-                            if (!CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                            if (!m_FileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
                             {
                                 m_message = "CopyFileToWorkDir returned False for " + sourceFileName + " using folder " + sourceFolderPath + " for job " + dataPkgJob.Key;
                                 if (m_DebugLevel >= 1)
@@ -5960,7 +4743,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
             {
                 errorMessage = "Error copying " + fiSourceFile.Name;
                 return false;
@@ -6090,7 +4873,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool RetrieveDatasetFile(string FileExtension, bool createStoragePathInfoOnly)
         {
-            return RetrieveDatasetFile(FileExtension, createStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT);
+            return RetrieveDatasetFile(FileExtension, createStoragePathInfoOnly, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT);
         }
 
         /// <summary>
@@ -6104,7 +4887,7 @@ namespace AnalysisManagerBase
         protected bool RetrieveDatasetFile(string FileExtension, bool createStoragePathInfoOnly, int maxAttempts)
         {
 
-            string DatasetFilePath = FindDatasetFile(maxAttempts, FileExtension);
+            string DatasetFilePath = m_FolderSearch.FindDatasetFile(m_DatasetName, maxAttempts, FileExtension);
             if (string.IsNullOrEmpty(DatasetFilePath))
             {
                 return false;
@@ -6130,7 +4913,8 @@ namespace AnalysisManagerBase
                 LogDebugMessage("Retrieving file " + fiDatasetFile.FullName);
             }
 
-            if (CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
+            if (m_FileCopyUtilities.CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, m_WorkingDir,
+                clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
             {
                 return true;
             }
@@ -6150,7 +4934,7 @@ namespace AnalysisManagerBase
         protected bool RetrieveMgfFile(bool GetCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
         {
 
-            var strMGFFilePath = FindMGFFile(maxAttempts, assumeUnpurged: false);
+            var strMGFFilePath = m_FolderSearch.FindMGFFile(m_DatasetName, maxAttempts, assumeUnpurged: false);
 
             if (string.IsNullOrEmpty(strMGFFilePath))
             {
@@ -6167,7 +4951,8 @@ namespace AnalysisManagerBase
             }
 
             // Do the copy
-            if (!CopyFileToWorkDirWithRename(fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
+            if (!m_FileCopyUtilities.CopyFileToWorkDirWithRename(m_DatasetName, fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir,
+                clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
                 return false;
 
             // If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
@@ -6177,7 +4962,8 @@ namespace AnalysisManagerBase
             foreach (FileInfo fiCDFFile in fiMGFFile.Directory.GetFiles("*" + DOT_CDF_EXTENSION))
             {
                 // Copy the .cdf file that was found
-                if (CopyFileToWorkDirWithRename(fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
+                if (m_FileCopyUtilities.CopyFileToWorkDirWithRename(m_DatasetName, fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir,
+                    clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
                 {
                     return true;
                 }
@@ -6246,7 +5032,8 @@ namespace AnalysisManagerBase
             if (fiSourceFile.Exists)
             {
 
-                if (CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
+                if (m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir,
+                    clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
                 {
                     if (!string.IsNullOrEmpty(hashcheckFilePath) && File.Exists(hashcheckFilePath))
                     {
@@ -6757,7 +5544,8 @@ namespace AnalysisManagerBase
                 logMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
             }
 
-            var success = CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, logMsgTypeIfNotFound, createStoragePathInfoOnly, maxCopyAttempts);
+            var success = m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir,
+                logMsgTypeIfNotFound, createStoragePathInfoOnly, maxCopyAttempts);
             if (!success)
             {
                 if (blnIgnoreFile)
@@ -6799,7 +5587,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool RetrieveSpectra(string RawDataType, bool createStoragePathInfoOnly)
         {
-            return RetrieveSpectra(RawDataType, createStoragePathInfoOnly, DEFAULT_MAX_RETRY_COUNT);
+            return RetrieveSpectra(RawDataType, createStoragePathInfoOnly, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT);
         }
 
         // <summary>
@@ -6951,9 +5739,9 @@ namespace AnalysisManagerBase
         {
 
             // Copies a data folder ending in FolderExtension to the working directory
-
+            
             // Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-            string DSFolderPath = FindDotXFolder(FolderExtension, assumeUnpurged: false);
+            string DSFolderPath = m_FolderSearch.FindDotXFolder(m_DatasetName, FolderExtension, assumeUnpurged: false);
 
             if (string.IsNullOrEmpty(DSFolderPath))
             {
@@ -6985,7 +5773,7 @@ namespace AnalysisManagerBase
 
                 if (createStoragePathInfoOnly)
                 {
-                    CreateStoragePathInfoFile(diSourceFolder.FullName, destFolderPath);
+                    m_FileCopyUtilities.CreateStoragePathInfoFile(diSourceFolder.FullName, destFolderPath);
                 }
                 else
                 {
@@ -7152,7 +5940,7 @@ namespace AnalysisManagerBase
                             LogMessage("Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles[0]) + " to " + Path.GetFileName(strImagingSeqFilePathFinal));
                         }
 
-                        if (!CopyFileWithRetry(MisFiles[0], strImagingSeqFilePathFinal, true))
+                        if (!m_FileCopyUtilities.CopyFileWithRetry(MisFiles[0], strImagingSeqFilePathFinal, true))
                         {
                             // Abort processing
                             LogError("Error copying ImagingSequence (.mis) file; unable to process MALDI imaging data");
@@ -7260,7 +6048,7 @@ namespace AnalysisManagerBase
                                     LogMessage("Copying " + strZipFilePathRemote);
                                 }
 
-                                if (!CopyFileWithRetry(strZipFilePathRemote, strZipFilePathToExtract, true))
+                                if (!m_FileCopyUtilities.CopyFileWithRetry(strZipFilePathRemote, strZipFilePathToExtract, true))
                                 {
                                     // Abort processing
                                     LogError("Error copying Zip file; unable to process MALDI imaging data");
@@ -7379,7 +6167,7 @@ namespace AnalysisManagerBase
                     {
                         if (createStoragePathInfoOnly)
                         {
-                            if (CreateStoragePathInfoFile(diSourceFolder.FullName, m_WorkingDir + @"\"))
+                            if (m_FileCopyUtilities.CreateStoragePathInfoFile(diSourceFolder.FullName, m_WorkingDir + @"\"))
                             {
                                 return true;
                             }
@@ -7398,7 +6186,7 @@ namespace AnalysisManagerBase
                             // Typically there will only be two files: ACQUS and ser
                             foreach (var fiFile in diSourceFolder.GetFiles())
                             {
-                                if (!CopyFileToWorkDir(fiFile.Name, diSourceFolder.FullName, diTargetFolder.FullName))
+                                if (!m_FileCopyUtilities.CopyFileToWorkDir(fiFile.Name, diSourceFolder.FullName, diTargetFolder.FullName))
                                 {
                                     // Error has alredy been logged
                                     return false;
@@ -7680,7 +6468,7 @@ namespace AnalysisManagerBase
         {
 
             // Copy the file
-            if (!CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
             {
                 return false;
             }
@@ -7703,7 +6491,7 @@ namespace AnalysisManagerBase
             // Copy the file
             if (maxCopyAttempts < 1)
                 maxCopyAttempts = 1;
-            if (!CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts))
             {
                 return false;
             }
@@ -7849,7 +6637,7 @@ namespace AnalysisManagerBase
                     var fiSourceFile = new FileInfo(sourceFilePath);
 
                     // Copy the file locally
-                    if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                    if (!m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
                     {
                         m_message = "Error copying " + fiSourceFile.Name;
                         if (m_DebugLevel >= 2)
@@ -7930,7 +6718,7 @@ namespace AnalysisManagerBase
 
             // No folder found containing the zipped OUT files
             // Copy the file
-            if (!CopyFileToWorkDir(ZippedFileName, ZippedFolderName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(ZippedFileName, ZippedFolderName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
             {
                 return false;
             }
@@ -8536,7 +7324,7 @@ namespace AnalysisManagerBase
             {
                 if (blnLogFreeMemoryOnSuccess)
                 {
-                    strMessage = strStepToolName + " will use " + intFreeMemoryRequiredMB.ToString() + " MB; " + 
+                    strMessage = strStepToolName + " will use " + intFreeMemoryRequiredMB.ToString() + " MB; " +
                         "system has " + sngFreeMemoryMB.ToString("0") + " MB available";
                     clsGlobal.LogDebug(strMessage);
                 }
@@ -8676,6 +7464,15 @@ namespace AnalysisManagerBase
         {
             m_StatusTools.CurrentOperation = progressMessage;
             m_StatusTools.UpdateAndWrite(percentComplete);
+        }
+
+        #endregion
+
+        #region "FileCopyUtilities Events"
+
+        private void FileCopyUtilities_ResetTimestampForQueueWaitTime()
+        {
+            ResetTimestampForQueueWaitTimeLogging();
         }
 
         #endregion

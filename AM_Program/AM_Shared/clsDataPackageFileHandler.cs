@@ -163,8 +163,10 @@ namespace AnalysisManagerBase
                 // Note that FindValidFolder will search both the dataset folder and in folder inputFolderName below the dataset folder
 
                 bool validFolderFound;
+                string folderNotFoundMessage;
 
-                var datasetFolderPath = mAnalysisResources.FindValidFolder(dataset, "*_CacheInfo.txt", folderNameToFind: inputFolderName, maxAttempts: 1, logFolderNotFound: false, retrievingInstrumentDataFolder: false, validFolderFound: out validFolderFound, assumeUnpurged: false);
+                var datasetFolderPath = mAnalysisResources.FindValidFolder(dataset, "*_CacheInfo.txt", folderNameToFind: inputFolderName, maxAttempts: 1, logFolderNotFound: false, retrievingInstrumentDataFolder: false, assumeUnpurged: false,
+                    validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
 
                 if (!validFolderFound)
                 {
@@ -222,7 +224,10 @@ namespace AnalysisManagerBase
 
                     var sourceCacheInfoFile = cacheInfoFiles.First();
 
-                    var success = mAnalysisResources.CopyFileToWorkDir(sourceCacheInfoFile.Name, sourceCacheInfoFile.DirectoryName, workingDir, clsLogTools.LogLevels.ERROR);
+                    var success = mAnalysisResources.CopyFileToWorkDir(
+                        sourceCacheInfoFile.Name, sourceCacheInfoFile.DirectoryName, 
+                        workingDir, clsLogTools.LogLevels.ERROR);
+
                     if (!success)
                     {
                         // The error should have already been logged
