@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
@@ -32,14 +33,6 @@ namespace AnalysisManagerProg
 
         // 450 seconds is 7.5 minutes
         private const int FASTA_GEN_TIMEOUT_INTERVAL_SEC = 450;
-
-        private struct udtPSMJobInfoType
-        {
-            public string Dataset;
-            public int DatasetID;
-            public int Job;
-            public string DtaRefineryDataFolderPath;
-        }
 
         #region "Properties"
 
@@ -440,27 +433,25 @@ namespace AnalysisManagerProg
 
             foreach (DataRow CurRow in Dt.Rows)
             {
-                var udtPSMJob = new udtPSMJobInfoType
-                {
-                    Dataset = clsGlobal.DbCStr(CurRow["Dataset"]),
-                    DatasetID = clsGlobal.DbCInt(CurRow["Dataset_ID"]),
-                    Job = clsGlobal.DbCInt(CurRow["Job"]),
-                    DtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow["Dataset_Folder_Path"]), clsGlobal.DbCStr(CurRow["Output_Folder"]))
-                };
+                var dataset = clsGlobal.DbCStr(CurRow["Dataset"]);
+                var datasetID = clsGlobal.DbCInt(CurRow["Dataset_ID"]);
+                var job = clsGlobal.DbCInt(CurRow["Job"]);
+                var dtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow["Dataset_Folder_Path"]),
+                                                             clsGlobal.DbCStr(CurRow["Output_Folder"]));
 
-                if (!Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath))
+                if (!Directory.Exists(dtaRefineryDataFolderPath))
                 {
-                    udtPSMJob.DtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow["Transfer_Folder_Path"]), clsGlobal.DbCStr(CurRow["Output_Folder"]));
+                    dtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow["Transfer_Folder_Path"]), clsGlobal.DbCStr(CurRow["Output_Folder"]));
                 }
 
-                if (Directory.Exists(udtPSMJob.DtaRefineryDataFolderPath))
+                if (Directory.Exists(dtaRefineryDataFolderPath))
                 {
-                    Console.WriteLine("Processing " + udtPSMJob.DtaRefineryDataFolderPath);
+                    Console.WriteLine("Processing " + dtaRefineryDataFolderPath);
                     // oMassErrorExtractor.ParseDTARefineryLogFile(udtPSMJob.Dataset, udtPSMJob.DatasetID, udtPSMJob.Job, udtPSMJob.DtaRefineryDataFolderPath)
                 }
                 else
                 {
-                    Console.WriteLine("Skipping " + udtPSMJob.DtaRefineryDataFolderPath);
+                    Console.WriteLine("Skipping " + dtaRefineryDataFolderPath);
                 }
             }
 
@@ -527,7 +518,14 @@ namespace AnalysisManagerProg
 
                 var blnNeedToArchiveFile = false;
 
-                var strTargetFilePath = Path.Combine(strTargetFolderPath, Path.GetFileName(strSrcFilePath));
+                var fileName = Path.GetFileName(strSrcFilePath);
+                if (fileName == null)
+                {
+                    Console.WriteLine("Filename could not be parsed from " + strSrcFilePath);
+                    return;
+                }
+
+                var strTargetFilePath = Path.Combine(strTargetFolderPath, fileName);
 
                 if (!File.Exists(strTargetFilePath))
                 {
@@ -652,23 +650,21 @@ namespace AnalysisManagerProg
             // strProteinCollectionList = "GWB1_Rifle_2011_9_13_0_1_2013-03-27,Tryp_Pig_Bov"
             // strProteinOptions = "seq_direction=forward,filetype=fasta"
 
-            var blnSuccess = false;
-            blnSuccess = TestProteinDBExport(destFolder, "na", strProteinCollectionList, strProteinOptions);
+            var blnSuccess = TestProteinDBExport(destFolder, "na", strProteinCollectionList, strProteinOptions);
 
             if (blnSuccess)
             {
                 IJobParams oJobParams = InitializeManagerParams();
-
-                const bool blnMsgfPlus = true;
-                var strJobNum = "12345";
-                var intDebugLevel = Convert.ToInt16(m_mgrParams.GetParam("debuglevel", 1));
-
-                var JavaProgLoc = @"C:\Program Files\Java\jre8\bin\java.exe";
-                var MSGFDbProgLoc = @"C:\DMS_Programs\MSGFDB\MSGFPlus.jar";
-                bool fastaFileIsDecoy;
-                string fastaFilePath;
-
                 oJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName);
+
+                //const bool blnMsgfPlus = true;
+                //var strJobNum = "12345";
+                //var intDebugLevel = Convert.ToInt16(m_mgrParams.GetParam("debuglevel", 1));
+
+                //var JavaProgLoc = @"C:\Program Files\Java\jre8\bin\java.exe";
+                //var MSGFDbProgLoc = @"C:\DMS_Programs\MSGFDB\MSGFPlus.jar";
+                //bool fastaFileIsDecoy;
+                //string fastaFilePath;
 
                 // Uncomment the following if the MSGFDB plugin is associated with the solution
                 //var oTool = new AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(

@@ -78,12 +78,12 @@ namespace AnalysisManagerProg
 
             switch (className.ToLower())
             {
-                //case "analysismanagermsgfdbplugin.clsanalysistoolrunnermsgfdb":
+                case "analysismanagermsgfdbplugin.clsanalysistoolrunnermsgfdb":
                 //    myToolRunner = new AnalysisManagerMSGFDBPlugIn.clsAnalysisToolRunnerMSGFDB();
-                //    break;
-                //case "analysismanagerqcartplugin.clsanalysistoolrunnerqcart":
+                    break;
+                case "analysismanagerqcartplugin.clsanalysistoolrunnerqcart":
                 //    myToolRunner = new AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART();
-                //    break;
+                    break;
             }
 
             return myToolRunner;
@@ -95,12 +95,12 @@ namespace AnalysisManagerProg
 
             switch (className.ToLower())
             {
-                //case "analysismanagermsgfdbplugin.clsanalysisresourcesmsgfdb":
+                case "analysismanagermsgfdbplugin.clsanalysisresourcesmsgfdb":
                 //    myModule = new AnalysisManagerMSGFDBPlugIn.clsAnalysisResourcesMSGFDB();
-                //    break;
-                //case "analysismanagerqcartplugin.clsanalysisresourcesqcart":
+                    break;
+                case "analysismanagerqcartplugin.clsanalysisresourcesqcart":
                 //    myModule = new AnalysisManagerQCARTPlugin.clsAnalysisResourcesQCART();
-                //    break;
+                    break;
             }
 
             return myModule;
