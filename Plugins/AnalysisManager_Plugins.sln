@@ -61,7 +61,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerPhospho_FDR_
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerPRIDEMzXMLPlugIn", "AM_PRIDE_MzXML_PlugIn\AnalysisManagerPRIDEMzXMLPlugIn.vbproj", "{9D9FFB40-9F3D-4734-8B2E-78D60363817A}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerResultsXferPlugin", "AM_ResultsXfer_PlugIn\AnalysisManagerResultsXferPlugin.vbproj", "{EDDE6076-0959-40E8-8760-08B29F66AB01}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerResultsXferPlugin", "AM_ResultsXfer_PlugIn\AnalysisManagerResultsXferPlugin.csproj", "{EDDE6076-0959-40E8-8760-08B29F66AB01}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSequestPlugin", "AM_Sequest_PlugIn\AnalysisManagerSequestPlugin.csproj", "{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}"
 EndProject
