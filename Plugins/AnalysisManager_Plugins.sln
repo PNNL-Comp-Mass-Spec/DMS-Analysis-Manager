@@ -65,7 +65,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerResultsXferP
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerSequestPlugin", "AM_Sequest_PlugIn\AnalysisManagerSequestPlugin.vbproj", "{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerSMAQCPlugIn", "AM_SMAQC_PlugIn\AnalysisManagerSMAQCPlugIn.vbproj", "{0A52C911-BC1A-4AA1-83A4-3AD97EF93F31}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSMAQCPlugIn", "AM_SMAQC_PlugIn\AnalysisManagerSMAQCPlugIn.csproj", "{0A52C911-BC1A-4AA1-83A4-3AD97EF93F31}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerXTandemPlugIn", "AM_XTandem_PlugIn\AnalysisManagerXTandemPlugIn.csproj", "{E29686F3-709C-4C38-8B9F-534F71682770}"
 EndProject

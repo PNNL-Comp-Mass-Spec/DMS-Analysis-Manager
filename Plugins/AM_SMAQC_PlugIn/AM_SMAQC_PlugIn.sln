@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerSMAQCPlugIn", "AnalysisManagerSMAQCPlugIn.vbproj", "{0A52C911-BC1A-4AA1-83A4-3AD97EF93F31}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSMAQCPlugIn", "AnalysisManagerSMAQCPlugIn.csproj", "{0A52C911-BC1A-4AA1-83A4-3AD97EF93F31}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
