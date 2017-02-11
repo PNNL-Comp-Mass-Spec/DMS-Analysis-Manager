@@ -1,33 +1,38 @@
-Option Strict On
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports System.IO
-Imports AnalysisManagerBase
+namespace AnalysisManagerSequestPlugin
+{
+    public class clsAnalysisToolRunnerAgilentSeq : clsAnalysisToolRunnerSeqBase
+    {
+        protected CloseOutType DeleteDataFile()
+        {
+            //Deletes the data files (.mgf and .cdf) from the working directory
+            string[] FoundFiles = null;
 
-Public Class clsAnalysisToolRunnerAgilentSeq
-    Inherits clsAnalysisToolRunnerSeqBase
-
-    Protected Function DeleteDataFile() As CloseOutType
-
-        'Deletes the data files (.mgf and .cdf) from the working directory
-        Dim FoundFiles() As String
-        Dim MyFile As String
-
-        Try
-            'Delete the .mgf file
-            FoundFiles = Directory.GetFiles(m_WorkDir, "*.mgf")
-            For Each MyFile In FoundFiles
-                DeleteFileWithRetries(MyFile)
-            Next
-            'Delete the .cdf file, if present
-            FoundFiles = Directory.GetFiles(m_WorkDir, "*.cdf")
-            For Each MyFile In FoundFiles
-                DeleteFileWithRetries(MyFile)
-            Next
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting raw data file(s), job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & Err.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-    End Function
-
-End Class
+            try
+            {
+                //Delete the .mgf file
+                FoundFiles = Directory.GetFiles(m_WorkDir, "*.mgf");
+                foreach (string MyFile in FoundFiles)
+                {
+                    DeleteFileWithRetries(MyFile);
+                }
+                //Delete the .cdf file, if present
+                FoundFiles = Directory.GetFiles(m_WorkDir, "*.cdf");
+                foreach (string MyFile in FoundFiles)
+                {
+                    DeleteFileWithRetries(MyFile);
+                }
+            }
+            catch (Exception Err)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                    "Error deleting raw data file(s), job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + Err.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+    }
+}
