@@ -8,8 +8,14 @@ namespace AnalysisManagerBase
 
         #region "Events and Event Handlers"
 
+        public event DebugEventEventHandler DebugEvent;
+        public delegate void DebugEventEventHandler(string strMessage);
+
         public event ErrorEventEventHandler ErrorEvent;
         public delegate void ErrorEventEventHandler(string strMessage, Exception ex);
+
+        public event ProgressUpdateEventHandler ProgressUpdate;
+        public delegate void ProgressUpdateEventHandler(string progressMessage, float percentComplete);
 
         public event StatusEventEventHandler StatusEvent;
         public delegate void StatusEventEventHandler(string strMessage);
@@ -17,17 +23,13 @@ namespace AnalysisManagerBase
         public event WarningEventEventHandler WarningEvent;
         public delegate void WarningEventEventHandler(string strMessage);
 
-        public event ProgressUpdateEventHandler ProgressUpdate;
-        public delegate void ProgressUpdateEventHandler(string progressMessage, float percentComplete);
-
         /// <summary>
-        /// Progress udpate
+        /// Report a debug message
         /// </summary>
-        /// <param name="progressMessage">Progress message</param>
-        /// <param name="percentComplete">Value between 0 and 100</param>
-        protected void OnProgressUpdate(string progressMessage, float percentComplete)
+        /// <param name="strMessage"></param>
+        protected void OnDebugEvent(string strMessage)
         {
-            ProgressUpdate?.Invoke(progressMessage, percentComplete);
+            DebugEvent?.Invoke(strMessage);
         }
 
         /// <summary>
@@ -50,7 +52,17 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Report an error
+        /// Progress udpate
+        /// </summary>
+        /// <param name="progressMessage">Progress message</param>
+        /// <param name="percentComplete">Value between 0 and 100</param>
+        protected void OnProgressUpdate(string progressMessage, float percentComplete)
+        {
+            ProgressUpdate?.Invoke(progressMessage, percentComplete);
+        }
+
+        /// <summary>
+        /// Report a status message
         /// </summary>
         /// <param name="strMessage"></param>
         protected void OnStatusEvent(string strMessage)
@@ -59,7 +71,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// report a warning
+        /// Report a warning
         /// </summary>
         /// <param name="strMessage"></param>
         protected void OnWarningEvent(string strMessage)
