@@ -93,7 +93,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerProSightQuan
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_RepoPkgr_PlugIn", "AM_RepoPkgr_PlugIn\AnalysisManager_RepoPkgr_PlugIn.csproj", "{02AB78CA-A428-4EF8-918F-D8864172AE7E}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerResultsCleanupPlugin", "AM_ResultsCleanup_PlugIn\AnalysisManagerResultsCleanupPlugin.vbproj", "{AEC999A5-5321-48AA-860E-8756DB701466}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerResultsCleanupPlugin", "AM_ResultsCleanup_PlugIn\AnalysisManagerResultsCleanupPlugin.csproj", "{AEC999A5-5321-48AA-860E-8756DB701466}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerBrukerDAExportPlugin", "AM_Bruker_DA_Export\AnalysisManagerBrukerDAExportPlugin.csproj", "{BC82FA0C-5BB5-4D84-BB6B-5F6B3E0670DB}"
 EndProject
