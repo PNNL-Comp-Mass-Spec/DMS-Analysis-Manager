@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerSequestPlugin", "AnalysisManagerSequestPlugin.vbproj", "{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSequestPlugin", "AnalysisManagerSequestPlugin.csproj", "{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
