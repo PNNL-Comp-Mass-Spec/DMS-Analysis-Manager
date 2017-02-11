@@ -1,33 +1,37 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2008, Battelle Memorial Institute
-' Created 10/30/2008
-'
-'*********************************************************************************************************
 
-Imports AnalysisManagerBase
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2008, Battelle Memorial Institute
+// Created 10/30/2008
+//
+//*********************************************************************************************************
 
-Public Class clsAnalysisResourcesResultXfer
-    Inherits clsAnalysisResources
+using AnalysisManagerBase;
 
-#Region "Methods"
-    ''' <summary>
-    ''' Obtains resources necessary for performing analysis results transfer
-    ''' </summary>
-    ''' <returns>CloseOutType indicating success or failure</returns>
-    ''' <remarks>No resources needed for performing results transfer. Function merely meets inheritance requirements</remarks>
-    Public Overrides Function GetResources() As CloseOutType
+namespace AnalysisManagerResultsXferPlugin
+{
+    public class clsAnalysisResourcesResultXfer : clsAnalysisResources
+    {
+        #region "Methods"
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+        /// <summary>
+        /// Obtains resources necessary for performing analysis results transfer
+        /// </summary>
+        /// <returns>CloseOutType indicating success or failure</returns>
+        /// <remarks>No resources needed for performing results transfer. Function merely meets inheritance requirements</remarks>
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-        Return CloseOutType.CLOSEOUT_SUCCESS
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-    End Function
-#End Region
-
-End Class
+        #endregion
+    }
+}
