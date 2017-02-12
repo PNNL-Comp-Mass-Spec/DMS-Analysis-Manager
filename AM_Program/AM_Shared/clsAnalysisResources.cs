@@ -2255,6 +2255,17 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Unzip gzipFilePath into the working directory
+        /// Existing files will be overwritten
+        /// </summary>
+        /// <param name="gzipFilePath">.gz file to unzip</param>
+        /// <returns>True if success; false if an error</returns>
+        protected bool GUnzipFile(string gzipFilePath)
+        {
+            return m_FileSearch.GUnzipFile(gzipFilePath);
+        }
+
+        /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
         /// <param name="dctDataPackageDatasets"></param>
