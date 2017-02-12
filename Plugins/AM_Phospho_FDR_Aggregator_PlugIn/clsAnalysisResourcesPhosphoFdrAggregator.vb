@@ -126,14 +126,14 @@ Public Class clsAnalysisResourcesPhosphoFdrAggregator
             Return True
         End If
 
-        Dim success = RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, clsLogTools.LogLevels.DEBUG)
+        Dim success = FileSearch.RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, clsLogTools.LogLevels.DEBUG)
 
         If Not success Then
             ' File not found in the transfer folder
             ' Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
 
             Dim paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", "\\gigasax\DMS_Parameter_Files\AScore")
-            success = RetrieveFile(paramFileName, paramFileFolder, 2, clsLogTools.LogLevels.ERROR)
+            success = FileSearch.RetrieveFile(paramFileName, paramFileFolder, 2, clsLogTools.LogLevels.ERROR)
         End If
 
         If success Then

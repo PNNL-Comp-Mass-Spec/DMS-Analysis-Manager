@@ -30,12 +30,12 @@ Public Class clsAnalysisResourcesDeconPeakDetector
 
         paramFileStoragePath = Path.Combine(paramFileStoragePath, "PeakDetection")
 
-        If Not RetrieveFile(peakDetectorParamFileName, paramFileStoragePath) Then
+        If Not FileSearch.RetrieveFile(peakDetectorParamFileName, paramFileStoragePath) Then
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the instrument data file
-        If Not RetrieveSpectra(strRawDataType) Then
+        If Not FileSearch.RetrieveSpectra(strRawDataType) Then
             If String.IsNullOrEmpty(m_message) Then
                 m_message = "Error retrieving instrument data file"
             End If

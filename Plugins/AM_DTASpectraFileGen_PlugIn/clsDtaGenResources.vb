@@ -54,8 +54,8 @@ Public Class clsDtaGenResources
 
 
         If blnMGFInstrumentData Then
-            Dim strFileToFind As String = m_DatasetName & DOT_MGF_EXTENSION
-            If Not FindAndRetrieveMiscFiles(strFileToFind, False) Then
+            Dim strFileToFind As String = DatasetName & DOT_MGF_EXTENSION
+            If Not FileSearch.FindAndRetrieveMiscFiles(strFileToFind, False) Then
                 LogError("Instrument data not found: " & strFileToFind)
                 Return CloseOutType.CLOSEOUT_FAILED
             Else
@@ -63,7 +63,7 @@ Public Class clsDtaGenResources
             End If
         Else
             'Get input data file
-            If Not RetrieveSpectra(strRawDataType) Then
+            If Not FileSearch.RetrieveSpectra(strRawDataType) Then
                 If String.IsNullOrEmpty(m_message) Then
                     LogError("Error retrieving instrument data file")
                 End If
@@ -83,18 +83,21 @@ Public Class clsDtaGenResources
 
                 Dim datasetID = m_jobParams.GetJobParameter("DatasetID", 0)
                 Dim folderNameToFind = "DTA_Gen_1_26_" & datasetID
-                Dim fileToFind = m_DatasetName & "_dta.zip"
+                Dim fileToFind = DatasetName & "_dta.zip"
                 Dim validFolderFound As Boolean
+                Dim folderNotFoundMessage As String
 
-                Dim existingDtaFolder = FindValidFolder(
-                    m_DatasetName,
+                Dim existingDtaFolder = FolderSearch.FindValidFolder(
+                    DatasetName,
                     fileToFind,
                     folderNameToFind,
                     maxAttempts:=1,
                     logFolderNotFound:=False,
                     retrievingInstrumentDataFolder:=False,
+                    assumeUnpurged:=False,
                     validFolderFound:=validFolderFound,
-                    assumeUnpurged:=False)
+                    folderNotFoundMessage:=folderNotFoundMessage
+                    )
 
                 If validFolderFound Then
                     ' Copy the file locally (or queue it for download from MyEMSL)
@@ -169,7 +172,7 @@ Public Class clsDtaGenResources
                 Return False
             End If
 
-            If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
+            If Not FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath) Then
                 Return False
             End If
 

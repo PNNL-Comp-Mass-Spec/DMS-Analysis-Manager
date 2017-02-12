@@ -49,7 +49,7 @@ Public Class clsAnalysisResourcesDecon2ls
             End If
         Else
             ' Get input data file
-            If Not RetrieveSpectra(strRawDataType) Then
+            If Not FileSearch.RetrieveSpectra(strRawDataType) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
                 Return CloseOutType.CLOSEOUT_FAILED
             End If
@@ -69,7 +69,7 @@ Public Class clsAnalysisResourcesDecon2ls
         Dim paramFileName = m_jobParams.GetParam("ParmFileName")
         Dim paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath")
 
-        If Not RetrieveFile(paramFileName, paramFileStoragePath) Then
+        If Not FileSearch.RetrieveFile(paramFileName, paramFileStoragePath) Then
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 

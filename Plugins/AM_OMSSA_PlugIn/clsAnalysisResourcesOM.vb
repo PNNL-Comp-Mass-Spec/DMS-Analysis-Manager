@@ -33,7 +33,7 @@ Public Class clsAnalysisResourcesOM
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
 
         'Retrieve param file
-        If Not RetrieveFile(
+        If Not FileSearch.RetrieveFile(
           m_jobParams.GetParam("ParmFileName"),
           m_jobParams.GetParam("ParmFileStoragePath")) _
         Then Return CloseOutType.CLOSEOUT_FAILED
@@ -49,14 +49,14 @@ Public Class clsAnalysisResourcesOM
         'Retrieve settings files aka default file that will have values overwritten by parameter file values
         'Stored in same location as parameter file
         '         m_jobParams.GetParam("SettingsFileName"), _
-        If Not RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, m_jobParams.GetParam("ParmFileStoragePath")) Then
+        If Not FileSearch.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, m_jobParams.GetParam("ParmFileStoragePath")) Then
             Return CloseOutType.CLOSEOUT_FAILED
         End If
-        m_JobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE)
+        m_jobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE)
 
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-        If Not RetrieveDtaFiles() Then
+        If Not FileSearch.RetrieveDtaFiles() Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If

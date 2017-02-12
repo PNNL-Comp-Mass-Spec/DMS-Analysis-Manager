@@ -34,8 +34,8 @@ Public Class clsAnalysisResourcesMSAlign
         End If
 
         ' Retrieve param file
-        If Not RetrieveFile( _
-           m_jobParams.GetParam("ParmFileName"), _
+        If Not FileSearch.RetrieveFile(
+           m_jobParams.GetParam("ParmFileName"),
            m_jobParams.GetParam("ParmFileStoragePath")) _
         Then Return CloseOutType.CLOSEOUT_FAILED
 
@@ -44,8 +44,8 @@ Public Class clsAnalysisResourcesMSAlign
 
         ' Retrieve the MSAlign file
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
-        Dim fileToGet = m_DatasetName & MSDECONV_MSALIGN_FILE_SUFFIX
-        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+        Dim fileToGet = DatasetName & MSDECONV_MSALIGN_FILE_SUFFIX
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If

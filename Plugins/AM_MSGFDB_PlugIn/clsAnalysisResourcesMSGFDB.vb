@@ -170,7 +170,7 @@ Public Class clsAnalysisResourcesMSGFDB
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-        If Not RetrieveDtaFiles() Then
+        If Not FileSearch.RetrieveDtaFiles() Then
             Dim sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders")
             If Not String.IsNullOrEmpty(sharedResultsFolder) Then
                 m_message &= "; shared results folder is " & sharedResultsFolder
@@ -204,7 +204,7 @@ Public Class clsAnalysisResourcesMSGFDB
         ' Retrieve the MASIC ScanStats.txt file (and possibly the ScanStatsEx.txt file)
 
         Dim blnSuccess As Boolean
-        blnSuccess = RetrieveScanStatsFiles(createStoragePathInfoOnly:=False, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=False)
+        blnSuccess = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly:=False, RetrieveScanStatsFile:=True, RetrieveScanStatsExFile:=False)
 
         If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
             Return CloseOutType.CLOSEOUT_FAILED
@@ -219,7 +219,7 @@ Public Class clsAnalysisResourcesMSGFDB
 
             If Not blnScanTypeColumnFound Then
                 ' We also have to retrieve the _ScanStatsEx.txt file
-                blnSuccess = RetrieveScanStatsFiles(createStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
+                blnSuccess = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly:=False, RetrieveScanStatsFile:=False, RetrieveScanStatsExFile:=True)
 
                 If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
                     Return CloseOutType.CLOSEOUT_FAILED

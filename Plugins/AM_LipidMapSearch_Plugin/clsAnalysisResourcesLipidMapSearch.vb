@@ -21,11 +21,11 @@ Public Class clsAnalysisResourcesLipidMapSearch
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
         Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
 
-        If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
+        If Not FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath) Then
             Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
-        If Not RetrievePNNLOmicsResourceFiles("LipidToolsProgLoc") Then
+        If Not FileSearch.RetrievePNNLOmicsResourceFiles("LipidToolsProgLoc") Then
             Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
@@ -98,8 +98,8 @@ Public Class clsAnalysisResourcesLipidMapSearch
             Return False
         End If
 
-        strDatasetFolder = Path.Combine(strDatasetFolder, m_DatasetName)
-        strDatasetFolderArchive = Path.Combine(strDatasetFolderArchive, m_DatasetName)
+        strDatasetFolder = Path.Combine(strDatasetFolder, DatasetName)
+        strDatasetFolderArchive = Path.Combine(strDatasetFolderArchive, DatasetName)
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the dataset's .Raw file and DeconTools _peaks.txt file")
@@ -206,7 +206,7 @@ Public Class clsAnalysisResourcesLipidMapSearch
             If Not CopyFileToWorkDir(strFileToFind, strDatasetFolderPathArchive, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
                 ' Raw file still not found; try MyEMSL
 
-                Dim DSFolderPath As String = FindValidFolder(strDatasetName, strFileToFind)
+                Dim DSFolderPath As String = FolderSearch.FindValidFolder(strDatasetName, strFileToFind, RetrievingInstrumentDataFolder:=False)
                 If DSFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
                     ' Queue this file for download
                     m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo)

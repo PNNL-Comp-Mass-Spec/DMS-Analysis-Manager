@@ -35,7 +35,7 @@ Public Class clsAnalysisResourcesMODa
         End If
 
         ' Retrieve param file
-        If Not RetrieveFile(
+        If Not FileSearch.RetrieveFile(
            m_jobParams.GetParam("ParmFileName"),
            m_jobParams.GetParam("ParmFileStoragePath")) _
         Then Return CloseOutType.CLOSEOUT_FAILED
@@ -46,7 +46,7 @@ Public Class clsAnalysisResourcesMODa
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-        If Not RetrieveDtaFiles() Then
+        If Not FileSearch.RetrieveDtaFiles() Then
             Dim sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders")
             If Not String.IsNullOrEmpty(sharedResultsFolder) Then
                 m_message &= "; shared results folder is " & sharedResultsFolder

@@ -38,7 +38,7 @@ namespace MSMSSpectrumFilterAM
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-            if (!RetrieveDtaFiles())
+            if (!FileSearch.RetrieveDtaFiles())
             {
                 //Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -106,7 +106,7 @@ namespace MSMSSpectrumFilterAM
                 string strDatasetFileOrFolderPath = null;
                 var blnScanStatsFilesRetrieved = false;
 
-                strDatasetFileOrFolderPath = FindDatasetFileOrFolder(out blnIsFolder, assumeUnpurged: false);
+                strDatasetFileOrFolderPath = FolderSearch.FindDatasetFileOrFolder(out blnIsFolder, assumeUnpurged: false);
 
                 if (!string.IsNullOrEmpty(strDatasetFileOrFolderPath) & !strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
@@ -151,7 +151,7 @@ namespace MSMSSpectrumFilterAM
                             break;
                     }
 
-                    if (!RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
+                    if (!FileSearch.RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;

@@ -52,7 +52,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + exportScriptStoragePath);
                 }
 
-                if (!RetrieveFile(exportScriptName, exportScriptStoragePath))
+                if (!FileSearch.RetrieveFile(exportScriptName, exportScriptStoragePath))
                 {
                     // Errors should have already been logged
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -73,7 +73,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                             currentTask = "Retrieve spectra: " + strRawDataType;
 
-                            if (!RetrieveSpectra(strRawDataType))
+                            if (!FileSearch.RetrieveSpectra(strRawDataType))
                             {
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AnalysisManagerBrukerDAExportPlugin.GetResources: Error occurred retrieving spectra.");
                                 return CloseOutType.CLOSEOUT_FAILED;

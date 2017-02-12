@@ -408,8 +408,8 @@ Public Class clsAnalysisResourcesGlyQIQ
             Dim fileToFind As String
             Dim sourceFolderPath As String = String.Empty
 
-            fileToFind = m_DatasetName & "_peaks.txt"
-            If Not FindAndRetrieveMiscFiles(fileToFind, unzip:=False, searchArchivedDatasetFolder:=False, sourceFolderPath:=sourceFolderPath) Then
+            fileToFind = DatasetName & "_peaks.txt"
+            If Not FileSearch.FindAndRetrieveMiscFiles(fileToFind, unzip:=False, searchArchivedDatasetFolder:=False, sourceFolderPath:=sourceFolderPath) Then
                 m_message = "Could not find the _peaks.txt file; this is typically created by the DeconPeakDetector job step; rerun that job step if it has been deleted"
                 Return False
             End If
@@ -425,7 +425,7 @@ Public Class clsAnalysisResourcesGlyQIQ
             End If
 
             ' Retrieve the instrument data file
-            If Not RetrieveSpectra(rawDataType) Then
+            If Not FileSearch.RetrieveSpectra(rawDataType) Then
                 If String.IsNullOrEmpty(m_message) Then
                     m_message = "Error retrieving instrument data file"
                 End If

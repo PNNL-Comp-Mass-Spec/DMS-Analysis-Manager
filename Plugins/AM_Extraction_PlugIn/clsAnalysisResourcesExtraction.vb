@@ -162,7 +162,7 @@ Public Class clsAnalysisResourcesExtraction
     Private Function GetSequestFiles() As CloseOutType
 
         'Get the concatenated .out file
-        If Not RetrieveOutFiles(False) Then
+        If Not FileSearch.RetrieveOutFiles(False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_NO_OUT_FILES
         End If
@@ -185,21 +185,21 @@ Public Class clsAnalysisResourcesExtraction
 
         Dim fileToGet As String
 
-        fileToGet = m_DatasetName & "_xt.zip"
-        If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
+        fileToGet = DatasetName & "_xt.zip"
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_NO_XT_FILES
         End If
         m_jobParams.AddResultFileToSkip(fileToGet)
 
         'Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
-        m_jobParams.AddResultFileToSkip(m_DatasetName & "_xt.xml")
+        m_jobParams.AddResultFileToSkip(DatasetName & "_xt.xml")
 
         ' Note that we'll obtain the X!Tandem parameter file in RetrieveMiscFiles
 
         ' However, we need to obtain the "input.xml" file and "default_input.xml" files now
         fileToGet = "input.xml"
-        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
@@ -222,24 +222,24 @@ Public Class clsAnalysisResourcesExtraction
         ' Get the zipped Inspect results files
 
         ' This file contains the p-value filtered results
-        fileToGet = m_DatasetName & "_inspect.zip"
-        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+        fileToGet = DatasetName & "_inspect.zip"
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_NO_INSP_FILES
         End If
         m_jobParams.AddResultFileToSkip(fileToGet)
 
         ' This file contains top hit for each scan (no filters)
-        fileToGet = m_DatasetName & "_inspect_fht.zip"
-        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+        fileToGet = DatasetName & "_inspect_fht.zip"
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_NO_INSP_FILES
         End If
         m_jobParams.AddResultFileToSkip(fileToGet)
 
         ' Get the peptide to protein mapping file
-        fileToGet = m_DatasetName & "_inspect_PepToProtMap.txt"
-        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+        fileToGet = DatasetName & "_inspect_PepToProtMap.txt"
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call
 
             ' See if IgnorePeptideToProteinMapError=True
@@ -264,16 +264,16 @@ Public Class clsAnalysisResourcesExtraction
 
         Dim fileToGet As String
 
-        fileToGet = m_DatasetName & "_moda.zip"
-        If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
+        fileToGet = DatasetName & "_moda.zip"
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
         m_jobParams.AddResultFileToSkip(fileToGet)
         m_jobParams.AddResultFileExtensionToSkip("_moda.txt")
 
-        fileToGet = m_DatasetName & "_mgf_IndexToScanMap.txt"
-        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+        fileToGet = DatasetName & "_mgf_IndexToScanMap.txt"
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
         m_jobParams.AddResultFileToSkip(fileToGet)
@@ -288,8 +288,8 @@ Public Class clsAnalysisResourcesExtraction
 
         Dim fileToGet As String
 
-        fileToGet = m_DatasetName & "_modp.zip"
-        If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
+        fileToGet = DatasetName & "_modp.zip"
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
@@ -347,8 +347,8 @@ Public Class clsAnalysisResourcesExtraction
             currentStep = "Determining results file type based on the results file name"
             blnUseLegacyMSGFDB = False
 
-            Dim fileToFind = m_DatasetName & "_msgfplus" & suffixToAdd & ".mzid.gz"
-            SourceFolderPath = FindDataFile(fileToFind, True, False)
+            Dim fileToFind = DatasetName & "_msgfplus" & suffixToAdd & ".mzid.gz"
+            SourceFolderPath = FileSearch.FindDataFile(fileToFind, True, False)
             If Not String.IsNullOrEmpty(SourceFolderPath) Then
                 ' Running MSGF+ with gzipped results
                 mzidSuffix = ".mzid.gz"
@@ -356,7 +356,7 @@ Public Class clsAnalysisResourcesExtraction
 
                 ' File not found; look for _msgfdb.mzid.gz
                 Dim fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToFind, "Dataset_msgfdb.txt")
-                SourceFolderPath = FindDataFile(fileToGetAlternative, True, False)
+                SourceFolderPath = FileSearch.FindDataFile(fileToGetAlternative, True, False)
 
                 If Not String.IsNullOrEmpty(SourceFolderPath) Then
                     ' Running MSGF+ with gzipped results
@@ -364,14 +364,14 @@ Public Class clsAnalysisResourcesExtraction
                 Else
 
                     ' File not found; look for a .zip file
-                    SourceFolderPath = FindDataFile(m_DatasetName & "_msgfplus" & suffixToAdd & ".zip", True, False)
+                    SourceFolderPath = FileSearch.FindDataFile(DatasetName & "_msgfplus" & suffixToAdd & ".zip", True, False)
                     If Not String.IsNullOrEmpty(SourceFolderPath) Then
                         ' Running MSGF+ with zipped results
                         mzidSuffix = ".zip"
                     Else
 
                         ' File not found; try _msgfdb
-                        SourceFolderPath = FindDataFile(m_DatasetName & "_msgfdb" & suffixToAdd & ".zip", True, False)
+                        SourceFolderPath = FileSearch.FindDataFile(DatasetName & "_msgfdb" & suffixToAdd & ".zip", True, False)
                         If Not String.IsNullOrEmpty(SourceFolderPath) Then
                             ' File Found
                             blnUseLegacyMSGFDB = True
@@ -399,7 +399,7 @@ Public Class clsAnalysisResourcesExtraction
                 End If
 
                 If blnUseLegacyMSGFDB Then
-                    strBaseName = m_DatasetName & "_msgfdb"
+                    strBaseName = DatasetName & "_msgfdb"
 
                     If splitFastaEnabled Then
                         LogError("GetMSGFPlusFiles does not support SplitFasta mode for legacy MSGF-DB results")
@@ -411,10 +411,10 @@ Public Class clsAnalysisResourcesExtraction
                     fileToGet = DatasetName & "_msgfplus" & suffixToAdd & ".tsv"
                     currentStep = "Retrieving " & fileToGet
 
-                    SourceFolderPath = FindDataFile(fileToGet, False, False)
+                    SourceFolderPath = FileSearch.FindDataFile(fileToGet, False, False)
                     If String.IsNullOrEmpty(SourceFolderPath) Then
                         Dim fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToGet, "Dataset_msgfdb.txt")
-                        SourceFolderPath = FindDataFile(fileToGetAlternative, False, False)
+                        SourceFolderPath = FileSearch.FindDataFile(fileToGetAlternative, False, False)
                         If Not String.IsNullOrEmpty(SourceFolderPath) Then
                             fileToGet = fileToGetAlternative
                         End If
@@ -447,7 +447,7 @@ Public Class clsAnalysisResourcesExtraction
                     fileToGet = strBaseName & mzidSuffix
                     currentStep = "Retrieving " & fileToGet
 
-                    If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
+                    If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, True) Then
                         'Errors were reported in function call, so just return
                         Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                     End If
@@ -473,7 +473,7 @@ Public Class clsAnalysisResourcesExtraction
                 fileToGet = DatasetName & "_msgfplus" & suffixToAdd & "_PepToProtMap.txt"
                 currentStep = "Retrieving " & fileToGet
 
-                If Not FindAndRetrievePHRPDataFile(fileToGet, "") Then
+                If Not FileSearch.FindAndRetrievePHRPDataFile(fileToGet, "") Then
                     ' Errors were reported in function call
 
                     ' See if IgnorePeptideToProteinMapError=True
@@ -504,7 +504,7 @@ Public Class clsAnalysisResourcesExtraction
                     fileToGet = "MSGFPlus_ConsoleOutput" & suffixToAdd & ".txt"
                     currentStep = "Retrieving " & fileToGet
 
-                    If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+                    If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
                         ' This is not an important error; ignore it
                     End If
                 End If
@@ -528,8 +528,8 @@ Public Class clsAnalysisResourcesExtraction
 
         Dim fileToGet As String
 
-        fileToGet = m_DatasetName & "_MSAlign_ResultTable.txt"
-        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+        fileToGet = DatasetName & "_MSAlign_ResultTable.txt"
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
@@ -548,7 +548,7 @@ Public Class clsAnalysisResourcesExtraction
 
         fileToGet = DatasetName & "_IcTsv.zip"
 
-        If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
@@ -648,13 +648,13 @@ Public Class clsAnalysisResourcesExtraction
             If Not fiModDefsFile.Exists AndAlso ResultType = RESULT_TYPE_MSPATHFINDER Then
                 ' MSPathFinder should have already created the ModDefs file during the previous step
                 ' Retrieve it from the transfer folder now
-                FindAndRetrieveMiscFiles(ModDefsFilename, False)
+                FileSearch.FindAndRetrieveMiscFiles(ModDefsFilename, False)
                 fiModDefsFile.Refresh()
             End If
 
             If ResultType = RESULT_TYPE_XTANDEM Then
                 ' Retrieve the taxonomy.xml file (PHRPReader looks for it)
-                FindAndRetrieveMiscFiles("taxonomy.xml", False)
+                FileSearch.FindAndRetrieveMiscFiles("taxonomy.xml", False)
             End If
 
             If Not fiModDefsFile.Exists And ResultType <> RESULT_TYPE_MSALIGN Then
@@ -671,7 +671,7 @@ Public Class clsAnalysisResourcesExtraction
             ' Check whether the newly generated ModDefs file matches the existing one
             ' If it doesn't match, or if the existing one is missing, then we need to keep the file
             ' Otherwise, we can skip it
-            Dim remoteModDefsFolder = FindDataFile(ModDefsFilename, searchArchivedDatasetFolder:=False, logFileNotFound:=logModFilesFileNotFound)
+            Dim remoteModDefsFolder = FileSearch.FindDataFile(ModDefsFilename, searchArchivedDatasetFolder:=False, logFileNotFound:=logModFilesFileNotFound)
             If String.IsNullOrEmpty(remoteModDefsFolder) Then
                 ' ModDefs file not found on the server
                 If fiModDefsFile.Length = 0 Then
@@ -715,7 +715,7 @@ Public Class clsAnalysisResourcesExtraction
                 strToolVersionFile = "Tool_Version_Info_MSGFPlus_IMS.txt"
             End If
 
-            blnSuccess = FindAndRetrieveMiscFiles(strToolVersionFile, False, False)
+            blnSuccess = FileSearch.FindAndRetrieveMiscFiles(strToolVersionFile, False, False)
 
             If blnSuccess AndAlso Not String.IsNullOrEmpty(strToolVersionFileNewName) Then
                 m_PendingFileRenames.Add(strToolVersionFile, strToolVersionFileNewName)
@@ -724,7 +724,7 @@ Public Class clsAnalysisResourcesExtraction
             ElseIf Not blnSuccess Then
                 If strToolVersionFile.ToLower().Contains("msgfplus") Then
                     Dim strToolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt"
-                    blnSuccess = FindAndRetrieveMiscFiles(strToolVersionFileLegacy, False, False)
+                    blnSuccess = FileSearch.FindAndRetrieveMiscFiles(strToolVersionFileLegacy, False, False)
                     If blnSuccess Then
                         ' Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
                         m_PendingFileRenames.Add(strToolVersionFileLegacy, strToolVersionFile)

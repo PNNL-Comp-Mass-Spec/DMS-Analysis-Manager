@@ -44,7 +44,7 @@ Public Class clsAnalysisResourcesMASIC
                 CreateStoragePathInfoOnly = False
         End Select
 
-        If Not RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly) Then
+        If Not FileSearch.RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
             Return CloseOutType.CLOSEOUT_FAILED
         End If
@@ -86,16 +86,16 @@ Public Class clsAnalysisResourcesMASIC
 
         ' We'll add the following extensions to m_FilesToDeleteExt
         ' Note, though, that the DeleteDataFile function will delete the .Raw or .mgf/.cdf files
-        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION)
-        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
-        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
-        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION)
 
-        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
-        m_JobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
+        m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION)
 
         'Retrieve param file
-        If Not RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
+        If Not FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 

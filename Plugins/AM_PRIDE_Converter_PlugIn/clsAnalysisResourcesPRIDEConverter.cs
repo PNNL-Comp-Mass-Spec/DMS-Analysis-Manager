@@ -335,7 +335,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (fiFiles.Count > 0)
                 {
                     // Template file found in the data package; copy it locally
-                    if (!RetrieveFile(fiFiles[0].Name, fiFiles[0].DirectoryName))
+                    if (!FileSearch.RetrieveFile(fiFiles[0].Name, fiFiles[0].DirectoryName))
                     {
                         return false;
                     }
@@ -356,7 +356,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (string.IsNullOrEmpty(strParamFileStoragePath))
                         strParamFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\PRIDE_Converter";
 
-                    if (!RetrieveFile(strTemplateFileName, strParamFileStoragePath))
+                    if (!FileSearch.RetrieveFile(strTemplateFileName, strParamFileStoragePath))
                     {
                         return false;
                     }
@@ -423,7 +423,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (fiFiles.Count > 0)
                     {
                         // Template file found in the data package; copy it locally
-                        if (!RetrieveFile(fiFiles[0].Name, fiFiles[0].DirectoryName))
+                        if (!FileSearch.RetrieveFile(fiFiles[0].Name, fiFiles[0].DirectoryName))
                         {
                             return false;
                         }
@@ -441,7 +441,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     string strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
                     if (string.IsNullOrEmpty(strParamFileStoragePath))
                     {
-                        strParamFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\PRIDE_Converter";
+                        strParamFileStoragePath = @"\\gigasax\dms_parameter_Files\PRIDE_Converter";
                     }
                     strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME;
 
@@ -449,7 +449,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         "PX Submission template file not found in the data package folder; retrieving " + strTemplateFileName + " from " +
                         strParamFileStoragePath);
 
-                    if (!RetrieveFile(strTemplateFileName, strParamFileStoragePath, 1))
+                    if (!FileSearch.RetrieveFile(strTemplateFileName, strParamFileStoragePath, 1))
                     {
                         if (string.IsNullOrEmpty(m_message))
                         {

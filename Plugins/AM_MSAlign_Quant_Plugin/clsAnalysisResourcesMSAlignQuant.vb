@@ -35,14 +35,14 @@ Public Class clsAnalysisResourcesMSAlignQuant
 
         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files")
 
-        If Not RetrieveFile(strParamFileName, strParamFileStoragePath) Then
+        If Not FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath) Then
             Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
 
         ' Retrieve the MSAlign results for this job
         Dim strMSAlignResultsTable As String
-        strMSAlignResultsTable = m_DatasetName & MSALIGN_RESULT_TABLE_SUFFIX
-        If Not FindAndRetrieveMiscFiles(strMSAlignResultsTable, False) Then
+        strMSAlignResultsTable = DatasetName & MSALIGN_RESULT_TABLE_SUFFIX
+        If Not FileSearch.FindAndRetrieveMiscFiles(strMSAlignResultsTable, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
@@ -54,7 +54,7 @@ Public Class clsAnalysisResourcesMSAlignQuant
 
         Select Case strRawDataType.ToLower
             Case RAW_DATA_TYPE_DOT_RAW_FILES, RAW_DATA_TYPE_BRUKER_FT_FOLDER, RAW_DATA_TYPE_DOT_D_FOLDERS
-                If RetrieveSpectra(strRawDataType) Then
+                If FileSearch.RetrieveSpectra(strRawDataType) Then
 
                     If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
                         Return CloseOutType.CLOSEOUT_FAILED

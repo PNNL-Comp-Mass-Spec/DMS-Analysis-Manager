@@ -10,7 +10,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods to look for folders related to datasets
     /// </summary>
-    internal class clsFolderSearch : clsEventNotifier
+    public class clsFolderSearch : clsEventNotifier
     {
         #region "Constants"
 
@@ -42,6 +42,8 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        public string DatasetName { get; set; }
+
         public bool MyEMSLSearchDisabled { get; set; }
 
         #endregion
@@ -58,18 +60,21 @@ namespace AnalysisManagerBase
         /// <param name="fileCopyUtilities"></param>
         /// <param name="jobParams"></param>
         /// <param name="myEmslUtilities"></param>
+        /// <param name="datasetName"></param>
         /// <param name="debugLevel"></param>
         /// <param name="auroraAvailable"></param>
         public clsFolderSearch(
             clsFileCopyUtilities fileCopyUtilities,
             IJobParams jobParams,
             clsMyEMSLUtilities myEmslUtilities,
+            string datasetName,
             short debugLevel,
             bool auroraAvailable)
         {
             m_FileCopyUtilities = fileCopyUtilities;
             m_jobParams = jobParams;
             m_MyEMSLUtilities = myEmslUtilities;
+            DatasetName = datasetName;
             m_DebugLevel = debugLevel;
             m_AuroraAvailable = auroraAvailable;
         }
@@ -92,7 +97,6 @@ namespace AnalysisManagerBase
         /// For instruments with multiple data folders, returns the path to the first folder
         /// For instrument with multiple zipped data files, returns the dataset folder path
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
         /// <param name="assumeUnpurged">
         /// When true, assume that the instrument data exists on the storage server 
@@ -101,9 +105,9 @@ namespace AnalysisManagerBase
         /// <returns>The full path to the dataset file or folder</returns>
         /// <remarks>When assumeUnpurged is true, this function returns the expected path 
         /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-        public string FindDatasetFileOrFolder(string datasetName, out bool blnIsFolder, bool assumeUnpurged)
+        public string FindDatasetFileOrFolder(out bool blnIsFolder, bool assumeUnpurged)
         {
-            return FindDatasetFileOrFolder(datasetName, DEFAULT_MAX_RETRY_COUNT, out blnIsFolder, assumeUnpurged: assumeUnpurged);
+            return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, out blnIsFolder, assumeUnpurged: assumeUnpurged);
         }
 
         /// <summary>
@@ -112,7 +116,6 @@ namespace AnalysisManagerBase
         /// For instruments with multiple data folders, returns the path to the first folder
         /// For instrument with multiple zipped data files, returns the dataset folder path
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
         /// <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
         /// <param name="assumeUnpurged">
@@ -122,7 +125,7 @@ namespace AnalysisManagerBase
         /// <returns>The full path to the dataset file or folder</returns>
         /// <remarks>When assumeUnpurged is true, this function returns the expected path 
         /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-        private string FindDatasetFileOrFolder(string datasetName, int maxAttempts, out bool blnIsFolder, bool assumeUnpurged = false)
+        public string FindDatasetFileOrFolder(int maxAttempts, out bool blnIsFolder, bool assumeUnpurged = false)
         {
             var RawDataType = m_jobParams.GetParam("RawDataType");
             var StoragePath = m_jobParams.GetParam("DatasetStoragePath");
@@ -141,50 +144,50 @@ namespace AnalysisManagerBase
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
                         //  we would pre-process the data beforehand to create MGF files
                         // The following call can be used to retrieve the files
-                        strFileOrFolderPath = FindMGFFile(datasetName, maxAttempts, assumeUnpurged);
+                        strFileOrFolderPath = FindMGFFile(maxAttempts, assumeUnpurged);
                     }
                     else
                     {
                         // DeconTools_V2 now supports reading the .D files directly
                         // Call RetrieveDotDFolder() to copy the folder and all subfolders
-                        strFileOrFolderPath = FindDotDFolder(datasetName, assumeUnpurged);
+                        strFileOrFolderPath = FindDotDFolder(assumeUnpurged);
                         blnIsFolder = true;
                     }
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
-                    strFileOrFolderPath = FindDatasetFile(datasetName, maxAttempts, clsAnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     // FTICR data
-                    strFileOrFolderPath = FindSFolders(datasetName, assumeUnpurged);
+                    strFileOrFolderPath = FindSFolders(assumeUnpurged);
                     blnIsFolder = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
-                    strFileOrFolderPath = FindDatasetFile(datasetName, maxAttempts, clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
-                    strFileOrFolderPath = FindDotRawFolder(datasetName, assumeUnpurged);
+                    strFileOrFolderPath = FindDotRawFolder(assumeUnpurged);
                     blnIsFolder = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
                     // IMS UIMF data
-                    strFileOrFolderPath = FindDatasetFile(datasetName, maxAttempts, clsAnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    strFileOrFolderPath = FindDatasetFile(datasetName, maxAttempts, clsAnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    strFileOrFolderPath = FindDatasetFile(datasetName, maxAttempts, clsAnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
+                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
@@ -194,12 +197,12 @@ namespace AnalysisManagerBase
                     // Both the MSXml step tool and DeconTools require the .Baf file
                     // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, so we need the file
 
-                    strFileOrFolderPath = FindDotDFolder(datasetName, assumeUnpurged);
+                    strFileOrFolderPath = FindDotDFolder(assumeUnpurged);
                     blnIsFolder = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
-                    strFileOrFolderPath = FindBrukerMALDIImagingFolders(datasetName, assumeUnpurged);
+                    strFileOrFolderPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
                     blnIsFolder = true;
 
                     break;
@@ -212,9 +215,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Finds the dataset folder containing Bruker Maldi imaging .zip files
         /// </summary>
+        /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the dataset folder</returns>
-        /// <remarks></remarks>
-        public string FindBrukerMALDIImagingFolders(string datasetName, bool assumeUnpurged = false)
+        public string FindBrukerMALDIImagingFolders(bool assumeUnpurged = false)
         {
 
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
@@ -222,7 +225,7 @@ namespace AnalysisManagerBase
             // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
             // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
 
-            var DSFolderPath = FindValidFolder(datasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, 
+            var DSFolderPath = FindValidFolder(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, 
                                                   RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
 
             if (string.IsNullOrEmpty(DSFolderPath))
@@ -235,25 +238,23 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Finds a file named DatasetName.FileExtension
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="FileExtension"></param>
         /// <returns>The full path to the folder; an empty string if no match</returns>
         /// <remarks></remarks>
-        public string FindDatasetFile(string datasetName, string FileExtension)
+        public string FindDatasetFile(string FileExtension)
         {
-            return FindDatasetFile(datasetName, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT, FileExtension);
+            return FindDatasetFile(clsFolderSearch.DEFAULT_MAX_RETRY_COUNT, FileExtension);
         }
 
         /// <summary>
         /// Finds a file named DatasetName.FileExtension
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
         /// <param name="fileExtension"></param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the folder; an empty string if no match</returns>
         /// <remarks></remarks>
-        public string FindDatasetFile(string datasetName, int maxAttempts, string fileExtension, bool assumeUnpurged = false)
+        public string FindDatasetFile(int maxAttempts, string fileExtension, bool assumeUnpurged = false)
         {
 
             if (!fileExtension.StartsWith("."))
@@ -261,11 +262,11 @@ namespace AnalysisManagerBase
                 fileExtension = "." + fileExtension;
             }
 
-            var DataFileName = datasetName + fileExtension;
+            var DataFileName = DatasetName + fileExtension;
             bool validFolderFound;
             string folderNotFoundMessage;
 
-            var DSFolderPath = FindValidFolder(datasetName, DataFileName, folderNameToFind: "", maxAttempts: maxAttempts,
+            var DSFolderPath = FindValidFolder(DatasetName, DataFileName, folderNameToFind: "", maxAttempts: maxAttempts,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: false,
                 assumeUnpurged: assumeUnpurged, 
                 validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
@@ -281,34 +282,31 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Finds a .Raw folder below the dataset folder
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the folder; an empty string if no match</returns>
-        private string FindDotDFolder(string datasetName, bool assumeUnpurged = false)
+        private string FindDotDFolder(bool assumeUnpurged = false)
         {
-            return FindDotXFolder(datasetName, clsAnalysisResources.DOT_D_EXTENSION, assumeUnpurged);
+            return FindDotXFolder(clsAnalysisResources.DOT_D_EXTENSION, assumeUnpurged);
         }
 
         /// <summary>
         /// Finds a .D folder below the dataset folder
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="assumeUnpurged"></param>
         /// <returns></returns>
-        private string FindDotRawFolder(string datasetName, bool assumeUnpurged = false)
+        private string FindDotRawFolder(bool assumeUnpurged = false)
         {
-            return FindDotXFolder(datasetName, clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
+            return FindDotXFolder(clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
         }
 
         /// <summary>
         /// Finds a subfolder (typically Dataset.D or Dataset.Raw) below the dataset folder
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="folderExtension"></param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>The full path to the folder; an empty string if no match</returns>
         /// <remarks></remarks>
-        public string FindDotXFolder(string datasetName, string folderExtension, bool assumeUnpurged)
+        public string FindDotXFolder(string folderExtension, bool assumeUnpurged)
         {
 
             if (!folderExtension.StartsWith("."))
@@ -322,7 +320,7 @@ namespace AnalysisManagerBase
             var FileNameToFind = string.Empty;
             var FolderExtensionWildcard = "*" + folderExtension;
 
-            var ServerPath = FindValidFolder(datasetName, FileNameToFind, FolderExtensionWildcard, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
+            var ServerPath = FindValidFolder(DatasetName, FileNameToFind, FolderExtensionWildcard, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: true,
                  assumeUnpurged: assumeUnpurged, 
                  validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
@@ -350,7 +348,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns></returns>
         /// <remarks></remarks>
-        public string FindMGFFile(string datasetName, int maxAttempts, bool assumeUnpurged)
+        public string FindMGFFile(int maxAttempts, bool assumeUnpurged)
         {
 
             // Data files are in a subfolder off of the main dataset folder
@@ -359,7 +357,7 @@ namespace AnalysisManagerBase
             bool validFolderFound;
             string folderNotFoundMessage;
 
-            var serverPath = FindValidFolder(datasetName, "", "*" + clsAnalysisResources.DOT_D_EXTENSION, maxAttempts,
+            var serverPath = FindValidFolder(DatasetName, "", "*" + clsAnalysisResources.DOT_D_EXTENSION, maxAttempts,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: false,
                 assumeUnpurged: assumeUnpurged,
                 validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
@@ -388,7 +386,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns></returns>
         /// <remarks></remarks>
-        private string FindSFolders(string datasetName, bool assumeUnpurged = false)
+        private string FindSFolders(bool assumeUnpurged = false)
         {
 
             // First Check for the existence of a 0.ser Folder
@@ -396,7 +394,7 @@ namespace AnalysisManagerBase
             bool validFolderFound;
             string folderNotFoundMessage;
 
-            var DSFolderPath = FindValidFolder(datasetName, FileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
+            var DSFolderPath = FindValidFolder(DatasetName, FileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: true,
                 assumeUnpurged: assumeUnpurged,
                 validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
@@ -407,7 +405,7 @@ namespace AnalysisManagerBase
             }
 
             // The 0.ser folder does not exist; look for zipped s-folders
-            DSFolderPath = FindValidFolder(datasetName, "s*.zip", RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
+            DSFolderPath = FindValidFolder(DatasetName, "s*.zip", RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
 
             return DSFolderPath;
 
@@ -522,7 +520,7 @@ namespace AnalysisManagerBase
         /// <param name="MaxRetryCount">Maximum number of attempts</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        private string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind, int MaxRetryCount)
+        public string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind, int MaxRetryCount)
         {
 
             return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount,

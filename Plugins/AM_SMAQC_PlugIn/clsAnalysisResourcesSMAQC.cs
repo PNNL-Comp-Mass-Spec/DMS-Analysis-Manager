@@ -21,7 +21,7 @@ namespace AnalysisManagerSMAQCPlugIn
             string strParamFileName = m_jobParams.GetParam("ParmFileName");
             string strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
 
-            if (!RetrieveFile(strParamFileName, strParamFileStoragePath))
+            if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -110,7 +110,7 @@ namespace AnalysisManagerSMAQCPlugIn
                         "Retrieving the MASIC files by searching for any valid MASIC folder");
                 }
 
-                return RetrieveScanAndSICStatsFiles(retrieveSICStatsFile: true, createStoragePathInfoOnly: createStoragePathInfoFile,
+                return FileSearch.RetrieveScanAndSICStatsFiles(retrieveSICStatsFile: true, createStoragePathInfoOnly: createStoragePathInfoFile,
                     retrieveScanStatsFile: true, retrieveScanStatsExFile: true, retrieveReporterIonsFile: true,
                     lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
             }
@@ -123,7 +123,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
 
                 string ServerPath = null;
-                ServerPath = FindValidFolder(m_DatasetName, "", strMASICResultsFolderName, 2);
+                ServerPath = FolderSearch.FindValidFolder(DatasetName, "", strMASICResultsFolderName, 2);
 
                 if (string.IsNullOrEmpty(ServerPath))
                 {
@@ -135,9 +135,15 @@ namespace AnalysisManagerSMAQCPlugIn
                     {
                         var bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName);
 
-                        return RetrieveScanAndSICStatsFiles(bestSICFolderPath, retrieveSICStatsFile: true,
-                            createStoragePathInfoOnly: createStoragePathInfoFile, retrieveScanStatsFile: true, retrieveScanStatsExFile: true,
-                            retrieveReporterIonsFile: true, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                        return FileSearch.RetrieveScanAndSICStatsFiles(
+                            bestSICFolderPath, 
+                            retrieveSICStatsFile: true,
+                            createStoragePathInfoOnly: createStoragePathInfoFile, 
+                            retrieveScanStatsFile: true, 
+                            retrieveScanStatsExFile: true,
+                            retrieveReporterIonsFile: true, 
+                            lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes
+                            );
                     }
 
                     var diFolderInfo = new DirectoryInfo(ServerPath);
@@ -157,7 +163,7 @@ namespace AnalysisManagerSMAQCPlugIn
                         }
                         else
                         {
-                            return RetrieveScanAndSICStatsFiles(diMASICFolderInfo.FullName, retrieveSICStatsFile: true,
+                            return FileSearch.RetrieveScanAndSICStatsFiles(diMASICFolderInfo.FullName, retrieveSICStatsFile: true,
                                 createStoragePathInfoOnly: createStoragePathInfoFile, retrieveScanStatsFile: true, retrieveScanStatsExFile: true,
                                 retrieveReporterIonsFile: true, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
                         }
@@ -225,7 +231,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             foreach (string FileToGet in lstFileNamesToGet)
             {
-                if (!FindAndRetrieveMiscFiles(FileToGet, false))
+                if (!FileSearch.FindAndRetrieveMiscFiles(FileToGet, false))
                 {
                     //Errors were reported in function call, so just return
                     return false;

@@ -9,7 +9,7 @@ using PHRPReader;
 
 namespace AnalysisManagerBase
 {
-    class clsFileSearch : clsEventNotifier
+    public class clsFileSearch : clsEventNotifier
     {
         #region "Constants"
 
@@ -60,6 +60,8 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        public string DatasetName { get; set; }
+
         public bool MyEMSLSearchDisabled { get; set; }
 
         #endregion
@@ -78,6 +80,7 @@ namespace AnalysisManagerBase
         /// <param name="myEmslUtilities"></param>
         /// <param name="mgrParams"></param>
         /// <param name="jobParams"></param>
+        /// <param name="datasetName"></param>
         /// <param name="debugLevel"></param>
         /// <param name="workingDir"></param>
         /// <param name="auroraAvailable"></param>
@@ -87,6 +90,7 @@ namespace AnalysisManagerBase
             clsMyEMSLUtilities myEmslUtilities,
             IMgrParams mgrParams,
             IJobParams jobParams,
+            string datasetName,
             short debugLevel,
             string workingDir,
             bool auroraAvailable)
@@ -96,10 +100,10 @@ namespace AnalysisManagerBase
             m_MyEMSLUtilities = myEmslUtilities;
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
+            DatasetName = datasetName;
             m_DebugLevel = debugLevel;
             m_WorkingDir = workingDir;
             m_AuroraAvailable = auroraAvailable;
-
 
             m_IonicZipTools = new clsIonicZipTools(debugLevel, workingDir);
             RegisterEvents(m_IonicZipTools);
@@ -108,7 +112,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copies the zipped s-folders to the working directory
         /// </summary>
-        /// <param name="datasetName"></param>
+        /// <param name=""></param>
         /// <param name="createStoragePathInfoOnly">
         /// When true, then does not actually copy the specified files, 
         /// but instead creates a series of files named s*.zip_StoragePathInfo.txt, 
@@ -116,10 +120,10 @@ namespace AnalysisManagerBase
         /// </param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool CopySFoldersToWorkDir(string datasetName, bool createStoragePathInfoOnly)
+        private bool CopySFoldersToWorkDir(bool createStoragePathInfoOnly)
         {
 
-            var DSFolderPath = m_FolderSearch.FindValidFolder(datasetName, "s*.zip", RetrievingInstrumentDataFolder: true);
+            var DSFolderPath = m_FolderSearch.FindValidFolder(DatasetName, "s*.zip", RetrievingInstrumentDataFolder: true);
 
             // Verify dataset folder exists
             if (!Directory.Exists(DSFolderPath))
@@ -215,67 +219,62 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
         /// </summary>
-        /// <param name="datasetName">Dataset name</param>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Logs an error if the file is not found</remarks>
-        public bool FindAndRetrieveMiscFiles(string datasetName, string fileName, bool unzip)
+        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip)
         {
-            return FindAndRetrieveMiscFiles(datasetName, fileName, unzip, searchArchivedDatasetFolder: true);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder: true);
         }
 
         /// <summary>
         /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
         /// </summary>
-        /// <param name="datasetName">Dataset name</param>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Logs an error if the file is not found</remarks>
-        private bool FindAndRetrieveMiscFiles(string datasetName, string fileName, bool unzip, bool searchArchivedDatasetFolder)
+        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder)
         {
             string sourceFolderPath;
-            return FindAndRetrieveMiscFiles(datasetName, fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath);
         }
 
         /// <summary>
         /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
         /// </summary>
-        /// <param name="datasetName">Dataset name</param>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="logFileNotFound"></param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool FindAndRetrieveMiscFiles(string datasetName, string fileName, bool unzip, bool searchArchivedDatasetFolder, bool logFileNotFound)
+        private bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, bool logFileNotFound)
         {
             string sourceFolderPath;
-            return FindAndRetrieveMiscFiles(datasetName, fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath, logFileNotFound);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath, logFileNotFound);
         }
 
         /// <summary>
         /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
         /// </summary>
-        /// <param name="datasetName">Dataset name</param>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Logs an error if the file is not found</remarks>
-        private bool FindAndRetrieveMiscFiles(string datasetName, string fileName, bool unzip, bool searchArchivedDatasetFolder, out string sourceFolderPath)
+        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, out string sourceFolderPath)
         {
 
-            return FindAndRetrieveMiscFiles(datasetName, fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath, logFileNotFound: true);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath, logFileNotFound: true);
         }
 
         /// <summary>
         /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
         /// </summary>
-        /// <param name="datasetName">Dataset name</param>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
@@ -284,15 +283,15 @@ namespace AnalysisManagerBase
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         private bool FindAndRetrieveMiscFiles(
-            string datasetName, string fileName,
-            bool unzip, bool searchArchivedDatasetFolder, out string sourceFolderPath, bool logFileNotFound)
+            string fileName, bool unzip, bool searchArchivedDatasetFolder, 
+            out string sourceFolderPath, bool logFileNotFound)
         {
 
             const bool CreateStoragePathInfoFile = false;
 
             // Look for the file in the various folders
             // A message will be logged if the file is not found
-            sourceFolderPath = FindDataFile(datasetName, fileName, searchArchivedDatasetFolder, logFileNotFound);
+            sourceFolderPath = FindDataFile(fileName, searchArchivedDatasetFolder, logFileNotFound);
 
             // Exit if file was not found
             if (string.IsNullOrEmpty(sourceFolderPath))
@@ -335,16 +334,15 @@ namespace AnalysisManagerBase
         /// Search for the specified PHRP file and copy it to the work directory
         /// If the filename contains _msgfplus and the file is not found, auto looks for the _msgfdb version of the file
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="fileToGet">File to find; if the file is found with an alternative name, this variable is updated with the new name</param>
         /// <param name="synopsisFileName">Synopsis file name, if known</param>
         /// <param name="addToResultFileSkipList">If true, add the filename to the list of files to skip copying to the result folder</param>
         /// <returns>True if success, false if not found</returns>
         /// <remarks>Used by the IDPicker and MSGF plugins</remarks>    
-        private bool FindAndRetrievePHRPDataFile(string datasetName, ref string fileToGet, string synopsisFileName, bool addToResultFileSkipList = true)
+        public bool FindAndRetrievePHRPDataFile(ref string fileToGet, string synopsisFileName, bool addToResultFileSkipList = true)
         {
 
-            var blnSuccess = FindAndRetrieveMiscFiles(datasetName, fileToGet, false);
+            var blnSuccess = FindAndRetrieveMiscFiles(fileToGet, false);
 
             if (!blnSuccess && fileToGet.ToLower().Contains("msgfplus"))
             {
@@ -354,7 +352,7 @@ namespace AnalysisManagerBase
 
                 if (!string.Equals(alternativeName, fileToGet))
                 {
-                    blnSuccess = FindAndRetrieveMiscFiles(datasetName, alternativeName, false);
+                    blnSuccess = FindAndRetrieveMiscFiles(alternativeName, false);
                     if (blnSuccess)
                     {
                         fileToGet = alternativeName;
@@ -381,14 +379,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
         /// <remarks></remarks>
-        public string FindCDTAFile(string datasetName, out string strErrorMessage)
+        public string FindCDTAFile(out string strErrorMessage)
         {
 
             strErrorMessage = string.Empty;
 
             // Retrieve zipped DTA file
-            var sourceFileName = datasetName + "_dta.zip";
-            var sourceFolderPath = FindDataFile(datasetName, sourceFileName);
+            var sourceFileName = DatasetName + "_dta.zip";
+            var sourceFolderPath = FindDataFile(sourceFileName);
 
             if (!string.IsNullOrEmpty(sourceFolderPath))
             {
@@ -406,8 +404,8 @@ namespace AnalysisManagerBase
 
             // Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
 
-            sourceFileName = datasetName + "_dta.txt";
-            sourceFolderPath = FindDataFile(datasetName, sourceFileName);
+            sourceFileName = DatasetName + "_dta.txt";
+            sourceFolderPath = FindDataFile(sourceFileName);
 
             if (string.IsNullOrEmpty(sourceFolderPath))
             {
@@ -431,13 +429,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Finds the server or archive folder where specified file is located
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="fileToFind">Name of the file to search for</param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
         /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        public string FindDataFile(string datasetName, string fileToFind)
+        public string FindDataFile(string fileToFind)
         {
-            return FindDataFile(datasetName, fileToFind, searchArchivedDatasetFolder: true);
+            return FindDataFile(fileToFind, searchArchivedDatasetFolder: true);
         }
 
         /// <summary>
@@ -448,15 +445,14 @@ namespace AnalysisManagerBase
         /// <param name="datasetName"></param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
         /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        private string FindDataFile(string datasetName, string fileToFind, bool searchArchivedDatasetFolder)
+        private string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder)
         {
-            return FindDataFile(datasetName, fileToFind, searchArchivedDatasetFolder, logFileNotFound: true);
+            return FindDataFile(fileToFind, searchArchivedDatasetFolder, logFileNotFound: true);
         }
 
         /// <summary>
         /// Finds the server or archive folder where specified file is located
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="fileToFind">Name of the file to search for</param>
         /// <param name="searchArchivedDatasetFolder">
         /// TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched
@@ -465,7 +461,7 @@ namespace AnalysisManagerBase
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
         /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        private string FindDataFile(string datasetName, string fileToFind, bool searchArchivedDatasetFolder, bool logFileNotFound)
+        public string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder, bool logFileNotFound)
         {
 
             try
@@ -537,7 +533,7 @@ namespace AnalysisManagerBase
 
                         if (folderPath.StartsWith(MYEMSL_PATH_FLAG))
                         {
-                            var matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileToFind, diFolderToCheck.Name, datasetName, recurse: false);
+                            var matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileToFind, diFolderToCheck.Name, DatasetName, recurse: false);
 
                             if (matchingMyEMSLFiles.Count > 0)
                             {
@@ -680,15 +676,14 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks for the newest .mzXML file for this dataset
         /// </summary>
-        /// <param name="datasetName">Dataset name</param>
         /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
         /// <returns>Full path to the file, if found; empty string if no match</returns>
         /// <remarks>Supports both gzipped mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-        public string FindMZXmlFile(string datasetName, out string hashCheckFilePath)
+        public string FindMZXmlFile(out string hashCheckFilePath)
         {
 
             // First look in the MsXML cache folder
-            var strMatchingFilePath = FindMsXmlFileInCache(datasetName, clsAnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashCheckFilePath);
+            var strMatchingFilePath = FindMsXmlFileInCache(clsAnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashCheckFilePath);
 
             if (!string.IsNullOrEmpty(strMatchingFilePath))
             {
@@ -700,7 +695,7 @@ namespace AnalysisManagerBase
             var DatasetID = m_jobParams.GetParam("JobParameters", "DatasetID");
 
             const string MSXmlFoldernameBase = "MSXML_Gen_1_";
-            var MzXMLFilename = datasetName + ".mzXML";
+            var MzXMLFilename = DatasetName + ".mzXML";
 
             const int MAX_ATTEMPTS = 1;
 
@@ -728,7 +723,7 @@ namespace AnalysisManagerBase
 
                 // Look for the MSXmlFolder
                 // If the folder cannot be found, then m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
-                var ServerPath = m_FolderSearch.FindValidFolder(datasetName, "", msXmlFoldername, MAX_ATTEMPTS, false, retrievingInstrumentDataFolder: false);
+                var ServerPath = m_FolderSearch.FindValidFolder(DatasetName, "", msXmlFoldername, MAX_ATTEMPTS, false, retrievingInstrumentDataFolder: false);
 
                 if (string.IsNullOrEmpty(ServerPath))
                 {
@@ -789,18 +784,16 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks for the newest mzXML or mzML file for this dataset
         /// </summary>
-        /// <param name="datasetName">Dataset name</param>
         /// <param name="msXmlType">File type to find (mzXML or mzML)</param>
         /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
         /// <returns>Full path to the file if a match; empty string if no match</returns>
         /// <remarks>Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
         public string FindMsXmlFileInCache(
-            string datasetName,
             clsAnalysisResources.MSXMLOutputTypeConstants msXmlType,
             out string hashCheckFilePath)
         {
 
-            var MsXMLFilename = datasetName;
+            var MsXMLFilename = string.Copy(DatasetName);
             hashCheckFilePath = string.Empty;
 
             switch (msXmlType)
@@ -846,7 +839,7 @@ namespace AnalysisManagerBase
                 if (lstFilesToAppend.Length == 0 && msXmlType == clsAnalysisResources.MSXMLOutputTypeConstants.mzXML)
                 {
                     // Older .mzXML files were not gzipped
-                    lstFilesToAppend = diCacheFolder.GetFiles(datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION, SearchOption.AllDirectories);
+                    lstFilesToAppend = diCacheFolder.GetFiles(DatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION, SearchOption.AllDirectories);
                 }
 
                 var query = (from item in lstFilesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
@@ -867,7 +860,7 @@ namespace AnalysisManagerBase
                         if (lstFilesToAppend.Length == 0 && msXmlType == clsAnalysisResources.MSXMLOutputTypeConstants.mzXML)
                         {
                             // Older .mzXML files were not gzipped
-                            lstFilesToAppend = lstSubFolders.First().GetFiles(datasetName + clsAnalysisResources.DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly);
+                            lstFilesToAppend = lstSubFolders.First().GetFiles(DatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly);
                         }
 
                         var query = (from item in lstFilesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
@@ -906,12 +899,12 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>The path to the .pbf file</returns>
         /// <remarks></remarks>
-        private string FindPBFFile(string datasetName, out string strErrorMessage)
+        private string FindPBFFile(out string strErrorMessage)
         {
             strErrorMessage = string.Empty;
 
-            var sourceFileName = datasetName + clsAnalysisResources.DOT_PBF_EXTENSION;
-            var sourceFolderPath = FindDataFile(datasetName, sourceFileName);
+            var sourceFileName = DatasetName + clsAnalysisResources.DOT_PBF_EXTENSION;
+            var sourceFolderPath = FindDataFile(sourceFileName);
 
             if (!string.IsNullOrEmpty(sourceFolderPath))
             {
@@ -1055,6 +1048,17 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Unzip gzipFilePath into the working directory
+        /// Existing files will be overwritten
+        /// </summary>
+        /// <param name="gzipFilePath">.gz file to unzip</param>
+        /// <returns>True if success; false if an error</returns>
+        public bool GUnzipFile(string gzipFilePath)
+        {
+            return m_IonicZipTools.GUnzipFile(gzipFilePath);
+        }
+
         private void NotifyInvalidParentDirectory(FileInfo fiSourceFile)
         {
             OnErrorEvent("Unable to determine the parent directory of " + fiSourceFile.FullName);
@@ -1063,7 +1067,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieve the dataset's cached .mzML file from the MsXML Cache
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
@@ -1072,15 +1075,14 @@ namespace AnalysisManagerBase
         /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
-        public bool RetrieveCachedMzMLFile(string datasetName, bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        public bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache)
         {
-            return RetrieveCachedMSXMLFile(datasetName, clsAnalysisResources.DOT_MZML_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_MZML_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
         }
 
         /// <summary>
         /// Retrieve the dataset's cached .PBF file from the MsXML Cache
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
         /// <returns>True if success, false if an error or file not found</returns>
@@ -1088,16 +1090,15 @@ namespace AnalysisManagerBase
         /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
-        public bool RetrieveCachedPBFFile(string datasetName, out string errorMessage, out bool fileMissingFromCache)
+        public bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache)
         {
             const bool unzip = false;
-            return RetrieveCachedMSXMLFile(datasetName, clsAnalysisResources.DOT_PBF_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_PBF_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
         }
 
         /// <summary>
         /// Retrieve the dataset's cached .mzXML file from the MsXML Cache
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
@@ -1106,15 +1107,14 @@ namespace AnalysisManagerBase
         /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_105_367204
         /// </remarks>
-        public bool RetrieveCachedMzXMLFile(string datasetName, bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        public bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache)
         {
-            return RetrieveCachedMSXMLFile(datasetName, clsAnalysisResources.DOT_MZXML_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_MZXML_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
         }
 
         /// <summary>
         /// Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache (assumes the file is gzipped)
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
@@ -1124,7 +1124,7 @@ namespace AnalysisManagerBase
         /// Uses the job's InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
-        public bool RetrieveCachedMSXMLFile(string datasetName, string resultFileExtension, bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        public bool RetrieveCachedMSXMLFile(string resultFileExtension, bool unzip, out string errorMessage, out bool fileMissingFromCache)
         {
 
             var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
@@ -1236,7 +1236,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var sourceFilePath = Path.Combine(disourceFolder.FullName, datasetName + resultFileExtension);
+            var sourceFilePath = Path.Combine(disourceFolder.FullName, DatasetName + resultFileExtension);
             var expectedFileDescription = resultFileExtension;
             if (resultFileExtension != clsAnalysisResources.DOT_PBF_EXTENSION)
             {
@@ -1287,7 +1287,7 @@ namespace AnalysisManagerBase
                 {
                     var localzippedFile = Path.Combine(m_WorkingDir, fiSourceFile.Name);
 
-                    if (!m_IonicZipTools.GUnzipFile(localzippedFile))
+                    if (!GUnzipFile(localzippedFile))
                     {
                         errorMessage = m_IonicZipTools.Message;
                         return false;
@@ -1299,14 +1299,14 @@ namespace AnalysisManagerBase
             return true;
 
         }
-
+        
         /// <summary>
         /// Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by strProgLocName
         /// </summary>
         /// <param name="strProgLocName"></param>
         /// <returns></returns>
         /// <remarks>strProgLocName is tyipcally DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
-        private bool RetrievePNNLOmicsResourceFiles(string strProgLocName)
+        public bool RetrievePNNLOmicsResourceFiles(string strProgLocName)
         {
 
             const string OMICS_ELEMENT_DATA_FILE = "PNNLOmicsElementData.xml";
@@ -1344,29 +1344,27 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="fileExtension">File extension to match; must contain a period, for example ".raw"</param>
         /// <param name="createStoragePathInfoOnly">If true, then create a storage path info file</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDatasetFile(string datasetName, string fileExtension, bool createStoragePathInfoOnly)
+        private bool RetrieveDatasetFile(string fileExtension, bool createStoragePathInfoOnly)
         {
-            return RetrieveDatasetFile(datasetName, fileExtension, createStoragePathInfoOnly, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT);
+            return RetrieveDatasetFile(fileExtension, createStoragePathInfoOnly, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT);
         }
 
         /// <summary>
         /// Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="fileExtension">File extension to match; must contain a period, for example ".raw"</param>
         /// <param name="createStoragePathInfoOnly">If true, then create a storage path info file</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDatasetFile(string datasetName, string fileExtension, bool createStoragePathInfoOnly, int maxAttempts)
+        private bool RetrieveDatasetFile(string fileExtension, bool createStoragePathInfoOnly, int maxAttempts)
         {
 
-            var DatasetFilePath = m_FolderSearch.FindDatasetFile(datasetName, maxAttempts, fileExtension);
+            var DatasetFilePath = m_FolderSearch.FindDatasetFile(maxAttempts, fileExtension);
             if (string.IsNullOrEmpty(DatasetFilePath))
             {
                 return false;
@@ -1403,21 +1401,20 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves the _DTA.txt file (either zipped or unzipped).  
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <returns>TRUE for success, FALSE for error</returns>
         /// <remarks>If the _dta.zip or _dta.txt file already exists in the working folder then will not re-copy it from the remote folder</remarks>
-        public bool RetrieveDtaFiles(string datasetName)
+        public bool RetrieveDtaFiles()
         {
 
-            var targetZipFilePath = Path.Combine(m_WorkingDir, datasetName + "_dta.zip");
-            var targetCDTAFilePath = Path.Combine(m_WorkingDir, datasetName + "_dta.txt");
+            var targetZipFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.zip");
+            var targetCDTAFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
 
             if (!File.Exists(targetCDTAFilePath) & !File.Exists(targetZipFilePath))
             {
                 string strErrorMessage;
 
                 // Find the CDTA file
-                var sourceFilePath = FindCDTAFile(datasetName, out strErrorMessage);
+                var sourceFilePath = FindCDTAFile(out strErrorMessage);
 
                 if (string.IsNullOrEmpty(sourceFilePath))
                 {
@@ -1517,7 +1514,7 @@ namespace AnalysisManagerBase
         /// <param name="fileName">Name of file to be copied</param>
         /// <param name="sourceFolderPath">Source folder that has the file</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        private bool RetrieveFile(string fileName, string sourceFolderPath)
+        public bool RetrieveFile(string fileName, string sourceFolderPath)
         {
 
             // Copy the file
@@ -1538,7 +1535,7 @@ namespace AnalysisManagerBase
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        private bool RetrieveFile(string fileName, string sourceFolderPath, int maxCopyAttempts,
+        public bool RetrieveFile(string fileName, string sourceFolderPath, int maxCopyAttempts,
             clsLogTools.LogLevels logMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR)
         {
 
@@ -1558,16 +1555,15 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves an Agilent ion trap .mgf file or .cdf/,mgf pair for analysis job in progress
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="getCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="maxAttempts"></param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveMgfFile(string datasetName, bool getCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
+        private bool RetrieveMgfFile(bool getCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
         {
 
-            var strMGFFilePath = m_FolderSearch.FindMGFFile(datasetName, maxAttempts, assumeUnpurged: false);
+            var strMGFFilePath = m_FolderSearch.FindMGFFile(maxAttempts, assumeUnpurged: false);
 
             if (string.IsNullOrEmpty(strMGFFilePath))
             {
@@ -1583,7 +1579,7 @@ namespace AnalysisManagerBase
             }
 
             // Do the copy
-            if (!m_FileCopyUtilities.CopyFileToWorkDirWithRename(datasetName, fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir,
+            if (!m_FileCopyUtilities.CopyFileToWorkDirWithRename(DatasetName, fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir,
                 clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
                 return false;
 
@@ -1600,7 +1596,7 @@ namespace AnalysisManagerBase
             foreach (var fiCDFFile in fiMGFFile.Directory.GetFiles("*" + clsAnalysisResources.DOT_CDF_EXTENSION))
             {
                 // Copy the .cdf file that was found
-                if (m_FileCopyUtilities.CopyFileToWorkDirWithRename(datasetName, fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir,
+                if (m_FileCopyUtilities.CopyFileToWorkDirWithRename(DatasetName, fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir,
                     clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
                 {
                     return true;
@@ -1623,16 +1619,15 @@ namespace AnalysisManagerBase
         /// If not found, looks in the dataset folder, looking for subfolders 
         /// MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="sourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks>The retrieved file might be gzipped.  For MzML files, use RetrieveMzMLFile</remarks>
-        private bool RetrieveMZXmlFile(string datasetName, bool createStoragePathInfoOnly, out string sourceFilePath)
+        public bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
         {
 
             string hashCheckFilePath;
-            sourceFilePath = FindMZXmlFile(datasetName, out hashCheckFilePath);
+            sourceFilePath = FindMZXmlFile(out hashCheckFilePath);
 
             if (string.IsNullOrEmpty(sourceFilePath))
             {
@@ -1763,20 +1758,18 @@ namespace AnalysisManagerBase
 
         }
 
-
         /// <summary>
         /// Retrieves zipped, concatenated OUT file, unzips, and splits into individual OUT files
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="unConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
         /// <returns>TRUE for success, FALSE for error</returns>
         /// <remarks></remarks>
-        private bool RetrieveOutFiles(string datasetName, bool unConcatenate)
+        public bool RetrieveOutFiles(bool unConcatenate)
         {
 
             // Retrieve zipped OUT file
-            var zippedFileName = datasetName + "_out.zip";
-            var zippedFolderName = FindDataFile(datasetName, zippedFileName);
+            var zippedFileName = DatasetName + "_out.zip";
+            var zippedFolderName = FindDataFile(zippedFileName);
 
             if (string.IsNullOrEmpty(zippedFolderName))
                 return false;
@@ -1803,7 +1796,7 @@ namespace AnalysisManagerBase
             {
                 OnStatusEvent("Splitting concatenated OUT file");
 
-                var fiSourceFile = new FileInfo(Path.Combine(m_WorkingDir, datasetName + "_out.txt"));
+                var fiSourceFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + "_out.txt"));
 
                 if (!fiSourceFile.Exists)
                 {
@@ -1818,7 +1811,7 @@ namespace AnalysisManagerBase
                 }
 
                 var FileSplitter = new clsSplitCattedFiles();
-                FileSplitter.SplitCattedOutsOnly(datasetName, m_WorkingDir);
+                FileSplitter.SplitCattedOutsOnly(DatasetName, m_WorkingDir);
 
                 if (m_DebugLevel >= 1)
                 {
@@ -1834,16 +1827,17 @@ namespace AnalysisManagerBase
         /// Looks for this dataset's ScanStats files (previously created by MASIC)
         /// Looks for the files in any SIC folder that exists for the dataset
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
-        private bool RetrieveScanStatsFiles(string datasetName, bool createStoragePathInfoOnly)
+        public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly)
         {
 
-            const bool RetrieveSICStatsFile = false;
-            return RetrieveScanAndSICStatsFiles(datasetName, RetrieveSICStatsFile,
-                createStoragePathInfoOnly, RetrieveScanStatsFile: true, RetrieveScanStatsExFile: true);
+            return RetrieveScanAndSICStatsFiles(
+                retrieveSICStatsFile: false,
+                createStoragePathInfoOnly: createStoragePathInfoOnly, 
+                retrieveScanStatsFile: true, 
+                retrieveScanStatsExFile: true);
 
         }
 
@@ -1851,18 +1845,17 @@ namespace AnalysisManagerBase
         /// Looks for this dataset's ScanStats files (previously created by MASIC)
         /// Looks for the files in any SIC folder that exists for the dataset
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="createStoragePathInfoOnly"></param>
-        /// <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-        /// <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
-        private bool RetrieveScanStatsFiles(string datasetName, bool createStoragePathInfoOnly, bool RetrieveScanStatsFile, bool RetrieveScanStatsExFile)
+        public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly, bool retrieveScanStatsFile, bool retrieveScanStatsExFile)
         {
 
-            const bool RetrieveSICStatsFile = false;
-            return RetrieveScanAndSICStatsFiles(datasetName, RetrieveSICStatsFile,
-                createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile);
+            const bool retrieveSICStatsFile = false;
+            return RetrieveScanAndSICStatsFiles(retrieveSICStatsFile,
+                createStoragePathInfoOnly, retrieveScanStatsFile, retrieveScanStatsExFile);
 
         }
 
@@ -1870,41 +1863,38 @@ namespace AnalysisManagerBase
         /// Looks for this dataset's MASIC results files
         /// Looks for the files in any SIC folder that exists for the dataset
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="retrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
-        private bool RetrieveScanAndSICStatsFiles(string datasetName, bool RetrieveSICStatsFile, bool createStoragePathInfoOnly)
+        private bool RetrieveScanAndSICStatsFiles(bool retrieveSICStatsFile, bool createStoragePathInfoOnly)
         {
-            return RetrieveScanAndSICStatsFiles(datasetName, RetrieveSICStatsFile,
-                createStoragePathInfoOnly, RetrieveScanStatsFile: true, RetrieveScanStatsExFile: true);
+            return RetrieveScanAndSICStatsFiles(retrieveSICStatsFile,
+                createStoragePathInfoOnly, retrieveScanStatsFile: true, retrieveScanStatsExFile: true);
         }
 
         /// <summary>
         /// Looks for this dataset's MASIC results files
         /// Looks for the files in any SIC folder that exists for the dataset
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="retrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-        /// <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-        /// <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
-        private bool RetrieveScanAndSICStatsFiles(
-            string datasetName,
-            bool RetrieveSICStatsFile,
+        public bool RetrieveScanAndSICStatsFiles(
+            bool retrieveSICStatsFile,
             bool createStoragePathInfoOnly,
-            bool RetrieveScanStatsFile,
-            bool RetrieveScanStatsExFile)
+            bool retrieveScanStatsFile,
+            bool retrieveScanStatsExFile)
         {
 
             var lstNonCriticalFileSuffixes = new List<string>();
             const bool RETRIEVE_REPORTERIONS_FILE = false;
 
-            return RetrieveScanAndSICStatsFiles(datasetName, RetrieveSICStatsFile,
-                createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes);
+            return RetrieveScanAndSICStatsFiles(retrieveSICStatsFile,
+                createStoragePathInfoOnly, retrieveScanStatsFile, retrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes);
 
         }
 
@@ -1912,7 +1902,6 @@ namespace AnalysisManagerBase
         /// Looks for this dataset's MASIC results files
         /// Looks for the files in any SIC folder that exists for the dataset
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
         /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
@@ -1921,8 +1910,7 @@ namespace AnalysisManagerBase
         /// <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
-        private bool RetrieveScanAndSICStatsFiles(
-            string datasetName,
+        public bool RetrieveScanAndSICStatsFiles(
             bool retrieveSICStatsFile,
             bool createStoragePathInfoOnly,
             bool retrieveScanStatsFile,
@@ -1936,8 +1924,8 @@ namespace AnalysisManagerBase
 
             // Look for the MASIC Results folder
             // If the folder cannot be found, then m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
-            var ScanStatsFilename = datasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX;
-            var ServerPath = m_FolderSearch.FindValidFolder(datasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound: false, retrievingInstrumentDataFolder: false);
+            var ScanStatsFilename = DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX;
+            var ServerPath = m_FolderSearch.FindValidFolder(DatasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound: false, retrievingInstrumentDataFolder: false);
 
             if (string.IsNullOrEmpty(ServerPath))
             {
@@ -1979,7 +1967,7 @@ namespace AnalysisManagerBase
                 }
 
                 var bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, bestSICFolderName);
-                return RetrieveScanAndSICStatsFiles(datasetName, bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile: retrieveScanStatsFile, retrieveScanStatsExFile: retrieveScanStatsExFile, retrieveReporterIonsFile: retrieveReporterIonsFile, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                return RetrieveScanAndSICStatsFiles(bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile: retrieveScanStatsFile, retrieveScanStatsExFile: retrieveScanStatsExFile, retrieveReporterIonsFile: retrieveReporterIonsFile, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
             }
             else
             {
@@ -2033,7 +2021,7 @@ namespace AnalysisManagerBase
 
                 var bestSICFolderPath = fiSourceFile.Directory.FullName;
 
-                return RetrieveScanAndSICStatsFiles(datasetName, bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile: retrieveScanStatsFile, retrieveScanStatsExFile: retrieveScanStatsExFile, retrieveReporterIonsFile: retrieveReporterIonsFile, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                return RetrieveScanAndSICStatsFiles(bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile: retrieveScanStatsFile, retrieveScanStatsExFile: retrieveScanStatsExFile, retrieveReporterIonsFile: retrieveReporterIonsFile, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
             }
 
         }
@@ -2041,33 +2029,30 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves the MASIC results for this dataset using the specified folder
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="MASICResultsFolderPath">Source folder to copy files from</param>
-        /// <param name="RetrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="retrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-        /// <param name="RetrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-        /// <param name="RetrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
         private bool RetrieveScanAndSICStatsFiles(
-            string datasetName,
             string MASICResultsFolderPath,
-            bool RetrieveSICStatsFile,
+            bool retrieveSICStatsFile,
             bool createStoragePathInfoOnly,
-            bool RetrieveScanStatsFile,
-            bool RetrieveScanStatsExFile)
+            bool retrieveScanStatsFile,
+            bool retrieveScanStatsExFile)
         {
 
             var lstNonCriticalFileSuffixes = new List<string>();
             const bool RETRIEVE_REPORTERIONS_FILE = false;
 
-            return RetrieveScanAndSICStatsFiles(datasetName, MASICResultsFolderPath, RetrieveSICStatsFile, createStoragePathInfoOnly, RetrieveScanStatsFile, RetrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes);
+            return RetrieveScanAndSICStatsFiles(MASICResultsFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile, retrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes);
         }
 
         /// <summary>
         /// Retrieves the MASIC results for this dataset using the specified folder
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="masicResultsFolderPath">Source folder to copy files from</param>
         /// <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
@@ -2076,8 +2061,7 @@ namespace AnalysisManagerBase
         /// <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
         /// <param name="lstNonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
-        private bool RetrieveScanAndSICStatsFiles(
-            string datasetName,
+        public bool RetrieveScanAndSICStatsFiles(
             string masicResultsFolderPath,
             bool retrieveSICStatsFile,
             bool createStoragePathInfoOnly,
@@ -2105,7 +2089,7 @@ namespace AnalysisManagerBase
                 {
                     // Look for and copy the _ScanStats.txt file
                     if (!RetrieveSICFileMyEMSL(
-                        datasetName, datasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX,
+                        DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX,
                         diSICFolder.Name, lstNonCriticalFileSuffixes))
                     {
                         return false;
@@ -2116,7 +2100,7 @@ namespace AnalysisManagerBase
                 {
                     // Look for and copy the _ScanStatsEx.txt file
                     if (!RetrieveSICFileMyEMSL
-                        (datasetName, datasetName + clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX,
+                        (DatasetName + clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX,
                         diSICFolder.Name, lstNonCriticalFileSuffixes))
                     {
                         return false;
@@ -2127,7 +2111,7 @@ namespace AnalysisManagerBase
                 {
                     // Look for and copy the _SICStats.txt file
                     if (!RetrieveSICFileMyEMSL(
-                        datasetName, datasetName + "_SICStats.txt",
+                        DatasetName + "_SICStats.txt",
                         diSICFolder.Name, lstNonCriticalFileSuffixes))
                     {
                         return false;
@@ -2138,7 +2122,7 @@ namespace AnalysisManagerBase
                 {
                     // Look for and copy the _SICStats.txt file
                     if (!RetrieveSICFileMyEMSL(
-                        datasetName, datasetName + "_ReporterIons.txt",
+                        DatasetName + "_ReporterIons.txt",
                         diSICFolder.Name, lstNonCriticalFileSuffixes))
                     {
                         return false;
@@ -2162,7 +2146,10 @@ namespace AnalysisManagerBase
             if (retrieveScanStatsFile)
             {
                 // Look for and copy the _ScanStats.txt file
-                if (!RetrieveSICFileUNC(datasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX, masicResultsFolderPath, createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
+                if (!RetrieveSICFileUNC(
+                    DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX, 
+                    masicResultsFolderPath, 
+                    createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {
                     return false;
                 }
@@ -2171,7 +2158,10 @@ namespace AnalysisManagerBase
             if (retrieveScanStatsExFile)
             {
                 // Look for and copy the _ScanStatsEx.txt file
-                if (!RetrieveSICFileUNC(datasetName + clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX, masicResultsFolderPath, createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
+                if (!RetrieveSICFileUNC(
+                    DatasetName + clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX, 
+                    masicResultsFolderPath, 
+                    createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {
                     return false;
                 }
@@ -2180,7 +2170,10 @@ namespace AnalysisManagerBase
             if (retrieveSICStatsFile)
             {
                 // Look for and copy the _SICStats.txt file
-                if (!RetrieveSICFileUNC(datasetName + "_SICStats.txt", masicResultsFolderPath, createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
+                if (!RetrieveSICFileUNC(
+                    DatasetName + "_SICStats.txt", 
+                    masicResultsFolderPath, 
+                    createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {
                     return false;
                 }
@@ -2189,7 +2182,10 @@ namespace AnalysisManagerBase
             if (retrieveReporterIonsFile)
             {
                 // Look for and copy the _SICStats.txt file
-                if (!RetrieveSICFileUNC(datasetName + "_ReporterIons.txt", masicResultsFolderPath, createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
+                if (!RetrieveSICFileUNC(
+                    DatasetName + "_ReporterIons.txt", 
+                    masicResultsFolderPath, 
+                    createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {
                     return false;
                 }
@@ -2200,10 +2196,10 @@ namespace AnalysisManagerBase
 
         }
 
-        private bool RetrieveSICFileMyEMSL(string datasetName, string strFileToFind, string strSICFolderName, List<string> lstNonCriticalFileSuffixes)
+        private bool RetrieveSICFileMyEMSL(string strFileToFind, string strSICFolderName, List<string> lstNonCriticalFileSuffixes)
         {
 
-            var matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(strFileToFind, strSICFolderName, datasetName, recurse: false);
+            var matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(strFileToFind, strSICFolderName, DatasetName, recurse: false);
 
             if (matchingMyEMSLFiles.Count > 0)
             {
@@ -2285,33 +2281,30 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="rawDataType">Type of data to copy</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        public bool RetrieveSpectra(string datasetName, string rawDataType)
+        public bool RetrieveSpectra(string rawDataType)
         {
             const bool createStoragePathInfoOnly = false;
-            return RetrieveSpectra(datasetName, rawDataType, createStoragePathInfoOnly);
+            return RetrieveSpectra(rawDataType, createStoragePathInfoOnly);
         }
 
         /// <summary>
         /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="rawDataType">Type of data to copy</param>
         /// <param name="createStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        public bool RetrieveSpectra(string datasetName, string rawDataType, bool createStoragePathInfoOnly)
+        public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly)
         {
-            return RetrieveSpectra(datasetName, rawDataType, createStoragePathInfoOnly, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT);
+            return RetrieveSpectra(rawDataType, createStoragePathInfoOnly, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT);
         }
 
         /// <summary>
         /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="rawDataType">Type of data to copy</param>
         /// <param name="createStoragePathInfoOnly">
         /// When true, does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt
@@ -2320,7 +2313,7 @@ namespace AnalysisManagerBase
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        public bool RetrieveSpectra(string datasetName, string rawDataType, bool createStoragePathInfoOnly, int maxAttempts)
+        public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly, int maxAttempts)
         {
 
             var blnSuccess = false;
@@ -2338,47 +2331,47 @@ namespace AnalysisManagerBase
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
                         //  we would pre-process the data beforehand to create MGF files
                         // The following call can be used to retrieve the files
-                        blnSuccess = RetrieveMgfFile(datasetName, getCdfAlso: true, createStoragePathInfoOnly: createStoragePathInfoOnly, maxAttempts: maxAttempts);
+                        blnSuccess = RetrieveMgfFile(getCdfAlso: true, createStoragePathInfoOnly: createStoragePathInfoOnly, maxAttempts: maxAttempts);
                     }
                     else
                     {
                         // DeconTools_V2 now supports reading the .D files directly
                         // Call RetrieveDotDFolder() to copy the folder and all subfolders
-                        blnSuccess = RetrieveDotDFolder(datasetName, createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles: true);
+                        blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles: true);
                     }
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
-                    blnSuccess = RetrieveDatasetFile(datasetName, clsAnalysisResources.DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     // FTICR data
-                    blnSuccess = RetrieveSFolders(datasetName, createStoragePathInfoOnly, maxAttempts);
+                    blnSuccess = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
-                    blnSuccess = RetrieveDatasetFile(datasetName, clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
-                    blnSuccess = RetrieveDotRawFolder(datasetName, createStoragePathInfoOnly, maxAttempts);
+                    blnSuccess = RetrieveDotRawFolder(createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
                     // IMS UIMF data
-                    blnSuccess = RetrieveDatasetFile(datasetName, clsAnalysisResources.DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    blnSuccess = RetrieveDatasetFile(datasetName, clsAnalysisResources.DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    blnSuccess = RetrieveDatasetFile(datasetName, clsAnalysisResources.DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
@@ -2398,11 +2391,11 @@ namespace AnalysisManagerBase
                         blnSkipBAFFiles = true;
                     }
 
-                    blnSuccess = RetrieveDotDFolder(datasetName, createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles);
+                    blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
-                    blnSuccess = RetrieveBrukerMALDIImagingFolders(datasetName, unzipOverNetwork: true);
+                    blnSuccess = RetrieveBrukerMALDIImagingFolders(unzipOverNetwork: true);
 
                     break;
                 default:
@@ -2430,7 +2423,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDotDFolder(string datasetName, bool createStoragePathInfoOnly, int maxAttempts, bool blnSkipBAFFiles)
+        private bool RetrieveDotDFolder(bool createStoragePathInfoOnly, int maxAttempts, bool blnSkipBAFFiles)
         {
             var fileNamesToSkip = new List<string>();
             if (blnSkipBAFFiles)
@@ -2438,7 +2431,7 @@ namespace AnalysisManagerBase
                 fileNamesToSkip.Add("analysis.baf");
             }
 
-            return RetrieveDotXFolder(datasetName, clsAnalysisResources.DOT_D_EXTENSION, createStoragePathInfoOnly, maxAttempts, fileNamesToSkip);
+            return RetrieveDotXFolder(clsAnalysisResources.DOT_D_EXTENSION, createStoragePathInfoOnly, maxAttempts, fileNamesToSkip);
         }
 
         /// <summary>
@@ -2446,15 +2439,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDotRawFolder(string datasetName, bool createStoragePathInfoOnly, int maxAttempts)
+        private bool RetrieveDotRawFolder(bool createStoragePathInfoOnly, int maxAttempts)
         {
-            return RetrieveDotXFolder(datasetName, clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts, new List<string>());
+            return RetrieveDotXFolder(clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts, new List<string>());
         }
 
         /// <summary>
         /// Retrieves a folder with a name like Dataset.D or Dataset.Raw
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="folderExtension">Extension on the folder; for example, ".D"</param>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="maxAttempts"></param>
@@ -2462,7 +2454,6 @@ namespace AnalysisManagerBase
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         private bool RetrieveDotXFolder(
-            string datasetName, 
             string folderExtension, 
             bool createStoragePathInfoOnly, 
             int maxAttempts, 
@@ -2472,7 +2463,7 @@ namespace AnalysisManagerBase
             // Copies a data folder ending in folderExtension to the working directory
 
             // Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-            var DSFolderPath = m_FolderSearch.FindDotXFolder(datasetName, folderExtension, assumeUnpurged: false);
+            var DSFolderPath = m_FolderSearch.FindDotXFolder(folderExtension, assumeUnpurged: false);
 
             if (string.IsNullOrEmpty(DSFolderPath))
             {
@@ -2535,11 +2526,10 @@ namespace AnalysisManagerBase
         /// The data is stored as zip files with names like 0_R00X433.zip
         /// This data is unzipped into a subfolder in the Chameleon cached data folder
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <param name="unzipOverNetwork"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public bool RetrieveBrukerMALDIImagingFolders(string datasetName, bool unzipOverNetwork)
+        public bool RetrieveBrukerMALDIImagingFolders(bool unzipOverNetwork)
         {
 
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
@@ -2571,11 +2561,11 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                unzipFolderPathBase = Path.Combine(diCachedDataFolder.FullName, datasetName);
+                unzipFolderPathBase = Path.Combine(diCachedDataFolder.FullName, DatasetName);
 
                 foreach (var diSubFolder in diCachedDataFolder.GetDirectories())
                 {
-                    if (!clsGlobal.IsMatch(diSubFolder.Name, datasetName))
+                    if (!clsGlobal.IsMatch(diSubFolder.Name, DatasetName))
                     {
                         // Delete this directory
                         try
@@ -2609,7 +2599,7 @@ namespace AnalysisManagerBase
                 // Delete any .mis files that do not start with this dataset's name
                 foreach (var fiFile in diCachedDataFolder.GetFiles("*.mis"))
                 {
-                    if (!clsGlobal.IsMatch(Path.GetFileNameWithoutExtension(fiFile.Name), datasetName))
+                    if (!clsGlobal.IsMatch(Path.GetFileNameWithoutExtension(fiFile.Name), DatasetName))
                     {
                         fiFile.Delete();
                     }
@@ -2630,12 +2620,12 @@ namespace AnalysisManagerBase
 
             // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
             // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
-            var serverPath = m_FolderSearch.FindValidFolder(datasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder: true);
+            var serverPath = m_FolderSearch.FindValidFolder(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder: true);
 
             try
             {
                 // Look for the .mis file (ImagingSequence file) 
-                var strImagingSeqFilePathFinal = Path.Combine(diCachedDataFolder.FullName, datasetName + ".mis");
+                var strImagingSeqFilePathFinal = Path.Combine(diCachedDataFolder.FullName, DatasetName + ".mis");
 
                 if (!File.Exists(strImagingSeqFilePathFinal))
                 {
@@ -2864,14 +2854,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveSFolders(string datasetName, bool createStoragePathInfoOnly, int maxAttempts)
+        private bool RetrieveSFolders(bool createStoragePathInfoOnly, int maxAttempts)
         {
 
             try
             {
                 // First Check for the existence of a 0.ser Folder
                 // If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
-                var DSFolderPath = m_FolderSearch.FindValidFolder(datasetName, fileNameToFind: "", folderNameToFind:
+                var DSFolderPath = m_FolderSearch.FindValidFolder(DatasetName, fileNameToFind: "", folderNameToFind:
                     clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, maxRetryCount: maxAttempts, logFolderNotFound: true, retrievingInstrumentDataFolder: true);
                 
                 if (!string.IsNullOrEmpty(DSFolderPath))
@@ -2911,7 +2901,7 @@ namespace AnalysisManagerBase
 
                 // If the 0.ser folder does not exist, unzip the zipped s-folders
                 // Copy the zipped s-folders from archive to work directory
-                if (!CopySFoldersToWorkDir(datasetName, createStoragePathInfoOnly))
+                if (!CopySFoldersToWorkDir(createStoragePathInfoOnly))
                 {
                     // Error messages have already been logged, so just exit
                     return false;
@@ -2932,7 +2922,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Create a dataset subdirectory under the working directory
-                var datasetWorkFolder = Path.Combine(m_WorkingDir, datasetName);
+                var datasetWorkFolder = Path.Combine(m_WorkingDir, DatasetName);
                 Directory.CreateDirectory(datasetWorkFolder);
 
                 // Set up the unzipper

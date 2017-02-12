@@ -36,7 +36,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
 
             // Retrieve param file
-            if (!RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_FAILED;
 
             // Retrieve Fasta file
@@ -45,8 +45,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             // Retrieve the MSAlign file
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files");
-            var fileToGet = m_DatasetName + MSDECONV_MSALIGN_FILE_SUFFIX;
-            if (!FindAndRetrieveMiscFiles(fileToGet, false))
+            var fileToGet = DatasetName + MSDECONV_MSALIGN_FILE_SUFFIX;
+            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 //Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

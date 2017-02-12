@@ -232,7 +232,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             {
                 var fileToGet = DatasetName + DOT_MS1FT_EXTENSION;
 
-                if (!FindAndRetrieveMiscFiles(fileToGet, false))
+                if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
                 {
                     //Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

@@ -133,12 +133,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         // See if a .mzXML or .mzML file already exists for this dataset
                         string strHashcheckFilePath;
 
-                        var mzXMLFilePath = FindMZXmlFile(out strHashcheckFilePath);
+                        var mzXMLFilePath = FileSearch.FindMZXmlFile(out strHashcheckFilePath);
                         var mzMLFilePath = string.Empty;
 
                         if (string.IsNullOrEmpty(mzXMLFilePath))
                         {
-                            mzMLFilePath = FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzML, out strHashcheckFilePath);
+                            mzMLFilePath = FileSearch.FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzML, out strHashcheckFilePath);
                         }
 
                         if (!string.IsNullOrEmpty(mzXMLFilePath))
@@ -174,7 +174,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 // Note that FindDatasetFileOrFolder will return the default dataset folder path, even if the data file is not found
                 // Therefore, we need to check that strRawFilePath actually exists
-                var strRawFilePath = FindDatasetFileOrFolder(1, out blnIsFolder);
+                var strRawFilePath = FolderSearch.FindDatasetFileOrFolder(1, out blnIsFolder);
 
                 if (!strRawFilePath.StartsWith(MYEMSL_PATH_FLAG))
                 {

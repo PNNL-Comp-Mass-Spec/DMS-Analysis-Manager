@@ -37,7 +37,7 @@ Public Class clsAnalysisResourcesMSDeconv
         Dim fileMissingFromCache = False
         Const unzipFile = True
 
-        Dim success = RetrieveCachedMzXMLFile(unzipFile, errorMessage, fileMissingFromCache)
+        Dim success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, errorMessage, fileMissingFromCache)
         If Not success Then
             Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION)
         End If

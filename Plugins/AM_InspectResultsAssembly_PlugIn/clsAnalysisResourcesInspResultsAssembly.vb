@@ -43,7 +43,7 @@ Public Class clsAnalysisResourcesInspResultsAssembly
         End If
 
         ' Retrieve the Inspect Input Params file
-        If Not RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName) Then
+        If Not FileSearch.RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If
@@ -52,9 +52,9 @@ Public Class clsAnalysisResourcesInspResultsAssembly
         If String.IsNullOrEmpty(numClonedSteps) Then
             ' This is not a parallelized job
             ' Retrieve the zipped Inspect result file
-            If Not RetrieveFile(zippedResultName, transferFolderName) Then
+            If Not FileSearch.RetrieveFile(zippedResultName, transferFolderName) Then
                 If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & zippedResultName & " using folder " & transferFolderName)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "FileSearch.RetrieveFile returned False for " & zippedResultName & " using folder " & transferFolderName)
                 End If
                 Return CloseOutType.CLOSEOUT_FAILED
             End If
@@ -70,9 +70,9 @@ Public Class clsAnalysisResourcesInspResultsAssembly
             End If
 
             ' Retrieve the Inspect search log file
-            If Not RetrieveFile(searchLogResultName, transferFolderName) Then
+            If Not FileSearch.RetrieveFile(searchLogResultName, transferFolderName) Then
                 If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RetrieveFile returned False for " & searchLogResultName & " using folder " & transferFolderName)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "FileSearch.RetrieveFile returned False for " & searchLogResultName & " using folder " & transferFolderName)
                 End If
                 Return CloseOutType.CLOSEOUT_FAILED
             End If

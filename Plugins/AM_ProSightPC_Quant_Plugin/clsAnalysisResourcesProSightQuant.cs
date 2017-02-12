@@ -50,7 +50,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files");
 
-            if (!RetrieveFile(strParamFileName, strParamFileStoragePath))
+            if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -58,7 +58,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             // Retrieve the ProSightPC results for this job
             string strProSightPCResultsFile = null;
             strProSightPCResultsFile = PROSIGHT_PC_RESULT_FILE;
-            if (!FindAndRetrieveMiscFiles(strProSightPCResultsFile, false))
+            if (!FileSearch.FindAndRetrieveMiscFiles(strProSightPCResultsFile, false))
             {
                 //Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -73,7 +73,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 case RAW_DATA_TYPE_DOT_RAW_FILES:
                 case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
 
-                    if (RetrieveSpectra(strRawDataType))
+                    if (FileSearch.RetrieveSpectra(strRawDataType))
                     {
                         if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                         {

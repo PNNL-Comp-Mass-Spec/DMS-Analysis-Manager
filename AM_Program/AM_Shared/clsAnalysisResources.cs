@@ -299,6 +299,10 @@ namespace AnalysisManagerBase
         }
         public short DebugLevel => m_DebugLevel;
 
+        public clsFolderSearch FolderSearch => m_FolderSearch;
+
+        public clsFileSearch FileSearch => m_FileSearch;
+
         public bool MyEMSLSearchDisabled
         {
             get { return m_MyEMSLSearchDisabled; }
@@ -352,7 +356,7 @@ namespace AnalysisManagerBase
             RegisterEvents(m_CDTAUtilities);
             m_CDTAUtilities.ProgressUpdate -= ProgressUpdateHandler;
             m_CDTAUtilities.ProgressUpdate += m_CDTAUtilities_ProgressEvent;
-            
+
         }
 
         /// <summary>
@@ -1049,113 +1053,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Finds the _DTA.txt file for this dataset
-        /// </summary>
-        /// <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
-        /// <remarks></remarks>
-        public string FindCDTAFile(out string strErrorMessage)
-        {
-            return m_FileSearch.FindCDTAFile(m_DatasetName, out strErrorMessage);
-        }
-
-        /// <summary>
-        /// Finds the server or archive folder where specified file is located
-        /// </summary>
-        /// <param name="fileToFind">Name of the file to search for</param>
-        /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
-        /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        public string FindDataFile(string fileToFind)
-        {
-            return m_FileSearch.FindDataFile(m_DatasetName, fileToFind);
-        }
-
-        /// <summary>
-        /// Determines the full path to the dataset file
-        /// Returns a folder path for data that is stored in folders (e.g. .D folders)
-        /// For instruments with multiple data folders, returns the path to the first folder
-        /// For instrument with multiple zipped data files, returns the dataset folder path
-        /// </summary>
-        /// <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
-        /// <param name="assumeUnpurged">
-        /// When true, assume that the instrument data exists on the storage server 
-        /// (and thus do not search MyEMSL or the archive for the file)
-        /// </param>
-        /// <returns>The full path to the dataset file or folder</returns>
-        /// <remarks>When assumeUnpurged is true, this function returns the expected path 
-        /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-        public string FindDatasetFileOrFolder(out bool blnIsFolder, bool assumeUnpurged)
-        {
-            return m_FolderSearch.FindDatasetFileOrFolder(m_DatasetName, out blnIsFolder, assumeUnpurged: assumeUnpurged);
-        }
-
-        /// <summary>
-        /// Looks for the newest .mzXML file for this dataset
-        /// </summary>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
-        /// <returns>Full path to the file, if found; empty string if no match</returns>
-        /// <remarks>Supports both gzipped mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-        public string FindMZXmlFile(out string hashCheckFilePath)
-        {
-            return m_FileSearch.FindMZXmlFile(m_DatasetName, out hashCheckFilePath);
-        }
-
-        /// <summary>
-        /// Looks for the newest mzXML or mzML file for this dataset
-        /// </summary>
-        /// <param name="msXmlType">File type to find (mzXML or mzML)</param>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
-        /// <returns>Full path to the file if a match; empty string if no match</returns>
-        /// <remarks>Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-        public string FindMsXmlFileInCache(
-            MSXMLOutputTypeConstants msXmlType,
-            out string hashCheckFilePath)
-        {
-            return m_FileSearch.FindMsXmlFileInCache(m_DatasetName, msXmlType, out hashCheckFilePath);
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        public string FindValidFolder(string DSName, string FileNameToFind, bool RetrievingInstrumentDataFolder)
-        {
-            var folderPath = m_FolderSearch.FindValidFolder(DSName, FileNameToFind, RetrievingInstrumentDataFolder);
-
-            return folderPath;
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
-        /// </summary>
-        /// <param name="dsName">Name of the dataset</param>
-        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="maxRetryCount">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
-        /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
-        public string FindValidFolder(
-            string dsName, string fileNameToFind, string folderNameToFind,
-            int maxRetryCount, bool logFolderNotFound, bool retrievingInstrumentDataFolder)
-        {
-
-            var folderPath = m_FolderSearch.FindValidFolder(
-                dsName, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound,
-                retrievingInstrumentDataFolder);
-
-            return folderPath;
-        }
-
-        /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
         /// If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
@@ -1246,7 +1143,7 @@ namespace AnalysisManagerBase
 
             if (!File.Exists(strInputFilePath))
             {
-                if (!m_FileSearch.RetrieveSpectra(m_DatasetName, strRawDataType))
+                if (!m_FileSearch.RetrieveSpectra(strRawDataType))
                 {
                     var strExtraMsg = m_message;
                     m_message = "Error retrieving spectra file";
@@ -1332,7 +1229,7 @@ namespace AnalysisManagerBase
                 ParameterFileName = m_jobParams.GetJobParameter("PeptideSearch", "ParmFileName", string.Empty),
                 LegacyFastaFileName = m_jobParams.GetJobParameter("PeptideSearch", "legacyFastaFileName", string.Empty)
             };
-            
+
             jobInfo.OrganismDBName = string.Copy(jobInfo.LegacyFastaFileName);
 
             jobInfo.ProteinCollectionList = m_jobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", string.Empty);
@@ -1829,7 +1726,7 @@ namespace AnalysisManagerBase
             bool fileMissingFromCache;
             const bool unzipFile = true;
 
-            var success = m_FileSearch.RetrieveCachedMzMLFile(m_DatasetName, unzipFile, out errorMessage, out fileMissingFromCache);
+            var success = m_FileSearch.RetrieveCachedMzMLFile(unzipFile, out errorMessage, out fileMissingFromCache);
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZML_EXTENSION);
@@ -1849,9 +1746,9 @@ namespace AnalysisManagerBase
             LogMessage("Getting mzXML file");
 
             // Note that capitalization matters for the extension; it must be .mzXML
-            var FileToGet = m_DatasetName + DOT_MZXML_EXTENSION;
+            var fileToGet = m_DatasetName + DOT_MZXML_EXTENSION;
 
-            if (!m_FileSearch.FindAndRetrieveMiscFiles(m_DatasetName, FileToGet, false))
+            if (!m_FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Look for a .mzXML file in the cache instead
 
@@ -1859,14 +1756,14 @@ namespace AnalysisManagerBase
                 bool fileMissingFromCache;
                 const bool unzipFile = true;
 
-                var success = m_FileSearch.RetrieveCachedMzXMLFile(m_DatasetName, unzipFile, out errorMessage, out fileMissingFromCache);
+                var success = m_FileSearch.RetrieveCachedMzXMLFile(unzipFile, out errorMessage, out fileMissingFromCache);
                 if (!success)
                 {
                     return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION);
                 }
 
             }
-            m_jobParams.AddResultFileToSkip(FileToGet);
+            m_jobParams.AddResultFileToSkip(fileToGet);
 
             if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
@@ -1885,7 +1782,7 @@ namespace AnalysisManagerBase
             string errorMessage;
             bool fileMissingFromCache;
 
-            var success = m_FileSearch.RetrieveCachedPBFFile(m_DatasetName, out errorMessage, out fileMissingFromCache);
+            var success = m_FileSearch.RetrieveCachedPBFFile(out errorMessage, out fileMissingFromCache);
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_PBF_EXTENSION);
@@ -3605,7 +3502,7 @@ namespace AnalysisManagerBase
                             }
                             else
                             {
-                                sourceFolderPath = m_FileSearch.FindDataFile(m_DatasetName, sourceFileName);
+                                sourceFolderPath = m_FileSearch.FindDataFile(sourceFileName);
 
                                 if (string.IsNullOrEmpty(sourceFolderPath))
                                 {
@@ -3626,7 +3523,7 @@ namespace AnalysisManagerBase
 
                                     if (!string.IsNullOrEmpty(alternateSourceFileName))
                                     {
-                                        sourceFolderPath = m_FileSearch.FindDataFile(m_DatasetName, alternateSourceFileName);
+                                        sourceFolderPath = m_FileSearch.FindDataFile(alternateSourceFileName);
                                         if (!string.IsNullOrEmpty(sourceFolderPath))
                                         {
                                             sourceFileName = alternateSourceFileName;
@@ -3645,7 +3542,7 @@ namespace AnalysisManagerBase
                                     string errorMessage;
                                     bool fileMissingFromCache;
 
-                                    var success = m_FileSearch.RetrieveCachedMSXMLFile(m_DatasetName, DOT_MZML_EXTENSION, false, 
+                                    var success = m_FileSearch.RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false,
                                         out errorMessage, out fileMissingFromCache);
 
                                     if (!success)
@@ -3741,20 +3638,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieves a data from a Bruker MALDI imaging dataset
-        /// The data is stored as zip files with names like 0_R00X433.zip
-        /// This data is unzipped into a subfolder in the Chameleon cached data folder
-        /// </summary>
-        /// <param name="unzipOverNetwork"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public bool RetrieveBrukerMALDIImagingFolders(bool unzipOverNetwork)
-        {
-            var success = m_FileSearch.RetrieveBrukerMALDIImagingFolders(m_DatasetName, unzipOverNetwork);
-            return success;
-        }
-
-        /// <summary>
         /// Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
         /// Also creates a batch file that can be manually run to retrieve the instrument data files
         /// </summary>
@@ -3801,29 +3684,6 @@ namespace AnalysisManagerBase
 
             return blnSuccess;
 
-        }
-
-        /// <summary>
-        /// Retrieves the _DTA.txt file (either zipped or unzipped).  
-        /// </summary>
-        /// <returns>TRUE for success, FALSE for error</returns>
-        /// <remarks>If the _dta.zip or _dta.txt file already exists in the working folder then will not re-copy it from the remote folder</remarks>
-        public bool RetrieveDtaFiles()
-        {
-            return m_FileSearch.RetrieveDtaFiles(m_DatasetName);
-        }
-
-        /// <summary>
-        /// Retrieves this dataset's mzXML or mzML file
-        /// </summary>
-        /// <param name="createStoragePathInfoOnly"></param>
-        /// <param name="sourceFilePath">Full path to the file that should be retrieved</param>
-        /// <param name="hashCheckFilePath"></param>
-        /// <returns>True if success, false if not retrieved or a hash error</returns>
-        /// <remarks></remarks>
-        public bool RetrieveMZXmlFileUsingSourceFile(bool createStoragePathInfoOnly, string sourceFilePath, string hashCheckFilePath)
-        {
-            return m_FileSearch.RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, sourceFilePath, hashCheckFilePath);
         }
 
         /// <summary>
@@ -3999,22 +3859,6 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-        }
-
-        /// <summary>
-        /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
-        /// </summary>
-        /// <param name="rawDataType">Type of data to copy</param>
-        /// <param name="createStoragePathInfoOnly">
-        /// When true, does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt
-        /// The first line in the StoragePathInfo file will be the full path to the spectrum file (or spectrum folder)
-        /// </param>
-        /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
-        public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly, int maxAttempts)
-        {
-            return m_FileSearch.RetrieveSpectra(m_DatasetName, rawDataType, createStoragePathInfoOnly, maxAttempts);
         }
 
         /// <summary>

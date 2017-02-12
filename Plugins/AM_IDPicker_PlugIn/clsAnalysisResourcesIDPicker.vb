@@ -31,7 +31,7 @@ Public Class clsAnalysisResourcesIDPicker
         ' Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
         Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
 
-        If Not FindAndRetrieveMiscFiles(strParamFileName, False) Then
+        If Not FileSearch.FindAndRetrieveMiscFiles(strParamFileName, False) Then
             Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
         End If
         m_jobParams.AddResultFileToSkip(strParamFileName)
@@ -198,13 +198,13 @@ Public Class clsAnalysisResourcesIDPicker
             Dim fileToGet = String.Copy(kvEntry.Key)
             Dim fileRequired = kvEntry.Value
 
-            ' Note that the contents of fileToGet will be updated by FindAndRetrievePHRPDataFile if we're looking for a _msgfplus file but we find a _msgfdb file
-            Dim success = FindAndRetrievePHRPDataFile(fileToGet, synFilePath)
+            ' Note that the contents of fileToGet will be updated by FileSearch.FindAndRetrievePHRPDataFile if we're looking for a _msgfplus file but we find a _msgfdb file
+            Dim success = FileSearch.FindAndRetrievePHRPDataFile(fileToGet, synFilePath)
 
             If Not success AndAlso eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB AndAlso
                fileToGet.Contains(Path.GetFileName(clsPHRPReader.GetToolVersionInfoFilename(eResultType))) Then
                 Dim strToolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt"
-                success = FindAndRetrieveMiscFiles(strToolVersionFileLegacy, False, False)
+                success = FileSearch.FindAndRetrieveMiscFiles(strToolVersionFileLegacy, False, False)
                 If success Then
                     ' Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
                     File.Move(Path.Combine(m_WorkingDir, strToolVersionFileLegacy), Path.Combine(m_WorkingDir, fileToGet))
@@ -244,7 +244,7 @@ Public Class clsAnalysisResourcesIDPicker
             lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(m_WorkingDir, strSearchEngineParamFileName))
             For Each strFileName As String In lstExtraFilesToGet
 
-                If Not FindAndRetrieveMiscFiles(strFileName, False) Then
+                If Not FileSearch.FindAndRetrieveMiscFiles(strFileName, False) Then
                     ' File not found
                     eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND
                     Return False
@@ -354,7 +354,7 @@ Public Class clsAnalysisResourcesIDPicker
     ''' <remarks></remarks>
     Private Function RetrieveMASICFiles(strDatasetName As String) As Boolean
 
-        If Not RetrieveScanStatsFiles(False) Then
+        If Not FileSearch.RetrieveScanStatsFiles(False) Then
             ' _ScanStats.txt file not found
             ' If processing a .Raw file or .UIMF file then we can create the file using the MSFileInfoScanner
             If Not GenerateScanStatsFile() Then

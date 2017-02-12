@@ -707,12 +707,12 @@ namespace AnalysisManagerBase
                             // However, if the file resides in MyEMSL then we need to call FindDataFile for every new file because FindDataFile will append the MyEMSL File ID for each file
                             if (string.IsNullOrEmpty(sourceFolderPath) || sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
                             {
-                                sourceFolderPath = mAnalysisResources.FindDataFile(sourceFilename);
+                                sourceFolderPath = mAnalysisResources.FileSearch.FindDataFile(sourceFilename);
 
                                 if (string.IsNullOrEmpty(sourceFolderPath))
                                 {
                                     var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
-                                    sourceFolderPath = mAnalysisResources.FindDataFile(alternateFileName);
+                                    sourceFolderPath = mAnalysisResources.FileSearch.FindDataFile(alternateFileName);
                                 }
                             }
 
@@ -903,7 +903,7 @@ namespace AnalysisManagerBase
                                 if (udtOptions.CreateJobPathFiles)
                                 {
                                     string strErrorMessage;
-                                    var sourceConcatenatedDTAFilePath = mAnalysisResources.FindCDTAFile(out strErrorMessage);
+                                    var sourceConcatenatedDTAFilePath = mAnalysisResources.FileSearch.FindCDTAFile(out strErrorMessage);
 
                                     if (string.IsNullOrEmpty(sourceConcatenatedDTAFilePath))
                                     {
@@ -916,7 +916,7 @@ namespace AnalysisManagerBase
                                 }
                                 else
                                 {
-                                    if (!mAnalysisResources.RetrieveDtaFiles())
+                                    if (!mAnalysisResources.FileSearch.RetrieveDtaFiles())
                                     {
                                         // Errors were reported in function call, so just return
                                         mAnalysisResources.RestoreCachedDataAndJobInfo();
@@ -1144,7 +1144,7 @@ namespace AnalysisManagerBase
                 // See if a .mzXML file already exists for this dataset
                 string hashcheckFilePath;
 
-                var mzXMLFilePath = mAnalysisResources.FindMZXmlFile(out hashcheckFilePath);
+                var mzXMLFilePath = mAnalysisResources.FileSearch.FindMZXmlFile(out hashcheckFilePath);
 
                 if (string.IsNullOrEmpty(mzXMLFilePath))
                 {
@@ -1167,7 +1167,7 @@ namespace AnalysisManagerBase
             }
 
             bool blnIsFolder;
-            var rawFilePath = mAnalysisResources.FindDatasetFileOrFolder(out blnIsFolder, udtOptions.AssumeInstrumentDataUnpurged);
+            var rawFilePath = mAnalysisResources.FolderSearch.FindDatasetFileOrFolder(out blnIsFolder, udtOptions.AssumeInstrumentDataUnpurged);
 
 
             if (!string.IsNullOrEmpty(rawFilePath))
@@ -1265,7 +1265,7 @@ namespace AnalysisManagerBase
                         else
                         {
                             // mzXML or .mzML file exists; either retrieve it or create a StoragePathInfo file
-                            blnSuccess = mAnalysisResources.RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, strMzXMLFilePath, strHashcheckFilePath);
+                            blnSuccess = mAnalysisResources.FileSearch.RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, strMzXMLFilePath, strHashcheckFilePath);
                         }
 
                         if (blnSuccess)
@@ -1296,7 +1296,7 @@ namespace AnalysisManagerBase
                             // .mzXML file not found (or problem adding to the MyEMSL download queue)
                             // Find or retrieve the .Raw file, which can be used to create the .mzXML file (the plugin will actually perform the work of converting the file; as an example, see the MSGF plugin)
 
-                            if (!mAnalysisResources.RetrieveSpectra(kvItem.Key.RawDataType, createStoragePathInfoOnly, maxAttempts: 1))
+                            if (!mAnalysisResources.FileSearch.RetrieveSpectra(kvItem.Key.RawDataType, createStoragePathInfoOnly, maxAttempts: 1))
                             {
                                 OnErrorEvent("Error occurred retrieving instrument data file for job " + intCurrentJob);
                                 return false;

@@ -23,7 +23,7 @@ Public Class clsAnalysisResourcesDtaSplit
 
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-        If Not RetrieveDtaFiles() Then
+        If Not FileSearch.RetrieveDtaFiles() Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If

@@ -46,7 +46,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!RetrieveSpectra(strRawDataType))
+            if (!FileSearch.RetrieveSpectra(strRawDataType))
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                     "clsDtaGenResources.GetResources: Error occurred retrieving spectra.");

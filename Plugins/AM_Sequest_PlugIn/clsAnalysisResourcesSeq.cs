@@ -398,7 +398,7 @@ namespace AnalysisManagerSequestPlugin
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
             // The file will be de-concatenated by function clsAnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
-            if (!RetrieveDtaFiles())
+            if (!FileSearch.RetrieveDtaFiles())
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;

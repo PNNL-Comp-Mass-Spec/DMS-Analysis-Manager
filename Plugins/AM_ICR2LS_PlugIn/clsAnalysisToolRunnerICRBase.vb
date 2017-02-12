@@ -559,7 +559,7 @@ Public MustInherit Class clsAnalysisToolRunnerICRBase
 
             Case ICR2LSProcessingModeConstants.SerFilePEK, ICR2LSProcessingModeConstants.SerFileTIC
                 ' Need to find the location of the apexAcquisition.method file
-                strApexAcqFilePath = clsAnalysisResources.FindFileInDirectoryTree(Path.GetDirectoryName(instrumentFilePath), APEX_ACQUISITION_METHOD_FILE)
+                strApexAcqFilePath = clsFileSearch.FindFileInDirectoryTree(Path.GetDirectoryName(instrumentFilePath), APEX_ACQUISITION_METHOD_FILE)
 
                 If String.IsNullOrEmpty(strApexAcqFilePath) Then
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Could not find the " & APEX_ACQUISITION_METHOD_FILE & " file in folder " & instrumentFilePath)

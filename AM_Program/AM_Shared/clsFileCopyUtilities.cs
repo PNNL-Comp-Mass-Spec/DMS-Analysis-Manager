@@ -8,7 +8,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Methods to copy files to the working directory
     /// </summary>
-    internal class clsFileCopyUtilities : clsEventNotifier
+    public class clsFileCopyUtilities : clsEventNotifier
     {
 
         #region "Constants"

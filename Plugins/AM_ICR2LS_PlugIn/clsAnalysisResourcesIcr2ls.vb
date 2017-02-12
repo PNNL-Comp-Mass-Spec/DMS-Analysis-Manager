@@ -16,7 +16,7 @@ Public Class clsAnalysisResourcesIcr2ls
         End If
 
         ' Retrieve param file
-        If Not RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
+        If Not FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
@@ -31,7 +31,7 @@ Public Class clsAnalysisResourcesIcr2ls
         End If
 
         ' Get input data file
-        If Not RetrieveSpectra(m_jobParams.GetParam("RawDataType")) Then
+        If Not FileSearch.RetrieveSpectra(m_jobParams.GetParam("RawDataType")) Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.")
             Return CloseOutType.CLOSEOUT_FAILED
         End If

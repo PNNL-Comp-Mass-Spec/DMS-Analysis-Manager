@@ -31,15 +31,15 @@ Public Class clsAnalysisResourcesLCMSFF
 
         ' Retrieve Decon2LS _scans.csv file for this dataset
         ' The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
-        Dim strFileToGet = m_DatasetName & SCANS_FILE_SUFFIX
-        If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
+        Dim strFileToGet = DatasetName & SCANS_FILE_SUFFIX
+        If Not FileSearch.FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         ' Retrieve Decon2LS _isos.csv files for this dataset
-        strFileToGet = m_DatasetName & ISOS_FILE_SUFFIX
-        If Not FindAndRetrieveMiscFiles(strFileToGet, False) Then
+        strFileToGet = DatasetName & ISOS_FILE_SUFFIX
+        If Not FileSearch.FindAndRetrieveMiscFiles(strFileToGet, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
@@ -74,7 +74,7 @@ Public Class clsAnalysisResourcesLCMSFF
 
 
             ' IMS data; need to get the .UIMF file
-            If Not RetrieveSpectra(strRawDataType) Then
+            If Not FileSearch.RetrieveSpectra(strRawDataType) Then
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
                 Return CloseOutType.CLOSEOUT_FAILED
             Else

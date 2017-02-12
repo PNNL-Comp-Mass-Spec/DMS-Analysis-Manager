@@ -52,21 +52,21 @@ Public Class clsAnalysisResourcesDtaRefinery
 
         'Retrieve settings files aka default file that will have values overwritten by parameter file values
         'Stored in same location as parameter file
-        If Not RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath) Then
+        If Not FileSearch.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath) Then
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If Not RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, strDtaRefineryParmFileStoragePath) Then
+        If Not FileSearch.RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, strDtaRefineryParmFileStoragePath) Then
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If Not RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath) Then
+        If Not FileSearch.RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath) Then
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Retrieve the _DTA.txt file
         ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-        If Not RetrieveDtaFiles() Then
+        If Not FileSearch.RetrieveDtaFiles() Then
             ' Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If
@@ -137,8 +137,8 @@ Public Class clsAnalysisResourcesDtaRefinery
         Dim sourceFolderPath As String
 
         Try
-            Dim deconMSnLogFileName = m_DatasetName & "_DeconMSn_log.txt"
-            sourceFolderPath = FindDataFile(deconMSnLogFileName)
+            Dim deconMSnLogFileName = DatasetName & "_DeconMSn_log.txt"
+            sourceFolderPath = FileSearch.FindDataFile(deconMSnLogFileName)
 
             If String.IsNullOrWhiteSpace(sourceFolderPath) Then
                 ' Could not find the file (error will have already been logged)
@@ -158,8 +158,8 @@ Public Class clsAnalysisResourcesDtaRefinery
             End If
 
 
-            Dim deconMSnProfileFileName = m_DatasetName & "_profile.txt"
-            sourceFolderPath = FindDataFile(deconMSnProfileFileName)
+            Dim deconMSnProfileFileName = DatasetName & "_profile.txt"
+            sourceFolderPath = FileSearch.FindDataFile(deconMSnProfileFileName)
 
             If String.IsNullOrWhiteSpace(sourceFolderPath) Then
                 ' Could not find the file (error will have already been logged)

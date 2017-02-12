@@ -87,7 +87,7 @@ Public Class clsAnalysisResourcesIN
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing parallelized Inspect segment " & parallelZipNum.ToString)
         End If
 
-        Dim DtaResultFolderName As String = FindDataFile(DtaResultFileName)
+        Dim DtaResultFolderName As String = FileSearch.FindDataFile(DtaResultFileName)
 
         If String.IsNullOrEmpty(DtaResultFolderName) Then
             ' No folder found containing the zipped DTA files (error will have already been logged)

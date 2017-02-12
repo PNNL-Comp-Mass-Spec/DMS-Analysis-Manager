@@ -76,7 +76,7 @@ namespace AnalysisManagerQCARTPlugin
                 var paramFileName = m_jobParams.GetParam("ParmFileName");
                 var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
 
-                var success = RetrieveFile(paramFileName, paramFileStoragePath);
+                var success = FileSearch.RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -89,7 +89,7 @@ namespace AnalysisManagerQCARTPlugin
                 var rScriptName = m_jobParams.GetJobParameter("QCARTRScriptName", "QC_ART_2015-11-11.R");
                 var rScriptStoragePath = Path.Combine(paramFileStoragePath, "Template_Scripts");
 
-                success = RetrieveFile(rScriptName, rScriptStoragePath);
+                success = FileSearch.RetrieveFile(rScriptName, rScriptStoragePath);
                 if (!success)
                 {
                     m_message = "Template QC-ART R Script not found: " + rScriptName;
@@ -1003,7 +1003,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 var reporterIonsFileName = DatasetName + REPORTER_IONS_FILE_SUFFIX;
 
-                var success = FindAndRetrieveMiscFiles(reporterIonsFileName, false);
+                var success = FileSearch.FindAndRetrieveMiscFiles(reporterIonsFileName, false);
                 if (!success)
                 {
                     LogError(REPORTER_IONS_FILE_SUFFIX + " file not found for dataset " + dataPkgJob.Dataset + ", job " + dataPkgJob.Job);

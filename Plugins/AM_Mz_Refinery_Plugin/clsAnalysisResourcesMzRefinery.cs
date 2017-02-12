@@ -74,7 +74,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + mzRefineryParmFileStoragePath);
                 }
 
-                if (!RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
+                if (!FileSearch.RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -166,7 +166,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             var localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusResults.Name);
             fiMSGFPlusResults.CopyTo(localFilePath, true);
 
-            m_IonicZipTools.GUnzipFile(localFilePath);
+            GUnzipFile(localFilePath);
 
             localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusConsoleOutput.Name);
             fiMSGFPlusConsoleOutput.CopyTo(localFilePath, true);

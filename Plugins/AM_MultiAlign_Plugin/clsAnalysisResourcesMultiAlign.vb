@@ -40,8 +40,8 @@ Public Class clsAnalysisResourcesMultiAlign
         Next
 
         ' Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
-        Dim fileToGet = m_DatasetName & strInputFileExtension
-        If Not FindAndRetrieveMiscFiles(fileToGet, False) Then
+        Dim fileToGet = DatasetName & strInputFileExtension
+        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If

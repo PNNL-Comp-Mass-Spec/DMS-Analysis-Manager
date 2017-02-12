@@ -66,7 +66,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                             currentTask = "Retrieve spectra: " + strRawDataType;
 
-                            if (RetrieveSpectra(strRawDataType))
+                            if (FileSearch.RetrieveSpectra(strRawDataType))
                             {
                                 m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                                 //Raw file
@@ -129,7 +129,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     }
 
                     //Retrieve param file
-                    if (!RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")))
+                    if (!FileSearch.RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")))
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }

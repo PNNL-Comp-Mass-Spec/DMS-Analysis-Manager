@@ -1076,7 +1076,7 @@ namespace AnalysisManagerProg
 
             objResources.Setup(m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
 
-            var blnSuccess = objResources.RetrieveBrukerMALDIImagingFolders(true);
+            var blnSuccess = objResources.FileSearch.RetrieveBrukerMALDIImagingFolders(true);
 
             // blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
 
