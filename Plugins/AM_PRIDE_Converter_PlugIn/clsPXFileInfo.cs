@@ -1,33 +1,42 @@
-﻿Imports AnalysisManagerBase
+﻿using System.Collections.Generic;
+using AnalysisManagerBase;
 
-Public Class clsPXFileInfo
-    Inherits clsPXFileInfoBase
+namespace AnalysisManagerPRIDEConverterPlugIn
+{
+    public class clsPXFileInfo : clsPXFileInfoBase
+    {
+        #region "Module Variables"
 
-#Region "Module Variables"
-    Protected ReadOnly mFileMappings As List(Of Integer)
-#End Region
+        #endregion
 
-#Region "Auto-properties"
-    Public Property PXFileType As ePXFileType
-#End Region
+        protected readonly List<int> mFileMappings;
 
-#Region "Properties"
-    Public ReadOnly Property FileMappings() As List(Of Integer)
-        Get
-            Return mFileMappings
-        End Get
-    End Property
-#End Region
+        #region "Auto-properties"
 
-    Public Sub New(fileName As String, dataPkgJob As clsDataPackageJobInfo)
-        MyBase.New(fileName, dataPkgJob)
-        mFileMappings = New List(Of Integer)
-    End Sub
+        public ePXFileType PXFileType { get; set; }
 
-    Public Sub AddFileMapping(intPXFileID As Integer)
-        If Not mFileMappings.Contains(intPXFileID) Then
-            mFileMappings.Add(intPXFileID)
-        End If
-    End Sub
+        #endregion
 
-End Class
+        #region "Properties"
+
+        public List<int> FileMappings
+        {
+            get { return mFileMappings; }
+        }
+
+        #endregion
+
+        public clsPXFileInfo(string fileName, clsDataPackageJobInfo dataPkgJob) : base(fileName, dataPkgJob)
+        {
+            mFileMappings = new List<int>();
+        }
+
+        public void AddFileMapping(int intPXFileID)
+        {
+            if (!mFileMappings.Contains(intPXFileID))
+            {
+                mFileMappings.Add(intPXFileID);
+            }
+        }
+    }
+}

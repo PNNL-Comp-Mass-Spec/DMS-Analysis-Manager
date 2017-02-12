@@ -1,50 +1,60 @@
-﻿Public Class clsSampleMetadata
+﻿using System;
+using System.Collections.Generic;
 
-    Public Structure udtCvParamInfoType
-        Public Accession As String
-        Public CvRef As String
-        Public Value As String
-        Public Name As String
-        Public unitCvRef As String
-        Public unitName As String
-        Public unitAccession As String
-        Public Sub Clear()
-            Accession = String.Empty
-            CvRef = String.Empty
-            Value = String.Empty
-            Name = String.Empty
-            unitCvRef = String.Empty
-            unitName = String.Empty
-            unitAccession = String.Empty
-        End Sub
-    End Structure
+namespace AnalysisManagerPRIDEConverterPlugIn
+{
+    public class clsSampleMetadata
+    {
+        public struct udtCvParamInfoType
+        {
+            public string Accession;
+            public string CvRef;
+            public string Value;
+            public string Name;
+            public string unitCvRef;
+            public string unitName;
+            public string unitAccession;
 
-    Public Property Species As String                                            ' Recommended to use NEWT CVs
-    Public Property Tissue As String                                             ' Recommended to use BRENDA CVs (BTO)
-    Public Property CellType As String                                           ' Recommended to use CL CVs
-    Public Property Disease As String                                            ' Recommended to use DOID CVs
-    Public Property Modifications As Dictionary(Of String, udtCvParamInfoType)   ' Recommended to use PSI-MOD, though Unimod is acceptable
-    Public Property InstrumentGroup As String                                    ' Recommended to use MS CVs
-    Public Property Quantification As String
-    Public Property ExperimentalFactor As String
+            public void Clear()
+            {
+                Accession = string.Empty;
+                CvRef = string.Empty;
+                Value = string.Empty;
+                Name = string.Empty;
+                unitCvRef = string.Empty;
+                unitName = string.Empty;
+                unitAccession = string.Empty;
+            }
+        }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Sub New()
-        Clear()
-    End Sub
+        public string Species { get; set; }                                         // Recommended to use NEWT CVs
+        public string Tissue { get; set; }                                          // Recommended to use BRENDA CVs (BTO)
+        public string CellType { get; set; }                                        // Recommended to use CL CVs
+        public string Disease { get; set; }                                         // Recommended to use DOID CVs
+        public Dictionary<string, udtCvParamInfoType> Modifications { get; set; }   // Recommended to use PSI-MOD, though Unimod is acceptable
+        public string InstrumentGroup { get; set; }                                 // Recommended to use MS CVs
+        public string Quantification { get; set; }
+        public string ExperimentalFactor { get; set; }
 
-    Public Sub Clear()
-        Species = String.Empty
-        Tissue = String.Empty
-        CellType = String.Empty
-        Disease = String.Empty
-        Modifications = New Dictionary(Of String, udtCvParamInfoType)(StringComparer.CurrentCultureIgnoreCase)
-        InstrumentGroup = String.Empty
-        Quantification = String.Empty
-        ExperimentalFactor = String.Empty
-    End Sub
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <remarks></remarks>
+        public clsSampleMetadata()
+        {
+            Clear();
+        }
 
-End Class
+        public void Clear()
+        {
+            Species = string.Empty;
+            Tissue = string.Empty;
+            CellType = string.Empty;
+            Disease = string.Empty;
+            Modifications = new Dictionary<string, udtCvParamInfoType>(StringComparer.CurrentCultureIgnoreCase);
+            InstrumentGroup = string.Empty;
+            Quantification = string.Empty;
+            ExperimentalFactor = string.Empty;
+        }
+    }
+}

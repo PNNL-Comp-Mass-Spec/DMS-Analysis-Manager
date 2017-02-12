@@ -1,58 +1,70 @@
-﻿Imports AnalysisManagerBase
+﻿using AnalysisManagerBase;
 
-Public Class clsPXFileInfoBase
+namespace AnalysisManagerPRIDEConverterPlugIn
+{
+    public class clsPXFileInfoBase
+    {
+        #region "Module Variables"
 
-#Region "Module Variables"
-    Protected mFileName As String
-    Protected mJobInfo As clsDataPackageJobInfo
-#End Region
+        protected string mFileName;
+        protected clsDataPackageJobInfo mJobInfo;
 
-#Region "Structures and Enums"
-    Public Enum ePXFileType
-        Undefined = 0
-        Result = 1              ' .msgf-pride.xml files
-        ResultMzId = 2          ' .mzid.gz files from MSGF+  (listed as "result" files in the .px file)
-        Raw = 3                 ' Instrument data files (typically .raw files)
-        Search = 4              ' Search engine output files, such as Mascot DAT or other output files (from analysis pipelines, such as pep.xml or prot.xml).
-        Peak = 5                ' _dta.txt or .mgf files
-    End Enum
-#End Region
+        #endregion
 
-#Region "Auto-properties"
-    Public Property FileID As Integer
-    Public Property Length As Int64
-    Public Property MD5Hash As String
-#End Region
+        #region "Structures and Enums"
 
-#Region "Properties"
-    Public ReadOnly Property Filename() As String
-        Get
-            Return mFileName
-        End Get
-    End Property
+        public enum ePXFileType
+        {
+            Undefined = 0,
+            Result = 1,              // .msgf-pride.xml files
+            ResultMzId = 2,          // .mzid.gz files from MSGF+  (listed as "result" files in the .px file)
+            Raw = 3,                 // Instrument data files (typically .raw files)
+            Search = 4,              // Search engine output files, such as Mascot DAT or other output files (from analysis pipelines, such as pep.xml or prot.xml).
+            Peak = 5                 // _dta.txt or .mgf files
+        }
 
-    Public ReadOnly Property JobInfo() As clsDataPackageJobInfo
-        Get
-            Return mJobInfo
-        End Get
-    End Property
-#End Region
+        #endregion
 
-    Public Sub New(fileName As String, dataPkgJob As clsDataPackageJobInfo)
-        mFileName = fileName
-        mJobInfo = dataPkgJob
-    End Sub
+        #region "Auto-properties"
 
-    Public Sub Update(oSource As clsPXFileInfoBase)
-        Me.mFileName = oSource.mFileName
-        Me.mJobInfo = oSource.mJobInfo
-        Me.FileID = oSource.FileID
-        Me.Length = oSource.Length
-        Me.MD5Hash = oSource.MD5Hash
-    End Sub
+        public int FileID { get; set; }
+        public long Length { get; set; }
+        public string MD5Hash { get; set; }
 
-    Public Overrides Function ToString() As String
-        Return "Job " & mJobInfo.Job & ": " & mFileName
-    End Function
+        #endregion
 
-End Class
+        #region "Properties"
+
+        public string Filename
+        {
+            get { return mFileName; }
+        }
+
+        public clsDataPackageJobInfo JobInfo
+        {
+            get { return mJobInfo; }
+        }
+
+        #endregion
+
+        public clsPXFileInfoBase(string fileName, clsDataPackageJobInfo dataPkgJob)
+        {
+            mFileName = fileName;
+            mJobInfo = dataPkgJob;
+        }
+
+        public void Update(clsPXFileInfoBase oSource)
+        {
+            this.mFileName = oSource.mFileName;
+            this.mJobInfo = oSource.mJobInfo;
+            this.FileID = oSource.FileID;
+            this.Length = oSource.Length;
+            this.MD5Hash = oSource.MD5Hash;
+        }
+
+        public override string ToString()
+        {
+            return "Job " + mJobInfo.Job + ": " + mFileName;
+        }
+    }
+}

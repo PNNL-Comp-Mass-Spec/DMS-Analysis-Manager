@@ -1,36 +1,42 @@
-﻿Public Class clsResultFileContainer
+﻿using System.Collections.Generic;
 
-    ''' <summary>
-    ''' Tracks the .mgf or _dta.txt or .mzML file for the analysis job
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Property MGFFilePath As String
+namespace AnalysisManagerPRIDEConverterPlugIn
+{
+    public class clsResultFileContainer
+    {
+        /// <summary>
+        /// Tracks the .mgf or _dta.txt or .mzML file for the analysis job
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public string MGFFilePath { get; set; }
 
-    ''' <summary>
-    ''' One or more .mzid.gz files
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Property MzIDFilePaths As List(Of String)
+        /// <summary>
+        /// One or more .mzid.gz files
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public List<string> MzIDFilePaths { get; set; }
 
-    ''' <summary>
-    ''' Tracks the .pepXML.gz file for the analysis job
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Property PepXMLFile As String
+        /// <summary>
+        /// Tracks the .pepXML.gz file for the analysis job
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public string PepXMLFile { get; set; }
 
-    Public Property PrideXmlFilePath As String
+        public string PrideXmlFilePath { get; set; }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Sub New()
-        MzIDFilePaths = New List(Of String)
-    End Sub
-End Class
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <remarks></remarks>
+        public clsResultFileContainer()
+        {
+            MzIDFilePaths = new List<string>();
+        }
+    }
+}
