@@ -1,214 +1,228 @@
-'*********************************************************************************************************
-' Written by John Sandoval for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2010, Battelle Memorial Institute
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by John Sandoval for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2010, Battelle Memorial Institute
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using AnalysisManagerBase;
 
-Imports System.Collections.Generic
-Imports System.IO
-Imports System.Threading
-Imports AnalysisManagerBase
+namespace AnalysisManagerPRIDEMzXMLPlugIn
+{
+    /// <summary>
+    /// Class for running PRIDEMzXML analysis
+    /// </summary>
+    public class clsAnalysisToolRunnerPRIDEMzXML : clsAnalysisToolRunnerBase
+    {
+        #region "Module Variables"
 
-Public Class clsAnalysisToolRunnerPRIDEMzXML
-    Inherits clsAnalysisToolRunnerBase
+        protected const float PROGRESS_PCT_PRIDEMZXML_RUNNING = 5;
+        protected const float PROGRESS_PCT_START = 95;
+        protected const float PROGRESS_PCT_COMPLETE = 99;
 
-    '*********************************************************************************************************
-    'Class for running PRIDEMzXML analysis
-    '*********************************************************************************************************
+        protected clsRunDosProgram mCmdRunner;
 
-#Region "Module Variables"
-    Protected Const PROGRESS_PCT_PRIDEMZXML_RUNNING As Single = 5
-    Protected Const PROGRESS_PCT_START As Single = 95
-    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
+        #endregion
 
-    Protected mCmdRunner As clsRunDosProgram
-#End Region
+        #region "Methods"
 
-#Region "Methods"
-    ''' <summary>
-    ''' Runs MSDataFileTrimmer tool
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
+        /// <summary>
+        /// Runs MSDataFileTrimmer tool
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            //Do the base class stuff
+            if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        Dim result As CloseOutType
+            // Store the MSDataFileTrimmer version info in the database
+            if (!StoreToolVersionInfo())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Aborting since StoreToolVersionInfo returned false");
+                m_message = "Error determining MSDataFileTrimmer version";
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        'Do the base class stuff
-        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDataFileTrimmer");
 
-        ' Store the MSDataFileTrimmer version info in the database
-        If Not StoreToolVersionInfo() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-            m_message = "Error determining MSDataFileTrimmer version"
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            RegisterEvents(mCmdRunner);
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
+            if (m_DebugLevel > 4)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPRIDEMzXML.RunTool(): Enter");
+            }
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDataFileTrimmer")
+            // verify that program file exists
+            // progLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
+            string progLoc = m_mgrParams.GetParam("MSDataFileTrimmerprogloc");
+            if (!File.Exists(progLoc))
+            {
+                if (progLoc.Length == 0)
+                    progLoc = "Parameter 'MSDataFileTrimmerprogloc' not defined for this manager";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Cannot find MSDataFileTrimmer program file: " + progLoc);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        mCmdRunner = New clsRunDosProgram(m_WorkDir)
-        RegisterEvents(mCmdRunner)
-        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+            string CmdStr = null;
+            CmdStr = "/M:" + Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile"));
+            CmdStr += " /G /O:" + m_WorkDir;
+            CmdStr += " /L:" + Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt");
 
-        If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPRIDEMzXML.RunTool(): Enter")
-        End If
+            mCmdRunner.CreateNoWindow = true;
+            mCmdRunner.CacheStandardOutput = true;
+            mCmdRunner.EchoOutputToConsole = true;
 
-        ' verify that program file exists
-        ' progLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
-        Dim progLoc As String = m_mgrParams.GetParam("MSDataFileTrimmerprogloc")
-        If Not File.Exists(progLoc) Then
-            If progLoc.Length = 0 Then progLoc = "Parameter 'MSDataFileTrimmerprogloc' not defined for this manager"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find MSDataFileTrimmer program file: " & progLoc)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            mCmdRunner.WriteConsoleOutputToFile = true;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MSDataFileTrimmer_ConsoleOutput.txt");
 
-        Dim CmdStr As String
-        CmdStr = "/M:" & Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile"))
-        CmdStr &= " /G /O:" & m_WorkDir
-        CmdStr &= " /L:" & Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt")
+            if (!mCmdRunner.RunProgram(progLoc, CmdStr, "MSDataFileTrimmer", true))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running MSDataFileTrimmer, job " + m_JobNum);
 
-        With mCmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
+                // Move the source files and any results to the Failed Job folder
+                // Useful for debugging XTandem problems
+                CopyFailedResultsToArchiveFolder();
 
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MSDataFileTrimmer_ConsoleOutput.txt")
-        End With
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If Not mCmdRunner.RunProgram(progLoc, CmdStr, "MSDataFileTrimmer", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running MSDataFileTrimmer, job " & m_JobNum)
+            //Stop the job timer
+            m_StopTime = DateTime.UtcNow;
 
-            ' Move the source files and any results to the Failed Job folder
-            ' Useful for debugging XTandem problems
-            CopyFailedResultsToArchiveFolder()
+            //Add the current job data to the summary file
+            if (!UpdateSummaryFile())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                    "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            }
 
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            //Make sure objects are released
+            Thread.Sleep(500);        // 500 msec delay
+            PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
-        'Stop the job timer
-        m_StopTime = DateTime.UtcNow
+            // Override the dataset name and transfer folder path so that the results get copied to the correct location
+            base.RedefineAggregationJobDatasetAndTransferFolder();
 
-        'Add the current job data to the summary file
-        If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-        End If
+            var result = MakeResultsFolder();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                return result;
+            }
 
-        'Make sure objects are released
-        Thread.Sleep(500)        ' 500 msec delay
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
+            string[] DumFiles = null;
 
-        ' Override the dataset name and transfer folder path so that the results get copied to the correct location
-        MyBase.RedefineAggregationJobDatasetAndTransferFolder()
+            //update list of files to be deleted after run
+            DumFiles = Directory.GetFiles(m_WorkDir, "*_grouped*");
+            foreach (string FileToSave in DumFiles)
+            {
+                m_jobParams.AddResultFileToKeep(Path.GetFileName(FileToSave));
+            }
 
-        result = MakeResultsFolder()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
+            result = MoveResultFiles();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                return result;
+            }
 
-        Dim DumFiles() As String
+            result = CopyResultsFolderToServer();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                return result;
+            }
 
-        'update list of files to be deleted after run
-        DumFiles = Directory.GetFiles(m_WorkDir, "*_grouped*")
-        For Each FileToSave As String In DumFiles
-            m_jobParams.AddResultFileToKeep(Path.GetFileName(FileToSave))
-        Next
+            return CloseOutType.CLOSEOUT_SUCCESS; //ZipResult
+        }
 
-        result = MoveResultFiles()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
+        protected void CopyFailedResultsToArchiveFolder()
+        {
+            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
+                strFailedResultsFolderPath = "??Not Defined??";
 
-        result = CopyResultsFolderToServer()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
-        Return CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
 
-    End Function
+            // Try to save whatever files are in the work directory
+            string strFolderPathToArchive = null;
+            strFolderPathToArchive = string.Copy(m_WorkDir);
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
+            // Make the results folder
+            var result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the result files into the result folder
+                result = MoveResultFiles();
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Move was a success; update strFolderPathToArchive
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
 
-        Dim result As CloseOutType
+            // Copy the results folder to the Archive folder
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+        }
 
-        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        protected bool StoreToolVersionInfo()
+        {
+            string strToolVersionInfo = string.Empty;
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
 
-        ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
+            // Store paths to key files in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")));
 
-        ' Try to save whatever files are in the work directory
-        Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
 
-        ' Make the results folder
-        result = MakeResultsFolder()
-        If result = CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
-            End If
-        End If
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            UpdateStatusFile(PROGRESS_PCT_PRIDEMZXML_RUNNING);
 
-        ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+            LogProgress("PrideMzXML");
+        }
 
-
-    End Sub
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
-
-        UpdateStatusFile(PROGRESS_PCT_PRIDEMZXML_RUNNING)
-
-        LogProgress("PrideMzXML")
-
-    End Sub
-
-#End Region
-
-End Class
+        #endregion
+    }
+}

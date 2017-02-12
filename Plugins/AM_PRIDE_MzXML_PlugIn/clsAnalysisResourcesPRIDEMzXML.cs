@@ -1,48 +1,49 @@
-Option Strict On
+using System.Collections.Generic;
+using System.Linq;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.Linq
-Imports System.Collections.Generic
+namespace AnalysisManagerPRIDEMzXMLPlugIn
+{
+    public class clsAnalysisResourcesPRIDEMzXML : clsAnalysisResources
+    {
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-Public Class clsAnalysisResourcesPRIDEMzXML
-    Inherits clsAnalysisResources
+            var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
 
-    Public Overrides Function GetResources() As CloseOutType
+            foreach (string fileSpec in fileSpecList.ToList())
+            {
+                var fileSpecTerms = fileSpec.Split(':').ToList();
+                if (fileSpecTerms.Count <= 2 || !(fileSpecTerms[2].ToLower() == "copy"))
+                {
+                    m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
+                }
+            }
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting PRIDE MzXML Input file");
 
-        Dim fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(","c).ToList()
+            if (!RetrieveFile(m_jobParams.GetParam("PRIDEMzXMLInputFile"), m_jobParams.GetParam("transferFolderPath")))
+                return CloseOutType.CLOSEOUT_FAILED;
 
-        For Each fileSpec As String In fileSpecList.ToList()
-            Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
-            If fileSpecTerms.Count <= 2 OrElse Not fileSpecTerms(2).ToLower = "copy" Then
-                m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms(1))
-            End If
-        Next
+            m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"));
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting PRIDE MzXML Input file")
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
 
-        If Not RetrieveFile(m_jobParams.GetParam("PRIDEMzXMLInputFile"), _
-         m_jobParams.GetParam("transferFolderPath")) _
-        Then Return CloseOutType.CLOSEOUT_FAILED
+            Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs = null;
 
-        m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"))
+            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, out dctDataPackageJobs))
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
-
-        Dim dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo) = Nothing
-
-        If Not RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, dctDataPackageJobs) Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-End Class
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+    }
+}
