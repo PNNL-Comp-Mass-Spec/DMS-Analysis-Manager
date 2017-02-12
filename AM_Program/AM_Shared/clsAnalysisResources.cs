@@ -588,7 +588,7 @@ namespace AnalysisManagerBase
                         blnWaitingForLockFile = true;
                         dtLockFileCreated = fiLockFile.LastWriteTimeUtc;
 
-                        var debugMessage = dataFileDescription + " lock file found; will wait for file to be deleted or age; " + 
+                        var debugMessage = dataFileDescription + " lock file found; will wait for file to be deleted or age; " +
                             fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
                         clsGlobal.LogDebug(debugMessage);
                     }
@@ -722,7 +722,7 @@ namespace AnalysisManagerBase
         /// <param name="destFolder">Folder where file will be created</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        public bool CreateFastaFile(clsProteinCollectionInfo proteinCollectionInfo, string destFolder)
+        protected bool CreateFastaFile(clsProteinCollectionInfo proteinCollectionInfo, string destFolder)
         {
 
             if (m_DebugLevel >= 1)
@@ -973,7 +973,7 @@ namespace AnalysisManagerBase
                                                  GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
                         strFastaFileMsg += "; file created: " +
-                            GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " + 
+                            GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " +
                             fiFastaFile.CreationTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
                         strFastaFileMsg += "; file size: " + fiFastaFile.Length.ToString() + " bytes";
@@ -1253,7 +1253,7 @@ namespace AnalysisManagerBase
         /// <param name="dataPackageID">Data Package ID</param>
         /// <returns>Storage path if successful, empty path if an error or unknown data package</returns>
         /// <remarks></remarks>
-        public static string GetDataPackageStoragePath(string connectionString, int dataPackageID)
+        protected static string GetDataPackageStoragePath(string connectionString, int dataPackageID)
         {
 
             // Requests Dataset information from a data package
@@ -1590,7 +1590,7 @@ namespace AnalysisManagerBase
                 // Report minutes
                 return dtInterval.TotalMinutes.ToString("0.00") + " minutes";
             }
-            
+
             // Report seconds
             return dtInterval.TotalSeconds.ToString("0.0") + " seconds";
         }
@@ -1973,7 +1973,8 @@ namespace AnalysisManagerBase
 
             var stepTool = jobParams.GetJobParameter("StepTool", "Unknown_Tool");
 
-            var udtHPCOptions = new udtHPCOptionsType {
+            var udtHPCOptions = new udtHPCOptionsType
+            {
                 HeadNode = jobParams.GetJobParameter("HPCHeadNode", "")
             };
 
@@ -3746,7 +3747,7 @@ namespace AnalysisManagerBase
 
                     var legacyFastaFileBaseName = string.Empty;
 
-                    if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) && 
+                    if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) &&
                         proteinCollectionInfo.LegacyFastaName.ToLower() != "na")
                     {
                         legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
@@ -3805,7 +3806,8 @@ namespace AnalysisManagerBase
             {
                 LogMessage("Retrieving parameter file " + paramFileName);
 
-                ParFileGen = new ParamFileGenerator.MakeParams.clsMakeParameterFile {
+                ParFileGen = new ParamFileGenerator.MakeParams.clsMakeParameterFile
+                {
                     TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
                 };
 
@@ -4124,7 +4126,7 @@ namespace AnalysisManagerBase
                     LogMessage(m_message + commentSuffix);
                     return false;
                 }
-                
+
                 // None of the spectra are centroided; unable to process with MSGF+
                 m_message = SPECTRA_ARE_NOT_CENTROIDED + " with MSGF+";
                 LogMessage(m_message + commentSuffix, 0, true);
@@ -4315,7 +4317,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-        }        
+        }
 
         private void m_FastaTools_FileGenerationCompleted(string FullOutputPath)
         {
