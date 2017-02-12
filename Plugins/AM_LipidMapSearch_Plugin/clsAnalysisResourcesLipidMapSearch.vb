@@ -105,7 +105,7 @@ Public Class clsAnalysisResourcesLipidMapSearch
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the dataset's .Raw file and DeconTools _peaks.txt file")
         End If
 
-        Return RetrieveDatasetAndPeaksFile(m_DatasetName, strDatasetFolder, strDatasetFolderArchive)
+        Return RetrieveDatasetAndPeaksFile(DatasetName, strDatasetFolder, strDatasetFolderArchive)
 
     End Function
 

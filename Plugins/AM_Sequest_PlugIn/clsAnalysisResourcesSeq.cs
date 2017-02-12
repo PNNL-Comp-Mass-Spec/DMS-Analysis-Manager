@@ -203,7 +203,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 var concatenatedTempFilePath = Path.Combine(diSourceFolder.FullName,
-                    m_DatasetName + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE);
+                    DatasetName + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE);
 
                 var fiTempOutFile = new FileInfo(concatenatedTempFilePath);
                 if (!fiTempOutFile.Exists)

@@ -72,7 +72,7 @@ Public Class clsAnalysisResourcesDtaRefinery
         End If
 
         ' Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
-        Dim strCDTAPath As String = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
+        Dim strCDTAPath As String = Path.Combine(m_WorkingDir, DatasetName & "_dta.txt")
         Const blnReplaceSourceFile = True
         Const blnDeleteSourceFileIfUpdated = True
 
@@ -111,13 +111,13 @@ Public Class clsAnalysisResourcesDtaRefinery
         m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
         m_jobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
         m_jobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
-        m_jobParams.AddResultFileExtensionToSkip(m_DatasetName & ".xml")
+        m_jobParams.AddResultFileExtensionToSkip(DatasetName & ".xml")
 
         m_jobParams.AddResultFileToSkip(strParamFileName)
         m_jobParams.AddResultFileToSkip(Path.GetFileNameWithoutExtension(strParamFileName) & "_ModDefs.txt")
         m_jobParams.AddResultFileToSkip("Mass_Correction_Tags.txt")
 
-        m_jobParams.AddResultFileToKeep(m_DatasetName & "_dta.zip")
+        m_jobParams.AddResultFileToKeep(DatasetName & "_dta.zip")
 
         ' Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         Dim strErrorMessage As String = Nothing

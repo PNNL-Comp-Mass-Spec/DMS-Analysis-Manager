@@ -62,15 +62,15 @@ Public Class clsAnalysisResourcesMSAlignQuant
 
                     ' Confirm that the .Raw or .D folder was actually copied locally
                     If strRawDataType.ToLower() = RAW_DATA_TYPE_DOT_RAW_FILES Then
-                        If Not File.Exists(Path.Combine(m_WorkingDir, m_DatasetName & DOT_RAW_EXTENSION)) Then
+                        If Not File.Exists(Path.Combine(m_WorkingDir, DatasetName & DOT_RAW_EXTENSION)) Then
                             m_message = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error"
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
                             Return CloseOutType.CLOSEOUT_FAILED
                         End If
-                        m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)	 'Raw file
+                        m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)  'Raw file
 
                     ElseIf strRawDataType.ToLower() = RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
-                        If Not Directory.Exists(Path.Combine(m_WorkingDir, m_DatasetName & DOT_D_EXTENSION)) Then
+                        If Not Directory.Exists(Path.Combine(m_WorkingDir, DatasetName & DOT_D_EXTENSION)) Then
                             m_message = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error"
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsDtaGenResources.GetResources: " & m_message)
                             Return CloseOutType.CLOSEOUT_FAILED

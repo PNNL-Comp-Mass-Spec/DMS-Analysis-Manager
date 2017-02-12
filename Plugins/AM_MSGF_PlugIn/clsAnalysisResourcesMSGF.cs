@@ -197,7 +197,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _syn.txt file
-            fileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, m_DatasetName);
+            fileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
                 blnSuccess = FindAndRetrievePHRPDataFile(ref fileToGet, "");
@@ -210,7 +210,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _fht.txt file
-            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName);
+            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
                 blnSuccess = FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath);
@@ -222,7 +222,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _ResultToSeqMap.txt file
-            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName);
+            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
                 blnSuccess = FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath);
@@ -234,7 +234,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _SeqToProteinMap.txt file
-            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, m_DatasetName);
+            fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
                 blnSuccess = FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath);
@@ -246,7 +246,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _PepToProtMapMTS.txt file
-            fileToGet = clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, m_DatasetName);
+            fileToGet = clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
                 // We're passing a dummy syn file name to FindAndRetrievePHRPDataFile
@@ -419,7 +419,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
 
                     // Possibly unzip the .mzXML file
-                    var fiMzXMLFile = new FileInfo(Path.Combine(m_WorkingDir, m_DatasetName + DOT_MZXML_EXTENSION + DOT_GZ_EXTENSION));
+                    var fiMzXMLFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + DOT_MZXML_EXTENSION + DOT_GZ_EXTENSION));
                     if (fiMzXMLFile.Exists)
                     {
                         m_jobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION);

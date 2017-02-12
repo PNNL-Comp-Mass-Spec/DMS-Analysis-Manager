@@ -55,7 +55,7 @@ Public Class clsAnalysisResourcesMASIC
 
         If String.Compare(RawDataType, RAW_DATA_TYPE_DOT_RAW_FILES, True) = 0 AndAlso toolName.ToLower().StartsWith("MASIC_Finnigan".ToLower()) Then
 
-            Dim strRawFileName = m_DatasetName & ".raw"
+            Dim strRawFileName = DatasetName & ".raw"
             Dim strInputFilePath = ResolveStoragePath(m_WorkingDir, strRawFileName)
 
             If String.IsNullOrWhiteSpace(strInputFilePath) Then

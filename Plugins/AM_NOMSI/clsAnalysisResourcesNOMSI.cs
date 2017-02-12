@@ -63,7 +63,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 // Retrieve the zip file that has the XML files from the Bruker_Data_Analysis step
                 currentTask = "Retrieve the Bruker_Data_Analysis _scans.zip file";
-                var fileToGet = m_DatasetName + "_scans.zip";
+                var fileToGet = DatasetName + "_scans.zip";
 
                 if (!FindAndRetrieveMiscFiles(fileToGet, false))
                 {

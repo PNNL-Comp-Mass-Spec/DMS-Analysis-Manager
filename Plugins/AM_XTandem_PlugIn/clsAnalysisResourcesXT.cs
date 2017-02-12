@@ -50,7 +50,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
             // X!Tandem uses this information to determine the scan number
-            string strCDTAPath = Path.Combine(m_WorkingDir, m_DatasetName + "_dta.txt");
+            string strCDTAPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
             const bool blnReplaceSourceFile = true;
             const bool blnDeleteSourceFileIfUpdated = true;
 
@@ -67,7 +67,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // If the _dta.txt file is over 2 GB in size, then condense it
 
-            if (!ValidateDTATextFileSize(m_WorkingDir, m_DatasetName + "_dta.txt"))
+            if (!ValidateDTATextFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
             {
                 //Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -179,9 +179,9 @@ namespace AnalysisManagerXTandemPlugIn
             string WorkingDir = m_mgrParams.GetParam("WorkDir");
             string OrganismName = m_jobParams.GetParam("OrganismName");
             string ParamFilePath = Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"));
-            string SpectrumFilePath = Path.Combine(WorkingDir, m_DatasetName + "_dta.txt");
+            string SpectrumFilePath = Path.Combine(WorkingDir, DatasetName + "_dta.txt");
             string TaxonomyFilePath = Path.Combine(WorkingDir, "taxonomy.xml");
-            string OutputFilePath = Path.Combine(WorkingDir, m_DatasetName + "_xt.xml");
+            string OutputFilePath = Path.Combine(WorkingDir, DatasetName + "_xt.xml");
 
             //make input file
             //start by adding the contents of the parameter file.

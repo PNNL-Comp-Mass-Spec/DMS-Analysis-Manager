@@ -189,7 +189,7 @@ Public Class clsAnalysisResourcesDecon2ls
             ' Gets the Decon2LS file type based on the input data type
             Dim eRawDataType = GetRawDataType(rawDataTypeName)
 
-            Dim datasetFilePath = clsAnalysisToolRunnerDecon2ls.GetInputFilePath(m_WorkingDir, m_DatasetName, eRawDataType)
+            Dim datasetFilePath = clsAnalysisToolRunnerDecon2ls.GetInputFilePath(m_WorkingDir, DatasetName, eRawDataType)
             Dim success As Boolean
 
             Select Case eRawDataType

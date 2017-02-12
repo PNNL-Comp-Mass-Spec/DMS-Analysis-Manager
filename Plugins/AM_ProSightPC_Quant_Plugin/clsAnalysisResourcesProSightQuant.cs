@@ -83,18 +83,18 @@ namespace AnalysisManagerProSightQuantPlugIn
                         // Confirm that the .Raw or .D folder was actually copied locally
                         if (strRawDataType.ToLower() == RAW_DATA_TYPE_DOT_RAW_FILES)
                         {
-                            if (!File.Exists(Path.Combine(m_WorkingDir, m_DatasetName + DOT_RAW_EXTENSION)))
+                            if (!File.Exists(Path.Combine(m_WorkingDir, DatasetName + DOT_RAW_EXTENSION)))
                             {
                                 m_message = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error";
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                     "clsDtaGenResources.GetResources: " + m_message);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
-                            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);  //Raw file
+                            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);  //Raw file
                         }
                         else if (strRawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                         {
-                            if (!Directory.Exists(Path.Combine(m_WorkingDir, m_DatasetName + DOT_D_EXTENSION)))
+                            if (!Directory.Exists(Path.Combine(m_WorkingDir, DatasetName + DOT_D_EXTENSION)))
                             {
                                 m_message = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error";
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,

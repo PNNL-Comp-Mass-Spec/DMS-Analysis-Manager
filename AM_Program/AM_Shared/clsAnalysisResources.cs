@@ -218,7 +218,16 @@ namespace AnalysisManagerBase
         protected IMgrParams m_mgrParams;
         protected string m_WorkingDir;
         protected int m_JobNum;
-        protected string m_DatasetName;
+
+        /// <summary>
+        /// Dataset name
+        /// </summary>
+        /// <remarks>
+        /// Update the dataset name using property DatasetName 
+        /// because we also need to propogate that change 
+        /// into m_FolderSearch and m_FileSearch
+        /// </remarks>
+        private string m_DatasetName;
 
         protected string m_MgrName;
 
@@ -267,8 +276,27 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
-        public string DatasetName => m_DatasetName;
+        /// <summary>
+        /// Dataset name
+        /// </summary>
+        /// <remarks>Also updates m_FolderSearch and m_FileSearch</remarks>
+        public string DatasetName
+        {
+            get
+            {
+                return m_DatasetName;
+            }
+            set
+            {
+                m_DatasetName = value;
 
+                if (m_FolderSearch != null)
+                    m_FolderSearch.DatasetName = m_DatasetName;
+
+                if (m_FileSearch != null)
+                    m_FileSearch.DatasetName = m_DatasetName;
+            }
+        }
         public short DebugLevel => m_DebugLevel;
 
         public bool MyEMSLSearchDisabled
@@ -352,7 +380,7 @@ namespace AnalysisManagerBase
                 int.TryParse(jobNum, out m_JobNum);
             }
 
-            m_DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum");
+            DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum");
 
             InitFileTools(m_MgrName, m_DebugLevel);
 
@@ -382,14 +410,16 @@ namespace AnalysisManagerBase
 
             var myEmslAvailable = m_mgrParams.GetParam("MyEmslAvailable", true);
 
-            m_FolderSearch = new clsFolderSearch(m_FileCopyUtilities, m_jobParams, m_MyEMSLUtilities, m_DebugLevel, m_AuroraAvailable);
+            m_FolderSearch = new clsFolderSearch(
+                m_FileCopyUtilities, m_jobParams, m_MyEMSLUtilities,
+                m_DatasetName, m_DebugLevel, m_AuroraAvailable);
             RegisterEvents(m_FolderSearch);
 
             m_FolderSearch.MyEMSLSearchDisabled = m_MyEMSLSearchDisabled || !myEmslAvailable;
 
             m_FileSearch = new clsFileSearch(
                 m_FileCopyUtilities, m_FolderSearch, m_MyEMSLUtilities,
-                m_mgrParams, m_jobParams, m_DebugLevel, m_WorkingDir, m_AuroraAvailable);
+                m_mgrParams, m_jobParams, m_DatasetName, m_DebugLevel, m_WorkingDir, m_AuroraAvailable);
 
             RegisterEvents(m_FileSearch);
 
@@ -2833,7 +2863,7 @@ namespace AnalysisManagerBase
             }
 
             m_jobParams.AddDatasetInfo(dataPkgJob.Dataset, dataPkgJob.DatasetID);
-            m_DatasetName = string.Copy(dataPkgJob.Dataset);
+            DatasetName = string.Copy(dataPkgJob.Dataset);
 
             m_jobParams.AddAdditionalParameter("JobParameters", "DatasetNum", dataPkgJob.Dataset);
             m_jobParams.AddAdditionalParameter("JobParameters", "DatasetID", dataPkgJob.DatasetID.ToString());

@@ -121,7 +121,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return false;
             }
 
-            var diTransferFolder = new DirectoryInfo(Path.Combine(transferFolderPath, m_DatasetName, resultsFolderName));
+            var diTransferFolder = new DirectoryInfo(Path.Combine(transferFolderPath, DatasetName, resultsFolderName));
             if (!diTransferFolder.Exists)
             {
                 // This is not an error -- it just means there are no existing MSGF+ results to use
@@ -129,7 +129,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             // Look for the required files in the transfer folder
-            var resultsFileName = m_DatasetName + clsAnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX + ".gz";
+            var resultsFileName = DatasetName + clsAnalysisToolRunnerMzRefinery.MSGFPLUS_MZID_SUFFIX + ".gz";
             var fiMSGFPlusResults = new FileInfo(Path.Combine(diTransferFolder.FullName, resultsFileName));
 
             if (!fiMSGFPlusResults.Exists)

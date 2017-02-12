@@ -72,7 +72,7 @@ Public Class clsAnalysisResourcesOM
         m_JobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
         m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
         m_JobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
-        m_jobParams.AddResultFileExtensionToSkip(m_DatasetName & ".xml")
+        m_jobParams.AddResultFileExtensionToSkip(DatasetName & ".xml")
 
         ' set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
         Dim errorMessage As String = String.Empty
@@ -143,7 +143,7 @@ Public Class clsAnalysisResourcesOM
 
         Try
             ' Convert the _DTA.txt file to a DTA .XML file
-            SourceFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
+            SourceFilePath = Path.Combine(m_WorkingDir, DatasetName & "_dta.txt")
 
             objDtaConverter = New DtaTextConverter.clsDtaTextToDtaXML
 
@@ -181,11 +181,11 @@ Public Class clsAnalysisResourcesOM
         Dim ParamFilePath As String = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"))
 
         Dim SearchSettings As String = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-        Dim MSInfilename As String = Path.Combine(m_WorkingDir, m_DatasetName & ".xml")
-        Dim MSOmxOutFilename As String = Path.Combine(m_WorkingDir, m_DatasetName & "_om.omx")
-        Dim MSOmxLargeOutFilename As String = Path.Combine(m_WorkingDir, m_DatasetName & "_om_large.omx")
-        m_jobParams.AddResultFileExtensionToSkip(m_DatasetName & "_om_large.omx")
-        Dim MSCsvOutFilename As String = Path.Combine(m_WorkingDir, m_DatasetName & "_om.csv")
+        Dim MSInfilename As String = Path.Combine(m_WorkingDir, DatasetName & ".xml")
+        Dim MSOmxOutFilename As String = Path.Combine(m_WorkingDir, DatasetName & "_om.omx")
+        Dim MSOmxLargeOutFilename As String = Path.Combine(m_WorkingDir, DatasetName & "_om_large.omx")
+        m_jobParams.AddResultFileExtensionToSkip(DatasetName & "_om_large.omx")
+        Dim MSCsvOutFilename As String = Path.Combine(m_WorkingDir, DatasetName & "_om.csv")
 
         Dim strOutputFilePath As String
 

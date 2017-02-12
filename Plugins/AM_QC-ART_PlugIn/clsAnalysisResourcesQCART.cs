@@ -141,7 +141,7 @@ namespace AnalysisManagerQCARTPlugin
                 // This list contains the dataset names for which we need to obtain QC Metric values (P_2C, MS1_2B, etc.)
                 var datasetNamesToRetrieveMetrics = new SortedSet<string>
                 {
-                    m_DatasetName
+                    DatasetName
                 };
 
                 // Also need to obtain the QC Metric values for the baseline datasets 
@@ -155,7 +155,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Cache the current dataset and job info
                 var currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-                currentTask = "Retrieve " + REPORTER_IONS_FILE_SUFFIX + " file for " + m_DatasetName;
+                currentTask = "Retrieve " + REPORTER_IONS_FILE_SUFFIX + " file for " + DatasetName;
 
                 success = RetrieveReporterIonsFile(currentDatasetAndJobInfo);
                 if (!success)
@@ -263,13 +263,13 @@ namespace AnalysisManagerQCARTPlugin
                                 break;
 
                             case "TARGET_DATASET_NAME":
-                                customValue = m_DatasetName;
+                                customValue = DatasetName;
                                 break;
 
                             case "TARGET_DATASET_FRACTION":
                                 if (mTargetDatasetFraction == 0)
                                 {
-                                    var errorMsg = "Error in CustomizeQCRScript: SCX fraction for dataset " + m_DatasetName + " is 0";
+                                    var errorMsg = "Error in CustomizeQCRScript: SCX fraction for dataset " + DatasetName + " is 0";
                                     LogError(errorMsg, errorMsg + "; should have been determined in RetrieveQCMetricsFromDB");
                                     return false;
                                 }
@@ -317,7 +317,7 @@ namespace AnalysisManagerQCARTPlugin
                                 break;
 
                             case "TARGET_DATASET_RESULTS":
-                                customValue = m_DatasetName + QCART_RESULTS_FILE_SUFFIX;
+                                customValue = DatasetName + QCART_RESULTS_FILE_SUFFIX;
                                 break;
 
                             default:
@@ -904,7 +904,7 @@ namespace AnalysisManagerQCARTPlugin
                         {
                             dataValues[fractionColIndex] = fractionNumber.ToString();
 
-                            if (clsGlobal.IsMatch(datasetName, m_DatasetName))
+                            if (clsGlobal.IsMatch(datasetName, DatasetName))
                                 mTargetDatasetFraction = fractionNumber;
                         }
 
@@ -972,7 +972,7 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                if (!clsGlobal.IsMatch(m_DatasetName, targetDatasetName))
+                if (!clsGlobal.IsMatch(DatasetName, targetDatasetName))
                 {
                     var warningMessage = "Warning: SourceJob2Dataset for job " + m_JobNum + " does not match the dataset for this job; it is instead " + targetDatasetName;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, warningMessage);
@@ -1001,7 +1001,7 @@ namespace AnalysisManagerQCARTPlugin
                     m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", dataPkgJob.ResultsFolderName);
                 }
 
-                var reporterIonsFileName = m_DatasetName + REPORTER_IONS_FILE_SUFFIX;
+                var reporterIonsFileName = DatasetName + REPORTER_IONS_FILE_SUFFIX;
 
                 var success = FindAndRetrieveMiscFiles(reporterIonsFileName, false);
                 if (!success)

@@ -406,9 +406,9 @@ Public Class clsAnalysisResourcesExtraction
                         Return CloseOutType.CLOSEOUT_FAILED
                     End If
                 Else
-                    strBaseName = m_DatasetName & "_msgfplus" & suffixToAdd
+                    strBaseName = DatasetName & "_msgfplus" & suffixToAdd
 
-                    fileToGet = m_DatasetName & "_msgfplus" & suffixToAdd & ".tsv"
+                    fileToGet = DatasetName & "_msgfplus" & suffixToAdd & ".tsv"
                     currentStep = "Retrieving " & fileToGet
 
                     SourceFolderPath = FindDataFile(fileToGet, False, False)
@@ -456,21 +456,21 @@ Public Class clsAnalysisResourcesExtraction
 
                 ' Manually add several files to skip
                 If splitFastaEnabled Then
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus_Part" & iteration & ".txt")
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus_Part" & iteration & ".mzid")
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus_Part" & iteration & ".tsv")
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb_Part" & iteration & ".txt")
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb_Part" & iteration & ".tsv")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfplus_Part" & iteration & ".txt")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfplus_Part" & iteration & ".mzid")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfplus_Part" & iteration & ".tsv")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfdb_Part" & iteration & ".txt")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfdb_Part" & iteration & ".tsv")
                 Else
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.txt")
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.mzid")
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfplus.tsv")
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.txt")
-                    m_jobParams.AddResultFileToSkip(m_DatasetName & "_msgfdb.tsv")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfplus.txt")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfplus.mzid")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfplus.tsv")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfdb.txt")
+                    m_jobParams.AddResultFileToSkip(DatasetName & "_msgfdb.tsv")
                 End If
 
                 ' Get the peptide to protein mapping file
-                fileToGet = m_DatasetName & "_msgfplus" & suffixToAdd & "_PepToProtMap.txt"
+                fileToGet = DatasetName & "_msgfplus" & suffixToAdd & "_PepToProtMap.txt"
                 currentStep = "Retrieving " & fileToGet
 
                 If Not FindAndRetrievePHRPDataFile(fileToGet, "") Then
@@ -546,7 +546,7 @@ Public Class clsAnalysisResourcesExtraction
 
         Dim fileToGet As String
 
-        fileToGet = m_DatasetName & "_IcTsv.zip"
+        fileToGet = DatasetName & "_IcTsv.zip"
 
         If Not FindAndRetrieveMiscFiles(fileToGet, True) Then
             'Errors were reported in function call, so just return

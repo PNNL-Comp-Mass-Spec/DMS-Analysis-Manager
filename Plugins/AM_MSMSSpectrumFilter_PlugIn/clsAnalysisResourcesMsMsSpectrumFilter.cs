@@ -45,7 +45,7 @@ namespace MSMSSpectrumFilterAM
             }
 
             // Add the _dta.txt file to the list of extensions to delete after the tool finishes
-            m_jobParams.AddResultFileExtensionToSkip(m_DatasetName + "_dta.txt");
+            m_jobParams.AddResultFileExtensionToSkip(DatasetName + "_dta.txt");
             //Unzipped, concatenated DTA
 
             // Add the _Dta.zip file to the list of files to move to the results folder
@@ -193,7 +193,7 @@ namespace MSMSSpectrumFilterAM
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Dataset folder not found: " + strDatasetFolderPath);
                 }
 
-                var lstFiles = diDatasetFolder.GetFiles(m_DatasetName + "_ScanStats.txt", SearchOption.AllDirectories).ToList();
+                var lstFiles = diDatasetFolder.GetFiles(DatasetName + "_ScanStats.txt", SearchOption.AllDirectories).ToList();
 
                 if (lstFiles.Count == 0)
                 {

@@ -137,7 +137,7 @@ Public Class clsAnalysisResourcesLCMSFF
 
         Dim SrcFilePath As String = Path.Combine(m_WorkingDir, strLCMSFFIniFileName)
         Dim TargetFilePath As String = Path.Combine(m_WorkingDir, strLCMSFFIniFileName & "_new")
-        Dim IsosFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & ISOS_FILE_SUFFIX)
+        Dim IsosFilePath As String = Path.Combine(m_WorkingDir, DatasetName & ISOS_FILE_SUFFIX)
 
         Dim strLineIn As String
         Dim strLineInLCase As String

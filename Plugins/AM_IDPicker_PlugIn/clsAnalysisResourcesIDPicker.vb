@@ -49,7 +49,7 @@ Public Class clsAnalysisResourcesIDPicker
         Dim blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", False)
 
         ' Retrieve the PSM result files, PHRP files, and MSGF file
-        If Not GetInputFiles(m_DatasetName, strParamFileName, result) Then
+        If Not GetInputFiles(DatasetName, strParamFileName, result) Then
             If result = CloseOutType.CLOSEOUT_SUCCESS Then result = CloseOutType.CLOSEOUT_FAILED
             Return result
         End If
@@ -325,7 +325,7 @@ Public Class clsAnalysisResourcesIDPicker
         While retrievalAttempts < 2
 
             retrievalAttempts += 1
-            If Not RetrieveMASICFiles(m_DatasetName) Then
+            If Not RetrieveMASICFiles(DatasetName) Then
                 Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 

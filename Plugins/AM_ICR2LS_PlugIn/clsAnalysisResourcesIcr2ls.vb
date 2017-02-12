@@ -62,8 +62,8 @@ Public Class clsAnalysisResourcesIcr2ls
             Dim strRemoteDatasetFolderPath = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"))
 
             If RawDataType.ToLower() = RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
-                strLocalDatasetFolderPath = Path.Combine(m_WorkingDir, m_DatasetName & ".d")
-                strRemoteDatasetFolderPath = Path.Combine(strRemoteDatasetFolderPath, m_DatasetName & ".d")
+                strLocalDatasetFolderPath = Path.Combine(m_WorkingDir, DatasetName & ".d")
+                strRemoteDatasetFolderPath = Path.Combine(strRemoteDatasetFolderPath, DatasetName & ".d")
             Else
                 strLocalDatasetFolderPath = String.Copy(m_WorkingDir)
             End If
@@ -208,7 +208,7 @@ Public Class clsAnalysisResourcesIcr2ls
                 Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
             End If
 
-            Dim pekTempFilePath = Path.Combine(diSourceFolder.FullName, m_DatasetName & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE)
+            Dim pekTempFilePath = Path.Combine(diSourceFolder.FullName, DatasetName & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE)
 
             Dim fiTempPekFile = New FileInfo(pekTempFilePath)
             If Not fiTempPekFile.Exists Then

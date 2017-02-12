@@ -79,10 +79,10 @@ Public Class clsAnalysisResourcesIN
 
         'Determine if this is parallelized inspect job
         If String.IsNullOrEmpty(CloneStepRenum) Then
-            DtaResultFileName = m_DatasetName & "_dta.zip"
+            DtaResultFileName = DatasetName & "_dta.zip"
         Else
             parallelZipNum = CInt(stepNum) - CInt(CloneStepRenum) + 1
-            DtaResultFileName = m_DatasetName & "_" & CStr(parallelZipNum) & "_dta.txt"
+            DtaResultFileName = DatasetName & "_" & CStr(parallelZipNum) & "_dta.txt"
             isParallelized = True
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing parallelized Inspect segment " & parallelZipNum.ToString)
         End If

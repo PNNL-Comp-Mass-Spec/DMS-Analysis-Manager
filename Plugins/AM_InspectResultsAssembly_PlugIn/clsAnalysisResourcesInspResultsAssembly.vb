@@ -28,8 +28,8 @@ Public Class clsAnalysisResourcesInspResultsAssembly
 
         Dim numClonedSteps As String
 
-        Dim transferFolderName As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_DatasetName)
-        Dim zippedResultName As String = m_DatasetName & "_inspect.zip"
+        Dim transferFolderName As String = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName)
+        Dim zippedResultName As String = DatasetName & "_inspect.zip"
         Const searchLogResultName = "InspectSearchLog.txt"
 
         transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"))

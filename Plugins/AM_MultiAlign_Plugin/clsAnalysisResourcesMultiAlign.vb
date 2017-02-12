@@ -86,7 +86,7 @@ Public Class clsAnalysisResourcesMultiAlign
         Const INPUT_FILENAME = "input.txt"
 
         Dim TargetFilePath As String = Path.Combine(m_WorkingDir, INPUT_FILENAME)
-        Dim DatasetFilePath As String = Path.Combine(m_WorkingDir, m_DatasetName & strInputFileExtension)
+        Dim DatasetFilePath As String = Path.Combine(m_WorkingDir, DatasetName & strInputFileExtension)
 
         Dim blnSuccess = True
 

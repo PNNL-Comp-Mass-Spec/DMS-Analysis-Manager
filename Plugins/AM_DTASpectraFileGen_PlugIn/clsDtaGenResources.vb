@@ -108,10 +108,10 @@ Public Class clsDtaGenResources
 
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid")
 
-                        fileToFind = m_DatasetName & "_profile.txt"
+                        fileToFind = DatasetName & "_profile.txt"
                         blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir)
 
-                        fileToFind = m_DatasetName & "_DeconMSn_log.txt"
+                        fileToFind = DatasetName & "_DeconMSn_log.txt"
                         blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir)
                     End If
 

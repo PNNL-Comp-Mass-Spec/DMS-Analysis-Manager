@@ -85,7 +85,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 foreach (var suffix in fileSuffixes)
                 {
-                    var sourceFile = new FileInfo(Path.Combine(transferFolderPath, m_DatasetName + suffix));
+                    var sourceFile = new FileInfo(Path.Combine(transferFolderPath, DatasetName + suffix));
 
                     if (!sourceFile.Exists)
                     {
@@ -230,7 +230,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         {
             try
             {
-                var fileToGet = m_DatasetName + DOT_MS1FT_EXTENSION;
+                var fileToGet = DatasetName + DOT_MS1FT_EXTENSION;
 
                 if (!FindAndRetrieveMiscFiles(fileToGet, false))
                 {

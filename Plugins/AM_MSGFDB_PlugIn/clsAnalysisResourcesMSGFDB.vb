@@ -213,7 +213,7 @@ Public Class clsAnalysisResourcesMSGFDB
         If blnSuccess Then
             ' Open the ScanStats file and read the header line to see if column ScanTypeName is present
             ' Also confirm that there are MSn spectra labeled as HCD, CID, or ETD
-            Dim strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+            Dim strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, DatasetName & "_ScanStats.txt")
 
             Dim blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsOrExFilePath)
 
@@ -226,7 +226,7 @@ Public Class clsAnalysisResourcesMSGFDB
                 End If
 
                 If blnSuccess Then
-                    strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStatsEx.txt")
+                    strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, DatasetName & "_ScanStatsEx.txt")
                 End If
             End If
 
@@ -260,7 +260,7 @@ Public Class clsAnalysisResourcesMSGFDB
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Dim strScanStatsFilePath = Path.Combine(m_WorkingDir, m_DatasetName & "_ScanStats.txt")
+        Dim strScanStatsFilePath = Path.Combine(m_WorkingDir, DatasetName & "_ScanStats.txt")
         Dim detailedScanTypesDefinedNewFile = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath)
 
         If Not detailedScanTypesDefinedNewFile Then
@@ -279,19 +279,19 @@ Public Class clsAnalysisResourcesMSGFDB
     Private Function ValidateCDTAFile() As CloseOutType
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
-        If Not ValidateCDTAFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
+        If Not ValidateCDTAFileSize(m_WorkingDir, DatasetName & "_dta.txt") Then
             ' Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Remove any spectra from the _DTA.txt file with fewer than 3 ions
-        If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, m_DatasetName & "_dta.txt") Then
+        If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName & "_dta.txt") Then
             ' Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Make sure that the spectra are centroided
-        Dim strCDTAPath = Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt")
+        Dim strCDTAPath = Path.Combine(m_WorkingDir, DatasetName & "_dta.txt")
 
         LogMessage("Validating that the _dta.txt file has centroided spectra")
 

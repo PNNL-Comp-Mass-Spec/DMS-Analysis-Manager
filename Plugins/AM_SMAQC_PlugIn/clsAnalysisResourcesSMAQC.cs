@@ -214,13 +214,13 @@ namespace AnalysisManagerSMAQCPlugIn
 
             string strSynopsisFileName = null;
 
-            strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, m_DatasetName);
+            strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, DatasetName);
             lstFileNamesToGet.Add(strSynopsisFileName);
 
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, m_DatasetName));
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, m_DatasetName));
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, m_DatasetName));
-            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, m_DatasetName));
+            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, DatasetName));
+            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, DatasetName));
+            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, DatasetName));
+            lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, DatasetName));
             lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(strSynopsisFileName));
 
             foreach (string FileToGet in lstFileNamesToGet)

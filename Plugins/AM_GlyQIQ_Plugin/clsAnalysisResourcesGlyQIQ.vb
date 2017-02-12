@@ -122,7 +122,7 @@ Public Class clsAnalysisResourcesGlyQIQ
         Try
 
             ' Define the output file name
-            mGlyQIQParams.ConsoleOperatingParametersFileName = GLYQIQ_PARAMS_FILE_PREFIX & m_DatasetName & ".txt"
+            mGlyQIQParams.ConsoleOperatingParametersFileName = GLYQIQ_PARAMS_FILE_PREFIX & DatasetName & ".txt"
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the Operating Parameters file, " & mGlyQIQParams.ConsoleOperatingParametersFileName)
 
             For Each workingDirectory In mGlyQIQParams.WorkingParameterFolders
@@ -186,7 +186,7 @@ Public Class clsAnalysisResourcesGlyQIQ
                     swOutFile.Write(clsGlobal.PossiblyQuotePath(progLoc))
 
                     swOutFile.Write(" " & """" & m_WorkingDir & """")
-                    swOutFile.Write(" " & """" & m_DatasetName & """")
+                    swOutFile.Write(" " & """" & DatasetName & """")
                     swOutFile.Write(" " & """" & "raw" & """")
 
                     Dim targetsFile As FileInfo = Nothing

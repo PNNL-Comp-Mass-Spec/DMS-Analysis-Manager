@@ -61,13 +61,13 @@ Public Class clsAnalysisResourcesMODa
         End If
 
         ' If the _dta.txt file is over 2 GB in size, then condense it
-        If Not ValidateCDTAFileSize(m_WorkingDir, m_DatasetName & "_dta.txt") Then
+        If Not ValidateCDTAFileSize(m_WorkingDir, DatasetName & "_dta.txt") Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Remove any spectra from the _DTA.txt file with fewer than 3 ions
-        If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, m_DatasetName & "_dta.txt") Then
+        If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName & "_dta.txt") Then
             'Errors were reported in function call, so just return
             Return CloseOutType.CLOSEOUT_FAILED
         End If
@@ -97,7 +97,7 @@ Public Class clsAnalysisResourcesMODa
             mDTAtoMGF.CreateIndexFile = True
 
             ' Convert the _dta.txt file for this dataset
-            Dim fiCDTAFile As FileInfo = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & "_dta.txt"))
+            Dim fiCDTAFile As FileInfo = New FileInfo(Path.Combine(m_WorkingDir, DatasetName & "_dta.txt"))
 
             If Not fiCDTAFile.Exists Then
                 m_message = "_dta.txt file not found; cannot convert to .mgf"
@@ -122,7 +122,7 @@ Public Class clsAnalysisResourcesMODa
             PRISM.Processes.clsProgRunner.GarbageCollectNow()
 
             Dim fiNewMGFFile As FileInfo
-            fiNewMGFFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & ".mgf"))
+            fiNewMGFFile = New FileInfo(Path.Combine(m_WorkingDir, DatasetName & ".mgf"))
 
             If Not fiNewMGFFile.Exists Then
                 ' MGF file was not created
