@@ -1,701 +1,778 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 01/30/2015
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports AnalysisManagerBase
-Imports System.IO
-Imports System.Text.RegularExpressions
-Imports System.Runtime.InteropServices
-Imports System.Text
-Imports System.Threading
-Imports PRISM.Processes
-
-Public Class clsAnalysisToolRunnerProMex
-    Inherits clsAnalysisToolRunnerBase
-
-    '*********************************************************************************************************
-    'Class for running ProMex to deisotope high resolution spectra
-    '*********************************************************************************************************
-
-#Region "Constants and Enums"
-    Protected Const PROMEX_CONSOLE_OUTPUT As String = "ProMex_ConsoleOutput.txt"
-
-    Protected Const PROGRESS_PCT_STARTING As Single = 1
-    Protected Const PROGRESS_PCT_COMPLETE As Single = 99
-
-#End Region
-
-#Region "Module Variables"
-
-    Protected mConsoleOutputErrorMsg As String
-
-    Protected mProMexParamFilePath As String
-
-    Protected mProMexResultsFilePath As String
-
-    Protected mCmdRunner As clsRunDosProgram
-
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Runs ProMex
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
-
-        Dim result As CloseOutType
-
-        Try
-            ' Call base class for initial setup
-            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerProMex.RunTool(): Enter")
-            End If
-
-            ' Determine the path to the ProMex program
-            Dim progLoc As String
-            progLoc = DetermineProgramLocation("ProMex", "ProMexProgLoc", "ProMex.exe")
-
-            If String.IsNullOrWhiteSpace(progLoc) Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Store the ProMex version info in the database
-            If Not StoreToolVersionInfo(progLoc) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-                m_message = "Error determining ProMex version"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Run ProMex
-            Dim blnSuccess = StartProMex(progLoc)
-
-            If blnSuccess Then
-                ' Look for the results file
-
-                Dim fiResultsFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MS1FT_EXTENSION))
-
-                If fiResultsFile.Exists Then
-                    blnSuccess = PostProcessProMexResults(fiResultsFile)
-                    If Not blnSuccess Then
-                        If String.IsNullOrEmpty(m_message) Then
-                            m_message = "Unknown error post-processing the ProMex results"
-                        End If
-                    End If
-
-                Else
-                    If String.IsNullOrEmpty(m_message) Then
-                        m_message = "ProMex results file not found: " & fiResultsFile.Name
-                    End If
-                    blnSuccess = False
-                End If
-            End If
-
-            m_progress = PROGRESS_PCT_COMPLETE
-
-            'Stop the job timer
-            m_StopTime = DateTime.UtcNow
-
-            'Add the current job data to the summary file
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            End If
-
-            mCmdRunner = Nothing
-
-            'Make sure objects are released
-            Thread.Sleep(500)        ' 500 msec delay
-            clsProgRunner.GarbageCollectNow()
-
-            If Not blnSuccess Then
-                ' Move the source files and any results to the Failed Job folder
-                ' Useful for debugging problems
-                CopyFailedResultsToArchiveFolder()
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays all of the parameters used
-            m_jobParams.AddResultFileToSkip(mProMexParamFilePath)
-
-            result = MakeResultsFolder()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                'MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MoveResultFiles()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                m_message = "Error moving files into results folder"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = CopyResultsFolderToServer()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-        Catch ex As Exception
-            m_message = "Error in ProMexPlugin->RunTool"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Protected Sub CopyFailedResultsToArchiveFolder()
-
-        Dim result As CloseOutType
-
-        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
-
-        ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
-
-        ' Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-        Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
-
-        Try
-            File.Delete(Path.Combine(m_WorkDir, m_Dataset & ".mzXML"))
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        ' Make the results folder
-        result = MakeResultsFolder()
-        If result = CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
-            End If
-        End If
-
-        ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
-    End Sub
-
-    Protected Function GetProMexParameterNames() As Dictionary(Of String, String)
-
-        Dim dctParamNames = New Dictionary(Of String, String)(25, StringComparer.CurrentCultureIgnoreCase)
-
-        dctParamNames.Add("MinCharge", "minCharge")
-        dctParamNames.Add("MaxCharge", "maxCharge")
-
-        dctParamNames.Add("MinMass", "minMass")
-        dctParamNames.Add("MaxMass", "maxMass")
-
-        dctParamNames.Add("Score", "score")
-        dctParamNames.Add("Csv", "csv")
-        dctParamNames.Add("MaxThreads", "maxThreads")
-
-        Return dctParamNames
-
-    End Function
-
-    ''' <summary>
-    ''' Parse the ProMex console output file to track the search progress
-    ''' </summary>
-    ''' <param name="strConsoleOutputFilePath"></param>
-    ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
-
-        ' Example Console output
-        '
-        ' ****** ProMex   ver. 1.0 (Jan 29, 2014) ************
-        ' -i      CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ.pbf
-        ' -minCharge      2
-        ' -maxCharge      60
-        ' -minMass        3000.0
-        ' -maxMass        50000.0
-        ' -score  n
-        ' -csv    y
-        ' -maxThreads     0
-        ' Start loading MS1 data from CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ.pbf
-        ' Complete loading MS1 data. Elapsed Time = 17.514 sec
-        ' Start MS1 feature extracting...
-        ' Mass Range 3000 - 50000
-        ' Charge Range 2 - 60
-        ' Output File     CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ.ms1ft
-        ' Csv Output File CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ_ms1ft.csv
-        ' Processing 2.25 % of mass bins (3187.563 Da); Elapsed Time = 16.035 sec; # of features = 283
-        ' Processing 4.51 % of mass bins (3375.063 Da); Elapsed Time = 26.839 sec; # of features = 770
-        ' Processing 6.76 % of mass bins (3562.563 Da); Elapsed Time = 40.169 sec; # of features = 1426
-        ' Processing 9.02 % of mass bins (3750.063 Da); Elapsed Time = 51.633 sec; # of features = 2154
-
-        Const REGEX_ProMex_PROGRESS = "Processing ([0-9.]+)\%"
-        Static reCheckProgress As New Regex(REGEX_ProMex_PROGRESS, RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-
-        Try
-            If Not File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-                End If
-
-                Exit Sub
-            End If
-
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
-            End If
-
-            ' Value between 0 and 100
-            Dim progressComplete As Single = 0
-            mConsoleOutputErrorMsg = String.Empty
-
-            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                Do While Not srInFile.EndOfStream
-                    Dim strLineIn = srInFile.ReadLine()
-
-                    If Not String.IsNullOrWhiteSpace(strLineIn) Then
-
-                        Dim strLineInLCase = strLineIn.ToLower()
-
-                        If strLineInLCase.StartsWith("error:") OrElse strLineInLCase.Contains("unhandled exception") Then
-                            If String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-                                mConsoleOutputErrorMsg = "Error running ProMex:"
-                            End If
-
-                            If strLineInLCase.StartsWith("error:") Then
-                                mConsoleOutputErrorMsg &= " " & strLineIn.Substring("error:".Length).Trim()
-                            Else
-                                mConsoleOutputErrorMsg &= " " & strLineIn
-                            End If
-
-                            Continue Do
-
-                        Else
-                            Dim oMatch As Match = reCheckProgress.Match(strLineIn)
-                            If oMatch.Success Then
-                                Single.TryParse(oMatch.Groups(1).ToString(), progressComplete)
-                                Continue Do
-                            End If
-
-                        End If
-
-                    End If
-                Loop
-
-            End Using
-
-            If m_progress < progressComplete Then
-                m_progress = progressComplete
-            End If
-
-        Catch ex As Exception
-            ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-            End If
-        End Try
-
-    End Sub
-
-    ''' <summary>
-    ''' Read the ProMex options file and convert the options to command line switches
-    ''' </summary>
-    ''' <param name="strCmdLineOptions">Output: MSGFDb command line arguments</param>
-    ''' <returns>Options string if success; empty string if an error</returns>
-    ''' <remarks></remarks>
-    Public Function ParseProMexParameterFile(<Out()> ByRef strCmdLineOptions As String) As CloseOutType
-
-        strCmdLineOptions = String.Empty
-
-        mProMexParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ProMexParamFile"))
-
-        If Not File.Exists(mProMexParamFilePath) Then
-            LogError("Parameter file not found", "Parameter file not found: " & mProMexParamFilePath)
-            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
-        End If
-
-        Dim sbOptions = New StringBuilder(500)
-
-        Try
-
-            ' Initialize the Param Name dictionary
-            Dim dctParamNames = GetProMexParameterNames()
-
-            Using srParamFile = New StreamReader(New FileStream(mProMexParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-                Do While Not srParamFile.EndOfStream
-                    Dim strLineIn = srParamFile.ReadLine()
-
-                    Dim kvSetting = clsGlobal.GetKeyValueSetting(strLineIn)
-
-                    If Not String.IsNullOrWhiteSpace(kvSetting.Key) Then
-
-                        Dim strValue As String = kvSetting.Value
-
-                        Dim strArgumentSwitch As String = String.Empty
-
-                        ' Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-                        If dctParamNames.TryGetValue(kvSetting.Key, strArgumentSwitch) Then
-
-                            sbOptions.Append(" -" & strArgumentSwitch & " " & strValue)
-                        Else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring parameter '" & kvSetting.Key & "' since not recognized as a valid ProMex parameter")
-                        End If
-
-                    End If
-                Loop
-
-            End Using
-
-        Catch ex As Exception
-            m_message = "Exception reading ProMex parameter file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        strCmdLineOptions = sbOptions.ToString()
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Validates that the modification definition text
-    ''' </summary>
-    ''' <param name="strMod">Modification definition</param>
-    ''' <param name="strModClean">Cleaned-up modification definition (output param)</param>
-    ''' <returns>True if valid; false if invalid</returns>
-    ''' <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-    Protected Function ParseProMexValidateMod(strMod As String, <Out()> ByRef strModClean As String) As Boolean
-
-        Dim intPoundIndex As Integer
-        Dim strSplitMod() As String
-
-        Dim strComment As String = String.Empty
-
-        strModClean = String.Empty
-
-        intPoundIndex = strMod.IndexOf("#"c)
-        If intPoundIndex > 0 Then
-            strComment = strMod.Substring(intPoundIndex)
-            strMod = strMod.Substring(0, intPoundIndex - 1).Trim
-        End If
-
-        strSplitMod = strMod.Split(","c)
-
-        If strSplitMod.Length < 5 Then
-            ' Invalid mod definition; must have 5 sections
-            LogError("Invalid modification string; must have 5 sections: " & strMod)
-            Return False
-        End If
-
-        ' Make sure mod does not have both * and any
-        If strSplitMod(1).Trim() = "*" AndAlso strSplitMod(3).ToLower().Trim() = "any" Then
-            LogError("Modification cannot contain both * and any: " & strMod)
-            Return False
-        End If
-
-        ' Reconstruct the mod definition, making sure there is no whitespace
-        strModClean = strSplitMod(0).Trim()
-        For intIndex As Integer = 1 To strSplitMod.Length - 1
-            strModClean &= "," & strSplitMod(intIndex).Trim()
-        Next
-
-        If Not String.IsNullOrWhiteSpace(strComment) Then
-            ' As of August 12, 2011, the comment cannot contain a comma
-            ' Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
-            strComment = strComment.Replace(",", ";")
-            strModClean &= "     " & strComment
-        End If
-
-        Return True
-
-    End Function
-
-    Private Function PostProcessProMexResults(fiResultsFile As FileInfo) As Boolean
-
-        ' Make sure there are at least two features in the .ms1ft file
-
-        Try
-            Using resultsReader = New StreamReader(New FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                Dim lineCount = 0
-                While Not resultsReader.EndOfStream
-                    Dim lineIn = resultsReader.ReadLine()
-                    If Not String.IsNullOrEmpty(lineIn) Then
-                        lineCount += 1
-                        If lineCount > 2 Then
-                            Return True
-                        End If
-                    End If
-                End While
-            End Using
-
-            m_message = "The ProMex results file has fewer than 2 deisotoped features"
-
-            Return False
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception examining the ms1ft file: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    Protected Function StartProMex(progLoc As String) As Boolean
-
-        Dim CmdStr As String
-        Dim blnSuccess As Boolean
-
-        mConsoleOutputErrorMsg = String.Empty
-
-        ' Read the ProMex Parameter File
-        ' The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
-
-        Dim strCmdLineOptions As String = String.Empty
-
-        Dim eResult = ParseProMexParameterFile(strCmdLineOptions)
-
-        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return False
-        ElseIf String.IsNullOrEmpty(strCmdLineOptions) Then
-            If String.IsNullOrEmpty(m_message) Then
-                m_message = "Problem parsing ProMex parameter file"
-            End If
-            Return False
-        End If
-
-        Dim msFilePath As String
-
-        Dim proMexBruker = clsAnalysisResourcesProMex.IsProMexBrukerJob(m_jobParams)
-
-        If proMexBruker Then
-            msFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZML_EXTENSION)
-        Else
-            msFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION)
-        End If
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running ProMex")
-
-        'Set up and execute a program runner to run ProMex
-
-        CmdStr = " -i " & msFilePath
-        CmdStr &= " " & strCmdLineOptions
-
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & CmdStr)
-        End If
-
-        mCmdRunner = New clsRunDosProgram(m_WorkDir)
-        RegisterEvents(mCmdRunner)
-        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
-
-        With mCmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, PROMEX_CONSOLE_OUTPUT)
-        End With
-
-        m_progress = PROGRESS_PCT_STARTING
-        ResetProgRunnerCpuUsage()
-
-        ' Start the program and wait for it to finish
-        ' However, while it's running, LoopWaiting will get called via events
-        blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "ProMex", True)
-
-        If Not mCmdRunner.WriteConsoleOutputToFile Then
-            ' Write the console output to a text file
-            Thread.Sleep(250)
-
-            Dim swConsoleOutputfile = New StreamWriter(New FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput)
-            swConsoleOutputfile.Close()
-        End If
-
-        ' Parse the console output file one more time to check for errors
-        Thread.Sleep(250)
-        ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath)
-
-        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
-        End If
-
-        If Not blnSuccess Then
-            Dim Msg = "Error running ProMex"
-            m_message = clsGlobal.AppendToComment(m_message, Msg)
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
-
-            If mCmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ProMex returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to ProMex failed (but exit code is 0)")
-            End If
-
-            Return False
-
-        ElseIf mConsoleOutputErrorMsg.Contains("Data file has no MS1 spectra") Then
-            m_message = mConsoleOutputErrorMsg
-            Return False
-        End If
-
-        If proMexBruker Then
-            blnSuccess = StorePbfFileInCache()
-            If Not blnSuccess Then
-                Return False
-            End If
-        End If
-
-        m_progress = PROGRESS_PCT_COMPLETE
-        m_StatusTools.UpdateAndWrite(m_progress)
-        If m_DebugLevel >= 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProMex Search Complete")
-        End If
-
-        Return True
-
-    End Function
-
-    Private Function StorePbfFileInCache() As Boolean
-
-        Dim fiAutoGeneratedPbfFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_PBF_EXTENSION))
-
-        If Not fiAutoGeneratedPbfFile.Exists Then
-            LogError("Auto-generated .PBF file not found; this is unexpected: " + fiAutoGeneratedPbfFile.Name)
-            Return False
-        End If
-
-        ' Store the PBF file in the spectra cache folder; not in the job result folder
-
-        Dim msXmlCacheFolderPath As String = m_mgrParams.GetParam("MSXMLCacheFolderPath", String.Empty)
-        Dim msXmlCacheFolder = New DirectoryInfo(msXmlCacheFolderPath)
-
-        If Not msXmlCacheFolder.Exists Then
-            LogError("MSXmlCache folder not found: " & msXmlCacheFolderPath)
-            Return False
-        End If
-
-        ' Temporarily override the result folder name
-        Dim resultFolderNameSaved = String.Copy(m_ResFolderName)
-
-        m_ResFolderName = "PBF_Gen_1_193_000000"
-
-        ' Copy the .pbf file to the MSXML cache
-        Dim remoteCachefilePath = CopyFileToServerCache(msXmlCacheFolder.FullName, fiAutoGeneratedPbfFile.FullName, purgeOldFilesIfNeeded:=True)
-
-        ' Restore the result folder name
-        m_ResFolderName = resultFolderNameSaved
-
-        If String.IsNullOrEmpty(remoteCachefilePath) Then
-            If String.IsNullOrEmpty(m_message) Then
-                LogError("CopyFileToServerCache returned false for " & fiAutoGeneratedPbfFile.Name)
-            End If
-            Return False
-        End If
-
-        ' Create the _CacheInfo.txt file
-        Dim cacheInfoFilePath = fiAutoGeneratedPbfFile.FullName & "_CacheInfo.txt"
-        Using swOutFile = New StreamWriter(New FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            swOutFile.WriteLine(remoteCachefilePath)
-        End Using
-
-        m_jobParams.AddResultFileToSkip(fiAutoGeneratedPbfFile.Name)
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(strProgLoc As String) As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-        Dim blnSuccess As Boolean
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        Dim fiProgram = New FileInfo(strProgLoc)
-        If Not fiProgram.Exists Then
-            Try
-                strToolVersionInfo = "Unknown"
-                Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), blnSaveToolVersionTextFile:=False)
-            Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-                Return False
-            End Try
-
-        End If
-
-        ' Lookup the version of the .NET application
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiProgram.FullName)
-        If Not blnSuccess Then Return False
-
-
-        ' Store paths to key DLLs in ioToolFiles
-        Dim ioToolFiles = New List(Of FileInfo)
-        ioToolFiles.Add(fiProgram)
-
-        ioToolFiles.Add(New FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-#End Region
-
-#Region "Event Handlers"
-
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
-
-        Const SECONDS_BETWEEN_UPDATE = 30
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
-
-        UpdateStatusFile()
-
-        ' Parse the console output file every 15 seconds
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
-
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, PROMEX_CONSOLE_OUTPUT))
-
-            UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE)
-
-            LogProgress("ProMex")
-        End If
-
-    End Sub
-
-#End Region
-
-End Class
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 01/30/2015
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using AnalysisManagerBase;
+using PRISM.Processes;
+
+namespace AnalysisManagerProMexPlugIn
+{
+    /// <summary>
+    /// Class for running ProMex to deisotope high resolution spectra
+    /// </summary>
+    public class clsAnalysisToolRunnerProMex : clsAnalysisToolRunnerBase
+    {
+        #region "Constants and Enums"
+
+        protected const string PROMEX_CONSOLE_OUTPUT = "ProMex_ConsoleOutput.txt";
+
+        protected const float PROGRESS_PCT_STARTING = 1;
+        protected const float PROGRESS_PCT_COMPLETE = 99;
+
+        #endregion
+
+        #region "Module Variables"
+
+        protected string mConsoleOutputErrorMsg;
+
+        protected string mProMexParamFilePath;
+
+        protected string mProMexResultsFilePath;
+
+        protected clsRunDosProgram mCmdRunner;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Runs ProMex
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            try
+            {
+                // Call base class for initial setup
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerProMex.RunTool(): Enter");
+                }
+
+                // Determine the path to the ProMex program
+                string progLoc = null;
+                progLoc = DetermineProgramLocation("ProMex", "ProMexProgLoc", "ProMex.exe");
+
+                if (string.IsNullOrWhiteSpace(progLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Store the ProMex version info in the database
+                if (!StoreToolVersionInfo(progLoc))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Aborting since StoreToolVersionInfo returned false");
+                    m_message = "Error determining ProMex version";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Run ProMex
+                var blnSuccess = StartProMex(progLoc);
+
+                if (blnSuccess)
+                {
+                    // Look for the results file
+
+                    var fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MS1FT_EXTENSION));
+
+                    if (fiResultsFile.Exists)
+                    {
+                        blnSuccess = PostProcessProMexResults(fiResultsFile);
+                        if (!blnSuccess)
+                        {
+                            if (string.IsNullOrEmpty(m_message))
+                            {
+                                m_message = "Unknown error post-processing the ProMex results";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(m_message))
+                        {
+                            m_message = "ProMex results file not found: " + fiResultsFile.Name;
+                        }
+                        blnSuccess = false;
+                    }
+                }
+
+                m_progress = PROGRESS_PCT_COMPLETE;
+
+                //Stop the job timer
+                m_StopTime = DateTime.UtcNow;
+
+                //Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
+
+                mCmdRunner = null;
+
+                //Make sure objects are released
+                Thread.Sleep(500);        // 500 msec delay
+                clsProgRunner.GarbageCollectNow();
+
+                if (!blnSuccess)
+                {
+                    // Move the source files and any results to the Failed Job folder
+                    // Useful for debugging problems
+                    CopyFailedResultsToArchiveFolder();
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays all of the parameters used
+                m_jobParams.AddResultFileToSkip(mProMexParamFilePath);
+
+                var result = MakeResultsFolder();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //MakeResultsFolder handles posting to local log, so set database error message and exit
+                    m_message = "Error making results folder";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = MoveResultFiles();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    m_message = "Error moving files into results folder";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = CopyResultsFolderToServer();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in ProMexPlugin->RunTool";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        protected void CopyFailedResultsToArchiveFolder()
+        {
+            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
+                strFailedResultsFolderPath = "??Not Defined??";
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
+
+            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
+            string strFolderPathToArchive = null;
+            strFolderPathToArchive = string.Copy(m_WorkDir);
+
+            try
+            {
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+            }
+
+            // Make the results folder
+            var result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the result files into the result folder
+                result = MoveResultFiles();
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Move was a success; update strFolderPathToArchive
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
+
+            // Copy the results folder to the Archive folder
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+        }
+
+        protected Dictionary<string, string> GetProMexParameterNames()
+        {
+            var dctParamNames = new Dictionary<string, string>(25, StringComparer.CurrentCultureIgnoreCase);
+
+            dctParamNames.Add("MinCharge", "minCharge");
+            dctParamNames.Add("MaxCharge", "maxCharge");
+
+            dctParamNames.Add("MinMass", "minMass");
+            dctParamNames.Add("MaxMass", "maxMass");
+
+            dctParamNames.Add("Score", "score");
+            dctParamNames.Add("Csv", "csv");
+            dctParamNames.Add("MaxThreads", "maxThreads");
+
+            return dctParamNames;
+        }
+
+        private const string REGEX_ProMex_PROGRESS = @"Processing ([0-9.]+)\%";
+        private Regex reCheckProgress = new Regex(REGEX_ProMex_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// Parse the ProMex console output file to track the search progress
+        /// </summary>
+        /// <param name="strConsoleOutputFilePath"></param>
+        /// <remarks></remarks>
+        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        {
+            // Example Console output
+            //
+            // ****** ProMex   ver. 1.0 (Jan 29, 2014) ************
+            // -i      CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ.pbf
+            // -minCharge      2
+            // -maxCharge      60
+            // -minMass        3000.0
+            // -maxMass        50000.0
+            // -score  n
+            // -csv    y
+            // -maxThreads     0
+            // Start loading MS1 data from CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ.pbf
+            // Complete loading MS1 data. Elapsed Time = 17.514 sec
+            // Start MS1 feature extracting...
+            // Mass Range 3000 - 50000
+            // Charge Range 2 - 60
+            // Output File     CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ.ms1ft
+            // Csv Output File CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ_ms1ft.csv
+            // Processing 2.25 % of mass bins (3187.563 Da); Elapsed Time = 16.035 sec; # of features = 283
+            // Processing 4.51 % of mass bins (3375.063 Da); Elapsed Time = 26.839 sec; # of features = 770
+            // Processing 6.76 % of mass bins (3562.563 Da); Elapsed Time = 40.169 sec; # of features = 1426
+            // Processing 9.02 % of mass bins (3750.063 Da); Elapsed Time = 51.633 sec; # of features = 2154
+
+            try
+            {
+                if (!File.Exists(strConsoleOutputFilePath))
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Console output file not found: " + strConsoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (m_DebugLevel >= 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                }
+
+                // Value between 0 and 100
+                float progressComplete = 0;
+                mConsoleOutputErrorMsg = string.Empty;
+
+                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!srInFile.EndOfStream)
+                    {
+                        var strLineIn = srInFile.ReadLine();
+
+                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        {
+                            var strLineInLCase = strLineIn.ToLower();
+
+                            if (strLineInLCase.StartsWith("error:") || strLineInLCase.Contains("unhandled exception"))
+                            {
+                                if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                                {
+                                    mConsoleOutputErrorMsg = "Error running ProMex:";
+                                }
+
+                                if (strLineInLCase.StartsWith("error:"))
+                                {
+                                    mConsoleOutputErrorMsg += " " + strLineIn.Substring("error:".Length).Trim();
+                                }
+                                else
+                                {
+                                    mConsoleOutputErrorMsg += " " + strLineIn;
+                                }
+
+                                continue;
+                            }
+                            else
+                            {
+                                Match oMatch = reCheckProgress.Match(strLineIn);
+                                if (oMatch.Success)
+                                {
+                                    float.TryParse(oMatch.Groups[1].ToString(), out progressComplete);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (m_progress < progressComplete)
+                {
+                    m_progress = progressComplete;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Read the ProMex options file and convert the options to command line switches
+        /// </summary>
+        /// <param name="strCmdLineOptions">Output: MSGFDb command line arguments</param>
+        /// <returns>Options string if success; empty string if an error</returns>
+        /// <remarks></remarks>
+        public CloseOutType ParseProMexParameterFile(out string strCmdLineOptions)
+        {
+            strCmdLineOptions = string.Empty;
+
+            mProMexParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ProMexParamFile"));
+
+            if (!File.Exists(mProMexParamFilePath))
+            {
+                LogError("Parameter file not found", "Parameter file not found: " + mProMexParamFilePath);
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
+
+            var sbOptions = new StringBuilder(500);
+
+            try
+            {
+                // Initialize the Param Name dictionary
+                var dctParamNames = GetProMexParameterNames();
+
+                using (var srParamFile = new StreamReader(new FileStream(mProMexParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srParamFile.EndOfStream)
+                    {
+                        var strLineIn = srParamFile.ReadLine();
+
+                        var kvSetting = clsGlobal.GetKeyValueSetting(strLineIn);
+
+                        if (!string.IsNullOrWhiteSpace(kvSetting.Key))
+                        {
+                            string strValue = kvSetting.Value;
+
+                            string strArgumentSwitch = string.Empty;
+
+                            // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
+
+                            if (dctParamNames.TryGetValue(kvSetting.Key, out strArgumentSwitch))
+                            {
+                                sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
+                            }
+                            else
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                    "Ignoring parameter '" + kvSetting.Key + "' since not recognized as a valid ProMex parameter");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception reading ProMex parameter file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            strCmdLineOptions = sbOptions.ToString();
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Validates that the modification definition text
+        /// </summary>
+        /// <param name="strMod">Modification definition</param>
+        /// <param name="strModClean">Cleaned-up modification definition (output param)</param>
+        /// <returns>True if valid; false if invalid</returns>
+        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
+        protected bool ParseProMexValidateMod(string strMod, out string strModClean)
+        {
+            int intPoundIndex = 0;
+            string[] strSplitMod = null;
+
+            string strComment = string.Empty;
+
+            strModClean = string.Empty;
+
+            intPoundIndex = strMod.IndexOf('#');
+            if (intPoundIndex > 0)
+            {
+                strComment = strMod.Substring(intPoundIndex);
+                strMod = strMod.Substring(0, intPoundIndex - 1).Trim();
+            }
+
+            strSplitMod = strMod.Split(',');
+
+            if (strSplitMod.Length < 5)
+            {
+                // Invalid mod definition; must have 5 sections
+                LogError("Invalid modification string; must have 5 sections: " + strMod);
+                return false;
+            }
+
+            // Make sure mod does not have both * and any
+            if (strSplitMod[1].Trim() == "*" && strSplitMod[3].ToLower().Trim() == "any")
+            {
+                LogError("Modification cannot contain both * and any: " + strMod);
+                return false;
+            }
+
+            // Reconstruct the mod definition, making sure there is no whitespace
+            strModClean = strSplitMod[0].Trim();
+            for (int intIndex = 1; intIndex <= strSplitMod.Length - 1; intIndex++)
+            {
+                strModClean += "," + strSplitMod[intIndex].Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(strComment))
+            {
+                // As of August 12, 2011, the comment cannot contain a comma
+                // Sangtae Kim has promised to fix this, but for now, we'll replace commas with semicolons
+                strComment = strComment.Replace(",", ";");
+                strModClean += "     " + strComment;
+            }
+
+            return true;
+        }
+
+        private bool PostProcessProMexResults(FileInfo fiResultsFile)
+        {
+            // Make sure there are at least two features in the .ms1ft file
+
+            try
+            {
+                using (var resultsReader = new StreamReader(new FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    var lineCount = 0;
+                    while (!resultsReader.EndOfStream)
+                    {
+                        var lineIn = resultsReader.ReadLine();
+                        if (!string.IsNullOrEmpty(lineIn))
+                        {
+                            lineCount += 1;
+                            if (lineCount > 2)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                m_message = "The ProMex results file has fewer than 2 deisotoped features";
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception examining the ms1ft file: " + ex.Message);
+                return false;
+            }
+        }
+
+        protected bool StartProMex(string progLoc)
+        {
+            string CmdStr = null;
+            bool blnSuccess = false;
+
+            mConsoleOutputErrorMsg = string.Empty;
+
+            // Read the ProMex Parameter File
+            // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
+
+            string strCmdLineOptions = string.Empty;
+
+            var eResult = ParseProMexParameterFile(out strCmdLineOptions);
+
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return false;
+            }
+            else if (string.IsNullOrEmpty(strCmdLineOptions))
+            {
+                if (string.IsNullOrEmpty(m_message))
+                {
+                    m_message = "Problem parsing ProMex parameter file";
+                }
+                return false;
+            }
+
+            string msFilePath = null;
+
+            var proMexBruker = clsAnalysisResourcesProMex.IsProMexBrukerJob(m_jobParams);
+
+            if (proMexBruker)
+            {
+                msFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+            }
+            else
+            {
+                msFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION);
+            }
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running ProMex");
+
+            //Set up and execute a program runner to run ProMex
+
+            CmdStr = " -i " + msFilePath;
+            CmdStr += " " + strCmdLineOptions;
+
+            if (m_DebugLevel >= 1)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + CmdStr);
+            }
+
+            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            RegisterEvents(mCmdRunner);
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+            mCmdRunner.CreateNoWindow = true;
+            mCmdRunner.CacheStandardOutput = false;
+            mCmdRunner.EchoOutputToConsole = true;
+
+            mCmdRunner.WriteConsoleOutputToFile = true;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, PROMEX_CONSOLE_OUTPUT);
+
+            m_progress = PROGRESS_PCT_STARTING;
+            ResetProgRunnerCpuUsage();
+
+            // Start the program and wait for it to finish
+            // However, while it's running, LoopWaiting will get called via events
+            blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "ProMex", true);
+
+            if (!mCmdRunner.WriteConsoleOutputToFile)
+            {
+                // Write the console output to a text file
+                Thread.Sleep(250);
+
+                var swConsoleOutputfile =
+                    new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                swConsoleOutputfile.Close();
+            }
+
+            // Parse the console output file one more time to check for errors
+            Thread.Sleep(250);
+            ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+
+            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+            }
+
+            if (!blnSuccess)
+            {
+                var Msg = "Error running ProMex";
+                m_message = clsGlobal.AppendToComment(m_message, Msg);
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "ProMex returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to ProMex failed (but exit code is 0)");
+                }
+
+                return false;
+            }
+            else if (mConsoleOutputErrorMsg.Contains("Data file has no MS1 spectra"))
+            {
+                m_message = mConsoleOutputErrorMsg;
+                return false;
+            }
+
+            if (proMexBruker)
+            {
+                blnSuccess = StorePbfFileInCache();
+                if (!blnSuccess)
+                {
+                    return false;
+                }
+            }
+
+            m_progress = PROGRESS_PCT_COMPLETE;
+            m_StatusTools.UpdateAndWrite(m_progress);
+            if (m_DebugLevel >= 3)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProMex Search Complete");
+            }
+
+            return true;
+        }
+
+        private bool StorePbfFileInCache()
+        {
+            var fiAutoGeneratedPbfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION));
+
+            if (!fiAutoGeneratedPbfFile.Exists)
+            {
+                LogError("Auto-generated .PBF file not found; this is unexpected: " + fiAutoGeneratedPbfFile.Name);
+                return false;
+            }
+
+            // Store the PBF file in the spectra cache folder; not in the job result folder
+
+            string msXmlCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var msXmlCacheFolder = new DirectoryInfo(msXmlCacheFolderPath);
+
+            if (!msXmlCacheFolder.Exists)
+            {
+                LogError("MSXmlCache folder not found: " + msXmlCacheFolderPath);
+                return false;
+            }
+
+            // Temporarily override the result folder name
+            var resultFolderNameSaved = string.Copy(m_ResFolderName);
+
+            m_ResFolderName = "PBF_Gen_1_193_000000";
+
+            // Copy the .pbf file to the MSXML cache
+            var remoteCachefilePath = CopyFileToServerCache(msXmlCacheFolder.FullName, fiAutoGeneratedPbfFile.FullName, purgeOldFilesIfNeeded: true);
+
+            // Restore the result folder name
+            m_ResFolderName = resultFolderNameSaved;
+
+            if (string.IsNullOrEmpty(remoteCachefilePath))
+            {
+                if (string.IsNullOrEmpty(m_message))
+                {
+                    LogError("CopyFileToServerCache returned false for " + fiAutoGeneratedPbfFile.Name);
+                }
+                return false;
+            }
+
+            // Create the _CacheInfo.txt file
+            var cacheInfoFilePath = fiAutoGeneratedPbfFile.FullName + "_CacheInfo.txt";
+            using (var swOutFile = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            {
+                swOutFile.WriteLine(remoteCachefilePath);
+            }
+
+            m_jobParams.AddResultFileToSkip(fiAutoGeneratedPbfFile.Name);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        protected bool StoreToolVersionInfo(string strProgLoc)
+        {
+            string strToolVersionInfo = string.Empty;
+            bool blnSuccess = false;
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            var fiProgram = new FileInfo(strProgLoc);
+            if (!fiProgram.Exists)
+            {
+                try
+                {
+                    strToolVersionInfo = "Unknown";
+                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), blnSaveToolVersionTextFile: false);
+                }
+                catch (Exception ex)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    return false;
+                }
+            }
+
+            // Lookup the version of the .NET application
+            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
+            if (!blnSuccess)
+                return false;
+
+            // Store paths to key DLLs in ioToolFiles
+            var ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(fiProgram);
+
+            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            const int SECONDS_BETWEEN_UPDATE = 30;
+
+            UpdateStatusFile();
+
+            // Parse the console output file every 15 seconds
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
+            {
+                dtLastConsoleOutputParse = DateTime.UtcNow;
+
+                ParseConsoleOutputFile(Path.Combine(m_WorkDir, PROMEX_CONSOLE_OUTPUT));
+
+                UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
+
+                LogProgress("ProMex");
+            }
+        }
+
+        #endregion
+    }
+}

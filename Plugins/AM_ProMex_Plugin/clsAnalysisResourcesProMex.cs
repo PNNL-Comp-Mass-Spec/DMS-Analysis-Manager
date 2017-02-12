@@ -1,167 +1,188 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 01/30/2015
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 01/30/2015
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
+namespace AnalysisManagerProMexPlugIn
+{
+    public class clsAnalysisResourcesProMex : clsAnalysisResources
+    {
+        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        {
+            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+        }
 
-Public Class clsAnalysisResourcesProMex
-    Inherits clsAnalysisResources
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-    End Sub
+            // Get the ProMex parameter file
 
-    Public Overrides Function GetResources() As CloseOutType
+            string paramFileStoragePathKeyName = null;
+            string proMexParmFileStoragePath = null;
+            paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "ProMex";
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            proMexParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(proMexParmFileStoragePath))
+            {
+                proMexParmFileStoragePath = "C:\\DMS_Programs\\ProMex";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                    "Parameter '" + paramFileStoragePathKeyName +
+                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
+                    proMexParmFileStoragePath);
+            }
 
-        ' Get the ProMex parameter file
+            string paramFileName = null;
 
-        Dim paramFileStoragePathKeyName As String
-        Dim proMexParmFileStoragePath As String
-        paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "ProMex"
+            // If this is a ProMex script, then the ProMex parameter file name is tracked as the job's parameter file
+            // Otherwise, for MSPathFinder scripts, the ProMex parameter file is defined in the Job's settings file, and is thus accessible as job parameter ProMexParamFile
 
-        proMexParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName)
-        If String.IsNullOrEmpty(proMexParmFileStoragePath) Then
-            proMexParmFileStoragePath = "C:\DMS_Programs\ProMex"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Parameter '" & paramFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & proMexParmFileStoragePath)
-        End If
+            var toolName = m_jobParams.GetParam("ToolName");
+            var proMexScript = toolName.StartsWith("ProMex", StringComparison.CurrentCultureIgnoreCase);
+            var proMexBruker = IsProMexBrukerJob(m_jobParams);
 
-        Dim paramFileName As String
+            if (proMexScript)
+            {
+                paramFileName = m_jobParams.GetJobParameter("ParmFileName", "");
 
-        ' If this is a ProMex script, then the ProMex parameter file name is tracked as the job's parameter file
-        ' Otherwise, for MSPathFinder scripts, the ProMex parameter file is defined in the Job's settings file, and is thus accessible as job parameter ProMexParamFile
+                if (string.IsNullOrEmpty(paramFileName))
+                {
+                    m_message = "Job Parameter File name is empty";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
-        Dim toolName = m_jobParams.GetParam("ToolName")
-        Dim proMexScript = toolName.StartsWith("ProMex", StringComparison.CurrentCultureIgnoreCase)
-        Dim proMexBruker = IsProMexBrukerJob(m_jobParams)
+                m_jobParams.AddAdditionalParameter("StepParameters", "ProMexParamFile", paramFileName);
+            }
+            else
+            {
+                paramFileName = m_jobParams.GetParam("ProMexParamFile");
 
-        If proMexScript Then
+                if (string.IsNullOrEmpty(paramFileName))
+                {
+                    // Settings file does not contain parameter ProMexParamFile
+                    m_message = "Parameter 'ProMexParamFile' is not defined in the settings file for this job";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
 
-            paramFileName = m_jobParams.GetJobParameter("ParmFileName", "")
+            if (!RetrieveFile(paramFileName, proMexParmFileStoragePath))
+            {
+                if (proMexScript)
+                {
+                    m_message = clsGlobal.AppendToComment(m_message, "see the parameter file name defined for this Analysis Job");
+                }
+                else
+                {
+                    m_message = clsGlobal.AppendToComment(m_message, "see the Analysis Job's settings file, entry ProMexParamFile");
+                }
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-            If String.IsNullOrEmpty(paramFileName) Then
-                m_message = "Job Parameter File name is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
+            CloseOutType eResult;
 
-            m_jobParams.AddAdditionalParameter("StepParameters", "ProMexParamFile", paramFileName)
+            if (proMexBruker)
+            {
+                // Retrieve the mzML file
+                // Note that ProMex will create a PBF file using the .mzML file
+                eResult = RetrieveMzMLFile();
+            }
+            else
+            {
+                // Retrieve the PBF file
+                eResult = RetrievePBFFile();
+            }
 
-        Else
-            paramFileName = m_jobParams.GetParam("ProMexParamFile")
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return eResult;
+            }
 
-            If String.IsNullOrEmpty(paramFileName) Then
-                ' Settings file does not contain parameter ProMexParamFile
-                m_message = "Parameter 'ProMexParamFile' is not defined in the settings file for this job"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        End If
+        /// <summary>
+        /// Returns True if this is a ProMex_Bruker job
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static bool IsProMexBrukerJob(IJobParams jobParams)
+        {
+            var toolName = jobParams.GetParam("ToolName");
+            var proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase);
 
-        If Not RetrieveFile(paramFileName, proMexParmFileStoragePath) Then
-            If proMexScript Then
-                m_message = clsGlobal.AppendToComment(m_message, "see the parameter file name defined for this Analysis Job")
-            Else
-                m_message = clsGlobal.AppendToComment(m_message, "see the Analysis Job's settings file, entry ProMexParamFile")
-            End If
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            return proMexBruker;
+        }
 
-        Dim eResult As CloseOutType
+        protected CloseOutType RetrieveMzMLFile()
+        {
+            var currentTask = "Initializing";
 
-        If proMexBruker Then
-            ' Retrieve the mzML file
-            ' Note that ProMex will create a PBF file using the .mzML file
-            eResult = RetrieveMzMLFile()
-        Else
-            ' Retrieve the PBF file
-            eResult = RetrievePBFFile()
-        End If
+            try
+            {
+                // Retrieve the .mzML file from the MSXml cache folder
 
-        If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return eResult
-        End If
+                currentTask = "RetrieveMzMLFile";
 
-        Return CloseOutType.CLOSEOUT_SUCCESS
+                var eResult = GetMzMLFile();
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return eResult;
+                }
 
-    End Function
+                m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
 
-    ''' <summary>
-    ''' Returns True if this is a ProMex_Bruker job
-    ''' </summary>
-    ''' <param name="jobParams"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function IsProMexBrukerJob(jobParams As IJobParams) As Boolean
-        Dim toolName = jobParams.GetParam("ToolName")
-        Dim proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in RetrieveMzMLFile: " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
 
-        Return proMexBruker
+        protected CloseOutType RetrievePBFFile()
+        {
+            var currentTask = "Initializing";
 
-    End Function
+            try
+            {
+                // Retrieve the .pbf file from the MSXml cache folder
 
-    Protected Function RetrieveMzMLFile() As CloseOutType
+                currentTask = "RetrievePBFFile";
 
-        Dim currentTask = "Initializing"
+                var eResult = GetPBFFile();
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return eResult;
+                }
 
-        Try
-            ' Retrieve the .mzML file from the MSXml cache folder
+                m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION);
 
-            currentTask = "RetrieveMzMLFile"
-
-            Dim eResult = GetMzMLFile()
-            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return eResult
-            End If
-
-            m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION)
-
-            Return CloseOutType.CLOSEOUT_SUCCESS
-
-        Catch ex As Exception
-            m_message = "Exception in RetrieveMzMLFile: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-    End Function
-
-    Protected Function RetrievePBFFile() As CloseOutType
-
-        Dim currentTask = "Initializing"
-
-        Try
-            ' Retrieve the .pbf file from the MSXml cache folder
-
-            currentTask = "RetrievePBFFile"
-
-            Dim eResult = GetPBFFile()
-            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return eResult
-            End If
-
-            m_jobParams.AddResultFileExtensionToSkip(DOT_PBF_EXTENSION)
-
-            Return CloseOutType.CLOSEOUT_SUCCESS
-
-        Catch ex As Exception
-            m_message = "Exception in RetrievePBFFile: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-    End Function
-
-End Class
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in RetrievePBFFile: " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+    }
+}
