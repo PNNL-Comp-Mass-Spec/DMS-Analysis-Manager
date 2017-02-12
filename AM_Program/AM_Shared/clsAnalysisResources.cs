@@ -334,6 +334,9 @@ namespace AnalysisManagerBase
         {
             m_CDTAUtilities = new clsCDTAUtilities();
             RegisterEvents(m_CDTAUtilities);
+            m_CDTAUtilities.ProgressUpdate -= ProgressUpdateHandler;
+            m_CDTAUtilities.ProgressUpdate += m_CDTAUtilities_ProgressEvent;
+            
         }
 
         /// <summary>
@@ -741,6 +744,9 @@ namespace AnalysisManagerBase
                 try
                 {
                     m_FastaTools = new Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr);
+                    m_FastaTools.FileGenerationProgress += m_FastaTools_FileGenerationProgress;
+                    m_FastaTools.FileGenerationCompleted += m_FastaTools_FileGenerationCompleted;
+
                     break;
                 }
                 catch (Exception ex)
@@ -4217,6 +4223,8 @@ namespace AnalysisManagerBase
                 // Examine the data in each spectrum to determine if it is centroided
 
                 mSpectraTypeClassifier = new SpectraTypeClassifier.clsSpectrumTypeClassifier();
+                mSpectraTypeClassifier.ErrorEvent += mSpectraTypeClassifier_ErrorEvent;
+                mSpectraTypeClassifier.ReadingSpectra += mSpectraTypeClassifier_ReadingSpectra;
 
                 var blnSuccess = mSpectraTypeClassifier.CheckCDTAFile(strCDTAPath);
 
