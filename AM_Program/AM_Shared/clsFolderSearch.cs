@@ -32,8 +32,6 @@ namespace AnalysisManagerBase
 
         private readonly int m_DebugLevel;
 
-        private readonly string m_MgrName;
-
         private readonly IJobParams m_jobParams;
 
         private readonly clsMyEMSLUtilities m_MyEMSLUtilities;
@@ -60,21 +58,18 @@ namespace AnalysisManagerBase
         /// <param name="fileCopyUtilities"></param>
         /// <param name="jobParams"></param>
         /// <param name="myEmslUtilities"></param>
-        /// <param name="mgrName"></param>
         /// <param name="debugLevel"></param>
         /// <param name="auroraAvailable"></param>
         public clsFolderSearch(
             clsFileCopyUtilities fileCopyUtilities,
             IJobParams jobParams,
             clsMyEMSLUtilities myEmslUtilities,
-            string mgrName,
             short debugLevel,
             bool auroraAvailable)
         {
             m_FileCopyUtilities = fileCopyUtilities;
             m_jobParams = jobParams;
             m_MyEMSLUtilities = myEmslUtilities;
-            m_MgrName = mgrName;
             m_DebugLevel = debugLevel;
             m_AuroraAvailable = auroraAvailable;
         }
