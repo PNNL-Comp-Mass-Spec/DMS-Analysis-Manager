@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 
@@ -60,6 +61,21 @@ namespace AnalysisManagerBase
             m_MyEMSLUtilities = myEmslUtilities;
             m_MgrName = mgrName;
             m_DebugLevel = debugLevel;
+        }
+
+        /// <summary>
+        /// Copy a folder from one location to another, optionally skipping some files by name
+        /// </summary>
+        /// <param name="sourceFolderPath">The source directory path</param>
+        /// <param name="destFolderPath">The destination directory path</param>
+        /// <param name="fileNamesToSkip">
+        /// List of file names to skip when copying the directory (and subdirectories)
+        /// Can optionally contain full path names to skip
+        /// </param>
+        public void CopyDirectory(string sourceFolderPath, string destFolderPath, List<string> fileNamesToSkip)
+        {
+            OnResetTimestampForQueueWaitTime();
+            m_FileTools.CopyDirectory(sourceFolderPath, destFolderPath, fileNamesToSkip);
         }
 
         /// <summary>
@@ -578,5 +594,6 @@ namespace AnalysisManagerBase
 
 
         #endregion
+        
     }
 }
