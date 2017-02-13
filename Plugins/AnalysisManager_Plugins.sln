@@ -35,7 +35,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerLCMSFeatureF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_Mage_PlugIn", "AM_Mage_PlugIn\AnalysisManager_Mage_PlugIn.csproj", "{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMasicPlugin", "AM_Masic_Plugin\AnalysisManagerMasicPlugin.vbproj", "{EC6B65D1-30E9-4AEF-A360-52E99056BD61}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMasicPlugin", "AM_Masic_Plugin\AnalysisManagerMasicPlugin.csproj", "{EC6B65D1-30E9-4AEF-A360-52E99056BD61}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSAlignPlugIn", "AM_MSAlign_Plugin\AnalysisManagerMSAlignPlugIn.csproj", "{0F3AF0B0-8CE4-4B2C-B243-7862271C4D1E}"
 EndProject
