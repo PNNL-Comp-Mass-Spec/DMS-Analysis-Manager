@@ -1,147 +1,160 @@
-Option Strict On
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.Linq
-Imports System.IO
+namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
+{
+    public class clsAnalysisResourcesPhosphoFdrAggregator : clsAnalysisResources
+    {
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
+            // Lookup the file processing options, for example:
+            // sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
+            // MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_fht.txt,MSGFPlus:_dta.zip,masic_finnigan:_ScanStatsEx.txt
 
-Public Class clsAnalysisResourcesPhosphoFdrAggregator
-    Inherits clsAnalysisResources
+            var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
 
-    Public Overrides Function GetResources() As CloseOutType
+            foreach (string fileSpec in fileSpecList.ToList())
+            {
+                var fileSpecTerms = fileSpec.Split(':').ToList();
+                if (fileSpecTerms.Count <= 2 || !(fileSpecTerms[2].ToLower().Trim() == "copy"))
+                {
+                    m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
+                }
+            }
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file");
 
-        ' Lookup the file processing options, for example:
-        ' sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
-        ' MSGFPlus:_msgfplus_syn.txt,MSGFPlus:_msgfplus_fht.txt,MSGFPlus:_dta.zip,masic_finnigan:_ScanStatsEx.txt
+            var paramFilesCopied = 0;
 
-        Dim fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(","c).ToList()
+            if (!RetrieveAScoreParamfile("AScoreCIDParamFile", ref paramFilesCopied))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        For Each fileSpec As String In fileSpecList.ToList()
-            Dim fileSpecTerms = fileSpec.Split(":"c).ToList()
-            If fileSpecTerms.Count <= 2 OrElse Not fileSpecTerms(2).ToLower().Trim() = "copy" Then
-                m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms(1))
-            End If
-        Next
+            if (!RetrieveAScoreParamfile("AScoreETDParamFile", ref paramFilesCopied))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
+            if (!RetrieveAScoreParamfile("AScoreHCDParamFile", ref paramFilesCopied))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        Dim paramFilesCopied = 0
+            if (paramFilesCopied == 0)
+            {
+                m_message = "One more more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
 
-        If Not RetrieveAScoreParamfile("AScoreCIDParamFile", paramFilesCopied) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
 
-        If Not RetrieveAScoreParamfile("AScoreETDParamFile", paramFilesCopied) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs = null;
 
-        If Not RetrieveAScoreParamfile("AScoreHCDParamFile", paramFilesCopied) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            // Retrieve the files for the jobs in the data package associated with this job
+            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out dctDataPackageJobs))
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If paramFilesCopied = 0 Then
-            m_message = "One more more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-        End If
+            // Cache the data package info
+            if (!CacheDataPackageInfo(dctDataPackageJobs))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files")
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        Dim dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo) = Nothing
+        protected bool CacheDataPackageInfo(Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        {
+            try
+            {
+                var diWorkingFolder = new DirectoryInfo(m_WorkingDir);
 
-        ' Retrieve the files for the jobs in the data package associated with this job
-        If Not RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, dctDataPackageJobs) Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+                var jobToDatasetMap = new Dictionary<string, string>();
+                var jobToSettingsFileMap = new Dictionary<string, string>();
+                var jobToolMap = new Dictionary<string, string>();
 
-        ' Cache the data package info
-        If Not CacheDataPackageInfo(dctDataPackageJobs) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+                // Find the Job* folders
 
-        Return CloseOutType.CLOSEOUT_SUCCESS
+                foreach (var subFolder in diWorkingFolder.GetDirectories("Job*"))
+                {
+                    var jobNumber = int.Parse(subFolder.Name.Substring(3));
+                    var udtJobInfo = dctDataPackageJobs[jobNumber];
 
-    End Function
+                    jobToDatasetMap.Add(jobNumber.ToString(), udtJobInfo.Dataset);
+                    jobToSettingsFileMap.Add(jobNumber.ToString(), udtJobInfo.SettingsFileName);
+                    jobToolMap.Add(jobNumber.ToString(), udtJobInfo.Tool);
+                }
 
-    Protected Function CacheDataPackageInfo(dctDataPackageJobs As Dictionary(Of Integer, clsDataPackageJobInfo)) As Boolean
+                // Store the packed job parameters
+                StorePackedJobParameterDictionary(jobToDatasetMap, JOB_PARAM_DICTIONARY_JOB_DATASET_MAP);
+                StorePackedJobParameterDictionary(jobToSettingsFileMap, JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP);
+                StorePackedJobParameterDictionary(jobToolMap, JOB_PARAM_DICTIONARY_JOB_TOOL_MAP);
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in CacheDataPackageInfo";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CacheDataPackageInfo: " + ex.Message);
+                return false;
+            }
 
-        Try
+            return true;
+        }
 
-            Dim diWorkingFolder = New DirectoryInfo(m_WorkingDir)
+        /// <summary>
+        /// Retrieves the AScore parameter file stored in the given parameter name
+        /// </summary>
+        /// <param name="parameterName">AScoreCIDParamFile or AScoreETDParamFile or AScoreHCDParamFile</param>
+        /// <param name="paramFilesCopied">Incremented if the parameter file is found and copied</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private bool RetrieveAScoreParamfile(string parameterName, ref int paramFilesCopied)
+        {
+            var paramFileName = m_jobParams.GetJobParameter(parameterName, string.Empty);
+            if (string.IsNullOrWhiteSpace(paramFileName))
+            {
+                return true;
+            }
 
-            Dim jobToDatasetMap = New Dictionary(Of String, String)
-            Dim jobToSettingsFileMap = New Dictionary(Of String, String)
-            Dim jobToolMap = New Dictionary(Of String, String)
+            if (paramFileName.ToLower().StartsWith("xxx_ascore_") || paramFileName.ToLower().StartsWith("xxx_undefined"))
+            {
+                // Dummy parameter file; ignore it
+                // Update the job parameter to be an empty string so that this parameter is ignored in BuildInputFile
+                m_jobParams.SetParam(parameterName, string.Empty);
+                return true;
+            }
 
-            ' Find the Job* folders
-            For Each subFolder In diWorkingFolder.GetDirectories("Job*")
+            var success = FileSearch.RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, clsLogTools.LogLevels.DEBUG);
 
-                Dim jobNumber = Integer.Parse(subFolder.Name.Substring(3))
-                Dim udtJobInfo = dctDataPackageJobs(jobNumber)
+            if (!success)
+            {
+                // File not found in the transfer folder
+                // Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
 
-                jobToDatasetMap.Add(jobNumber.ToString(), udtJobInfo.Dataset)
-                jobToSettingsFileMap.Add(jobNumber.ToString(), udtJobInfo.SettingsFileName)
-                jobToolMap.Add(jobNumber.ToString(), udtJobInfo.Tool)
-            Next
+                var paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", "\\\\gigasax\\DMS_Parameter_Files\\AScore");
+                success = FileSearch.RetrieveFile(paramFileName, paramFileFolder, 2, clsLogTools.LogLevels.ERROR);
+            }
 
-            ' Store the packed job parameters
-            StorePackedJobParameterDictionary(jobToDatasetMap, JOB_PARAM_DICTIONARY_JOB_DATASET_MAP)
-            StorePackedJobParameterDictionary(jobToSettingsFileMap, JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP)
-            StorePackedJobParameterDictionary(jobToolMap, JOB_PARAM_DICTIONARY_JOB_TOOL_MAP)
+            if (success)
+            {
+                paramFilesCopied += 1;
+            }
 
-        Catch ex As Exception
-            m_message = "Error in CacheDataPackageInfo"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CacheDataPackageInfo: " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    ''' <summary>
-    ''' Retrieves the AScore parameter file stored in the given parameter name
-    ''' </summary>
-    ''' <param name="parameterName">AScoreCIDParamFile or AScoreETDParamFile or AScoreHCDParamFile</param>
-    ''' <param name="paramFilesCopied">Incremented if the parameter file is found and copied</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function RetrieveAScoreParamfile(parameterName As String, ByRef paramFilesCopied As Integer) As Boolean
-
-        Dim paramFileName = m_jobParams.GetJobParameter(parameterName, String.Empty)
-        If String.IsNullOrWhiteSpace(paramFileName) Then
-            Return True
-        End If
-
-        If paramFileName.ToLower().StartsWith("xxx_ascore_") OrElse paramFileName.ToLower().StartsWith("xxx_undefined") Then
-            ' Dummy parameter file; ignore it
-            ' Update the job parameter to be an empty string so that this parameter is ignored in BuildInputFile
-            m_jobParams.SetParam(parameterName, String.Empty)
-            Return True
-        End If
-
-        Dim success = FileSearch.RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, clsLogTools.LogLevels.DEBUG)
-
-        If Not success Then
-            ' File not found in the transfer folder
-            ' Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
-
-            Dim paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", "\\gigasax\DMS_Parameter_Files\AScore")
-            success = FileSearch.RetrieveFile(paramFileName, paramFileFolder, 2, clsLogTools.LogLevels.ERROR)
-        End If
-
-        If success Then
-            paramFilesCopied += 1
-        End If
-
-        Return success
-
-    End Function
-
-End Class
+            return success;
+        }
+    }
+}
