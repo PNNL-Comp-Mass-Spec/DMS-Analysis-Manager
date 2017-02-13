@@ -1,119 +1,133 @@
-'*********************************************************************************************************
-' Written by John Sandoval for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2010, Battelle Memorial Institute
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by John Sandoval for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2010, Battelle Memorial Institute
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports System.IO
-Imports AnalysisManagerBase
+namespace AnalysisManagerMultiAlignPlugIn
+{
+    public class clsAnalysisResourcesMultiAlign : clsAnalysisResources
+    {
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-Public Class clsAnalysisResourcesMultiAlign
-    Inherits clsAnalysisResources
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files");
 
+            string strInputFileExtension = string.Empty;
 
-    Public Overrides Function GetResources() As CloseOutType
+            var splitString = m_jobParams.GetParam("TargetJobFileList").Split(',');
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            foreach (string row in splitString)
+            {
+                var fileNameExt = row.Split(':');
+                if (fileNameExt.Length < 3)
+                {
+                    throw new InvalidOperationException("Malformed target job specification; must have three columns separated by two colons: " + row);
+                }
+                if (fileNameExt[2] == "nocopy")
+                {
+                    m_jobParams.AddResultFileExtensionToSkip(fileNameExt[1]);
+                }
+                strInputFileExtension = fileNameExt[1];
+            }
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files")
+            // Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
+            var fileToGet = DatasetName + strInputFileExtension;
+            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        Dim strInputFileExtension As String = String.Empty
+            // Retrieve the MultiAlign Parameter .xml file specified for this job
+            var multialignParamFileName = m_jobParams.GetParam("ParmFileName");
+            if (multialignParamFileName == null || multialignParamFileName.Length == 0)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
 
-        Dim splitString = m_jobParams.GetParam("TargetJobFileList").Split(","c)
+            var paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
+            var multialignParameterFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+            if (multialignParameterFileStoragePath == null || multialignParameterFileStoragePath.Length == 0)
+            {
+                multialignParameterFileStoragePath = "\\\\gigasax\\DMS_Parameter_Files\\MultiAlign";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    "Parameter '" + paramFileStoragePathKeyName +
+                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
+                    multialignParameterFileStoragePath);
+            }
 
-        For Each row As String In splitString
-            Dim fileNameExt = row.Split(":"c)
-            If fileNameExt.Length < 3 Then
-                Throw New InvalidOperationException("Malformed target job specification; must have three columns separated by two colons: " & row)
-            End If
-            If fileNameExt(2) = "nocopy" Then
-                m_jobParams.AddResultFileExtensionToSkip(fileNameExt(1))
-            End If
-            strInputFileExtension = fileNameExt(1)
-        Next
+            if (!CopyFileToWorkDir(multialignParamFileName, multialignParameterFileStoragePath, m_WorkingDir))
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
-        Dim fileToGet = DatasetName & strInputFileExtension
-        If Not FileSearch.FindAndRetrieveMiscFiles(fileToGet, False) Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Retrieve the MultiAlign Parameter .xml file specified for this job
-        Dim multialignParamFileName = m_jobParams.GetParam("ParmFileName")
-        If multialignParamFileName Is Nothing OrElse multialignParamFileName.Length = 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MultiAlign ParmFileName not defined in the settings for this job; unable to continue")
-            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
-        End If
+            // Build the MultiAlign input text file
+            var success = BuildMultiAlignInputTextFile(strInputFileExtension);
 
-        Dim paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "MultiAlign"
-        Dim multialignParameterFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName)
-        If multialignParameterFileStoragePath Is Nothing OrElse multialignParameterFileStoragePath.Length = 0 Then
-            multialignParameterFileStoragePath = "\\gigasax\DMS_Parameter_Files\MultiAlign"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & paramFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & multialignParameterFileStoragePath)
-        End If
+            if (!success)
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If Not CopyFileToWorkDir(multialignParamFileName, multialignParameterFileStoragePath, m_WorkingDir) Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+        protected bool BuildMultiAlignInputTextFile(string strInputFileExtension)
+        {
+            const string INPUT_FILENAME = "input.txt";
 
-        ' Build the MultiAlign input text file
-        Dim success = BuildMultiAlignInputTextFile(strInputFileExtension)
+            string TargetFilePath = Path.Combine(m_WorkingDir, INPUT_FILENAME);
+            string DatasetFilePath = Path.Combine(m_WorkingDir, DatasetName + strInputFileExtension);
 
-        If Not success Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            var blnSuccess = true;
 
-        Return CloseOutType.CLOSEOUT_SUCCESS
+            // Create the MA input file
+            try
+            {
+                using (var swOutFile = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    swOutFile.WriteLine("[Files]");
+                    swOutFile.WriteLine(DatasetFilePath);
+                    //..\SARC_MS_Final\663878_Sarc_MS_13_24Aug10_Cheetah_10-08-02_0000_LCMSFeatures.txt
 
-    End Function
+                    swOutFile.WriteLine("[Database]");
 
-    Protected Function BuildMultiAlignInputTextFile(strInputFileExtension As String) As Boolean
+                    swOutFile.WriteLine("Database = " + m_jobParams.GetParam("AMTDB"));
+                    swOutFile.WriteLine("Server = " + m_jobParams.GetParam("AMTDBServer"));
+                    //Database = MT_Human_Sarcopenia_MixedLC_P692
+                    //Server = elmer
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" + INPUT_FILENAME + "): " +
+                    ex.Message);
+                blnSuccess = false;
+            }
 
-        Const INPUT_FILENAME = "input.txt"
-
-        Dim TargetFilePath As String = Path.Combine(m_WorkingDir, INPUT_FILENAME)
-        Dim DatasetFilePath As String = Path.Combine(m_WorkingDir, DatasetName & strInputFileExtension)
-
-        Dim blnSuccess = True
-
-        ' Create the MA input file 
-        Try
-
-            Using swOutFile = New StreamWriter(New FileStream(TargetFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
-
-                swOutFile.WriteLine("[Files]")
-                swOutFile.WriteLine(DatasetFilePath)
-                '..\SARC_MS_Final\663878_Sarc_MS_13_24Aug10_Cheetah_10-08-02_0000_LCMSFeatures.txt
-
-                swOutFile.WriteLine("[Database]")
-
-                swOutFile.WriteLine("Database = " & m_jobParams.GetParam("AMTDB"))
-                swOutFile.WriteLine("Server = " & m_jobParams.GetParam("AMTDBServer"))
-                'Database = MT_Human_Sarcopenia_MixedLC_P692
-                'Server = elmer
-
-            End Using
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" & INPUT_FILENAME & "): " & ex.Message)
-            blnSuccess = False
-        End Try
-
-        Return blnSuccess
-    End Function
-
-End Class
+            return blnSuccess;
+        }
+    }
+}
