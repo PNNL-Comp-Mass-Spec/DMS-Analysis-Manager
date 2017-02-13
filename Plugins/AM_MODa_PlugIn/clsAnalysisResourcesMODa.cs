@@ -1,146 +1,162 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 03/26/2014
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 03/26/2014
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.IO;
+using System.Threading;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.IO
+namespace AnalysisManagerMODaPlugIn
+{
+    public class clsAnalysisResourcesMODa : clsAnalysisResources
+    {
+        protected DTAtoMGF.clsDTAtoMGF mDTAtoMGF;
 
-Public Class clsAnalysisResourcesMODa
-    Inherits clsAnalysisResources
+        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        {
+            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+        }
 
-    Protected WithEvents mDTAtoMGF As DTAtoMGF.clsDTAtoMGF
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-        MyBase.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities)
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-    End Sub
+            // Make sure the machine has enough free memory to run MODa
+            if (!ValidateFreeMemorySize("MODaJavaMemorySize", "MODa"))
+            {
+                m_message = "Not enough free memory to run MODa";
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-    Public Overrides Function GetResources() As CloseOutType
+            // Retrieve param file
+            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+                return CloseOutType.CLOSEOUT_FAILED;
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            // Retrieve Fasta file
+            if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
+                return CloseOutType.CLOSEOUT_FAILED;
 
-        ' Make sure the machine has enough free memory to run MODa
-        If Not ValidateFreeMemorySize("MODaJavaMemorySize", "MODa") Then
-            m_message = "Not enough free memory to run MODa"
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            // Retrieve the _DTA.txt file
+            // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-        ' Retrieve param file
-        If Not FileSearch.RetrieveFile(
-           m_jobParams.GetParam("ParmFileName"),
-           m_jobParams.GetParam("ParmFileStoragePath")) _
-        Then Return CloseOutType.CLOSEOUT_FAILED
+            if (!FileSearch.RetrieveDtaFiles())
+            {
+                var sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders");
+                if (!string.IsNullOrEmpty(sharedResultsFolder))
+                {
+                    m_message += "; shared results folder is " + sharedResultsFolder;
+                }
 
-        ' Retrieve Fasta file
-        If Not RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")) Then Return CloseOutType.CLOSEOUT_FAILED
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Retrieve the _DTA.txt file
-        ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If Not FileSearch.RetrieveDtaFiles() Then
-            Dim sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders")
-            If Not String.IsNullOrEmpty(sharedResultsFolder) Then
-                m_message &= "; shared results folder is " & sharedResultsFolder
-            End If
+            // If the _dta.txt file is over 2 GB in size, then condense it
+            if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            // Remove any spectra from the _DTA.txt file with fewer than 3 ions
+            if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + "_dta.txt"))
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            // Convert the _dta.txt file to a mgf file
+            if (!ConvertCDTAToMGF())
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' If the _dta.txt file is over 2 GB in size, then condense it
-        If Not ValidateCDTAFileSize(m_WorkingDir, DatasetName & "_dta.txt") Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        ' Remove any spectra from the _DTA.txt file with fewer than 3 ions
-        If Not ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName & "_dta.txt") Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+        /// <summary>
+        /// Convert the _dta.txt file to a .mgf file
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected bool ConvertCDTAToMGF()
+        {
+            try
+            {
+                mDTAtoMGF = new DTAtoMGF.clsDTAtoMGF();
+                mDTAtoMGF.Combine2And3PlusCharges = false;
+                mDTAtoMGF.FilterSpectra = false;
+                mDTAtoMGF.MaximumIonsPer100MzInterval = 0;
+                mDTAtoMGF.NoMerge = true;
+                mDTAtoMGF.CreateIndexFile = true;
 
-        ' Convert the _dta.txt file to a mgf file
-        If Not ConvertCDTAToMGF() Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+                // Convert the _dta.txt file for this dataset
+                FileInfo fiCDTAFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + "_dta.txt"));
 
-        Return CloseOutType.CLOSEOUT_SUCCESS
+                if (!fiCDTAFile.Exists)
+                {
+                    m_message = "_dta.txt file not found; cannot convert to .mgf";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + fiCDTAFile.FullName);
+                    return false;
+                }
 
-    End Function
+                if (!mDTAtoMGF.ProcessFile(fiCDTAFile.FullName))
+                {
+                    m_message = "Error converting " + fiCDTAFile.Name + " to a .mgf file";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + mDTAtoMGF.GetErrorMessage());
+                    return false;
+                }
+                else
+                {
+                    // Delete the _dta.txt file
+                    try
+                    {
+                        fiCDTAFile.Delete();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Ignore errors here
+                    }
+                }
 
-    ''' <summary>
-    ''' Convert the _dta.txt file to a .mgf file
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function ConvertCDTAToMGF() As Boolean
+                Thread.Sleep(125);
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
-        Try
-            mDTAtoMGF = New DTAtoMGF.clsDTAtoMGF()
-            mDTAtoMGF.Combine2And3PlusCharges = False
-            mDTAtoMGF.FilterSpectra = False
-            mDTAtoMGF.MaximumIonsPer100MzInterval = 0
-            mDTAtoMGF.NoMerge = True
-            mDTAtoMGF.CreateIndexFile = True
+                var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + ".mgf"));
 
-            ' Convert the _dta.txt file for this dataset
-            Dim fiCDTAFile As FileInfo = New FileInfo(Path.Combine(m_WorkingDir, DatasetName & "_dta.txt"))
+                if (!fiNewMGFFile.Exists)
+                {
+                    // MGF file was not created
+                    m_message = "A .mgf file was not created using the _dta.txt file; unable to run MODa";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + mDTAtoMGF.GetErrorMessage());
+                    return false;
+                }
 
-            If Not fiCDTAFile.Exists Then
-                m_message = "_dta.txt file not found; cannot convert to .mgf"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & fiCDTAFile.FullName)
-                Return False
-            End If
+                m_jobParams.AddResultFileExtensionToSkip(".mgf");
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in ConvertCDTAToMGF";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                return false;
+            }
 
-            If Not mDTAtoMGF.ProcessFile(fiCDTAFile.FullName) Then
-                m_message = "Error converting " & fiCDTAFile.Name & " to a .mgf file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
-                Return False
-            Else
-                ' Delete the _dta.txt file
-                Try
-                    fiCDTAFile.Delete()
-                Catch ex As Exception
-                    ' Ignore errors here
-                End Try
-            End If
-
-            Threading.Thread.Sleep(125)
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-            Dim fiNewMGFFile As FileInfo
-            fiNewMGFFile = New FileInfo(Path.Combine(m_WorkingDir, DatasetName & ".mgf"))
-
-            If Not fiNewMGFFile.Exists Then
-                ' MGF file was not created
-                m_message = "A .mgf file was not created using the _dta.txt file; unable to run MODa"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mDTAtoMGF.GetErrorMessage())
-                Return False
-            End If
-
-            m_jobParams.AddResultFileExtensionToSkip(".mgf")
-
-        Catch ex As Exception
-            m_message = "Exception in ConvertCDTAToMGF"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-End Class
+            return true;
+        }
+    }
+}
