@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerPhospho_FDR_AggregatorPlugIn", "AnalysisManagerPhospho_FDR_AggregatorPlugIn.vbproj", "{4A642BDC-EF25-4DFC-9B77-3278AB5AC08A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPhospho_FDR_AggregatorPlugIn", "AnalysisManagerPhospho_FDR_AggregatorPlugIn.csproj", "{4A642BDC-EF25-4DFC-9B77-3278AB5AC08A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
