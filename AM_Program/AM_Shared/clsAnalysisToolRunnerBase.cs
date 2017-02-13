@@ -30,6 +30,12 @@ namespace AnalysisManagerBase
         public const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
         /// <summary>
+        /// This error message is reported by the SEQUEST plugin
+        /// </summary>
+        /// <remarks>The Analysis Manager looks for this message when deciding whether the manager needs to be disabled locally if a job fails</remarks>
+        public const string PVM_RESET_ERROR_MESSAGE = "Error resetting PVM";
+
+        /// <summary>
         /// Purge interval for cached server files, in minutes
         /// </summary>
         private const int CACHED_SERVER_FILES_PURGE_INTERVAL = 90;

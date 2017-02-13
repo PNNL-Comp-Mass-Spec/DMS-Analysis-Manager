@@ -248,7 +248,7 @@ namespace AnalysisManagerSequestPlugin
                         if (!blnSuccess)
                         {
                             // Log message "Error resetting PVM; disabling manager locally"
-                            m_message = "Error resetting PVM";
+                            m_message = PVM_RESET_ERROR_MESSAGE;
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                 m_message + "; disabling manager locally");
                             m_NeedToAbortProcessing = true;
