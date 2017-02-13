@@ -14,7 +14,7 @@ using ExtensionMethods;
 // Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/
 // -------------------------------------------------------------------------------
 // 
-// Last modified February 9, 2017
+// Last modified February 13, 2017
 
 namespace AnalysisManagerProg
 {
@@ -321,11 +321,11 @@ namespace AnalysisManagerProg
                     var paramValue = string.Empty;
 
                     bool isSwitchParam;
-                    if (paramName.StartsWith(switchStartChar))
+                    if (paramName.StartsWith(switchStartChar.ToString()))
                     {
                         isSwitchParam = true;
                     }
-                    else if (paramName.StartsWith(ALTERNATE_SWITCH_CHAR) || paramName.StartsWith(DEFAULT_SWITCH_CHAR))
+                    else if (paramName.StartsWith(ALTERNATE_SWITCH_CHAR.ToString()) || paramName.StartsWith(DEFAULT_SWITCH_CHAR.ToString()))
                     {
                         isSwitchParam = true;
                     }
@@ -601,12 +601,12 @@ namespace AnalysisManagerProg
                                 // Found the end of a parameter
                                 var paramName = commandLine.Substring(indexStart, indexEnd - indexStart + 1).TrimEnd(' ');
 
-                                if (paramName.StartsWith('"'))
+                                if (paramName.StartsWith('"'.ToString()))
                                 {
                                     paramName = paramName.Substring(1);
                                 }
 
-                                if (paramName.EndsWith('"'))
+                                if (paramName.EndsWith('"'.ToString()))
                                 {
                                     paramName = paramName.Substring(0, paramName.Length - 1);
                                 }
@@ -635,47 +635,6 @@ namespace AnalysisManagerProg
 
             return paramList.ToArray();
 
-        }
-    }
-
-    namespace ExtensionMethods
-    {
-        /// <summary>
-        /// String extension methods StartsWith and EndsWith
-        /// </summary>
-        public static class StringExtensions
-        {
-            /// <summary>
-            /// Determine whether a string starts with a character
-            /// </summary>
-            /// <param name="str"></param>
-            /// <param name="ch"></param>
-            /// <returns>True if str starts with ch</returns>
-            public static bool StartsWith(this string str, char ch)
-            {
-                if (!string.IsNullOrEmpty(str))
-                {
-                    if (str[0] == ch)
-                        return true;
-                }
-                return false;
-            }
-
-            /// <summary>
-            /// Determine whether a string ends with a character
-            /// </summary>
-            /// <param name="str"></param>
-            /// <param name="ch"></param>
-            /// <returns>True if str ends with ch</returns>
-            public static bool EndsWith(this string str, char ch)
-            {
-                if (!string.IsNullOrEmpty(str))
-                {
-                    if (str[str.Length - 1] == ch)
-                        return true;
-                }
-                return false;
-            }
         }
     }
 }
