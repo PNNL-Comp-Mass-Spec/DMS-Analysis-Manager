@@ -151,7 +151,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.vbproj">
+    <ProjectReference Include="..\AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.csproj">
       <Project>{44e81b35-ba39-47ad-9b67-fbafc925caca}</Project>
       <Name>AnalysisManagerMSGFDBPlugIn</Name>
     </ProjectReference>

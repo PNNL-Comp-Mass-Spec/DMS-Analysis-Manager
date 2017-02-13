@@ -43,7 +43,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSDeconvPlug
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFPlugin", "AM_MSGF_PlugIn\AnalysisManagerMSGFPlugin.csproj", "{7A6DE396-7309-43E1-8F8A-B387709508DD}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSGFDBPlugIn", "AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.vbproj", "{44E81B35-BA39-47AD-9B67-FBAFC925CACA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFDBPlugIn", "AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.csproj", "{44E81B35-BA39-47AD-9B67-FBAFC925CACA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSMSSpectrumFilterAM", "AM_MSMSSpectrumFilter_PlugIn\MSMSSpectrumFilterAM.csproj", "{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}"
 EndProject
