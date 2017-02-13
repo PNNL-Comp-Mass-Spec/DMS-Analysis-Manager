@@ -29,8 +29,6 @@ namespace AnalysisManagerBase
         protected const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
         public const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
-        public const string PVM_RESET_ERROR_MESSAGE = "Error resetting PVM";
-
         /// <summary>
         /// Purge interval for cached server files, in minutes
         /// </summary>
@@ -58,7 +56,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// access to settings file parameters
         /// </summary>
-        protected PRISM.Files.XmlSettingsFileAccessor m_settingsFileParams = new PRISM.Files.XmlSettingsFileAccessor();
+        protected readonly PRISM.Files.XmlSettingsFileAccessor m_settingsFileParams = new PRISM.Files.XmlSettingsFileAccessor();
 
         /// <summary>
         /// Progress of run (in percent)

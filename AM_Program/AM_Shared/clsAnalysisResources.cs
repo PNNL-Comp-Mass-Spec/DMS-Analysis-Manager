@@ -29,8 +29,6 @@ namespace AnalysisManagerBase
 
         #region "Constants"
 
-        protected const int FASTA_GEN_TIMEOUT_INTERVAL_MINUTES = 65;
-
         public const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
 
         [Obsolete("Unused")]
@@ -324,23 +322,14 @@ namespace AnalysisManagerBase
             }
         }
 
-        public clsMyEMSLUtilities MyEMSLUtilities
-        {
-            get { return m_MyEMSLUtilities; }
-        }
+        public clsMyEMSLUtilities MyEMSLUtilities => m_MyEMSLUtilities;
 
         /// <summary>
         ///  Explanation of what happened to last operation this class performed
         /// </summary>
-        public string Message
-        {
-            get { return m_message; }
-        }
+        public string Message => m_message;
 
-        public string WorkDir
-        {
-            get { return m_WorkingDir; }
-        }
+        public string WorkDir => m_WorkingDir;
 
         #endregion
 
