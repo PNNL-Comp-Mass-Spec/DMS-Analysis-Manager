@@ -39,7 +39,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMasicPlugin"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSAlignPlugIn", "AM_MSAlign_Plugin\AnalysisManagerMSAlignPlugIn.vbproj", "{0F3AF0B0-8CE4-4B2C-B243-7862271C4D1E}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMSDeconvPlugIn", "AM_MSDeconv_Plugin\AnalysisManagerMSDeconvPlugIn.vbproj", "{2999072A-B9F2-4E0E-976A-76C74A6F2B53}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSDeconvPlugIn", "AM_MSDeconv_Plugin\AnalysisManagerMSDeconvPlugIn.csproj", "{2999072A-B9F2-4E0E-976A-76C74A6F2B53}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFPlugin", "AM_MSGF_PlugIn\AnalysisManagerMSGFPlugin.csproj", "{7A6DE396-7309-43E1-8F8A-B387709508DD}"
 EndProject
