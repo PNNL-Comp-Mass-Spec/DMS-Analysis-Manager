@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMODaPlugIn", "AnalysisManagerMODaPlugIn.vbproj", "{894D4C6C-FD28-44D2-A570-2600ED2C787E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMODaPlugIn", "AnalysisManagerMODaPlugIn.csproj", "{894D4C6C-FD28-44D2-A570-2600ED2C787E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
