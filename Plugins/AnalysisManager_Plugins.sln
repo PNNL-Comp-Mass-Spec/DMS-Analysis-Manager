@@ -103,7 +103,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerNOMSIPlugin"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProMexPlugin", "AM_ProMex_Plugin\AnalysisManagerProMexPlugin.csproj", "{5ADEE0CA-782C-4039-978A-C43CD171BA09}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerMODPlusPlugin", "AM_MODPlus_Plugin\AnalysisManagerMODPlusPlugin.vbproj", "{F797EDD0-F632-45B8-8421-1F4A3F50314A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMODPlusPlugin", "AM_MODPlus_Plugin\AnalysisManagerMODPlusPlugin.csproj", "{F797EDD0-F632-45B8-8421-1F4A3F50314A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerQCARTPlugIn", "AM_QC-ART_PlugIn\AnalysisManagerQCARTPlugIn.csproj", "{F418E32A-6B5F-4F40-809E-730D20F32FA1}"
 EndProject
