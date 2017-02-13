@@ -1,1099 +1,1211 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 05/12/2015
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports AnalysisManagerBase
-Imports System.IO
-Imports System.Text.RegularExpressions
-Imports System.Runtime.InteropServices
-Imports System.Threading
-Imports System.Xml
-
-''' <summary>
-''' Class for running MODPlus
-''' </summary>
-''' <remarks></remarks>
-Public Class clsAnalysisToolRunnerMODPlus
-    Inherits clsAnalysisToolRunnerBase
-
-#Region "Constants and Enums"
-
-    Protected Const MODPlus_CONSOLE_OUTPUT As String = "MODPlus_ConsoleOutput.txt"
-    Protected Const MODPlus_JAR_NAME As String = "modp_pnnl.jar"
-    Protected Const TDA_PLUS_JAR_NAME As String = "tda_plus.jar"
-
-    Protected Const PROGRESS_PCT_CONVERTING_MSXML_TO_MGF As Single = 1
-    Protected Const PROGRESS_PCT_SPLITTING_MGF As Single = 3
-    Protected Const PROGRESS_PCT_MODPLUS_STARTING As Single = 5
-    Protected Const PROGRESS_PCT_MODPLUS_COMPLETE As Single = 95
-    Protected Const PROGRESS_PCT_COMPUTING_FDR As Single = 96
-
-    Protected Const USE_THREADING As Boolean = True
-
-#End Region
-
-#Region "Module Variables"
-    Protected mToolVersionWritten As Boolean
-    Protected mMODPlusVersion As String
-
-    Protected mMODPlusProgLoc As String
-    Protected mConsoleOutputErrorMsg As String
-
-    ''' <summary>
-    ''' Dictionary of ModPlus instances
-    ''' </summary>
-    ''' <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
-    Protected mMODPlusRunners As Dictionary(Of Integer, clsMODPlusRunner)
-
-#End Region
-
-#Region "Methods"
-
-    ''' <summary>
-    ''' Runs MODPlus
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
-
-        Dim result As CloseOutType
-
-        Try
-            ' Call base class for initial setup
-            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMODPlus.RunTool(): Enter")
-            End If
-
-            ' Verify that program files exist
-
-            ' JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
-            Dim javaProgLoc = GetJavaProgLoc()
-            If String.IsNullOrEmpty(javaProgLoc) Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Determine the path to the MODPlus program
-            mMODPlusProgLoc = DetermineProgramLocation("MODPlus", "MODPlusProgLoc", MODPlus_JAR_NAME)
-
-            If String.IsNullOrWhiteSpace(mMODPlusProgLoc) Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If Not InitializeFastaFile() Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            Dim paramFileList As Dictionary(Of Integer, String) = Nothing
-
-            ' Run MODPlus (using multiple threads)
-            Dim blnSuccess = StartMODPlus(javaProgLoc, paramFileList)
-
-            If blnSuccess Then
-                ' Look for the results file(s)
-                blnSuccess = PostProcessMODPlusResults(paramFileList)
-                If Not blnSuccess Then
-                    If String.IsNullOrEmpty(m_message) Then
-                        LogError("Unknown error post-processing the MODPlus results")
-                    End If
-                End If
-            End If
-
-            m_progress = PROGRESS_PCT_MODPLUS_COMPLETE
-
-            ' Stop the job timer
-            m_StopTime = DateTime.UtcNow
-
-            ' Add the current job data to the summary file
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            End If
-
-
-            ' Make sure objects are released
-            Thread.Sleep(500)        ' 500 msec delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-            If Not blnSuccess Then
-                ' Move the source files and any results to the Failed Job folder
-                ' Useful for debugging problems
-                CopyFailedResultsToArchiveFolder()
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MakeResultsFolder()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' MakeResultsFolder handles posting to local log, so set database error message and exit
-                LogError("Error making results folder")
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MoveResultFiles()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                LogError("Error moving files into results folder")
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = CopyResultsFolderToServer()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-        Catch ex As Exception
-            LogError("Error in MODPlusPlugin->RunTool", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
-    ''' </summary>
-    ''' <param name="doc"></param>
-    ''' <param name="xpath"></param>
-    ''' <param name="attributeName"></param>
-    ''' <param name="attributeValue"></param>
-    ''' <remarks></remarks>
-    Private Sub AddXMLElement(doc As XmlDocument, xpath As String, attributeName As String, attributeValue As String)
-        Dim attributes = New Dictionary(Of String, String)
-        attributes.Add(attributeName, attributeValue)
-
-        AddXMLElement(doc, xpath, attributes)
-    End Sub
-
-    ''' <summary>
-    ''' Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
-    ''' </summary>
-    ''' <param name="doc"></param>
-    ''' <param name="xpath"></param>
-    ''' <param name="attributes"></param>
-    ''' <remarks></remarks>
-    Private Sub AddXMLElement(doc As XmlDocument, xpath As String, attributes As Dictionary(Of String, String))
-
-        MakeXPath(doc, xpath, attributes)
-
-    End Sub
-
-    ''' <summary>
-    ''' Use MSConvert to convert the .mzXML or .mzML file to a .mgf file
-    ''' </summary>
-    ''' <param name="fiSpectrumFile"></param>
-    ''' <param name="fiMgfFile"></param>
-    ''' <returns>True if success, false if an error</returns>
-    ''' <remarks></remarks>
-    Private Function ConvertMsXmlToMGF(fiSpectrumFile As FileInfo, fiMgfFile As FileInfo) As Boolean
-
-        ' Set up and execute a program runner to run MSConvert
-
-        Dim msConvertProgLoc = DetermineProgramLocation("MSConvert", "ProteoWizardDir", "msconvert.exe")
-        If String.IsNullOrWhiteSpace(msConvertProgLoc) Then
-            If String.IsNullOrWhiteSpace(m_message) Then
-                LogError("Manager parameter ProteoWizardDir was not found; cannot run MSConvert.exe")
-            End If
-            Return False
-        End If
-
-        Dim msConvertConsoleOutput = Path.Combine(m_WorkDir, "MSConvert_ConsoleOutput.txt")
-        m_jobParams.AddResultFileToSkip(msConvertConsoleOutput)
-
-        Dim cmdStr = " --mgf"
-        cmdStr &= " --outfile " & fiMgfFile.FullName
-        cmdStr &= " " & PossiblyQuotePath(fiSpectrumFile.FullName)
-
-        If m_DebugLevel >= 1 Then
-            ' C:\DMS_Programs\ProteoWizard\msconvert.exe --mgf --outfile Dataset.mgf Dataset.mzML
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msConvertProgLoc & " " & cmdStr)
-        End If
-
-        Dim msConvertRunner = New clsRunDosProgram(m_WorkDir)
-        RegisterEvents(msConvertRunner)
-        AddHandler msConvertRunner.LoopWaiting, AddressOf MSConvert_CmdRunner_LoopWaiting
-
-        With msConvertRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = msConvertConsoleOutput
-        End With
-
-        m_progress = PROGRESS_PCT_CONVERTING_MSXML_TO_MGF
-        ResetProgRunnerCpuUsage()
-
-        ' Start the program and wait for it to finish
-        ' However, while it's running, LoopWaiting will get called via events
-        Dim success = msConvertRunner.RunProgram(msConvertProgLoc, cmdStr, "MSConvert", True)
-
-        If success Then
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSConvert.exe successfully created " & fiMgfFile.Name)
-            End If
-            Return True
-        End If
-
-        Dim msg As String
-        msg = "Error running MSConvert"
-        m_message = clsGlobal.AppendToComment(m_message, msg)
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
-
-        If msConvertRunner.ExitCode <> 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSConvert returned a non-zero exit code: " & msConvertRunner.ExitCode.ToString)
-        Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSConvert failed (but exit code is 0)")
-        End If
-
-        Return False
-
-    End Function
-
-    Protected Sub CopyFailedResultsToArchiveFolder()
-
-        Dim result As CloseOutType
-
-        Dim strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
-
-        ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
-
-        ' Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-        Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
-
-        Try
-            File.Delete(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MZXML_EXTENSION))
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
-
-        ' Make the results folder
-        result = MakeResultsFolder()
-        If result = CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
-            End If
-        End If
-
-        ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
-    End Sub
-
-    ''' <summary>
-    ''' 
-    ''' </summary>
-    ''' <param name="paramFileName"></param>
-    ''' <param name="fastaFilePath"></param>
-    ''' <param name="mgfFiles"></param>
-    ''' <returns>Dictionary where key is the thread number and value is the parameter file path</returns>
-    ''' <remarks></remarks>
-    Private Function CreateParameterFiles(
-      paramFileName As String,
-      fastaFilePath As String,
-      mgfFiles As IEnumerable(Of FileInfo)) As Dictionary(Of Integer, String)
-
-        Try
-            Dim fiParamFile = New FileInfo(Path.Combine(m_WorkDir, paramFileName))
-            If Not fiParamFile.Exists Then
-                LogError("Parameter file not found by CreateParameterFiles")
-                Return New Dictionary(Of Integer, String)
-            End If
-
-            Dim doc = New XmlDocument()
-            doc.Load(fiParamFile.FullName)
-
-            DefineParamfileDatasetAndFasta(doc, fastaFilePath)
-
-            DefineParamMassResolutionSettings(doc)
-
-            Dim paramFileList = CreateThreadParamFiles(fiParamFile, doc, mgfFiles)
-
-            Return paramFileList
-
-        Catch ex As Exception
-            LogError("Exception in CreateParameterFiles", ex)
-            Return New Dictionary(Of Integer, String)
-        End Try
-
-    End Function
-
-    Private Function CreateThreadParamFiles(
-       fiMasterParamFile As FileInfo,
-       doc As XmlDocument,
-       mgfFiles As IEnumerable(Of FileInfo)) As Dictionary(Of Integer, String)
-
-        Dim reThreadNumber = New Regex("_Part(\d+)\.mgf", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-        Dim paramFileList = New Dictionary(Of Integer, String)
-        Dim nodeList As XmlNodeList
-
-        For Each fiMgfFile In mgfFiles
-
-            Dim reMatch = reThreadNumber.Match(fiMgfFile.Name)
-            If Not reMatch.Success Then
-                LogError("RegEx failed to extract the thread number from the MGF file name: " + fiMgfFile.Name)
-                Return New Dictionary(Of Integer, String)
-            End If
-
-            Dim threadNumber As Integer
-            If Not Integer.TryParse(reMatch.Groups(1).Value, threadNumber) Then
-                LogError("RegEx logic error extracting the thread number from the MGF file name: " + fiMgfFile.Name)
-                Return New Dictionary(Of Integer, String)
-            End If
-
-            If paramFileList.ContainsKey(threadNumber) Then
-                LogError("MGFSplitter logic error; duplicate thread number encountered for " + fiMgfFile.Name)
-                Return New Dictionary(Of Integer, String)
-            End If
-
-            nodeList = doc.SelectNodes("/search/dataset")
-            If nodeList.Count > 0 Then
-                nodeList(0).Attributes("local_path").Value = fiMgfFile.FullName
-                nodeList(0).Attributes("format").Value = "mgf"
-            End If
-
-            Dim paramFileName = Path.GetFileNameWithoutExtension(fiMasterParamFile.Name) & "_Part" & threadNumber & ".xml"
-            Dim paramFilePath = Path.Combine(fiMasterParamFile.DirectoryName, paramFileName)
-
-            Using objXmlWriter = New XmlTextWriter(New FileStream(paramFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), New Text.UTF8Encoding(False))
-                objXmlWriter.Formatting = Formatting.Indented
-                objXmlWriter.Indentation = 4
-
-                doc.WriteTo(objXmlWriter)
-            End Using
-
-            paramFileList.Add(threadNumber, paramFilePath)
-
-            m_jobParams.AddResultFileToSkip(paramFilePath)
-
-        Next
-
-        Return paramFileList
-
-    End Function
-
-    Private Sub DefineParamfileDatasetAndFasta(doc As XmlDocument, fastaFilePath As String)
-
-        ' Define the path to the dataset file
-        Dim nodeList As XmlNodeList = doc.SelectNodes("/search/dataset")
-        If nodeList.Count > 0 Then
-            ' This value will get updated to the correct name later in this function
-            nodeList(0).Attributes("local_path").Value = "Dataset_PartX.mgf"
-            nodeList(0).Attributes("format").Value = "mgf"
-        Else
-            ' Match not found; add it
-            Dim attributes = New Dictionary(Of String, String)
-            attributes.Add("local_path", "Dataset_PartX.mgf")
-            attributes.Add("format", "mgf")
-            AddXMLElement(doc, "/search/dataset", attributes)
-        End If
-
-        ' Define the path to the fasta file
-        nodeList = doc.SelectNodes("/search/database")
-        If nodeList.Count > 0 Then
-            nodeList(0).Attributes("local_path").Value = fastaFilePath
-        Else
-            ' Match not found; add it
-            AddXMLElement(doc, "/search/database", "local_path", fastaFilePath)
-        End If
-
-    End Sub
-
-    Private Sub DefineParamMassResolutionSettings(doc As XmlDocument)
-
-        Const LOW_RES_FLAG = "low"
-        Const HIGH_RES_FLAG = "high"
-
-        Const MIN_FRAG_TOL_LOW_RES = 0.3
-        Const DEFAULT_FRAG_TOL_LOW_RES = "0.5"        
-        Const DEFAULT_FRAG_TOL_HIGH_RES = "0.05"
-
-
-        ' Validate the setting for instrument_resolution and fragment_ion_tol
-
-        Dim strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
-        Dim instrumentResolutionMsMs = LOW_RES_FLAG
-
-        If strDatasetType.ToLower().EndsWith("hmsn") Then
-            instrumentResolutionMsMs = HIGH_RES_FLAG
-        End If
-
-        Dim nodeList = doc.SelectNodes("/search/instrument_resolution")
-        If nodeList.Count > 0 Then
-            If nodeList(0).Attributes("msms").Value = HIGH_RES_FLAG AndAlso instrumentResolutionMsMs = "low" Then
-                ' Parameter file lists the resolution as high, but it's actually low
-                ' Auto-change it
-                nodeList(0).Attributes("msms").Value = instrumentResolutionMsMs
-                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-switched to low resolution mode for MS/MS data")
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage)
-            End If
-        Else
-            ' Match not found; add it
-            Dim attributes = New Dictionary(Of String, String)
-            attributes.Add("ms", HIGH_RES_FLAG)
-            attributes.Add("msms", instrumentResolutionMsMs)
-            AddXMLElement(doc, "/search/instrument_resolution", attributes)
-        End If
-
-
-        nodeList = doc.SelectNodes("/search/parameters/fragment_ion_tol")
-        If nodeList.Count > 0 Then
-            If instrumentResolutionMsMs = LOW_RES_FLAG Then
-                Dim massTolDa As Double = 0
-                If Double.TryParse(nodeList(0).Attributes("value").Value, massTolDa) Then
-                    Dim massUnits = nodeList(0).Attributes("unit").Value
-
-                    If massUnits = "ppm" Then
-                        ' Convert from ppm to Da
-                        massTolDa = massTolDa * 1000 / 1000000
-                    End If
-
-                    If massTolDa < MIN_FRAG_TOL_LOW_RES Then
-                        m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-changed fragment_ion_tol to " & DEFAULT_FRAG_TOL_LOW_RES & " Da since low resolution MS/MS")
-                        nodeList(0).Attributes("value").Value = DEFAULT_FRAG_TOL_LOW_RES
-                        nodeList(0).Attributes("unit").Value = "da"
-                    End If
-                End If
-            End If
-
-        Else
-            ' Match not found; add it
-            Dim attributes = New Dictionary(Of String, String)
-
-            If instrumentResolutionMsMs = HIGH_RES_FLAG Then
-                attributes.Add("value", DEFAULT_FRAG_TOL_HIGH_RES)
-            Else
-                attributes.Add("value", DEFAULT_FRAG_TOL_LOW_RES)
-            End If
-
-            attributes.Add("unit", "da")
-            AddXMLElement(doc, "/search/parameters/fragment_ion_tol", attributes)
-        End If
-
-    End Sub
-
-    Private Function InitializeFastaFile() As Boolean
-
-        ' Define the path to the fasta file
-        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
-        Dim fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-
-        Dim fiFastaFile = New FileInfo(fastaFilePath)
-
-        If Not fiFastaFile.Exists Then
-            ' Fasta file not found
-            LogError("Fasta file not found: " & fiFastaFile.Name, "Fasta file not found: " & fiFastaFile.FullName)
-            Return False
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
-    ''' </summary>
-    ''' <param name="doc"></param>
-    ''' <param name="xpath"></param>
-    ''' <param name="attributes"></param>
-    ''' <returns></returns>
-    ''' <remarks>Code adapted from "http://stackoverflow.com/questions/508390/create-xml-nodes-based-on-xpath"</remarks>
-    Private Function MakeXPath(doc As XmlDocument, xpath As String, attributes As Dictionary(Of String, String)) As XmlNode
-        Return MakeXPath(doc, TryCast(doc, XmlNode), xpath, attributes)
-    End Function
-
-    Private Function MakeXPath(doc As XmlDocument, parent As XmlNode, xpath As String, attributes As Dictionary(Of String, String)) As XmlNode
-
-        ' Grab the next node name in the xpath; or return parent if empty
-        Dim partsOfXPath As String() = xpath.Trim("/"c).Split("/"c)
-        Dim nextNodeInXPath As String = partsOfXPath.First()
-        If String.IsNullOrEmpty(nextNodeInXPath) Then
-            Return parent
-        End If
-
-        ' Get or create the node from the name
-        Dim node As XmlNode = parent.SelectSingleNode(nextNodeInXPath)
-        If node Is Nothing Then
-            Dim newNode = doc.CreateElement(nextNodeInXPath)
-
-            If partsOfXPath.Count = 1 Then
-                ' Right-most node in the xpath
-                ' Add the attributes
-                For Each attrib In attributes
-                    Dim newAttr As XmlAttribute = doc.CreateAttribute(attrib.Key)
-                    newAttr.Value = attrib.Value
-                    newNode.Attributes.Append(newAttr)
-                Next
-            End If
-
-            node = parent.AppendChild(newNode)
-        End If
-
-        If partsOfXPath.Count = 1 Then
-            Return node
-        Else
-            ' Rejoin the remainder of the array as an xpath expression and recurse
-            Dim rest As String = String.Join("/", partsOfXPath.Skip(1).ToArray())
-            Return MakeXPath(doc, node, rest, attributes)
-        End If
-
-    End Function
-
-    Private Function PostProcessMODPlusResults(paramFileList As Dictionary(Of Integer, String)) As Boolean
-
-        Dim successOverall = True
-
-        Try
-            ' Keys in this list are scan numbers with charge state encoded as Charge / 100
-            ' For example, if scan 1000 and charge 2, then the key will be 1000.02
-            ' Values are a list of readers that have that given ScanPlusCharge combo
-            Dim lstNextAvailableScan = New SortedList(Of Double, List(Of clsMODPlusResultsReader))
-
-            ' Combine the result files using a Merge Sort (we assume the results are sorted by scan in each result file)
-
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Merging the results files")
-            End If
-
-            For Each modPlusRunner In mMODPlusRunners
-
-                If String.IsNullOrWhiteSpace(modPlusRunner.Value.OutputFilePath) Then
-                    Continue For
-                End If
-
-                Dim fiResultFile = New FileInfo(modPlusRunner.Value.OutputFilePath)
-
-                If Not fiResultFile.Exists Then
-                    ' Result file not found for the current thread
-                    ' Log an error, but continue to combine the files
-                    m_message = clsGlobal.AppendToComment(m_message, "Result file not found for thread " & modPlusRunner.Key)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    successOverall = False
-                    Continue For
-                ElseIf fiResultFile.Length = 0 Then
-                    ' 0-byte result file
-                    ' Log an error, but continue to combine the files
-                    m_message = clsGlobal.AppendToComment(m_message, "Result file is empty for thread " & modPlusRunner.Key)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-                    successOverall = False
-                    Continue For
-                End If
-
-                Dim reader = New clsMODPlusResultsReader(m_Dataset, fiResultFile)
-                If reader.SpectrumAvailable Then
-                    PushReader(lstNextAvailableScan, reader)
-                End If
-            Next
-
-            ' The final results file is named Dataset_modp.txt
-            Dim combinedResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & clsMODPlusRunner.RESULTS_FILE_SUFFIX)
-            Dim fiCombinedResults = New FileInfo(combinedResultsFilePath)
-
-            Using swCombinedResults = New StreamWriter(New FileStream(fiCombinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-                While lstNextAvailableScan.Count > 0
-                    Dim nextScan = lstNextAvailableScan.First()
-
-                    lstNextAvailableScan.Remove(nextScan.Key)
-
-                    For Each reader In nextScan.Value
-                        For Each dataLine In reader.CurrentScanData
-                            swCombinedResults.WriteLine(dataLine)
-                        Next
-
-                        ' Add a blank line
-                        swCombinedResults.WriteLine()
-
-                        If reader.ReadNextSpectrum() Then
-                            PushReader(lstNextAvailableScan, reader)
-                        End If
-                    Next
-                End While
-
-            End Using
-
-            For Each modPlusRunner In mMODPlusRunners
-                m_jobParams.AddResultFileToSkip(modPlusRunner.Value.OutputFilePath)
-            Next
-
-            ' Zip the output file along with the ConsoleOutput files
-            Dim diZipFolder = New DirectoryInfo(Path.Combine(m_WorkDir, "Temp_ZipScratch"))
-            If Not diZipFolder.Exists Then diZipFolder.Create()
-
-            Dim filesToMove = New List(Of FileInfo)
-            filesToMove.Add(fiCombinedResults)
-
-            Dim diWorkDir = New DirectoryInfo(m_WorkDir)
-            filesToMove.AddRange(diWorkDir.GetFiles("*ConsoleOutput*.txt"))
-
-            For Each paramFile In paramFileList
-                filesToMove.Add(New FileInfo(paramFile.Value))
-            Next
-
-            For Each fiFile In filesToMove
-                If fiFile.Exists Then
-                    fiFile.MoveTo(Path.Combine(diZipFolder.FullName, fiFile.Name))
-                End If
-            Next
-
-            Dim zippedResultsFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(fiCombinedResults.Name) & ".zip")
-            Dim blnSuccess = m_IonicZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath)
-
-            If blnSuccess Then
-                m_jobParams.AddResultFileToSkip(fiCombinedResults.Name)
-            ElseIf String.IsNullOrEmpty(m_message) Then
-                LogError("Unknown error zipping the MODPlus results and console output files")
-                Return False
-            End If
-
-            If successOverall Then
-                m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
-            End If
-
-            Return successOverall
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception preparing the MODPlus results for zipping: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    Protected Sub PushReader(
-      lstNextAvailableScan As SortedList(Of Double, List(Of clsMODPlusResultsReader)),
-      reader As clsMODPlusResultsReader)
-
-        Dim readersForValue As List(Of clsMODPlusResultsReader) = Nothing
-
-        If lstNextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, readersForValue) Then
-            readersForValue.Add(reader)
-        Else
-            readersForValue = New List(Of clsMODPlusResultsReader)
-            readersForValue.Add(reader)
-
-            lstNextAvailableScan.Add(reader.CurrentScanChargeCombo, readersForValue)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' Split the .mgf file into multiple parts
-    ''' </summary>
-    ''' <param name="fiMgfFile"></param>
-    ''' <param name="threadCount"></param>
-    ''' <returns>List of newly created .mgf files</returns>
-    ''' <remarks>Yses a round-robin splitting</remarks>
-    Private Function SplitMGFFiles(fiMgfFile As FileInfo, threadCount As Integer) As List(Of FileInfo)
-
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Splitting mgf file into " & threadCount & " parts: " & fiMgfFile.Name)
-        End If
-
-        ' Cache the current state of m_message
-        Dim cachedStatusMessage = String.Copy(m_message)
-        m_message = String.Empty
-
-        Dim splitter = New clsSplitMGFFile()
-        RegisterEvents(splitter)
-
-        ' Split the .mgf file
-        ' If an error occurs, m_message will be updated because ErrorEventHandler calls LogError when event ErrorEvent is raised by clsSplitMGFFile
-        Dim mgfFiles = splitter.SplitMgfFile(fiMgfFile.FullName, threadCount, "_Part")
-
-        If mgfFiles.Count = 0 Then
-            If String.IsNullOrWhiteSpace(m_message) Then
-                LogError("SplitMgfFile returned an empty list of files")
-            End If
-
-            Return New List(Of FileInfo)
-        End If
-
-        ' Restore m_message
-        m_message = cachedStatusMessage
-
-        m_jobParams.AddResultFileToSkip(fiMgfFile.FullName)
-
-        Return mgfFiles
-
-    End Function
-
-    ''' <summary>
-    ''' Run MODPlus
-    ''' </summary>
-    ''' <param name="javaProgLoc">Path to java.exe</param>
-    ''' <param name="paramFileList">Output: Dictionary where key is the thread number and value is the parameter file path</param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Protected Function StartMODPlus(
-      javaProgLoc As String,
-      <Out()> ByRef paramFileList As Dictionary(Of Integer, String)) As Boolean
-
-        Dim currentTask = "Initializing"
-
-        paramFileList = New Dictionary(Of Integer, String)
-
-        Try
-
-            ' We will store the MODPlus version info in the database after the header block is written to file MODPlus_ConsoleOutput.txt
-
-            mToolVersionWritten = False
-            mMODPlusVersion = String.Empty
-            mConsoleOutputErrorMsg = String.Empty
-
-            currentTask = "Determine thread count"
-
-            Dim javaMemorySizeMB = m_jobParams.GetJobParameter("MODPlusJavaMemorySize", 3000)
-            Dim maxThreadsToAllow = ComputeMaxThreadsGivenMemoryPerThread(javaMemorySizeMB)
-
-            ' Determine the number of threads
-            Dim threadCountText = m_jobParams.GetJobParameter("MODPlusThreads", "90%")
-            Dim threadCount As Integer = ParseThreadCount(threadCountText, maxThreadsToAllow)
-
-            ' Convert the .mzXML or .mzML file to the MGF format
-            Dim spectrumFileName = m_Dataset
-
-            Dim msXmlOutputType = m_jobParams.GetJobParameter("MSXMLOutputType", String.Empty)
-            If msXmlOutputType.ToLower() = "mzxml" Then
-                spectrumFileName &= clsAnalysisResources.DOT_MZXML_EXTENSION
-            Else
-                spectrumFileName &= clsAnalysisResources.DOT_MZML_EXTENSION
-            End If
-
-            currentTask = "Convert .mzML file to MGF"
-
-            Dim fiSpectrumFile = New FileInfo(Path.Combine(m_WorkDir, spectrumFileName))
-            If Not fiSpectrumFile.Exists Then
-                LogError("Spectrum file not found: " + fiSpectrumFile.Name)
-                Return False
-            End If
-
-            Dim fiMgfFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_MGF_EXTENSION))
-
-            If fiMgfFile.Exists Then
-                ' The .MGF file already exists
-                ' This will typically only be true while debugging
-            Else
-
-                Dim success As Boolean = ConvertMsXmlToMGF(fiSpectrumFile, fiMgfFile)
-                If Not success Then
-                    Return False
-                End If
-
-            End If
-
-
-            currentTask = "Split the MGF file"
-
-            ' Create one MGF file for each thread
-            Dim mgfFiles As List(Of FileInfo) = SplitMGFFiles(fiMgfFile, threadCount)
-            If mgfFiles.Count = 0 Then
-                If String.IsNullOrWhiteSpace(m_message) Then
-                    LogError("Unknown error calling SplitMGFFiles")
-                End If
-                Return False
-            End If
-
-            currentTask = "Lookup job parameters"
-
-            ' Define the path to the fasta file
-            ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
-            Dim dbFilename As String = m_jobParams.GetParam("PeptideSearch", "generatedFastaName")
-            Dim fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename)
-
-            Dim paramFileName = m_jobParams.GetParam("ParmFileName")
-
-            currentTask = "Create a parameter file for each thread"
-
-            paramFileList = CreateParameterFiles(paramFileName, fastaFilePath, mgfFiles)
-
-            If paramFileList.Count = 0 Then
-                If String.IsNullOrWhiteSpace(m_message) Then
-                    LogError("CreateParameterFile returned an empty list in StartMODPlus")
-                End If
-                Return False
-            End If
-
-            currentTask = " Set up and execute a program runner to run each MODPlus instance"
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MODPlus using " & paramFileList.Count & " threads")
-
-            m_progress = PROGRESS_PCT_MODPLUS_STARTING
-            ResetProgRunnerCpuUsage()
-
-            mMODPlusRunners = New Dictionary(Of Integer, clsMODPlusRunner)()
-            Dim lstThreads As New List(Of Thread)
-
-            For Each paramFile In paramFileList
-
-                Dim threadNum = paramFile.Key
-
-                currentTask = "LaunchingModPlus, thread " & threadNum
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, currentTask)
-
-                Dim modPlusRunner = New clsMODPlusRunner(m_Dataset, threadNum, m_WorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc)
-
-                If Not USE_THREADING Then
-                    AddHandler modPlusRunner.CmdRunnerWaiting, AddressOf CmdRunner_LoopWaiting
-                End If
-
-                modPlusRunner.JavaMemorySizeMB = javaMemorySizeMB
-
-                mMODPlusRunners.Add(threadNum, modPlusRunner)
-
-                If USE_THREADING Then
-                    Dim newThread As New Thread(New ThreadStart(AddressOf modPlusRunner.StartAnalysis))
-                    newThread.Priority = ThreadPriority.BelowNormal
-                    newThread.Start()
-                    lstThreads.Add(newThread)
-                Else
-                    modPlusRunner.StartAnalysis()
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaProgLoc & " " & modPlusRunner.CommandLineArgs)
-
-                    If modPlusRunner.Status = clsMODPlusRunner.MODPlusRunnerStatusCodes.Failure Then
-                        LogError("Error running MODPlus, thread " & threadNum)
-                        Return False
-                    End If
-                End If
-            Next
-
-            If USE_THREADING Then
-                ' Wait for all of the threads to exit
-                ' Run for a maximum of 14 days
-
-                currentTask = "Waiting for all of the threads to exit"
-
-                Dim dtStartTime = DateTime.UtcNow
-                Dim completedThreads As New SortedSet(Of Integer)
-
-                Const SECONDS_BETWEEN_UPDATES = 15
-                Dim dtLastStatusUpdate = DateTime.UtcNow
-
-                While True
-
-                    ' Poll the status of each of the threads
-
-                    Dim stepsComplete = 0
-                    Dim progressSum As Double = 0
-
-                    Dim processIDs = New List(Of Integer)
-                    Dim coreUsageOverall As Single
-                    
-                    For Each modPlusRunner In mMODPlusRunners
-                        Dim eStatus = modPlusRunner.Value.Status
-                        If eStatus >= clsMODPlusRunner.MODPlusRunnerStatusCodes.Success Then
-                            ' Analysis completed (or failed)
-                            stepsComplete += 1
-
-                            If Not completedThreads.Contains(modPlusRunner.Key) Then
-                                completedThreads.Add(modPlusRunner.Key)
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODPlus thread " & modPlusRunner.Key & " is now complete")
-                            End If
-
-                        End If
-
-                        processIDs.Add(modPlusRunner.Value.ProcessID)
-
-                        progressSum += modPlusRunner.Value.Progress
-                        coreUsageOverall += modPlusRunner.Value.CoreUsage
-
-                        If m_DebugLevel >= 1 Then
-
-                            If Not modPlusRunner.Value.CommandLineArgsLogged AndAlso Not String.IsNullOrWhiteSpace(modPlusRunner.Value.CommandLineArgs) Then
-                                modPlusRunner.Value.CommandLineArgsLogged = True
-
-                                ' "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt  > MODPlus_ConsoleOutput_Part1.txt
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaProgLoc & " " & modPlusRunner.Value.CommandLineArgs)
-
-                            End If
-
-                        End If
-
-                        If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate) Then
-                            mMODPlusVersion = modPlusRunner.Value.ReleaseDate
-                            mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc)
-                        End If
-                    Next
-
-                    Dim subTaskProgress = CSng(progressSum / mMODPlusRunners.Count)
-                    Dim updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, subTaskProgress)
-                    If updatedProgress > m_progress Then
-                        ' This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
-                        m_progress = updatedProgress
-                    End If
-                    
-
-                    If stepsComplete >= mMODPlusRunners.Count Then
-                        ' All threads are done
-                        Exit While
-                    End If
-
-                    While DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds < SECONDS_BETWEEN_UPDATES
-                        Thread.Sleep(250)
-                    End While
-
-                    dtLastStatusUpdate = DateTime.UtcNow
-
-                    CmdRunner_LoopWaiting(processIDs, coreUsageOverall, SECONDS_BETWEEN_UPDATES)
-
-                    If DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14 Then
-                        LogError("MODPlus ran for over 14 days; aborting")
-
-                        For Each modPlusRunner In mMODPlusRunners
-                            modPlusRunner.Value.AbortProcessingNow()
-                        Next
-
-                        Return False
-                    End If
-                End While
-            End If
-
-            Dim blnSuccess = True
-            Dim exitCode = 0
-
-            currentTask = "Looking for console output error messages"
-
-            ' Look for any console output error messages
-            For Each modPlusRunner In mMODPlusRunners
-
-                ' One last check for the ToolVersion info being written to the database
-                If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate) Then
-                    mMODPlusVersion = modPlusRunner.Value.ReleaseDate
-                    mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc)
-                End If
-
-                Dim progRunner = modPlusRunner.Value.ProgRunner
-
-                If progRunner Is Nothing Then
-                    blnSuccess = False
-                    If String.IsNullOrWhiteSpace(m_message) Then
-                        m_message = "progRunner object is null for thread " & modPlusRunner.Key
-                    End If
-                    Continue For
-                End If
-
-                If Not String.IsNullOrWhiteSpace(progRunner.CachedConsoleErrors) Then
-                    ' Note that clsProgRunner will have already included these errors in the ConsoleOutput.txt file
-                    Dim consoleError = "Console error for thread " & modPlusRunner.Key & ": " & progRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ")
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError)
-                    blnSuccess = False
-                End If
-
-                If progRunner.ExitCode <> 0 AndAlso exitCode = 0 Then
-                    blnSuccess = False
-                    exitCode = progRunner.ExitCode
-                End If
-
-            Next
-
-            If Not blnSuccess Then
-                Dim msg As String
-                msg = "Error running MODPlus"
-                m_message = clsGlobal.AppendToComment(m_message, msg)
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg & ", job " & m_JobNum)
-
-                If exitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MODPlus returned a non-zero exit code: " & exitCode.ToString())
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MODPlus failed (but exit code is 0)")
-                End If
-
-                Return False
-            End If
-
-            m_progress = PROGRESS_PCT_MODPLUS_COMPLETE
-
-            m_StatusTools.UpdateAndWrite(m_progress)
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODPlus Analysis Complete")
-            End If
-
-            Return True
-
-        Catch ex As Exception
-            LogError("Error in StartMODPlus at " & currentTask, ex)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(strProgLoc As String) As Boolean
-
-        Dim strToolVersionInfo As String
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        strToolVersionInfo = String.Copy(mMODPlusVersion)
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        Dim fiMODPlusProg = New FileInfo(mMODPlusProgLoc)
-        ioToolFiles.Add(fiMODPlusProg)
-
-        ioToolFiles.Add(New FileInfo(Path.Combine(fiMODPlusProg.DirectoryName, "tda_plus.jar")))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=True)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-#End Region
-
-#Region "Event Handlers"
-
-    Private Sub MSConvert_CmdRunner_LoopWaiting()
-        Dim processIDs = New List(Of Integer)
-        processIDs.Add(0)
-
-        ' Pass -1 for coreUsageOverall so that mCoreUsageHistory does not get updated
-        CmdRunner_LoopWaiting(processIDs, coreUsageOverall:=-1, secondsBetweenUpdates:=30)
-    End Sub
-
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting(processIDs As List(Of Integer), coreUsageOverall As Single, secondsBetweenUpdates As Integer)
-
-        UpdateStatusFile(m_progress)
-
-        UpdateProgRunnerCpuUsage(processIDs.FirstOrDefault(), coreUsageOverall, secondsBetweenUpdates)
-
-        LogProgress("MODPlus")
-
-    End Sub
-
-#End Region
-
-End Class
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 05/12/2015
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Xml;
+using AnalysisManagerBase;
+
+namespace AnalysisManagerMODPlusPlugin
+{
+    /// <summary>
+    /// Class for running MODPlus
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsAnalysisToolRunnerMODPlus : clsAnalysisToolRunnerBase
+    {
+        #region "Constants and Enums"
+
+        protected const string MODPlus_CONSOLE_OUTPUT = "MODPlus_ConsoleOutput.txt";
+        protected const string MODPlus_JAR_NAME = "modp_pnnl.jar";
+        protected const string TDA_PLUS_JAR_NAME = "tda_plus.jar";
+
+        protected const float PROGRESS_PCT_CONVERTING_MSXML_TO_MGF = 1;
+        protected const float PROGRESS_PCT_SPLITTING_MGF = 3;
+        protected const float PROGRESS_PCT_MODPLUS_STARTING = 5;
+        protected const float PROGRESS_PCT_MODPLUS_COMPLETE = 95;
+        protected const float PROGRESS_PCT_COMPUTING_FDR = 96;
+
+        protected const bool USE_THREADING = true;
+
+        #endregion
+
+        #region "Module Variables"
+
+        protected bool mToolVersionWritten;
+        protected string mMODPlusVersion;
+
+        protected string mMODPlusProgLoc;
+        protected string mConsoleOutputErrorMsg;
+
+        /// <summary>
+        /// Dictionary of ModPlus instances
+        /// </summary>
+        /// <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
+        protected Dictionary<int, clsMODPlusRunner> mMODPlusRunners;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Runs MODPlus
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            try
+            {
+                // Call base class for initial setup
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMODPlus.RunTool(): Enter");
+                }
+
+                // Verify that program files exist
+
+                // JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
+                var javaProgLoc = GetJavaProgLoc();
+                if (string.IsNullOrEmpty(javaProgLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Determine the path to the MODPlus program
+                mMODPlusProgLoc = DetermineProgramLocation("MODPlus", "MODPlusProgLoc", MODPlus_JAR_NAME);
+
+                if (string.IsNullOrWhiteSpace(mMODPlusProgLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (!InitializeFastaFile())
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                Dictionary<int, string> paramFileList = null;
+
+                // Run MODPlus (using multiple threads)
+                var blnSuccess = StartMODPlus(javaProgLoc, out paramFileList);
+
+                if (blnSuccess)
+                {
+                    // Look for the results file(s)
+                    blnSuccess = PostProcessMODPlusResults(paramFileList);
+                    if (!blnSuccess)
+                    {
+                        if (string.IsNullOrEmpty(m_message))
+                        {
+                            LogError("Unknown error post-processing the MODPlus results");
+                        }
+                    }
+                }
+
+                m_progress = PROGRESS_PCT_MODPLUS_COMPLETE;
+
+                // Stop the job timer
+                m_StopTime = DateTime.UtcNow;
+
+                // Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
+
+                // Make sure objects are released
+                Thread.Sleep(500);        // 500 msec delay
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                if (!blnSuccess)
+                {
+                    // Move the source files and any results to the Failed Job folder
+                    // Useful for debugging problems
+                    CopyFailedResultsToArchiveFolder();
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var result = MakeResultsFolder();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // MakeResultsFolder handles posting to local log, so set database error message and exit
+                    LogError("Error making results folder");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = MoveResultFiles();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    LogError("Error moving files into results folder");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = CopyResultsFolderToServer();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MODPlusPlugin->RunTool", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="xpath"></param>
+        /// <param name="attributeName"></param>
+        /// <param name="attributeValue"></param>
+        /// <remarks></remarks>
+        private void AddXMLElement(XmlDocument doc, string xpath, string attributeName, string attributeValue)
+        {
+            var attributes = new Dictionary<string, string>();
+            attributes.Add(attributeName, attributeValue);
+
+            AddXMLElement(doc, xpath, attributes);
+        }
+
+        /// <summary>
+        /// Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="xpath"></param>
+        /// <param name="attributes"></param>
+        /// <remarks></remarks>
+        private void AddXMLElement(XmlDocument doc, string xpath, Dictionary<string, string> attributes)
+        {
+            MakeXPath(doc, xpath, attributes);
+        }
+
+        /// <summary>
+        /// Use MSConvert to convert the .mzXML or .mzML file to a .mgf file
+        /// </summary>
+        /// <param name="fiSpectrumFile"></param>
+        /// <param name="fiMgfFile"></param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        private bool ConvertMsXmlToMGF(FileInfo fiSpectrumFile, FileInfo fiMgfFile)
+        {
+            // Set up and execute a program runner to run MSConvert
+
+            var msConvertProgLoc = DetermineProgramLocation("MSConvert", "ProteoWizardDir", "msconvert.exe");
+            if (string.IsNullOrWhiteSpace(msConvertProgLoc))
+            {
+                if (string.IsNullOrWhiteSpace(m_message))
+                {
+                    LogError("Manager parameter ProteoWizardDir was not found; cannot run MSConvert.exe");
+                }
+                return false;
+            }
+
+            var msConvertConsoleOutput = Path.Combine(m_WorkDir, "MSConvert_ConsoleOutput.txt");
+            m_jobParams.AddResultFileToSkip(msConvertConsoleOutput);
+
+            var cmdStr = " --mgf";
+            cmdStr += " --outfile " + fiMgfFile.FullName;
+            cmdStr += " " + PossiblyQuotePath(fiSpectrumFile.FullName);
+
+            if (m_DebugLevel >= 1)
+            {
+                // C:\DMS_Programs\ProteoWizard\msconvert.exe --mgf --outfile Dataset.mgf Dataset.mzML
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msConvertProgLoc + " " + cmdStr);
+            }
+
+            var msConvertRunner = new clsRunDosProgram(m_WorkDir);
+            RegisterEvents(msConvertRunner);
+            msConvertRunner.LoopWaiting += MSConvert_CmdRunner_LoopWaiting;
+
+            msConvertRunner.CreateNoWindow = true;
+            msConvertRunner.CacheStandardOutput = false;
+            msConvertRunner.EchoOutputToConsole = true;
+
+            msConvertRunner.WriteConsoleOutputToFile = true;
+            msConvertRunner.ConsoleOutputFilePath = msConvertConsoleOutput;
+
+            m_progress = PROGRESS_PCT_CONVERTING_MSXML_TO_MGF;
+            ResetProgRunnerCpuUsage();
+
+            // Start the program and wait for it to finish
+            // However, while it's running, LoopWaiting will get called via events
+            var success = msConvertRunner.RunProgram(msConvertProgLoc, cmdStr, "MSConvert", true);
+
+            if (success)
+            {
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "MSConvert.exe successfully created " + fiMgfFile.Name);
+                }
+                return true;
+            }
+
+            string msg = null;
+            msg = "Error running MSConvert";
+            m_message = clsGlobal.AppendToComment(m_message, msg);
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+
+            if (msConvertRunner.ExitCode != 0)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    "MSConvert returned a non-zero exit code: " + msConvertRunner.ExitCode.ToString());
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSConvert failed (but exit code is 0)");
+            }
+
+            return false;
+        }
+
+        protected void CopyFailedResultsToArchiveFolder()
+        {
+            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
+                strFailedResultsFolderPath = "??Not Defined??";
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
+
+            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
+            string strFolderPathToArchive = null;
+            strFolderPathToArchive = string.Copy(m_WorkDir);
+
+            try
+            {
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+            }
+
+            // Make the results folder
+            var result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the result files into the result folder
+                result = MoveResultFiles();
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Move was a success; update strFolderPathToArchive
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
+
+            // Copy the results folder to the Archive folder
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="paramFileName"></param>
+        /// <param name="fastaFilePath"></param>
+        /// <param name="mgfFiles"></param>
+        /// <returns>Dictionary where key is the thread number and value is the parameter file path</returns>
+        /// <remarks></remarks>
+        private Dictionary<int, string> CreateParameterFiles(string paramFileName, string fastaFilePath, IEnumerable<FileInfo> mgfFiles)
+        {
+            try
+            {
+                var fiParamFile = new FileInfo(Path.Combine(m_WorkDir, paramFileName));
+                if (!fiParamFile.Exists)
+                {
+                    LogError("Parameter file not found by CreateParameterFiles");
+                    return new Dictionary<int, string>();
+                }
+
+                var doc = new XmlDocument();
+                doc.Load(fiParamFile.FullName);
+
+                DefineParamfileDatasetAndFasta(doc, fastaFilePath);
+
+                DefineParamMassResolutionSettings(doc);
+
+                var paramFileList = CreateThreadParamFiles(fiParamFile, doc, mgfFiles);
+
+                return paramFileList;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in CreateParameterFiles", ex);
+                return new Dictionary<int, string>();
+            }
+        }
+
+        private Dictionary<int, string> CreateThreadParamFiles(FileInfo fiMasterParamFile, XmlDocument doc, IEnumerable<FileInfo> mgfFiles)
+        {
+            var reThreadNumber = new Regex(@"_Part(\d+)\.mgf", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var paramFileList = new Dictionary<int, string>();
+
+            foreach (var fiMgfFile in mgfFiles)
+            {
+                var reMatch = reThreadNumber.Match(fiMgfFile.Name);
+                if (!reMatch.Success)
+                {
+                    LogError("RegEx failed to extract the thread number from the MGF file name: " + fiMgfFile.Name);
+                    return new Dictionary<int, string>();
+                }
+
+                int threadNumber = 0;
+                if (!int.TryParse(reMatch.Groups[1].Value, out threadNumber))
+                {
+                    LogError("RegEx logic error extracting the thread number from the MGF file name: " + fiMgfFile.Name);
+                    return new Dictionary<int, string>();
+                }
+
+                if (paramFileList.ContainsKey(threadNumber))
+                {
+                    LogError("MGFSplitter logic error; duplicate thread number encountered for " + fiMgfFile.Name);
+                    return new Dictionary<int, string>();
+                }
+
+                var nodeList = doc.SelectNodes("/search/dataset");
+                if (nodeList.Count > 0)
+                {
+                    nodeList[0].Attributes["local_path"].Value = fiMgfFile.FullName;
+                    nodeList[0].Attributes["format"].Value = "mgf";
+                }
+
+                var paramFileName = Path.GetFileNameWithoutExtension(fiMasterParamFile.Name) + "_Part" + threadNumber + ".xml";
+                var paramFilePath = Path.Combine(fiMasterParamFile.DirectoryName, paramFileName);
+
+                using (var objXmlWriter = new XmlTextWriter(new FileStream(paramFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
+                {
+                    objXmlWriter.Formatting = Formatting.Indented;
+                    objXmlWriter.Indentation = 4;
+
+                    doc.WriteTo(objXmlWriter);
+                }
+
+                paramFileList.Add(threadNumber, paramFilePath);
+
+                m_jobParams.AddResultFileToSkip(paramFilePath);
+            }
+
+            return paramFileList;
+        }
+
+        private void DefineParamfileDatasetAndFasta(XmlDocument doc, string fastaFilePath)
+        {
+            // Define the path to the dataset file
+            XmlNodeList nodeList = doc.SelectNodes("/search/dataset");
+            if (nodeList.Count > 0)
+            {
+                // This value will get updated to the correct name later in this function
+                nodeList[0].Attributes["local_path"].Value = "Dataset_PartX.mgf";
+                nodeList[0].Attributes["format"].Value = "mgf";
+            }
+            else
+            {
+                // Match not found; add it
+                var attributes = new Dictionary<string, string>();
+                attributes.Add("local_path", "Dataset_PartX.mgf");
+                attributes.Add("format", "mgf");
+                AddXMLElement(doc, "/search/dataset", attributes);
+            }
+
+            // Define the path to the fasta file
+            nodeList = doc.SelectNodes("/search/database");
+            if (nodeList.Count > 0)
+            {
+                nodeList[0].Attributes["local_path"].Value = fastaFilePath;
+            }
+            else
+            {
+                // Match not found; add it
+                AddXMLElement(doc, "/search/database", "local_path", fastaFilePath);
+            }
+        }
+
+        private void DefineParamMassResolutionSettings(XmlDocument doc)
+        {
+            const string LOW_RES_FLAG = "low";
+            const string HIGH_RES_FLAG = "high";
+
+            const float MIN_FRAG_TOL_LOW_RES = 0.3f;
+            const string DEFAULT_FRAG_TOL_LOW_RES = "0.5";
+            const string DEFAULT_FRAG_TOL_HIGH_RES = "0.05";
+
+            // Validate the setting for instrument_resolution and fragment_ion_tol
+
+            var strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType");
+            var instrumentResolutionMsMs = LOW_RES_FLAG;
+
+            if (strDatasetType.ToLower().EndsWith("hmsn"))
+            {
+                instrumentResolutionMsMs = HIGH_RES_FLAG;
+            }
+
+            var nodeList = doc.SelectNodes("/search/instrument_resolution");
+            if (nodeList.Count > 0)
+            {
+                if (nodeList[0].Attributes["msms"].Value == HIGH_RES_FLAG && instrumentResolutionMsMs == "low")
+                {
+                    // Parameter file lists the resolution as high, but it's actually low
+                    // Auto-change it
+                    nodeList[0].Attributes["msms"].Value = instrumentResolutionMsMs;
+                    m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-switched to low resolution mode for MS/MS data");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage);
+                }
+            }
+            else
+            {
+                // Match not found; add it
+                var attributes = new Dictionary<string, string>();
+                attributes.Add("ms", HIGH_RES_FLAG);
+                attributes.Add("msms", instrumentResolutionMsMs);
+                AddXMLElement(doc, "/search/instrument_resolution", attributes);
+            }
+
+            nodeList = doc.SelectNodes("/search/parameters/fragment_ion_tol");
+            if (nodeList.Count > 0)
+            {
+                if (instrumentResolutionMsMs == LOW_RES_FLAG)
+                {
+                    double massTolDa = 0;
+                    if (double.TryParse(nodeList[0].Attributes["value"].Value, out massTolDa))
+                    {
+                        var massUnits = nodeList[0].Attributes["unit"].Value;
+
+                        if (massUnits == "ppm")
+                        {
+                            // Convert from ppm to Da
+                            massTolDa = massTolDa * 1000 / 1000000;
+                        }
+
+                        if (massTolDa < MIN_FRAG_TOL_LOW_RES)
+                        {
+                            m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-changed fragment_ion_tol to " + DEFAULT_FRAG_TOL_LOW_RES + " Da since low resolution MS/MS");
+                            nodeList[0].Attributes["value"].Value = DEFAULT_FRAG_TOL_LOW_RES;
+                            nodeList[0].Attributes["unit"].Value = "da";
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Match not found; add it
+                var attributes = new Dictionary<string, string>();
+
+                if (instrumentResolutionMsMs == HIGH_RES_FLAG)
+                {
+                    attributes.Add("value", DEFAULT_FRAG_TOL_HIGH_RES);
+                }
+                else
+                {
+                    attributes.Add("value", DEFAULT_FRAG_TOL_LOW_RES);
+                }
+
+                attributes.Add("unit", "da");
+                AddXMLElement(doc, "/search/parameters/fragment_ion_tol", attributes);
+            }
+        }
+
+        private bool InitializeFastaFile()
+        {
+            // Define the path to the fasta file
+            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+
+            var fiFastaFile = new FileInfo(fastaFilePath);
+
+            if (!fiFastaFile.Exists)
+            {
+                // Fasta file not found
+                LogError("Fasta file not found: " + fiFastaFile.Name, "Fasta file not found: " + fiFastaFile.FullName);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="xpath"></param>
+        /// <param name="attributes"></param>
+        /// <returns></returns>
+        /// <remarks>Code adapted from "http://stackoverflow.com/questions/508390/create-xml-nodes-based-on-xpath"</remarks>
+        private XmlNode MakeXPath(XmlDocument doc, string xpath, Dictionary<string, string> attributes)
+        {
+            return MakeXPath(doc, doc as XmlNode, xpath, attributes);
+        }
+
+        private XmlNode MakeXPath(XmlDocument doc, XmlNode parent, string xpath, Dictionary<string, string> attributes)
+        {
+            // Grab the next node name in the xpath; or return parent if empty
+            string[] partsOfXPath = xpath.Trim('/').Split('/');
+            string nextNodeInXPath = partsOfXPath.First();
+            if (string.IsNullOrEmpty(nextNodeInXPath))
+            {
+                return parent;
+            }
+
+            // Get or create the node from the name
+            XmlNode node = parent.SelectSingleNode(nextNodeInXPath);
+            if (node == null)
+            {
+                var newNode = doc.CreateElement(nextNodeInXPath);
+
+                if (partsOfXPath.Length == 1)
+                {
+                    // Right-most node in the xpath
+                    // Add the attributes
+                    foreach (var attrib in attributes)
+                    {
+                        XmlAttribute newAttr = doc.CreateAttribute(attrib.Key);
+                        newAttr.Value = attrib.Value;
+                        newNode.Attributes.Append(newAttr);
+                    }
+                }
+
+                node = parent.AppendChild(newNode);
+            }
+
+            if (partsOfXPath.Length == 1)
+            {
+                return node;
+            }
+            else
+            {
+                // Rejoin the remainder of the array as an xpath expression and recurse
+                string rest = string.Join("/", partsOfXPath.Skip(1).ToArray());
+                return MakeXPath(doc, node, rest, attributes);
+            }
+        }
+
+        private bool PostProcessMODPlusResults(Dictionary<int, string> paramFileList)
+        {
+            var successOverall = true;
+
+            try
+            {
+                // Keys in this list are scan numbers with charge state encoded as Charge / 100
+                // For example, if scan 1000 and charge 2, then the key will be 1000.02
+                // Values are a list of readers that have that given ScanPlusCharge combo
+                var lstNextAvailableScan = new SortedList<double, List<clsMODPlusResultsReader>>();
+
+                // Combine the result files using a Merge Sort (we assume the results are sorted by scan in each result file)
+
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Merging the results files");
+                }
+
+                foreach (var modPlusRunner in mMODPlusRunners)
+                {
+                    if (string.IsNullOrWhiteSpace(modPlusRunner.Value.OutputFilePath))
+                    {
+                        continue;
+                    }
+
+                    var fiResultFile = new FileInfo(modPlusRunner.Value.OutputFilePath);
+
+                    if (!fiResultFile.Exists)
+                    {
+                        // Result file not found for the current thread
+                        // Log an error, but continue to combine the files
+                        m_message = clsGlobal.AppendToComment(m_message, "Result file not found for thread " + modPlusRunner.Key);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        successOverall = false;
+                        continue;
+                    }
+                    else if (fiResultFile.Length == 0)
+                    {
+                        // 0-byte result file
+                        // Log an error, but continue to combine the files
+                        m_message = clsGlobal.AppendToComment(m_message, "Result file is empty for thread " + modPlusRunner.Key);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        successOverall = false;
+                        continue;
+                    }
+
+                    var reader = new clsMODPlusResultsReader(m_Dataset, fiResultFile);
+                    if (reader.SpectrumAvailable)
+                    {
+                        PushReader(lstNextAvailableScan, reader);
+                    }
+                }
+
+                // The final results file is named Dataset_modp.txt
+                var combinedResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + clsMODPlusRunner.RESULTS_FILE_SUFFIX);
+                var fiCombinedResults = new FileInfo(combinedResultsFilePath);
+
+                using (var swCombinedResults = new StreamWriter(new FileStream(fiCombinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (lstNextAvailableScan.Count > 0)
+                    {
+                        var nextScan = lstNextAvailableScan.First();
+
+                        lstNextAvailableScan.Remove(nextScan.Key);
+
+                        foreach (var reader in nextScan.Value)
+                        {
+                            foreach (var dataLine in reader.CurrentScanData)
+                            {
+                                swCombinedResults.WriteLine(dataLine);
+                            }
+
+                            // Add a blank line
+                            swCombinedResults.WriteLine();
+
+                            if (reader.ReadNextSpectrum())
+                            {
+                                PushReader(lstNextAvailableScan, reader);
+                            }
+                        }
+                    }
+                }
+
+                foreach (var modPlusRunner in mMODPlusRunners)
+                {
+                    m_jobParams.AddResultFileToSkip(modPlusRunner.Value.OutputFilePath);
+                }
+
+                // Zip the output file along with the ConsoleOutput files
+                var diZipFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Temp_ZipScratch"));
+                if (!diZipFolder.Exists)
+                    diZipFolder.Create();
+
+                var filesToMove = new List<FileInfo>();
+                filesToMove.Add(fiCombinedResults);
+
+                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                filesToMove.AddRange(diWorkDir.GetFiles("*ConsoleOutput*.txt"));
+
+                foreach (var paramFile in paramFileList)
+                {
+                    filesToMove.Add(new FileInfo(paramFile.Value));
+                }
+
+                foreach (var fiFile in filesToMove)
+                {
+                    if (fiFile.Exists)
+                    {
+                        fiFile.MoveTo(Path.Combine(diZipFolder.FullName, fiFile.Name));
+                    }
+                }
+
+                var zippedResultsFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(fiCombinedResults.Name) + ".zip");
+                var blnSuccess = m_IonicZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath);
+
+                if (blnSuccess)
+                {
+                    m_jobParams.AddResultFileToSkip(fiCombinedResults.Name);
+                }
+                else if (string.IsNullOrEmpty(m_message))
+                {
+                    LogError("Unknown error zipping the MODPlus results and console output files");
+                    return false;
+                }
+
+                if (successOverall)
+                {
+                    m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION);
+                }
+
+                return successOverall;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception preparing the MODPlus results for zipping: " + ex.Message);
+                return false;
+            }
+        }
+
+        protected void PushReader(SortedList<double, List<clsMODPlusResultsReader>> lstNextAvailableScan, clsMODPlusResultsReader reader)
+        {
+            List<clsMODPlusResultsReader> readersForValue = null;
+
+            if (lstNextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, out readersForValue))
+            {
+                readersForValue.Add(reader);
+            }
+            else
+            {
+                readersForValue = new List<clsMODPlusResultsReader>();
+                readersForValue.Add(reader);
+
+                lstNextAvailableScan.Add(reader.CurrentScanChargeCombo, readersForValue);
+            }
+        }
+
+        /// <summary>
+        /// Split the .mgf file into multiple parts
+        /// </summary>
+        /// <param name="fiMgfFile"></param>
+        /// <param name="threadCount"></param>
+        /// <returns>List of newly created .mgf files</returns>
+        /// <remarks>Yses a round-robin splitting</remarks>
+        private List<FileInfo> SplitMGFFiles(FileInfo fiMgfFile, int threadCount)
+        {
+            if (m_DebugLevel >= 1)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "Splitting mgf file into " + threadCount + " parts: " + fiMgfFile.Name);
+            }
+
+            // Cache the current state of m_message
+            var cachedStatusMessage = string.Copy(m_message);
+            m_message = string.Empty;
+
+            var splitter = new clsSplitMGFFile();
+            RegisterEvents(splitter);
+
+            // Split the .mgf file
+            // If an error occurs, m_message will be updated because ErrorEventHandler calls LogError when event ErrorEvent is raised by clsSplitMGFFile
+            var mgfFiles = splitter.SplitMgfFile(fiMgfFile.FullName, threadCount, "_Part");
+
+            if (mgfFiles.Count == 0)
+            {
+                if (string.IsNullOrWhiteSpace(m_message))
+                {
+                    LogError("SplitMgfFile returned an empty list of files");
+                }
+
+                return new List<FileInfo>();
+            }
+
+            // Restore m_message
+            m_message = cachedStatusMessage;
+
+            m_jobParams.AddResultFileToSkip(fiMgfFile.FullName);
+
+            return mgfFiles;
+        }
+
+        /// <summary>
+        /// Run MODPlus
+        /// </summary>
+        /// <param name="javaProgLoc">Path to java.exe</param>
+        /// <param name="paramFileList">Output: Dictionary where key is the thread number and value is the parameter file path</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        protected bool StartMODPlus(string javaProgLoc, out Dictionary<int, string> paramFileList)
+        {
+            var currentTask = "Initializing";
+
+            paramFileList = new Dictionary<int, string>();
+
+            try
+            {
+                // We will store the MODPlus version info in the database after the header block is written to file MODPlus_ConsoleOutput.txt
+
+                mToolVersionWritten = false;
+                mMODPlusVersion = string.Empty;
+                mConsoleOutputErrorMsg = string.Empty;
+
+                currentTask = "Determine thread count";
+
+                var javaMemorySizeMB = m_jobParams.GetJobParameter("MODPlusJavaMemorySize", 3000);
+                var maxThreadsToAllow = ComputeMaxThreadsGivenMemoryPerThread(javaMemorySizeMB);
+
+                // Determine the number of threads
+                var threadCountText = m_jobParams.GetJobParameter("MODPlusThreads", "90%");
+                int threadCount = ParseThreadCount(threadCountText, maxThreadsToAllow);
+
+                // Convert the .mzXML or .mzML file to the MGF format
+                var spectrumFileName = m_Dataset;
+
+                var msXmlOutputType = m_jobParams.GetJobParameter("MSXMLOutputType", string.Empty);
+                if (msXmlOutputType.ToLower() == "mzxml")
+                {
+                    spectrumFileName += clsAnalysisResources.DOT_MZXML_EXTENSION;
+                }
+                else
+                {
+                    spectrumFileName += clsAnalysisResources.DOT_MZML_EXTENSION;
+                }
+
+                currentTask = "Convert .mzML file to MGF";
+
+                var fiSpectrumFile = new FileInfo(Path.Combine(m_WorkDir, spectrumFileName));
+                if (!fiSpectrumFile.Exists)
+                {
+                    LogError("Spectrum file not found: " + fiSpectrumFile.Name);
+                    return false;
+                }
+
+                var fiMgfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MGF_EXTENSION));
+
+                if (fiMgfFile.Exists)
+                {
+                    // The .MGF file already exists
+                    // This will typically only be true while debugging
+                }
+                else
+                {
+                    bool success = ConvertMsXmlToMGF(fiSpectrumFile, fiMgfFile);
+                    if (!success)
+                    {
+                        return false;
+                    }
+                }
+
+                currentTask = "Split the MGF file";
+
+                // Create one MGF file for each thread
+                List<FileInfo> mgfFiles = SplitMGFFiles(fiMgfFile, threadCount);
+                if (mgfFiles.Count == 0)
+                {
+                    if (string.IsNullOrWhiteSpace(m_message))
+                    {
+                        LogError("Unknown error calling SplitMGFFiles");
+                    }
+                    return false;
+                }
+
+                currentTask = "Lookup job parameters";
+
+                // Define the path to the fasta file
+                // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+                string dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
+
+                var paramFileName = m_jobParams.GetParam("ParmFileName");
+
+                currentTask = "Create a parameter file for each thread";
+
+                paramFileList = CreateParameterFiles(paramFileName, fastaFilePath, mgfFiles);
+
+                if (paramFileList.Count == 0)
+                {
+                    if (string.IsNullOrWhiteSpace(m_message))
+                    {
+                        LogError("CreateParameterFile returned an empty list in StartMODPlus");
+                    }
+                    return false;
+                }
+
+                currentTask = " Set up and execute a program runner to run each MODPlus instance";
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    "Running MODPlus using " + paramFileList.Count + " threads");
+
+                m_progress = PROGRESS_PCT_MODPLUS_STARTING;
+                ResetProgRunnerCpuUsage();
+
+                mMODPlusRunners = new Dictionary<int, clsMODPlusRunner>();
+                List<Thread> lstThreads = new List<Thread>();
+
+                foreach (var paramFile in paramFileList)
+                {
+                    var threadNum = paramFile.Key;
+
+                    currentTask = "LaunchingModPlus, thread " + threadNum;
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, currentTask);
+
+                    var modPlusRunner = new clsMODPlusRunner(m_Dataset, threadNum, m_WorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc);
+
+                    if (!USE_THREADING)
+                    {
+                        modPlusRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
+                    }
+
+                    modPlusRunner.JavaMemorySizeMB = javaMemorySizeMB;
+
+                    mMODPlusRunners.Add(threadNum, modPlusRunner);
+
+                    if (USE_THREADING)
+                    {
+                        Thread newThread = new Thread(new ThreadStart(modPlusRunner.StartAnalysis));
+                        newThread.Priority = ThreadPriority.BelowNormal;
+                        newThread.Start();
+                        lstThreads.Add(newThread);
+                    }
+                    else
+                    {
+                        modPlusRunner.StartAnalysis();
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            javaProgLoc + " " + modPlusRunner.CommandLineArgs);
+
+                        if (modPlusRunner.Status == clsMODPlusRunner.MODPlusRunnerStatusCodes.Failure)
+                        {
+                            LogError("Error running MODPlus, thread " + threadNum);
+                            return false;
+                        }
+                    }
+                }
+
+                if (USE_THREADING)
+                {
+                    // Wait for all of the threads to exit
+                    // Run for a maximum of 14 days
+
+                    currentTask = "Waiting for all of the threads to exit";
+
+                    var dtStartTime = DateTime.UtcNow;
+                    SortedSet<int> completedThreads = new SortedSet<int>();
+
+                    const int SECONDS_BETWEEN_UPDATES = 15;
+                    var dtLastStatusUpdate = DateTime.UtcNow;
+
+                    while (true)
+                    {
+                        // Poll the status of each of the threads
+
+                        var stepsComplete = 0;
+                        double progressSum = 0;
+
+                        var processIDs = new List<int>();
+                        float coreUsageOverall = 0;
+
+                        foreach (var modPlusRunner in mMODPlusRunners)
+                        {
+                            var eStatus = modPlusRunner.Value.Status;
+                            if (eStatus >= clsMODPlusRunner.MODPlusRunnerStatusCodes.Success)
+                            {
+                                // Analysis completed (or failed)
+                                stepsComplete += 1;
+
+                                if (!completedThreads.Contains(modPlusRunner.Key))
+                                {
+                                    completedThreads.Add(modPlusRunner.Key);
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                        "MODPlus thread " + modPlusRunner.Key + " is now complete");
+                                }
+                            }
+
+                            processIDs.Add(modPlusRunner.Value.ProcessID);
+
+                            progressSum += modPlusRunner.Value.Progress;
+                            coreUsageOverall += modPlusRunner.Value.CoreUsage;
+
+                            if (m_DebugLevel >= 1)
+                            {
+                                if (!modPlusRunner.Value.CommandLineArgsLogged && !string.IsNullOrWhiteSpace(modPlusRunner.Value.CommandLineArgs))
+                                {
+                                    modPlusRunner.Value.CommandLineArgsLogged = true;
+
+                                    // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt  > MODPlus_ConsoleOutput_Part1.txt
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                        javaProgLoc + " " + modPlusRunner.Value.CommandLineArgs);
+                                }
+                            }
+
+                            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate))
+                            {
+                                mMODPlusVersion = modPlusRunner.Value.ReleaseDate;
+                                mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc);
+                            }
+                        }
+
+                        var subTaskProgress = Convert.ToSingle(progressSum / mMODPlusRunners.Count);
+                        var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, subTaskProgress);
+                        if (updatedProgress > m_progress)
+                        {
+                            // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
+                            m_progress = updatedProgress;
+                        }
+
+                        if (stepsComplete >= mMODPlusRunners.Count)
+                        {
+                            // All threads are done
+                            break;
+                        }
+
+                        while (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds < SECONDS_BETWEEN_UPDATES)
+                        {
+                            Thread.Sleep(250);
+                        }
+
+                        dtLastStatusUpdate = DateTime.UtcNow;
+
+                        CmdRunner_LoopWaiting(processIDs, coreUsageOverall, SECONDS_BETWEEN_UPDATES);
+
+                        if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
+                        {
+                            LogError("MODPlus ran for over 14 days; aborting");
+
+                            foreach (var modPlusRunner in mMODPlusRunners)
+                            {
+                                modPlusRunner.Value.AbortProcessingNow();
+                            }
+
+                            return false;
+                        }
+                    }
+                }
+
+                var blnSuccess = true;
+                var exitCode = 0;
+
+                currentTask = "Looking for console output error messages";
+
+                // Look for any console output error messages
+
+                foreach (var modPlusRunner in mMODPlusRunners)
+                {
+                    // One last check for the ToolVersion info being written to the database
+                    if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate))
+                    {
+                        mMODPlusVersion = modPlusRunner.Value.ReleaseDate;
+                        mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc);
+                    }
+
+                    var progRunner = modPlusRunner.Value.ProgRunner;
+
+                    if (progRunner == null)
+                    {
+                        blnSuccess = false;
+                        if (string.IsNullOrWhiteSpace(m_message))
+                        {
+                            m_message = "progRunner object is null for thread " + modPlusRunner.Key;
+                        }
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(progRunner.CachedConsoleErrors))
+                    {
+                        // Note that clsProgRunner will have already included these errors in the ConsoleOutput.txt file
+                        var consoleError = "Console error for thread " + modPlusRunner.Key + ": " +
+                                           progRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError);
+                        blnSuccess = false;
+                    }
+
+                    if (progRunner.ExitCode != 0 && exitCode == 0)
+                    {
+                        blnSuccess = false;
+                        exitCode = progRunner.ExitCode;
+                    }
+                }
+
+                if (!blnSuccess)
+                {
+                    string msg = null;
+                    msg = "Error running MODPlus";
+                    m_message = clsGlobal.AppendToComment(m_message, msg);
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+
+                    if (exitCode != 0)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "MODPlus returned a non-zero exit code: " + exitCode.ToString());
+                    }
+                    else
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "Call to MODPlus failed (but exit code is 0)");
+                    }
+
+                    return false;
+                }
+
+                m_progress = PROGRESS_PCT_MODPLUS_COMPLETE;
+
+                m_StatusTools.UpdateAndWrite(m_progress);
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODPlus Analysis Complete");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in StartMODPlus at " + currentTask, ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        protected bool StoreToolVersionInfo(string strProgLoc)
+        {
+            string strToolVersionInfo = null;
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            strToolVersionInfo = string.Copy(mMODPlusVersion);
+
+            // Store paths to key files in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var fiMODPlusProg = new FileInfo(mMODPlusProgLoc);
+            ioToolFiles.Add(fiMODPlusProg);
+
+            ioToolFiles.Add(new FileInfo(Path.Combine(fiMODPlusProg.DirectoryName, "tda_plus.jar")));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: true);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        private void MSConvert_CmdRunner_LoopWaiting()
+        {
+            var processIDs = new List<int>();
+            processIDs.Add(0);
+
+            // Pass -1 for coreUsageOverall so that mCoreUsageHistory does not get updated
+            CmdRunner_LoopWaiting(processIDs, coreUsageOverall: -1, secondsBetweenUpdates: 30);
+        }
+
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting(List<int> processIDs, float coreUsageOverall, int secondsBetweenUpdates)
+        {
+            UpdateStatusFile(m_progress);
+
+            UpdateProgRunnerCpuUsage(processIDs.FirstOrDefault(), coreUsageOverall, secondsBetweenUpdates);
+
+            LogProgress("MODPlus");
+        }
+
+        #endregion
+    }
+}

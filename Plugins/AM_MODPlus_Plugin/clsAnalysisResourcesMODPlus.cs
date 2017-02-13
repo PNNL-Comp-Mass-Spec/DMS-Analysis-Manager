@@ -1,184 +1,207 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 05/12/2015
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 05/12/2015
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports System.IO
-Imports AnalysisManagerBase
+namespace AnalysisManagerMODPlusPlugin
+{
+    public class clsAnalysisResourcesMODPlus : clsAnalysisResources
+    {
+        internal const string MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###";
+        internal const int MINIMUM_PERCENT_DECOY = 25;
 
-Public Class clsAnalysisResourcesMODPlus
-    Inherits clsAnalysisResources
+        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        {
+            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+        }
 
-    Friend Const MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY As String = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###"
-    Friend Const MINIMUM_PERCENT_DECOY = 25
+        public override CloseOutType GetResources()
+        {
+            var currentTask = "Initializing";
 
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, myEMSLUtilities As clsMyEMSLUtilities)
-        MyBase.Setup(mgrParams, jobParams, statusTools, myEmslUtilities)
-        SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, True)
-    End Sub
+            try
+            {
+                currentTask = "Retrieve shared resources";
 
-    Public Overrides Function GetResources() As CloseOutType
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                var result = GetSharedResources();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
 
-        Dim currentTask = "Initializing"
+                currentTask = "Retrieve Fasta and param file";
+                if (!RetrieveFastaAndParamFile())
+                {
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
 
-        Try
+                currentTask = "Get Input file";
 
-            currentTask = "Retrieve shared resources"
-    
-            ' Retrieve shared resources, including the JobParameters file from the previous job step
-            Dim result = GetSharedResources()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
+                var eResult = GetMsXmlFile();
 
-            currentTask = "Retrieve Fasta and param file"
-            If Not RetrieveFastaAndParamFile() Then
-                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-            End If
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return eResult;
+                }
 
-            currentTask = "Get Input file"
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in GetResources: " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
 
-            Dim eResult As CloseOutType
-            eResult = GetMsXmlFile()
+        private bool RetrieveFastaAndParamFile()
+        {
+            var currentTask = "Initializing";
 
-            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return eResult
-            End If
-            
-            Return CloseOutType.CLOSEOUT_SUCCESS
+            try
+            {
+                var proteinCollections = m_jobParams.GetParam("ProteinCollectionList", string.Empty);
+                var proteinOptions = m_jobParams.GetParam("ProteinOptions", string.Empty);
 
-        Catch ex As Exception
-            m_message = "Exception in GetResources: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
+                if (string.IsNullOrEmpty(proteinCollections))
+                {
+                    LogError("Job parameter ProteinCollectionList not found; unable to check for decoy fasta file");
+                    return false;
+                }
 
-    End Function
+                if (string.IsNullOrEmpty(proteinOptions))
+                {
+                    LogError("Job parameter ProteinOptions not found; unable to check for decoy fasta file");
+                    return false;
+                }
 
-    Private Function RetrieveFastaAndParamFile() As Boolean
+                var checkLegacyFastaForDecoy = false;
 
-        Dim currentTask = "Initializing"
+                if (clsGlobal.IsMatch(proteinCollections, "na"))
+                {
+                    // Legacy fasta file
+                    // Need to open it with a reader and look for entries that start with XXX.
+                    checkLegacyFastaForDecoy = true;
+                }
+                else
+                {
+                    if (!proteinOptions.ToLower().Contains("seq_direction=decoy"))
+                    {
+                        LogError("Job parameter ProteinOptions does not contain seq_direction=decoy; cannot analyze with MODPlus; choose a DMS-generated decoy protein collection");
+                        return false;
+                    }
+                }
 
-        Try
-            Dim proteinCollections = m_jobParams.GetParam("ProteinCollectionList", String.Empty)
-            Dim proteinOptions = m_jobParams.GetParam("ProteinOptions", String.Empty)
+                // Retrieve the Fasta file
+                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
 
-            If String.IsNullOrEmpty(proteinCollections) Then
-                LogError("Job parameter ProteinCollectionList not found; unable to check for decoy fasta file")
-                Return False
-            End If
+                currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
-            If String.IsNullOrEmpty(proteinOptions) Then
-                LogError("Job parameter ProteinOptions not found; unable to check for decoy fasta file")
-                Return False
-            End If
+                if (!RetrieveOrgDB(localOrgDbFolder))
+                    return false;
 
-            Dim checkLegacyFastaForDecoy = False
+                if (checkLegacyFastaForDecoy)
+                {
+                    if (!FastaHasDecoyProteins())
+                    {
+                        return false;
+                    }
+                }
 
-            If clsGlobal.IsMatch(proteinCollections, "na") Then
-                ' Legacy fasta file
-                ' Need to open it with a reader and look for entries that start with XXX.
-                checkLegacyFastaForDecoy = True
-            Else
-                If Not proteinOptions.ToLower().Contains("seq_direction=decoy") Then
-                    LogError("Job parameter ProteinOptions does not contain seq_direction=decoy; cannot analyze with MODPlus; choose a DMS-generated decoy protein collection")
-                    Return False
-                End If
-            End If
-           
-            ' Retrieve the Fasta file
-            Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
+                m_jobParams.AddAdditionalParameter("MODPlus", MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY, "True");
 
-            currentTask = "RetrieveOrgDB to " & localOrgDbFolder
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file");
 
-            If Not RetrieveOrgDB(localOrgDbFolder) Then Return False
+                // Retrieve the parameter file
+                // This will also obtain the _ModDefs.txt file using query
+                //  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
+                //  FROM V_Param_File_Mass_Mod_Info
+                //  WHERE Param_File_Name = 'ParamFileName'
 
-            If checkLegacyFastaForDecoy Then
-                If Not FastaHasDecoyProteins() Then
-                    Return False
-                End If
-            End If
+                var paramFileName = m_jobParams.GetParam("ParmFileName");
 
-            m_jobParams.AddAdditionalParameter("MODPlus", MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY, "True")
+                currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file")
+                if (!RetrieveGeneratedParamFile(paramFileName))
+                {
+                    return false;
+                }
 
-            ' Retrieve the parameter file
-            ' This will also obtain the _ModDefs.txt file using query 
-            '  SELECT Local_Symbol, Monoisotopic_Mass_Correction, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag
-            '  FROM V_Param_File_Mass_Mod_Info 
-            '  WHERE Param_File_Name = 'ParamFileName'
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                return false;
+            }
+        }
 
-            Dim paramFileName = m_jobParams.GetParam("ParmFileName")
+        private bool FastaHasDecoyProteins()
+        {
+            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
-            currentTask = "RetrieveGeneratedParamFile " & paramFileName
+            var fiFastaFile = new FileInfo(fastaFilePath);
 
-            If Not RetrieveGeneratedParamFile(paramFileName) Then
-                Return False
-            End If
+            if (!fiFastaFile.Exists)
+            {
+                // Fasta file not found
+                LogError("Fasta file not found: " + fiFastaFile.Name, "Fasta file not found: " + fiFastaFile.FullName);
+                return false;
+            }
 
-            Return True
+            // Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
+            var decoyPrefixes = GetDefaultDecoyPrefixes();
+            double maxPercentReverse = 0;
 
-        Catch ex As Exception
-            m_message = "Exception in RetrieveFastaAndParamFile: " & ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & "; task = " & currentTask & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return False
-        End Try
+            foreach (var decoyPrefix in decoyPrefixes)
+            {
+                int proteinCount = 0;
+                var fractionDecoy = GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out proteinCount);
 
-    End Function
+                if (proteinCount == 0)
+                {
+                    LogError("No proteins found in " + fiFastaFile.Name);
+                    return false;
+                }
 
-    Private Function FastaHasDecoyProteins() As Boolean
+                var percentReverse = fractionDecoy * 100;
 
-        Dim localOrgDbFolder = m_mgrParams.GetParam("orgdbdir")
-        Dim fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+                if (percentReverse >= MINIMUM_PERCENT_DECOY)
+                {
+                    // At least 25% of the proteins in the FASTA file are reverse proteins
+                    return true;
+                }
 
-        Dim fiFastaFile = New FileInfo(fastaFilePath)
+                if (percentReverse > maxPercentReverse)
+                {
+                    maxPercentReverse = percentReverse;
+                }
+            }
 
-        If Not fiFastaFile.Exists Then
-            ' Fasta file not found
-            LogError("Fasta file not found: " & fiFastaFile.Name, "Fasta file not found: " & fiFastaFile.FullName)
-            Return False
-        End If
+            var addonMsg = "choose a DMS-generated decoy protein collection or a legacy fasta file with protein names that start with " +
+                           string.Join(" or ", decoyPrefixes);
 
-        ' Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
-        Dim decoyPrefixes = GetDefaultDecoyPrefixes()
-        Dim maxPercentReverse As Double = 0
+            if (Math.Abs(maxPercentReverse - 0) < float.Epsilon)
+            {
+                LogError("Legacy fasta file " + fiFastaFile.Name + " does not have any decoy (reverse) proteins; " + addonMsg);
+                return false;
+            }
 
-        For Each decoyPrefix In decoyPrefixes
-
-            Dim proteinCount As Integer
-            Dim fractionDecoy = GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, proteinCount)
-          
-            If proteinCount = 0 Then
-                LogError("No proteins found in " & fiFastaFile.Name)
-                Return False
-            End If
-
-            Dim percentReverse = fractionDecoy * 100
-
-            If percentReverse >= MINIMUM_PERCENT_DECOY Then
-                ' At least 25% of the proteins in the FASTA file are reverse proteins
-                Return True
-            End If
-
-            If percentReverse > maxPercentReverse Then
-                maxPercentReverse = percentReverse
-            End If
-        Next
-
-        Dim addonMsg = "choose a DMS-generated decoy protein collection or a legacy fasta file with protein names that start with " & String.Join(" or ", decoyPrefixes)
-
-        If Math.Abs(maxPercentReverse - 0) < Single.Epsilon Then
-            LogError("Legacy fasta file " & fiFastaFile.Name & " does not have any decoy (reverse) proteins; " & addonMsg)
-            Return False
-        End If
-
-        LogError("Fewer than " & MINIMUM_PERCENT_DECOY & "% of the proteins in legacy fasta file " & fiFastaFile.Name & " are decoy (reverse) proteins (" & maxPercentReverse.ToString("0") & "%); " & addonMsg)
-        Return False
-
-    End Function
-End Class
+            LogError("Fewer than " + MINIMUM_PERCENT_DECOY + "% of the proteins in legacy fasta file " + fiFastaFile.Name +
+                     " are decoy (reverse) proteins (" + maxPercentReverse.ToString("0") + "%); " + addonMsg);
+            return false;
+        }
+    }
+}
