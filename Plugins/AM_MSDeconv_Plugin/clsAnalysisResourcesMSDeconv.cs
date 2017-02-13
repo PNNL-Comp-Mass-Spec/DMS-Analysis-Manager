@@ -1,56 +1,59 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 10/12/2011
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 10/12/2011
+//
+//*********************************************************************************************************
 
-Option Strict On
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
+namespace AnalysisManagerMSDeconvPlugIn
+{
+    public class clsAnalysisResourcesMSDeconv : clsAnalysisResources
+    {
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-Public Class clsAnalysisResourcesMSDeconv
-    Inherits clsAnalysisResources
+            // Make sure the machine has enough free memory to run MSDeconv
+            if (!ValidateFreeMemorySize("MSDeconvJavaMemorySize", "MSDeconv"))
+            {
+                m_message = "Not enough free memory to run MSDeconv";
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-    Public Overrides Function GetResources() As CloseOutType
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file");
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            //var eResult = GetMzXMLFile();
+            //if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            //{
+            //    return eResult;
+            //}
 
-        ' Make sure the machine has enough free memory to run MSDeconv
-        If Not ValidateFreeMemorySize("MSDeconvJavaMemorySize", "MSDeconv") Then
-            m_message = "Not enough free memory to run MSDeconv"
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            var errorMessage = string.Empty;
+            var fileMissingFromCache = false;
+            const bool unzipFile = true;
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file")
+            var success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, out errorMessage, out fileMissingFromCache);
+            if (!success)
+            {
+                return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION);
+            }
 
-        'Dim eResult = GetMzXMLFile()
-        'If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-        '	Return eResult
-        'End If
+            // Make sure we don't move the .mzXML file into the results folder
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-        Dim errorMessage = String.Empty
-        Dim fileMissingFromCache = False
-        Const unzipFile = True
+            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        Dim success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, errorMessage, fileMissingFromCache)
-        If Not success Then
-            Return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION)
-        End If
-
-        ' Make sure we don't move the .mzXML file into the results folder
-        m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION)
-
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-End Class
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+    }
+}
