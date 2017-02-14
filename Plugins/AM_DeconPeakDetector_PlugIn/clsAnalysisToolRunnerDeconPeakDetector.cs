@@ -1,356 +1,395 @@
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 05/23/2014
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports AnalysisManagerBase
-Imports System.IO
-Imports System.Text.RegularExpressions
-
-Public Class clsAnalysisToolRunnerDeconPeakDetector
-    Inherits clsAnalysisToolRunnerBase
-
-    '*********************************************************************************************************
-    'Class for running the Decon Peak Detector
-    '*********************************************************************************************************
-
-#Region "Constants and Enums"
-    Private Const DECON_PEAK_DETECTOR_EXE_NAME As String = "HammerOrDeconSimplePeakDetector.exe"
-
-    Private Const DECON_PEAK_DETECTOR_CONSOLE_OUTPUT As String = "DeconPeakDetector_ConsoleOutput.txt"
-
-    Private Const PROGRESS_PCT_STARTING As Single = 1
-    Private Const PROGRESS_PCT_COMPLETE As Single = 99
-
-#End Region
-
-#Region "Module Variables"
-
-    Private mConsoleOutputErrorMsg As String
-
-    Private mCmdRunner As clsRunDosProgram
-
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Runs DeconPeakDetector tool
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
-
-        Dim result As CloseOutType
-
-        Try
-            'Call base class for initial setup
-            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter")
-            End If
-
-            ' Verify that program files exist
-
-            ' Determine the path to the PeakDetector program
-            Dim progLoc As String
-            progLoc = DetermineProgramLocation("DeconPeakDetector", "DeconPeakDetectorProgLoc", DECON_PEAK_DETECTOR_EXE_NAME)
-
-            If String.IsNullOrWhiteSpace(progLoc) Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Store the PeakDetector version info in the database
-            m_message = String.Empty
-            If Not StoreToolVersionInfo(progLoc) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Error determining DeconPeakDetector version"
-                End If
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Run DeconPeakDetector
-            Dim blnSuccess = RunDeconPeakDetector(progLoc)
-
-            If blnSuccess Then
-                ' Look for the DeconPeakDetector results file
-                Dim peakDetectorResultsFilePath = Path.Combine(m_WorkDir, m_Dataset & "_peaks.txt")
-
-                Dim fiResultsFile = New FileInfo(peakDetectorResultsFilePath)
-
-                If Not fiResultsFile.Exists Then
-                    If String.IsNullOrEmpty(m_message) Then
-                        m_message = "DeconPeakDetector results file not found: " & Path.GetFileName(peakDetectorResultsFilePath)
-                    End If
-                    blnSuccess = False
-                End If
-            End If
-
-            If blnSuccess Then
-                m_jobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt")
-            End If
-
-            m_progress = PROGRESS_PCT_COMPLETE
-
-            'Stop the job timer
-            m_StopTime = DateTime.UtcNow
-
-            'Add the current job data to the summary file
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            End If
-
-            'Make sure objects are released
-            Threading.Thread.Sleep(500)     ' 500 msec delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-
-            If Not blnSuccess Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MakeResultsFolder()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                'MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = MoveResultFiles()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                m_message = "Error moving files into results folder"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            result = CopyResultsFolderToServer()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-        Catch ex As Exception
-            m_message = "Error in DeconPeakDetectorPlugin->RunTool"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Parse the DeconPeakDetector console output file to track the search progress
-    ''' </summary>
-    ''' <param name="strConsoleOutputFilePath"></param>
-    ''' <remarks></remarks>
-    Private Sub ParseConsoleOutputFile(strConsoleOutputFilePath As String)
-
-        ' Example Console output
-        '
-
-        ' Started Peak Detector
-        ' There are 6695 MS1 scans
-        ' Using Decon Peak Detector
-        ' 
-        ' Peak creation progress: 0%
-        ' Peak creation progress: 1%
-        ' Peak creation progress: 2%
-        ' Peak creation progress: 2%
-        ' Peak creation progress: 3%
-        ' Peak creation progress: 4%
-
-        Static reProgress As Regex = New Regex("Peak creation progress: (?<Progress>\d+)%", RegexOptions.Compiled)
-
-        Try
-            If Not File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
-                End If
-
-                Exit Sub
-            End If
-
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
-            End If
-
-            Dim strLineIn As String
-            Dim peakDetectProgress As Integer
-
-            Using srInFile = New StreamReader(New FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
-
-                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue Do
-
-                    Dim reMatch As Match = reProgress.Match(strLineIn)
-
-                    If reMatch.Success Then
-                        peakDetectProgress = Int32.Parse(reMatch.Groups("Progress").Value)
-                    End If
-
-                Loop
-
-            End Using
-
-            Dim sngActualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, peakDetectProgress, 100)
-
-            If m_progress < sngActualProgress Then
-                m_progress = sngActualProgress
-            End If
-
-        Catch ex As Exception
-            ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
-            End If
-        End Try
-
-    End Sub
-
-    Private Function RunDeconPeakDetector(strPeakDetectorProgLoc As String) As Boolean
-
-        Dim CmdStr As String
-        Dim blnSuccess As Boolean
-
-        Dim peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "")
-        Dim paramFilePath = Path.Combine(m_WorkDir, peakDetectorParamFileName)
-
-        mConsoleOutputErrorMsg = String.Empty
-
-        Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType)
-
-        If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION)
-        Else
-            m_message = "The DeconPeakDetector presently only supports Thermo .Raw files"
-            Return False
-        End If
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running DeconPeakDetector")
-
-        'Set up and execute a program runner to run the Peak Detector
-        CmdStr = m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION
-        CmdStr &= " /P:" & PossiblyQuotePath(paramFilePath)
-        CmdStr &= " /O:" & PossiblyQuotePath(m_WorkDir)
-
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strPeakDetectorProgLoc & " " & CmdStr)
-
-        mCmdRunner = New clsRunDosProgram(m_WorkDir)
-        RegisterEvents(mCmdRunner)
-        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
-
-        With mCmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = False
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, DECON_PEAK_DETECTOR_CONSOLE_OUTPUT)
-        End With
-
-        m_progress = PROGRESS_PCT_STARTING
-
-        blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, CmdStr, "PeakDetector", True)
-
-        If Not String.IsNullOrEmpty(mConsoleOutputErrorMsg) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg)
-        End If
-
-        If Not blnSuccess Then
-            Dim Msg As String
-            Msg = "Error running DeconPeakDetector"
-            m_message = clsGlobal.AppendToComment(m_message, Msg)
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
-
-            If mCmdRunner.ExitCode <> 0 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PeakDetector returned a non-zero exit code: " & mCmdRunner.ExitCode.ToString)
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to PeakDetector failed (but exit code is 0)")
-            End If
-
-            Return False
-        End If
-
-        m_progress = PROGRESS_PCT_COMPLETE
-        m_StatusTools.UpdateAndWrite(m_progress)
-        If m_DebugLevel >= 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconPeakDetector Search Complete")
-        End If
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Function StoreToolVersionInfo(strPeakDetectorPath As String) As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        ' Lookup the version of the DeconConsole application
-        Dim fiPeakDetector = New FileInfo(strPeakDetectorPath)
-
-        Dim blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, fiPeakDetector.FullName)
-        If Not blnSuccess Then Return False
-
-        Dim dllPath = Path.Combine(fiPeakDetector.Directory.FullName, "SimplePeakDetectorEngine.dll")
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, dllPath)
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(strPeakDetectorPath))
-        ioToolFiles.Add(New FileInfo(dllPath))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-#End Region
-
-#Region "Event Handlers"
-
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
-
-        Static dtLastConsoleOutputParse As DateTime = DateTime.UtcNow
-
-        UpdateStatusFile()
-
-        If DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15 Then
-            dtLastConsoleOutputParse = DateTime.UtcNow
-
-            ParseConsoleOutputFile(Path.Combine(m_WorkDir, DECON_PEAK_DETECTOR_CONSOLE_OUTPUT))
-
-            LogProgress("DeconPeakDetector")
-        End If
-
-    End Sub
-
-#End Region
-
-End Class
+//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 05/23/2014
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Threading;
+using AnalysisManagerBase;
+
+namespace AnalysisManagerDeconPeakDetectorPlugIn
+{
+    /// <summary>
+    /// Class for running the Decon Peak Detector
+    /// </summary>
+    public class clsAnalysisToolRunnerDeconPeakDetector : clsAnalysisToolRunnerBase
+    {
+        #region "Constants and Enums"
+
+        private const string DECON_PEAK_DETECTOR_EXE_NAME = "HammerOrDeconSimplePeakDetector.exe";
+
+        private const string DECON_PEAK_DETECTOR_CONSOLE_OUTPUT = "DeconPeakDetector_ConsoleOutput.txt";
+
+        private const float PROGRESS_PCT_STARTING = 1;
+        private const float PROGRESS_PCT_COMPLETE = 99;
+
+        #endregion
+
+        #region "Module Variables"
+
+        private string mConsoleOutputErrorMsg;
+
+        private clsRunDosProgram mCmdRunner;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Runs DeconPeakDetector tool
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            try
+            {
+                //Call base class for initial setup
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
+                }
+
+                // Verify that program files exist
+
+                // Determine the path to the PeakDetector program
+                string progLoc = null;
+                progLoc = DetermineProgramLocation("DeconPeakDetector", "DeconPeakDetectorProgLoc", DECON_PEAK_DETECTOR_EXE_NAME);
+
+                if (string.IsNullOrWhiteSpace(progLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Store the PeakDetector version info in the database
+                m_message = string.Empty;
+                if (!StoreToolVersionInfo(progLoc))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Aborting since StoreToolVersionInfo returned false");
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        m_message = "Error determining DeconPeakDetector version";
+                    }
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Run DeconPeakDetector
+                var blnSuccess = RunDeconPeakDetector(progLoc);
+
+                if (blnSuccess)
+                {
+                    // Look for the DeconPeakDetector results file
+                    var peakDetectorResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_peaks.txt");
+
+                    var fiResultsFile = new FileInfo(peakDetectorResultsFilePath);
+
+                    if (!fiResultsFile.Exists)
+                    {
+                        if (string.IsNullOrEmpty(m_message))
+                        {
+                            m_message = "DeconPeakDetector results file not found: " + Path.GetFileName(peakDetectorResultsFilePath);
+                        }
+                        blnSuccess = false;
+                    }
+                }
+
+                if (blnSuccess)
+                {
+                    m_jobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt");
+                }
+
+                m_progress = PROGRESS_PCT_COMPLETE;
+
+                //Stop the job timer
+                m_StopTime = DateTime.UtcNow;
+
+                //Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
+
+                //Make sure objects are released
+                Thread.Sleep(500);     // 500 msec delay
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+                if (!blnSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var result = MakeResultsFolder();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //MakeResultsFolder handles posting to local log, so set database error message and exit
+                    m_message = "Error making results folder";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = MoveResultFiles();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    m_message = "Error moving files into results folder";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                result = CopyResultsFolderToServer();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in DeconPeakDetectorPlugin->RunTool";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        // Example Console output
+        //
+        // Started Peak Detector
+        // There are 6695 MS1 scans
+        // Using Decon Peak Detector
+        //
+        // Peak creation progress: 0%
+        // Peak creation progress: 1%
+        // Peak creation progress: 2%
+        // Peak creation progress: 2%
+        // Peak creation progress: 3%
+        // Peak creation progress: 4%
+        private Regex reProgress = new Regex(@"Peak creation progress: (?<Progress>\d+)%", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Parse the DeconPeakDetector console output file to track the search progress
+        /// </summary>
+        /// <param name="strConsoleOutputFilePath"></param>
+        /// <remarks></remarks>
+        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        {
+            try
+            {
+                if (!File.Exists(strConsoleOutputFilePath))
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Console output file not found: " + strConsoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (m_DebugLevel >= 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                }
+
+                string strLineIn = null;
+                int peakDetectProgress = 0;
+
+                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
+
+                        Match reMatch = reProgress.Match(strLineIn);
+
+                        if (reMatch.Success)
+                        {
+                            peakDetectProgress = int.Parse(reMatch.Groups["Progress"].Value);
+                        }
+                    }
+                }
+
+                var sngActualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, peakDetectProgress, 100);
+
+                if (m_progress < sngActualProgress)
+                {
+                    m_progress = sngActualProgress;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (m_DebugLevel >= 2)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
+        private bool RunDeconPeakDetector(string strPeakDetectorProgLoc)
+        {
+            string CmdStr = null;
+            bool blnSuccess = false;
+
+            var peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "");
+            var paramFilePath = Path.Combine(m_WorkDir, peakDetectorParamFileName);
+
+            mConsoleOutputErrorMsg = string.Empty;
+
+            string rawDataType = m_jobParams.GetParam("RawDataType");
+            var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
+
+            if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            {
+                m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
+            }
+            else
+            {
+                m_message = "The DeconPeakDetector presently only supports Thermo .Raw files";
+                return false;
+            }
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running DeconPeakDetector");
+
+            //Set up and execute a program runner to run the Peak Detector
+            CmdStr = m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION;
+            CmdStr += " /P:" + PossiblyQuotePath(paramFilePath);
+            CmdStr += " /O:" + PossiblyQuotePath(m_WorkDir);
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strPeakDetectorProgLoc + " " + CmdStr);
+
+            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            RegisterEvents(mCmdRunner);
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+            mCmdRunner.CreateNoWindow = true;
+            mCmdRunner.CacheStandardOutput = false;
+            mCmdRunner.EchoOutputToConsole = true;
+
+            mCmdRunner.WriteConsoleOutputToFile = true;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, DECON_PEAK_DETECTOR_CONSOLE_OUTPUT);
+
+            m_progress = PROGRESS_PCT_STARTING;
+
+            blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, CmdStr, "PeakDetector", true);
+
+            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+            }
+
+            if (!blnSuccess)
+            {
+                string Msg = null;
+                Msg = "Error running DeconPeakDetector";
+                m_message = clsGlobal.AppendToComment(m_message, Msg);
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "PeakDetector returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Call to PeakDetector failed (but exit code is 0)");
+                }
+
+                return false;
+            }
+
+            m_progress = PROGRESS_PCT_COMPLETE;
+            m_StatusTools.UpdateAndWrite(m_progress);
+            if (m_DebugLevel >= 3)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconPeakDetector Search Complete");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        private bool StoreToolVersionInfo(string strPeakDetectorPath)
+        {
+            string strToolVersionInfo = string.Empty;
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            // Lookup the version of the DeconConsole application
+            var fiPeakDetector = new FileInfo(strPeakDetectorPath);
+
+            var blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiPeakDetector.FullName);
+            if (!blnSuccess)
+                return false;
+
+            var dllPath = Path.Combine(fiPeakDetector.Directory.FullName, "SimplePeakDetectorEngine.dll");
+            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, dllPath);
+
+            // Store paths to key files in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(strPeakDetectorPath));
+            ioToolFiles.Add(new FileInfo(dllPath));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        private DateTime dtLastConsoleOutputParse = DateTime.MinValue;
+
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            UpdateStatusFile();
+
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            {
+                dtLastConsoleOutputParse = DateTime.UtcNow;
+
+                ParseConsoleOutputFile(Path.Combine(m_WorkDir, DECON_PEAK_DETECTOR_CONSOLE_OUTPUT));
+
+                LogProgress("DeconPeakDetector");
+            }
+        }
+
+        #endregion
+    }
+}
