@@ -113,7 +113,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
             else
             {
-                cmdStr += " " + mCustomMSConvertArguments;
+                // Replace single quotes with double quotes
+                // For example, switch from:
+                // --filter 'peakPicking true 1-' --filter 'scanNumber [0,24427] [24441,49450]' --mzML --32
+                // to:
+                // --filter "peakPicking true 1-" --filter "scanNumber [0,24427] [24441,49450]" --mzML --32
+
+                cmdStr += " " + mCustomMSConvertArguments.Replace("'", "\"");
             }
 
             mOutputFileName = GetOutputFileName(msXmlFormat, rawFilePath, mRawDataType);
