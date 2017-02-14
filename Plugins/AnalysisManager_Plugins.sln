@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_Cyclops_Plu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDecon2lsPlugIn", "AM_Decon2ls_PlugIn_Decon2LSV2\AnalysisManagerDecon2lsPlugIn.csproj", "{4E7586EC-4A03-433B-B98D-393DA95C020C}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerDtaImportPlugIn", "AM_DTA_Import_PlugIn\AnalysisManagerDtaImportPlugIn.vbproj", "{BD78C2C2-9834-47FF-B550-DD48A647F710}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDtaImportPlugIn", "AM_DTA_Import_PlugIn\AnalysisManagerDtaImportPlugIn.csproj", "{BD78C2C2-9834-47FF-B550-DD48A647F710}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDtaSplitPlugIn", "AM_DTA_Split_PlugIn\AnalysisManagerDtaSplitPlugIn.csproj", "{2892CB95-88A4-498F-9BAE-517666A68318}"
 EndProject
