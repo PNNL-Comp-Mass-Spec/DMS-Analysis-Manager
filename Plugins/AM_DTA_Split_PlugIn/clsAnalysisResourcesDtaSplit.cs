@@ -1,45 +1,47 @@
-Option Strict On
+using AnalysisManagerBase;
+using MyEMSLReader;
 
-Imports AnalysisManagerBase
-Imports MyEMSLReader
+namespace AnalysisManagerDtaSplitPlugIn
+{
+    public class clsAnalysisResourcesDtaSplit : clsAnalysisResources
+    {
+        #region "Methods"
 
-Public Class clsAnalysisResourcesDtaSplit
-    Inherits clsAnalysisResources
+        /// <summary>
+        /// Retrieves files necessary for performance of Sequest analysis
+        /// </summary>
+        /// <returns>CloseOutType indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
+            // Retrieve the _DTA.txt file
+            // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+            if (!FileSearch.RetrieveDtaFiles())
+            {
+                //Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-#Region "Methods"
-    ''' <summary>
-    ''' Retrieves files necessary for performance of Sequest analysis
-    ''' </summary>
-    ''' <returns>CloseOutType indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function GetResources() As CloseOutType
+            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            //Add all the extensions of the files to delete after run
+            m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); //Zipped DTA
+            m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); //Unzipped, concatenated DTA
 
-        ' Retrieve the _DTA.txt file
-        ' Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-        If Not FileSearch.RetrieveDtaFiles() Then
-            'Errors were reported in function call, so just return
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            //All finished
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        'Add all the extensions of the files to delete after run
-        m_jobParams.AddResultFileExtensionToSkip("_dta.zip") 'Zipped DTA
-        m_JobParams.AddResultFileExtensionToSkip("_dta.txt") 'Unzipped, concatenated DTA
-
-        'All finished
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-#End Region
-
-End Class
+        #endregion
+    }
+}
