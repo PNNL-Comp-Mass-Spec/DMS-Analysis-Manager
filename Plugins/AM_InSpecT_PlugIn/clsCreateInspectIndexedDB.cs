@@ -1,256 +1,296 @@
-'*********************************************************************************************************
-' Written by John Sandoval for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
-' Created 01/29/2009
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by John Sandoval for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2009, Battelle Memorial Institute
+// Created 01/29/2009
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.IO;
+using System.Threading;
+using AnalysisManagerBase;
 
-Imports System.IO
-Imports System.Threading
-Imports AnalysisManagerBase
+namespace AnalysisManagerInSpecTPlugIn
+{
+    public class clsCreateInspectIndexedDB
+    {
+        /// <summary>
+        /// Convert .Fasta file to indexed DB files
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public CloseOutType CreateIndexedDbFiles(ref IMgrParams mgrParams, ref IJobParams jobParams, int DebugLevel, string JobNum, string InspectDir, string OrgDbDir)
+        {
+            const float MAX_WAITTIME_HOURS = 1.0f;
+            const float MAX_WAITTIME_PREVENT_REPEATS = 2.0f;
 
-Public Class clsCreateInspectIndexedDB
+            const string PREPDB_SCRIPT = "PrepDB.py";
+            const string SHUFFLEDB_SCRIPT = "ShuffleDB_Seed.py";
 
-    ''' <summary>
-    ''' Convert .Fasta file to indexed DB files
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Function CreateIndexedDbFiles(ByRef mgrParams As IMgrParams,
-                                         ByRef jobParams As IJobParams,
-                                         DebugLevel As Integer,
-                                         JobNum As String,
-                                         InspectDir As String,
-                                         OrgDbDir As String) As CloseOutType
+            string CmdStr = null;
 
-        Const MAX_WAITTIME_HOURS As Single = 1.0
-        Const MAX_WAITTIME_PREVENT_REPEATS As Single = 2.0
+            int intRandomNumberSeed = 0;
+            bool blnShuffleDBPreventRepeats = false;
 
-        Const PREPDB_SCRIPT = "PrepDB.py"
-        Const SHUFFLEDB_SCRIPT = "ShuffleDB_Seed.py"
+            string strDBFileNameInput = null;
+            string strOutputNameBase = null;
 
-        Dim CmdStr As String
+            string dbLockFilename = null;
+            string dbTrieFilenameBeforeShuffle = null;
+            string dbTrieFilename = null;
 
-        Dim intRandomNumberSeed As Integer
-        Dim blnShuffleDBPreventRepeats As Boolean
+            string pythonProgLoc = null;
+            bool blnUseShuffledDB = false;
 
-        Dim strDBFileNameInput As String
-        Dim strOutputNameBase As String
+            float sngMaxWaitTimeHours = MAX_WAITTIME_HOURS;
 
-        Dim dbLockFilename As String
-        Dim dbTrieFilenameBeforeShuffle As String
-        Dim dbTrieFilename As String
+            try
+            {
+                if (DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "clsCreateInspectIndexedDB.CreateIndexedDbFiles(): Enter");
+                }
 
-        Dim pythonProgLoc As String
-        Dim blnUseShuffledDB As Boolean
+                intRandomNumberSeed = jobParams.GetJobParameter("InspectShuffleDBSeed", 1000);
+                blnShuffleDBPreventRepeats = jobParams.GetJobParameter("InspectPreventShuffleDBRepeats", false);
 
-        Dim fi As FileInfo
-        Dim createTime As DateTime
-        Dim durationTime As TimeSpan
-        Dim currentTime As DateTime
-        Dim sngMaxWaitTimeHours As Single = MAX_WAITTIME_HOURS
+                if (blnShuffleDBPreventRepeats)
+                {
+                    sngMaxWaitTimeHours = MAX_WAITTIME_PREVENT_REPEATS;
+                }
 
-        Try
-            If DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsCreateInspectIndexedDB.CreateIndexedDbFiles(): Enter")
-            End If
+                strDBFileNameInput = Path.Combine(OrgDbDir, jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                blnUseShuffledDB = jobParams.GetJobParameter("InspectUsesShuffledDB", false);
 
-            intRandomNumberSeed = jobParams.GetJobParameter("InspectShuffleDBSeed", 1000)
-            blnShuffleDBPreventRepeats = jobParams.GetJobParameter("InspectPreventShuffleDBRepeats", False)
+                strOutputNameBase = Path.GetFileNameWithoutExtension(strDBFileNameInput);
+                dbTrieFilenameBeforeShuffle = Path.Combine(OrgDbDir, strOutputNameBase + ".trie");
 
-            If blnShuffleDBPreventRepeats Then
-                sngMaxWaitTimeHours = MAX_WAITTIME_PREVENT_REPEATS
-            End If
+                if (blnUseShuffledDB)
+                {
+                    // Will create the .trie file using PrepDB.py, then shuffle it using shuffleDB.py
+                    // The Pvalue.py script does much better at computing p-values if a decoy search is performed (i.e. shuffleDB.py is used)
+                    // Note that shuffleDB will add a prefix of XXX to the shuffled protein names
+                    strOutputNameBase += "_shuffle";
+                }
 
-            strDBFileNameInput = Path.Combine(OrgDbDir, jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-            blnUseShuffledDB = jobParams.GetJobParameter("InspectUsesShuffledDB", False)
+                dbLockFilename = Path.Combine(OrgDbDir, strOutputNameBase + "_trie.lock");
+                dbTrieFilename = Path.Combine(OrgDbDir, strOutputNameBase + ".trie");
 
-            strOutputNameBase = Path.GetFileNameWithoutExtension(strDBFileNameInput)
-            dbTrieFilenameBeforeShuffle = Path.Combine(OrgDbDir, strOutputNameBase & ".trie")
+                pythonProgLoc = mgrParams.GetParam("pythonprogloc");
 
-            If blnUseShuffledDB Then
-                ' Will create the .trie file using PrepDB.py, then shuffle it using shuffleDB.py
-                ' The Pvalue.py script does much better at computing p-values if a decoy search is performed (i.e. shuffleDB.py is used)
-                ' Note that shuffleDB will add a prefix of XXX to the shuffled protein names
-                strOutputNameBase &= "_shuffle"
-            End If
+                var objPrepDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar);
+                objPrepDB.ErrorEvent += CmdRunner_ErrorEvent;
 
-            dbLockFilename = Path.Combine(OrgDbDir, strOutputNameBase & "_trie.lock")
-            dbTrieFilename = Path.Combine(OrgDbDir, strOutputNameBase & ".trie")
+                // Check to see if another Analysis Manager is already creating the indexed db files
+                if (File.Exists(dbLockFilename))
+                {
+                    if (DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Lock file found: " + dbLockFilename + "; waiting for file to be removed by other manager generating .trie file " +
+                            Path.GetFileName(dbTrieFilename));
+                    }
 
-            pythonProgLoc = mgrParams.GetParam("pythonprogloc")
+                    // Lock file found; wait up to sngMaxWaitTimeHours hours
+                    var fi = new FileInfo(dbLockFilename);
+                    var createTime = fi.CreationTimeUtc;
+                    var currentTime = DateTime.UtcNow;
+                    var durationTime = currentTime - createTime;
+                    while (File.Exists(dbLockFilename) & durationTime.Hours < sngMaxWaitTimeHours)
+                    {
+                        // Sleep for 2 seconds
+                        Thread.Sleep(2000);
 
-            Dim objPrepDB = New clsRunDosProgram(InspectDir & Path.DirectorySeparatorChar)
-            AddHandler objPrepDB.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+                        // Update the current time and elapsed duration
+                        currentTime = DateTime.UtcNow;
+                        durationTime = currentTime - createTime;
+                    }
 
-            ' Check to see if another Analysis Manager is already creating the indexed db files
-            If File.Exists(dbLockFilename) Then
-                If DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Lock file found: " & dbLockFilename & "; waiting for file to be removed by other manager generating .trie file " & Path.GetFileName(dbTrieFilename))
-                End If
+                    //If the duration time has exceeded sngMaxWaitTimeHours, then delete the lock file and try again with this manager
+                    if (durationTime.Hours > sngMaxWaitTimeHours)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "Waited over " + sngMaxWaitTimeHours.ToString("0.0") + " hour(s) for lock file: " + dbLockFilename +
+                            " to be deleted, but it is still present; deleting the file now and continuing");
+                        if (File.Exists(dbLockFilename))
+                        {
+                            File.Delete(dbLockFilename);
+                        }
+                    }
+                }
 
-                ' Lock file found; wait up to sngMaxWaitTimeHours hours
-                fi = My.Computer.FileSystem.GetFileInfo(dbLockFilename)
-                createTime = fi.CreationTimeUtc
-                currentTime = DateTime.UtcNow
-                durationTime = currentTime - createTime
-                While File.Exists(dbLockFilename) And durationTime.Hours < sngMaxWaitTimeHours
-                    ' Sleep for 2 seconds
-                    Thread.Sleep(2000)
+                // If lock file existed, the index files should now be created
+                // Check for one of the index files in case this is the first time or there was a problem with
+                // another manager creating it.
+                if (!File.Exists(dbTrieFilename))
+                {
+                    // Try to create the index files for fasta file strDBFileNameInput
 
-                    ' Update the current time and elapsed duration
-                    currentTime = DateTime.UtcNow
-                    durationTime = currentTime - createTime
-                End While
+                    // Verify that python program file exists
+                    if (!File.Exists(pythonProgLoc))
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            "Cannot find python.exe program file: " + pythonProgLoc);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
 
-                'If the duration time has exceeded sngMaxWaitTimeHours, then delete the lock file and try again with this manager
-                If durationTime.Hours > sngMaxWaitTimeHours Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Waited over " & sngMaxWaitTimeHours.ToString("0.0") & " hour(s) for lock file: " & dbLockFilename & " to be deleted, but it is still present; deleting the file now and continuing")
-                    If File.Exists(dbLockFilename) Then
-                        File.Delete(dbLockFilename)
-                    End If
-                End If
+                    // Verify that the PrepDB python script exists
+                    string PrebDBScriptPath = Path.Combine(InspectDir, PREPDB_SCRIPT);
+                    if (!File.Exists(PrebDBScriptPath))
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            "Cannot find PrepDB script: " + PrebDBScriptPath);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
 
-            End If
+                    // Verify that the ShuffleDB python script exists
+                    string ShuffleDBScriptPath = Path.Combine(InspectDir, SHUFFLEDB_SCRIPT);
+                    if (blnUseShuffledDB)
+                    {
+                        if (!File.Exists(ShuffleDBScriptPath))
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                "Cannot find ShuffleDB script: " + ShuffleDBScriptPath);
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
+                    }
 
-            ' If lock file existed, the index files should now be created
-            ' Check for one of the index files in case this is the first time or there was a problem with 
-            ' another manager creating it.
-            If Not File.Exists(dbTrieFilename) Then
-                ' Try to create the index files for fasta file strDBFileNameInput
+                    if (DebugLevel >= 3)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " + dbLockFilename);
+                    }
 
-                ' Verify that python program file exists
-                If Not File.Exists(pythonProgLoc) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find python.exe program file: " & pythonProgLoc)
-                    Return CloseOutType.CLOSEOUT_FAILED
-                End If
+                    //Create lock file
+                    bool bSuccess = false;
+                    bSuccess = CreateLockFile(dbLockFilename);
+                    if (!bSuccess)
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
 
-                ' Verify that the PrepDB python script exists
-                Dim PrebDBScriptPath As String = Path.Combine(InspectDir, PREPDB_SCRIPT)
-                If Not File.Exists(PrebDBScriptPath) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find PrepDB script: " & PrebDBScriptPath)
-                    Return CloseOutType.CLOSEOUT_FAILED
-                End If
+                    if (DebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Creating indexed database file: " + dbTrieFilenameBeforeShuffle);
+                    }
 
-                ' Verify that the ShuffleDB python script exists
-                Dim ShuffleDBScriptPath As String = Path.Combine(InspectDir, SHUFFLEDB_SCRIPT)
-                If blnUseShuffledDB Then
-                    If Not File.Exists(ShuffleDBScriptPath) Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find ShuffleDB script: " & ShuffleDBScriptPath)
-                        Return CloseOutType.CLOSEOUT_FAILED
-                    End If
-                End If
+                    //Set up and execute a program runner to run PrepDB.py
+                    CmdStr = " " + PrebDBScriptPath + " FASTA " + strDBFileNameInput;
+                    if (DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc + " " + CmdStr);
+                    }
 
-                If DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " & dbLockFilename)
-                End If
+                    if (!objPrepDB.RunProgram(pythonProgLoc, CmdStr, "PrepDB", true))
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                            "Error running " + PREPDB_SCRIPT + " for " + strDBFileNameInput + " : " + JobNum);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                    else
+                    {
+                        if (DebugLevel >= 1)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                "Created .trie file for " + strDBFileNameInput);
+                        }
+                    }
 
-                'Create lock file
-                Dim bSuccess As Boolean
-                bSuccess = CreateLockFile(dbLockFilename)
-                If Not bSuccess Then
-                    Return CloseOutType.CLOSEOUT_FAILED
-                End If
+                    if (blnUseShuffledDB)
+                    {
+                        //Set up and execute a program runner to run ShuffleDB_seed.py
+                        var objShuffleDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar);
+                        objShuffleDB.ErrorEvent += CmdRunner_ErrorEvent;
 
-                If DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating indexed database file: " & dbTrieFilenameBeforeShuffle)
-                End If
+                        CmdStr = " " + ShuffleDBScriptPath + " -r " + dbTrieFilenameBeforeShuffle + " -w " + dbTrieFilename;
 
-                'Set up and execute a program runner to run PrepDB.py
-                CmdStr = " " & PrebDBScriptPath & " FASTA " & strDBFileNameInput
-                If DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc & " " & CmdStr)
-                End If
+                        if (blnShuffleDBPreventRepeats)
+                        {
+                            CmdStr += " -p";
+                        }
 
-                If Not objPrepDB.RunProgram(pythonProgLoc, CmdStr, "PrepDB", True) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running " & PREPDB_SCRIPT & " for " & strDBFileNameInput & " : " & JobNum)
-                    Return CloseOutType.CLOSEOUT_FAILED
-                Else
-                    If DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Created .trie file for " & strDBFileNameInput)
-                    End If
-                End If
+                        if (intRandomNumberSeed != 0)
+                        {
+                            CmdStr += " -d " + intRandomNumberSeed.ToString();
+                        }
 
-                If blnUseShuffledDB Then
-                    'Set up and execute a program runner to run ShuffleDB_seed.py
-                    Dim objShuffleDB = New clsRunDosProgram(InspectDir & Path.DirectorySeparatorChar)
-                    AddHandler objShuffleDB.ErrorEvent, AddressOf CmdRunner_ErrorEvent
+                        if (DebugLevel >= 1)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc + " " + CmdStr);
+                        }
 
-                    CmdStr = " " & ShuffleDBScriptPath & " -r " & dbTrieFilenameBeforeShuffle & " -w " & dbTrieFilename
+                        if (!objShuffleDB.RunProgram(pythonProgLoc, CmdStr, "ShuffleDB", true))
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                                "Error running " + SHUFFLEDB_SCRIPT + " for " + dbTrieFilenameBeforeShuffle + " : " + JobNum);
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
+                        else
+                        {
+                            if (DebugLevel >= 1)
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    "Shuffled .trie file created: " + dbTrieFilename);
+                            }
+                        }
+                    }
 
-                    If blnShuffleDBPreventRepeats Then
-                        CmdStr &= " -p"
-                    End If
+                    if (DebugLevel >= 3)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " + dbLockFilename);
+                    }
 
-                    If intRandomNumberSeed <> 0 Then
-                        CmdStr &= " -d " & intRandomNumberSeed.ToString
-                    End If
+                    // Delete the lock file
+                    if (File.Exists(dbLockFilename))
+                    {
+                        File.Delete(dbLockFilename);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "clsCreateInspectIndexedDB.CreateIndexedDbFiles, An exception has occurred: " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-                    If DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc & " " & CmdStr)
-                    End If
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-                    If Not objShuffleDB.RunProgram(pythonProgLoc, CmdStr, "ShuffleDB", True) Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running " & SHUFFLEDB_SCRIPT & " for " & dbTrieFilenameBeforeShuffle & " : " & JobNum)
-                        Return CloseOutType.CLOSEOUT_FAILED
-                    Else
-                        If DebugLevel >= 1 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Shuffled .trie file created: " & dbTrieFilename)
-                        End If
-                    End If
-                End If
+        /// <summary>
+        /// Creates a lock file
+        /// </summary>
+        /// <returns>True if success; false if failure</returns>
+        protected bool CreateLockFile(string strLockFilePath)
+        {
+            try
+            {
+                using (var sw = new StreamWriter(strLockFilePath))
+                {
+                    // Add Date and time to the file.
+                    sw.WriteLine(DateTime.Now);
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "clsCreateInspectIndexedDB.CreateLockFile, Error creating lock file: " + ex.Message);
+                return false;
+            }
 
+            return true;
+        }
 
-                If DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " & dbLockFilename)
-                End If
-
-                ' Delete the lock file
-                If File.Exists(dbLockFilename) Then
-                    File.Delete(dbLockFilename)
-                End If
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsCreateInspectIndexedDB.CreateIndexedDbFiles, An exception has occurred: " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Creates a lock file
-    ''' </summary>
-    ''' <returns>True if success; false if failure</returns>
-    Protected Function CreateLockFile(strLockFilePath As String) As Boolean
-
-        Try
-            Using sw = New StreamWriter(strLockFilePath)
-                ' Add Date and time to the file.
-                sw.WriteLine(DateTime.Now)
-            End Using
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsCreateInspectIndexedDB.CreateLockFile, Error creating lock file: " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Event handler for event CmdRunner.ErrorEvent
-    ''' </summary>
-    ''' <param name="strMessage"></param>
-    ''' <param name="ex"></param>
-    Private Sub CmdRunner_ErrorEvent(strMessage As String, ex As Exception)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
-    End Sub
-End Class
+        /// <summary>
+        /// Event handler for event CmdRunner.ErrorEvent
+        /// </summary>
+        /// <param name="strMessage"></param>
+        /// <param name="ex"></param>
+        private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage);
+        }
+    }
+}
